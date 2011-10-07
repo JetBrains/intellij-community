@@ -29,8 +29,6 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -439,11 +437,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
   }
 
-  private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@Nullable PsiFile file, int offset, @Nullable FileType fileType) {
+  private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@NotNull PsiFile file, int offset) {
     LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
     LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
     for (TemplateContextType contextType : contexts) {
-      if (fileType == null ? contextType.isInContext(file, offset) : contextType.isInContext(fileType)) {
+      if (contextType.isInContext(file, offset)) {
         set.add(contextType);
       }
     }
@@ -503,21 +501,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {
-    Set<TemplateContextType> result = getDirectlyApplicableContextTypes(file, offset, null);
+    Set<TemplateContextType> result = getDirectlyApplicableContextTypes(file, offset);
 
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
     if (baseLanguage != file.getLanguage()) {
       PsiFile basePsi = file.getViewProvider().getPsi(baseLanguage);
       if (basePsi != null) {
-        result.addAll(getDirectlyApplicableContextTypes(basePsi, offset, null));
-      }
-    }
-
-    final Language baseLanguageForBaseLanguage = baseLanguage.getBaseLanguage();
-    if (baseLanguageForBaseLanguage != null) {
-      final LanguageFileType associatedFileType = baseLanguageForBaseLanguage.getAssociatedFileType();
-      if (associatedFileType != null && associatedFileType != file.getFileType()) {
-        result.addAll(getDirectlyApplicableContextTypes(null, 0, associatedFileType));
+        result.addAll(getDirectlyApplicableContextTypes(basePsi, offset));
       }
     }
 
@@ -527,7 +517,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (languageAtOffset != file.getLanguage() && languageAtOffset != baseLanguage) {
       PsiFile basePsi = file.getViewProvider().getPsi(languageAtOffset);
       if (basePsi != null) {
-        result.addAll(getDirectlyApplicableContextTypes(basePsi, offset, null));
+        result.addAll(getDirectlyApplicableContextTypes(basePsi, offset));
       }
     }
 

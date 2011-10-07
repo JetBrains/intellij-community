@@ -165,6 +165,11 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));
   }
 
+  public void testLoadForDefaultProject() throws Exception {
+    configureByFile();
+    myFixture.testHighlighting(true, true, true);
+  }
+
   public static Class[] getInspectionClasses() {
     Class[] result = {
       //RegistrationProblemsInspection.class,

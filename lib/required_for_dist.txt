@@ -44,4 +44,4 @@ xstream.jar
 swingx-core-1.6.2.jar
 netty-3.2.5.Final.jar
 protobuf-2.3.0.jar
-
+jps-facade.jar

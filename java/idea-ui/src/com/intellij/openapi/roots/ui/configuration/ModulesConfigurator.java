@@ -552,7 +552,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (module == moduleEditor.getModule() && Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
         moduleEditor.updateCompilerOutputPathChanged(ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
-        myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module), true, false);
+        myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
         return;
       }
     }

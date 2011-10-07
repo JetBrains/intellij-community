@@ -113,6 +113,7 @@ public class SaveAsTemplateAction extends AnAction {
     }, null, null);
 
     final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
+    template.setToReformat(true);
 
     PsiFile copy;
     AccessToken token = WriteAction.start();

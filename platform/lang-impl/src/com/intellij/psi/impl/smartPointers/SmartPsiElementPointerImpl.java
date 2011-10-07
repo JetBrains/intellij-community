@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -69,9 +70,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   public boolean equals(Object obj) {
     if (!(obj instanceof SmartPsiElementPointer)) return false;
-    SmartPsiElementPointer pointer = (SmartPsiElementPointer)obj;
-    Project project = getProject();
-    return !project.isDisposed() && SmartPointerManager.getInstance(project).pointToTheSameElement(this, pointer);
+    return pointsToTheSameElementAs(this, (SmartPsiElementPointer)obj);
   }
 
   public int hashCode() {
@@ -201,5 +200,14 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @NotNull
   SmartPointerElementInfo getElementInfo() {
     return myElementInfo;
+  }
+
+  protected static boolean pointsToTheSameElementAs(SmartPsiElementPointer pointer1, SmartPsiElementPointer pointer2) {
+    if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
+      SmartPointerElementInfo elementInfo1 = ((SmartPsiElementPointerImpl)pointer1).getElementInfo();
+      SmartPointerElementInfo elementInfo2 = ((SmartPsiElementPointerImpl)pointer2).getElementInfo();
+      return elementInfo1.pointsToTheSameElementAs(elementInfo2);
+    }
+    return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
 }

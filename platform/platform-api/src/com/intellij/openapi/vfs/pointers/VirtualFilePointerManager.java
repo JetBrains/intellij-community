@@ -58,5 +58,5 @@ public abstract class VirtualFilePointerManager implements Disposable {
   public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent);
 
   @NotNull
-  public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent, VirtualFilePointerListener listener);
+  public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -186,6 +187,45 @@ public class SearchResults implements DocumentListener {
   public void clear() {
     searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null, getStamp());
   }
+  
+  private static class BombedCharSequence implements CharSequence {
+    private CharSequence delegate;
+    private long myTime;
+    private long i = 0;
+
+    public BombedCharSequence(CharSequence sequence, long time) {
+      delegate = sequence;
+      myTime = time;
+    }
+
+    @Override
+    public int length() {
+      check();
+      return delegate.length();
+    }
+
+    @Override
+    public char charAt(int i) {
+      check();
+      return delegate.charAt(i);
+    }
+
+    private void check() {
+      ++i;
+      if (i % 1000 == 0) {
+        long l = System.currentTimeMillis();
+        if (l >= myTime) {
+          throw new ProcessCanceledException();
+        }
+      }
+    }
+
+    @Override
+    public CharSequence subSequence(int i, int i1) {
+      check();
+      return delegate.subSequence(i, i1);
+    }
+  }
 
   public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final TextRange next, final int stamp) {
     if (myDisposed) return;
@@ -211,8 +251,11 @@ public class SearchResults implements DocumentListener {
             FindManager findManager = FindManager.getInstance(editor.getProject());
             FindResult result;
             try {
-              result = findManager.findString(editor.getDocument().getCharsSequence(), offset, findModel, virtualFile);
+              BombedCharSequence bombedCharSequence = new BombedCharSequence(editor.getDocument().getCharsSequence(), System.currentTimeMillis() + 3000);
+              result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
             } catch(PatternSyntaxException e) {
+              result = null;
+            } catch (ProcessCanceledException e) {
               result = null;
             }
             if (result == null || !result.isStringFound()) break;

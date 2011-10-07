@@ -24,6 +24,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -71,17 +72,23 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
     private final PsiNamedElement myElement;
     private final PsiElement myFileContext;
 
-    public ResultWithContext(PsiNamedElement element, PsiElement fileContext) {
+    public ResultWithContext(@NotNull PsiNamedElement element, PsiElement fileContext) {
       myElement = element;
       myFileContext = fileContext;
     }
 
+    @NotNull
     public PsiNamedElement getElement() {
       return myElement;
     }
 
     public PsiElement getFileContext() {
       return myFileContext;
+    }
+
+    @Override
+    public String toString() {
+      return myElement.toString();
     }
   }
 }

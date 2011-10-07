@@ -52,7 +52,7 @@ public class GroovyNameSuggestionUtil {
     return suggestVariableNames(expr, validator, false);
   }
 
-  public static String[] suggestVariableNames(GrExpression expr, NameValidator validator, boolean forStaticVariable) {
+  public static String[] suggestVariableNames(@NotNull GrExpression expr, NameValidator validator, boolean forStaticVariable) {
     Set<String> possibleNames = new LinkedHashSet<String>();
     PsiType type = expr.getType();
     generateNameByExpr(expr, possibleNames, validator, forStaticVariable);

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.notification;
 
-package com.intellij.codeInsight.completion;
+import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 
-import com.intellij.psi.PsiElement;
+public abstract class NotificationsConfiguration implements Notifications {
+  public static NotificationsConfiguration getNotificationsConfiguration() {
+    return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);
+  }
 
-/**
- * @author ik
- */
-public interface KeywordChooser{
-  String[] getKeywords(CompletionContext context, PsiElement position);
+  public abstract void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId);
 }

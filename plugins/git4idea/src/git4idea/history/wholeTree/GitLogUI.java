@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -67,6 +68,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -152,6 +154,29 @@ public class GitLogUI implements Disposable {
 
     initUiRefresh();
     myAuthorRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+  
+  public void initFromSettings() {
+    final GitLogSettings settings = GitLogSettings.getInstance(myProject);
+    mySelectedBranch = settings.getSelectedBranch();
+    myUserFilterI.myFilter = settings.getSelectedUser();
+    myUserFilterI.myMeSelected = settings.isSelectedUserMe();
+    myUsersFilterAction.setSelectedPresets(settings.getSelectedUser(), settings.isSelectedUserMe());
+    myBranchSelectorAction.setPreset(mySelectedBranch);
+
+    final List<String> selectedPaths = settings.getSelectedPaths();
+    if (selectedPaths != null && ! selectedPaths.isEmpty()){
+      final ArrayList<VirtualFile> paths = new ArrayList<VirtualFile>();
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      for (String path : selectedPaths) {
+        final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(path));
+        if (vf == null) return; // do not keep filter if any file can not be found
+        paths.add(vf);
+      }
+      myStructureFilter.myAllSelected = false;
+      myStructureFilter.getSelected().addAll(paths);
+    }
+    myStructureFilterAction.setPreset();
   }
 
   private void initUiRefresh() {
@@ -1228,6 +1253,13 @@ public class GitLogUI implements Disposable {
   }
 
   private void reloadRequest() {
+    // store state
+    final GitLogSettings settings = GitLogSettings.getInstance(myProject);
+    settings.setSelectedBranch(mySelectedBranch);
+    settings.setSelectedUser(myUserFilterI.myFilter);
+    settings.setSelectedUserIsMe(myUserFilterI.isMeSelected());
+    settings.setSelectedPaths(myStructureFilter.myAllSelected ? null : myStructureFilter.getSelected());
+
     myState = StepType.CONTINUE;
     final int was = myTableModel.getRowCount();
     myDetailsCache.resetAsideCaches();
@@ -1408,6 +1440,7 @@ public class GitLogUI implements Disposable {
     private boolean myMeIsKnown;
     private String myMe;
     private String myFilter;
+    private boolean myMeSelected;
     private final Runnable myReloadCallback;
 
     public MyFilterUi(Runnable reloadCallback) {
@@ -1417,17 +1450,20 @@ public class GitLogUI implements Disposable {
     @Override
     public void allSelected() {
       myFilter = null;
+      myMeSelected = false;
       myReloadCallback.run();
     }
 
     @Override
     public void meSelected() {
       myFilter = myMe;
+      myMeSelected = true;
       myReloadCallback.run();
     }
 
     @Override
     public void filter(String s) {
+      myMeSelected = false;
       myFilter = s;
       myReloadCallback.run();
     }
@@ -1435,6 +1471,10 @@ public class GitLogUI implements Disposable {
     @Override
     public boolean isMeKnown() {
       return myMeIsKnown;
+    }
+
+    public boolean isMeSelected() {
+      return myMeSelected;
     }
 
     @Override
@@ -1485,6 +1525,10 @@ public class GitLogUI implements Disposable {
     @Override
     public List<VirtualFile> getRoots() {
       return myGetter.get();
+    }
+
+    public boolean isAllSelected() {
+      return myAllSelected;
     }
   }
 

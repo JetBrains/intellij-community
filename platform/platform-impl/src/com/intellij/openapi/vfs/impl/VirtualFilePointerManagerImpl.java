@@ -396,7 +396,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  public synchronized VirtualFilePointerContainer createContainer(@NotNull Disposable parent, VirtualFilePointerListener listener) {
+  public synchronized VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent, listener));
   }
 

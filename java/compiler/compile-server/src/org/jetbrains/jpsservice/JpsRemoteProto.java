@@ -1795,6 +1795,382 @@ public final class JpsRemoteProto {
           // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand.PathVariable)
         }
         
+        public static final class GlobalLibrary extends
+            com.google.protobuf.GeneratedMessageLite {
+          // Use GlobalLibrary.newBuilder() to construct.
+          private GlobalLibrary() {
+            initFields();
+          }
+          private GlobalLibrary(boolean noInit) {}
+          
+          private static final GlobalLibrary defaultInstance;
+          public static GlobalLibrary getDefaultInstance() {
+            return defaultInstance;
+          }
+          
+          public GlobalLibrary getDefaultInstanceForType() {
+            return defaultInstance;
+          }
+          
+          // required string name = 1;
+          public static final int NAME_FIELD_NUMBER = 1;
+          private boolean hasName;
+          private java.lang.String name_ = "";
+          public boolean hasName() { return hasName; }
+          public java.lang.String getName() { return name_; }
+          
+          // optional string homePath = 2;
+          public static final int HOMEPATH_FIELD_NUMBER = 2;
+          private boolean hasHomePath;
+          private java.lang.String homePath_ = "";
+          public boolean hasHomePath() { return hasHomePath; }
+          public java.lang.String getHomePath() { return homePath_; }
+          
+          // repeated string path = 3;
+          public static final int PATH_FIELD_NUMBER = 3;
+          private java.util.List<java.lang.String> path_ =
+            java.util.Collections.emptyList();
+          public java.util.List<java.lang.String> getPathList() {
+            return path_;
+          }
+          public int getPathCount() { return path_.size(); }
+          public java.lang.String getPath(int index) {
+            return path_.get(index);
+          }
+          
+          private void initFields() {
+          }
+          public final boolean isInitialized() {
+            if (!hasName) return false;
+            return true;
+          }
+          
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
+                              throws java.io.IOException {
+            getSerializedSize();
+            if (hasName()) {
+              output.writeString(1, getName());
+            }
+            if (hasHomePath()) {
+              output.writeString(2, getHomePath());
+            }
+            for (java.lang.String element : getPathList()) {
+              output.writeString(3, element);
+            }
+          }
+          
+          private int memoizedSerializedSize = -1;
+          public int getSerializedSize() {
+            int size = memoizedSerializedSize;
+            if (size != -1) return size;
+          
+            size = 0;
+            if (hasName()) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeStringSize(1, getName());
+            }
+            if (hasHomePath()) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeStringSize(2, getHomePath());
+            }
+            {
+              int dataSize = 0;
+              for (java.lang.String element : getPathList()) {
+                dataSize += com.google.protobuf.CodedOutputStream
+                  .computeStringSizeNoTag(element);
+              }
+              size += dataSize;
+              size += 1 * getPathList().size();
+            }
+            memoizedSerializedSize = size;
+            return size;
+          }
+          
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          
+          public static Builder newBuilder() { return Builder.create(); }
+          public Builder newBuilderForType() { return newBuilder(); }
+          public static Builder newBuilder(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary prototype) {
+            return newBuilder().mergeFrom(prototype);
+          }
+          public Builder toBuilder() { return newBuilder(this); }
+          
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary, Builder> {
+            private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary result;
+            
+            // Construct using org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.newBuilder()
+            private Builder() {}
+            
+            private static Builder create() {
+              Builder builder = new Builder();
+              builder.result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary();
+              return builder;
+            }
+            
+            protected org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary internalGetResult() {
+              return result;
+            }
+            
+            public Builder clear() {
+              if (result == null) {
+                throw new IllegalStateException(
+                  "Cannot call clear() after build().");
+              }
+              result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary();
+              return this;
+            }
+            
+            public Builder clone() {
+              return create().mergeFrom(result);
+            }
+            
+            public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary getDefaultInstanceForType() {
+              return org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.getDefaultInstance();
+            }
+            
+            public boolean isInitialized() {
+              return result.isInitialized();
+            }
+            public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary build() {
+              if (result != null && !isInitialized()) {
+                throw newUninitializedMessageException(result);
+              }
+              return buildPartial();
+            }
+            
+            private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary buildParsed()
+                throws com.google.protobuf.InvalidProtocolBufferException {
+              if (!isInitialized()) {
+                throw newUninitializedMessageException(
+                  result).asInvalidProtocolBufferException();
+              }
+              return buildPartial();
+            }
+            
+            public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary buildPartial() {
+              if (result == null) {
+                throw new IllegalStateException(
+                  "build() has already been called on this Builder.");
+              }
+              if (result.path_ != java.util.Collections.EMPTY_LIST) {
+                result.path_ =
+                  java.util.Collections.unmodifiableList(result.path_);
+              }
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary returnMe = result;
+              result = null;
+              return returnMe;
+            }
+            
+            public Builder mergeFrom(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary other) {
+              if (other == org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.getDefaultInstance()) return this;
+              if (other.hasName()) {
+                setName(other.getName());
+              }
+              if (other.hasHomePath()) {
+                setHomePath(other.getHomePath());
+              }
+              if (!other.path_.isEmpty()) {
+                if (result.path_.isEmpty()) {
+                  result.path_ = new java.util.ArrayList<java.lang.String>();
+                }
+                result.path_.addAll(other.path_);
+              }
+              return this;
+            }
+            
+            public Builder mergeFrom(
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws java.io.IOException {
+              while (true) {
+                int tag = input.readTag();
+                switch (tag) {
+                  case 0:
+                    return this;
+                  default: {
+                    if (!parseUnknownField(input, extensionRegistry, tag)) {
+                      return this;
+                    }
+                    break;
+                  }
+                  case 10: {
+                    setName(input.readString());
+                    break;
+                  }
+                  case 18: {
+                    setHomePath(input.readString());
+                    break;
+                  }
+                  case 26: {
+                    addPath(input.readString());
+                    break;
+                  }
+                }
+              }
+            }
+            
+            
+            // required string name = 1;
+            public boolean hasName() {
+              return result.hasName();
+            }
+            public java.lang.String getName() {
+              return result.getName();
+            }
+            public Builder setName(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasName = true;
+              result.name_ = value;
+              return this;
+            }
+            public Builder clearName() {
+              result.hasName = false;
+              result.name_ = getDefaultInstance().getName();
+              return this;
+            }
+            
+            // optional string homePath = 2;
+            public boolean hasHomePath() {
+              return result.hasHomePath();
+            }
+            public java.lang.String getHomePath() {
+              return result.getHomePath();
+            }
+            public Builder setHomePath(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasHomePath = true;
+              result.homePath_ = value;
+              return this;
+            }
+            public Builder clearHomePath() {
+              result.hasHomePath = false;
+              result.homePath_ = getDefaultInstance().getHomePath();
+              return this;
+            }
+            
+            // repeated string path = 3;
+            public java.util.List<java.lang.String> getPathList() {
+              return java.util.Collections.unmodifiableList(result.path_);
+            }
+            public int getPathCount() {
+              return result.getPathCount();
+            }
+            public java.lang.String getPath(int index) {
+              return result.getPath(index);
+            }
+            public Builder setPath(int index, java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.path_.set(index, value);
+              return this;
+            }
+            public Builder addPath(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.path_.isEmpty()) {
+                result.path_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.path_.add(value);
+              return this;
+            }
+            public Builder addAllPath(
+                java.lang.Iterable<? extends java.lang.String> values) {
+              if (result.path_.isEmpty()) {
+                result.path_ = new java.util.ArrayList<java.lang.String>();
+              }
+              super.addAll(values, result.path_);
+              return this;
+            }
+            public Builder clearPath() {
+              result.path_ = java.util.Collections.emptyList();
+              return this;
+            }
+            
+            // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand.GlobalLibrary)
+          }
+          
+          static {
+            defaultInstance = new GlobalLibrary(true);
+            org.jetbrains.jpsservice.JpsRemoteProto.internalForceInit();
+            defaultInstance.initFields();
+          }
+          
+          // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand.GlobalLibrary)
+        }
+        
         // repeated .org.jetbrains.jpsservice.Message.Request.SetupCommand.PathVariable path_variable = 1;
         public static final int PATH_VARIABLE_FIELD_NUMBER = 1;
         private java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable> pathVariable_ =
@@ -1807,10 +2183,25 @@ public final class JpsRemoteProto {
           return pathVariable_.get(index);
         }
         
+        // repeated .org.jetbrains.jpsservice.Message.Request.SetupCommand.GlobalLibrary global_library = 2;
+        public static final int GLOBAL_LIBRARY_FIELD_NUMBER = 2;
+        private java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary> globalLibrary_ =
+          java.util.Collections.emptyList();
+        public java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary> getGlobalLibraryList() {
+          return globalLibrary_;
+        }
+        public int getGlobalLibraryCount() { return globalLibrary_.size(); }
+        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary getGlobalLibrary(int index) {
+          return globalLibrary_.get(index);
+        }
+        
         private void initFields() {
         }
         public final boolean isInitialized() {
           for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable element : getPathVariableList()) {
+            if (!element.isInitialized()) return false;
+          }
+          for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary element : getGlobalLibraryList()) {
             if (!element.isInitialized()) return false;
           }
           return true;
@@ -1821,6 +2212,9 @@ public final class JpsRemoteProto {
           getSerializedSize();
           for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable element : getPathVariableList()) {
             output.writeMessage(1, element);
+          }
+          for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary element : getGlobalLibraryList()) {
+            output.writeMessage(2, element);
           }
         }
         
@@ -1833,6 +2227,10 @@ public final class JpsRemoteProto {
           for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable element : getPathVariableList()) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(1, element);
+          }
+          for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary element : getGlobalLibraryList()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeMessageSize(2, element);
           }
           memoizedSerializedSize = size;
           return size;
@@ -1975,6 +2373,10 @@ public final class JpsRemoteProto {
               result.pathVariable_ =
                 java.util.Collections.unmodifiableList(result.pathVariable_);
             }
+            if (result.globalLibrary_ != java.util.Collections.EMPTY_LIST) {
+              result.globalLibrary_ =
+                java.util.Collections.unmodifiableList(result.globalLibrary_);
+            }
             org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand returnMe = result;
             result = null;
             return returnMe;
@@ -1987,6 +2389,12 @@ public final class JpsRemoteProto {
                 result.pathVariable_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable>();
               }
               result.pathVariable_.addAll(other.pathVariable_);
+            }
+            if (!other.globalLibrary_.isEmpty()) {
+              if (result.globalLibrary_.isEmpty()) {
+                result.globalLibrary_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary>();
+              }
+              result.globalLibrary_.addAll(other.globalLibrary_);
             }
             return this;
           }
@@ -2010,6 +2418,12 @@ public final class JpsRemoteProto {
                   org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder();
                   input.readMessage(subBuilder, extensionRegistry);
                   addPathVariable(subBuilder.buildPartial());
+                  break;
+                }
+                case 18: {
+                  org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.newBuilder();
+                  input.readMessage(subBuilder, extensionRegistry);
+                  addGlobalLibrary(subBuilder.buildPartial());
                   break;
                 }
               }
@@ -2065,6 +2479,57 @@ public final class JpsRemoteProto {
           }
           public Builder clearPathVariable() {
             result.pathVariable_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // repeated .org.jetbrains.jpsservice.Message.Request.SetupCommand.GlobalLibrary global_library = 2;
+          public java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary> getGlobalLibraryList() {
+            return java.util.Collections.unmodifiableList(result.globalLibrary_);
+          }
+          public int getGlobalLibraryCount() {
+            return result.getGlobalLibraryCount();
+          }
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary getGlobalLibrary(int index) {
+            return result.getGlobalLibrary(index);
+          }
+          public Builder setGlobalLibrary(int index, org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            result.globalLibrary_.set(index, value);
+            return this;
+          }
+          public Builder setGlobalLibrary(int index, org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.Builder builderForValue) {
+            result.globalLibrary_.set(index, builderForValue.build());
+            return this;
+          }
+          public Builder addGlobalLibrary(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            if (result.globalLibrary_.isEmpty()) {
+              result.globalLibrary_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary>();
+            }
+            result.globalLibrary_.add(value);
+            return this;
+          }
+          public Builder addGlobalLibrary(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.Builder builderForValue) {
+            if (result.globalLibrary_.isEmpty()) {
+              result.globalLibrary_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary>();
+            }
+            result.globalLibrary_.add(builderForValue.build());
+            return this;
+          }
+          public Builder addAllGlobalLibrary(
+              java.lang.Iterable<? extends org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary> values) {
+            if (result.globalLibrary_.isEmpty()) {
+              result.globalLibrary_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary>();
+            }
+            super.addAll(values, result.globalLibrary_);
+            return this;
+          }
+          public Builder clearGlobalLibrary() {
+            result.globalLibrary_ = java.util.Collections.emptyList();
             return this;
           }
           
@@ -3363,19 +3828,40 @@ public final class JpsRemoteProto {
         public boolean hasSourceFilePath() { return hasSourceFilePath; }
         public java.lang.String getSourceFilePath() { return sourceFilePath_; }
         
-        // optional uint32 line = 4;
-        public static final int LINE_FIELD_NUMBER = 4;
-        private boolean hasLine;
-        private int line_ = 0;
-        public boolean hasLine() { return hasLine; }
-        public int getLine() { return line_; }
+        // optional uint64 problem_begin_offset = 4;
+        public static final int PROBLEM_BEGIN_OFFSET_FIELD_NUMBER = 4;
+        private boolean hasProblemBeginOffset;
+        private long problemBeginOffset_ = 0L;
+        public boolean hasProblemBeginOffset() { return hasProblemBeginOffset; }
+        public long getProblemBeginOffset() { return problemBeginOffset_; }
         
-        // optional uint32 column = 5;
-        public static final int COLUMN_FIELD_NUMBER = 5;
+        // optional uint64 problem_end_offset = 5;
+        public static final int PROBLEM_END_OFFSET_FIELD_NUMBER = 5;
+        private boolean hasProblemEndOffset;
+        private long problemEndOffset_ = 0L;
+        public boolean hasProblemEndOffset() { return hasProblemEndOffset; }
+        public long getProblemEndOffset() { return problemEndOffset_; }
+        
+        // optional uint64 problem_location_offset = 6;
+        public static final int PROBLEM_LOCATION_OFFSET_FIELD_NUMBER = 6;
+        private boolean hasProblemLocationOffset;
+        private long problemLocationOffset_ = 0L;
+        public boolean hasProblemLocationOffset() { return hasProblemLocationOffset; }
+        public long getProblemLocationOffset() { return problemLocationOffset_; }
+        
+        // optional uint64 line = 7;
+        public static final int LINE_FIELD_NUMBER = 7;
+        private boolean hasLine;
+        private long line_ = 0L;
+        public boolean hasLine() { return hasLine; }
+        public long getLine() { return line_; }
+        
+        // optional uint64 column = 8;
+        public static final int COLUMN_FIELD_NUMBER = 8;
         private boolean hasColumn;
-        private int column_ = 0;
+        private long column_ = 0L;
         public boolean hasColumn() { return hasColumn; }
-        public int getColumn() { return column_; }
+        public long getColumn() { return column_; }
         
         private void initFields() {
           kind_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR;
@@ -3397,11 +3883,20 @@ public final class JpsRemoteProto {
           if (hasSourceFilePath()) {
             output.writeString(3, getSourceFilePath());
           }
+          if (hasProblemBeginOffset()) {
+            output.writeUInt64(4, getProblemBeginOffset());
+          }
+          if (hasProblemEndOffset()) {
+            output.writeUInt64(5, getProblemEndOffset());
+          }
+          if (hasProblemLocationOffset()) {
+            output.writeUInt64(6, getProblemLocationOffset());
+          }
           if (hasLine()) {
-            output.writeUInt32(4, getLine());
+            output.writeUInt64(7, getLine());
           }
           if (hasColumn()) {
-            output.writeUInt32(5, getColumn());
+            output.writeUInt64(8, getColumn());
           }
         }
         
@@ -3423,13 +3918,25 @@ public final class JpsRemoteProto {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(3, getSourceFilePath());
           }
+          if (hasProblemBeginOffset()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeUInt64Size(4, getProblemBeginOffset());
+          }
+          if (hasProblemEndOffset()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeUInt64Size(5, getProblemEndOffset());
+          }
+          if (hasProblemLocationOffset()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeUInt64Size(6, getProblemLocationOffset());
+          }
           if (hasLine()) {
             size += com.google.protobuf.CodedOutputStream
-              .computeUInt32Size(4, getLine());
+              .computeUInt64Size(7, getLine());
           }
           if (hasColumn()) {
             size += com.google.protobuf.CodedOutputStream
-              .computeUInt32Size(5, getColumn());
+              .computeUInt64Size(8, getColumn());
           }
           memoizedSerializedSize = size;
           return size;
@@ -3584,6 +4091,15 @@ public final class JpsRemoteProto {
             if (other.hasSourceFilePath()) {
               setSourceFilePath(other.getSourceFilePath());
             }
+            if (other.hasProblemBeginOffset()) {
+              setProblemBeginOffset(other.getProblemBeginOffset());
+            }
+            if (other.hasProblemEndOffset()) {
+              setProblemEndOffset(other.getProblemEndOffset());
+            }
+            if (other.hasProblemLocationOffset()) {
+              setProblemLocationOffset(other.getProblemLocationOffset());
+            }
             if (other.hasLine()) {
               setLine(other.getLine());
             }
@@ -3625,11 +4141,23 @@ public final class JpsRemoteProto {
                   break;
                 }
                 case 32: {
-                  setLine(input.readUInt32());
+                  setProblemBeginOffset(input.readUInt64());
                   break;
                 }
                 case 40: {
-                  setColumn(input.readUInt32());
+                  setProblemEndOffset(input.readUInt64());
+                  break;
+                }
+                case 48: {
+                  setProblemLocationOffset(input.readUInt64());
+                  break;
+                }
+                case 56: {
+                  setLine(input.readUInt64());
+                  break;
+                }
+                case 64: {
+                  setColumn(input.readUInt64());
                   break;
                 }
               }
@@ -3700,39 +4228,93 @@ public final class JpsRemoteProto {
             return this;
           }
           
-          // optional uint32 line = 4;
+          // optional uint64 problem_begin_offset = 4;
+          public boolean hasProblemBeginOffset() {
+            return result.hasProblemBeginOffset();
+          }
+          public long getProblemBeginOffset() {
+            return result.getProblemBeginOffset();
+          }
+          public Builder setProblemBeginOffset(long value) {
+            result.hasProblemBeginOffset = true;
+            result.problemBeginOffset_ = value;
+            return this;
+          }
+          public Builder clearProblemBeginOffset() {
+            result.hasProblemBeginOffset = false;
+            result.problemBeginOffset_ = 0L;
+            return this;
+          }
+          
+          // optional uint64 problem_end_offset = 5;
+          public boolean hasProblemEndOffset() {
+            return result.hasProblemEndOffset();
+          }
+          public long getProblemEndOffset() {
+            return result.getProblemEndOffset();
+          }
+          public Builder setProblemEndOffset(long value) {
+            result.hasProblemEndOffset = true;
+            result.problemEndOffset_ = value;
+            return this;
+          }
+          public Builder clearProblemEndOffset() {
+            result.hasProblemEndOffset = false;
+            result.problemEndOffset_ = 0L;
+            return this;
+          }
+          
+          // optional uint64 problem_location_offset = 6;
+          public boolean hasProblemLocationOffset() {
+            return result.hasProblemLocationOffset();
+          }
+          public long getProblemLocationOffset() {
+            return result.getProblemLocationOffset();
+          }
+          public Builder setProblemLocationOffset(long value) {
+            result.hasProblemLocationOffset = true;
+            result.problemLocationOffset_ = value;
+            return this;
+          }
+          public Builder clearProblemLocationOffset() {
+            result.hasProblemLocationOffset = false;
+            result.problemLocationOffset_ = 0L;
+            return this;
+          }
+          
+          // optional uint64 line = 7;
           public boolean hasLine() {
             return result.hasLine();
           }
-          public int getLine() {
+          public long getLine() {
             return result.getLine();
           }
-          public Builder setLine(int value) {
+          public Builder setLine(long value) {
             result.hasLine = true;
             result.line_ = value;
             return this;
           }
           public Builder clearLine() {
             result.hasLine = false;
-            result.line_ = 0;
+            result.line_ = 0L;
             return this;
           }
           
-          // optional uint32 column = 5;
+          // optional uint64 column = 8;
           public boolean hasColumn() {
             return result.hasColumn();
           }
-          public int getColumn() {
+          public long getColumn() {
             return result.getColumn();
           }
-          public Builder setColumn(int value) {
+          public Builder setColumn(long value) {
             result.hasColumn = true;
             result.column_ = value;
             return this;
           }
           public Builder clearColumn() {
             result.hasColumn = false;
-            result.column_ = 0;
+            result.column_ = 0L;
             return this;
           }
           

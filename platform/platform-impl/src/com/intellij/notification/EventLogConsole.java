@@ -40,13 +40,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.text.DateFormat;
 
 /**
  * @author peter
@@ -133,7 +133,7 @@ class EventLogConsole {
     Document document = editor.getDocument();
     boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset();
 
-    append(document, DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + ". ");
+    append(document, DateFormatUtil.formatTimeWithSeconds(notification.getCreationTime()) + " ");
 
     EventLog.LogEntry pair = EventLog.formatForLog(notification);
 

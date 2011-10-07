@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class NonOpaquePanel extends Wrapper {
-
-  private static final Color TRANSPARENT = new Color(0, 0, 0, 0);
-
   public NonOpaquePanel() {
     setOpaque(false);
   }
@@ -59,7 +56,7 @@ public class NonOpaquePanel extends Wrapper {
 
     if (!isOpaque && UIUtil.isUnderNimbusLookAndFeel()) {
       if (UIUtil.isUnderNimbusLookAndFeel()) {
-        setBackground(TRANSPARENT);
+        setBackground(UIUtil.TRANSPARENT_COLOR);
       }
     }
   }
@@ -67,7 +64,7 @@ public class NonOpaquePanel extends Wrapper {
   public static void setTransparent(JComponent c) {
     c.setOpaque(false);
     if (UIUtil.isUnderNimbusLookAndFeel()) {
-      c.setBackground(TRANSPARENT);
+      c.setBackground(UIUtil.TRANSPARENT_COLOR);
     }
   }
 }

@@ -185,7 +185,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
-    public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
+    private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
     private static JavaResolveResult[] _resolve(boolean incompleteCode, PsiReferenceExpressionImpl expression) {
       CompositeElement treeParent = expression.getTreeParent();

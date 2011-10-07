@@ -61,5 +61,9 @@ public interface Component extends DomElement {
     @NotNull
     @SubTag(value = "skipForDefaultProject", indicator = true)
     GenericDomValue<Boolean> getSkipForDefaultProject();
+
+    @NotNull
+    @SubTag(value = "loadForDefaultProject", indicator = true)
+    GenericDomValue<Boolean> getLoadForDefaultProject();
   }
 }

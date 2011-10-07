@@ -76,6 +76,12 @@ public class BaseRevisionTextPatchEP implements PatchEP {
       catch (VcsException e) {
         LOG.info(e);
       }
+    } else {
+      final Map<String, String> map = commitContext.getUserData(ourStoredTexts);
+      if (map != null) {
+        final File file = new File(myBaseDir, path);
+        return map.get(file.getPath());
+      }
     }
     return null;
   }
@@ -88,6 +94,7 @@ public class BaseRevisionTextPatchEP implements PatchEP {
   public void consumeContentBeforePatchApplied(@NotNull String path,
                                                @NotNull CharSequence content,
                                                CommitContext commitContext) {
+    if (commitContext == null) return;
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map == null) {
       map = new HashMap<String, String>();

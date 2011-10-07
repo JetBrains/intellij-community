@@ -28,12 +28,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.ActionButtonPresentation;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -43,16 +44,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -117,74 +120,140 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   public static<T extends FilePatch> ApplyPatchStatus applyOnly(final Project project, final ApplyFilePatchBase<T> patch,
-                                                                final ApplyPatchContext context, final VirtualFile file) {
+                                                                final ApplyPatchContext context, final VirtualFile file, final CommitContext commitContext) {
     final T patchBase = patch.getPatch();
     final Application application = ApplicationManager.getApplication();
-    final ApplyPatchException[] exc = new ApplyPatchException[1];
-    final ApplyPatchStatus applyPatchStatus = application.runWriteAction(new Computable<ApplyPatchStatus>() {
+    final ApplyFilePatch.Result result = application.runWriteAction(new Computable<ApplyFilePatch.Result>() {
       @Override
-      public ApplyPatchStatus compute() {
+      public ApplyFilePatch.Result compute() {
         try {
-          return patch.apply(file, context, project);
+          return patch.apply(file, context, project, new FilePathImpl(file), new Getter<CharSequence>() {
+            @Override
+            public CharSequence get() {
+              return getBaseContents((TextFilePatch)patchBase, commitContext, project);
+            }
+          });
         }
         catch (IOException e) {
           LOG.error(e);
-          return ApplyPatchStatus.FAILURE;
+          return ApplyFilePatch.Result.createThrow(e);
         }
-        catch (ApplyPatchException e) {
-          exc[0] = e;
+      }
+    });
+
+    final ApplyPatchStatus status;
+    try {
+      status = result.getStatus();
+    }
+    catch (IOException e) {
+      showIOException(project, patchBase.getBeforeName(), e);
+      return ApplyPatchStatus.FAILURE;
+    }
+    if (ApplyPatchStatus.ALREADY_APPLIED.equals(status) || ApplyPatchStatus.SUCCESS.equals(status)) {
+      return status;
+    }
+    final ApplyPatchForBaseRevisionTexts mergeData = result.getMergeData();
+    if (mergeData != null) {
+      if (mergeData.getBase() != null) {
+        return showMergeDialog(project, file, mergeData.getBase(), mergeData.getPatched(), ApplyPatchMergeRequestFactory.INSTANCE);
+      } else {
+        try {
+          return showBadDiffDialog(project, file, mergeData, false);
+        }
+        catch (final IOException e) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              showIOException(project, patchBase.getBeforeName(), e);
+            }
+          });
         }
         return ApplyPatchStatus.FAILURE;
       }
-    });
-    if (exc[0] != null) {
-      if (! patchBase.isNewFile() && ! patchBase.isDeletedFile() && patchBase instanceof TextFilePatch) {
-        //final VirtualFile beforeRename = (pathBeforeRename == null) ? file : pathBeforeRename;
-        ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, new FilePathImpl(file), (TextFilePatch) patchBase,
-                                                               ApplyPatchMergeRequestFactory.INSTANCE);
-        if (mergeStatus != null) {
-          return mergeStatus;
-        }
-      }
-      Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patchBase.getBeforeName(), exc[0].getMessage()),
-                               VcsBundle.message("patch.apply.dialog.title"));
-      return ApplyPatchStatus.FAILURE;
     }
-    return applyPatchStatus;
+    return status;
+  }
+
+  private static <T extends FilePatch> void showIOException(Project project, String name, IOException e) {
+    Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", name, e.getMessage()),
+                             VcsBundle.message("patch.apply.dialog.title"));
   }
 
   @Nullable
-  public static ApplyPatchStatus mergeAgainstBaseVersion(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
-                                                         final TextFilePatch patch, final PatchMergeRequestFactory mergeRequestFactory) {
-    final ApplyPatchForBaseRevisionTexts threeTexts;
-    try {
-      threeTexts = ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch);
+  private static CharSequence getBaseContents(final TextFilePatch patchBase, final CommitContext commitContext, final Project project) {
+    final BaseRevisionTextPatchEP baseRevisionTextPatchEP = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
+    if (baseRevisionTextPatchEP != null) {
+      final String path = patchBase.getBeforeName() == null ? patchBase.getAfterName() : patchBase.getBeforeName();
+      return baseRevisionTextPatchEP.provideContent(path, commitContext);
     }
-    catch (VcsException e) {
-      return mergeBaseFailure(project, patch, e.getMessage());
+    return null;
+  }
+
+  public static ApplyPatchStatus showBadDiffDialog(final Project project, final VirtualFile file, final ApplyPatchForBaseRevisionTexts texts, final boolean readonly)
+    throws IOException {
+    if (texts.getLocal() == null) {
+      return ApplyPatchStatus.FAILURE;
     }
-    ApplyPatchStatus status = threeTexts.getStatus();
-    if (status != ApplyPatchStatus.ALREADY_APPLIED) {
-      return ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+    final DiffTool tool = DiffManager.getInstance().getDiffTool();
+
+    final SimpleDiffRequest simpleRequest = createBadDiffRequest(project, file, texts, readonly);
+    tool.show(simpleRequest);
+
+    return ApplyPatchStatus.SUCCESS;
+  }
+
+  public static SimpleDiffRequest createBadDiffRequest(final Project project,
+                                                        final VirtualFile file,
+                                                        ApplyPatchForBaseRevisionTexts texts,
+                                                        boolean readonly) {
+    final SimpleDiffRequest simpleRequest = new SimpleDiffRequest(project, "Result of patch apply");
+    final DocumentImpl patched = new DocumentImpl(texts.getPatched());
+    patched.setReadOnly(false);
+
+    final DocumentContent mergedDocument = new DocumentContent(project, patched, file.getFileType());
+    mergedDocument.getDocument().setReadOnly(readonly);
+    simpleRequest.setContents(new SimpleContent(texts.getLocal().toString(), file.getFileType()),
+                              mergedDocument);
+    simpleRequest.setContentTitles(VcsBundle.message("diff.title.local"), "Patched (with problems)");
+    simpleRequest.addHint(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG);
+    simpleRequest.addHint(DiffTool.HINT_DIFF_IS_APPROXIMATE);
+
+    if (! readonly) {
+      simpleRequest.setOnOkRunnable(new Runnable() {
         @Override
-        public ApplyPatchStatus compute() {
-          return showMergeDialog(project, file, threeTexts.getBase(), threeTexts.getPatched(), mergeRequestFactory);
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              final String resultText = mergedDocument.getDocument().getText();
+              final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+              final Document document = fileDocumentManager.getDocument(file);
+              if (document == null) {
+                try {
+                  VfsUtil.saveText(file, resultText);
+                }
+                catch (IOException e) {
+                  showIOException(project, file.getName(), e);          // todo bad: we had already returned success by now
+                }
+              } else {
+                document.setText(resultText);
+                fileDocumentManager.saveDocument(document);
+              }
+            }
+          });
         }
       });
     }
-    else {
-      return status;
-    }
-  }
-
-  private static ApplyPatchStatus mergeBaseFailure(Project project, TextFilePatch patch, final String message) {
-    Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(),
-                                                        message), VcsBundle.message("patch.apply.dialog.title"));
-    return ApplyPatchStatus.FAILURE;
+    return simpleRequest;
   }
 
   private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent,
                                                   final PatchMergeRequestFactory mergeRequestFactory) {
+    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Document document = fileDocumentManager.getDocument(file);
+    if (document != null) {
+      fileDocumentManager.saveDocument(document);
+    }
     CharSequence fileContent = LoadTextUtil.loadText(file);
     if (fileContent == null || content == null) {
       return ApplyPatchStatus.FAILURE;

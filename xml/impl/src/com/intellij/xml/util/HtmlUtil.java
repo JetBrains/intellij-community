@@ -24,9 +24,11 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -66,6 +68,8 @@ import java.util.StringTokenizer;
  * @author Maxim.Mossienko
  */
 public class HtmlUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.HtmlUtil");
+  
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET_PREFIX = "charset=";
   @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
@@ -350,10 +354,35 @@ public class HtmlUtil {
     if (!isHtmlTagContainingFile(doc)) {
       return false;
     }
+
+    final PsiFile htmlFile = doc.getContainingFile();
+    
+    final String htmlFileFullName;
+    if (htmlFile != null) {
+      final VirtualFile vFile = htmlFile.getVirtualFile();
+      if (vFile != null) {
+        htmlFileFullName = vFile.getPath();
+      }
+      else {
+        htmlFileFullName = htmlFile.getName();
+      }
+    }
+    else {
+      htmlFileFullName = "unknown";
+    }
+
     if (doctype == null) {
+      LOG.debug("DOCTYPE for " + htmlFileFullName + " is null");
       return XmlUtil.HTML5_SCHEMA_LOCATION.equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
     }
-    return isHtml5Doctype(doctype);
+
+    final boolean html5Doctype = isHtml5Doctype(doctype);
+    final String doctypeDescription = "text: " + doctype.getText() +
+                                      ", dtdUri: " + doctype.getDtdUri() +
+                                      ", publicId: " + doctype.getPublicId() +
+                                      ", markupDecl: " + doctype.getMarkupDecl();
+    LOG.debug("DOCTYPE for " + htmlFileFullName + "; " + doctypeDescription + "; HTML5: " + html5Doctype);
+    return html5Doctype;
   }
 
   public static boolean isHtml5Doctype(XmlDoctype doctype) {

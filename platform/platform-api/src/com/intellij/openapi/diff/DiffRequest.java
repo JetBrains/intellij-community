@@ -37,6 +37,7 @@ public abstract class DiffRequest {
   private Factory<JComponent> myBottomComponentFactory = null;
   private final HashSet myHints = new HashSet();
   private final Map<String, Object> myGenericData;
+  private Runnable myOnOkRunnable;
 
   protected DiffRequest(Project project) {
     myProject = project;
@@ -144,5 +145,13 @@ public abstract class DiffRequest {
 
   public void setBottomComponentFactory(final Factory<JComponent> factory) {
     myBottomComponentFactory = factory;
+  }
+
+  public Runnable getOnOkRunnable() {
+    return myOnOkRunnable;
+  }
+
+  public void setOnOkRunnable(Runnable onOkRunnable) {
+    myOnOkRunnable = onOkRunnable;
   }
 }

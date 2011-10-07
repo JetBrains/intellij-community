@@ -20,6 +20,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,7 +34,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.xml")){
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new CodeStyleXmlPanel(settings);
+        return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       public Icon getIcon() {
         return StdFileTypes.XML.getIcon();
@@ -47,5 +49,10 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public String getConfigurableDisplayName() {
     return ApplicationBundle.message("title.xml");
+  }
+
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new XmlCodeStyleSettings(settings);
   }
 }

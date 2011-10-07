@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -140,7 +141,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (initializer != null && !isDefaultArrayInitializer(initializer)) {
         return true;
       }
-      return variableIsWrittenAsMethodArgument(variable, context);
+      return variableIsWritten(variable, context);
     }
 
     private static boolean arrayContentsAreRead(PsiVariable variable,
@@ -148,7 +149,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (VariableAccessUtils.arrayContentsAreAccessed(variable, context)) {
         return true;
       }
-      return variableIsReadAsMethodArgument(variable, context);
+      return variableIsRead(variable, context);
     }
 
     private static boolean isDefaultArrayInitializer(
@@ -171,32 +172,28 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       return false;
     }
 
-    public static boolean variableIsWrittenAsMethodArgument(
-      @NotNull PsiVariable variable, @NotNull PsiElement context) {
-      final VariablePassedAsArgumentVisitor visitor =
-        new VariablePassedAsArgumentVisitor(variable, true);
+    public static boolean variableIsWritten(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+      final VariableReadWriteVisitor visitor =
+        new VariableReadWriteVisitor(variable, true);
       context.accept(visitor);
       return visitor.isPassed();
     }
 
-    public static boolean variableIsReadAsMethodArgument(
-      @NotNull PsiVariable variable, @NotNull PsiElement context) {
-      final VariablePassedAsArgumentVisitor visitor =
-        new VariablePassedAsArgumentVisitor(variable, false);
+    public static boolean variableIsRead(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+      final VariableReadWriteVisitor visitor =
+        new VariableReadWriteVisitor(variable, false);
       context.accept(visitor);
       return visitor.isPassed();
     }
 
-    static class VariablePassedAsArgumentVisitor
-      extends JavaRecursiveElementVisitor {
+    static class VariableReadWriteVisitor extends JavaRecursiveElementVisitor {
 
       @NotNull
       private final PsiVariable variable;
       private final boolean write;
       private boolean passed = false;
 
-      VariablePassedAsArgumentVisitor(
-        @NotNull PsiVariable variable, boolean write) {
+      VariableReadWriteVisitor(@NotNull PsiVariable variable, boolean write) {
         this.variable = variable;
         this.write = write;
       }
@@ -205,6 +202,30 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       public void visitElement(@NotNull PsiElement element) {
         if (!passed) {
           super.visitElement(element);
+        }
+      }
+
+      @Override
+      public void visitBinaryExpression(PsiBinaryExpression expression) {
+        super.visitBinaryExpression(expression);
+        if (write || passed) {
+          return;
+        }
+        final IElementType tokenType = expression.getOperationTokenType();
+        if (!JavaTokenType.EQEQ.equals(tokenType) && !JavaTokenType.NE.equals(tokenType)) {
+          return;
+        }
+        final PsiExpression lhs = expression.getLOperand();
+        if (!(lhs instanceof PsiBinaryExpression)) {
+          if (VariableAccessUtils.mayEvaluateToVariable(lhs, variable)) {
+            passed = true;
+          }
+        }
+        final PsiExpression rhs = expression.getROperand();
+        if (!(rhs instanceof PsiBinaryExpression)) {
+          if (VariableAccessUtils.mayEvaluateToVariable(rhs, variable)) {
+            passed = true;
+          }
         }
       }
 

@@ -177,6 +177,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, T entry);
 
+  @Nullable
   String getSdkName();
 
   boolean isDisposed();

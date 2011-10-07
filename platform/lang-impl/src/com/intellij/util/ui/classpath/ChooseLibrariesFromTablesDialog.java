@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,16 +36,16 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   private @Nullable final Project myProject;
   private final boolean myShowCustomLibraryTables;
 
-  private ChooseLibrariesFromTablesDialog(@NotNull String title, @NotNull Project project, final boolean showCustomLibraryTables) {
+  protected ChooseLibrariesFromTablesDialog(@NotNull String title, @NotNull Project project, final boolean showCustomLibraryTables) {
     super(project, title);
     myShowCustomLibraryTables = showCustomLibraryTables;
     myProject = project;
   }
 
   protected ChooseLibrariesFromTablesDialog(@NotNull JComponent parentComponent,
-                                         @NotNull String title,
-                                         @Nullable Project project,
-                                         final boolean showCustomLibraryTables) {
+                                            @NotNull String title,
+                                            @Nullable Project project,
+                                            final boolean showCustomLibraryTables) {
     super(parentComponent, title);
     myShowCustomLibraryTables = showCustomLibraryTables;
     myProject = project;

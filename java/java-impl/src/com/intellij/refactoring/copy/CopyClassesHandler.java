@@ -23,8 +23,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -117,6 +119,18 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     assert classes != null;
     if (defaultTargetDirectory == null) {
       defaultTargetDirectory = classes.keySet().iterator().next().getContainingDirectory();
+    } else {
+      Project project = defaultTargetDirectory.getProject();
+      VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
+        .getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
+      if (sourceRootForFile == null) {
+        final PsiFile[] files = new PsiFile[elements.length];
+        for (int i = 0, elementsLength = elements.length; i < elementsLength; i++) {
+          files[i] = elements[i].getContainingFile();
+        }
+        CopyFilesOrDirectoriesHandler.copyAsFiles(files, defaultTargetDirectory, project);
+        return;
+      }
     }
     Project project = defaultTargetDirectory.getProject();
     Object targetDirectory = null;

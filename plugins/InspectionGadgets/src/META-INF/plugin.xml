@@ -867,6 +867,11 @@
     <localInspection language="JAVA" shortName="UnusedCatchParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.catch.parameter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.UnusedCatchParameterInspection"/>
+    <localInspection language="JAVA" shortName="NewExceptionWithoutArguments" bundle="com.siyeh.InspectionGadgetsBundle" key="new.exception.without.arguments.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.errorhandling.NewExceptionWithoutArgumentsInspection"/>
+
+
     <localInspection language="JAVA" suppressId="FinalizeDoesntCallSuperFinalize" shortName="FinalizeCallsSuperFinalize"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="finalize.doesnt.call.super.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.finalization.issues" enabledByDefault="true"

@@ -27,7 +27,7 @@ public class MvcRunTarget extends MvcActionBase {
     ProcessBuilder pb = framework.createCommandAndShowErrors(dialog.getVmOptions(), selectedModule, parsedCmd.first, parsedCmd.second);
     if (pb == null) return;
 
-    MvcConsole.getInstance(selectedModule.getProject()).executeProcess(selectedModule, pb, null, false);
+    MvcConsole.executeProcess(selectedModule, pb, null, false);
   }
 
 }

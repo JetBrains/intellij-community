@@ -23,6 +23,9 @@ public class UnnecessaryFullyQualifiedName
 
     java.util.Vector v;
     class Vector {}
+    
+    java.util.Set set;
+    String Set;
 }
 enum SomeEnum {
 

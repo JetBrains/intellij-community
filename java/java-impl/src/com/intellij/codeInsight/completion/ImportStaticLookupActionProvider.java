@@ -16,12 +16,8 @@ import javax.swing.*;
 public class ImportStaticLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(final LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer) {
-    if (!(element instanceof StaticallyImportable)) {
-      return;
-    }
-
-    final StaticallyImportable item = (StaticallyImportable)element;
-    if (!item.canBeImported()) {
+    final StaticallyImportable item = element.as(StaticallyImportable.CLASS_CONDITION_KEY);
+    if (item == null || !item.canBeImported()) {
       return;
     }
 

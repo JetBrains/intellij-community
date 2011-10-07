@@ -1,5 +1,5 @@
 class A{
  {
-  boolean a = <caret>false;
+  boolean a = A<caret>false;
  }
 }

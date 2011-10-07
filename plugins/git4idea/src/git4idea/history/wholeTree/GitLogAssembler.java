@@ -26,16 +26,19 @@ import java.util.List;
  */
 public class GitLogAssembler implements GitLog {
   private final Project myProject;
+  private final boolean myProjectScope;
   private GitLogUI myGitLogUI;
   private MediatorImpl myMediator;
   private DetailsLoaderImpl myDetailsLoader;
   private DetailsCache myDetailsCache;
   private LoadController myLoadController;
   private BigTableTableModel myTableModel;
+  private boolean myInitialized;
 
   //@CalledInAwt
   public GitLogAssembler(final Project project, boolean projectScope, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
+    myProjectScope = projectScope;
     myMediator = new MediatorImpl(myProject, gitCommitsSequentially);
 
     myGitLogUI = new GitLogUI(myProject, myMediator);
@@ -74,6 +77,10 @@ public class GitLogAssembler implements GitLog {
   @Override
   public void rootsChanged(List<VirtualFile> roots) {
     myGitLogUI.rootsChanged(roots);
+    if (myProjectScope && ! myInitialized) {
+      myInitialized = true;
+      myGitLogUI.initFromSettings();
+    }
   }
 
   @Override

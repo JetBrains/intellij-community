@@ -25,10 +25,10 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.SequenceIterator;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author cdr
@@ -46,8 +46,9 @@ public class CompilerPerfTestAction extends AnAction {
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
 
     final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-    Collection<BackendCompiler> compilers = configuration.getRegisteredJavaCompilers();
-    final Iterator<BackendCompiler> it = new SequenceIterator<BackendCompiler>(compilers.iterator(),compilers.iterator(),compilers.iterator(),compilers.iterator(),compilers.iterator(),compilers.iterator(),compilers.iterator());
+    List<BackendCompiler> compilers = (List<BackendCompiler>)configuration.getRegisteredJavaCompilers();
+    final List<BackendCompiler> allCompilers = ContainerUtil.concat(compilers, compilers, compilers, compilers, compilers, compilers, compilers);
+    final int[] i = new int[1];
 
     CompileStatusNotification callback = new CompileStatusNotification() {
       volatile long start;
@@ -59,23 +60,24 @@ public class CompilerPerfTestAction extends AnAction {
           return;
         }
         final long finish = System.currentTimeMillis();
-        //System.out.println("Compiled with " +
-        //                   compiler.getName() +
-        //                   " in " +
-        //                   TimeUnit.MILLISECONDS.toMinutes(finish - start) + "m" +TimeUnit.MILLISECONDS.toSeconds((finish - start)%60000) + "s" +
-        //                   " with " +
-        //                   errors +
-        //                   " errors, " +
-        //                   warnings +
-        //                   " warnings, aborted=" +
-        //                   aborted+"; free memory="+Runtime.getRuntime().freeMemory()+" bytes");
+        System.out.println("Compiled with '" +
+                           compiler.getPresentableName() + "' " +
+                           " in " +
+                           TimeUnit.MILLISECONDS.toMinutes(finish - start) + "m" +
+                           TimeUnit.MILLISECONDS.toSeconds((finish - start)%60000) + "s" +
+                           " with " +
+                           errors +
+                           " errors, " +
+                           warnings +
+                           " warnings, aborted=" +
+                           aborted+"; free memory="+Runtime.getRuntime().freeMemory()+" bytes");
         //ProfilingUtil.forceCaptureMemorySnapshot();
         next();
       }
 
       void next() {
-        if (!it.hasNext()) return;
-        compiler = it.next();
+        if (i[0] >= allCompilers.size()) return;
+        compiler = allCompilers.get(i[0]++);
         if (compiler.getId().equals("Jikes")|| compiler.getId().contains("Eclipse")) {
           next();
           return;

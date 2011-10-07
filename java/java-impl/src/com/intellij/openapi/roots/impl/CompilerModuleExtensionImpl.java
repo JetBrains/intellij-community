@@ -25,14 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -82,10 +80,8 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   private VirtualFilePointer duplicatePointer(VirtualFilePointer pointer) {
     if (pointer == null) return null;
-    final VirtualFilePointerListener listener =
-        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).getVirtualFilePointerListener();
     final VirtualFilePointerManager filePointerManager = VirtualFilePointerManager.getInstance();
-    return filePointerManager.duplicate(pointer, this, listener);
+    return filePointerManager.duplicate(pointer, this, null);
   }
 
 
@@ -187,9 +183,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   private VirtualFilePointer createPointer(final String url) {
-    final VirtualFilePointerListener listener =
-      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).getVirtualFilePointerListener();
-    return VirtualFilePointerManager.getInstance().create(url, this, listener);
+    return VirtualFilePointerManager.getInstance().create(url, this, null);
   }
 
   public void setCompilerOutputPath(final String url) {

@@ -1649,5 +1649,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       flushDeferredText(myClear);
     }
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }
 

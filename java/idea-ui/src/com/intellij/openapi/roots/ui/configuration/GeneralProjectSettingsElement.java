@@ -87,11 +87,6 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   }
 
   @Override
-  public boolean highlightIfUnused() {
-    return false;
-  }
-
-  @Override
   public String getId() {
     return "project:general";
   }

@@ -17,6 +17,7 @@ package com.intellij.patterns;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -298,7 +299,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       @Override
       public boolean accepts(@NotNull PsiElement start, ProcessingContext context) {
         PsiElement element = getParent(start);
-        while (element != null && element.getTextRange().getStartOffset() == start.getTextRange().getStartOffset()) {
+        TextRange range = start.getTextRange();
+        if (range == null) return false;
+
+        int startOffset = range.getStartOffset();
+        while (element != null && element.getTextRange() != null && element.getTextRange().getStartOffset() == startOffset) {
           if (ancestor.accepts(element, context)) {
             return true;
           }

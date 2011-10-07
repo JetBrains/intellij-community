@@ -34,10 +34,6 @@ public class NotificationSettings {
     myShouldLog = shouldLog;
   }
 
-  public NotificationSettings(final String groupId, final NotificationDisplayType displayType) {
-    this(groupId, displayType, true);
-  }
-
  @NotNull
   public String getGroupId() {
     return myGroupId;

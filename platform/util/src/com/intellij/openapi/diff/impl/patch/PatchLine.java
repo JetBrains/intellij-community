@@ -49,4 +49,13 @@ public class PatchLine {
   public void setSuppressNewLine(final boolean suppressNewLine) {
     mySuppressNewLine = suppressNewLine;
   }
+
+  @Override
+  public String toString() {
+    return "PatchLine{" +
+           "myType=" + myType +
+           ", myText='" + myText + '\'' +
+           ", mySuppressNewLine=" + mySuppressNewLine +
+           '}';
+  }
 }

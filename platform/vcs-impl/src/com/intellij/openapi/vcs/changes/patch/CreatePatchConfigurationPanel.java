@@ -22,24 +22,25 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchDialog;
+import com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Consumer;
+import com.intellij.util.OnOffListener;
 import com.intellij.util.ui.AdjustComponentWhenShown;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,14 +57,13 @@ public class CreatePatchConfigurationPanel {
   private JCheckBox myReversePatchCheckbox;
   private JLabel myErrorLabel;
   private JCheckBox myIncludeBaseRevisionTextCheckBox;
-  private JLabel myBaseRevisionTextShouldLabel;
   private Consumer<Boolean> myOkEnabledListener;
   private final Project myProject;
   private boolean myDvcsIsUsed;
   private List<Change> myChanges;
-  private FixedSizeButton myFixedSizeSelect;
-  private JLabel mySelectedLabel;
   private Collection<Change> myIncludedChanges;
+  private SelectFilesToAddTextsToPatchPanel mySelectFilesToAddTextsToPatchPanel;
+  private SplitterWithSecondHideable mySplitterWithSecondHideable;
 
   public CreatePatchConfigurationPanel(final Project project) {
     myProject = project;
@@ -88,12 +88,7 @@ public class CreatePatchConfigurationPanel {
       }
     });
 
-    //myBaseRevisionTextShouldLabel.setUI(new MultiLineLabelUI());
-    myBaseRevisionTextShouldLabel.setForeground(UIUtil.getInactiveTextColor());
-    myBaseRevisionTextShouldLabel.setVisible(false);
     myIncludeBaseRevisionTextCheckBox.setVisible(false);
-    myFixedSizeSelect.setVisible(false);
-    mySelectedLabel.setVisible(false);
 
     myFileNameField.getTextField().addInputMethodListener(new InputMethodListener() {
       public void inputMethodTextChanged(final InputMethodEvent event) {
@@ -123,6 +118,21 @@ public class CreatePatchConfigurationPanel {
       protected boolean init() {
         if (myPanel.isVisible()) {
           IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myFileNameField.getTextField(), true);
+          if (myIncludeBaseRevisionTextCheckBox.isVisible()) {
+            // a hack =(
+            final JDialog dialog = getParentDialog();
+            final Dimension dialogSize = dialog.getSize();
+            dialog.setSize(dialogSize.width, dialogSize.height + 1);
+            if (dialogSize.width < 500) {
+              dialog.setSize(500, dialogSize.height - 1);
+            } else {
+              dialog.setSize(dialogSize.width, dialogSize.height - 1);
+            }
+            dialog.repaint();
+            /*if (myIncludeBaseRevisionTextCheckBox.isVisible() && VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT) {
+              mySplitterWithSecondHideable.on();
+            }*/
+          }
         }
         return false;
       }
@@ -131,6 +141,7 @@ public class CreatePatchConfigurationPanel {
 
   private void initUi() {
     myPanel = new JPanel(new GridBagLayout());
+    myPanel.setMinimumSize(new Dimension(400, -1));
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                                    new Insets(1, 1, 1, 1), 0, 0);
     gb.anchor = GridBagConstraints.WEST;
@@ -138,17 +149,6 @@ public class CreatePatchConfigurationPanel {
     myPanel.add(createPatchLabel, gb);
     gb.anchor = GridBagConstraints.NORTHWEST;
     myFileNameField = new TextFieldWithBrowseButton();
-    new AdjustComponentWhenShown() {
-      @Override
-      protected boolean init() {
-        /*if (myFileNameField.getHeight() == 0) return false;
-        myFileNameField.getTextField().setMinimumSize(new Dimension(30, myFileNameField.getHeight()));*/
-        if (myChanges.size() > 0 && myIncludeBaseRevisionTextCheckBox.isSelected()) {
-          myFixedSizeSelect.doClick();
-        }
-        return true;
-      }
-    }.install(myPanel);
     ++ gb.gridx;
     gb.fill = GridBagConstraints.HORIZONTAL;
     gb.weightx = 1;
@@ -165,76 +165,101 @@ public class CreatePatchConfigurationPanel {
     ++ gb.gridy;
     gb.gridwidth = 2;
     
-    final JPanel wrapper = new JPanel(new BorderLayout());
     myIncludeBaseRevisionTextCheckBox = new JCheckBox("Include base revision text(s) into patch file");
-    wrapper.add(myIncludeBaseRevisionTextCheckBox, BorderLayout.WEST);
-    final JPanel wr2 = new JPanel(new BorderLayout());
-    wrapper.add(wr2, BorderLayout.EAST);
-    myFixedSizeSelect = new FixedSizeButton(myIncludeBaseRevisionTextCheckBox);
-    wr2.add(myFixedSizeSelect, BorderLayout.WEST);
-    mySelectedLabel = new JLabel(ALL);
-    mySelectedLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-    mySelectedLabel.setFont(mySelectedLabel.getFont().deriveFont(Font.BOLD));
-    wr2.add(mySelectedLabel, BorderLayout.EAST);
-    gb.fill = GridBagConstraints.NONE;
-    gb.weightx = 0;
-    myPanel.add(wrapper, gb);
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.weightx = 1;
-
-    myIncludeBaseRevisionTextCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        mySelectedLabel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-        myFixedSizeSelect.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-        myFixedSizeSelect.doClick();
-      }
-    });
-    myFixedSizeSelect.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final SelectFilesToAddTextsToPatchDialog dialog = new SelectFilesToAddTextsToPatchDialog(myProject, myChanges, myIncludedChanges);
-        dialog.show();
-        if (dialog.isOK()) {
-          myIncludedChanges = dialog.getIncludedChanges();
-          recalculateSelectedLabel();
-        }
-      }
-    });
-
-    gb.gridx = 0;
-    gb.gridwidth = 2;
+    myPanel.add(myIncludeBaseRevisionTextCheckBox, gb);
     ++ gb.gridy;
-    final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).
-      append("</head><body>Base revision text should be included into patch, if it is about to be used in projects under DVCS.").
-      append("<br/>In DVCS commits can be reordered, so there could exist no revision any more with the text matching patch context.<br/><br/>").
-      append("Only modified files texts needs to be added. Add/delete changes are self-descriptive.").
-      append("</body></html>");
 
-    myBaseRevisionTextShouldLabel = new JLabel(sb.toString());
-    myPanel.add(myBaseRevisionTextShouldLabel, gb);
-
-    ++ gb.gridy;
     myErrorLabel = new JLabel();
     myPanel.add(myErrorLabel, gb);
   }
 
-  private void recalculateSelectedLabel() {
-    mySelectedLabel.setText("(Selected " + myIncludedChanges.size() + " of " + myChanges.size() + " modified)");
+  private void initSplitter(Runnable inclusionListener) {
+    mySelectFilesToAddTextsToPatchPanel = new SelectFilesToAddTextsToPatchPanel(myProject, myChanges, myIncludedChanges, inclusionListener);
+    final Dimension preferredSize = myPanel.getPreferredSize();
+    final JPanel wrapper = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return preferredSize;
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return preferredSize;
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return preferredSize;
+      }
+    };
+    wrapper.add(myPanel, BorderLayout.NORTH);
+    mySplitterWithSecondHideable = new SplitterWithSecondHideable(true, ALL, wrapper, new OnOffListener<Integer>() {
+      @Override
+      public void on(Integer integer) {
+        VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
+        final JDialog dialog = getParentDialog();
+        final Dimension dialogSize = dialog.getSize();
+        dialog.setSize(dialogSize.width, dialogSize.height + integer);
+        dialog.repaint();
+      }
+
+      @Override
+      public void off(Integer integer) {
+        VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT = false;
+        final JDialog dialog = getParentDialog();
+        final Dimension dialogSize = dialog.getSize();
+        dialog.setSize(dialogSize.width, dialogSize.height - integer);
+        dialog.repaint();
+      }
+    }, false) {
+      @Override
+      protected RefreshablePanel createDetails() {
+        return mySelectFilesToAddTextsToPatchPanel;
+      }
+
+      @Override
+      protected float getSplitterInitialProportion() {
+        return 0.4f;
+      }
+    };
+  }
+
+  private JDialog getParentDialog() {
+    Container parent = myPanel.getParent();
+    while (! (parent instanceof JDialog)) {
+      parent = parent.getParent();
+    }
+    return (JDialog)parent;
   }
 
   public void showTextStoreOption(final boolean dvcsIsUsed) {
     myDvcsIsUsed = dvcsIsUsed;
     if (myChanges.size() > 0) {
-      myBaseRevisionTextShouldLabel.setVisible(true);
       myIncludeBaseRevisionTextCheckBox.setVisible(true);
-      myFixedSizeSelect.setVisible(true);
-      mySelectedLabel.setVisible(true);
 
       final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
 
       boolean turnOn = dvcsIsUsed || configuration.INCLUDE_TEXT_INTO_PATCH;
       myIncludeBaseRevisionTextCheckBox.setSelected(turnOn);
+      myIncludeBaseRevisionTextCheckBox.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          mySelectFilesToAddTextsToPatchPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
+          mySplitterWithSecondHideable.setEnabledColor(myIncludeBaseRevisionTextCheckBox.isSelected());
+        }
+      });
+      final Runnable inclusionListener = new Runnable() {
+        @Override
+        public void run() {
+          if (mySelectFilesToAddTextsToPatchPanel != null) {
+            myIncludedChanges = mySelectFilesToAddTextsToPatchPanel.getIncludedChanges();
+            mySplitterWithSecondHideable.setText("Selected: " + (myIncludedChanges.size() == myChanges.size() ?
+                                       "All" : ("" + myIncludedChanges.size() + " of " + myChanges.size())));
+          }
+        }
+      };
+      initSplitter(inclusionListener);
+      inclusionListener.run();
     }
   }
 
@@ -265,8 +290,8 @@ public class CreatePatchConfigurationPanel {
     return myIncludedChanges;
   }
 
-  public JPanel getPanel() {
-    return myPanel;
+  public JComponent getPanel() {
+    return ! myIncludeBaseRevisionTextCheckBox.isVisible() || myChanges.isEmpty() ? myPanel : mySplitterWithSecondHideable.getComponent();
   }
 
   public void installOkEnabledListener(final Consumer<Boolean> runnable) {
@@ -301,7 +326,6 @@ public class CreatePatchConfigurationPanel {
   public void setChanges(Collection<Change> changes) {
     myChanges = new ArrayList<Change>(changes);
     myIncludedChanges = new ArrayList<Change>(myChanges);
-    myIncludedChanges.removeAll(SelectFilesToAddTextsToPatchDialog.getBig(myChanges));
-    recalculateSelectedLabel();
+    myIncludedChanges.removeAll(SelectFilesToAddTextsToPatchPanel.getBig(myChanges));
   }
 }

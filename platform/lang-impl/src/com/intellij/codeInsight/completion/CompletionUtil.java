@@ -132,13 +132,6 @@ public class CompletionUtil {
   }
 
 
-  static boolean isOverwrite(final LookupElement item, final char completionChar) {
-    return completionChar != Lookup.AUTO_INSERT_SELECT_CHAR
-      ? completionChar == Lookup.REPLACE_SELECT_CHAR
-      : item.getUserData(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
-  }
-
-
   public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
     if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, parameters.getPosition().getProject())) {
       FeatureUsageTracker.getInstance().triggerFeatureShown(id);

@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -27,12 +28,12 @@ public class ApplyBinaryFilePatch extends ApplyFilePatchBase<BinaryFilePatch> {
     super(patch);
   }
 
-  protected void applyCreate(final VirtualFile newFile) throws IOException, ApplyPatchException {
+  protected void applyCreate(final VirtualFile newFile) throws IOException {
     newFile.setBinaryContent(myPatch.getAfterContent());
   }
 
-  protected ApplyPatchStatus applyChange(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
+  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException {
     fileToPatch.setBinaryContent(myPatch.getAfterContent());
-    return ApplyPatchStatus.SUCCESS;
+    return SUCCESS;
   }
 }

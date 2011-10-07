@@ -60,7 +60,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     InsertHandlerState state = new InsertHandlerState(context.getSelectionEndOffset(), context.getSelectionEndOffset());
 
-    if (CompletionUtil.isOverwrite(item, completionChar)) {
+    if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
       removeEndOfIdentifier(context);
     }
     else if(context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) {
@@ -143,7 +143,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
   }
 
-  private static void removeEndOfIdentifier(InsertionContext context){
+  public static void removeEndOfIdentifier(InsertionContext context){
     final Document document = context.getEditor().getDocument();
     JavaCompletionUtil.initOffsets(context.getFile(), context.getProject(), context.getOffsetMap());
     document.deleteString(context.getSelectionEndOffset(), context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));

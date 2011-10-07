@@ -16,20 +16,51 @@
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public interface ApplyFilePatch {
-  ApplyPatchStatus apply(VirtualFile fileToPatch, ApplyPatchContext context, Project project) throws IOException, ApplyPatchException;
+  Result SUCCESS = new Result(ApplyPatchStatus.SUCCESS) {
+    @Override
+    public ApplyPatchForBaseRevisionTexts getMergeData() {
+      return null;
+    }
+  };
 
-  ApplyPatchStatus applyImpl(VirtualFile fileToPatch, Project project) throws IOException, ApplyPatchException;
+  Result apply(VirtualFile fileToPatch, ApplyPatchContext context, Project project, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException;
 
-  @Nullable
-  VirtualFile findFileToPatch(@NotNull ApplyPatchContext context) throws IOException;
+  abstract class Result {
+    private final ApplyPatchStatus myStatus;
+    private IOException myException;
+
+    protected Result(ApplyPatchStatus status) {
+      myStatus = status;
+    }
+
+    protected Result(ApplyPatchStatus status, final IOException e) {
+      myStatus = status;
+      myException = e;
+    }
+
+    public abstract ApplyPatchForBaseRevisionTexts getMergeData();
+
+    public ApplyPatchStatus getStatus() throws IOException {
+      return myStatus;
+    }
+
+    public static Result createThrow(final IOException e) {
+      return new Result(ApplyPatchStatus.FAILURE, e) {
+        @Override
+        public ApplyPatchForBaseRevisionTexts getMergeData() {
+          return null;
+        }
+      };
+    }
+  }
 }

@@ -13,7 +13,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
@@ -34,11 +33,6 @@ public class XslTextContextType extends TemplateContextType {
       PsiElement element = file.findElementAt(offset);
       return element == null || HtmlTextContextType.isInContext(element);
     }
-    return false;
-  }
-
-  @Override
-  public boolean isInContext(@NotNull FileType fileType) {
     return false;
   }
 }

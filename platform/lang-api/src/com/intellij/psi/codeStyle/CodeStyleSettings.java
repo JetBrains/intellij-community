@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
@@ -456,29 +457,61 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   // ---------------------------------------------------------------------------------------
 
 
-  // ---------------------------------- XML formatting options -------------------------
+  // ---------------------------------- Legacy(!) XML formatting options -------------------
 
-  public final static int WS_AROUND_CDATA_PRESERVE = 0;
-  public final static int WS_AROUND_CDATA_NONE = 1;
-  public final static int WS_AROUND_CDATA_NEW_LINES = 2;
-
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_KEEP_WHITESPACES = false;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public int XML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public int XML_TEXT_WRAP = WRAP_AS_NEEDED;
-
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_KEEP_LINE_BREAKS = true;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_KEEP_LINE_BREAKS_IN_TEXT = true;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public int XML_KEEP_BLANK_LINES = 2;
 
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_ALIGN_ATTRIBUTES = true;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_ALIGN_TEXT = false;
-
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = false;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_SPACE_AFTER_TAG_NAME = false;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_SPACE_INSIDE_EMPTY_TAG = false;
-
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
   public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA = false;
-  public int XML_WHITE_SPACE_AROUND_CDATA = WS_AROUND_CDATA_PRESERVE;
+  /**
+   * @deprecated Use XmlCodeStyleSettings.
+   */
+  public int XML_WHITE_SPACE_AROUND_CDATA = 0;
 
   // ---------------------------------------------------------------------------------------
 
@@ -545,6 +578,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     boolean oldOptionsImported = importOldIndentOptions(element);
     for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
       settings.readExternal(element);
+      settings.importLegacySettings();
     }
 
     final List list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);

@@ -27,6 +27,7 @@ public interface DiffPanel extends DiffViewer, Disposable {
   void setRequestFocus(boolean requestFocus);
   boolean hasDifferences();
   void setTooBigFileErrorContents();
+  void setPatchAppliedApproximately();
   void removeStatusBar();
   void enableToolbar(final boolean value);
 }

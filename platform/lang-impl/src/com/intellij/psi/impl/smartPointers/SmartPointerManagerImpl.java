@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -223,11 +222,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   @Override
   public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
-    if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
-      SmartPointerElementInfo elementInfo1 = ((SmartPsiElementPointerImpl)pointer1).getElementInfo();
-      SmartPointerElementInfo elementInfo2 = ((SmartPsiElementPointerImpl)pointer2).getElementInfo();
-      return elementInfo1.pointsToTheSameElementAs(elementInfo2);
-    }
-    return Comparing.equal(pointer1.getElement(), pointer2.getElement());
+    return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
 }

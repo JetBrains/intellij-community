@@ -105,7 +105,7 @@ public class JavaMembersGetter extends MembersGetter {
       return null;
     }
 
-    return JavaCompletionUtil.qualify(new VariableLookupItem(field));
+    return new VariableLookupItem(field, false);
   }
 
   @Nullable
@@ -117,8 +117,8 @@ public class JavaMembersGetter extends MembersGetter {
     }
 
 
-    JavaMethodCallElement item = new JavaMethodCallElement(method);
+    JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
     item.setInferenceSubstitutor(substitutor);
-    return JavaCompletionUtil.qualify(item);
+    return item;
   }
 }

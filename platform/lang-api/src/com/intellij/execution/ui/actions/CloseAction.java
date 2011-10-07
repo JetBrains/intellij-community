@@ -41,14 +41,23 @@ public class CloseAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    if (myContentDescriptor == null) {
+    final RunContentDescriptor contentDescriptor = getContentDescriptor();
+    if (contentDescriptor == null) {
       return;
     }
-    final boolean removedOk = ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myExecutor, myContentDescriptor);
+    final boolean removedOk = ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(getExecutor(), contentDescriptor);
     if (removedOk) {
       myContentDescriptor = null;
       myExecutor = null;
     }
+  }
+
+  public RunContentDescriptor getContentDescriptor() {
+    return myContentDescriptor;
+  }
+
+  public Executor getExecutor() {
+    return myExecutor;
   }
 
   public void update(AnActionEvent e) {

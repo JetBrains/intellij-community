@@ -48,6 +48,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
 
     List<FilePatch> patches = ObjectsConvertor.<FilePatch, TextFilePatch>downcast(reader.readAllPatches());
 
-    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, (LocalChangeList) null, null).execute();
+    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, (LocalChangeList) null, null, null).execute();
   }
 }

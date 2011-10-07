@@ -362,13 +362,6 @@ public class CompletionData {
           addLookupItem(set, tailType, element, file, variant);
         }
       }
-      // TODO: KeywordChooser -> ContextGetter
-      else if (comp instanceof KeywordChooser) {
-        final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
-        for (String keyword : keywords) {
-          addKeyword(set, tailType, keyword, matcher, file, variant);
-        }
-      }
     }
   }
 

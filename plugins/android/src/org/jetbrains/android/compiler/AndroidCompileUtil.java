@@ -184,7 +184,10 @@ public class AndroidCompileUtil {
     final Project project = module.getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (project.isDisposed()) return;
+        if (project.isDisposed() || module.isDisposed()) {
+          return;
+        }
+
         final VirtualFile root;
         if (created) {
           root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile);

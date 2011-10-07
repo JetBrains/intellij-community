@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -41,14 +40,19 @@ import java.util.*;
  */
 @State(name = "NotificationConfiguration",
        storages = {@Storage( file = "$APP_CONFIG$/notifications.xml")})
-public class NotificationsConfiguration implements ApplicationComponent, Notifications, PersistentStateComponent<Element> {
+public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ApplicationComponent,
+                                                                                          PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
   private final Map<String, String> myToolWindowCapable = new java.util.LinkedHashMap<String, String>();
   private final MessageBus myMessageBus;
 
-  public NotificationsConfiguration(@NotNull final MessageBus bus) {
+  public static NotificationsConfigurationImpl getNotificationsConfigurationImpl() {
+    return (NotificationsConfigurationImpl)getNotificationsConfiguration();
+  }
+
+  public NotificationsConfigurationImpl(@NotNull final MessageBus bus) {
     myMessageBus = bus;
   }
 
@@ -65,17 +69,13 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     return myToolWindowCapable.get(groupId);
   }
 
-  public static NotificationsConfiguration getNotificationsConfiguration() {
-    return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);
-  }
-
   public static NotificationSettings[] getAllSettings() {
-    return getNotificationsConfiguration()._getAllSettings();
+    return getNotificationsConfigurationImpl()._getAllSettings();
   }
 
   @Deprecated
   public static void remove(NotificationSettings[] toRemove) {
-    getNotificationsConfiguration()._remove(ContainerUtil.map2Array(toRemove, String.class, new Function<NotificationSettings, String>() {
+    getNotificationsConfigurationImpl()._remove(ContainerUtil.map2Array(toRemove, String.class, new Function<NotificationSettings, String>() {
       @Override
       public String fun(NotificationSettings notificationSettings) {
         return notificationSettings.getGroupId();
@@ -84,7 +84,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   public static void remove(String... toRemove) {
-    getNotificationsConfiguration()._remove(toRemove);
+    getNotificationsConfigurationImpl()._remove(toRemove);
   }
 
   private synchronized void _remove(String... toRemove) {
@@ -112,7 +112,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
 
   @NotNull
   public static NotificationSettings getSettings(@NotNull final String groupId) {
-    final NotificationSettings settings = getNotificationsConfiguration()._getSettings(groupId);
+    final NotificationSettings settings = getNotificationsConfigurationImpl()._getSettings(groupId);
     return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true) : settings;
   }
 
@@ -129,18 +129,20 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     myIdToSettingsMap.clear();
   }
 
-  public void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType displayType) {
-    registerDefaultSettings(new NotificationSettings(groupDisplayType, displayType));
+  public void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType displayType) {
+    register(groupDisplayName, displayType, true);
   }
 
-  public synchronized void registerDefaultSettings(NotificationSettings settings) {
-    String groupId = settings.getGroupId();
-    if (!isRegistered(groupId)) {
-      myIdToSettingsMap.put(groupId, settings);
-    } else if (settings.getDisplayType() == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupId)) {
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType displayType,
+                       boolean shouldLog) {
+    if (!isRegistered(groupDisplayName)) {
+      myIdToSettingsMap.put(groupDisplayName, new NotificationSettings(groupDisplayName, displayType, shouldLog));
+    } else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
       // the first time with tool window capability
-      ObjectUtils.assertNotNull(_getSettings(groupId)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
-      myToolWindowCapable.put(groupId, null);
+      ObjectUtils.assertNotNull(_getSettings(groupDisplayName)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
+      myToolWindowCapable.put(groupDisplayName, null);
     }
   }
 

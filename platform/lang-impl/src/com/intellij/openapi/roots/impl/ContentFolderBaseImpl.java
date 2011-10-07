@@ -39,13 +39,13 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   ContentFolderBaseImpl(@NotNull VirtualFile file, @NotNull ContentEntryImpl contentEntry) {
     super(contentEntry.getRootModel());
     myContentEntry = contentEntry;
-    myFilePointer = VirtualFilePointerManager.getInstance().create(file, this, contentEntry.getRootModel().myVirtualFilePointerListener);
+    myFilePointer = VirtualFilePointerManager.getInstance().create(file, this, null);
   }
 
   ContentFolderBaseImpl(@NotNull String url, @NotNull ContentEntryImpl contentEntry) {
     super(contentEntry.getRootModel());
     myContentEntry = contentEntry;
-    myFilePointer = VirtualFilePointerManager.getInstance().create(url, this, contentEntry.getRootModel().myVirtualFilePointerListener);
+    myFilePointer = VirtualFilePointerManager.getInstance().create(url, this, null);
   }
 
   protected ContentFolderBaseImpl(@NotNull ContentFolderBaseImpl that, @NotNull ContentEntryImpl contentEntry) {
@@ -59,7 +59,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   protected ContentFolderBaseImpl(@NotNull VirtualFilePointer filePointer, @NotNull ContentEntryImpl contentEntry) {
     super(contentEntry.getRootModel());
     myContentEntry = contentEntry;
-    myFilePointer = VirtualFilePointerManager.getInstance().duplicate(filePointer,this, contentEntry.getRootModel().myVirtualFilePointerListener);
+    myFilePointer = VirtualFilePointerManager.getInstance().duplicate(filePointer,this, null);
   }
 
   private static String getUrlFrom(Element element) throws InvalidDataException {

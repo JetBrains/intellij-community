@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
-  protected Binding getElementBinding(Class<? extends Object> elementClass) {
+  protected Binding getElementBinding(Class<?> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
     return binding == null ? myXmlSerializer.getBinding(elementClass) : binding;
   }

@@ -189,8 +189,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
                                      HighlightLevelUtil.AnalysisLevel.HIGHLIGHT,false);
-      final Set<PsiFile> injected = new THashSet<PsiFile>();
-      getInjectedPsiFiles(inside, outside, progress, injected);
 
       setProgressLimit((long)(inside.size()+outside.size()));
 
@@ -206,6 +204,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           // all infos for the "injected fragment for the host which is inside" are indeed inside
           // but some of the infos for the "injected fragment for the host which is outside" can be still inside
           Set<HighlightInfo> injectedResult = new THashSet<HighlightInfo>();
+          final Set<PsiFile> injected = new THashSet<PsiFile>();
+          getInjectedPsiFiles(inside, outside, progress, injected);
           if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) throw new ProcessCanceledException();
           final List<HighlightInfo> injectionsOutside = new ArrayList<HighlightInfo>(gotHighlights.size());
 
@@ -347,7 +347,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
 
         HighlightInfoHolder holder = createInfoHolder(injectedPsi);
-        runHighlightVisitosForInjected(injectedPsi, holder, progress);
+        runHighlightVisitorsForInjected(injectedPsi, holder, progress);
         for (int i = 0; i < holder.size(); i++) {
           HighlightInfo info = holder.get(i);
           final int startOffset = documentWindow.injectedToHost(info.startOffset);
@@ -462,17 +462,19 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private void runHighlightVisitosForInjected(@NotNull PsiFile injectedPsi, @NotNull final HighlightInfoHolder holder, @NotNull final ProgressIndicator progress) {
+  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi,
+                                               @NotNull final HighlightInfoHolder holder,
+                                               @NotNull final ProgressIndicator progress) {
     HighlightVisitor[] visitors = getHighlightVisitors();
     try {
       HighlightVisitor[] filtered = filterVisitors(visitors, injectedPsi);
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
-      for (final HighlightVisitor hvisitor : filtered) {
-        hvisitor.analyze(injectedPsi, true, holder, new Runnable() {
+      for (final HighlightVisitor visitor : filtered) {
+        visitor.analyze(injectedPsi, true, holder, new Runnable() {
           public void run() {
             for (PsiElement element : elements) {
               progress.checkCanceled();
-              hvisitor.visit(element);
+              visitor.visit(element);
             }
           }
         });
@@ -643,7 +645,50 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   //    public void run() {
   //      //noinspection unchecked
   //      boolean failed = false;
-  //      PsiNodeTask task = new PsiNodeTask(myFile){
+  //      PsiNodeTask task = createPsiTask(myFile);
+  //      JobSchedulerImpl.submitTask(task);
+  //
+  //      for (List<PsiElement> elements : new List[]{elements1, elements2}) {
+  //        int nextLimit = chunkSize;
+  //        for (int i = 0; i < elements.size(); i++) {
+  //          PsiElement element = elements.get(i);
+  //          progress.checkCanceled();
+  //
+  //          if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
+  //            skipParentsSet.add(element.getParent());
+  //            continue;
+  //          }
+  //
+  //          if (element instanceof PsiErrorElement) {
+  //            myHasErrorElement = true;
+  //          }
+  //          kjlhkjh
+  //          if (i == nextLimit) {
+  //            advanceProgress(chunkSize);
+  //            nextLimit = i + chunkSize;
+  //          }
+  //
+  //        }
+  //        advanceProgress(elements.size() - (nextLimit-chunkSize));
+  //        if (elements == elements1) after1.run();
+  //      }
+  //    }
+  //
+  //    private PsiNodeTask createPsiTask(@NotNull PsiElement root) {
+  //      return new PsiNodeTask(root) {
+  //        @Override
+  //        public void onEnter(@NotNull PsiElement element) {
+  //          if (element instanceof PsiErrorElement) {
+  //            myHasErrorElement = true;
+  //          }
+  //          super.onEnter(element);
+  //        }
+  //
+  //        @Override
+  //        protected PsiNodeTask forkNode(@NotNull PsiElement child) {
+  //          return createPsiTask(child);
+  //        }
+  //
   //        @Override
   //        protected boolean highlight(PsiElement element) {
   //          holder.clear();
@@ -684,31 +729,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   //          return true;
   //        }
   //      };
-  //      JobSchedulerImpl.submitTask();
-  //      for (List<PsiElement> elements : new List[]{elements1, elements2}) {
-  //        int nextLimit = chunkSize;
-  //        for (int i = 0; i < elements.size(); i++) {
-  //          PsiElement element = elements.get(i);
-  //          progress.checkCanceled();
-  //
-  //          if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
-  //            skipParentsSet.add(element.getParent());
-  //            continue;
-  //          }
-  //
-  //          if (element instanceof PsiErrorElement) {
-  //            myHasErrorElement = true;
-  //          }
-  //          kjlhkjh
-  //          if (i == nextLimit) {
-  //            advanceProgress(chunkSize);
-  //            nextLimit = i + chunkSize;
-  //          }
-  //
-  //        }
-  //        advanceProgress(elements.size() - (nextLimit-chunkSize));
-  //        if (elements == elements1) after1.run();
-  //      }
   //    }
   //  };
   //

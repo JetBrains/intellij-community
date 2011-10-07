@@ -26,15 +26,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
-import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.TextRevisionNumber;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ShelvedChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
@@ -52,6 +50,7 @@ public class ShelvedChange {
   private final String myBeforePath;
   private final String myAfterPath;
   private final FileStatus myFileStatus;
+  private final AtomicReference<Boolean> myIsConflicting;
   private Change myChange;
 
   public ShelvedChange(final String patchPath, final String beforePath, final String afterPath, final FileStatus fileStatus) {
@@ -59,6 +58,26 @@ public class ShelvedChange {
     myBeforePath = beforePath;
     myAfterPath = afterPath;
     myFileStatus = fileStatus;
+    myIsConflicting = new AtomicReference<Boolean>();
+  }
+
+  public boolean isConflictingChange(final Project project) {
+    Boolean isConflicting = myIsConflicting.get();
+    if (isConflicting != null) return isConflicting;
+
+    ContentRevision afterRevision = getChange(project).getAfterRevision();
+    if (afterRevision == null) return false;
+    try {
+      afterRevision.getContent();
+    }
+    catch(VcsException e) {
+      if (e.getCause() instanceof ApplyPatchException) {
+        myIsConflicting.set(true);
+        return true;
+      }
+    }
+    myIsConflicting.set(false);
+    return false;
   }
 
   public String getBeforePath() {
@@ -120,7 +139,7 @@ public class ShelvedChange {
       }
       if (myFileStatus != FileStatus.DELETED) {
         final FilePathImpl afterPath = new FilePathImpl(getAbsolutePath(baseDir, myAfterPath), false);
-        afterRevision = new PatchedContentRevision(beforePath, afterPath);
+        afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
       }
       myChange = new Change(beforeRevision, afterRevision, myFileStatus);
     }
@@ -140,8 +159,8 @@ public class ShelvedChange {
   }
 
   @Nullable
-  public TextFilePatch loadFilePatch() throws IOException, PatchSyntaxException {
-    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
+  public TextFilePatch loadFilePatch(final Project project, CommitContext commitContext) throws IOException, PatchSyntaxException {
+    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, myPatchPath, commitContext);
     for(TextFilePatch patch: filePatches) {
       if (myBeforePath.equals(patch.getBeforeName())) {
         return patch;
@@ -175,11 +194,13 @@ public class ShelvedChange {
   }
 
   private class PatchedContentRevision implements ContentRevision {
+    private final Project myProject;
     private final FilePath myBeforeFilePath;
     private final FilePath myAfterFilePath;
     private String myContent;
 
-    public PatchedContentRevision(final FilePath beforeFilePath, final FilePath afterFilePath) {
+    public PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
+      myProject = project;
       myBeforeFilePath = beforeFilePath;
       myAfterFilePath = afterFilePath;
     }
@@ -200,7 +221,7 @@ public class ShelvedChange {
 
     @Nullable
     private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
-      TextFilePatch patch = loadFilePatch();
+      TextFilePatch patch = loadFilePatch(myProject, null);
       if (patch != null) {
         return loadContent(patch);
       }
@@ -214,9 +235,11 @@ public class ShelvedChange {
       if (patch.isDeletedFile()) {
         return null;
       }
-      StringBuilder newText = new StringBuilder();
-      ApplyFilePatchBase.applyModifications(patch, getBaseContent(), newText);
-      return newText.toString();
+      final GenericPatchApplier applier = new GenericPatchApplier(getBaseContent(), patch.getHunks());
+      if (applier.execute()) {
+        return applier.getAfter();
+      }
+      throw new ApplyPatchException("Apply patch conflict");
     }
 
     private String getBaseContent() {

@@ -26,10 +26,12 @@ import com.intellij.psi.xml.XmlText;
 
 public class XmlPolicy extends XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
+  private final XmlCodeStyleSettings myXmlSettings;
 
   public XmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
     super(documentModel);
     mySettings = settings;
+    myXmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
@@ -64,52 +66,52 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   public int getTextWrap(final XmlTag tag) {
-    return mySettings.XML_TEXT_WRAP;
+    return myXmlSettings.XML_TEXT_WRAP;
   }
 
   public int getAttributesWrap() {
-    return mySettings.XML_ATTRIBUTE_WRAP;
+    return myXmlSettings.XML_ATTRIBUTE_WRAP;
   }
 
   public boolean getShouldAlignAttributes() {
-    return mySettings.XML_ALIGN_ATTRIBUTES;
+    return myXmlSettings.XML_ALIGN_ATTRIBUTES;
   }
   public boolean getShouldAlignText() {
-    return mySettings.XML_ALIGN_TEXT;
+    return myXmlSettings.XML_ALIGN_TEXT;
   }
 
   public boolean getShouldKeepWhiteSpaces() {
-    return mySettings.XML_KEEP_WHITESPACES;
+    return myXmlSettings.XML_KEEP_WHITESPACES;
   }
 
   public boolean getShouldAddSpaceAroundEqualityInAttribute() {
-    return mySettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
+    return myXmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
   }
 
   public boolean getShouldAddSpaceAroundTagName() {
-    return mySettings.XML_SPACE_AFTER_TAG_NAME;
+    return myXmlSettings.XML_SPACE_AFTER_TAG_NAME;
   }
 
   public int getKeepBlankLines() {
-    return mySettings.XML_KEEP_BLANK_LINES;
+    return myXmlSettings.XML_KEEP_BLANK_LINES;
   }
 
   public boolean getShouldKeepLineBreaks() {
-    return mySettings.XML_KEEP_LINE_BREAKS;
+    return myXmlSettings.XML_KEEP_LINE_BREAKS;
   }
 
   public boolean getShouldKeepLineBreaksInText() {
-    return mySettings.XML_KEEP_LINE_BREAKS_IN_TEXT;
+    return myXmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT;
   }
 
   @Override
   public boolean getKeepWhiteSpacesInsideCDATA() {
-    return mySettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
+    return myXmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
   }
 
   @Override
   public int getWhiteSpaceAroundCDATAOption() {
-    return mySettings.XML_WHITE_SPACE_AROUND_CDATA;
+    return myXmlSettings.XML_WHITE_SPACE_AROUND_CDATA;
   }
 
   public CodeStyleSettings getSettings() {
@@ -117,7 +119,7 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   public boolean addSpaceIntoEmptyTag() {
-    return mySettings.XML_SPACE_INSIDE_EMPTY_TAG;
+    return myXmlSettings.XML_SPACE_INSIDE_EMPTY_TAG;
   }
 
   public boolean shouldSaveSpacesBetweenTagAndText() {

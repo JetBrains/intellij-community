@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
@@ -111,23 +110,13 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     rootConfigurable.selectNodeInTree(libraryNode);
   }
 
-  private static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable, final @Nullable LibraryType type) {
-    final List<Module> modules = new ArrayList<Module>();
-    for (Module module : rootConfigurable.getModules()) {
-      if (type == null || type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {
-        modules.add(module);
-      }
-    }
-    return modules;
-  }
-
   public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
     List<LibraryType<?>> suitableTypes = new ArrayList<LibraryType<?>>();
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
-        if (!getSuitableModules(configurable, extension).isEmpty()) {
+        if (!LibraryEditingUtil.getSuitableModules(configurable, extension).isEmpty()) {
           suitableTypes.add(extension);
         }
       }

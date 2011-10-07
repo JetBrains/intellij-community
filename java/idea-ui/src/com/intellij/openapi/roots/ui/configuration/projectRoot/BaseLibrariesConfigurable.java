@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
@@ -51,6 +52,14 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     super(project);
   }
 
+  public static BaseLibrariesConfigurable getInstance(@NotNull Project project, @NotNull String tableLevel) {
+    if (tableLevel.equals(LibraryTablesRegistrar.PROJECT_LEVEL)) {
+      return ProjectLibrariesConfigurable.getInstance(project);
+    }
+    else {
+      return GlobalLibrariesConfigurable.getInstance(project);
+    }
+  }
 
   public abstract LibraryTablePresentation getLibraryTablePresentation();
 
@@ -208,8 +217,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
-  public void removeLibraryNode(@NotNull Library library) {
-    final MyNode node = findNodeByObject(myRoot, library);
+  public void removeLibrary(@NotNull LibraryProjectStructureElement element) {
+    getModelProvider().getModifiableModel().removeLibrary(element.getLibrary());
+    myContext.getDaemonAnalyzer().removeElement(element);
+    final MyNode node = findNodeByObject(myRoot, element.getLibrary());
     if (node != null) {
       removePaths(TreeUtil.getPathFromRoot(node));
     }

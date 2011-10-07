@@ -7,7 +7,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -20,16 +19,15 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 
 public class StatisticsNotificationManager {
-  private StatisticsNotificationManager() {
-  }
 
-  static {
-    NotificationsConfiguration.remove("SendUsagesStatistics");
+  public static final String GROUP_DISPLAY_ID = "IDE Usage Statistics";
+
+  private StatisticsNotificationManager() {
   }
 
   public static void showNotification(@NotNull RemotelyConfigurableStatisticsService statisticsService, Project project) {
 
-    Notifications.Bus.notify(new Notification("IDE Usage Statistics", getTitle(),
+    Notifications.Bus.notify(new Notification(GROUP_DISPLAY_ID, getTitle(),
                                               getText(),
                                               NotificationType.INFORMATION,
                                               new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent

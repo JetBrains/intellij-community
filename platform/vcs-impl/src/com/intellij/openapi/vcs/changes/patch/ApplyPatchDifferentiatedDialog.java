@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
@@ -91,6 +93,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private boolean myContainBasedChanges;
   private JLabel myPatchFileLabel;
   private PatchReader myReader;
+  private CommitContext myCommitContext;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
@@ -869,7 +872,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         for (FilePatchInProgress.PatchChange change : changes) {
           final FilePatchInProgress patchInProgress = change.getPatchInProgress();
           if (! patchInProgress.baseExistsOrAdded()) continue;
-          final DiffRequestPresentable diffRequestPresentable = change.createDiffRequestPresentable(myProject);
+          final TextFilePatch patch = patchInProgress.getPatch();
+          final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
+          final DiffRequestPresentable diffRequestPresentable =
+            change.createDiffRequestPresentable(myProject, new Getter<CharSequence>() {
+              @Override
+              public CharSequence get() {
+                return myReader.getBaseRevision(myProject, path);
+              }
+            });
           if (diffRequestPresentable != null) {
             diffRequestPresentables.add(diffRequestPresentable);
           }

@@ -26,14 +26,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class XmlContextType extends FileTypeBasedContextType {
+public class XmlContextType extends TemplateContextType {
   public XmlContextType() {
-    super("XML", CodeInsightBundle.message("dialog.edit.template.checkbox.xml"), StdFileTypes.XML);
+    super("XML", CodeInsightBundle.message("dialog.edit.template.checkbox.xml"));
   }
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    return super.isInContext(file, offset) && !isEmbeddedContent(file, offset);
+    return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) && !isEmbeddedContent(file, offset) &&
+           !HtmlContextType.isMyLanguage(PsiUtilBase.getLanguageAtOffset(file, offset)) &&
+           file.getFileType() != StdFileTypes.JSPX && file.getFileType() != StdFileTypes.JSP;
   }
 
   public static boolean isEmbeddedContent(@NotNull final PsiFile file, final int offset) {

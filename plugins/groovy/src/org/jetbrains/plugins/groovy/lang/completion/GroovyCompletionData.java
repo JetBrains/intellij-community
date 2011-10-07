@@ -20,14 +20,13 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.ModifierChooser;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +111,7 @@ public class GroovyCompletionData {
         }
       } else {
         if (suggestModifiers(position)) {
-          addKeywords(result, true, MODIFIERS);
+          addModifiers(position, result);
         }
         if (psiElement().afterLeaf(MODIFIERS).accepts(position) ||
             GroovyCompletionUtil.isInTypeDefinitionBody(position) && GroovyCompletionUtil.isNewStatement(position, true)) {
@@ -124,6 +123,12 @@ public class GroovyCompletionData {
         }
       }
     }
+  }
+
+  public static void addModifiers(PsiElement position, CompletionResultSet result) {
+    PsiClass scope = PsiTreeUtil.getParentOfType(position, PsiClass.class);
+    PsiModifierList modifierList = ModifierChooser.findModifierList(position);
+    addKeywords(result, true, ModifierChooser.addMemberModifiers(modifierList, scope != null && scope.isInterface()));
   }
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {

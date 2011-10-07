@@ -74,7 +74,7 @@ public class InvokeTemplateAction extends AnAction {
 
     // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
     // at a meaningful position rather than at indent 0)
-    if (myEditor.getSelectionModel().hasSelection()) {
+    if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
       int offset = myEditor.getSelectionModel().getSelectionStart();
       int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
       int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
