@@ -28,7 +28,7 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
       }
 
       public String getHelpTopic() {
-        return null;
+        return "reference.settingsdialog.codestyle.python";
       }
     };
   }
