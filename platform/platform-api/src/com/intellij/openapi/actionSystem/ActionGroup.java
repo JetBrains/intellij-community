@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +23,8 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Method;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a group of actions.
@@ -99,7 +98,7 @@ public abstract class ActionGroup extends AnAction {
    *
    * @return <code>true</code> if the group is a popup, <code>false</code> otherwise
    */
-  public final boolean isPopup(){
+  public boolean isPopup(){
     return myPopup;
   }
 
