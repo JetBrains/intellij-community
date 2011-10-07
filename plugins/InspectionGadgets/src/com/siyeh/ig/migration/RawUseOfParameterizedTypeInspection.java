@@ -73,7 +73,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @Override
   public String getAlternativeID() {
-    return "unchecked";
+    return "rawtypes";
   }
 
   @Override

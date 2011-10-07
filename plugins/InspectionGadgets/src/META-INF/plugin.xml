@@ -1158,7 +1158,7 @@
                      key="method.can.be.variable.arity.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.MethodCanBeVariableArityMethodInspection"/>
-    <localInspection language="JAVA" alternativeId="unchecked" shortName="RawUseOfParameterizedType" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection language="JAVA" suppressId="rawtypes" alternativeId="RawUseOfParameterized" shortName="RawUseOfParameterizedType" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="raw.use.of.parameterized.type.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection"/>
