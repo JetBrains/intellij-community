@@ -172,7 +172,7 @@
             </constraints>
             <properties>
               <enabled value="true"/>
-              <selected value="true"/>
+              <selected value="false"/>
               <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.interactive"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.interactive.tooltip"/>
             </properties>
