@@ -410,6 +410,7 @@ public abstract class VcsVFSListener implements Disposable {
               }
             }
             myDirtyScopeManager.filesDirty(files, dirs);
+            myDirtyFiles.clear();
           }
           if (! myExceptions.isEmpty()) {
             AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myVcs.getDisplayName() + " operations errors");
