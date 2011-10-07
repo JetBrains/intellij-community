@@ -175,6 +175,10 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
       Color color = colorsForEditor[i];
 
+      if (color == null) {
+        continue;
+      }
+
       if (pair.first != null) {
         highlightInfos.add(createHighlightInfo(color, pair.first));
       }
@@ -269,7 +273,9 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     for (int i = 0; i < resultColors.length; i++) {
       final Color color = baseColors[i];
 
-      final Color color1 = XmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency);
+      final Color color1 = color != null
+                           ? XmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency)
+                           : null;
       resultColors[i] = color1;
     }
 

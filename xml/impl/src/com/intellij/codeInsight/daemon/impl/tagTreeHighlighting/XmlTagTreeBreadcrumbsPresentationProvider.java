@@ -22,6 +22,7 @@ import com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider;
 import com.intellij.xml.breadcrumbs.CrumbPresentation;
 import com.intellij.xml.breadcrumbs.DefaultCrumbsPresentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -53,7 +54,8 @@ public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresen
 
     for (int i = result.length - 1; i >= 0; i--) {
       if (elements[i] instanceof XmlTag) {
-        result[i] = new MyCrumbPresentation(baseColors[index % baseColors.length]);
+        final Color color = baseColors[index % baseColors.length];
+        result[i] = new MyCrumbPresentation(color);
         index++;
       }
     }
@@ -63,14 +65,16 @@ public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresen
   private static class MyCrumbPresentation extends DefaultCrumbsPresentation {
     private final Color myColor;
 
-    private MyCrumbPresentation(Color color) {
+    private MyCrumbPresentation(@Nullable Color color) {
       myColor = color;
     }
 
     @Override
     public Color getBackgroundColor(boolean selected, boolean hovered, boolean light) {
       final Color baseColor = super.getBackgroundColor(selected, hovered, light);
-      return XmlTagTreeHighlightingUtil.makeTransparent(myColor, baseColor, 0.1);
+      return myColor != null
+             ? XmlTagTreeHighlightingUtil.makeTransparent(myColor, baseColor, 0.1)
+             : baseColor;
     }
   }
 }

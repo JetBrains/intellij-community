@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Set;
@@ -66,7 +67,7 @@ class XmlTagTreeHighlightingUtil {
     return true;
   }
 
-  static Color makeTransparent(Color color, Color backgroundColor, double transparency) {
+  static Color makeTransparent(@NotNull Color color, @NotNull Color backgroundColor, double transparency) {
     int r = makeTransparent(transparency, color.getRed(), backgroundColor.getRed());
     int g = makeTransparent(transparency, color.getGreen(), backgroundColor.getGreen());
     int b = makeTransparent(transparency, color.getBlue(), backgroundColor.getBlue());
