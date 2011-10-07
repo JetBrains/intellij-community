@@ -52,7 +52,7 @@ if [ -z "$JDK" ]; then
   fi
 fi
 
-VERSION_LOG='/tmp/java.version.log'
+VERSION_LOG=`mktemp -t java.version.log.XXXX`
 $JDK/bin/java -version 2> $VERSION_LOG
 grep 'OpenJDK' $VERSION_LOG
 OPEN_JDK=$?
