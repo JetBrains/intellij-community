@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -50,7 +51,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     return new PyInspectionVisitor(holder){
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
-        if (CythonLanguageDialect._isDisabledFor(node)) {
+        if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
           return;
         }
         final Set<ScopeOwner> largeFunctions = session.getUserData(LARGE_FUNCTIONS_KEY);

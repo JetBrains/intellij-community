@@ -2,6 +2,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.util.TextRange;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.*;
@@ -30,6 +31,9 @@ public class DocStringAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    if (MakoLanguage._isDisabledFor(node)) {
+      return;
+    }
     PyExpression left = node.getLeftHandSideExpression();
     if (left != null && "__doc__".equals(left.getText())) {
       PyExpression right = node.getAssignedValue();
@@ -41,6 +45,9 @@ public class DocStringAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyExpressionStatement(PyExpressionStatement node) {
+    if (MakoLanguage._isDisabledFor(node)) {
+      return;
+    }
     if (node.getExpression() instanceof PyStringLiteralExpression &&
         EpydocUtil.isVariableDocString((PyStringLiteralExpression)node.getExpression())) {
       annotateDocStringStmt((PyStringLiteralExpression)node.getExpression());

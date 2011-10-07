@@ -27,7 +27,7 @@ public class ExpressionParsing extends Parsing {
         buildTokenElement(PyElementTypes.TARGET_EXPRESSION, myBuilder);
       }
       else {
-        buildTokenElement(PyElementTypes.REFERENCE_EXPRESSION, myBuilder);
+        buildTokenElement(getReferenceType(), myBuilder);
       }
       return true;
     }
@@ -311,7 +311,7 @@ public class ExpressionParsing extends Parsing {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {
-            expr.done(PyElementTypes.REFERENCE_EXPRESSION);
+            expr.done(getReferenceType());
           }
           expr = expr.precede();
         }
