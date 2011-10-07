@@ -24,32 +24,31 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.resolve.GrClassEnhancer;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrCollectionTypeMembersProvider extends GrClassEnhancer {
+public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
 
-  @NotNull
   @Override
-  public String getQualifiedName() {
+  public String getParentClassName() {
     return CommonClassNames.JAVA_UTIL_COLLECTION;
   }
 
   @Override
-  public boolean processDynamicElements(final @NotNull PsiType qualifierType,
-                                        @NotNull PsiClass aClass,
+  public void processDynamicElements(final @NotNull PsiType qualifierType,
+                                     PsiClass aClass,
                                      final PsiScopeProcessor processor,
                                      final GroovyPsiElement place,
                                      final ResolveState state) {
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
-    if (collectionType == null) return true;
+    if (collectionType == null) return;
 
     final PsiScopeProcessor fieldSearcher = new FieldSearcher(processor, JavaPsiFacade.getInstance(place.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, place.getResolveScope()));
-    return ResolveUtil.processAllDeclarations(collectionType, fieldSearcher, state, place);
+    ResolveUtil.processAllDeclarations(collectionType, fieldSearcher, state, place);
   }
 
   private static class FieldSearcher implements PsiScopeProcessor, ClassHint, ElementClassHint {

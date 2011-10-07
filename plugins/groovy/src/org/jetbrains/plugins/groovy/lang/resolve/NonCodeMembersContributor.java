@@ -17,14 +17,22 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
+
+import java.util.*;
 
 /**
  * @author peter
@@ -32,11 +40,45 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 public abstract class NonCodeMembersContributor {
   private static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
-  public abstract void processDynamicElements(@NotNull PsiType qualifierType,
+  private static final LightCacheKey<String[]> KEY = LightCacheKey.create();
+  
+  private static volatile MultiMap<String, NonCodeMembersContributor> ourClassSpecifiedContributors;
+  private static NonCodeMembersContributor[] ourAllTypeContributors;
+  
+  public void processDynamicElements(@NotNull PsiType qualifierType,
                                               PsiScopeProcessor processor,
                                               GroovyPsiElement place,
-                                              ResolveState state);
+                                              ResolveState state) {
+    throw new RuntimeException("One of two 'processDynamicElements()' methods must be implemented");
+  }
 
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     PsiClass aClass,
+                                     PsiScopeProcessor processor,
+                                     GroovyPsiElement place,
+                                     ResolveState state) {
+    processDynamicElements(qualifierType, processor, place, state);
+  }
+
+  @Nullable
+  protected String getParentClassName() {
+    return null;
+  }
+  
+  private static void ensureInit() {
+    if (ourClassSpecifiedContributors != null) return;
+
+    MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<String, NonCodeMembersContributor>();
+    
+    for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
+      contributorMap.putValue(contributor.getParentClassName(), contributor);
+    }
+
+    Collection<NonCodeMembersContributor> allTypeContributors = contributorMap.remove(null);
+    ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[allTypeContributors.size()]);
+    ourClassSpecifiedContributors = contributorMap;
+  }
+  
   public static boolean runContributors(@NotNull final PsiType qualifierType,
                                          PsiScopeProcessor processor,
                                          final GroovyPsiElement place,
@@ -44,15 +86,50 @@ public abstract class NonCodeMembersContributor {
 
     MyDelegatingScopeProcessor delegatingProcessor = new MyDelegatingScopeProcessor(processor);
 
-    for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
-      contributor.processDynamicElements(qualifierType, delegatingProcessor, place, state);
+    ensureInit();
+    
+    final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
+
+    if (aClass != null) {
+      for (String superClassName : getParentClassNames(aClass)) {
+        for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
+          enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
+          if (!delegatingProcessor.wantMore) {
+            return false;
+          }
+        }
+      }
+    }
+
+    for (NonCodeMembersContributor contributor : ourAllTypeContributors) {
+      contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
       if (!delegatingProcessor.wantMore) {
         return false;
       }
     }
+    
     return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
   }
 
+  protected static String[] getParentClassNames(PsiClass aClass) {
+    String[] superClassNames = KEY.getCachedValue(aClass);
+    if (superClassNames == null) {
+      Set<PsiClass> superClasses = new HashSet<PsiClass>();
+      superClasses.add(aClass);
+      InheritanceUtil.getSuperClasses(aClass, superClasses, true);
+
+      superClassNames = new String[superClasses.size()];
+      int i = 0;
+      for (PsiClass superClass : superClasses) {
+        superClassNames[i++] = superClass.getQualifiedName();
+      }
+
+      superClassNames = KEY.putCachedValue(aClass, superClassNames);
+    }
+
+    return superClassNames;
+  }
+  
   private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
     public boolean wantMore = true;
 
