@@ -27,13 +27,13 @@ public class ProjectStructureProblemDescription {
   private final String myMessage;
   private final String myDescription;
   private final PlaceInProjectStructure myPlace;
-  private final List<ConfigurationErrorQuickFix> myFixes;
+  private final List<? extends ConfigurationErrorQuickFix> myFixes;
   private final ProjectStructureProblemType myProblemType;
 
   public ProjectStructureProblemDescription(@NotNull String message,
                                             @Nullable String description,
                                             @NotNull PlaceInProjectStructure place,
-                                            @NotNull List<ConfigurationErrorQuickFix> fixes,
+                                            @NotNull List<? extends ConfigurationErrorQuickFix> fixes,
                                             @NotNull ProjectStructureProblemType problemType) {
     myMessage = message;
     myDescription = description;
@@ -51,7 +51,7 @@ public class ProjectStructureProblemDescription {
     return myDescription;
   }
 
-  public List<ConfigurationErrorQuickFix> getFixes() {
+  public List<? extends ConfigurationErrorQuickFix> getFixes() {
     return myFixes;
   }
 

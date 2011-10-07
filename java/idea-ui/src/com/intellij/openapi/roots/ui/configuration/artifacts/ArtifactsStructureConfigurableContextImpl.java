@@ -110,7 +110,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   }
 
   public void queueValidation(Artifact artifact) {
-    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact), true, false);
+    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact));
   }
 
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {

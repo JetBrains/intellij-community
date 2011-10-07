@@ -70,6 +70,12 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     return myProblemDescriptions != null && !myProblemDescriptions.isEmpty();
   }
 
+  public void removeProblem(@NotNull ProjectStructureProblemDescription description) {
+    if (myProblemDescriptions != null) {
+      myProblemDescriptions.remove(description);
+    }
+  }
+
   @Nullable
   public List<ProjectStructureProblemDescription> getProblemDescriptions() {
     return myProblemDescriptions;
