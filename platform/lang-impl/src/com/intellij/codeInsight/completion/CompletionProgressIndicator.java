@@ -104,8 +104,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       setMergeCommand();
 
-      myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET,
-                            myEditor.getCaretModel().getOffset() - item.getLookupString().length());
       CodeCompletionHandlerBase.lookupItemSelected(CompletionProgressIndicator.this, item, event.getCompletionChar(), myLookup.getItems());
     }
 

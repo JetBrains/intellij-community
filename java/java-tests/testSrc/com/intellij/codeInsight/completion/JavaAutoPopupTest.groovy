@@ -42,6 +42,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
+import com.intellij.openapi.editor.LogicalPosition
 
 /**
  * @author peter
@@ -1067,6 +1068,30 @@ class LiveComplete {
     myFixture.configureByText "a.java", "class Foo { void foo(Foo<caret>[] a) { }; class Bar {}}"
     type '.'
     assert !lookup
+  }
+
+  public void testBlockSelection() {
+    myFixture.configureByText "a.java", """
+class Foo {{
+  <caret>t;
+  t;
+}}"""
+    def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+    edt { myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1)) }
+    type 'toStr'
+    assert lookup
+    type '\n'
+    myFixture.checkResult '''
+class Foo {{
+  toString();
+  toString()<caret>;
+}}'''
+
+    def start = myFixture.editor.selectionModel.blockStart
+    def end = myFixture.editor.selectionModel.blockEnd
+    assert start.line == end.line - 1
+    assert start.column == end.column
+    assert end == myFixture.editor.caretModel.logicalPosition
   }
 
 

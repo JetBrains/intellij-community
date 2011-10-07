@@ -36,9 +36,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -611,7 +609,86 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(indicator, item);
 
     final Editor editor = indicator.getEditor();
-    final int caretOffset = editor.getCaretModel().getOffset();
+
+    WatchingInsertionContext context = null;
+    if (editor.getSelectionModel().hasBlockSelection() && editor.getSelectionModel().getBlockSelectionEnds().length > 0) {
+      List<RangeMarker> insertionPoints = new ArrayList<RangeMarker>();
+      for (int endOffset : editor.getSelectionModel().getBlockSelectionEnds()) {
+        insertionPoints.add(editor.getDocument().createRangeMarker(endOffset, endOffset));
+      }
+
+      List<RangeMarker> caretsAfter = new ArrayList<RangeMarker>();
+      for (RangeMarker insertionPoint : insertionPoints) {
+        if (insertionPoint.isValid()) {
+          context = insertItem(indicator, item, completionChar, items, update, editor, insertionPoint.getStartOffset());
+          int offset = editor.getCaretModel().getOffset();
+          caretsAfter.add(editor.getDocument().createRangeMarker(offset, offset));
+        }
+      }
+      assert context != null;
+
+      restoreBlockSelection(editor, caretsAfter);
+
+      for (RangeMarker insertionPoint : insertionPoints) {
+        insertionPoint.dispose();
+      }
+      for (RangeMarker marker : caretsAfter) {
+        marker.dispose();
+      }
+      
+    } else {
+      context = insertItem(indicator, item, completionChar, items, update, editor, editor.getCaretModel().getOffset());
+    }
+
+    final Runnable runnable = context.getLaterRunnable();
+    if (runnable != null) {
+      final Runnable runnable1 = new Runnable() {
+        public void run() {
+          if (!indicator.getProject().isDisposed()) {
+            runnable.run();
+          }
+          indicator.disposeOffsetMaps();
+        }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable1.run();
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(runnable1);
+      }
+    }
+    else {
+      indicator.disposeOffsetMaps();
+    }
+  }
+
+  private static void restoreBlockSelection(Editor editor, List<RangeMarker> caretsAfter) {
+    int column = -1;
+    int minLine = Integer.MAX_VALUE;
+    int maxLine = -1;
+    for (RangeMarker marker : caretsAfter) {
+      if (marker.isValid()) {
+        LogicalPosition lp = editor.offsetToLogicalPosition(marker.getStartOffset());
+        if (column == -1) {
+          column = lp.column;
+        } else if (column != lp.column) {
+          return;
+        }
+        minLine = Math.min(minLine, lp.line);
+        maxLine = Math.max(maxLine, lp.line);
+      }
+    }
+    editor.getSelectionModel().setBlockSelection(new LogicalPosition(minLine, column), new LogicalPosition(maxLine, column));
+  }
+
+  private static WatchingInsertionContext insertItem(final CompletionProgressIndicator indicator,
+                                                     final LookupElement item,
+                                                     final char completionChar,
+                                                     List<LookupElement> items,
+                                                     final CompletionLookupArranger.StatisticsUpdate update,
+                                                     final Editor editor, final int caretOffset) {
+    editor.getCaretModel().moveToOffset(caretOffset);
+    indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, caretOffset - item.getLookupString().length());
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
 
     final WatchingInsertionContext context = new WatchingInsertionContext(indicator, completionChar, items, editor);
@@ -635,7 +712,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           if (tailOffset < 0) {
             LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass());
             tailOffset = editor.getCaretModel().getOffset();
-          } else {
+          }
+          else {
             editor.getCaretModel().moveToOffset(tailOffset);
           }
           if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
@@ -646,7 +724,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                 processor.process(project, editor, indicator.getParameters().getOriginalFile());
               }
             }
-          } else {
+          }
+          else {
             DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
             EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
           }
@@ -656,26 +735,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         CompletionLookupArranger.trackStatistics(context, update);
       }
     });
-    final Runnable runnable = context.getLaterRunnable();
-    if (runnable != null) {
-      final Runnable runnable1 = new Runnable() {
-        public void run() {
-          if (!context.getProject().isDisposed()) {
-            runnable.run();
-          }
-          indicator.disposeOffsetMaps();
-        }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable1.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable1);
-      }
-    }
-    else {
-      indicator.disposeOffsetMaps();
-    }
+    return context;
   }
 
   public boolean startInWriteAction() {

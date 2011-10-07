@@ -741,20 +741,37 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       lookupString = handleCaseInsensitiveVariant(prefix, lookupString);
     }
 
-    EditorModificationUtil.deleteSelectedText(myEditor);
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    int lookupStart = caretOffset - prefix.length();
+    if (myEditor.getSelectionModel().hasBlockSelection()) {
+      LogicalPosition blockStart = myEditor.getSelectionModel().getBlockStart();
+      LogicalPosition blockEnd = myEditor.getSelectionModel().getBlockEnd();
+      assert blockStart != null && blockEnd != null;
 
-    int len = myEditor.getDocument().getTextLength();
-    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
-    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
+      for (int line = blockStart.line; line <= blockEnd.line; line++) {
+        myEditor.getDocument().replaceString(myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column)) - prefix.length(),
+                                             myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column)),
+                                             lookupString);
+      }
+      LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix.length());
+      LogicalPosition end = new LogicalPosition(blockEnd.line, start.column + lookupString.length());
+      myEditor.getSelectionModel().setBlockSelection(start, end);
+      myEditor.getCaretModel().moveToLogicalPosition(end);
+    } else {
+      EditorModificationUtil.deleteSelectedText(myEditor);
+      final int caretOffset = myEditor.getCaretModel().getOffset();
+      int lookupStart = caretOffset - prefix.length();
+  
+      int len = myEditor.getDocument().getTextLength();
+      LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+      LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
+  
+      myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
+  
+      int offset = lookupStart + lookupString.length();
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getSelectionModel().removeSelection();
+    }
 
-    myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
-
-    int offset = lookupStart + lookupString.length();
-    myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
   }
 
   private static String handleCaseInsensitiveVariant(final String prefix, @NotNull final String lookupString) {
