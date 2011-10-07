@@ -77,7 +77,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   protected static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
 
-  public static SuggestedNameInfo getSuggestedName(PsiType type, final PsiExpression expression) {
+  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, @NotNull final PsiExpression expression) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
     final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, type);
     final String[] strings = JavaCompletionUtil

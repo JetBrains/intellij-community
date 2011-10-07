@@ -221,7 +221,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
     @Override
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
-      if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+      if (Registry.is("ide.mac.useNativeClipboard") && content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
         try {
           String stringData = (String) content.getTransferData(DataFlavor.stringFlavor);
           myFullTransferable = Pair.create(stringData, content);
@@ -252,21 +252,21 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           IntegerType count = Foundation.invoke(types, "count");
 
           ID plainTextType = null;
-          ID vmObjectType = null;
 
           for (int i = 0; i < count.intValue(); i++) {
             ID each = Foundation.invoke(types, "objectAtIndex:", i);
             String eachType = Foundation.toStringViaUTF8(each);
             if (plainText.equals(eachType)) {
               plainTextType = each;
-            }
-
-            if (eachType != null && eachType.contains(jvmObject)) {
-              vmObjectType = each;
+              break;
             }
           }
 
-          if (vmObjectType != null && plainTextType != null) {
+          // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
+          // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects 
+          // into clipboard) 
+          
+          if (plainTextType != null) {
             ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
             String value = Foundation.toStringViaUTF8(text);
             if (value == null) {

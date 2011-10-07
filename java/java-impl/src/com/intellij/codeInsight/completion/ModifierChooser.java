@@ -16,19 +16,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.classes.InterfaceFilter;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,12 +37,42 @@ import java.util.Map;
  */
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class ModifierChooser
- implements KeywordChooser{
-  private static final Map<ElementFilter, String[][]> myMap = new HashMap<ElementFilter, String[][]>();
+public class ModifierChooser {
 
-  static {
-    myMap.put(new NotFilter(new InterfaceFilter()), new String[][]{
+  static String[] getKeywords(@NotNull PsiElement position) {
+    final PsiModifierList list = findModifierList(position);
+    if (list == null && !shouldSuggestModifiers(position)) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    PsiElement scope = position.getParent();
+    while (scope != null) {
+      if (scope instanceof PsiJavaFile) {
+        return addClassModifiers(list);
+      }
+      if (scope instanceof PsiClass) {
+        return addMemberModifiers(list, ((PsiClass)scope).isInterface());
+      }
+
+      scope = scope.getParent();
+      if (scope instanceof PsiDirectory) break;
+    }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  public static String[] addClassModifiers(PsiModifierList list) {
+    return addKeywords(list, new String[][]{
+      new String[]{"public"},
+      new String[]{"final", "abstract"}
+    });
+  }
+
+  public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface) {
+    return addKeywords(list, inInterface ? new String[][]{
+      new String[]{"public", "protected"},
+      new String[]{"static"},
+      new String[]{"final"}
+    } : new String[][]{
       new String[]{"public", "protected", "private"},
       new String[]{"static"},
       new String[]{"final", "abstract"},
@@ -54,128 +82,62 @@ public class ModifierChooser
       new String[]{"volatile"},
       new String[]{"transient"}
     });
-
-    myMap.put(new InterfaceFilter(), new String[][]{
-      new String[]{"public", "protected"},
-      new String[]{"static"},
-      new String[]{"final"}
-    });
-
-
-    myMap.put(new ClassFilter(PsiJavaFile.class), new String[][]{
-      new String[]{"public"},
-      new String[]{"final", "abstract"}
-    });
-
-    myMap.put(new ClassFilter(PsiParameterList.class), new String[][]{
-      new String[]{"final"}
-    });
   }
 
-  public String[] getKeywords(CompletionContext context, PsiElement position) {
-    if (JavaCompletionData.INSIDE_SWITCH.isAcceptable(position, position)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
+  private static String[] addKeywords(PsiModifierList list, String[][] keywordSets) {
     final List<String> ret = new ArrayList<String>();
-    try {
-      PsiElement scope;
-
-      if (position == null) {
-        scope = context.file;
-      }
-      else {
-        scope = position.getParent();
-      }
-
-      final PsiModifierList list = getModifierList(position);
-
-      scopes:
-      while (scope != null) {
-        for (final Object o : myMap.keySet()) {
-          final ElementFilter filter = (ElementFilter)o;
-          if (filter.isClassAcceptable(scope.getClass()) && filter.isAcceptable(scope, scope.getParent())) {
-            final String[][] keywordSets = myMap.get(filter);
-            for (int i = 0; i < keywordSets.length; i++) {
-              final String[] keywords = keywordSets[keywordSets.length - i - 1];
-              boolean containModifierFlag = false;
-              if (list != null) {
-                for (@Modifier String keyword : keywords) {
-                  if (list.hasExplicitModifier(keyword)) {
-                    containModifierFlag = true;
-                    break;
-                  }
-                }
-              }
-              if (!containModifierFlag) {
-                ContainerUtil.addAll(ret, keywords);
-              }
-            }
-            break scopes;
+    for (int i = 0; i < keywordSets.length; i++) {
+      final String[] keywords = keywordSets[keywordSets.length - i - 1];
+      boolean containModifierFlag = false;
+      if (list != null) {
+        for (@Modifier String keyword : keywords) {
+          if (list.hasExplicitModifier(keyword)) {
+            containModifierFlag = true;
+            break;
           }
         }
-        scope = scope.getParent();
-        if (scope instanceof JspClassLevelDeclarationStatement) {
-          scope = scope.getContext();
-        }
-        if (scope instanceof PsiDirectory) break;
       }
-    }
-    catch (Exception e) {
+      if (!containModifierFlag) {
+        ContainerUtil.addAll(ret, keywords);
+      }
     }
     return ArrayUtil.toStringArray(ret);
   }
 
-  private static PsiModifierList getModifierList(PsiElement element)
-  throws Exception{
-    if(element == null){
-      return null;
-    }
-    if(element.getParent() instanceof PsiModifierList)
+  @Nullable
+  public static PsiModifierList findModifierList(@NotNull PsiElement element) {
+    if(element.getParent() instanceof PsiModifierList) {
       return (PsiModifierList)element.getParent();
-
-    final PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
-
-    if(prev != null) {
-      final PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prev, PsiModifierList.class);
-      if(modifierList != null){
-        return modifierList;
-      }
     }
 
+    return PsiTreeUtil.getParentOfType(FilterPositionUtil.searchNonSpaceNonCommentBack(element), PsiModifierList.class);
+  }
+
+  private static boolean shouldSuggestModifiers(PsiElement element) {
     PsiElement parent = element.getParent();
     while(parent != null && (parent instanceof PsiJavaCodeReferenceElement
-      || parent instanceof PsiErrorElement || parent instanceof PsiTypeElement
-      || parent instanceof PsiMethod || parent instanceof PsiVariable
-      || parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList
-      || parent instanceof PsiDocComment
-      || element.getText().equals(parent.getText()))){
+                             || parent instanceof PsiErrorElement || parent instanceof PsiTypeElement
+                             || parent instanceof PsiMethod || parent instanceof PsiVariable
+                             || parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList
+                             || parent instanceof PsiDocComment
+                             || element.getText().equals(parent.getText()))){
       parent = parent.getParent();
       if (parent instanceof JspClassLevelDeclarationStatement) {
         parent = parent.getContext();
       }
     }
 
-    if(parent == null) throw new Exception();
-    for (final Object o : myMap.keySet()) {
-      final ElementFilter filter = (ElementFilter)o;
-      if (filter.isClassAcceptable(parent.getClass()) && filter.isAcceptable(parent, parent.getParent())) {
-        if (parent instanceof PsiParameterList) {
-          if (prev == null || Arrays.asList(new String[]{"(", ","}).contains(prev.getText())
-              || Arrays.asList(new String[]{"(", ","}).contains(element.getText())) {
-            return null;
-          }
-        }
-        else if (prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent())) {
-          return null;
-        }
+    if(parent == null) return false;
+
+    PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
+
+    if (parent instanceof PsiJavaFile || parent instanceof PsiClass) {
+      if (prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent())) {
+        return true;
       }
     }
 
-    throw new Exception("Can't find modifier list");
+    return false;
   }
 
-  public String toString(){
-    return "modifier-chooser";
-  }
 }

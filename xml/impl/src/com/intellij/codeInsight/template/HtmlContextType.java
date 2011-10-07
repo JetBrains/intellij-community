@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +39,4 @@ public class HtmlContextType extends FileTypeBasedContextType {
   static boolean isMyLanguage(Language language) {
     return language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE);
   }
-
-  @Override
-  public boolean isInContext(@NotNull final FileType fileType) {
-    return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
-  }
-
 }

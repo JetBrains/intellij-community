@@ -91,8 +91,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   public void setCompilerOutputUrl(String compilerOutputUrl) {
-    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance()
-        .create(compilerOutputUrl, myProject, ProjectRootManagerImpl.getInstanceImpl(myProject).getVirtualFilePointerListener());
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
     setCompilerOutputPointer(pointer);
     final LocalFileSystem.WatchRequest watchRequest =
       LocalFileSystem.getInstance().addRootToWatch(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl), true);

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMember;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -33,8 +32,6 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     final String fileName = directory + getTestName(true) + "." + getExtension();
     myFixture.addFileToProject(fileName, stringList.get(0));
     myFixture.configureByFile(fileName);
-
-    CompositeCompletionData.restrictCompletion(addReferenceVariants(), addKeywords());
 
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = false;
@@ -75,7 +72,6 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
       CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = old;
-      CompositeCompletionData.restrictCompletion(true, true);
     }
     assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result);
   }

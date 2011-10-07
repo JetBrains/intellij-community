@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitVcs;
@@ -61,37 +62,69 @@ public class StructureFilterAction extends BasePopupAction {
         if (vcsStructureChooser.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) return;
         final Collection<VirtualFile> files = vcsStructureChooser.getSelectedFiles();
         final Map<VirtualFile,String> modulesSet = vcsStructureChooser.getModulesSet();
-        String text;
-        if (files.size() == 1) {
-          final VirtualFile file = files.iterator().next();
-          final String module = modulesSet.get(file);
-          text = module == null ? file.getName() : module;
-        }
-        else {
-          text = FILTER;
-        }
-        text = text.length() > 20 ? FILTER : text;
+        final String text = getText(files, modulesSet);
+        final String toolTip = getTooltip(files, modulesSet);
+        myPanel.setToolTipText(wrapTooltip(toolTip));
         myLabel.setText(text);
-
-        final String toolTip;
-        final StringBuilder sb = new StringBuilder();
-        for (VirtualFile file : files) {
-          sb.append("<br><b>");
-          final String module = modulesSet.get(file);
-          final String name = module == null ? file.getName() : module;
-          sb.append(name).append("</b> (").append(file.getPath()).append(")");
-        }
-        toolTip = sb.toString();
-        myPanel.setToolTipText("<html><b>" + STRUCTURE + "</b><br>" + toolTip + "</html>");
         structureFilterI.select(files);
       }
     };
     myLabel.setText(ALL);
   }
 
+  private String wrapTooltip(String toolTip) {
+    return "<html><b>" + STRUCTURE + "</b><br>" + toolTip + "</html>";
+  }
+
+  private String getTooltip(Collection<VirtualFile> files, Map<VirtualFile, String> modulesSet) {
+    String toolTip;
+    final StringBuilder sb = new StringBuilder();
+    for (VirtualFile file : files) {
+      sb.append("<br><b>");
+      final String module = modulesSet.get(file);
+      final String name = module == null ? file.getName() : module;
+      sb.append(name).append("</b> (").append(file.getPath()).append(")");
+    }
+    toolTip = sb.toString();
+    return toolTip;
+  }
+
+  private String getText(Collection<VirtualFile> files, Map<VirtualFile, String> modulesSet) {
+    String text;
+    if (files.size() == 1) {
+      final VirtualFile file = files.iterator().next();
+      final String module = modulesSet.get(file);
+      text = module == null ? file.getName() : module;
+    }
+    else {
+      text = FILTER;
+    }
+    text = text.length() > 20 ? FILTER : text;
+    return text;
+  }
+
   @Override
   protected void createActions(Consumer<AnAction> actionConsumer) {
     actionConsumer.consume(myAll);
     actionConsumer.consume(mySelect);
+  }
+
+  public void setPreset() {
+    final Collection<VirtualFile> selected = myStructureFilterI.getSelected();
+
+    if (myStructureFilterI.isAllSelected()) {
+      myLabel.setText(ALL);
+      myPanel.setToolTipText(STRUCTURE + " " + ALL);
+    } else {
+      final VcsStructureChooser vcsStructureChooser =
+        new VcsStructureChooser(GitVcs.getInstance(myProject), "Select folders to filter by", myStructureFilterI.getSelected(),
+                                myStructureFilterI.getRoots());
+      final Map<VirtualFile,String> modulesSet = vcsStructureChooser.getModulesSet();
+      final String text = getText(selected, modulesSet);
+      final String toolTip = getTooltip(selected, modulesSet);
+      myPanel.setToolTipText(wrapTooltip(toolTip));
+      myLabel.setText(text);
+      Disposer.dispose(vcsStructureChooser.getDisposable());
+    }
   }
 }

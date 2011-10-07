@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="GeneralSettings">
+    <option name="browserPath" value="open" />
+    <option name="lastTip" value="2" />
+    <option name="showTipsOnStartup" value="false" />
+    <option name="showOccupiedMemory" value="false" />
+    <option name="reopenLastProject" value="true" />
+    <option name="autoSyncFiles" value="true" />
+    <option name="autoSaveFiles" value="true" />
+    <option name="autoSaveIfInactive" value="false" />
+    <option name="inactiveTimeout" value="15" />
+    <option name="useDefaultBrowser" value="true" />
+    <option name="confirmExtractFiles" value="true" />
+    <option name="searchInBackground" value="false" />
+    <option name="confirmExit" value="true" />
+    <option name="confirmOpenNewProject" value="-1" />
+  </component>
+</application>
+

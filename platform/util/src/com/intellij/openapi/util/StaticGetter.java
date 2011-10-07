@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.codeInsight.completion;
-
-import com.intellij.psi.PsiElement;
+package com.intellij.openapi.util;
 
 /**
- * @author ik
+ * Created by IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 9/30/11
+ * Time: 1:18 PM
  */
-public interface KeywordChooser{
-  String[] getKeywords(CompletionContext context, PsiElement position);
+public class StaticGetter<T> implements Getter<T> {
+  private final T myT;
+
+  public StaticGetter(T t) {
+    myT = t;
+  }
+
+  @Override
+  public T get() {
+    return myT;
+  }
 }

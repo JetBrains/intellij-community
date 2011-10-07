@@ -50,9 +50,23 @@ class FrameDiffTool implements DiffTool {
       final DialogBuilder builder = new DialogBuilder(request.getProject());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow(), builder);
       if (diffPanel == null) return;
+      if (hints.contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
+        diffPanel.setPatchAppliedApproximately(); // todo read only and not variants
+      }
+      final Runnable onOkRunnable = request.getOnOkRunnable();
+      if (onOkRunnable != null){
+        builder.setOkOperation(new Runnable() {
+          @Override
+          public void run() {
+            builder.getDialogWrapper().close(0);
+            onOkRunnable.run();
+          }
+        });
+      } else {
+        builder.removeAllActions();
+      }
       builder.setCenterPanel(diffPanel.getComponent());
       builder.setPreferedFocusComponent(diffPanel.getPreferredFocusedComponent());
-      builder.removeAllActions();
       builder.setTitle(request.getWindowTitle());
       builder.setDimensionServiceKey(request.getGroupKey());
 
@@ -68,8 +82,11 @@ class FrameDiffTool implements DiffTool {
       final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame(), frameWrapper);
       if (diffPanel == null) return;
+      if (hints.contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
+        diffPanel.setPatchAppliedApproximately();
+      }
       frameWrapper.setTitle(request.getWindowTitle());
-      DiffUtil.initDiffFrame(frameWrapper, diffPanel);
+      DiffUtil.initDiffFrame(frameWrapper, diffPanel, diffPanel.getComponent());
 
       new AnAction() {
         public void actionPerformed(final AnActionEvent e) {
@@ -81,6 +98,34 @@ class FrameDiffTool implements DiffTool {
       frameWrapper.show();
     }
   }
+
+  /*public static void createEditableDiffFrame(final DiffRequest request) {
+    final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
+    DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame(), frameWrapper);
+    if (diffPanel == null) return;
+    diffPanel.setPatchAppliedApproximately();
+
+    frameWrapper.setTitle(request.getWindowTitle());
+
+    final DialogBuilder builder = new DialogBuilder(request.getProject());
+    builder.setCenterPanel(diffPanel.getComponent());
+    builder.setPreferedFocusComponent(diffPanel.getPreferredFocusedComponent());
+
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(builder.getCenterPanel(), BorderLayout.CENTER);
+    panel.add(builder.getDialogWrapper().get);
+
+    DiffUtil.initDiffFrame(frameWrapper, diffPanel);
+
+    new AnAction() {
+      public void actionPerformed(final AnActionEvent e) {
+        frameWrapper.getFrame().dispose();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
+                                diffPanel.getComponent());
+
+    frameWrapper.show();
+  }*/
 
   @Nullable
   private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable) {

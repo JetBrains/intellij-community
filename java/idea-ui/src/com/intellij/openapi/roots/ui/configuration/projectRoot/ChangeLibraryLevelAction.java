@@ -61,14 +61,14 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
     final ProjectStructureElement selectedElement = mySourceConfigurable.getSelectedElement();
     if (!(selectedElement instanceof LibraryProjectStructureElement)) return;
     final StructureConfigurableContext context = mySourceConfigurable.myContext;
-    final Library originalLibrary = ((LibraryProjectStructureElement)selectedElement).getLibrary();
-    final LibraryEx oldLibrary = (LibraryEx)context.getLibrary(originalLibrary.getName(), mySourceConfigurable.getLevel());
+    final LibraryProjectStructureElement libraryElement = (LibraryProjectStructureElement)selectedElement;
+    final LibraryEx oldLibrary = (LibraryEx)context.getLibrary(libraryElement.getLibrary().getName(), mySourceConfigurable.getLevel());
     LOG.assertTrue(oldLibrary != null);
     final Library newLibrary = doCopy(oldLibrary);
     if (newLibrary == null) return;
 
     final ModulesConfigurator configurator = context.getModulesConfigurator();
-    final Collection<ProjectStructureElementUsage> usages = context.getDaemonAnalyzer().getUsages(selectedElement);
+    final Collection<ProjectStructureElementUsage> usages = context.getDaemonAnalyzer().getUsages(libraryElement);
     for (ProjectStructureElementUsage usage : usages) {
       if (usage instanceof UsageInModuleClasspath) {
         final Module module = ((UsageInModuleClasspath)usage).getModule();
@@ -80,16 +80,14 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
         }
       }
       else if (usage instanceof UsageInArtifact) {
-        final PackagingElement<?> libraryElement = PackagingElementFactory.getInstance().createLibraryFiles(newLibrary.getName(),
-                                                                                                            newLibrary.getTable().getTableLevel(), null);
-        ((UsageInArtifact)usage).replaceElement(libraryElement);
+        final PackagingElement<?> newLibraryElement = PackagingElementFactory.getInstance().createLibraryFiles(newLibrary.getName(),
+                                                                                                               newLibrary.getTable().getTableLevel(), null);
+        ((UsageInArtifact)usage).replaceElement(newLibraryElement);
       }
     }
 
     if (!myCopy) {
-      mySourceConfigurable.getModelProvider().getModifiableModel().removeLibrary(originalLibrary);
-      context.getDaemonAnalyzer().removeElement(selectedElement);
-      mySourceConfigurable.removeLibraryNode(originalLibrary);
+      mySourceConfigurable.removeLibrary(libraryElement);
     }
     ProjectStructureConfigurable.getInstance(myProject).selectProjectOrGlobalLibrary(newLibrary, true);
   }

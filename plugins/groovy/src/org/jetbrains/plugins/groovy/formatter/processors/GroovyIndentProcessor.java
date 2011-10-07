@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
@@ -112,6 +113,9 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     if (psiParent instanceof GrExpression) {
       return getExpressionIndent(psiParent, child);
     }
+    if (psiParent instanceof GrVariable && child.getPsi() == ((GrVariable)psiParent).getInitializerGroovy()) {
+      return Indent.getNormalIndent();
+    }
 
     //For parameter lists
     if (psiParent instanceof GrParameterList ||
@@ -136,6 +140,10 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
         psiParent instanceof GrDocTag &&
             child.getElementType() != mGDOC_TAG_NAME) {
       return Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
+    }
+
+    if (psiParent instanceof GrNamedArgument && child.getPsi() == ((GrNamedArgument)psiParent).getExpression()) {
+      return Indent.getContinuationIndent();
     }
 
     if (child.getPsi() instanceof GrVariable && psiParent instanceof GrVariableDeclaration) {

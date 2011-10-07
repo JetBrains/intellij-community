@@ -37,10 +37,20 @@ import org.jetbrains.annotations.Nullable;
 public class PsiTypeLookupItem extends LookupItem {
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
   private final boolean myDiamond;
+  private boolean myIndicateAnonymous;
 
   private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond) {
     super(o, lookupString);
     myDiamond = diamond;
+  }
+
+
+  public void setIndicateAnonymous(boolean indicateAnonymous) {
+    myIndicateAnonymous = indicateAnonymous;
+  }
+
+  public boolean isIndicateAnonymous() {
+    return myIndicateAnonymous;
   }
 
   @Override

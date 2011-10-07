@@ -19,6 +19,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +42,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
     else if (current instanceof Object[]) {
       Object[] curArr = (Object[])current;
-      int size = curArr.length;
-      Object[] newArr = new Object[size + 1];
-      System.arraycopy(curArr, 0, newArr, 0, size);
-      newArr[size] = value;
-
+      Object[] newArr = ArrayUtil.append(curArr, value, ArrayUtil.OBJECT_ARRAY_FACTORY);
       myMap.put(key, newArr);
     }
     else {
@@ -105,5 +104,17 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
 
     return Collections.singleton((V)value);
+  }
+
+  @Override
+  public String toString() {
+    return "{" + StringUtil.join(myMap.entrySet(), new Function<Map.Entry<K, Object>, String>() {
+      @Override
+      public String fun(Map.Entry<K, Object> entry) {
+        Object value = entry.getValue();
+        String s = (value instanceof Object[] ? Arrays.asList((Object[])value) : Arrays.asList(value)).toString();
+        return entry.getKey() + ": " + s;
+      }
+    }, "; ") + "}";
   }
 }

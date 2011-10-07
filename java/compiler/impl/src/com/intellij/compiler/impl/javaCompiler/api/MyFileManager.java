@@ -54,7 +54,7 @@ class MyFileManager implements StandardJavaFileManager {
     List<JavaFileObject> result = new ArrayList<JavaFileObject>(size);
 
     for (File file : files) {
-      JavaFileObject fileObject = new JavaVirtualByIoFile(file, JavaFileObject.Kind.SOURCE);
+      JavaFileObject fileObject = new JavaIoFile(file, JavaFileObject.Kind.SOURCE);
       result.add(fileObject);
     }
 
@@ -118,10 +118,8 @@ class MyFileManager implements StandardJavaFileManager {
           if (results == null) results = new SmartList<JavaFileObject>();
           if (kind == JavaFileObject.Kind.SOURCE && child.getFileSystem() instanceof JarFileSystem) continue;  //for some reasdon javac looks for java files inside jar
 
-          // do not use VFS to read .class content
-          JavaFileObject fileObject =
-            kind == JavaFileObject.Kind.CLASS && child.getFileSystem() == LocalFileSystem.getInstance() ?
-            new JavaIoFile(new File(child.getPath()), kind) : new JavaVirtualFile(child, kind);
+          // use VFS to read content inside .jar
+          JavaFileObject fileObject = !child.getPath().contains("!/") ? new JavaIoFile(new File(child.getPath()), kind) : new JavaVirtualFile(child, kind);
           results.add(fileObject);
         }
       }
@@ -201,7 +199,7 @@ class MyFileManager implements StandardJavaFileManager {
 
   @Override
   public boolean isSameFile(FileObject a, FileObject b) {
-    if ((a instanceof FileVirtualObject && b instanceof FileVirtualObject) || (a instanceof Output && b instanceof Output)) {
+    if (a instanceof FileVirtualObject && b instanceof FileVirtualObject || a instanceof Output && b instanceof Output) {
       return a.equals(b);
     }
     return myStandardFileManager.isSameFile(a, b);

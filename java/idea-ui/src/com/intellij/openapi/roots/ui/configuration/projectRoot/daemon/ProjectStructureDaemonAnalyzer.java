@@ -26,6 +26,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private final MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> mySourceElement2Usages = new MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage>();
   private final MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> myContainingElement2Usages = new MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage>();
   private final Set<ProjectStructureElement> myElementWithNotCalculatedUsages = new HashSet<ProjectStructureElement>();
+  private final Set<ProjectStructureElement> myElementsToShowWarningIfUnused = new HashSet<ProjectStructureElement>();
+  private final Map<ProjectStructureElement, ProjectStructureProblemDescription> myWarningsAboutUnused = new HashMap<ProjectStructureElement, ProjectStructureProblemDescription>();
   private final MergingUpdateQueue myAnalyzerQueue;
   private final EventDispatcher<ProjectStructureDaemonAnalyzerListener> myDispatcher = EventDispatcher.create(ProjectStructureDaemonAnalyzerListener.class);
   private final AtomicBoolean myStopped = new AtomicBoolean(false);
@@ -71,6 +73,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         if (LOG.isDebugEnabled()) {
           LOG.debug("updating problems for " + element);
         }
+        final ProjectStructureProblemDescription warning = myWarningsAboutUnused.get(element);
+        if (warning != null)
+          problemsHolder.registerProblem(warning);
         myProblemHolders.put(element, problemsHolder);
         myDispatcher.getMulticaster().problemsChanged(element);
       }
@@ -108,6 +113,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       addUsage(usage);
     }
     myElementWithNotCalculatedUsages.remove(element);
+    reportUnusedElements();
   }
 
   private static void invokeLater(Runnable runnable) {
@@ -125,11 +131,16 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     if (collectUsages) {
       myElementWithNotCalculatedUsages.add(element);
     }
+    if (element.shouldShowWarningIfUnused()) {
+      myElementsToShowWarningIfUnused.add(element);
+    }
     myAnalyzerQueue.queue(new AnalyzeElementUpdate(element, check, collectUsages));
   }
 
   public void removeElement(ProjectStructureElement element) {
     myElementWithNotCalculatedUsages.remove(element);
+    myElementsToShowWarningIfUnused.remove(element);
+    myWarningsAboutUnused.remove(element);
     myProblemHolders.remove(element);
     final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.removeAll(element);
     if (usages != null) {
@@ -139,10 +150,42 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
     removeUsagesInElement(element);
     myDispatcher.getMulticaster().problemsChanged(element);
+    reportUnusedElements();
+  }
+
+  private void reportUnusedElements() {
+    if (!myElementWithNotCalculatedUsages.isEmpty()) return;
+
+    for (ProjectStructureElement element : myElementsToShowWarningIfUnused) {
+      final ProjectStructureProblemDescription warning;
+      final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.get(element);
+      if (usages == null || usages.isEmpty()) {
+        warning = element.createUnusedElementWarning();
+      }
+      else {
+        warning = null;
+      }
+
+      final ProjectStructureProblemDescription old = myWarningsAboutUnused.put(element, warning);
+      ProjectStructureProblemsHolderImpl holder = myProblemHolders.get(element);
+      if (holder == null) {
+        holder = new ProjectStructureProblemsHolderImpl();
+        myProblemHolders.put(element, holder);
+      }
+      if (old != null) {
+        holder.removeProblem(old);
+      }
+      if (warning != null) {
+        holder.registerProblem(warning);
+      }
+      if (old != null || warning != null) {
+        myDispatcher.getMulticaster().problemsChanged(element);
+      }
+    }
   }
 
   public boolean isUnused(ProjectStructureElement element) {
-    if (!element.highlightIfUnused()) {
+    if (!element.shouldShowWarningIfUnused()) {
       return false;
     }
     if (!myElementWithNotCalculatedUsages.isEmpty()) {
@@ -179,9 +222,18 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myProblemHolders.clear();
   }
 
-  public void clearAllProblems() {
+  public void queueUpdateForAllElementsWithErrors() {
+    List<ProjectStructureElement> toUpdate = new ArrayList<ProjectStructureElement>();
+    for (Map.Entry<ProjectStructureElement, ProjectStructureProblemsHolderImpl> entry : myProblemHolders.entrySet()) {
+      if (entry.getValue().containProblems()) {
+        toUpdate.add(entry.getKey());
+      }
+    }
     myProblemHolders.clear();
-    myDispatcher.getMulticaster().allProblemsChanged();
+    LOG.debug("Adding to queue updates for " + toUpdate.size() + " problematic elements");
+    for (ProjectStructureElement element : toUpdate) {
+      queueUpdate(element);
+    }
   }
 
   public void dispose() {

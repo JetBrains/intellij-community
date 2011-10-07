@@ -63,17 +63,20 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private final VirtualFile myBaseDirectory;
   private final List<FilePatch> myPatches;
   private final CustomBinaryPatchApplier<BinaryType> myCustomForBinaries;
+  private final CommitContext myCommitContext;
   private final Consumer<List<FilePath>> myToTargetListsMover;
   private final List<FilePatch> myRemainingPatches;
   private final PathsVerifier<BinaryType> myVerifier;
 
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
-                      @Nullable final Consumer<List<FilePath>> toTargetListsMover, final CustomBinaryPatchApplier<BinaryType> customForBinaries) {
+                      @Nullable final Consumer<List<FilePath>> toTargetListsMover, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
+                      final CommitContext commitContext) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
     myToTargetListsMover = toTargetListsMover;
     myCustomForBinaries = customForBinaries;
+    myCommitContext = commitContext;
     myRemainingPatches = new ArrayList<FilePatch>();
     myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
       @Nullable
@@ -89,8 +92,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
-                        final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries) {
-    this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries);
+                        final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
+                        final CommitContext commitContext) {
+    this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries, commitContext);
   }
 
   @Nullable
@@ -255,7 +259,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
             try {
               markInternalOperation(textPatches, true);
 
-              final ApplyPatchStatus status = actualApply(myVerifier);
+              final ApplyPatchStatus status = actualApply(myVerifier, myCommitContext);
 
               if (status != null) {
                 refStatus.set(status);
@@ -323,16 +327,16 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   @Nullable
-  private ApplyPatchStatus actualApply(final PathsVerifier<BinaryType> verifier) {
+  private ApplyPatchStatus actualApply(final PathsVerifier<BinaryType> verifier, final CommitContext commitContext) {
     final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = verifier.getTextPatches();
     final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     ApplyPatchStatus status = null;
 
     try {
-      status = applyList(textPatches, context, status);
+      status = applyList(textPatches, context, status, commitContext);
 
       if (myCustomForBinaries == null) {
-        status = applyList(verifier.getBinaryPatches(), context, status);
+        status = applyList(verifier.getBinaryPatches(), context, status, commitContext);
       } else {
         final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> binaryPatches = verifier.getBinaryPatches();
         ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
@@ -359,10 +363,12 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
-  private <V extends FilePatch, T extends ApplyFilePatchBase<V>> ApplyPatchStatus applyList(final List<Pair<VirtualFile, T>> patches, final ApplyPatchContext context,
-                                     ApplyPatchStatus status) throws IOException {
+  private <V extends FilePatch, T extends ApplyFilePatchBase<V>> ApplyPatchStatus applyList(final List<Pair<VirtualFile, T>> patches,
+                                                                                            final ApplyPatchContext context,
+                                                                                            ApplyPatchStatus status,
+                                                                                            CommitContext commiContext) throws IOException {
     for (Pair<VirtualFile, T> patch : patches) {
-      ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst());
+      ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst(), commiContext);
       myVerifier.doMoveIfNeeded(patch.getFirst());
 
       status = ApplyPatchStatus.and(status, patchStatus);

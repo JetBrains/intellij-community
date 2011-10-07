@@ -85,9 +85,9 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public boolean isValid() {
     if (myIsDeleted) return false;
-    final PsiElement element = getElement();
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+        final PsiElement element = getElement();
         return element != null && element.isPhysical();
       }
     }).booleanValue();

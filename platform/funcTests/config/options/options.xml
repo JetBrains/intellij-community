@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="DimensionService">
+    <location key="OptionsEditor" x="650" y="367" />
+    <location key="FileChooserDialogImpl.2560.77.1280.1024" x="788" y="468" />
+    <location key="UiDebugger.2560.77.1280.1024" x="808" y="502" />
+  </component>
+  <component name="LafManager">
+    <laf class-name="com.apple.laf.AquaLookAndFeel" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="GoToFile.includeJavaFiles" value="false" />
+    <property name="Non-Project Files" value="Yellow" />
+    <property name="GoToClass.toSaveIncludeLibraries" value="false" />
+    <property name="installation.uid" value="71f7d0a1-58d7-42c0-bb43-b68572b43516" />
+    <property name="Tests" value="Green" />
+    <property name="MemberChooser.sorted" value="false" />
+    <property name="evlsprt3.6" value="18" />
+    <property name="file.colors.enable.tests" value="Green" />
+    <property name="MemberChooser.showClasses" value="true" />
+    <property name="file.colors.enable.non.project" value="Yellow" />
+    <property name="GoToClass.includeLibraries" value="false" />
+    <property name="MemberChooser.copyJavadoc" value="false" />
+  </component>
+</application>
+

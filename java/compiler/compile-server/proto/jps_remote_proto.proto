@@ -51,11 +51,20 @@ message Message {
     }
 
     message SetupCommand {
+
       message PathVariable {
         required string name = 1;
         required string value = 2;
       }
+
+      message GlobalLibrary {
+        required string name = 1;
+        optional string homePath = 2;
+        repeated string path = 3;
+      }
+
       repeated PathVariable path_variable = 1;
+      repeated GlobalLibrary global_library = 2;
     }
 
     message ReloadProjectCommand {
@@ -96,8 +105,11 @@ message Message {
       required Kind kind = 1;
       optional string text = 2;
       optional string source_file_path = 3;
-      optional uint32 line = 4;
-      optional uint32 column = 5;
+      optional uint64 problem_begin_offset = 4;
+      optional uint64 problem_end_offset = 5;
+      optional uint64 problem_location_offset = 6;
+      optional uint64 line = 7;
+      optional uint64 column = 8;
     }
 
     required Type response_type = 1;

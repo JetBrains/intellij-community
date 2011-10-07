@@ -2,10 +2,10 @@ package org.jetbrains.jpsservice.impl;
 
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.server.BuildParameters;
-import org.jetbrains.jps.server.BuildType;
-import org.jetbrains.jps.server.Facade;
-import org.jetbrains.jps.server.MessagesConsumer;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.server.*;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 import org.jetbrains.jpsservice.Server;
 
@@ -42,18 +42,30 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
     else {
       final JpsRemoteProto.Message.Request request = message.getRequest();
       final JpsRemoteProto.Message.Request.Type requestType = request.getRequestType();
+      final Facade facade = Facade.getInstance();
       switch (requestType) {
         case COMPILE_REQUEST :
           reply = startBuild(sessionId, ctx, request.getCompileRequest());
           break;
-
+        case RELOAD_PROJECT_COMMAND:
+          final JpsRemoteProto.Message.Request.ReloadProjectCommand reloadProjectCommand = request.getReloadProjectCommand();
+          facade.clearProjectCache(reloadProjectCommand.getProjectIdList());
+          break;
         case SETUP_COMMAND:
-          final Map<String, String> data = new HashMap<String, String>();
+          final Map<String, String> pathVars = new HashMap<String, String>();
           final JpsRemoteProto.Message.Request.SetupCommand setupCommand = request.getSetupCommand();
           for (JpsRemoteProto.Message.Request.SetupCommand.PathVariable variable : setupCommand.getPathVariableList()) {
-            data.put(variable.getName(), variable.getValue());
+            pathVars.put(variable.getName(), variable.getValue());
           }
-          Facade.getInstance().setPathVariables(data);
+          final List<GlobalLibrary> libs = new ArrayList<GlobalLibrary>();
+          for (JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary library : setupCommand.getGlobalLibraryList()) {
+            libs.add(
+              library.hasHomePath()?
+              new SdkLibrary(library.getName(), library.getHomePath(), library.getPathList()) :
+              new GlobalLibrary(library.getName(), library.getPathList())
+            );
+          }
+          facade.setGlobals(libs, pathVars);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 
@@ -85,6 +97,7 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
     final JpsRemoteProto.Message.Request.CompilationRequest.Type compileType = compileRequest.getCommandType();
 
     switch (compileType) {
+      // todo
       case CLEAN:
       case MAKE:
       case REBUILD: {
@@ -145,19 +158,21 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
       Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildStartedEvent("build started")));
       Throwable error = null;
       try {
-        Facade.getInstance().startBuild(myProjectPath, myModules, myParams, new MessagesConsumer() {
-          public void consumeProgressMessage(String message) {
-            Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileProgressMessageResponse(message))
-            );
-          }
-
-          public void consumeCompilerMessage(String compilerName, String message) {
-            final JpsRemoteProto.Message.Response.CompileMessage.Kind kind =
-              message.contains("error:")? JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR : JpsRemoteProto.Message.Response.CompileMessage.Kind.INFO;
-            Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileMessageResponse(kind, message, null, -1, -1))
-            );
+        Facade.getInstance().startBuild(myProjectPath, myModules, myParams, new MessageHandler() {
+          public void processMessage(BuildMessage buildMessage) {
+            final JpsRemoteProto.Message.Response response;
+            if (buildMessage instanceof CompilerMessage) {
+              final CompilerMessage compilerMessage = (CompilerMessage)buildMessage;
+              response = ProtoUtil.createCompileMessageResponse(
+                compilerMessage.getKind(), compilerMessage.getMessageText(), compilerMessage.getSourcePath(),
+                compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
+                compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn()
+              );
+            }
+            else {
+              response = ProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText());
+            }
+            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, response));
           }
         });
       }

@@ -1398,7 +1398,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isStickySelection()) {
       setStickySelection(false);
     }
-    if (myDocument.isInBulkUpdate()) {
+    if (myDocument.isInBulkUpdate() || myScrollingModel == null) {
       // Assuming that the job is done at bulk listener callback methods.
       return;
     }

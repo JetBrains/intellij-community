@@ -15,6 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.util.containers.CompositeIterator;
 import com.intellij.util.containers.SLRUMap;
 
 import java.util.*;
@@ -74,64 +75,6 @@ public class CommitIdsHolder<Item> {
       iterators.add(myProbationalQueue.keySet().iterator());
       iterators.add(myProtectedQueue.keySet().iterator());
       return new CompositeIterator<Key>(iterators);
-    }
-
-    private static class CompositeIterator<Key> implements Iterator<Key> {
-      private int myPreviousIdx;
-      private int myIdx;
-      private final List<Iterator<Key>> myIterators;
-
-      private CompositeIterator(final List<Iterator<Key>> iterators) {
-        myIterators = iterators;
-        myIdx = -1;
-        myPreviousIdx = -1;
-        for (int i = 0; i < myIterators.size(); i++) {
-          final Iterator<Key> iterator = myIterators.get(i);
-          if (iterator.hasNext()) {
-            myIdx = i;
-            break;
-          }
-        }
-      }
-
-      @Override
-      public boolean hasNext() {
-        return (myIdx >= 0) && myIterators.get(myIdx).hasNext();
-      }
-
-      @Override
-      public Key next() {
-        final Key result = myIterators.get(myIdx).next();
-        recalculateCurrent();
-        return result;
-      }
-
-      private void recalculateCurrent() {
-        if (myIdx == -1) return;
-        if (! myIterators.get(myIdx).hasNext()) {
-          myPreviousIdx = myIdx;
-          myIdx = -1;
-          for (int i = myPreviousIdx; i < myIterators.size(); i++) {
-            final Iterator<Key> iterator = myIterators.get(i);
-            if (iterator.hasNext()) {
-              myIdx = i;
-              break;
-            }
-          }
-        }
-      }
-
-      @Override
-      public void remove() {
-        if ((myPreviousIdx != -1) && (myPreviousIdx != myIdx)) {
-          // last element
-          final Iterator<Key> keyIterator = myIterators.get(myPreviousIdx);
-          keyIterator.remove(); // already on last position
-        } else {
-          myIterators.get(myIdx).remove();
-        }
-        recalculateCurrent();
-      }
     }
   }
 }

@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,26 +35,37 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   }
 
   @Nullable
-  protected ApplyPatchStatus applyChange(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
+  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, final Getter<CharSequence> baseContents) throws IOException {
     byte[] fileContents = fileToPatch.contentsToByteArray();
     CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
-    StringBuilder newText = new StringBuilder();
-    ApplyPatchStatus status = ApplyFilePatchBase.applyModifications(myPatch, text, newText);
-    if (status != ApplyPatchStatus.ALREADY_APPLIED) {
+    final GenericPatchApplier applier = new GenericPatchApplier(text, myPatch.getHunks());
+    if (applier.execute()) {
       final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
       if (document == null) {
-        throw new ApplyPatchException("Failed to set contents for updated file " + fileToPatch.getPath());
+        throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
       }
-      document.setText(newText.toString());
+      document.setText(applier.getAfter());
       FileDocumentManager.getInstance().saveDocument(document);
+      return new Result(applier.getStatus()) {
+        @Override
+        public ApplyPatchForBaseRevisionTexts getMergeData() {
+          return null;
+        }
+      };
     }
-    return status;
+    applier.trySolveSomehow();
+    return new Result(ApplyPatchStatus.FAILURE) {
+      @Override
+      public ApplyPatchForBaseRevisionTexts getMergeData() {
+        return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch, baseContents);
+      }
+    };
   }
 
-  protected void applyCreate(final VirtualFile newFile) throws IOException, ApplyPatchException {
+  protected void applyCreate(final VirtualFile newFile) throws IOException {
     final Document document = FileDocumentManager.getInstance().getDocument(newFile);
     if (document == null) {
-      throw new ApplyPatchException("Failed to set contents for new file " + newFile.getPath());
+      throw new IOException("Failed to set contents for new file " + newFile.getPath());
     }
     document.setText(myPatch.getNewFileText());
     FileDocumentManager.getInstance().saveDocument(document);

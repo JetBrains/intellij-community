@@ -118,15 +118,17 @@ public class PsiCopyPasteManager {
   public void clear() {
     Transferable old = myCopyPasteManager.getContents();
     myRecentData = null;
-    myCopyPasteManager.setSystemClipboardContent(new StringSelection(""));
-    myCopyPasteManager.fireContentChanged(old);
+    StringSelection _new = new StringSelection("");
+    myCopyPasteManager.setSystemClipboardContent(_new);
+    myCopyPasteManager.fireContentChanged(old, _new);
   }
 
   public void setElements(PsiElement[] elements, boolean copied) {
     Transferable old = myCopyPasteManager.getContents();
     myRecentData = new MyData(elements, copied);
-    myCopyPasteManager.setSystemClipboardContent(new MyTransferable(myRecentData));
-    myCopyPasteManager.fireContentChanged(old);
+    MyTransferable _new = new MyTransferable(myRecentData);
+    myCopyPasteManager.setSystemClipboardContent(_new);
+    myCopyPasteManager.fireContentChanged(old, _new);
   }
 
   public boolean isCutElement(Object element) {

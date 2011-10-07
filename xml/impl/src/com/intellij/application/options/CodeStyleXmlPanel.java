@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,18 +63,19 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   public void apply(CodeStyleSettings settings) {
-    settings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
-    settings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
-    settings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
-    settings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
-    settings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
-    settings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
-    settings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
-    settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
-    settings.XML_SPACE_AFTER_TAG_NAME = mySpacesAfterTagName.isSelected();
-    settings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
-    settings.XML_WHITE_SPACE_AROUND_CDATA = myWhiteSpaceAroundCDATA.getSelectedIndex();
-    settings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA = myKeepWhitespaceInsideCDATACheckBox.isSelected();
+    XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
+    xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
+    xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
+    xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
+    xmlSettings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
+    xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
+    xmlSettings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
+    xmlSettings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
+    xmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
+    xmlSettings.XML_SPACE_AFTER_TAG_NAME = mySpacesAfterTagName.isSelected();
+    xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
+    xmlSettings.XML_WHITE_SPACE_AROUND_CDATA = myWhiteSpaceAroundCDATA.getSelectedIndex();
+    xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA = myKeepWhitespaceInsideCDATACheckBox.isSelected();
   }
 
   private int getIntValue(JTextField keepBlankLines) {
@@ -86,60 +88,62 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   protected void resetImpl(final CodeStyleSettings settings) {
-    myKeepBlankLines.setText(String.valueOf(settings.XML_KEEP_BLANK_LINES));
-    myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.XML_ATTRIBUTE_WRAP));
-    myAlignAttributes.setSelected(settings.XML_ALIGN_ATTRIBUTES);
-    myKeepWhiteSpaces.setSelected(settings.XML_KEEP_WHITESPACES);
-    mySpacesAfterTagName.setSelected(settings.XML_SPACE_AFTER_TAG_NAME);
-    mySpacesAroundEquality.setSelected(settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE);
-    myKeepLineBreaks.setSelected(settings.XML_KEEP_LINE_BREAKS);
-    myKeepLineBreaksInText.setSelected(settings.XML_KEEP_LINE_BREAKS_IN_TEXT);
-    myInEmptyTag.setSelected(settings.XML_SPACE_INSIDE_EMPTY_TAG);
+    XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
+    myKeepBlankLines.setText(String.valueOf(xmlSettings.XML_KEEP_BLANK_LINES));
+    myWrapAttributes.setSelectedIndex(getIndexForWrapping(xmlSettings.XML_ATTRIBUTE_WRAP));
+    myAlignAttributes.setSelected(xmlSettings.XML_ALIGN_ATTRIBUTES);
+    myKeepWhiteSpaces.setSelected(xmlSettings.XML_KEEP_WHITESPACES);
+    mySpacesAfterTagName.setSelected(xmlSettings.XML_SPACE_AFTER_TAG_NAME);
+    mySpacesAroundEquality.setSelected(xmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE);
+    myKeepLineBreaks.setSelected(xmlSettings.XML_KEEP_LINE_BREAKS);
+    myKeepLineBreaksInText.setSelected(xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT);
+    myInEmptyTag.setSelected(xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG);
     myWrapText.setSelected(wrapText(settings));
-    myWhiteSpaceAroundCDATA.setSelectedIndex(settings.XML_WHITE_SPACE_AROUND_CDATA);
-    myKeepWhitespaceInsideCDATACheckBox.setSelected(settings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
+    myWhiteSpaceAroundCDATA.setSelectedIndex(xmlSettings.XML_WHITE_SPACE_AROUND_CDATA);
+    myKeepWhitespaceInsideCDATACheckBox.setSelected(xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
   }
 
   public boolean isModified(CodeStyleSettings settings) {
+    XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     if (myWrapText.isSelected() != wrapText(settings)) {
       return true;
     }
-    if (settings.XML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
+    if (xmlSettings.XML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
-    if (settings.XML_ATTRIBUTE_WRAP != ourWrappings[myWrapAttributes.getSelectedIndex()]) {
+    if (xmlSettings.XML_ATTRIBUTE_WRAP != ourWrappings[myWrapAttributes.getSelectedIndex()]) {
       return true;
     }
-    if (settings.XML_ALIGN_ATTRIBUTES != myAlignAttributes.isSelected()) {
+    if (xmlSettings.XML_ALIGN_ATTRIBUTES != myAlignAttributes.isSelected()) {
       return true;
     }
-    if (settings.XML_KEEP_WHITESPACES != myKeepWhiteSpaces.isSelected()) {
-      return true;
-    }
-
-    if (settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE != mySpacesAroundEquality.isSelected()){
+    if (xmlSettings.XML_KEEP_WHITESPACES != myKeepWhiteSpaces.isSelected()) {
       return true;
     }
 
-    if (settings.XML_SPACE_AFTER_TAG_NAME != mySpacesAfterTagName.isSelected()){
+    if (xmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE != mySpacesAroundEquality.isSelected()){
       return true;
     }
 
-    if (settings.XML_KEEP_LINE_BREAKS != myKeepLineBreaks.isSelected()) {
+    if (xmlSettings.XML_SPACE_AFTER_TAG_NAME != mySpacesAfterTagName.isSelected()){
       return true;
     }
 
-    if (settings.XML_KEEP_LINE_BREAKS_IN_TEXT != myKeepLineBreaksInText.isSelected()) {
+    if (xmlSettings.XML_KEEP_LINE_BREAKS != myKeepLineBreaks.isSelected()) {
       return true;
     }
 
-    if (settings.XML_SPACE_INSIDE_EMPTY_TAG != myInEmptyTag.isSelected()){
+    if (xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT != myKeepLineBreaksInText.isSelected()) {
       return true;
     }
-    if (settings.XML_WHITE_SPACE_AROUND_CDATA != myWhiteSpaceAroundCDATA.getSelectedIndex()) {
+
+    if (xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG != myInEmptyTag.isSelected()){
       return true;
     }
-    if (settings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA != this.myKeepWhitespaceInsideCDATACheckBox.isSelected()) {
+    if (xmlSettings.XML_WHITE_SPACE_AROUND_CDATA != myWhiteSpaceAroundCDATA.getSelectedIndex()) {
+      return true;
+    }
+    if (xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA != this.myKeepWhitespaceInsideCDATACheckBox.isSelected()) {
       return true;
     }
 
@@ -147,7 +151,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   private boolean wrapText(final CodeStyleSettings settings) {
-    return settings.XML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED;
+    XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
+    return xmlSettings.XML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED;
   }
 
   public JComponent getPanel() {

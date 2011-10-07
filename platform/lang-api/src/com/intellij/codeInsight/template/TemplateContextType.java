@@ -19,7 +19,6 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -58,8 +57,6 @@ public abstract class TemplateContextType {
   }
 
   public abstract boolean isInContext(@NotNull PsiFile file, int offset);
-
-  public abstract boolean isInContext(@NotNull final FileType fileType);
 
   /**
    * @return whether an abbreviation of this context's template can be entered in editor

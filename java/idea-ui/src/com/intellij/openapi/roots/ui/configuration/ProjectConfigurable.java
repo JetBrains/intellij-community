@@ -108,11 +108,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
           updateCircularDependencyWarning();
         }
       }
-
-      @Override
-      public void allProblemsChanged() {
-        updateCircularDependencyWarning();
-      }
     });
     init(model);
   }

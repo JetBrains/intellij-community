@@ -82,7 +82,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     context.getModulesConfigurator().addAllModuleChangeListener(new ModuleEditor.ChangeListener() {
       public void moduleStateChanged(ModifiableRootModel moduleRootModel) {
         for (ProjectStructureElement element : getProjectStructureElements()) {
-          myContext.getDaemonAnalyzer().queueUpdate(element, true, false);
+          myContext.getDaemonAnalyzer().queueUpdate(element);
         }
       }
     });

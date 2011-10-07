@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.template;
 
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -62,11 +61,6 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
   }
 
   protected abstract boolean isInContext(@NotNull PsiElement element);
-
-  @Override
-  public boolean isInContext(@NotNull final FileType fileType) {
-    return false;
-  }
 
   public static class Generic extends GroovyTemplateContextType {
     public Generic() {

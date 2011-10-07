@@ -19,7 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,9 +31,9 @@ import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,18 +102,14 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     if (!includeTests) {
       orderEnumerator = orderEnumerator.productionOnly();
     }
-    orderEnumerator.using(myContext.getModulesProvider()).withoutSdk().runtimeOnly().recursively().forEach(new Processor<OrderEntry>() {
+    final OrderEnumerator enumerator = orderEnumerator.using(myContext.getModulesProvider()).withoutSdk().runtimeOnly().recursively();
+    enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<Library>(libraries));
+    enumerator.forEachModule(new Processor<Module>() {
       @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          Module module = orderEntry.getOwnerModule();
-          archive.addOrFindChild(factory.createModuleOutput(module));
-          if (includeTests) {
-            archive.addOrFindChild(factory.createTestModuleOutput(module));
-          }
-        }
-        else if (orderEntry instanceof LibraryOrderEntry) {
-          ContainerUtil.addIfNotNull(((LibraryOrderEntry)orderEntry).getLibrary(), libraries);
+      public boolean process(Module module) {
+        archive.addOrFindChild(factory.createModuleOutput(module));
+        if (includeTests) {
+          archive.addOrFindChild(factory.createTestModuleOutput(module));
         }
         return true;
       }

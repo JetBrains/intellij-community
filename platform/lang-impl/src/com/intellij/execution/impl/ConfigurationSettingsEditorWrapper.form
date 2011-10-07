@@ -17,11 +17,6 @@
         <border type="none"/>
         <children/>
       </grid>
-      <vspacer id="48f8f">
-        <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
       <grid id="d489d" binding="myStepsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -35,7 +30,7 @@
       </grid>
       <component id="c7b94" class="javax.swing.JCheckBox" binding="myCbStoreProjectConfiguration">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ExecutionBundle" key="run.configuration.store.place.option"/>
@@ -48,6 +43,11 @@
             <preferred-size width="-1" height="10"/>
             <maximum-size width="-1" height="10"/>
           </grid>
+        </constraints>
+      </vspacer>
+      <vspacer id="48f8f">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
     </children>

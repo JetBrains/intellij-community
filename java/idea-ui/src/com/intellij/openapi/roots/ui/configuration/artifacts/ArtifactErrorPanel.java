@@ -37,7 +37,7 @@ public class ArtifactErrorPanel {
   private JPanel myMainPanel;
   private JButton myFixButton;
   private JLabel myErrorLabel;
-  private List<ConfigurationErrorQuickFix> myCurrentQuickFixes;
+  private List<? extends ConfigurationErrorQuickFix> myCurrentQuickFixes;
   private String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
@@ -83,7 +83,7 @@ public class ArtifactErrorPanel {
     artifactEditor.queueValidation();
   }
 
-  public void showError(@NotNull String message, @NotNull List<ConfigurationErrorQuickFix> quickFixes) {
+  public void showError(@NotNull String message, @NotNull List<? extends ConfigurationErrorQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
     final String errorText = "<html>" + message + "</html>";
     if (myErrorLabel.isShowing()) {

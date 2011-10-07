@@ -559,6 +559,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     MavenEmbedder.setImplementation(c, RepositoryMetadataManager.class, CustomRepositoryMetadataManager.class);
     MavenEmbedder.setImplementation(c, WagonManager.class, CustomWagonManager.class);
     MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
+    MavenEmbedder.setImplementation(c, PluginManager.class, Flexmojos4PluginWorkaround.class);
   }
 
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,

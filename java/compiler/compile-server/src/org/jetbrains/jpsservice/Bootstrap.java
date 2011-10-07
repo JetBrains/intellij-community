@@ -28,14 +28,18 @@ import java.util.List;
  */
 public class Bootstrap {
 
+  public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
+
   public static List<File> buildServerProcessClasspath() {
     final List<File> cp = new ArrayList<File>();
     cp.add(getResourcePath(Server.class));
     cp.add(getResourcePath(com.google.protobuf.Message.class));
     cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class));
-    final File jpsJar = getResourcePath(Facade.class);
-    final File parentFile = jpsJar.getParentFile();
-    final File[] files = parentFile.listFiles();
+    final File jpsFacadeJar = getResourcePath(Facade.class);
+    cp.add(jpsFacadeJar);
+
+    final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
+    final File[] files = jpsRuntime.listFiles();
     if (files != null) {
       for (File file : files) {
         final String name = file.getName();
@@ -46,7 +50,8 @@ public class Bootstrap {
            name.startsWith("asm") ||
            name.startsWith("gant")||
            name.startsWith("groovy") ||
-           name.startsWith("javac2")
+           name.startsWith("javac2") ||
+           name.startsWith("util")
           );
         if (shouldAdd) {
           cp.add(file);

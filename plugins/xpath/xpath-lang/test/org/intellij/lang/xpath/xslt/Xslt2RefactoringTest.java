@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -39,7 +40,8 @@ public class Xslt2RefactoringTest extends TestBase {
   protected void setUp() throws Exception {
     super.setUp();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
-    settings.XML_SPACE_INSIDE_EMPTY_TAG = true;
+    XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
+    xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
     settings.getIndentOptions(StdFileTypes.XML).INDENT_SIZE = 2;
   }
 
