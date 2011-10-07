@@ -1027,10 +1027,29 @@ public class XmlUtil {
   public static final String HTML5_SCHEMA_LOCATION;
   public static final String XHTML5_SCHEMA_LOCATION;
   
+  private static <T> String getClassesListString(T[] a) {
+    final StringBuilder builder = new StringBuilder();
+    for (int i = 0, n = a.length; i < n; i++) {
+      T element = a[i];
+      builder.append(element != null ? element.getClass().getName() : "NULL");
+      if (i < n - 1) {
+        builder.append(", ");
+      }
+    }
+    return builder.toString();
+  }
+  
   static {
     final Html5SchemaProvider[] providers = Html5SchemaProvider.EP_NAME.getExtensions();
     final URL htmlSchemaLocationURL;
     final URL xhtmlSchemaLocationURL;
+    
+    LOG.assertTrue(providers.length > 0, "RelaxNG based schema for HTML5 is not supported. Old XSD schema will be used");
+    
+    if (providers.length > 1) {
+      LOG.error("More than one HTML5 schema providers found: " + getClassesListString(providers));
+    }
+    
     if (providers.length > 0) {
       htmlSchemaLocationURL = providers[0].getHtmlSchemaLocation();
       xhtmlSchemaLocationURL = providers[0].getXhtmlSchemaLocation();
@@ -1039,8 +1058,12 @@ public class XmlUtil {
       htmlSchemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
       xhtmlSchemaLocationURL = htmlSchemaLocationURL;
     }
+
     HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(htmlSchemaLocationURL.toExternalForm()));
+    LOG.info("HTML5_SCHEMA_LOCATION = " + HTML5_SCHEMA_LOCATION);
+    
     XHTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(xhtmlSchemaLocationURL.toExternalForm()));
+    LOG.info("XHTML5_SCHEMA_LOCATION = " + XHTML5_SCHEMA_LOCATION);
   }
   
   @Nullable
