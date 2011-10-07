@@ -43,10 +43,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   public static class ImportTypes {
     public final IElementType statement;
     public final IElementType element;
+    public IElementType starElement;
 
-    public ImportTypes(IElementType statement, IElementType element) {
+    public ImportTypes(IElementType statement, IElementType element, IElementType starElement) {
       this.statement = statement;
       this.element = element;
+      this.starElement = starElement;
     }
   }
 
@@ -381,7 +383,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       if (builder.getTokenType() == PyTokenTypes.MULT) {
         final PsiBuilder.Marker star_import_mark = builder.mark();
         builder.advanceLexer();
-        star_import_mark.done(PyElementTypes.STAR_IMPORT_ELEMENT);
+        star_import_mark.done(types.starElement);
       }
       else if (builder.getTokenType() == PyTokenTypes.LPAR) {
         builder.advanceLexer();
@@ -404,7 +406,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
   protected ImportTypes checkFromImportKeyword() {
     checkMatches(PyTokenTypes.IMPORT_KEYWORD, "'import' expected");
-    return new ImportTypes(PyElementTypes.FROM_IMPORT_STATEMENT, PyElementTypes.IMPORT_ELEMENT);
+    return new ImportTypes(PyElementTypes.FROM_IMPORT_STATEMENT, PyElementTypes.IMPORT_ELEMENT, PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   /**

@@ -258,6 +258,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(CythonFunction.class, "foo");
   }
 
+  public void testCythonFromModuleCImportStar() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
   public void testCythonFromPackageCImportAttribute() {
     assertResolvesTo(CythonFunction.class, "foo");
   }
