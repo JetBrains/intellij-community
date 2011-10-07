@@ -35,11 +35,11 @@
   <actions>
     <group id="StructuralSearchActions">
       <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
-        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
       </action>
 
       <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
-        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
+        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
       </action>
     </group>
   </actions>
