@@ -20,8 +20,8 @@ import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsSer
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.impl.NotificationSettings;
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -39,10 +39,11 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
     myProject = project;
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
 
-    NotificationsConfiguration.remove("SendUsagesStatistics");
-    NotificationsConfiguration.getNotificationsConfiguration().registerDefaultSettings(new NotificationSettings(StatisticsNotificationManager.GROUP_DISPLAY_ID,
-                                                                                                                NotificationDisplayType.STICKY_BALLOON,
-                                                                                                                false));
+    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
+    NotificationsConfiguration.getNotificationsConfiguration().register(
+      StatisticsNotificationManager.GROUP_DISPLAY_ID,
+      NotificationDisplayType.STICKY_BALLOON,
+      false);
   }
 
   @Override
@@ -50,7 +51,7 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
       @Override
       public void run() {
-          runStatisticsService();
+        runStatisticsService();
       }
     });
   }
@@ -75,8 +76,9 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
       @Override
       public void run() {
         if (DumbService.isDumb(myProject)) {
-           runWithDelay(statisticsService);
-        } else {
+          runWithDelay(statisticsService);
+        }
+        else {
           statisticsService.send();
         }
       }
