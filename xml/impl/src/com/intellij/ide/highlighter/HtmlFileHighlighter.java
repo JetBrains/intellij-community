@@ -87,7 +87,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-    return pack(keys1.get(tokenType), keys2.get(tokenType));
+    return pack(XmlHighlighterColors.HTML_CODE, pack(keys1.get(tokenType), keys2.get(tokenType)));
   }
 
   public static final void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,

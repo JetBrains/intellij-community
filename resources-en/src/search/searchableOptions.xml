@@ -7562,6 +7562,7 @@
     <option name="comment" hit="Comment" />
     <option name="entity" hit="Entity reference" />
     <option name="reference" hit="Entity reference" />
+    <option name="code" hit="HTML code" />
     <option name="tag" hit="Tag" />
     <option name="name" hit="Tag name" />
     <option name="tag" hit="Tag name" />
