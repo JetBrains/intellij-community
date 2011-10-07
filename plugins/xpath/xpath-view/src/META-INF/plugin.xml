@@ -220,7 +220,7 @@
       <reference id="XPathView.Actions.Evaluate" />
       <reference id="XPathView.Actions.FindByExpression" />
 
-      <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchActions" />
+      <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
     </group>
 
     <reference id="XPathView.Actions.ShowPath">
