@@ -188,19 +188,15 @@ public class PatchApplier<BinaryType extends FilePatch> {
       result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       if (ApplyPatchStatus.FAILURE.equals(result)) return result;
     }
-    result = ApplyPatchStatus.and(result, ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
-      public ApplyPatchStatus compute() {
-        final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-            }
-          }
-        }, VcsBundle.message("patch.apply.command"), null);
-        return refStatus.get();
+    final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        for (PatchApplier applier : group) {
+          refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+        }
       }
-    }));
+    }, VcsBundle.message("patch.apply.command"), null);
+    result =  refStatus.get();
     result = result == null ? ApplyPatchStatus.FAILURE : result;
     final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
     for (PatchApplier applier : group) {
@@ -232,47 +228,43 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
   protected ApplyPatchStatus executeWritable() {
     final Application application = ApplicationManager.getApplication();
-    return application.runReadAction(new Computable<ApplyPatchStatus>() {
-      public ApplyPatchStatus compute() {
-        final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            final Boolean result = application.runWriteAction(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return myVerifier.execute();
-              }
-            });
-            if (! result) {
-              return;
-            }
+    final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        final Boolean result = application.runWriteAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return myVerifier.execute();
+          }
+        });
+        if (! result) {
+          return;
+        }
 
-            if (!makeWritable(myVerifier.getWritableFiles())) {
-              return;
-            }
+        if (!makeWritable(myVerifier.getWritableFiles())) {
+          return;
+        }
 
-            final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = myVerifier.getTextPatches();
-            if (!fileTypesAreOk(textPatches)) {
-              return;
-            }
+        final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = myVerifier.getTextPatches();
+        if (!fileTypesAreOk(textPatches)) {
+          return;
+        }
 
-            try {
-              markInternalOperation(textPatches, true);
+        try {
+          markInternalOperation(textPatches, true);
 
-              final ApplyPatchStatus status = actualApply(myVerifier, myCommitContext);
+          final ApplyPatchStatus status = actualApply(myVerifier, myCommitContext);
 
-              if (status != null) {
-                refStatus.set(status);
-              }
-            }
-            finally {
-              markInternalOperation(textPatches, false);
-            }
-          } // end of Command run
-        }, VcsBundle.message("patch.apply.command"), null);
-        return refStatus.get();
-      }
-    });
+          if (status != null) {
+            refStatus.set(status);
+          }
+        }
+        finally {
+          markInternalOperation(textPatches, false);
+        }
+      } // end of Command run
+    }, VcsBundle.message("patch.apply.command"), null);
+    return refStatus.get();
   }
 
   private static void markInternalOperation(List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches, boolean set) {

@@ -154,27 +154,22 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
     final ApplyPatchForBaseRevisionTexts mergeData = result.getMergeData();
     if (mergeData != null) {
-      return ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
-        @Override
-        public ApplyPatchStatus compute() {
-          if (mergeData.getBase() != null) {
-            return showMergeDialog(project, file, mergeData.getBase(), mergeData.getPatched(), ApplyPatchMergeRequestFactory.INSTANCE);
-          } else {
-            try {
-              return showBadDiffDialog(project, file, mergeData, false);
-            }
-            catch (final IOException e) {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  showIOException(project, patchBase.getBeforeName(), e);
-                }
-              });
-            }
-            return ApplyPatchStatus.FAILURE;
-          }
+      if (mergeData.getBase() != null) {
+        return showMergeDialog(project, file, mergeData.getBase(), mergeData.getPatched(), ApplyPatchMergeRequestFactory.INSTANCE);
+      } else {
+        try {
+          return showBadDiffDialog(project, file, mergeData, false);
         }
-      });
+        catch (final IOException e) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              showIOException(project, patchBase.getBeforeName(), e);
+            }
+          });
+        }
+        return ApplyPatchStatus.FAILURE;
+      }
     }
     return status;
   }
