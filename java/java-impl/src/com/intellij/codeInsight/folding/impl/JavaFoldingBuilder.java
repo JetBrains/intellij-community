@@ -39,6 +39,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -602,9 +603,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
               if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
               if (lastLineEnd < firstLineStart) return false;
 
-              PsiClass resolve = anonymousClass.getBaseClassType().resolve();
-              assert resolve != null;
-              final String baseClassName = quick ? anonymousClass.getBaseClassReference().getReferenceName() : resolve.getName();
+              final String baseClassName = quick ?
+                                           anonymousClass.getBaseClassReference().getReferenceName() :
+                                           ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
               if (lastLineEnd >= seq.length() || firstLineStart >= seq.length() || firstLineStart < 0) {
                 LOG.error("llE=" + lastLineEnd + "; fLS=" + firstLineStart + "; len=" + seq.length() + "rE=" + rangeEnd + "; class=" +
                           baseClassName);
