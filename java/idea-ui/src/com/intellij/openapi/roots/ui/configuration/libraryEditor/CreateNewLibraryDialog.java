@@ -71,7 +71,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     final LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx)getTableModifiableModel();
     final Library library = modifiableModel.createLibrary(myLibraryEditor.getName(), myLibraryEditor.getType());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
-    myLibraryEditor.apply(model);
+    myLibraryEditor.applyTo(model);
     new WriteAction() {
       protected void run(final Result result) {
         model.commit();

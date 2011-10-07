@@ -168,11 +168,6 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return false;
   }
 
-  public void apply(@NotNull LibraryEx.ModifiableModelEx model) {
-    model.setName(myLibraryName);
-    applyTo(model);
-  }
-
   public void applyTo(LibraryEx.ModifiableModelEx model) {
     model.setProperties(myProperties);
     for (OrderRootType type : myRoots.keySet()) {

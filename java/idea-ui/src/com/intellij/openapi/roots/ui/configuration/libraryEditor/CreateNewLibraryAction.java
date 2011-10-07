@@ -18,11 +18,13 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
@@ -96,15 +98,18 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), myType);
 
     final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
-    final ExistingLibraryEditor libraryEditor = modifiableModel.getLibraryEditor(library);
-    libraryEditor.addRoots(roots);
-    if (libraryEditor.hasChanges()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable(){
-        public void run() {
-          libraryEditor.commit();  //update lib node
-        }
-      });
+    final NewLibraryEditor editor = new NewLibraryEditor(((LibraryEx)library).getType(), ((LibraryEx)library).getProperties());
+    editor.addRoots(roots);
+    final Library.ModifiableModel model = library.getModifiableModel();
+    editor.applyTo((LibraryEx.ModifiableModelEx)model);
+    AccessToken token = WriteAction.start();
+    try {
+      model.commit();
     }
+    finally {
+      token.finish();
+    }
+
     final DefaultMutableTreeNode
       libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
     rootConfigurable.selectNodeInTree(libraryNode);
