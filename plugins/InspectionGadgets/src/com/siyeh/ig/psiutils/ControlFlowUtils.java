@@ -23,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ControlFlowUtils {
 
-  private ControlFlowUtils() {
-  }
+  private ControlFlowUtils() {}
 
   public static boolean statementMayCompleteNormally(
     @Nullable PsiStatement statement) {
@@ -62,23 +61,23 @@ public class ControlFlowUtils {
         return true;
       }
       final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return true;
+      }
       final String className = aClass.getQualifiedName();
       return !"java.lang.System".equals(className);
     }
     else if (statement instanceof PsiForStatement) {
-      return forStatementMayReturnNormally((PsiForStatement)statement);
+      return forStatementMayCompleteNormally((PsiForStatement)statement);
     }
     else if (statement instanceof PsiForeachStatement) {
-      return foreachStatementMayReturnNormally(
-        (PsiForeachStatement)statement);
+      return foreachStatementMayCompleteNormally((PsiForeachStatement)statement);
     }
     else if (statement instanceof PsiWhileStatement) {
-      return whileStatementMayReturnNormally(
-        (PsiWhileStatement)statement);
+      return whileStatementMayCompleteNormally((PsiWhileStatement)statement);
     }
     else if (statement instanceof PsiDoWhileStatement) {
-      return doWhileStatementMayReturnNormally(
-        (PsiDoWhileStatement)statement);
+      return doWhileStatementMayCompleteNormally((PsiDoWhileStatement)statement);
     }
     else if (statement instanceof PsiSynchronizedStatement) {
       final PsiCodeBlock body =
@@ -95,14 +94,13 @@ public class ControlFlowUtils {
         (PsiLabeledStatement)statement);
     }
     else if (statement instanceof PsiIfStatement) {
-      return ifStatementMayReturnNormally((PsiIfStatement)statement);
+      return ifStatementMayCompleteNormally((PsiIfStatement)statement);
     }
     else if (statement instanceof PsiTryStatement) {
-      return tryStatementMayReturnNormally((PsiTryStatement)statement);
+      return tryStatementMayCompleteNormally((PsiTryStatement)statement);
     }
     else if (statement instanceof PsiSwitchStatement) {
-      return switchStatementMayReturnNormally(
-        (PsiSwitchStatement)statement);
+      return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
     else {
       // unknown statement type
@@ -110,45 +108,43 @@ public class ControlFlowUtils {
     }
   }
 
-  private static boolean doWhileStatementMayReturnNormally(
-    @NotNull PsiDoWhileStatement loopStatement) {
-    final PsiExpression test = loopStatement.getCondition();
+  private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
+    final PsiExpression condition = loopStatement.getCondition();
+    final Object value = ExpressionUtils.computeConstantExpression(condition);
     final PsiStatement body = loopStatement.getBody();
-    return statementMayCompleteNormally(body) && !BoolUtils.isTrue(test)
+    return statementMayCompleteNormally(body) && value != Boolean.TRUE
            || statementIsBreakTarget(loopStatement)
            || statementContainsContinueToAncestor(loopStatement);
   }
 
-  private static boolean whileStatementMayReturnNormally(
-    @NotNull PsiWhileStatement loopStatement) {
-    final PsiExpression test = loopStatement.getCondition();
-    return !BoolUtils.isTrue(test)
+  private static boolean whileStatementMayCompleteNormally(@NotNull PsiWhileStatement loopStatement) {
+    final PsiExpression condition = loopStatement.getCondition();
+    final Object value = ExpressionUtils.computeConstantExpression(condition);
+    return value != Boolean.TRUE
            || statementIsBreakTarget(loopStatement)
            || statementContainsContinueToAncestor(loopStatement);
   }
 
-  private static boolean forStatementMayReturnNormally(
-    @NotNull PsiForStatement loopStatement) {
-    final PsiExpression test = loopStatement.getCondition();
+  private static boolean forStatementMayCompleteNormally(@NotNull PsiForStatement loopStatement) {
     if (statementIsBreakTarget(loopStatement)) {
       return true;
     }
     if (statementContainsContinueToAncestor(loopStatement)) {
       return true;
     }
-    if (test == null) {
+    final PsiExpression condition = loopStatement.getCondition();
+    if (condition == null) {
       return false;
     }
-    return !BoolUtils.isTrue(test);
+    final Object value = ExpressionUtils.computeConstantExpression(condition);
+    return Boolean.TRUE != value;
   }
 
-  private static boolean foreachStatementMayReturnNormally(
-    @NotNull PsiForeachStatement loopStatement) {
+  private static boolean foreachStatementMayCompleteNormally(@NotNull PsiForeachStatement loopStatement) {
     return true;
   }
 
-  private static boolean switchStatementMayReturnNormally(
-    @NotNull PsiSwitchStatement switchStatement) {
+  private static boolean switchStatementMayCompleteNormally(@NotNull PsiSwitchStatement switchStatement) {
     if (statementIsBreakTarget(switchStatement)) {
       return true;
     }
@@ -230,8 +226,7 @@ public class ControlFlowUtils {
     return aClass.isEnum();
   }
 
-  private static boolean tryStatementMayReturnNormally(
-    @NotNull PsiTryStatement tryStatement) {
+  private static boolean tryStatementMayCompleteNormally(@NotNull PsiTryStatement tryStatement) {
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
       if (!codeBlockMayCompleteNormally(finallyBlock)) {
@@ -251,15 +246,20 @@ public class ControlFlowUtils {
     return false;
   }
 
-  private static boolean ifStatementMayReturnNormally(
-    @NotNull PsiIfStatement ifStatement) {
+  private static boolean ifStatementMayCompleteNormally(@NotNull PsiIfStatement ifStatement) {
+    final PsiExpression condition = ifStatement.getCondition();
+    final Object value = ExpressionUtils.computeConstantExpression(condition);
     final PsiStatement thenBranch = ifStatement.getThenBranch();
-    if (statementMayCompleteNormally(thenBranch)) {
-      return true;
+    final boolean thenCompletesNormally = statementMayCompleteNormally(thenBranch);
+    if (value == Boolean.TRUE) {
+      return thenCompletesNormally;
     }
     final PsiStatement elseBranch = ifStatement.getElseBranch();
-    return elseBranch == null ||
-           statementMayCompleteNormally(elseBranch);
+    final boolean elseCompletesNormally = statementMayCompleteNormally(elseBranch);
+    if (value == Boolean.FALSE) {
+      return elseCompletesNormally;
+    }
+    return thenCompletesNormally || elseCompletesNormally;
   }
 
   private static boolean labeledStatementMayCompleteNormally(
@@ -653,7 +653,6 @@ public class ControlFlowUtils {
     private final PsiStatement m_target;
 
     private BreakFinder(@NotNull PsiStatement target) {
-      super();
       m_target = target;
     }
 
@@ -662,14 +661,12 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitBreakStatement(
-      @NotNull PsiBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       if (m_found) {
         return;
       }
-      super.visitBreakStatement(breakStatement);
-      final PsiStatement exitedStatement =
-        breakStatement.findExitedStatement();
+      super.visitBreakStatement(statement);
+      final PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null) {
         return;
       }
@@ -677,22 +674,36 @@ public class ControlFlowUtils {
         m_found = true;
       }
     }
+
+    @Override
+    public void visitIfStatement(PsiIfStatement statement) {
+      if (m_found) {
+        return;
+      }
+      final PsiExpression condition = statement.getCondition();
+      final Object value = ExpressionUtils.computeConstantExpression(condition);
+      if (Boolean.FALSE != value) {
+        final PsiStatement thenBranch = statement.getThenBranch();
+        if (thenBranch != null) {
+          thenBranch.accept(this);
+        }
+      }
+      if (Boolean.TRUE != value) {
+        final PsiStatement elseBranch = statement.getElseBranch();
+        if (elseBranch != null) {
+          elseBranch.accept(this);
+        }
+      }
+    }
   }
 
   private static class ContinueFinder extends JavaRecursiveElementVisitor {
 
     private boolean m_found = false;
-    private int m_nestingDepth = 0;
-    private String m_label = null;
+    private final PsiStatement m_target;
 
     private ContinueFinder(@NotNull PsiStatement target) {
-      if (target.getParent() instanceof PsiLabeledStatement) {
-        final PsiLabeledStatement labeledStatement =
-          (PsiLabeledStatement)target.getParent();
-        final PsiIdentifier identifier =
-          labeledStatement.getLabelIdentifier();
-        m_label = identifier.getText();
-      }
+      m_target = target;
     }
 
     public boolean continueFound() {
@@ -706,69 +717,38 @@ public class ControlFlowUtils {
         return;
       }
       super.visitContinueStatement(statement);
-      final PsiIdentifier labelIdentifier =
-        statement.getLabelIdentifier();
-      if (m_nestingDepth == 1 && labelIdentifier == null) {
+      final PsiStatement continuedStatement = statement.findContinuedStatement();
+      if (continuedStatement == null) {
+        return;
+      }
+      if (PsiTreeUtil.isAncestor(continuedStatement, m_target, false)) {
         m_found = true;
       }
-      else if (labelMatches(labelIdentifier)) {
-        m_found = true;
-      }
-    }
-
-    private boolean labelMatches(PsiIdentifier labelIdentifier) {
-      if (labelIdentifier == null) {
-        return false;
-      }
-      final String labelText = labelIdentifier.getText();
-      return labelText.equals(m_label);
     }
 
     @Override
-    public void visitDoWhileStatement(
-      @NotNull PsiDoWhileStatement statement) {
+    public void visitIfStatement(PsiIfStatement statement) {
       if (m_found) {
         return;
       }
-      m_nestingDepth++;
-      super.visitDoWhileStatement(statement);
-      m_nestingDepth--;
-    }
-
-    @Override
-    public void visitForStatement(@NotNull PsiForStatement statement) {
-      if (m_found) {
-        return;
+      final PsiExpression condition = statement.getCondition();
+      final Object value = ExpressionUtils.computeConstantExpression(condition);
+      if (Boolean.FALSE != value) {
+        final PsiStatement thenBranch = statement.getThenBranch();
+        if (thenBranch != null) {
+          thenBranch.accept(this);
+        }
       }
-      m_nestingDepth++;
-      super.visitForStatement(statement);
-      m_nestingDepth--;
-    }
-
-    @Override
-    public void visitForeachStatement(
-      @NotNull PsiForeachStatement statement) {
-      if (m_found) {
-        return;
+      if (Boolean.TRUE != value) {
+        final PsiStatement elseBranch = statement.getElseBranch();
+        if (elseBranch != null) {
+          elseBranch.accept(this);
+        }
       }
-      m_nestingDepth++;
-      super.visitForeachStatement(statement);
-      m_nestingDepth--;
-    }
-
-    @Override
-    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-      if (m_found) {
-        return;
-      }
-      m_nestingDepth++;
-      super.visitWhileStatement(statement);
-      m_nestingDepth--;
     }
   }
 
-  public static class MethodCallFinder
-    extends JavaRecursiveElementVisitor {
+  public static class MethodCallFinder extends JavaRecursiveElementVisitor {
 
     private final String containingClassName;
     private final PsiType returnType;
@@ -779,7 +759,6 @@ public class ControlFlowUtils {
     MethodCallFinder(String containingClassName, PsiType returnType,
                      String methodName,
                      PsiType... parameterTypeNames) {
-
       this.containingClassName = containingClassName;
       this.returnType = returnType;
       this.methodName = methodName;
