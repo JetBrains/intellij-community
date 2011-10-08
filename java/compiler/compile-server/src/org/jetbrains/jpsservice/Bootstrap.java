@@ -51,7 +51,8 @@ public class Bootstrap {
            name.startsWith("gant")||
            name.startsWith("groovy") ||
            name.startsWith("javac2") ||
-           name.startsWith("util")
+           name.startsWith("util") ||
+           name.startsWith("trove")
           );
         if (shouldAdd) {
           cp.add(file);

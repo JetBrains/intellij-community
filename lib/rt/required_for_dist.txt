@@ -9,3 +9,4 @@ jps-incremental/jps-gwt.jar
 jps-incremental/jps-javaee.jar
 jps-incremental/jps-jpa.jar
 jps-incremental/util.jar
+jps-incremental/trove4j.jar

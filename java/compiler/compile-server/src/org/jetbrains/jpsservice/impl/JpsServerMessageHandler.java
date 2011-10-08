@@ -9,6 +9,8 @@ import org.jetbrains.jps.server.*;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 import org.jetbrains.jpsservice.Server;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -180,9 +182,26 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
         error = e;
       }
       finally {
-        final JpsRemoteProto.Message lastMessage = error != null?
-                  ProtoUtil.toMessage(mySessionId, ProtoUtil.createFailure("build failed: ", error)) :
-                  ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedEvent("build completed"));
+        final JpsRemoteProto.Message lastMessage;
+        if (error != null) {
+          Throwable cause = error.getCause();
+          if (cause == null) {
+            cause = error;
+          }
+          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          cause.printStackTrace(new PrintStream(out));
+
+          final StringBuilder messageText = new StringBuilder();
+          messageText.append("JPS Internal error: (").append(cause.getClass().getName()).append(") ").append(cause.getMessage());
+          final String trace = out.toString();
+          if (!trace.isEmpty()) {
+            messageText.append("\n").append(trace);
+          }
+          lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createFailure(messageText.toString(), cause));
+        }
+        else {
+          lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedEvent("build completed"));
+        }
 
         Channels.write(myChannelContext.getChannel(), lastMessage).addListener(new ChannelFutureListener() {
           public void operationComplete(ChannelFuture future) throws Exception {
