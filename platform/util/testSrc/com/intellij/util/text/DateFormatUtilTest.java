@@ -16,8 +16,10 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.SystemInfo;
 import junit.framework.TestCase;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,8 +40,16 @@ public class DateFormatUtilTest extends TestCase {
   public void testTime() throws ParseException {
     Clock.setTime(2004, 11, 10, 17, 10, 15);
 
-    assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
-    assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
+    if (SystemInfo.isMac) {
+      assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
+      assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
+    }
+    else {
+      assertEquals(DateFormat.getTimeInstance(DateFormat.SHORT).format(Clock.getTime()),
+                   DateFormatUtil.formatTime(Clock.getTime()));
+      assertEquals(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(Clock.getTime()),
+                   DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
+    }
   }
 
   public void testPrettyDateTime() throws ParseException {
