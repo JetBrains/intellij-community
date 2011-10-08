@@ -18,11 +18,14 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.psi.PropertyUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -73,36 +76,62 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
           if (args.length == 0) {
             return;
           }
-          if (!hasTitleCapitalization(args[0])) {
-            holder.registerProblem(args [0], "Dialog titles should use title capitalization", ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          String titleValue = getTitleValue(args [0]);
+          if (titleValue != null && !hasTitleCapitalization(titleValue)) {
+            holder.registerProblem(args [0], "Dialog title '" + titleValue + "' is not properly capitalized. It should have title capitalization",
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         } 
       }
     };
   }
 
-  private static boolean hasTitleCapitalization(PsiExpression arg) {
+  @Nullable
+  private static String getTitleValue(PsiExpression arg) {
     if (arg instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)arg).getValue();
       if (value instanceof String) {
-        return hasTitleCapitalization((String) value);
+        return (String) value;
       }
     }
     if (arg instanceof PsiMethodCallExpression) {
       PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
       PsiExpression returnValue = PropertyUtils.getGetterReturnExpression(psiMethod);
       if (returnValue != null) {
-        return hasTitleCapitalization(returnValue);
+        return getTitleValue(returnValue);
       }
-      PsiExpression[] args = ((PsiMethodCallExpression)arg).getArgumentList().getExpressions();
-      if (args.length > 0) {
-        PsiReference[] references = args[0].getReferences();
-        for (PsiReference reference : references) {
+      Property propertyArgument = getPropertyArgument((PsiMethodCallExpression)arg);
+      if (propertyArgument != null) {
+        return propertyArgument.getUnescapedValue();
+      }
+    }
+    if (arg instanceof PsiReferenceExpression) {
+      PsiElement result = ((PsiReferenceExpression)arg).resolve();
+      if (result instanceof PsiVariable && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
+        return getTitleValue(((PsiVariable) result).getInitializer());
+      }
+    }
+    return null;
+  }
 
+  @Nullable
+  private static Property getPropertyArgument(PsiMethodCallExpression arg) {
+    PsiExpression[] args = ((PsiMethodCallExpression)arg).getArgumentList().getExpressions();
+    if (args.length > 0) {
+      PsiReference[] references = args[0].getReferences();
+      for (PsiReference reference : references) {
+        if (reference instanceof PropertyReference) {
+          ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
+          if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
+            PsiElement element = resolveResults[0].getElement();
+            if (element instanceof Property) {
+              return (Property) element;
+            }
+          }
         }
       }
     }
-    return true;
+    return null;
   }
 
   private static boolean hasTitleCapitalization(String value) {
