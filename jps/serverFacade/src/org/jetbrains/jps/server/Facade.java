@@ -43,7 +43,7 @@ public class Facade {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) {
+  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
     Project project;
 
     synchronized (myConfigurationLock) {

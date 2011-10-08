@@ -2,11 +2,13 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
@@ -20,17 +22,26 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
-public abstract class CompileContext implements MessageHandler, UserDataHolder {
+public class CompileContext implements MessageHandler, UserDataHolder {
 
   private final CompileScope myScope;
   private final boolean myIsMake;
+  private final MessageHandler myDelegateMessageHandler;
   private final Map<Key, Object> myUserData = new ConcurrentHashMap<Key, Object>();
-  private boolean myCompilingTests = false;
+  private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
 
-  public CompileContext(CompileScope scope, String projectName, boolean isMake) {
+  private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
+    @NotNull
+    public FSSnapshot createValue(Module key) {
+      return buildSnapshot(key);
+    }
+  };
+
+  public CompileContext(CompileScope scope, String projectName, boolean isMake, MessageHandler delegateMessageHandler) {
     myScope = scope;
     myIsMake = isMake;
+    myDelegateMessageHandler = delegateMessageHandler;
     final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
     myDataManager = new BuildDataManager(buildDataRoot);
   }
@@ -49,6 +60,11 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
 
   public void setCompilingTests(boolean compilingTests) {
     myCompilingTests = compilingTests;
+    clearFileCache();
+  }
+
+  public void clearFileCache() {
+    myFilesCache.clear();
   }
 
   public CompileScope getScope() {
@@ -57,6 +73,10 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
 
   public BuildDataManager getBuildDataManager() {
     return myDataManager;
+  }
+
+  public void processMessage(BuildMessage msg) {
+    myDelegateMessageHandler.processMessage(msg);
   }
 
   public <T> T getUserData(@NotNull Key<T> key) {
@@ -69,46 +89,76 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
 
   public void processFiles(ModuleChunk chunk, FileProcessor processor) throws Exception {
     for (Module module : chunk.getModules()) {
-      if (!processModule(module, processor)) {
+      final FSSnapshot snapshot = myFilesCache.get(module);
+      if (!snapshot.processFiles(processor)) {
         return;
       }
     }
   }
 
   /** @noinspection unchecked*/
-  private boolean processModule(Module module, FileProcessor processor) throws Exception {
+  //private boolean processModule(Module module, FileProcessor processor) throws Exception {
+  //  final Set<File> excludes = new HashSet<File>();
+  //  for (String excludePath : (Collection<String>)module.getExcludes()) {
+  //    excludes.add(new File(excludePath));
+  //  }
+  //
+  //  final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
+  //  for (String root : roots) {
+  //    final File rootFile = new File(root);
+  //    if (!processRootRecursively(module, rootFile, root, processor, excludes)) {
+  //      return false;
+  //    }
+  //  }
+  //  return true;
+  //}
+
+  private FSSnapshot buildSnapshot(Module module) {
     final Set<File> excludes = new HashSet<File>();
     for (String excludePath : (Collection<String>)module.getExcludes()) {
       excludes.add(new File(excludePath));
     }
-
+    final FSSnapshot snapshot = new FSSnapshot(module);
     final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
-    for (String root : roots) {
-      final File rootFile = new File(root);
-      if (!processRootRecursively(module, rootFile, root, processor, excludes)) {
-        return false;
-      }
+    for (String srcRoot : roots) {
+      final FSSnapshot.Root root = snapshot.addRoot(new File(srcRoot), srcRoot);
+      buildStructure(root.getNode(), excludes);
     }
-    return true;
+    return snapshot;
   }
 
-  private static boolean processRootRecursively(final Module module, final File fromFile, final String sourceRoot, FileProcessor processor, final Set<File> excluded) throws Exception {
-    if (fromFile.isDirectory()) {
-      if (isExcluded(excluded, fromFile)) {
-        return true;
+  //private static boolean processRootRecursively(final Module module, final File fromFile, final String sourceRoot, FileProcessor processor, final Set<File> excluded) throws Exception {
+  //  if (fromFile.isDirectory()) {
+  //    if (isExcluded(excluded, fromFile)) {
+  //      return true;
+  //    }
+  //    final File[] children = fromFile.listFiles();
+  //    if (children != null) {
+  //      for (File child : children) {
+  //        final boolean shouldContinue = processRootRecursively(module, child, sourceRoot, processor, excluded);
+  //        if (!shouldContinue) {
+  //          return false;
+  //        }
+  //      }
+  //    }
+  //    return true;
+  //  }
+  //  return processor.apply(module, fromFile, sourceRoot);
+  //}
+
+  private static void buildStructure(final FSSnapshot.Node from, final Set<File> excluded) {
+    final File nodeFile = from.getFile();
+    if (nodeFile.isDirectory()) {
+      if (isExcluded(excluded, nodeFile)) {
+        return;
       }
-      final File[] children = fromFile.listFiles();
+      final File[] children = nodeFile.listFiles();
       if (children != null) {
         for (File child : children) {
-          final boolean shouldContinue = processRootRecursively(module, child, sourceRoot, processor, excluded);
-          if (!shouldContinue) {
-            return false;
-          }
+          buildStructure(from.addChild(child), excluded);
         }
       }
-      return true;
     }
-    return processor.apply(module, fromFile, sourceRoot);
   }
 
   private static boolean isExcluded(final Set<File> excludedRoots, File file) {

@@ -2,11 +2,8 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +33,13 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake) {
-    final CompileContext context = new CompileContext(scope, myProjectName, isMake) {
+    final CompileContext context = new CompileContext(scope, myProjectName, isMake, new MessageHandler() {
       public void processMessage(BuildMessage msg) {
         for (MessageHandler h : myMessageHandlers) {
           h.processMessage(msg);
         }
       }
-    };
+    });
     try {
       if (!isMake) {
         context.getBuildDataManager().clean();
@@ -66,23 +63,6 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       context.processMessage(new ProgressMessage(e.getMessage()));
     }
-    catch (Throwable e) {
-      Throwable cause = e.getCause();
-      if (cause == null) {
-        cause = e;
-      }
-      final ByteArrayOutputStream out = new ByteArrayOutputStream();
-      cause.printStackTrace(new PrintStream(out));
-
-      final StringBuilder messageText = new StringBuilder();
-      messageText.append("JPS Internal error: (").append(cause.getClass().getName()).append(") ").append(e.getMessage());
-      final String trace = out.toString();
-      if (!trace.isEmpty()) {
-        messageText.append("\n").append(trace);
-      }
-
-      context.processMessage(new CompilerMessage("JPS Server", BuildMessage.Kind.ERROR, messageText.toString()));
-    }
     finally {
       context.getBuildDataManager().close();
     }
@@ -104,8 +84,13 @@ public class IncProjectBuilder {
   }
 
   private void buildChunk(CompileContext context, ModuleChunk chunk) throws ProjectBuildException{
-    for (BuilderCategory category : BuilderCategory.values()) {
-      runBuilders(context, chunk, myBuilderRegistry.getBuilders(category));
+    try {
+      for (BuilderCategory category : BuilderCategory.values()) {
+        runBuilders(context, chunk, myBuilderRegistry.getBuilders(category));
+      }
+    }
+    finally {
+      context.clearFileCache();
     }
   }
 
@@ -115,8 +100,8 @@ public class IncProjectBuilder {
       nextPassRequired = false;
       for (Builder builder : builders) {
 
-        final String sourcesKind = context.isCompilingTests() ? "test" : "production";
-        context.processMessage(new ProgressMessage("Compiling " + chunk.getName() + "[" + sourcesKind+"]; Compiler: " + builder.getDescription()));
+        //final String sourcesKind = context.isCompilingTests() ? "test" : "production";
+        //context.processMessage(new ProgressMessage("Compiling " + chunk.getName() + "[" + sourcesKind+"]; Compiler: " + builder.getDescription()));
 
         final Builder.ExitCode buildResult = builder.build(context, chunk);
         if (buildResult == Builder.ExitCode.ABORT) {

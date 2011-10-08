@@ -60,7 +60,7 @@ public class ResourcesBuilder extends Builder{
         }
       });
 
-      context.processMessage(new ProgressMessage("Done copying resources for " + chunk.getName()));
+      //context.processMessage(new ProgressMessage("Done copying resources for " + chunk.getName()));
 
       return ExitCode.OK;
     }

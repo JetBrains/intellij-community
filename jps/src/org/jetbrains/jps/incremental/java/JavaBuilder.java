@@ -6,6 +6,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import javax.tools.Diagnostic;
@@ -85,6 +86,7 @@ public class JavaBuilder extends Builder{
     final Set<File> successfullyCompiled = new HashSet<File>();
     final boolean compilationOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, new EmbeddedJavac.OutputConsumer() {
       public void classFileWritten(OutputFileObject output) {
+        context.processMessage(new ProgressMessage("Compiled " + output.getFile().getPath()));
         final JavaFileObject source = output.getSource();
         if (source != null) {
           final File file = new File(source.toUri());
