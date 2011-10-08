@@ -37,16 +37,25 @@ public abstract class Location<E extends PsiElement> {
   @NotNull public abstract <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
 
   @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor() {
+  public VirtualFile getVirtualFile() {
     final E psiElement = getPsiElement();
     if (!psiElement.isValid()) return null;
     final PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return null;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
+    return virtualFile;
   }
-
+  
+  @Nullable
+  public OpenFileDescriptor getOpenFileDescriptor() {
+    VirtualFile virtualFile = getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
+    return new OpenFileDescriptor(getProject(), virtualFile, getPsiElement().getTextOffset());
+  }
+  
   @Nullable
   public <Ancestor extends PsiElement> Location<Ancestor> getParent(final Class<Ancestor> parentClass) {
     final Iterator<Location<PsiElement>> ancestors = getAncestors(PsiElement.class, true);
