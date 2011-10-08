@@ -42,8 +42,15 @@ public class PropertyUtils {
         return PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, true);
     }
 
+  /**
+   * If the name of the method looks like a getter and the body consists of a single return statement,
+   * returns the returned expression. Otherwise, returns null.
+   *
+   * @param method the method to check
+   * @return the return value, or null if it doesn't match the condotions.
+   */
   @Nullable
-  public static PsiField getFieldOfGetter(PsiMethod method) {
+  public static PsiExpression getGetterReturnExpression(PsiMethod method) {
     if (method == null) {
       return null;
     }
@@ -76,6 +83,13 @@ public class PropertyUtils {
     if (value == null) {
       return null;
     }
+    return value;
+  }
+
+  @Nullable
+  public static PsiField getFieldOfGetter(PsiMethod method) {
+    final PsiExpression value = getGetterReturnExpression(method);
+    if (value == null) return null;
     if (!(value instanceof PsiReferenceExpression)) {
       return null;
     }
