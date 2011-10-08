@@ -2,6 +2,7 @@
   <library name="idea-util">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/util.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/trove4j.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

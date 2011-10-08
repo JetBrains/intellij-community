@@ -43,7 +43,7 @@ public class Facade {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable {
+  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) {
     Project project;
 
     synchronized (myConfigurationLock) {
@@ -89,7 +89,6 @@ public class Facade {
         project.clean();
         break;
     }
-    //pw.save();
   }
 
   private static String getProjectName(String projectPath) {
