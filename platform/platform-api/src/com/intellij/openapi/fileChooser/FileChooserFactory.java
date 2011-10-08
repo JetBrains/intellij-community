@@ -37,7 +37,7 @@ public abstract class FileChooserFactory {
    * @author Konstantin Bulenkov
    * @param descriptor dialog descriptor
    * @param project current project
-   * @return Sace File dialog
+   * @return Save File dialog
    * @since 9.0
    */
   public abstract FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project);
