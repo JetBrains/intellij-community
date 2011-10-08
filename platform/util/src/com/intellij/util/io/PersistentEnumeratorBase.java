@@ -248,7 +248,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
     catch (Throwable e) {
       markCorrupted();
-      LOG.error(e);
+      LOG.info(e);
       throw new RuntimeException(e);
     }
 
