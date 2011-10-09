@@ -86,8 +86,6 @@ class RenderUtil {
     final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
 
     loadResources(projectResources, resFolders);
-
-    final ResourceResolver resolver = factory.createResourceResolver(config, projectResources, theme.getName(), theme.isProjectTheme());
     final int minSdkVersion = getMinSdkVersion(facet);
     
     final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
@@ -103,6 +101,8 @@ class RenderUtil {
         .append(" Try to build project\n");
     }
 
+    final ResourceResolver resolver =
+      factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
     final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
 
     final RenderSession session;
