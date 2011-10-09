@@ -47,6 +47,13 @@ public class StringUtil {
     }
   };
 
+  public static final NotNullFunction<String, String> SINGLE_QUOTER = new NotNullFunction<String, String>() {
+    @NotNull
+    public String fun(String s) {
+      return "'" + s + "'";
+    }
+  };
+
   public static <T> Function<T, String> createToStringFunction(Class<T> cls) {
     return new Function<T, String>() {
       @Override
