@@ -5,6 +5,9 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -120,6 +123,18 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         update(event);
       }
     }, project);
+
+    CompilerManager.getInstance(project).addAfterTask(new CompileTask() {
+      @Override
+      public boolean execute(CompileContext context) {
+        if (myToolWindowForm != null &&
+            myToolWindowReady &&
+            !myToolWindowDisposed) {
+          render();
+        }
+        return true;
+      }
+    });
   }
 
   private void update(PsiTreeChangeEvent event) {
