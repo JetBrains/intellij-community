@@ -67,7 +67,8 @@ public class AndroidDomUtil {
     addSpecialResourceType("drawable", "icon");
     addSpecialResourceType("style", "theme");
     addSpecialResourceType("anim", "animation");
-    addSpecialResourceType("id", "id");
+    addSpecialResourceType("id", "id", "layout_toRightOf", "layout_toLeftOf", "layout_above", "layout_below", "layout_alignBaseLine",
+                           "layout_alignLeft", "layout_alignTop", "layout_alignRight", "layout_alignBottom");
   }
 
   private AndroidDomUtil() {
