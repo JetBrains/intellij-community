@@ -89,7 +89,20 @@ class RenderUtil {
 
     final ResourceResolver resolver = factory.createResourceResolver(config, projectResources, theme.getName(), theme.isProjectTheme());
     final int minSdkVersion = getMinSdkVersion(facet);
+    
     final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
+    try {
+      callback.loadAndParseRClass();
+    }
+    catch (ClassNotFoundException e) {
+      LOG.debug(e);
+      final String message = e.getMessage();
+      warningBuilder.append(message != null && message.length() > 0
+                            ? ("Class not found error: " + message + ".")
+                            : "R class not found.")
+        .append(" Try to build project\n");
+    }
+
     final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
 
     final RenderSession session;

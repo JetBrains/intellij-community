@@ -60,7 +60,6 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     myParentClassLoader = layoutLib.getClassLoader();
     myModule = module;
     myProjectResources = projectResources;
-    loadAndParseRClass();
   }
 
   @Nullable
@@ -327,42 +326,37 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     return myBrokenClasses;
   }
 
-  private void loadAndParseRClass() {
-    try {
-      final String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Nullable
-        @Override
-        public String compute() {
-          return getRClassName(myModule);
-        }
-      });
-      if (className == null) {
-        LOG.info("loadAndParseRClass: failed to find manifest package for project %1$s");
-        return;
+  public void loadAndParseRClass() throws ClassNotFoundException {
+    final String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        return getRClassName(myModule);
       }
+    });
+    if (className == null) {
+      LOG.info("loadAndParseRClass: failed to find manifest package for project %1$s");
+      return;
+    }
 
-      Class<?> aClass = myLoadedClasses.get(className);
-      if (aClass == null) {
-        ProjectClassLoader loader = new ProjectClassLoader(null, myModule);
-        aClass = loader.loadClass(className);
-        if (aClass != null) {
-          myLoadedClasses.put(className, aClass);
-        }
-      }
-
+    Class<?> aClass = myLoadedClasses.get(className);
+    if (aClass == null) {
+      ProjectClassLoader loader = new ProjectClassLoader(null, myModule);
+      aClass = loader.loadClass(className);
       if (aClass != null) {
-        final Map<ResourceType, TObjectIntHashMap<String>> res2id =
-          new EnumMap<ResourceType, TObjectIntHashMap<String>>(ResourceType.class);
-        final TIntObjectHashMap<Pair<ResourceType, String>> id2res = new TIntObjectHashMap<Pair<ResourceType, String>>();
-        final Map<IntArrayWrapper, String> styleableId2res = new HashMap<IntArrayWrapper, String>();
-
-        if (parseClass(aClass, id2res, styleableId2res, res2id)) {
-          myProjectResources.setCompiledResources(id2res, styleableId2res, res2id);
-        }
+        myLoadedClasses.put(className, aClass);
       }
     }
-    catch (ClassNotFoundException e) {
-      LOG.debug(e);
+
+    if (aClass != null) {
+      final Map<ResourceType, TObjectIntHashMap<String>> res2id =
+        new EnumMap<ResourceType, TObjectIntHashMap<String>>(ResourceType.class);
+      final TIntObjectHashMap<Pair<ResourceType, String>> id2res = new TIntObjectHashMap<Pair<ResourceType, String>>();
+      final Map<IntArrayWrapper, String> styleableId2res = new HashMap<IntArrayWrapper, String>();
+
+      if (parseClass(aClass, id2res, styleableId2res, res2id)) {
+        myProjectResources.setCompiledResources(id2res, styleableId2res, res2id);
+      }
     }
   }
 
