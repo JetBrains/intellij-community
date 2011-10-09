@@ -331,7 +331,8 @@ public class GitHistoryUtils {
 
           final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
           final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null, new Date(record.getAuthorTimeStamp() * 1000)));
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null, new Date(record.getAuthorTimeStamp() * 1000),
+                                               false));
         } catch (VcsException e) {
           exceptionConsumer.consume(e);
         }

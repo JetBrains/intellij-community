@@ -184,7 +184,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
         fileDoesntExistInBranchError(project, file, branchToCompare);
         return;
       }
-      final VcsFileRevision compareRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)compareRevisionNumber);
+      final VcsFileRevision compareRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)compareRevisionNumber, false);
       final String currentTitle = currentRevisionNumber != null ? ((GitRevisionNumber)currentRevisionNumber).getShortRev() + " on " + head : "Local changes on " + head;
       final String compareTitle = ((GitRevisionNumber)compareRevisionNumber).getShortRev() + " on " + branchToCompare;
 
