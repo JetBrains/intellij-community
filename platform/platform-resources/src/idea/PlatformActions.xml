@@ -212,6 +212,8 @@
 
       <!-- View -->
       <group id="ViewMenu" popup="true">
+        <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
+
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
@@ -272,52 +274,56 @@
 
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
-        <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
+        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
+        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
+        <separator/>
+        <group id="ActiveToolwindowGroup" popup="true">
+          <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
+          <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
+          <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
+          <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
+          <separator/>
+          <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
+          <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
+          <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
+          <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
+          <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
+          <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
+          <group id="ResizeToolWindowGroup" popup="true">
+            <action id="ResizeToolWindowLeft" class="com.intellij.ide.actions.ResizeToolWindowAction$Left"/>
+            <action id="ResizeToolWindowRight" class="com.intellij.ide.actions.ResizeToolWindowAction$Right"/>
+            <action id="ResizeToolWindowUp" class="com.intellij.ide.actions.ResizeToolWindowAction$Up"/>
+            <action id="ResizeToolWindowDown" class="com.intellij.ide.actions.ResizeToolWindowAction$Down"/>
+          </group>
+        </group>
+
+        <group id="EditorTabsGroup" popup="true">
+          <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
+          <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
+          <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
+          <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+          <separator/>
+          <group id="CloseEditorsGroup">
+            <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
+            <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
+            <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
+            <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
+          </group>
+          <separator/>
+          <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
+          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
+          <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
+          <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
+          <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
+          <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
+          <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
+        </group>
+
         <group id="BackgroundTasks" popup="true">
           <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>
           <action id="AutoShowProcessWindow" class="com.intellij.openapi.wm.impl.status.AutoShowProcessPopupAction"/>
         </group>
-        <separator/>
-        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
-        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
-        <separator/>
-        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
-        <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
-        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
-        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
-        <separator/>
-        <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
-        <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
-        <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
-        <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
-        <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
-        <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
-        <group id="ResizeToolWindowGroup" popup="true">
-          <action id="ResizeToolWindowLeft" class="com.intellij.ide.actions.ResizeToolWindowAction$Left"/>
-          <action id="ResizeToolWindowRight" class="com.intellij.ide.actions.ResizeToolWindowAction$Right"/>
-          <action id="ResizeToolWindowUp" class="com.intellij.ide.actions.ResizeToolWindowAction$Up"/>
-          <action id="ResizeToolWindowDown" class="com.intellij.ide.actions.ResizeToolWindowAction$Down"/>
-        </group>
-        <separator/>
-        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
-        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
-        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
-        <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
-        <separator/>
-        <group id="CloseEditorsGroup">
-          <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
-          <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
-          <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
-          <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
-        </group>
-        <separator/>
-        <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
-        <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
-        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
-        <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
-        <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
-        <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
-        <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
+
         <separator/>
         <group id="OpenProjectWindows" class="com.intellij.openapi.wm.impl.ProjectWindowActionGroup">
           <action id="NextProjectWindow" class="com.intellij.openapi.wm.impl.NextProjectWindow"/>
