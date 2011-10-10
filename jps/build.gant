@@ -8,7 +8,7 @@ def libs = "$projectHome/lib/"
 
 def gantHome = GANT_HOME
 
-project.targetFolder = "${projectHome}/build"
+projectBuilder.targetFolder = "${projectHome}/build"
     
 library("ANT") {
   classpath "$libs/ant-1.7.1.jar"
@@ -37,10 +37,10 @@ module("antLayout") {
 }
 
 target('default' : 'Default target') {
-  project.clean()
-  project.makeAll()
+  projectBuilder.clean()
+  projectBuilder.makeAll()
 
-  layout("${project.targetFolder}/deploy") {
+  layout("${projectBuilder.targetFolder}/deploy") {
     jar("jps.jar") {
       module("JPS")
       module("antLayout")

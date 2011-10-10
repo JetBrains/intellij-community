@@ -5,8 +5,8 @@ package org.jetbrains.jps
  */
 public class ModuleCycleTest extends JpsBuildTestCase {
   public void test() throws Exception {
-    doTest("testData/moduleCycle/moduleCycle.ipr", {Project project ->
-      project.builder.arrangeModuleCyclesOutputs = true
+    doTest("testData/moduleCycle/moduleCycle.ipr", {Project project, ProjectBuilder builder ->
+      builder.arrangeModuleCyclesOutputs = true
     }, {
         dir("production") {
           dir("module1") {

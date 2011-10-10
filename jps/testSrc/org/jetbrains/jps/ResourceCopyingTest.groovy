@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 class ResourceCopyingTest extends JpsBuildTestCase {
   public void testOverwriteArtifacts() throws Exception {
-    doTest("testData/resourceCopying/resourceCopying.ipr", {}, {
+    doTest("testData/resourceCopying/resourceCopying.ipr", null, {
       dir("production") {
         dir("resourceCopying") {
           dir("copy") {

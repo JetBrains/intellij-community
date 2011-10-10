@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 class PathVariablesTest extends JpsBuildTestCase {
   public void testInArtifact() throws Exception {
-    doTest("testData/pathVariables/pathVariables.ipr", ['EXTERNAL_DIR':'testData/pathVariables/external'], {}, {
+    doTest("testData/pathVariables/pathVariables.ipr", ['EXTERNAL_DIR':'testData/pathVariables/external'], null, {
       dir("artifacts") {
         dir("fileCopy") {
           dir("dir") {

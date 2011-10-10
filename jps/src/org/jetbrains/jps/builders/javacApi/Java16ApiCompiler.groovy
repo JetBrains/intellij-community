@@ -96,7 +96,7 @@ class Java16ApiCompiler {
             CompilationTask task = compiler.getTask(new PrintWriter(out), fileManager, null, options, null, toCompile)
 
             if (!task.call()) {
-                projectBuilder.buildInfoPrinter.printCompilationErrors(project, "javac", out.toString())
+                projectBuilder.buildInfoPrinter.printCompilationErrors(projectBuilder, "javac", out.toString())
                 projectBuilder.error("Compilation failed")
             }
             else {

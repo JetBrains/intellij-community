@@ -4,6 +4,7 @@ import org.jetbrains.jps.JpsBuildTestCase
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.RunConfiguration
 import org.jetbrains.jps.util.FileUtil
+import org.jetbrains.jps.ProjectBuilder
 
 class JavaAppLauncherTest extends JpsBuildTestCase {
   public void test_simple() {
@@ -51,9 +52,10 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
 
     RunConfiguration runConf = project.runConfigurations[runConfName];
 
-    project.targetFolder = createTempDir().absolutePath;
+    ProjectBuilder builder = createBuilder(project)
+    builder.targetFolder = createTempDir().absolutePath;
 
-    project.makeAll();
+    builder.buildAll();
 
     File outFile = createTempFile();
 

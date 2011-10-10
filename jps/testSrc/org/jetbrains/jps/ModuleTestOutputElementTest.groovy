@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 class ModuleTestOutputElementTest extends JpsBuildTestCase {
   public void test() {
-    doTest("testData/moduleTestOutput/moduleTestOutput.ipr", {}, {
+    doTest("testData/moduleTestOutput/moduleTestOutput.ipr", null, {
       dir("artifacts") {
         dir("tests") {
           file("MyTest.class")

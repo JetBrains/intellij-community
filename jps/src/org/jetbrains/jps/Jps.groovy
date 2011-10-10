@@ -9,7 +9,9 @@ final class Jps {
 
   def Jps(GantBinding binding) {
     Project project = new Project(binding)
+    ProjectBuilder projectBuilder = project.builder
     binding.setVariable("project", project)
+    binding.setVariable("projectBuilder", projectBuilder)
     binding.setVariable("module", {String name, Closure initializer ->
       return project.createModule(name, initializer)
     })
@@ -33,7 +35,7 @@ final class Jps {
     binding.setVariable("moduleTests", {String name ->
       def module = project.modules[name]
       if (module == null) project.error("cannot find module ${name}")
-      return project.builder.moduleTestsOutput(module)
+      return projectBuilder.moduleTestsOutput(module)
     })
 
     binding.setVariable("layout", {String dir, Closure body ->
@@ -69,10 +71,10 @@ final class Jps {
             name = (String)param0;
           }
           if (duplicate != null) {
-            binding.ant.jar(name: name, compress: project.builder.compressJars, duplicate: duplicate, args[1])
+            binding.ant.jar(name: name, compress: projectBuilder.compressJars, duplicate: duplicate, args[1])
           }
           else {
-            binding.ant.jar(name: name, compress: project.builder.compressJars, args[1])
+            binding.ant.jar(name: name, compress: projectBuilder.compressJars, args[1])
           }
         }
         else {

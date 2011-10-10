@@ -3,6 +3,7 @@ package org.jetbrains.jps.scala
 import org.jetbrains.jps.JpsBuildTestCase
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.idea.Facet
+import org.jetbrains.jps.ProjectBuilder
 
 class ScalaModuleTest extends JpsBuildTestCase {
   public void test_load_scala_facet() {
@@ -17,8 +18,9 @@ class ScalaModuleTest extends JpsBuildTestCase {
   public void test_compile_scala_module() {
     def projectPath = "plugins/scala/testData/scala-test"
     Project project = loadProject(projectPath, [:]);
-    project.clean();
-    project.builder.makeModule(project.modules["mod1"]);
+    ProjectBuilder builder = createBuilder(project)
+    builder.clean();
+    builder.makeModule(project.modules["mod1"]);
 
     def path = projectPath + "/out/production/mod1/HelloWorld.class"
     assertTrue(path, new File(path).isFile());
@@ -27,8 +29,9 @@ class ScalaModuleTest extends JpsBuildTestCase {
   public void test_joint_compilation() {
     def projectPath = "plugins/scala/testData/scala-test"
     Project project = loadProject(projectPath, [:]);
-    project.clean();
-    project.builder.makeModule(project.modules["mod2"]);
+    ProjectBuilder builder = createBuilder(project)
+    builder.clean();
+    builder.makeModule(project.modules["mod2"]);
 
     def path = projectPath + "/out/production/mod2/"
     assertTrue(path, new File(path, "A.class").isFile());

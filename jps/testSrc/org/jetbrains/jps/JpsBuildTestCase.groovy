@@ -2,7 +2,6 @@ package org.jetbrains.jps
 
 import junit.framework.TestCase
 import org.codehaus.gant.GantBinding
-import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.jps.idea.IdeaProjectLoader
 import org.jetbrains.jps.util.FileSystemItem
 import org.jetbrains.jps.util.TempFiles
@@ -28,29 +27,33 @@ abstract class JpsBuildTestCase extends TestCase {
   }
 
   def doTest(String projectPath, Map<String, String> pathVariables, Closure initProject, Closure expectedOutput) {
-    Project project = buildAll(projectPath, pathVariables, initProject)
-    assertOutput(project, project.targetFolder, expectedOutput);
+    ProjectBuilder projectBuilder = buildAll(projectPath, pathVariables, initProject)
+    assertOutput(projectBuilder.targetFolder, expectedOutput);
   }
 
-  def protected assertOutput(Project project, String targetFolder, Closure expectedOutput) {
+  def protected assertOutput(String targetFolder, Closure expectedOutput) {
     def root = new FileSystemItem(name: "<root>")
     initFileSystemItem(root, expectedOutput)
     root.assertDirectoryEqual(new File(targetFolder), "")
   }
 
   def protected buildAll(String projectPath, Map<String, String> pathVariables, Closure initProject) {
-    def binding = new GantBinding()
-    binding.includeTool << Jps
-    ProjectWrapper pw = ProjectWrapper.load(binding, projectPath, null, pathVariables, false)
-    Project project = pw.getProject()
+    Project project = loadProject(projectPath, pathVariables)
     def target = createTempDir()
-    project.targetFolder = target.absolutePath
-    initProject(project)
-    pw.clean()
-    pw.rebuild()
-    pw.buildArtifacts()
-    pw.deleteTempFiles()
-    return project
+    ProjectBuilder builder = createBuilder(project)
+    builder.targetFolder = target.absolutePath
+    if (initProject != null) {
+      initProject(project, builder)
+    }
+    builder.clean()
+    builder.buildAll()
+    builder.buildArtifacts()
+    builder.deleteTempFiles()
+    return builder
+  }
+
+  protected ProjectBuilder createBuilder(Project project) {
+    return project.builder
   }
 
   protected Project loadProject(String projectPath, Map<String, String> pathVariables) {
@@ -94,4 +97,8 @@ abstract class JpsBuildTestCase extends TestCase {
   def File createTempFile() {
     return myTempFiles.createTempFile();
   }
+}
+
+interface ProjectInitializer {
+  void init(Project project, ProjectBuilder projectBuilder)
 }

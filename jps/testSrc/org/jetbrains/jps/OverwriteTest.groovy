@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 class OverwriteTest extends JpsBuildTestCase {
   public void testOverwriteArtifacts() throws Exception {
-    doTest("testData/overwriteTest/overwriteTest.ipr", {}, {
+    doTest("testData/overwriteTest/overwriteTest.ipr", null, {
       dir("artifacts") {
         dir("classes") {
           file("a.xml", "<root2/>")

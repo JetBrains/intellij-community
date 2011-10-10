@@ -27,7 +27,6 @@ class Project {
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
 
   String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
-  String tempFolder = null
 
   def Project(GantBinding binding) {
     this.binding = binding
@@ -35,18 +34,6 @@ class Project {
 
     resolvers << new ModuleResolver(project: this)
     resolvers << new LibraryResolver(project: this)
-  }
-
-  String getTargetFolder() {
-    return builder.targetFolder
-  }
-
-  void setTargetFolder(String targetFolder) {
-    builder.targetFolder = targetFolder
-  }
-
-  def List<ModuleChunk> getChunks (boolean tests) {
-    return builder.getChunks(tests).getChunkList()
   }
 
   def ProjectBuilder getBuilder () {
@@ -125,44 +112,8 @@ class Project {
     builder.debug(message)
   }
 
-  def makeSelected (Collection<Module> modules, boolean tests) {
-    builder.buildSelected (modules, tests)
-  }
-
-  def makeAll() {
-    builder.buildAll()
-  }
-
-  def makeProduction() {
-    builder.buildProduction()
-  }
-
-  def buildArtifacts() {
-    builder.artifactBuilder.buildArtifacts()
-  }
-
-  def buildArtifact(String artifactName) {
-    def artifact = artifacts[artifactName]
-    if (artifact == null) {
-      error("Artifact '$artifactName' not found")
-    }
-    builder.artifactBuilder.buildArtifact(artifact)
-  }
-
-  List<String> runtimeClasspath() {
-    return builder.getProjectPaths().getProjectRuntimeClasspath(false);
-  }
-
-  List<String> testRuntimeClasspath() {
-    return builder.getProjectPaths().getProjectRuntimeClasspath(true);
-  }
-
   def clean() {
     builder.clean()
-  }
-
-  def deleteTempFiles() {
-    builder.deleteTempFiles()
   }
 
   def ClasspathItem resolve(Object dep) {

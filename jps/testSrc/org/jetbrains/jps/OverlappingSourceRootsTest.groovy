@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 public class OverlappingSourceRootsTest extends JpsBuildTestCase {
   public void test() throws Exception {
-    doTest("testData/overlappingSourceRoots/overlappingSourceRoots.ipr", {}, {
+    doTest("testData/overlappingSourceRoots/overlappingSourceRoots.ipr", null, {
         dir("production") {
           dir("inner") {
             dir("y") {

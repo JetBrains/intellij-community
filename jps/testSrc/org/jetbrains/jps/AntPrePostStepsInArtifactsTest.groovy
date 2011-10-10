@@ -6,12 +6,13 @@ import org.jetbrains.jps.util.FileUtil
 class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
   public void test() throws Exception {
     Project project = loadProject("testData/artifactWithAntPrePostTasks/.idea", [:])
-    project.tempFolder = FileUtil.createTempDirectory("tmp").absolutePath
-    project.clean()
-    project.buildArtifact("main")
-    project.deleteTempFiles()
+    ProjectBuilder builder = createBuilder(project)
+    builder.tempFolder = FileUtil.createTempDirectory("tmp").absolutePath
+    builder.clean()
+    builder.buildArtifact("main")
+    builder.deleteTempFiles()
     File outDir = new File("testData/artifactWithAntPrePostTasks/out");
-    assertOutput(project, outDir.getAbsolutePath()) {
+    assertOutput(outDir.getAbsolutePath(), {
       dir("artifacts") {
         dir("main") {
           dir("dir") {
@@ -21,7 +22,7 @@ class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
           file("poststep.txt", "${com.intellij.openapi.util.io.FileUtil.toSystemIndependentName(outDir.absolutePath)}/artifacts/main")
         }
       }
-    }
+    })
   }
 
   public void test_broken_artifact() throws Exception {

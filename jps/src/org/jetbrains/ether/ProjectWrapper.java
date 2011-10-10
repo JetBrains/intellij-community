@@ -111,6 +111,7 @@ public class ProjectWrapper {
 
     // Original JPS Project
     private final Project myProject;
+    private final ProjectBuilder myProjectBuilder;
 
     // Project directory
     private final String myRoot;
@@ -861,6 +862,7 @@ public class ProjectWrapper {
         affectedFiles = new HashSet<StringCache.S>();
 
         myProject = new Project(binding == null ? new GantBinding() : binding);
+        myProjectBuilder = myProject.getBuilder();
 
         final File prjFile = new File(prjDir);
         final boolean dirBased = !(prjFile.isFile() && prjDir.endsWith(".ipr"));
@@ -893,6 +895,7 @@ public class ProjectWrapper {
         affectedFiles = affected;
         backendCallback = dependencyMapping.getCallback();
         myProject = null;
+        myProjectBuilder = null;
         myHistory = null;
 
         myRoot = RW.readStringAttribute(r, "Root:");
@@ -1046,7 +1049,7 @@ public class ProjectWrapper {
     }
 
     public void clean() {
-        myProject.clean();
+        myProjectBuilder.clean();
 
         for (ModuleWrapper m : myModules.values()) {
             m.updateOutputStatus();
@@ -1058,16 +1061,6 @@ public class ProjectWrapper {
     public void rebuild() {
         makeModules(myProject.getModules().values(), defaultFlags);
     }
-
-    public void buildArtifacts() {
-        myProject.buildArtifacts();
-    }
-
-    public void deleteTempFiles() {
-        myProject.deleteTempFiles();
-
-    }
-
 
     public Project getProject() {
         return myProject;
@@ -1210,7 +1203,7 @@ public class ProjectWrapper {
 
         public BuildStatus build(final Collection<Module> modules, final Flags flags) {
             boolean incremental = flags.incremental();
-            final List<ModuleChunk> chunks = myProject.getChunks(flags.tests());
+            final List<ModuleChunk> chunks = myProjectBuilder.getChunks(flags.tests()).getChunkList();
 
             for (final ModuleChunk c : chunks) {
                 final Set<Module> chunkModules = c.getElements();
@@ -1428,10 +1421,9 @@ public class ProjectWrapper {
             return;
         }
 
-        final ProjectBuilder builder = myProject.getBuilder();
-        final BusyBeaver beaver = new BusyBeaver(builder);
+        final BusyBeaver beaver = new BusyBeaver(myProjectBuilder);
 
-        builder.buildStart();
+        myProjectBuilder.buildStart();
 
         if (flags.tests()) {
             beaver.build(modules, new Flags() {
@@ -1455,7 +1447,7 @@ public class ProjectWrapper {
 
         beaver.build(modules, flags);
 
-        builder.buildStop();
+        myProjectBuilder.buildStop();
 
         for (Module mod : modules) {
             getModule(mod.getName()).updateOutputStatus();

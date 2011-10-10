@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 class ExtractedDirectoryElementTest extends JpsBuildTestCase {
   public void testExtractDir() throws Exception {
-    doTest("testData/extractDirTest/extractDirTest.ipr", {}, {
+    doTest("testData/extractDirTest/extractDirTest.ipr", null, {
       dir("artifacts") {
         dir("extractDir") {
           file("b.txt", "b")

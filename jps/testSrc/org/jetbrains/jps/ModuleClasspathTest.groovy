@@ -8,6 +8,7 @@ import org.jetbrains.jps.incremental.ProjectPaths
  */
 public class ModuleClasspathTest extends JpsBuildTestCase {
   private Project project
+  private ProjectBuilder builder
 
   @Override
   protected void setUp() {
@@ -20,6 +21,7 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
         classpath "/jdk15.jar"
       }
     })
+    builder = createBuilder(project)
   }
 
   private String getProjectPath() {
@@ -61,20 +63,20 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
   public void testCompilationClasspath() {
     ModuleChunk chunk = new ModuleChunk(project.modules['main'])
     assertClasspath(["util/lib/exported.jar", "out/production/util", "/jdk.jar"],
-            ProjectPaths.getPathsList(project.builder.getProjectPaths().getPlatformCompilationClasspath(chunk, false, true)))
+            ProjectPaths.getPathsList(builder.getProjectPaths().getPlatformCompilationClasspath(chunk, false, true)))
     assertClasspath(["main/lib/service.jar"],
-            ProjectPaths.getPathsList(project.builder.getProjectPaths().getCompilationClasspath(chunk, false, true)))
+            ProjectPaths.getPathsList(builder.getProjectPaths().getCompilationClasspath(chunk, false, true)))
   }
 
   public void testProjectClasspath() {
     assertClasspath(["out/production/main", "/jdk.jar", "main/lib/service.jar",
                      "test-util/lib/runtime.jar", "out/production/test-util",
                      "util/lib/exported.jar", "/jdk15.jar", "out/production/util"],
-                    project.builder.getProjectPaths().getProjectRuntimeClasspath(false))
+                    builder.getProjectPaths().getProjectRuntimeClasspath(false))
   }
 
   private def assertClasspath(String module, ClasspathKind classpathKind, List<String> expected) {
-    final List<String> classpath = project.builder.moduleClasspath(project.modules[module], classpathKind)
+    final List<String> classpath = builder.moduleClasspath(project.modules[module], classpathKind)
     assertClasspath(expected, toSystemIndependentPaths(classpath))
   }
 

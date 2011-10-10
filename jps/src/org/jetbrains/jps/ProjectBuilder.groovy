@@ -44,6 +44,7 @@ class ProjectBuilder {
 
   private ProjectPaths projectPaths
   private String targetFolder = null
+  String tempFolder = null
 
   private final TempFileContainer tempFileContainer
   boolean dryRun = false
@@ -162,6 +163,18 @@ class ProjectBuilder {
 
   private def buildAllModules(boolean includeTests) {
     buildModules(project.modules.values(), includeTests)
+  }
+
+  public def buildArtifact(String artifactName) {
+    def artifact = project.artifacts[artifactName]
+    if (artifact == null) {
+      error("Artifact '$artifactName' not found")
+    }
+    artifactBuilder.buildArtifact(artifact)
+  }
+
+  public def buildArtifacts() {
+    artifactBuilder.buildArtifacts()
   }
 
   private def clearChunks(Collection<Module> modules) {

@@ -19,7 +19,7 @@ class TempFileContainer {
   private File getBaseDirectory() {
     if (baseDirectory == null) {
       def ant = projectBuilder.binding.ant
-      String basePath = projectBuilder.project.tempFolder ?: projectBuilder.targetFolder ?: "."
+      String basePath = projectBuilder.tempFolder ?: projectBuilder.targetFolder ?: "."
       baseDirectory = new File(basePath, tempDirectoryName)
       BuildUtil.deleteDir(projectBuilder, baseDirectory.absolutePath)
       ant.mkdir(dir: baseDirectory.absolutePath)

@@ -9,8 +9,8 @@ import java.util.jar.Attributes
  */
 class ManifestInArtifactTest extends JpsBuildTestCase {
   public void test() {
-    def project = buildAll("testData/manifestInArtifact/manifest.ipr", [:], {})
-    File jarFile = new File(project.targetFolder + "/artifacts/simple/simple.jar")
+    def projectBuilder = buildAll("testData/manifestInArtifact/manifest.ipr", [:], null)
+    File jarFile = new File(projectBuilder.targetFolder + "/artifacts/simple/simple.jar")
     assertTrue(jarFile.exists())
     File extracted = ZipUtil.extractToTempDir(jarFile)
     File manifestFile = new File(extracted, "META-INF/MANIFEST.MF")

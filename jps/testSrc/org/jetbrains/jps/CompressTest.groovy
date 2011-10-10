@@ -5,20 +5,20 @@ package org.jetbrains.jps
  */
 class CompressTest extends JpsBuildTestCase {
   public void testCompress() throws Exception {
-    File jarFile = doBuildJar({})
+    File jarFile = doBuildJar(null)
     assertTrue(jarFile.size() < 1000)
   }
 
   public void testNotCompress() throws Exception {
-    File jarFile = doBuildJar {Project project ->
-      project.builder.compressJars = false
+    File jarFile = doBuildJar {Project project, ProjectBuilder builder ->
+      builder.compressJars = false
     }
     assertTrue(jarFile.size() > 5000)
   }
 
   private File doBuildJar(Closure initProject) {
-    Project project = buildAll("testData/compressTest/compressTest.ipr", [:], initProject)
-    File jarFile = new File(project.targetFolder + "/artifacts/data/data.jar")
+    ProjectBuilder projectBuilder = buildAll("testData/compressTest/compressTest.ipr", [:], initProject)
+    File jarFile = new File(projectBuilder.targetFolder + "/artifacts/data/data.jar")
     assertTrue("$jarFile.absolutePath doesn't exist", jarFile.exists())
     return jarFile
   }

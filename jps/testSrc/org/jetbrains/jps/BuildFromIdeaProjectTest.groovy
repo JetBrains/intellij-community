@@ -14,7 +14,7 @@ class BuildFromIdeaProjectTest extends JpsBuildTestCase {
   }
 
   private Closure getGlobalLib() {
-    return {Project project ->
+    return {Project project, ProjectBuilder projectBuilder ->
       project.createGlobalLibrary("jdom") {
         classpath "testData/iprProject/lib/jdom.jar"
       }

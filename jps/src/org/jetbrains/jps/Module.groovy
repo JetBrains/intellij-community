@@ -98,12 +98,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   }
 
   def List<String> getClasspathRoots(ClasspathKind kind) {
-    if (kind.isTestsIncluded()) {
-      return [project.builder.moduleTestsOutput(this), project.builder.moduleOutput(this)]
-    }
-    else {
-      return [project.builder.moduleOutput(this)]
-    }
+    return []
   }
 
   def List<ClasspathItem> getClasspath(ClasspathKind kind) {
