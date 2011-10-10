@@ -46,7 +46,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ActionMenuItem extends JMenuItem {
+public class ActionMenuItem extends JCheckBoxMenuItem {
   private static final Icon ourCheckedIcon = new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
@@ -268,7 +268,10 @@ public class ActionMenuItem extends JMenuItem {
     if (isToggleable() && myPresentation.getIcon() == null) {
       action.update(myEvent);
       myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-      if (!(getUI() instanceof GtkMenuItemUI)) {
+      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
+        setState(myToggled);
+      }
+      else if (!(getUI() instanceof GtkMenuItemUI)) {
         if (myToggled) {
           setIcon(ourCheckedIcon);
           setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
