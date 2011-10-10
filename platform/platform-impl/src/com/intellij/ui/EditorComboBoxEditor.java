@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
@@ -49,7 +48,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     return myTextField.getEditor();
   }
 
-  public Component getEditorComponent() {
+  public EditorTextField getEditorComponent() {
     return myTextField;
   }
 
