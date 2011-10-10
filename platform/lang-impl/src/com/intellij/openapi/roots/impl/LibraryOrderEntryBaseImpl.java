@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +37,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
+  private final MyRootSetChangedListener myRootSetChangedListener = new MyRootSetChangedListener();
   private RootProvider myCurrentlySubscribedRootProvider = null;
 
   LibraryOrderEntryBaseImpl(RootModelImpl rootModel, ProjectRootManagerImpl instanceImpl) {
@@ -90,8 +91,8 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return rootProvider == null ? VirtualFile.EMPTY_ARRAY : filterDirectories(rootProvider.getFiles(type));
   }
 
-  private static VirtualFile[] filterDirectories(VirtualFile[] files) {
-    List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, VirtualFile>() {
+  protected VirtualFile[] filterDirectories(VirtualFile[] files) {
+    List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new Function<VirtualFile, VirtualFile>() {
       public VirtualFile fun(VirtualFile file) {
         return file.isDirectory() ? file : null;
       }
@@ -127,17 +128,35 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   private void subscribe(RootProvider wrapper) {
     if (wrapper != null) {
-      myProjectRootManagerImpl.subscribeToRootProvider(this, wrapper);
+      addListenerToWrapper(wrapper, myRootSetChangedListener);
     }
     myCurrentlySubscribedRootProvider = wrapper;
+  }
+
+  private void addListenerToWrapper(final RootProvider wrapper,
+                                      final RootProvider.RootSetChangedListener rootSetChangedListener) {
+    myProjectRootManagerImpl.addRootSetChangedListener(rootSetChangedListener, wrapper);
   }
 
 
   private void unsubscribe() {
     if (myCurrentlySubscribedRootProvider != null) {
-      myProjectRootManagerImpl.unsubscribeFromRootProvider(this, myCurrentlySubscribedRootProvider);
+      final RootProvider wrapper = myCurrentlySubscribedRootProvider;
+      removeListenerFromWrapper(wrapper, myRootSetChangedListener);
     }
     myCurrentlySubscribedRootProvider = null;
+  }
+
+  protected void removeListenerFromWrapper(final RootProvider wrapper,
+                                           final RootProvider.RootSetChangedListener rootSetChangedListener) {
+    myProjectRootManagerImpl.removeRootSetChangedListener(rootSetChangedListener, wrapper);
+  }
+
+
+  private class MyRootSetChangedListener implements RootProvider.RootSetChangedListener {
+    public void rootSetChanged(RootProvider wrapper) {
+      updateFromRootProviderAndSubscribe();
+    }
   }
 
   @Override

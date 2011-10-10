@@ -91,4 +91,8 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
     return new OrderRootType[0];
   }
 
+  public boolean isFileBased() {
+    return false;
+  }
+
 }
