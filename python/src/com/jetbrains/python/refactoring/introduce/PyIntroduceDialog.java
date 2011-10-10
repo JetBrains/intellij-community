@@ -55,7 +55,6 @@ public class PyIntroduceDialog extends DialogWrapper {
     myHelpId = helpId;
     setUpNameComboBox(operation.getSuggestedNames());
 
-    setModal(true);
     setTitle(caption);
     init();
     setupDialog(operation.getAvailableInitPlaces());
@@ -104,12 +103,12 @@ public class PyIntroduceDialog extends DialogWrapper {
   private void setupDialog(EnumSet<IntroduceHandler.InitPlace> availableInitPlaces) {
     myReplaceAll.setMnemonic(KeyEvent.VK_A);
     myNameLabel.setLabelFor(myNameComboBox);
-    myPlaceSelector.setVisible(availableInitPlaces.size() > 0);
+    myPlaceSelector.setVisible(availableInitPlaces.size() > 1);
     myConstructor.setVisible(availableInitPlaces.contains(IntroduceHandler.InitPlace.CONSTRUCTOR));
     mySetUp.setVisible(availableInitPlaces.contains(IntroduceHandler.InitPlace.SET_UP));
     mySamePlace.setSelected(true);
     
-    // Replace occurences check box setup
+    // Replace occurrences check box setup
     if (myOccurrencesCount > 1) {
       myReplaceAll.setSelected(false);
       myReplaceAll.setEnabled(true);
