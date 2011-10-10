@@ -680,6 +680,9 @@ public class IdeEventQueue extends EventQueue {
   private void defaultDispatchEvent(final AWTEvent e) {
     try {
       myDispatchingFocusEvent = e instanceof FocusEvent;
+
+      maybeReady();
+
       super.dispatchEvent(e);
     }
     catch (ProcessCanceledException pce) {
