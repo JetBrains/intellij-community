@@ -438,6 +438,10 @@ public class AbstractTreeUi {
     });
   }
 
+  public ProgressIndicator getProgress() {
+    return myProgress;
+  }
+
   private void releaseNow() {
     try {
       acquireLock();

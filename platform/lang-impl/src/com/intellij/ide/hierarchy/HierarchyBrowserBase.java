@@ -20,6 +20,7 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
@@ -98,6 +99,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   protected abstract JTree getCurrentTree();
+  protected abstract HierarchyTreeBuilder getCurrentBuilder();
 
   @Nullable
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
@@ -215,6 +217,10 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   private final class CloseAction extends CloseTabToolbarAction {
     public final void actionPerformed(final AnActionEvent e) {
+      final ProgressIndicator progress = getCurrentBuilder().getUi().getProgress();
+      if (progress != null) {
+        progress.cancel();
+      }
       myContent.getManager().removeContent(myContent, true);
     }
   }
