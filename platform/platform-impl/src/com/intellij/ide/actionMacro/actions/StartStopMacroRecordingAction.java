@@ -27,10 +27,8 @@ import com.intellij.openapi.project.DumbAware;
  */
 public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
-    boolean editorAvailable = PlatformDataKeys.EDITOR.getData(e.getDataContext()) != null;
     boolean isRecording = ActionMacroManager.getInstance().isRecording();
 
-    e.getPresentation().setEnabled(editorAvailable || isRecording);
     e.getPresentation().setText(isRecording
                                 ? IdeBundle.message("action.stop.macro.recording")
                                 : IdeBundle.message("action.start.macro.recording"));
