@@ -27,7 +27,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private final int myBaselineVersion;
   private final int myBuildNumber;
   private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
-  private static final int TOP_BASELINE_VERSION = 108;
+  private static final int TOP_BASELINE_VERSION = 110;
 
   public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
     myProductCode = productCode;
