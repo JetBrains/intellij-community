@@ -130,7 +130,7 @@
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
     </intentionAction>
 
-    <localInspection shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
+    <localInspection language="XML" shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
                      groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.android.inspections.AndroidDomInspection"/>
 
