@@ -333,7 +333,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     public void actionPerformed(AnActionEvent e) {
-      getInstance().playMacro(myMacro);
+      IdeEventQueue.getInstance().doWhenReady(new Runnable() {
+        @Override
+        public void run() {
+          getInstance().playMacro(myMacro);
+        }
+      });
     }
 
     public void update(AnActionEvent e) {
