@@ -136,10 +136,11 @@
 
     <!-- View -->
     <group id="QuickActions">
+      <separator/>
       <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
       <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
 
-      <add-to-group group-id="ViewMenu" anchor="first"/>
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ToolWindowsGroup"/>
     </group>
 
     <group id="CodeEditorBaseGroup">
@@ -163,12 +164,6 @@
     </action>
 
     <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
-
-    <group id="ProjectViewGroup">
-      <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
-      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
-      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
-    </group>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
