@@ -1,9 +1,8 @@
-package org.jetbrains.jps.incremental;
+package org.jetbrains.jps;
 
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
 
 import java.io.File;
 import java.util.*;

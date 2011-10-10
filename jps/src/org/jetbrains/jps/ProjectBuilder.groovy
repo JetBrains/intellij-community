@@ -8,7 +8,7 @@ import org.jetbrains.ether.dependencyView.Callbacks.Backend
 import org.jetbrains.ether.dependencyView.StringCache
 import org.jetbrains.jps.artifacts.ArtifactBuilder
 import org.jetbrains.jps.idea.OwnServiceLoader
-import org.jetbrains.jps.incremental.ProjectPaths
+
 import org.jetbrains.jps.listeners.BuildInfoPrinter
 import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter

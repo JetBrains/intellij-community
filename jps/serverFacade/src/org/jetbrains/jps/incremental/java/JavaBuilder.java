@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.java;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;

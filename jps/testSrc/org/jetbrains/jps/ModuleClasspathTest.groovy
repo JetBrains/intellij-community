@@ -1,7 +1,6 @@
 package org.jetbrains.jps
 
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.jps.incremental.ProjectPaths
 
 /**
  * @author nik

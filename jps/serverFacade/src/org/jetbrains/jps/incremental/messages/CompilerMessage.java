@@ -1,5 +1,7 @@
 package org.jetbrains.jps.incremental.messages;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 
 /**
@@ -25,7 +27,7 @@ public class CompilerMessage extends BuildMessage {
   }
 
   public CompilerMessage(String compilerName, Kind kind, String messageText,
-                         /*@org.jetbrains.annotations.Nullable*/ String sourcePath,
+                         @Nullable String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,
                          long problemLocationOffset,

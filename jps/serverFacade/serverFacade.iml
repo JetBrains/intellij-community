@@ -19,6 +19,16 @@
     </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/annotations.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="idea-util" level="project" />
   </component>
 </module>
 
