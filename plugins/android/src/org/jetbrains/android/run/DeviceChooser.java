@@ -103,10 +103,15 @@ public class DeviceChooser extends DialogWrapper {
     Collections.addAll(selectedSerialsSet, selectedSerials);
     IDevice[] myDevices = model.myDevices;
     ListSelectionModel selectionModel = myDeviceTable.getSelectionModel();
-    selectionModel.clearSelection();
+    boolean cleared = false;
+
     for (int i = 0, n = myDevices.length; i < n; i++) {
       String serialNumber = myDevices[i].getSerialNumber();
       if (selectedSerialsSet.contains(serialNumber)) {
+        if (!cleared) {
+          selectionModel.clearSelection();
+          cleared = true;
+        }
         selectionModel.addSelectionInterval(i, i);
       }
     }
