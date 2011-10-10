@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -66,7 +63,18 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
       if (dir == null) dir = description.findSubdirectory(aClass.getName());
       if (dir == null) continue;
       final PsiFile descr = dir.findFile("description.html");
-      if (descr != null) return null;
+      if (descr != null) {
+        if (!hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
+          PsiElement problem = aClass.getNameIdentifier();
+          ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(problem == null ? nameIdentifier : problem,
+                                                                                "Intention must have 'before.*.template' and 'after.*.template' beside 'description.html'",
+                                                                                isOnTheFly,
+                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          return new ProblemDescriptor[]{problemDescriptor};
+        }
+        
+        return null;
+      }
     }
 
 
@@ -78,6 +86,25 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     return new ProblemDescriptor[]{problemDescriptor};
   }
 
+  private static boolean hasBeforeAndAfterTemplate(@NotNull VirtualFile dir) {
+    boolean hasBefore = false;
+    boolean hasAfter = false;
+
+    for (VirtualFile file : dir.getChildren()) {
+      String name = file.getName();
+      if (name.endsWith(".template")) {
+        if (name.startsWith("before.")) {
+          hasBefore = true;
+        }
+        else if (name.startsWith("after.")) {
+          hasAfter = true;
+        }
+      }
+    }
+
+    return hasBefore && hasAfter;
+  }
+  
   public static List<VirtualFile> getPotentialRoots(Module module) {
     final PsiDirectory[] dirs = getIntentionDescriptionsDirs(module);
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
