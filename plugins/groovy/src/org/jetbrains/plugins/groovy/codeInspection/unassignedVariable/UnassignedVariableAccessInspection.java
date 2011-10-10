@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -68,7 +69,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
         String name = read.getVariableName();
         GroovyPsiElement property = ResolveUtil.resolveProperty((GroovyPsiElement) element, name);
         if (property != null && !(property instanceof PsiParameter) && !(property instanceof PsiField) &&
-            PsiTreeUtil.isAncestor(owner, property, false)) {
+            PsiTreeUtil.isAncestor(owner, property, false) && !GppTypeConverter.hasTypedContext(element)) {
           problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unassigned.access.tooltip", name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }

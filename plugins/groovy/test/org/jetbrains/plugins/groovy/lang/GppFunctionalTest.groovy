@@ -15,6 +15,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import junit.framework.ComparisonFailure
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -541,6 +542,23 @@ new Foo().foo.substr<caret>a
 """
     myFixture.completeBasic()
     assertOrderedEquals myFixture.lookupElementStrings, "substring", "substring"
+  }
+
+  public void testNonInitializedVariable() throws Exception {
+    configureScript """
+
+@Typed
+def foo() {
+  int a
+  return a
+}
+
+def bar() {
+  int a
+  return <warning descr="Variable 'a' might not be assigned">a</warning>
+}"""
+    myFixture.enableInspections new UnassignedVariableAccessInspection()
+    myFixture.checkHighlighting(true, false, false)
   }
 
 }
