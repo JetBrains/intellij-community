@@ -31,7 +31,6 @@ public class PlaybackLastMacroAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(!ActionMacroManager.getInstance().isPlaying() &&
-                                   ActionMacroManager.getInstance().hasRecentMacro() &&
-                                   PlatformDataKeys.EDITOR.getData(e.getDataContext()) != null);
+                                   ActionMacroManager.getInstance().hasRecentMacro());
   }
 }

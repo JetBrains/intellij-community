@@ -338,8 +338,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!getInstance().isPlaying() &&
-                                     PlatformDataKeys.EDITOR.getData(e.getDataContext()) != null);
+      e.getPresentation().setEnabled(!getInstance().isPlaying());
     }
   }
 
