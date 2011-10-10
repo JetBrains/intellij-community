@@ -442,8 +442,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   }
 
   private boolean isEntryPoint(final RefElement owner) {
-    if (RefUtil.isEntryPoint(owner)) return true;
     final PsiElement element = owner.getElement();
+    if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(element.getProject());
       if (AnnotationUtil.isAnnotated((PsiModifierListOwner)element, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
