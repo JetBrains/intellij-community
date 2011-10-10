@@ -21,14 +21,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -88,10 +87,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @Nullable
-  public String getSDKVersion(@NotNull Module module) {
-    final String path = LibrariesUtil.getGroovyHomePath(module);
-    if (path == null) return null;
-    return getSDKVersion(path);
+  public String getSDKVersion(@NotNull final Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<String>() {
+      @Override
+      public Result<String> compute() {
+        final String path = LibrariesUtil.getGroovyHomePath(module);
+        if (path == null) return null;
+        return Result.create(getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
+      }
+    });
   }
 
   public boolean isVersionAtLeast(Module module, String version) {
