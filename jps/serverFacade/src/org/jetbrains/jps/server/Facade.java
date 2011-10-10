@@ -86,7 +86,7 @@ public class Facade {
         break;
 
       case CLEAN:
-        project.clean();
+        project.getBuilder().clean();
         break;
     }
   }

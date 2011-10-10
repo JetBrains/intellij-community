@@ -105,7 +105,7 @@ final class Jps {
       return layoutInfo
     })
 
-    project.taskdef(name: "layout", classname: "jetbrains.antlayout.tasks.LayoutTask")
+    binding.ant.taskdef(name: "layout", classname: "jetbrains.antlayout.tasks.LayoutTask")
   }
 
   def Jps(GantBinding binding, Map map) {

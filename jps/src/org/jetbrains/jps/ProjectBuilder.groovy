@@ -54,11 +54,11 @@ class ProjectBuilder {
     this.binding = binding
     artifactBuilder = new ArtifactBuilder(this)
     tempFileContainer = new TempFileContainer(this, "__build_temp__")
-    sourceGeneratingBuilders << new GroovyStubGenerator(project)
+    sourceGeneratingBuilders << new GroovyStubGenerator(this)
     translatingBuilders << new JavacBuilder()
-    translatingBuilders << new GroovycBuilder(project)
+    translatingBuilders << new GroovycBuilder(this)
     translatingBuilders << new ResourceCopier()
-    weavingBuilders << new JetBrainsInstrumentations(project)
+    weavingBuilders << new JetBrainsInstrumentations(this)
     productionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE)
     testChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE)
 

@@ -1,5 +1,6 @@
 package org.jetbrains.jps.runConf;
 
+import org.jetbrains.jps.ProjectBuilder;
 import org.jetbrains.jps.RunConfiguration;
 
 public abstract class RunConfigurationLauncherService {
@@ -17,14 +18,14 @@ public abstract class RunConfigurationLauncherService {
 
   public void afterFinish(RunConfiguration runConf) {}
 
-  public final void start(RunConfiguration runConf) {
+  public final void start(RunConfiguration runConf, ProjectBuilder projectBuilder) {
     beforeStart(runConf);
     try {
-      startInternal(runConf);
+      startInternal(runConf, projectBuilder);
     } finally {
       afterFinish(runConf);
     }
   }
 
-  protected abstract void startInternal(RunConfiguration runConf);
+  protected abstract void startInternal(RunConfiguration runConf, ProjectBuilder projectBuilder);
 }

@@ -21,12 +21,12 @@ class Java16ApiCompilerRunner {
       return true
     }
     catch (NoClassDefFoundError error) {
-      chunk.project.warning("Java 1.6 API compiler is not available")
+      projectBuilder.warning("Java 1.6 API compiler is not available")
       notAvailable = true
     }
     catch (Exception e) {
       e.printStackTrace()
-      chunk.project.warning("Compilation failed with exception for '${chunk.name}'")
+      projectBuilder.warning("Compilation failed with exception for '${chunk.name}'")
       throw e
     }
     return false

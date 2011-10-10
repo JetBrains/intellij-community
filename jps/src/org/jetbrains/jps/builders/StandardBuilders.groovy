@@ -188,8 +188,8 @@ class ResourceCopier implements ModuleBuilder {
 }
 
 class GroovycBuilder implements ModuleBuilder {
-  def GroovycBuilder(org.jetbrains.jps.Project project) {
-    project.taskdef(name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
+  def GroovycBuilder(org.jetbrains.jps.ProjectBuilder projectBuilder) {
+    projectBuilder.binding.ant.taskdef(name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
@@ -232,8 +232,8 @@ class GroovycBuilder implements ModuleBuilder {
 
 class GroovyStubGenerator implements ModuleBuilder {
 
-  def GroovyStubGenerator(org.jetbrains.jps.Project project) {
-    project.taskdef(name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
+  def GroovyStubGenerator(org.jetbrains.jps.ProjectBuilder projectBuilder) {
+    projectBuilder.binding.ant.taskdef(name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
@@ -310,8 +310,8 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     }
   }
 
-  def JetBrainsInstrumentations(org.jetbrains.jps.Project project) {
-    project.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
+  def JetBrainsInstrumentations(org.jetbrains.jps.ProjectBuilder projectBuilder) {
+    projectBuilder.binding.ant.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
   }
 
   def getPrefixedPath(org.jetbrains.jps.ProjectBuilder projectBuilder, String root, ModuleChunk moduleChunk) {

@@ -112,10 +112,6 @@ class Project {
     builder.debug(message)
   }
 
-  def clean() {
-    builder.clean()
-  }
-
   def ClasspathItem resolve(Object dep) {
     if (dep instanceof ClasspathItem) {
       return dep
@@ -176,14 +172,5 @@ class Project {
 
   def exportProperty(String name, String value) {
     binding.ant.project.setProperty(name, value)
-  }
-
-  def taskdef(Map args) {
-    binding.ant.taskdef(name: args.name, classname: args.classname) {
-      String additionalClasspathId = getPropertyIfDefined("additional.classpath.id")
-      if (additionalClasspathId != null) {
-        classpath (refid: additionalClasspathId)
-      }
-    }
   }
 }

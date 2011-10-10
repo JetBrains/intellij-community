@@ -2,6 +2,7 @@ package org.jetbrains.jps.runConf.java
 
 import org.jetbrains.jps.RunConfiguration
 import org.jetbrains.jps.runConf.RunConfigurationLauncherService
+import org.jetbrains.jps.ProjectBuilder
 
 /**
  * This launcher is able can be used to start Java main class.
@@ -63,10 +64,10 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     mySystemProperties.putAll(props);
   }
 
-  final void startInternal(RunConfiguration runConf) {
+  final void startInternal(RunConfiguration runConf, ProjectBuilder projectBuilder) {
     def project = runConf.project;
 
-    def ant = project.binding.ant;
+    def ant = projectBuilder.binding.ant;
     def params = [
       mainClass: getMainClassName(runConf),
       jvmArgs: getJVMArguments(runConf),
@@ -74,14 +75,14 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     ];
 
     def module = runConf.module;
-    def runConfRuntimeCp = getRuntimeClasspath(runConf);
+    def runConfRuntimeCp = getRuntimeClasspath(runConf, projectBuilder);
 
     def attrs = [:];
     def sdk = module?.sdk ? module.sdk : project.projectSdk;
     if (sdk != null) {
       attrs["jvm"] = sdk.getJavaExecutable();
     } else {
-      project.warning("Cannot find java executable, will use java of the current process.");
+      projectBuilder.warning("Cannot find java executable, will use java of the current process.");
     }
 
     attrs["classname"] = MainClassLauncher.class.getName();
@@ -102,7 +103,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     def runConfRuntimeCpFile = createTempFile(runConfRuntimeCp);
     def mainClassCpFile = createTempFile(getMainClassClasspath(runConf));
     def tmpArgs = createTempFile(splitCommandArgumentsAndUnquote(params.classArgs));
-    project.info("Starting run configuration $runConf.name ...");
+    projectBuilder.info("Starting run configuration $runConf.name ...");
 
     ant.java(attrs) {
       arg(line: "$params.mainClass \"$mainClassCpFile\" \"$runConfRuntimeCpFile\" \"$tmpArgs\"");
@@ -193,12 +194,12 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
     return result;
   }
 
-  private Collection<String> getRuntimeClasspath(RunConfiguration runConf) {
+  private Collection<String> getRuntimeClasspath(RunConfiguration runConf, ProjectBuilder projectBuilder) {
     def runConfRuntimeCp = new LinkedHashSet<String>();
     if (runConf.module != null) {
-      runConfRuntimeCp.addAll(runConf.project.builder.moduleRuntimeClasspath(runConf.module, true));
+      runConfRuntimeCp.addAll(projectBuilder.moduleRuntimeClasspath(runConf.module, true));
     } else {
-      runConfRuntimeCp.addAll(runConf.project.builder.getProjectPaths().getProjectRuntimeClasspath(true));
+      runConfRuntimeCp.addAll(projectBuilder.getProjectPaths().getProjectRuntimeClasspath(true));
     }
 
     return runConfRuntimeCp;

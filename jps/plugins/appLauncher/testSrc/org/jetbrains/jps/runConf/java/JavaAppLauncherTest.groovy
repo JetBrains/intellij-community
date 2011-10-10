@@ -66,7 +66,7 @@ class JavaAppLauncherTest extends JpsBuildTestCase {
       launcherInitializer(launcher);
     }
 
-    launcher.start(runConf);
+    launcher.start(runConf, builder);
 
     String output = FileUtil.loadFileText(outFile);
     assertions(output);
