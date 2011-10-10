@@ -311,6 +311,21 @@ class Foo {
     assertEmpty make()
   }
 
+  public void testRecompileExpressionReferences() throws Exception {
+    def rusCon = myFixture.addFileToProject('RusCon.groovy', '''
+interface RusCon {
+  Closure foo = { Seq.foo() }
+}''')
+    myFixture.addFileToProject "Seq.groovy", """
+class Seq implements RusCon {
+  static def foo() { }
+}"""
+    assertEmpty make()
+
+    touch(rusCon.virtualFile)
+    assertEmpty make()
+  }
+
   public void testRecompileImportedClass() throws Exception {
     def bar = myFixture.addFileToProject("pack/Bar.groovy", """
 package pack
