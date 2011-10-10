@@ -13,8 +13,12 @@
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildParticipantProvider implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipantProvider"/>
+
     <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions" extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin" implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension" implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
+
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
@@ -46,6 +50,13 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.TitleCapitalizationInspection"/>
+    <localInspection language="XML" shortName="InspectionMappingConsistency"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     displayName="&lt;inspection&gt; tag consistency"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>

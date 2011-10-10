@@ -81,6 +81,7 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @SubTagList("resource-bundle")
   List<GenericDomValue<String>> getResourceBundles();
   GenericDomValue<String> addResourceBundle();
 

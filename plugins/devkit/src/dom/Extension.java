@@ -29,4 +29,5 @@ public interface Extension extends DomElement {
 
   GenericAttributeValue<String> getOrder();
 
+  ExtensionPoint getExtensionPoint();
 }
