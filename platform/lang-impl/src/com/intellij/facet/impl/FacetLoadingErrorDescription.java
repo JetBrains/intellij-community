@@ -17,28 +17,31 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.impl.invalid.InvalidFacet;
+import com.intellij.facet.impl.invalid.InvalidFacetManager;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
+import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.ProjectBundle;
 
 /**
  * @author nik
  */
 public class FacetLoadingErrorDescription extends ConfigurationErrorDescription {
+  private static final ConfigurationErrorType INVALID_FACET = new ConfigurationErrorType(ProjectBundle.message("element.kind.name.facet"), true);
   private final InvalidFacet myFacet;
 
   public FacetLoadingErrorDescription(final InvalidFacet facet) {
-    super(facet.getName() + " (" + facet.getModule().getName() + ")", ProjectBundle.message("element.kind.name.facet"), facet.getErrorMessage());
+    super(facet.getName() + " (" + facet.getModule().getName() + ")", facet.getErrorMessage(), INVALID_FACET);
     myFacet = facet;
   }
 
   @Override
-  public String getRemoveConfirmationMessage() {
-    return ProjectBundle.message("confirmation.message.would.you.like.to.remove.facet", myFacet.getName(), myFacet.getModule().getName());
+  public String getIgnoreConfirmationMessage() {
+    return ProjectBundle.message("confirmation.message.would.you.like.to.ignore.facet", myFacet.getName(), myFacet.getModule().getName());
   }
 
   @Override
-  public void removeInvalidElement() {
-    FacetUtil.deleteFacet(myFacet);
+  public void ignoreInvalidElement() {
+    InvalidFacetManager.getInstance(myFacet.getModule().getProject()).setIgnored(myFacet, true);
   }
 
   @Override

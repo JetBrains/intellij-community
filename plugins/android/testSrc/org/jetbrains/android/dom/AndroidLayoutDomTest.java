@@ -311,6 +311,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     }
   }
 
+  public void testRelativeIdsCompletion() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "@+id/", "@android:", "@id/idd1", "@id/idd2");
+  }
+
   private void copyOnClickClasses() throws IOException {
     copyFileToProject("OnClick_Class1.java", "src/p1/p2/OnClick_Class1.java");
     copyFileToProject("OnClick_Class2.java", "src/p1/p2/OnClick_Class2.java");

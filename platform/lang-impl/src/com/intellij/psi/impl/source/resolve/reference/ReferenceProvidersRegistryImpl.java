@@ -76,7 +76,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     }
   };
 
-  public PsiReferenceRegistrarImpl getRegistrar(Language language) {
+  public synchronized PsiReferenceRegistrarImpl getRegistrar(Language language) {
     return myRegistrars.get(language);
   }
 

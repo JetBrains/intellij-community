@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.module.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
+import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,8 +28,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -40,10 +42,14 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   private JLabel myDescriptionLabel;
   private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<JCheckBox, ConfigurationErrorDescription>();
 
-  private RemoveInvalidElementsDialog(final String title, String invalidElements, final Project project, List<ConfigurationErrorDescription> errors) {
+  private RemoveInvalidElementsDialog(final String title,
+                                      ConfigurationErrorType type,
+                                      String invalidElements,
+                                      final Project project,
+                                      List<ConfigurationErrorDescription> errors) {
     super(project, true);
     setTitle(title);
-    myDescriptionLabel.setText(ProjectBundle.message("label.text.0.cannot.be.loaded", invalidElements));
+    myDescriptionLabel.setText(ProjectBundle.message(type.canIgnore() ? "label.text.0.cannot.be.loaded.ignore" : "label.text.0.cannot.be.loaded.remove", invalidElements));
     myContentPanel.setLayout(new VerticalFlowLayout());
     for (ConfigurationErrorDescription error : errors) {
       JCheckBox checkBox = new JCheckBox(error.getElementName() + ".");
@@ -62,32 +68,34 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
       myContentPanel.add(panel);
     }
     init();
-    setOKButtonText(ProjectBundle.message("button.text.remove.selected"));
+    setOKButtonText(ProjectBundle.message(type.canIgnore() ? "button.text.ignore.selected" : "button.text.remove.selected"));
     setCancelButtonText(ProjectBundle.message("button.text.keep.all"));
   }
 
 
-  public static void showDialog(@NotNull Project project, @NotNull String title, @NotNull String invalidElements,
+  public static void showDialog(@NotNull Project project,
+                                @NotNull String title,
+                                ConfigurationErrorType type,
+                                @NotNull String invalidElements,
                                 @NotNull List<ConfigurationErrorDescription> errors) {
     if (errors.isEmpty()) {
       return;
     }
     if (errors.size() == 1) {
       ConfigurationErrorDescription error = errors.get(0);
-      String message = error.getDescription() + "\n" + error.getRemoveConfirmationMessage();
-      final int answer = Messages.showOkCancelDialog(project, message, title, CommonBundle.getNoButtonText(),
-                                                     CommonBundle.getYesButtonText(), Messages.getErrorIcon());
+      String message = error.getDescription() + "\n" + error.getIgnoreConfirmationMessage();
+      final int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
       if (answer == 1) {
-        error.removeInvalidElement();
+        error.ignoreInvalidElement();
       }
       return;
     }
 
-    RemoveInvalidElementsDialog dialog = new RemoveInvalidElementsDialog(title, invalidElements, project, errors);
+    RemoveInvalidElementsDialog dialog = new RemoveInvalidElementsDialog(title, type, invalidElements, project, errors);
     dialog.show();
     if (dialog.isOK()) {
       for (ConfigurationErrorDescription errorDescription : dialog.getSelectedItems()) {
-        errorDescription.removeInvalidElement();
+        errorDescription.ignoreInvalidElement();
       }
     }
   }

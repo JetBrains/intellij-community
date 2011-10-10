@@ -204,7 +204,8 @@ public class CreateClassUtil {
   @Nullable
   private static PsiClass createClassNamed(@Nullable String newClassName,
                                            @NotNull Properties properties,
-                                           String templateName, PsiDirectory directory) throws IncorrectOperationException {
+                                           String templateName,
+                                           @NotNull PsiDirectory directory) throws IncorrectOperationException {
     if (newClassName == null) {
       return null;
     }

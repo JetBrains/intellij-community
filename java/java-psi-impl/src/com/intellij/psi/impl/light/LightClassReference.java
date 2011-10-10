@@ -132,18 +132,15 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
   public String getQualifiedName() {
     if (myClassName != null) {
-      PsiClass psiClass = (PsiClass)resolve();
-
-      if (psiClass != null) {
-        return psiClass.getQualifiedName();
+      if (myContext != null) {
+        PsiClass psiClass = (PsiClass)resolve();
+        if (psiClass != null) {
+          return psiClass.getQualifiedName();
+        }
       }
-      else {
-        return myClassName;
-      }
+      return myClassName;
     }
-    else {
-      return myRefClass.getQualifiedName();
-    }
+    return myRefClass.getQualifiedName();
   }
 
   public String getReferenceName() {

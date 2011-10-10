@@ -28,9 +28,7 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
@@ -287,16 +285,24 @@ public class RenameUtil {
       if (element == null) continue;
       element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
       if (element == null) continue;
+
+      final ProperTextRange rangeInElement = usage.getRangeInElement();
+      if (rangeInElement == null) continue;
+
       final PsiFile containingFile = element.getContainingFile();
       final Document document = psiDocumentManager.getDocument(containingFile);
-      int fileOffset = usage.getSegment().getStartOffset();
+
+      final Segment segment = usage.getSegment();
+      LOG.assertTrue(segment != null);
+      int fileOffset = segment.getStartOffset();
 
       List<UsageOffset> list = docsToOffsetsMap.get(document);
       if (list == null) {
         list = new ArrayList<UsageOffset>();
         docsToOffsetsMap.put(document, list);
       }
-      list.add(new UsageOffset(fileOffset, fileOffset + usage.getRangeInElement().getLength(), usage.newText));
+      
+      list.add(new UsageOffset(fileOffset, fileOffset + rangeInElement.getLength(), usage.newText));
     }
 
     for (Document document : docsToOffsetsMap.keySet()) {

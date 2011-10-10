@@ -44,7 +44,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
                                      PsiScopeProcessor processor,
                                      GroovyPsiElement place,
                                      ResolveState state) {
-    if (aClass != null && Arrays.asList(getParentClassNames(aClass)).contains("groovy.util.AntBuilder")) {
+    if (aClass != null && getParentClassNames(aClass).contains("groovy.util.AntBuilder")) {
       processAntTasks(processor, place, state);
       return;
     }

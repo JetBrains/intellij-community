@@ -4,15 +4,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.Map;
 
@@ -69,6 +67,18 @@ public class ClassContextFilter implements ContextFilter {
   }
 
   public static boolean isSubtype(PsiType checked, PsiFile placeFile, String typeText) {
+    final boolean isClassType = checked instanceof PsiClassType;
+    if (isClassType) {
+      final PsiClass psiClass = ((PsiClassType)checked).resolve();
+      if (psiClass != null) {
+        final int i = typeText.indexOf("<");
+        String rawName = i > 0 ? typeText.substring(0, i) : typeText;
+        if (!NonCodeMembersContributor.getParentClassNames(psiClass).contains(rawName)) {
+          return false;
+        }
+      }
+    }
+
     PsiType myType = getCachedType(typeText, placeFile);
     if (checked == PsiType.NULL) return myType == PsiType.NULL;
     return TypesUtil.isAssignable(myType, checked, placeFile.getManager(), placeFile.getResolveScope(), false);

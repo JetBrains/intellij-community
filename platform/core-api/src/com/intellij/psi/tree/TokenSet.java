@@ -27,6 +27,8 @@ public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet();
   private final boolean[] mySet = new boolean[IElementType.getAllocatedTypesCount()] ;
 
+  private volatile IElementType[] myTypes;
+
   /**
    * Returns the array of element types contained in the set.
    *
@@ -34,17 +36,22 @@ public class TokenSet {
    */
 
   public IElementType[] getTypes() {
-    int elementCount = 0;
-    for (boolean bit : mySet) {
-      if (bit) elementCount++;
-    }
-
-    IElementType[] types = new IElementType[elementCount];
-    int count = 0;
-    for (short i = IElementType.FIRST_TOKEN_INDEX; i < mySet.length; i++) {
-      if (mySet[i]) {
-        types[count++] = IElementType.find(i);
+    IElementType[] types = myTypes;
+    if (types == null) {
+      int elementCount = 0;
+      for (boolean bit : mySet) {
+        if (bit) elementCount++;
       }
+
+      types = new IElementType[elementCount];
+      int count = 0;
+      for (short i = IElementType.FIRST_TOKEN_INDEX; i < mySet.length; i++) {
+        if (mySet[i]) {
+          types[count++] = IElementType.find(i);
+        }
+      }
+      
+      myTypes = types;
     }
 
     return types;

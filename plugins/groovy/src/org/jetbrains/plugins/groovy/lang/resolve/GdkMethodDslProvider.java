@@ -26,6 +26,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
@@ -97,7 +98,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
   }
 
   private static class GdkMethodHolder {
-    private final MultiMap<String, PsiMethod> originalMethodsByName;
+    private final ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>> originalMethodsByNameAndType;
     private final NotNullLazyValue<MultiMap<String, PsiMethod>> originalMethodByType;
     private final boolean myStatic;
     private final GlobalSearchScope myScope;
@@ -114,13 +115,23 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
         byName.putValue(m.getName(), m);
       }
-      this.originalMethodsByName = byName;
       this.originalMethodByType = new VolatileNotNullLazyValue<MultiMap<String, PsiMethod>>() {
         @NotNull
         @Override
         protected MultiMap<String, PsiMethod> compute() {
           MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
-          for (PsiMethod method : originalMethodsByName.values()) {
+          for (PsiMethod method : byName.values()) {
+            map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
+          }
+          return map;
+        }
+      };
+      
+      originalMethodsByNameAndType = new ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>>() {
+        @Override
+        protected MultiMap<String, PsiMethod> create(String name) {
+          MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+          for (PsiMethod method : byName.get(name)) {
             map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
           }
           return map;
@@ -139,20 +150,13 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
       NameHint nameHint = processor.getHint(NameHint.KEY);
       String name = nameHint == null ? null : nameHint.getName(state);
-      if (name != null) {
-        for (PsiMethod method : originalMethodsByName.get(name)) {
-          if (getCategoryTargetType(method).isAssignableFrom(psiType)) {
-            if (!processor.execute(GrGdkMethodImpl.createGdkMethod(method, myStatic), state)) {
-              return false;
-            }
-          }
-        }
-
+      final MultiMap<String, PsiMethod> map = name != null ? originalMethodsByNameAndType.get(name) : originalMethodByType.getValue();
+      if (map.isEmpty()) {
         return true;
       }
 
       for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
-        for (PsiMethod method : originalMethodByType.getValue().get(superType)) {
+        for (PsiMethod method : map.get(superType)) {
           if (!processor.execute(GrGdkMethodImpl.createGdkMethod(method, myStatic), state)) {
             return false;
           }

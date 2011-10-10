@@ -150,7 +150,11 @@ public class DomImplUtil {
     return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
       public boolean value(XmlTag childTag) {
         if (!childTag.isValid()) {
-          throw new AssertionError("tag.getSubTags() returned invalid, tag=" + tag + ", subTag.parent=" + childTag.getNode().getTreeParent());
+          LOG.error("tag.getSubTags() returned invalid, " +
+                    "tag=" + tag + ", " +
+                    "containing file: " + tag.getContainingFile() +
+                    "subTag.parent=" + childTag.getNode().getTreeParent());
+          return false;
         }
         return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
       }

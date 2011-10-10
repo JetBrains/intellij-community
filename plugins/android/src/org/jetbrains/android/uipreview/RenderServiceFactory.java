@@ -21,27 +21,30 @@ import com.android.ide.common.rendering.LayoutLibrary;
 import com.android.ide.common.rendering.api.IProjectCallback;
 import com.android.ide.common.rendering.api.ResourceValue;
 import com.android.ide.common.resources.FrameworkResources;
-import com.android.ide.common.resources.ResourceRepository;
 import com.android.ide.common.resources.ResourceResolver;
-import com.android.ide.common.resources.configuration.*;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.sdk.LoadStatus;
 import com.android.io.FileWrapper;
 import com.android.io.FolderWrapper;
-import com.android.resources.*;
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.internal.project.ProjectProperties;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -69,11 +72,26 @@ public class RenderServiceFactory {
     return null;
   }
 
-  public ResourceResolver createResourceResolver(FolderConfiguration config,
-                                                 ResourceRepository projectResources,
+  public ResourceResolver createResourceResolver(final AndroidFacet facet,
+                                                 FolderConfiguration config,
+                                                 ProjectResources projectResources,
                                                  String themeName,
                                                  boolean isProjectTheme) {
     final Map<ResourceType, Map<String, ResourceValue>> configedProjectRes = projectResources.getConfiguredResources(config);
+
+    final Collection<String> ids = ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
+      @Override
+      public Collection<String> compute() {
+        return facet.getLocalResourceManager().getIds();
+      }
+    });
+    final Map<String, ResourceValue> map = configedProjectRes.get(ResourceType.ID);
+    for (String id : ids) {
+      if (!map.containsKey(id)) {
+        map.put(id, new ResourceValue(ResourceType.ID, id, false));
+      }
+    }
+
     final Map<ResourceType, Map<String, ResourceValue>> configedFrameworkRes = myResources.getConfiguredResources(config);
     return ResourceResolver.create(configedProjectRes, configedFrameworkRes, themeName, isProjectTheme);
   }

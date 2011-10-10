@@ -17,6 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
@@ -244,7 +245,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result.toArray(new PsiPackage[result.size()]);
   }
 
-  private class PsiElementFinderImpl extends PsiElementFinder {
+  private class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       return myFileManager.findClass(qualifiedName, scope);
     }

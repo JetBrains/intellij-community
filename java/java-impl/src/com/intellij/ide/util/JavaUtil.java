@@ -29,6 +29,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,12 @@ import java.util.List;
 
 
 public class JavaUtil {
+  private static final TokenSet JAVA_FILE_FIRST_TOKEN_SET = TokenSet.orSet(
+    ElementType.MODIFIER_BIT_SET,
+    ElementType.CLASS_KEYWORD_BIT_SET,
+    TokenSet.create(JavaTokenType.AT, JavaTokenType.IMPORT_KEYWORD)
+  );
+
   private JavaUtil() { }
 
   public static List<Pair<File,String>> suggestRoots(File dir, LanguageFileType fileType) {
@@ -173,11 +181,17 @@ public class JavaUtil {
   }
 
   @Nullable
-  public static String getPackageStatement(CharSequence text){
+  public static String getPackageStatement(CharSequence text) {
     Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);
-    if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) return null;
+    final IElementType firstToken = lexer.getTokenType();
+    if (firstToken != JavaTokenType.PACKAGE_KEYWORD) {
+      if (JAVA_FILE_FIRST_TOKEN_SET.contains(firstToken)) {
+        return "";
+      }
+      return null;
+    }
     lexer.advance();
     skipWhiteSpaceAndComments(lexer);
 

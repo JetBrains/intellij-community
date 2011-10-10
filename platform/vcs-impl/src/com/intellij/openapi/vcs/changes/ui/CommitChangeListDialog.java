@@ -191,7 +191,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     if (changes.isEmpty()) {
-      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
+      Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return false;
     }

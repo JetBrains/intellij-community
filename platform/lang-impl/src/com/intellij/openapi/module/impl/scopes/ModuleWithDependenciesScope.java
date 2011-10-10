@@ -73,10 +73,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
       @Override
       public boolean process(OrderEntry each) {
         if (each instanceof ModuleOrderEntry) {
-          myModules.add(((ModuleOrderEntry)each).getModule());
+          ContainerUtil.addIfNotNull(myModules, ((ModuleOrderEntry)each).getModule());
         }
         else if (each instanceof ModuleSourceOrderEntry) {
-          myModules.add(each.getOwnerModule());
+          ContainerUtil.addIfNotNull(myModules, each.getOwnerModule());
         }
         return true;
       }

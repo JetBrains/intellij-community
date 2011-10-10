@@ -175,13 +175,15 @@ public class PackageUtil {
     return psiDirectory[0];
   }
 
+  @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
                                                              String packageName,
-                                                             PsiDirectory baseDir,
+                                                             @Nullable PsiDirectory baseDir,
                                                              boolean askUserToCreate) throws IncorrectOperationException {
     return findOrCreateDirectoryForPackage(module, packageName, baseDir, askUserToCreate, false);
   }
 
+  @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
                                                              String packageName,
                                                              PsiDirectory baseDir,
@@ -189,7 +191,7 @@ public class PackageUtil {
                                                              boolean filterSourceDirsForBaseTestDirectory) throws IncorrectOperationException {
     final Project project = module.getProject();
     PsiDirectory psiDirectory = null;
-    if (!"".equals(packageName)) {
+    if (!packageName.isEmpty()) {
       PsiPackage rootPackage = findLongestExistingPackage(module, packageName);
       if (rootPackage != null) {
         int beginIndex = rootPackage.getQualifiedName().length() + 1;

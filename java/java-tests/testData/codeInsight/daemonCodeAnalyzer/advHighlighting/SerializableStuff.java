@@ -75,3 +75,15 @@ class <warning descr="Externalizable class should have public no-args constructo
     public void writeExternal(ObjectOutput out) throws IOException {
     }
 }
+
+abstract class abstractNoSerializable {
+  protected Object readResolve() throws ObjectStreamException {
+    return null;
+  }
+}
+
+class serializableSubclassOfAbstractNoSerializable extends abstractNoSerializable implements Serializable {
+  public static void main(String[] args) {
+    System.out.println(new serializableSubclassOfAbstractNoSerializable().toString());
+  }
+}

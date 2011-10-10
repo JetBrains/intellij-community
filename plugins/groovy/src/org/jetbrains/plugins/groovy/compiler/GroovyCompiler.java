@@ -51,9 +51,10 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -169,8 +170,9 @@ public class GroovyCompiler extends GroovyCompilerBase {
     psi.acceptChildren(new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (element instanceof GrCodeReferenceElement) {
-          GrCodeReferenceElement referenceElement = (GrCodeReferenceElement)element;
+        if (element instanceof GrReferenceElement &&
+            (!(element instanceof GrReferenceExpression) || !((GrReferenceExpression)element).isQualified())) {
+          GrReferenceElement referenceElement = (GrReferenceElement)element;
           try {
             final PsiElement target = referenceElement.resolve();
             if (target instanceof GrTypeDefinition || target instanceof GroovyScriptClass) {

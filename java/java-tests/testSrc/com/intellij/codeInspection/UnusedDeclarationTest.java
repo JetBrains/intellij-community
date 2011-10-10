@@ -180,4 +180,8 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testUsagesInAnonymous() throws Exception {
     doTest();
   }
+
+  public void testAbstractClassWithSerializableSubclasses() throws Exception {
+    doTest();
+  }
 }

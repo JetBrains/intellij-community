@@ -850,7 +850,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
 
-    private static PsiField checkForwardRefs(PsiExpression initializer, final PsiClass parentClass) {
+    @Nullable
+    private static PsiField checkForwardRefs(@Nullable PsiExpression initializer, final PsiClass parentClass) {
+      if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override

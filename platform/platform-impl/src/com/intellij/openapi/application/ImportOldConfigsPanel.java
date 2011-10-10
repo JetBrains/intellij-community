@@ -18,7 +18,9 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,15 +182,25 @@ public class ImportOldConfigsPanel extends JDialog {
   private void close() {
     if (myRbImport.isSelected()) {
       final String productWithVendor = mySettings.getProductName(ThreeState.YES);
-      String instHome = myPrevInstallation.getText();
-      if ("".equals(instHome)) {
+      String instHome;
+      if (myPrevInstallation.getText() != null) {
+        instHome = FileUtil.toSystemDependentName(PathUtil.getCanonicalPath(myPrevInstallation.getText()));
+      }
+      else {
+        instHome = null;
+      }
+
+      if (StringUtil.isEmpty(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getEmptyHomeErrorText(productWithVendor),
                                       mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
-      if (PathManager.getHomePath().equals(instHome)) {
+      String currentInstanceHomePath = PathManager.getHomePath();
+      if (SystemInfo.isFileSystemCaseSensitive
+          ? currentInstanceHomePath.equals(instHome)
+          : currentInstanceHomePath.equalsIgnoreCase(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getCurrentHomeErrorText(productWithVendor),
                                       mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);

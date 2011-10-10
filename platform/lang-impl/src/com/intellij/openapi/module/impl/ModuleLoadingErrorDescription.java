@@ -17,6 +17,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ConfigurationErrorDescription;
+import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.ProjectBundle;
 
 import java.io.File;
@@ -25,12 +26,13 @@ import java.io.File;
  * @author nik
  */
 public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
+  private static final ConfigurationErrorType INVALID_MODULE = new ConfigurationErrorType(ProjectBundle.message("element.kind.name.module"), false);
   private final ModuleManagerImpl.ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;
 
   private ModuleLoadingErrorDescription(final String description, final ModuleManagerImpl.ModulePath modulePath, ModuleManagerImpl moduleManager,
                                         final String elementName) {
-    super(elementName, ProjectBundle.message("element.kind.name.module"), description);
+    super(elementName, description, INVALID_MODULE);
     myModulePath = modulePath;
     myModuleManager = moduleManager;
   }
@@ -40,12 +42,12 @@ public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription
   }
 
   @Override
-  public void removeInvalidElement() {
+  public void ignoreInvalidElement() {
     myModuleManager.removeFailedModulePath(myModulePath);
   }
 
   @Override
-  public String getRemoveConfirmationMessage() {
+  public String getIgnoreConfirmationMessage() {
     return ProjectBundle.message("module.remove.from.project.confirmation", getElementName());
   }
 

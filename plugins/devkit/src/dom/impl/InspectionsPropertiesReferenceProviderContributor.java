@@ -28,7 +28,11 @@ import com.intellij.psi.PsiReferenceRegistrar;
 public class InspectionsPropertiesReferenceProviderContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    ElementPattern pattern = XmlPatterns.xmlAttribute().withParent(StandardPatterns.or(XmlPatterns.xmlTag().withName("localInspection"), XmlPatterns.xmlTag().withName("globalInspection")));
+    ElementPattern pattern = XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute()
+      .withParent(StandardPatterns.or(XmlPatterns.xmlTag().withName("localInspection")
+                                                          .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")),
+                                      XmlPatterns.xmlTag().withName("globalInspection")
+                                                          .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")))));
     registrar.registerReferenceProvider(pattern, new InspectionsKeyPropertiesReferenceProvider(false), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 }
