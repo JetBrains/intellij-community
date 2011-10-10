@@ -276,10 +276,10 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!"serialVersionUID".equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || isSerializable(aClass, null);
   }
 
-  private static boolean isWriteObjectMethod(PsiMethod method) {
+  private static boolean isWriteObjectMethod(PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"writeObject".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -287,10 +287,10 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return !(aClass != null && !isSerializable(aClass));
+    return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadObjectMethod(PsiMethod method) {
+  private static boolean isReadObjectMethod(PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"readObject".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -298,10 +298,10 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!parameters[0].getType().equalsToText("java.io.ObjectInputStream")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return !(aClass != null && !isSerializable(aClass));
+    return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isWriteReplaceMethod(PsiMethod method) {
+  private static boolean isWriteReplaceMethod(PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"writeReplace".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -309,23 +309,38 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return !(aClass != null && !isSerializable(aClass));
+    return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadResolveMethod(PsiMethod method) {
+  private static boolean isReadResolveMethod(PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"readResolve".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
     if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
-    return !(aClass != null && !isSerializable(aClass));
+    final PsiClass aClass = method.getContainingClass();
+    return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isSerializable(PsiClass aClass) {
-    PsiClass serializableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
-    return serializableClass != null && aClass.isInheritor(serializableClass, true);
+  private static boolean isSerializable(PsiClass aClass, @Nullable RefClass refClass) {
+    final PsiClass serializableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
+    if (serializableClass != null) {
+      return isSerializable(aClass, refClass, serializableClass);
+    }
+    return false;
+  }
+
+  private static boolean isSerializable(PsiClass aClass, RefClass refClass, PsiClass serializableClass) {
+    if (aClass == null) return false;
+    if (aClass.isInheritor(serializableClass, true)) return true;
+    if (refClass != null) {
+      final Set<RefClass> subClasses = refClass.getSubClasses();
+      for (RefClass subClass : subClasses) {
+        if (isSerializable(subClass.getElement(), subClass, serializableClass)) return true;
+      }
+    }
+    return false;
   }
 
   public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
@@ -552,7 +567,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               }
               else {
                 PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-                if (isSerializablePatternMethod(psiMethod)) {
+                if (isSerializablePatternMethod(psiMethod, refMethod.getOwnerClass())) {
                   getEntryPointsManager().addEntryPoint(refMethod, false);
                 }
                 else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
@@ -603,9 +618,9 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return true;
   }
 
-  private static boolean isSerializablePatternMethod(PsiMethod psiMethod) {
-    return isReadObjectMethod(psiMethod) || isWriteObjectMethod(psiMethod) || isReadResolveMethod(psiMethod) ||
-           isWriteReplaceMethod(psiMethod);
+  private static boolean isSerializablePatternMethod(PsiMethod psiMethod, RefClass refClass) {
+    return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
+           isWriteReplaceMethod(psiMethod, refClass);
   }
 
   private void enqueueMethodUsages(final RefMethod refMethod) {

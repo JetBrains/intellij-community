@@ -1342,13 +1342,13 @@ public class HighlightMethodUtil {
       return parameters.length == 0
              && returnType != null
              && returnType.equalsToText("java.lang.Object")
-             && HighlightUtil.isSerializable(containingClass);
+             && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || HighlightUtil.isSerializable(containingClass));
     }
     if ("writeReplace".equals(name)) {
       return parameters.length == 0
              && returnType != null
              && returnType.equalsToText("java.lang.Object")
-             && HighlightUtil.isSerializable(containingClass);
+             && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || HighlightUtil.isSerializable(containingClass));
     }
     if ("writeObject".equals(name)) {
       return parameters.length == 1
