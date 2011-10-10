@@ -18,20 +18,20 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.*;
-import com.intellij.ide.todo.configurable.TodoConfigurable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -150,7 +150,7 @@ public class TodoCheckinHandler extends CheckinHandler {
       final String todoName = VcsBundle.message("before.checkin.new.todo.check.title");
       if (Messages.showOkCancelDialog(myProject,
                               todoName +
-                              " can't be performed while IntelliJ IDEA updates the indices in background.\n" +
+                              " can't be performed while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates the indices in background.\n" +
                               "You can commit the changes without running checks, or you can wait until indices are built.",
                               todoName + " is not possible right now",
                               "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {
