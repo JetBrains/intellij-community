@@ -26,6 +26,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +58,8 @@ public class InspectionsKeyPropertiesReferenceProvider extends PsiReferenceProvi
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     boolean soft = myDefaultSoft;
 
-    if (element instanceof XmlAttribute) {
-      final XmlAttribute xmlAttribute = (XmlAttribute)element;
+    if (element instanceof XmlAttributeValue) {
+      final XmlAttribute xmlAttribute = (XmlAttribute)element.getParent();
       if (element.getTextLength() < 2) {
         return PsiReference.EMPTY_ARRAY;
       }
