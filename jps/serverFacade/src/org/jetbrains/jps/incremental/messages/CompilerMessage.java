@@ -1,7 +1,5 @@
 package org.jetbrains.jps.incremental.messages;
 
-import com.sun.istack.internal.Nullable;
-
 import java.io.File;
 
 /**
@@ -27,7 +25,7 @@ public class CompilerMessage extends BuildMessage {
   }
 
   public CompilerMessage(String compilerName, Kind kind, String messageText,
-                         @Nullable String sourcePath,
+                         /*@org.jetbrains.annotations.Nullable*/ String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,
                          long problemLocationOffset,
