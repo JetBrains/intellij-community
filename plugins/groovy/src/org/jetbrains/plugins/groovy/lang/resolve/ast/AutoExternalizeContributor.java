@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -35,7 +38,7 @@ public class AutoExternalizeContributor extends AstTransformContributor {
 
   @Override
   public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
-    if (PsiImplUtil.getAnnotation(clazz, GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_EXTERNALIZE) == null) return;
+    if (!hasGeneratedImplementations(clazz)) return;
 
     final LightMethodBuilder write = new LightMethodBuilder(clazz.getManager(), "writeExternal");
     write.setContainingClass(clazz);
@@ -47,5 +50,16 @@ public class AutoExternalizeContributor extends AstTransformContributor {
     read.setContainingClass(clazz);
     read.addParameter("oin", ObjectInput.class.getName());
     collector.add(read);
+  }
+
+  private static boolean hasGeneratedImplementations(GrTypeDefinition clazz) {
+    if (PsiImplUtil.getAnnotation(clazz, GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_EXTERNALIZE) != null) {
+      return true;
+    }
+    if (GppTypeConverter.hasTypedContext(clazz)) {
+      return InheritanceUtil.isInheritor(clazz, CommonClassNames.JAVA_IO_EXTERNALIZABLE) &&
+             clazz.findCodeMethodsByName("readExternal", false).length == 0;
+    }
+    return false;
   }
 }

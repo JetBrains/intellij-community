@@ -561,6 +561,14 @@ def bar() {
     myFixture.checkHighlighting(true, false, false)
   }
 
+  public void testExternalizable() throws Exception {
+    configureScript '''
+@Typed class Foo implements Externalizable {}
+<error descr="Method 'writeExternal' is not implemented">class Bar implements Externalizable</error> {}
+'''
+    myFixture.checkHighlighting(true, false, false)
+  }
+
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {
