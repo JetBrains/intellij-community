@@ -1,0 +1,3 @@
+package abc;
+
+class MyClass{}
