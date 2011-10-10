@@ -286,6 +286,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFile.class, "m1.pxd");
   }
 
+  public void testCythonImplicitCImport() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
   private PsiFile prepareFile() {
     String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
