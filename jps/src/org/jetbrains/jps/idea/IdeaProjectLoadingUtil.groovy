@@ -19,10 +19,10 @@ public class IdeaProjectLoadingUtil {
     url
   }
 
-  static Facet findFacetByIdWithAssertion(Project project, String facetId) {
+  static Facet findFacetByIdWithAssertion(Project project, String facetId, ProjectLoadingErrorReporter errorReporter) {
     Facet facet = findFacetById(project, facetId)
     if (facet == null) {
-      project.error("Facet not found: id=$facetId")
+      errorReporter.error("Facet not found: id=$facetId")
     }
     return facet
   }

@@ -100,10 +100,6 @@ class Project {
     builder.error(message)
   }
 
-  def warning(String message) {
-    builder.warning(message)
-  }
-
   def info(String message) {
     builder.info(message)
   }
@@ -149,28 +145,5 @@ class Project {
 
   def putAt(String key, Object value) {
     props[key] = value
-  }
-
-  String getPropertyIfDefined(String name) {
-    try {
-      binding[name]
-    }
-    catch (MissingPropertyException mpe) {
-      return null
-    }
-  }
-
-  boolean isDefined(String prop) {
-    try {
-      binding[prop]
-      return true
-    }
-    catch (MissingPropertyException mpe) {
-      return false
-    }
-  }
-
-  def exportProperty(String name, String value) {
-    binding.ant.project.setProperty(name, value)
   }
 }

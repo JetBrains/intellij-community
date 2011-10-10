@@ -5,6 +5,7 @@ import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.idea.IdeaProjectLoader
 import org.jetbrains.jps.util.FileSystemItem
 import org.jetbrains.jps.util.TempFiles
+import org.jetbrains.jps.idea.AntErrorReporter
 
 /**
  * @author nik
@@ -65,7 +66,7 @@ abstract class JpsBuildTestCase extends TestCase {
     binding.includeTool << Jps
     def project = new Project(binding)
     initGlobal(project)
-    IdeaProjectLoader.loadFromPath(project, projectPath, pathVariables, null)
+    IdeaProjectLoader.loadFromPath(project, projectPath, pathVariables, null, new AntErrorReporter(binding))
     return project
   }
 

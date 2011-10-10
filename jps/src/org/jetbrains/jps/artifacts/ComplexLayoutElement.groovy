@@ -3,6 +3,7 @@ package org.jetbrains.jps.artifacts
 import org.jetbrains.jps.Library
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.ProjectBuilder
+import org.jetbrains.jps.idea.ProjectLoadingErrorReporter
 
 /**
  * @author nik
@@ -56,11 +57,12 @@ class LibraryFilesElement extends ComplexLayoutElement {
 
 class ArtifactLayoutElement extends ComplexLayoutElement {
   String artifactName
+  ProjectLoadingErrorReporter errorReporter
 
   List<LayoutElement> getSubstitution(Project project) {
     Artifact artifact = project.artifacts[artifactName]
     if (artifact == null) {
-      project.error("unknown artifact: $artifactName")
+      errorReporter.error("unknown artifact: $artifactName")
     }
     def root = artifact.rootElement
     if (root instanceof RootElement) {

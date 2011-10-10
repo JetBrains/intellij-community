@@ -420,7 +420,7 @@ class ProjectBuilder {
 
     chunk.modules.each {
       Reporter.reportBuildSuccess(it, tests)
-      project.exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
+      exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
     }
   }
 
@@ -459,7 +459,7 @@ class ProjectBuilder {
   private String createOutputFolder(String name, Module module, boolean tests) {
     def dst = getProjectPaths().getModuleOutputDir(module, tests)
     if (dst == null) {
-      project.error("${tests ? 'Test output' : 'Output'} path for module $name is not specified")
+      error("${tests ? 'Test output' : 'Output'} path for module $name is not specified")
     }
     def ant = binding.ant
     ant.mkdir(dir: dst.absolutePath)
@@ -499,10 +499,14 @@ class ProjectBuilder {
         answer.add(path)
       }
       else if (showWarnings) {
-        project.warning("'$path' does not exist!")
+        warning("'$path' does not exist!")
       }
     }
 
     answer
+  }
+
+  def exportProperty(String name, String value) {
+    binding.ant.project.setProperty(name, value)
   }
 }

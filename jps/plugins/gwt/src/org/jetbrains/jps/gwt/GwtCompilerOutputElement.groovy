@@ -6,18 +6,20 @@ import org.jetbrains.jps.Project
 import org.jetbrains.jps.idea.IdeaProjectLoadingUtil
 import org.jetbrains.jps.idea.Facet
 import org.jetbrains.jps.artifacts.DirectoryCopyElement
+import org.jetbrains.jps.idea.ProjectLoadingErrorReporter
 
 /**
  * @author nik
  */
 class GwtCompilerOutputElement extends ComplexLayoutElement {
   String facetId
+  ProjectLoadingErrorReporter errorReporter
 
   @Override
   List<LayoutElement> getSubstitution(Project project) {
-    Facet facet = IdeaProjectLoadingUtil.findFacetByIdWithAssertion(project, facetId)
+    Facet facet = IdeaProjectLoadingUtil.findFacetByIdWithAssertion(project, facetId, errorReporter)
     if (!(facet instanceof GwtFacet)) {
-      project.error("'$facetId' is not GWT facet!")
+      errorReporter.error("'$facetId' is not GWT facet!")
     }
 
     GwtFacet gwtFacet = (GwtFacet)facet

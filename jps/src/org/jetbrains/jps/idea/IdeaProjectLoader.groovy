@@ -14,6 +14,7 @@ public class IdeaProjectLoader {
   private String projectLanguageLevel
   private Map<String, String> pathVariables
   private ProjectMacroExpander projectMacroExpander
+  private ProjectLoadingErrorReporter errorReporter
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -30,7 +31,11 @@ public class IdeaProjectLoader {
   }
 
   public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables, String script) {
-    def loader = new IdeaProjectLoader(project, pathVariables)
+    return loadFromPath(project, path, pathVariables, script, new SystemOutErrorReporter())
+  }
+
+  public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables, String script, ProjectLoadingErrorReporter errorReporter) {
+    def loader = new IdeaProjectLoader(project, pathVariables, errorReporter)
 
     loader.doLoadFromPath(path);
 
@@ -50,9 +55,10 @@ public class IdeaProjectLoader {
     return loadFromPath(project, path, [:], script);
   }
 
-  private def IdeaProjectLoader(Project project, Map<String, String> pathVariables) {
+  private def IdeaProjectLoader(Project project, Map<String, String> pathVariables, ProjectLoadingErrorReporter errorReporter) {
     this.project = project;
     this.pathVariables = pathVariables
+    this.errorReporter = errorReporter
   }
 
   private def doLoadFromPath(String path) {
@@ -80,7 +86,7 @@ public class IdeaProjectLoader {
       }
     }
 
-    project.error("Cannot find IntelliJ IDEA project files at $path")
+    errorReporter.error("Cannot find IntelliJ IDEA project files at $path")
   }
 
   def loadFromIpr(String path) {
@@ -100,10 +106,10 @@ public class IdeaProjectLoader {
   def loadFromDirectoryBased(File dir) {
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
     def modulesXml = new File(dir, "modules.xml")
-    if (!modulesXml.exists()) project.error("Cannot find modules.xml in $dir")
+    if (!modulesXml.exists()) errorReporter.error("Cannot find modules.xml in $dir")
 
     def miscXml = new File(dir, "misc.xml")
-    if (!miscXml.exists()) project.error("Cannot find misc.xml in $dir")
+    if (!miscXml.exists()) errorReporter.error("Cannot find misc.xml in $dir")
     loadProjectJdkAndOutput(new XmlParser(false, false).parse(miscXml))
 
     def encodingsXml = new File(dir, "encodings.xml")
@@ -195,7 +201,7 @@ public class IdeaProjectLoader {
     def sdkName = componentTag?."@project-jdk-name"
     def sdk = project.sdks[sdkName]
     if (sdk == null) {
-      project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
+      errorReporter.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
     }
     def outputTag = componentTag?.output?.getAt(0)
     String outputPath = outputTag != null ? IdeaProjectLoadingUtil.pathFromUrl(outputTag.'@url') : null
@@ -225,7 +231,7 @@ public class IdeaProjectLoader {
 
   def loadArtifacts(Node artifactsComponent) {
     if (artifactsComponent == null) return;
-    ArtifactLoader artifactLoader = new ArtifactLoader(project, projectMacroExpander)
+    ArtifactLoader artifactLoader = new ArtifactLoader(project, projectMacroExpander, errorReporter)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
       def outputPath = projectMacroExpander.expandMacros(artifactTag."output-path"[0]?.text())
@@ -301,7 +307,7 @@ public class IdeaProjectLoader {
   private def loadModule(String imlPath) {
     def moduleFile = new File(imlPath)
     if (!moduleFile.exists()) {
-      project.error("Module file $imlPath not found")
+      errorReporter.error("Module file $imlPath not found")
       return
     }
 
@@ -323,7 +329,7 @@ public class IdeaProjectLoader {
               def moduleName = entryTag.attribute("module-name")
               def module = project.modules[moduleName]
               if (module == null) {
-                project.warning("Cannot resolve module $moduleName in $currentModuleName")
+                errorReporter.warning("Cannot resolve module $moduleName in $currentModuleName")
               }
               else {
                 dependency(module, scope, exported)
@@ -352,12 +358,12 @@ public class IdeaProjectLoader {
               if (entryTag.@level == "project") {
                 library = project.libraries[name]
                 if (library == null) {
-                  project.warning("Cannot resolve project library '$name' in module '$currentModuleName'")
+                  errorReporter.warning("Cannot resolve project library '$name' in module '$currentModuleName'")
                 }
               } else {
                 library = project.globalLibraries[name]
                 if (library == null) {
-                  project.warning("Cannot resolve global library '$name' in module '$currentModuleName'")
+                  errorReporter.warning("Cannot resolve global library '$name' in module '$currentModuleName'")
                 }
               }
 
@@ -370,7 +376,7 @@ public class IdeaProjectLoader {
               def name = entryTag.@jdkName
               def sdk = project.sdks[name]
               if (sdk == null) {
-                project.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
+                errorReporter.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
               }
               else {
                 currentModule.sdk = sdk
@@ -428,7 +434,7 @@ public class IdeaProjectLoader {
         if (srcFolderExists) {
           if (componentTag."@inherit-compiler-output" == "true") {
             if (projectOutputPath == null) {
-              project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
+              errorReporter.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
             }
             currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
             currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)

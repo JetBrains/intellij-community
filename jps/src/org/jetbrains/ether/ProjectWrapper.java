@@ -873,11 +873,7 @@ public class ProjectWrapper {
 
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
-        if (pathVariables == null) {
-            IdeaProjectLoader.loadFromPath(myProject, loadPath, setupScript);
-        } else {
-            IdeaProjectLoader.loadFromPath(myProject, loadPath, pathVariables, setupScript);
-        }
+        IdeaProjectLoader.loadFromPath(myProject, loadPath, pathVariables != null ? pathVariables : Collections.<String, String>emptyMap(), setupScript);
 
         for (Module m : myProject.getModules().values()) {
             myModules.put(m.getName(), new ModuleWrapper(m));

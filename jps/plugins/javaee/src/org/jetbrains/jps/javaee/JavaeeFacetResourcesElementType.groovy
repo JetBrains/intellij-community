@@ -4,8 +4,9 @@ import org.jetbrains.jps.MacroExpander
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.LayoutElement
 import org.jetbrains.jps.artifacts.LayoutElementTypeService
+import org.jetbrains.jps.idea.ProjectLoadingErrorReporter
 
- /**
+/**
  * @author nik
  */
 class JavaeeFacetResourcesElementType extends LayoutElementTypeService {
@@ -14,8 +15,8 @@ class JavaeeFacetResourcesElementType extends LayoutElementTypeService {
   }
 
   @Override
-  LayoutElement createElement(Project project, Node tag, MacroExpander macroExpander) {
-    return new JavaeeFacetResourcesElement(facetId: tag."@facet")
+  LayoutElement createElement(Project project, Node tag, MacroExpander macroExpander, ProjectLoadingErrorReporter errorReporter) {
+    return new JavaeeFacetResourcesElement(facetId: tag."@facet", errorReporter: errorReporter)
   }
 
 }

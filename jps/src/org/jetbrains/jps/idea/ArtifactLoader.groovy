@@ -14,10 +14,12 @@ class ArtifactLoader {
   private static OwnServiceLoader<ArtifactPropertiesProviderService> propertiesProvidersLoader = OwnServiceLoader.load(ArtifactPropertiesProviderService.class)
   private static Map<String, LayoutElementTypeService> elementTypes = null
   private static Map<String, ArtifactPropertiesProviderService> propertiesProviders = null
+  private final ProjectLoadingErrorReporter errorReporter
 
-  def ArtifactLoader(Project project, MacroExpander macroExpander) {
+  def ArtifactLoader(Project project, MacroExpander macroExpander, ProjectLoadingErrorReporter errorReporter) {
     this.macroExpander = macroExpander
     this.project = project
+    this.errorReporter = errorReporter
   }
 
   LayoutElement loadLayoutElement(Node tag, String artifactName) {
@@ -30,18 +32,18 @@ class ArtifactLoader {
       case "archive":
         return new ArchiveElement(tag."@name", loadChildren(tag, artifactName));
       case "artifact":
-        return new ArtifactLayoutElement(artifactName: tag."@artifact-name")
+        return new ArtifactLayoutElement(artifactName: tag."@artifact-name", errorReporter: errorReporter)
       case "file-copy":
         def path = macroExpander.expandMacros(tag."@path")
         if (!new File(path).exists()) {
-           project.warning("Error in '$artifactName' artifact: file '$path' doesn't exist")
+           errorReporter.warning("Error in '$artifactName' artifact: file '$path' doesn't exist")
         }
         return new FileCopyElement(filePath: path,
                                    outputFileName: tag."@output-file-name");
       case "dir-copy":
         def path = macroExpander.expandMacros(tag."@path")
         if (!new File(path).exists()) {
-          project.warning("Error in '$artifactName' artifact: directory '$path' doesn't exist")
+          errorReporter.warning("Error in '$artifactName' artifact: directory '$path' doesn't exist")
         }
         return new DirectoryCopyElement(dirPath: path);
       case "extracted-dir":
@@ -49,19 +51,19 @@ class ArtifactLoader {
         String pathInJar = tag."@path-in-jar"
         if (pathInJar == null) pathInJar = "/"
         if (!new File(jarPath).exists()) {
-          project.warning("Error in '$artifactName' artifact: file '$jarPath' doesn't exist")
+          errorReporter.warning("Error in '$artifactName' artifact: file '$jarPath' doesn't exist")
         }
         return new ExtractedDirectoryElement(jarPath: jarPath, pathInJar: pathInJar)
       case "module-output":
         def name = tag."@name"
         if (project.modules[name] == null) {
-          project.error("Unknown module '$name' in '$artifactName' artifact")
+          errorReporter.error("Unknown module '$name' in '$artifactName' artifact")
         }
         return new ModuleOutputElement(moduleName: name);
       case "module-test-output":
         def name = tag."@name"
         if (project.modules[name] == null) {
-          project.error("Unknown module '$name' in '$artifactName' artifact")
+          errorReporter.error("Unknown module '$name' in '$artifactName' artifact")
         }
         return new ModuleTestOutputElement(moduleName: name);
       case "library":
@@ -70,10 +72,10 @@ class ArtifactLoader {
 
     LayoutElementTypeService type = findType(id)
     if (type != null) {
-      return type.createElement(project, tag, macroExpander)
+      return type.createElement(project, tag, macroExpander, errorReporter)
     }
 
-    project.error("unknown element in '$artifactName' artifact: $id");
+    errorReporter.error("unknown element in '$artifactName' artifact: $id");
   }
 
   private LayoutElementTypeService findType(String typeId) {
@@ -105,11 +107,11 @@ class ArtifactLoader {
         try {
           res[id] = provider.loadProperties(propertiesNode.options[0], macroExpander)
         } catch (Exception e) {
-          project.warning("Failed to load properties of the artifact: $artifactName, error: " + e.getMessage());
+          errorReporter.warning("Failed to load properties of the artifact: $artifactName, error: " + e.getMessage());
         }
       }
       else {
-        project.debug("Unknown properties '$id' in '$artifactName' artifact")
+        errorReporter.warning("Unknown properties '$id' in '$artifactName' artifact")
       }
     }
     return res;

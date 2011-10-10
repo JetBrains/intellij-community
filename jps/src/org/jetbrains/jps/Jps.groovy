@@ -26,7 +26,7 @@ final class Jps {
 
     binding.setVariable("jdk", {Object[] args ->
       if (!(args.length in [2,3])) {
-        project.error("expected 2 to 3 parameters for jdk() but ${args.length} found")
+        projectBuilder.error("expected 2 to 3 parameters for jdk() but ${args.length} found")
       }
       Closure initializer = args.length > 2 ? args[2] : {}
       return project.createJavaSdk((String)args[0], (String)args[1], initializer)
@@ -34,7 +34,7 @@ final class Jps {
 
     binding.setVariable("moduleTests", {String name ->
       def module = project.modules[name]
-      if (module == null) project.error("cannot find module ${name}")
+      if (module == null) projectBuilder.error("cannot find module ${name}")
       return projectBuilder.moduleTestsOutput(module)
     })
 
@@ -51,7 +51,7 @@ final class Jps {
             binding.ant."$tag"(name: args[0], args[1])
           }
           else {
-            project.error("unexpected number of parameters for $tag")
+            projectBuilder.error("unexpected number of parameters for $tag")
           }
           if (tag == "module") {
             layoutInfo.usedModules << args[0].toString()
@@ -78,19 +78,19 @@ final class Jps {
           }
         }
         else {
-          project.error("unexpected number of parameters for 'jar' task: $args.length")
+          projectBuilder.error("unexpected number of parameters for 'jar' task: $args.length")
         }
       })
 
       binding.setVariable("renamedFile", {Object[] args ->
         if (args.length != 2) {
-          project.error("unexpected number of parameters for renamedFile")
+          projectBuilder.error("unexpected number of parameters for renamedFile")
         }
         binding.ant."renamedFile"(filePath: args[0], newName: args[1])
       })
       binding.setVariable("extractedDir", {Object[] args ->
         if (args.length != 2) {
-          project.error("unexpected number of parameters for extractedDir")
+          projectBuilder.error("unexpected number of parameters for extractedDir")
         }
         binding.ant."extractedDir"(jarPath: args[0], pathInJar: args[1])
       })
