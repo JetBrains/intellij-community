@@ -228,7 +228,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     private final static int MAX_LEN = 35;
 
     public ChangeListChooser(List<? extends ChangeList> lists) {
-      super(new BorderLayout());
+      super(new BorderLayout(4, 2));
       myChooser = new JComboBox() {
         public Dimension getMinimumSize() {
           return new Dimension(0, 0);
