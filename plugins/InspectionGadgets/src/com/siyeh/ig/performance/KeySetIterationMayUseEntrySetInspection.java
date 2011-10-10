@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,8 +225,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       private final PsiElement map;
       private final String parameterName;
 
-      private final List<PsiExpression> parameterAccesses =
-        new ArrayList();
+      private final List<PsiExpression> parameterAccesses = new ArrayList();
 
       public ParameterAccessCollector(
         PsiParameter parameter, PsiElement map) {
@@ -260,9 +259,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         }
       }
 
-      private boolean collectValueUsage(
-        PsiReferenceExpression expression)
-        throws IncorrectOperationException {
+      private boolean collectValueUsage(PsiReferenceExpression expression) throws IncorrectOperationException {
         final PsiElement parent = expression.getParent();
         if (!(parent instanceof PsiExpressionList)) {
           return false;
@@ -271,25 +268,24 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         if (!(grandParent instanceof PsiMethodCallExpression)) {
           return false;
         }
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)grandParent;
-        final PsiReferenceExpression methodExpression =
-          methodCallExpression.getMethodExpression();
-        @NonNls final String methodName =
-          methodExpression.getReferenceName();
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"get".equals(methodName)) {
           return false;
         }
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (!(qualifier instanceof PsiReferenceExpression)) {
           return false;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)qualifier;
-        final PsiElement target2 =
-          referenceExpression.resolve();
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        final PsiElement target2 = referenceExpression.resolve();
         if (!map.equals(target2)) {
+          return false;
+        }
+        final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+        if (qualifierExpression != null &&
+            !(qualifier instanceof PsiThisExpression) || qualifierExpression instanceof PsiSuperExpression) {
           return false;
         }
         parameterAccesses.add(methodCallExpression);
@@ -346,32 +342,24 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       registerError(iteratedValue);
     }
 
-    private static boolean isMapKeySetIteration(
-      PsiExpression iteratedExpression,
-      PsiVariable key,
-      @Nullable PsiElement context) {
+    private static boolean isMapKeySetIteration(PsiExpression iteratedExpression, PsiVariable key, @Nullable PsiElement context) {
       if (context == null) {
         return false;
       }
       if (!(iteratedExpression instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)iteratedExpression;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)iteratedExpression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"keySet".equals(methodName)) {
         return false;
       }
-      final PsiExpression expression =
-        methodExpression.getQualifierExpression();
+      final PsiExpression expression = methodExpression.getQualifierExpression();
       if (!(expression instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiVariable)) {
         return false;
@@ -390,31 +378,27 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (!CommonClassNames.JAVA_UTIL_MAP.equals(className)) {
         return false;
       }
-      final GetValueFromMapChecker checker =
-        new GetValueFromMapChecker(targetVariable, key);
+      final GetValueFromMapChecker checker = new GetValueFromMapChecker(targetVariable, key);
       context.accept(checker);
       return checker.isGetValueFromMap();
     }
   }
 
-  private static class GetValueFromMapChecker
-    extends JavaRecursiveElementVisitor {
+  private static class GetValueFromMapChecker extends JavaRecursiveElementVisitor {
 
     private final PsiVariable key;
     private final PsiVariable map;
     private boolean getValueFromMap = false;
-    private boolean assigned = false;
+    private boolean tainted = false;
 
-    GetValueFromMapChecker(@NotNull PsiVariable map,
-                           @NotNull PsiVariable key) {
+    GetValueFromMapChecker(@NotNull PsiVariable map, @NotNull PsiVariable key) {
       this.map = map;
       this.key = key;
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
-      if (assigned) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (tainted) {
         return;
       }
       super.visitReferenceExpression(expression);
@@ -422,7 +406,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (parent instanceof PsiAssignmentExpression) {
         final PsiElement target = expression.resolve();
         if (key.equals(target) || map.equals(target)) {
-          assigned = true;
+          tainted = true;
         }
       }
       else if (!(parent instanceof PsiReferenceExpression)) {
@@ -432,23 +416,23 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)parent;
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiElement target = expression.resolve();
       if (!map.equals(target)) {
         return;
       }
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiExpression qualifierExpression = expression.getQualifierExpression();
+      if (qualifierExpression != null &&
+          !(qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression)) {
+        return;
+      }
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"get".equals(methodName)) {
         return;
       }
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
-      final PsiExpression[] arguments =
-        argumentList.getExpressions();
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
@@ -456,10 +440,8 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (!(argument instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)argument;
-      final PsiElement argumentTarget =
-        referenceExpression.resolve();
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+      final PsiElement argumentTarget = referenceExpression.resolve();
       if (!key.equals(argumentTarget)) {
         return;
       }
@@ -467,7 +449,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     public boolean isGetValueFromMap() {
-      return getValueFromMap && !assigned;
+      return getValueFromMap && !tainted;
     }
   }
 }
