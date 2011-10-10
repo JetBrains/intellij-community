@@ -410,8 +410,6 @@ public class PsiUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiMember member) {
-
-    if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
     if (member instanceof LightElement) {
       return true;
     }
@@ -421,6 +419,9 @@ public class PsiUtil {
         return true;
       }
     }
+
+    if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
+
     return com.intellij.psi.util.PsiUtil.isAccessible(member, place, null);
   }
 
