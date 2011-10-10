@@ -82,6 +82,8 @@ public class MultiMap<K, V> {
   }
 
   public boolean isEmpty() {
+    if (myMap.isEmpty()) return true;
+
     for(Collection<V> valueList: myMap.values()) {
       if (!valueList.isEmpty()) {
         return false;
