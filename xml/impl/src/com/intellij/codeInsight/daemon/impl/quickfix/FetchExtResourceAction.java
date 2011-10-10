@@ -267,23 +267,27 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   private void cleanup(final List<String> resourceUrls, final List<String> downloadedResources) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        for (String resourcesUrl : resourceUrls) {
-          ExternalResourceManager.getInstance().removeResource(resourcesUrl);
-        }
-
-        for (String downloadedResource : downloadedResources) {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource));
-          if (virtualFile != null) {
-            try {
-              virtualFile.delete(this);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            for (String resourcesUrl : resourceUrls) {
+              ExternalResourceManager.getInstance().removeResource(resourcesUrl);
             }
-            catch (IOException ignore) {
 
+            for (String downloadedResource : downloadedResources) {
+              VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource));
+              if (virtualFile != null) {
+                try {
+                  virtualFile.delete(this);
+                }
+                catch (IOException ignore) {
+
+                }
+              }
             }
           }
-        }
+        });
       }
     });
   }
