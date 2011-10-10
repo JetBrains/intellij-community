@@ -357,7 +357,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     public void postProcessKeyEvent(KeyEvent e) {
-      final boolean waiting = IdeEventQueue.getInstance().getKeyEventDispatcher().isWaitingForSecondKeyStroke();
+      final boolean waiting = !IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
 
       final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED;
       boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
