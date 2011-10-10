@@ -34,6 +34,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -75,17 +76,22 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
   protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath);
-    doTestConfiguredFile(checkWarnings, checkInfos);
+    doTestConfiguredFile(checkWarnings, checkInfos, filePath);
   }
 
-  protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos) {
+  protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos, String filePath) {
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
-    checkHighlighting(data);
+    checkHighlighting(data, composeLocalPath(filePath));
   }
 
-  private void checkHighlighting(ExpectedHighlightingData data) {
+  @Nullable
+  private String composeLocalPath(String filePath) {
+    return filePath != null ? getTestDataPath() + "/" + filePath : null;
+  }
+
+  private void checkHighlighting(ExpectedHighlightingData data, String filePath) {
     data.init();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -97,7 +103,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
-    data.checkResult(infos, getEditor().getDocument().getText());
+    data.checkResult(infos, getEditor().getDocument().getText(), filePath);
   }
 
   protected HighlightTestInfo testFile(@NonNls @NotNull String filePath) {
@@ -109,7 +115,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
         ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
         if (checkSymbolNames) data.checkSymbolNames();
 
-        checkHighlighting(data);
+        checkHighlighting(data, composeLocalPath(path));
         return this;
       }
     };

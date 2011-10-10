@@ -64,7 +64,7 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
 
     backspace();
     backspace();
-    doTestConfiguredFile(true, false);
+    doTestConfiguredFile(true, false, null);
   }
   public void testNativeConversion() throws Exception {
     configureFromFileText("x.properties","a=<caret>v");
@@ -99,7 +99,7 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + "/" + "MultipleRanges.xml");
     type("US-ASCII");
 
-    doTestConfiguredFile(true, false);
+    doTestConfiguredFile(true, false, null);
   }
 
   private void doTest(@NonNls String filePath) throws Exception {
@@ -110,7 +110,7 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
     configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
 
-    doTestConfiguredFile(true, false);
+    doTestConfiguredFile(true, false, null);
   }
 
   public static final String THREE_NOTORIOUS_RUSSIAN_LETTERS = "\u0416\u041e\u041f";

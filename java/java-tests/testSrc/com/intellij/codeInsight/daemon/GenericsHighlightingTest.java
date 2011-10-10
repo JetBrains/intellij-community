@@ -106,6 +106,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
     final String text = collectionsClass.getContainingFile().getText();
     configureFromFileText("Collections.java", text.replaceAll("\r","\n"));
-    doTestConfiguredFile(false, false);
+    doTestConfiguredFile(false, false, null);
   }
 }

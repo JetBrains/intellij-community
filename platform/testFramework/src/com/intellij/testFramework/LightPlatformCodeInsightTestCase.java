@@ -47,6 +47,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,7 +290,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     } catch (IOException e) {
       LOG.error(e);
     }
-    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces);
+    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + filePath);
   }
 
   /**
@@ -297,16 +298,26 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText
    */
   protected void checkResultByText(@NonNls String fileText) {
-    checkResultByText(null, fileText, false);
+    checkResultByText(null, fileText, false, null);
   }
 
+  /**
+     * Same as checkResultByFile but text is provided directly.
+     * @param message - this check specific message. Added to text, caret position, selection checking. May be null
+     * @param fileText
+     * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+     */
+  protected void checkResultByText(final String message, final String fileText, final boolean ignoreTrailingSpaces) {
+    checkResultByText(message, fileText, ignoreTrailingSpaces, null);  
+  }
+  
   /**
    * Same as checkResultByFile but text is provided directly.
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(final String message, final String fileText, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByText(final String message, final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -346,7 +357,12 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         String newFileText = document.getText();
 
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        assertEquals(getMessage("Text mismatch", message), newFileText, myFile.getText());
+        String fileText = myFile.getText();
+        String failMessage = getMessage("Text mismatch", message);
+        if (filePath != null && !newFileText.equals(fileText)) {
+          throw new FileComparisonFailure(failMessage, newFileText, fileText, filePath);
+        }
+        assertEquals(failMessage, newFileText, fileText);
 
         checkCaretPosition(caretMarker, newFileText, message);
         checkSelection(selStartMarker, selEndMarker, newFileText, message);
