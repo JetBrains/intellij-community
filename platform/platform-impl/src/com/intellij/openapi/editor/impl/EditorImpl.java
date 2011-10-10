@@ -796,23 +796,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public ActionCallback type(final String text) {
     final ActionCallback result = new ActionCallback();
 
-    Application app = ApplicationManager.getApplication();
-    if (!app.isWriteAccessAllowed()) {
-      result.setRejected();
-    } else {
-      app.runWriteAction(new Runnable() {
-        public void run() {
-          for (int i = 0; i < text.length(); i++) {
-            if (!processKeyTyped(text.charAt(i))) {
-              result.setRejected();
-              return;
-            }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (int i = 0; i < text.length(); i++) {
+          if (!processKeyTyped(text.charAt(i))) {
+            result.setRejected();
+            return;
           }
-
-          result.setDone();
         }
-      });
-    }
+
+        result.setDone();
+      }
+    });
 
     return result;
   }

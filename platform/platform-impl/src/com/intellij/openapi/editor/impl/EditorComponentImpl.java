@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,8 +105,15 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     }
   }
 
-  public ActionCallback type(String text) {
-    return myEditor.type(text);
+  public ActionCallback type(final String text) {
+    final ActionCallback result = new ActionCallback();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myEditor.type(text).notify(result);
+      }
+    });
+    return result;
   }
 
   public InputMethodRequests getInputMethodRequests() {

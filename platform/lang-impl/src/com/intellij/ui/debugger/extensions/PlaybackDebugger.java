@@ -387,7 +387,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myLog.setText(null);
 
     addInfo("Waiting for IDE frame activation", -1, MESSAGE_COLOR, 0);
-    myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false, true);
+    myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false, true, false);
     VirtualFile file = pathToFile();
     if (file != null) {
       VirtualFile scriptDir = file.getParent();

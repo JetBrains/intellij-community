@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,13 +33,15 @@ public abstract class PlaybackContext  {
   private File myBaseDir;
   private Set<Class> myCallClasses;
   private PlaybackRunner myRunner;
+  private boolean myUseTypingTargets;
 
-  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
+  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
     myRunner = runner;
     myCallback = callback;
     myCurrentLine = currentLine;
     myRobot = robot;
     myUseDirectActionCall = useDriectActionCall;
+    myUseTypingTargets = useTypingTargets;
     myCurrentCmd = currentCmd;
     myBaseDir = baseDir;
     myCallClasses = callClasses;
@@ -58,6 +61,10 @@ public abstract class PlaybackContext  {
 
   public boolean isUseDirectActionCall() {
     return myUseDirectActionCall;
+  }
+
+  public boolean isUseTypingTargets() {
+    return myUseTypingTargets;
   }
 
   public PlaybackCommand getCurrentCmd() {

@@ -51,7 +51,10 @@ public class PlaybackRunner {
   private final ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
+
   private final boolean myUseDirectActionCall;
+  private boolean myUseTypingTargets;
+
   private File myScriptDir;
   private boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
@@ -68,10 +71,11 @@ public class PlaybackRunner {
     }
   };
 
-  public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation) {
+  public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation, boolean useTypingTargets) {
     myScript = script;
     myCallback = callback;
     myUseDirectActionCall = useDirectActionCall;
+    myUseTypingTargets = useTypingTargets;
     myStopOnAppDeactivation = stopOnAppDeactivation;
     myAppListener = new ApplicationActivationListener() {
       @Override
@@ -143,7 +147,7 @@ public class PlaybackRunner {
         return;
       }
       final PlaybackContext context =
-        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
+        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
 
           private long myTimeStamp = myContextTimestamp;
 

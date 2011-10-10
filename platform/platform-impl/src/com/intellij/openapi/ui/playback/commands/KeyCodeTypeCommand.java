@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.IdeFocusManager;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
@@ -47,7 +50,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       codes = text;
     }
 
-    String unicode;
+    final String unicode;
     if (codes.length() + 1 < text.length()) {
       unicode = text.substring(textDelim + 1);
     } else {
@@ -56,41 +59,62 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
 
     final ActionCallback result = new ActionCallback();
 
-    TypingTarget typingTarget = findTarget();
-    if (typingTarget != null) {
-      typingTarget.type(unicode).doWhenDone(new Runnable() {
-        public void run() {
-          result.setDone();
-        }
-      }).doWhenRejected(new Runnable() {
-        public void run() {
+
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        TypingTarget typingTarget = findTarget(context);
+        if (typingTarget != null) {
+          typingTarget.type(unicode).doWhenDone(new Runnable() {
+            public void run() {
+              result.setDone();
+            }
+          }).doWhenRejected(new Runnable() {
+            public void run() {
+              typeCodes(context, context.getRobot(), codes).notify(result);
+            }
+          });
+        } else {
           typeCodes(context, context.getRobot(), codes).notify(result);
         }
-      });
-    } else {
-      typeCodes(context, context.getRobot(), codes).notify(result);
-    }
+      }
+    });
 
     return result;
   }
 
-  private ActionCallback typeCodes(PlaybackContext context, Robot robot, String codes) {
-    String[] pairs = codes.split(CODE_DELIMITER);
-    for (String eachPair : pairs) {
-      try {
-        String[] splits = eachPair.split(MODIFIER_DELIMITER);
-        Integer code = Integer.valueOf(splits[0]);
-        Integer modifier = Integer.valueOf(splits[1]);
-        type(robot, code.intValue(), modifier.intValue());
+  private ActionCallback typeCodes(final PlaybackContext context, final Robot robot, final String codes) {
+    final ActionCallback result = new ActionCallback();
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        String[] pairs = codes.split(CODE_DELIMITER);
+        for (String eachPair : pairs) {
+          try {
+            String[] splits = eachPair.split(MODIFIER_DELIMITER);
+            Integer code = Integer.valueOf(splits[0]);
+            Integer modifier = Integer.valueOf(splits[1]);
+            type(robot, code.intValue(), modifier.intValue());
+          }
+          catch (NumberFormatException e) {
+            dumpError(context, "Invalid code: " + eachPair);
+            result.setRejected();
+            return;
+          }
+        }
+
+        result.setDone();
       }
-      catch (NumberFormatException e) {
-        dumpError(context, "Invalid code: " + eachPair);
-        return new ActionCallback.Rejected();
-      }
+    };
+
+
+    if (SwingUtilities.isEventDispatchThread()) {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    } else {
+      runnable.run();
     }
 
-
-    return new ActionCallback.Done();
+    return result;
   }
 
   public static Pair<java.util.List<Integer>, java.util.List<Integer>> parseKeyCodes(String keyCodesText) {

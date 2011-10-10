@@ -218,7 +218,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
         }
       }
 
-    }, Registry.is("actionSystem.playback.useDirectActionCall"), true);
+    }, Registry.is("actionSystem.playback.useDirectActionCall"), true, Registry.is("actionSystem.playback.useTypingTargets"));
 
     myIsPlaying = true;
 
