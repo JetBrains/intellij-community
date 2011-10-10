@@ -34,7 +34,7 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       public String getHelpTopic() {
-        return null;
+        return "reference.settingsdialog.codestyle.java";
       }
     };
   }
