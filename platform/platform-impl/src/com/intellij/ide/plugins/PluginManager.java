@@ -799,25 +799,11 @@ public class PluginManager {
     if (ourBuildNumber == null) {
       ourBuildNumber = BuildNumber.fromString(System.getProperty("idea.plugins.compatible.build"));
       if (ourBuildNumber == null) {
-        try {
-          File buildTxtFile =
-            FileUtil.findFirstThatExist(PathManager.getHomePath() + "/build.txt", PathManager.getHomePath() + "/community/build.txt");
-
-          if (buildTxtFile != null) {
-            ourBuildNumber = BuildNumber.fromString(FileUtil.loadFile(buildTxtFile).trim());
-          }
-          else {
-            ourBuildNumber = BuildNumber.fromString("999.SNAPSHOT");
-          }
-        }
-        catch (IOException e) {
-          ourBuildNumber = BuildNumber.fromString("999.SNAPSHOT");
-        }
+        ourBuildNumber = BuildNumber.fromFile();
       }
     }
     return ourBuildNumber;
   }
-
 
   private static void loadDescriptors(String pluginsPath,
                                       List<IdeaPluginDescriptorImpl> result,

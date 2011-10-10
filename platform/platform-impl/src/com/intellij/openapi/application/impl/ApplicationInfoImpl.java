@@ -24,6 +24,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -142,7 +143,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromString(myBuildNumber);
+    String prefix = null;
+    if (PlatformUtils.isCommunity()) {
+      prefix = "IC";
+    }
+    else if (PlatformUtils.isIdea()) {
+      prefix = "IU";
+    }
+    return BuildNumber.fromString(myBuildNumber, prefix);
   }
 
   public String getMajorVersion() {
@@ -354,7 +362,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     }
 
     Thread currentThread = Thread.currentThread();
-    currentThread.setName(currentThread.getName() + " " + myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber + ", eap:"+myEAP);
+    currentThread.setName(currentThread.getName() + " " + myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber + ", eap:" + myEAP);
 
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
