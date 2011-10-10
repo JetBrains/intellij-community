@@ -255,7 +255,7 @@ public class CompleteReferenceExpression {
   private static String[] getVariantsWithSameQualifier(PrefixMatcher matcher,GrExpression qualifier, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
     if (qualifier != null && qualifier.getType() != null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFileBase.class);
+    final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, PsiFile.class);
     Set<String> result = new LinkedHashSet<String>();
     addVariantsWithSameQualifier(matcher, scope, refExpr, qualifier, result, processor);
     return ArrayUtil.toStringArray(result);
