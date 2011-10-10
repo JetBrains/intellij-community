@@ -18,6 +18,7 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
+import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -26,17 +27,18 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
  * @author nik
  */
 public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescription {
+  private static final ConfigurationErrorType INVALID_ARTIFACT = new ConfigurationErrorType("artifact", false);
   private final Project myProject;
   private final InvalidArtifact myArtifact;
 
   public ArtifactLoadingErrorDescription(Project project, InvalidArtifact artifact) {
-    super(artifact.getName(), "artifact", artifact.getErrorMessage());
+    super(artifact.getName(), artifact.getErrorMessage(), INVALID_ARTIFACT);
     myProject = project;
     myArtifact = artifact;
   }
 
   @Override
-  public void removeInvalidElement() {
+  public void ignoreInvalidElement() {
     final ModifiableArtifactModel model = ArtifactManager.getInstance(myProject).createModifiableModel();
     model.removeArtifact(myArtifact);
     new WriteAction() {
@@ -47,7 +49,7 @@ public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescripti
   }
 
   @Override
-  public String getRemoveConfirmationMessage() {
+  public String getIgnoreConfirmationMessage() {
     return "Would you like to remove artifact '" + myArtifact.getName() + "?";
   }
 

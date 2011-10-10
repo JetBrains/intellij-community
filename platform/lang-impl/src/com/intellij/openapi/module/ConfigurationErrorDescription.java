@@ -21,12 +21,12 @@ package com.intellij.openapi.module;
  */
 public abstract class ConfigurationErrorDescription {
   private final String myElementName;
-  private final String myElementKind;
   private final String myDescription;
+  private ConfigurationErrorType myErrorType;
 
-  protected ConfigurationErrorDescription(String elementName, String elementKind, String description) {
+  protected ConfigurationErrorDescription(String elementName, String description, ConfigurationErrorType errorType) {
     myElementName = elementName;
-    myElementKind = elementKind;
+    myErrorType = errorType;
     myDescription = description;
   }
 
@@ -34,17 +34,17 @@ public abstract class ConfigurationErrorDescription {
     return myElementName;
   }
 
-  public String getElementKind() {
-    return myElementKind;
+  public ConfigurationErrorType getErrorType() {
+    return myErrorType;
   }
 
   public String getDescription() {
     return myDescription;
   }
 
-  public abstract void removeInvalidElement();
+  public abstract void ignoreInvalidElement();
 
-  public abstract String getRemoveConfirmationMessage();
+  public abstract String getIgnoreConfirmationMessage();
 
   public boolean isValid() {
     return true;
