@@ -40,7 +40,7 @@ import java.util.*;
 public abstract class NonCodeMembersContributor {
   private static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
-  private static final LightCacheKey<String[]> KEY = LightCacheKey.create();
+  private static final LightCacheKey<Set<String>> KEY = LightCacheKey.create();
   
   private static volatile MultiMap<String, NonCodeMembersContributor> ourClassSpecifiedContributors;
   private static NonCodeMembersContributor[] ourAllTypeContributors;
@@ -111,17 +111,16 @@ public abstract class NonCodeMembersContributor {
     return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
   }
 
-  protected static String[] getParentClassNames(@NotNull PsiClass aClass) {
-    String[] superClassNames = KEY.getCachedValue(aClass);
+  public static Set<String> getParentClassNames(@NotNull PsiClass aClass) {
+    Set<String> superClassNames = KEY.getCachedValue(aClass);
     if (superClassNames == null) {
       Set<PsiClass> superClasses = new HashSet<PsiClass>();
       superClasses.add(aClass);
       InheritanceUtil.getSuperClasses(aClass, superClasses, true);
 
-      superClassNames = new String[superClasses.size()];
-      int i = 0;
+      superClassNames = new HashSet<String>();
       for (PsiClass superClass : superClasses) {
-        superClassNames[i++] = superClass.getQualifiedName();
+        superClassNames.add(superClass.getQualifiedName());
       }
 
       superClassNames = KEY.putCachedValue(aClass, superClassNames);
