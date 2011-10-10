@@ -309,8 +309,8 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid());
-    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(vFile.isValid(), "Invalid file");
+    LOG.assertTrue(!myDisposed, "Already disposed");
     if (!myInitialized) return null;
 
     dispatchPendingEvents();
