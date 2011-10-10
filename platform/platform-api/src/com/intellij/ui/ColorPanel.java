@@ -110,7 +110,7 @@ public class ColorPanel extends JPanel {
     allColorsPanel.add(customColorsPanel, new GridBagConstraints(2, 0, 1, 1, 0.1D, 0.1D, 17, 0, new Insets(2, 2, 2, 2), 0, 0));
     setLayout(new BorderLayout());
     add(selectedColorPanel, BorderLayout.WEST);
-    add(allColorsPanel, BorderLayout.CENTER);
+    //add(allColorsPanel, BorderLayout.CENTER);
   }
 
   public void setEnabled(boolean enabled) {
