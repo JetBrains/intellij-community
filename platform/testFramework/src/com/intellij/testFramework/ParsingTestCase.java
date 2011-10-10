@@ -96,6 +96,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
         }
       });
     }
+    Extensions.registerAreaClass("IDEA_PROJECT", null);
     myProject = new MockProjectEx(getTestRootDisposable());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
