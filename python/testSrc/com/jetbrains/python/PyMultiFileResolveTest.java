@@ -290,6 +290,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(CythonFunction.class, "foo");
   }
 
+  public void testCythonInclude() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
   private PsiFile prepareFile() {
     String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
