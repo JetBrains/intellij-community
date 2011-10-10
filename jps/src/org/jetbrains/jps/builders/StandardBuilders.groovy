@@ -4,7 +4,6 @@ import com.intellij.ant.InstrumentationUtil
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
 import com.intellij.ant.PrefixedPath
 import org.apache.tools.ant.BuildListener
-import org.jetbrains.ether.MockFS
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.AntListener
 import org.jetbrains.ether.dependencyView.StringCache
@@ -159,8 +158,6 @@ class ResourceCopier implements ModuleBuilder {
     def ant = projectBuilder.binding.ant
 
     state.sourceRoots.each {String root ->
-      final File f = MockFS.fromFiles(root, state.sourceFiles)
-
       if (new File(root).exists()) {
         def target = state.targetFolder
         def prefix = moduleChunk.modules.collect { it.sourceRootPrefixes[root] }.find {it != null}
