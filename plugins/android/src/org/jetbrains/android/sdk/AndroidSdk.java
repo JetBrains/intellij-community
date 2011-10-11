@@ -364,7 +364,7 @@ public abstract class AndroidSdk {
       synchronized (myLock) {
         final long startTime = System.currentTimeMillis();
 
-        final long timeout = 8000;
+        final long timeout = 10000;
 
         while (!myFinished && !myCanceled && !indicator.isCanceled()) {
           long wastedTime = System.currentTimeMillis() - startTime;
