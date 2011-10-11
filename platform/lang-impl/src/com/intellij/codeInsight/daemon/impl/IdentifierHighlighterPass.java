@@ -70,6 +70,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     myCaretOffset = myEditor.getCaretModel().getOffset();
   }
 
+  @Override
   public void doCollectInformation(final ProgressIndicator progress) {
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
       return;
@@ -109,6 +110,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
       final PsiElement finalMyTarget = myTarget;
       ReferencesSearch.search(myTarget, new LocalSearchScope(myFile)).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(final PsiReference psiReference) {
           final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
           if (detector == null || detector.getReferenceAccess(finalMyTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
@@ -133,6 +135,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     final boolean virtSpace = TargetElementUtilBase.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset());
     final List<HighlightInfo> infos = virtSpace ? Collections.<HighlightInfo>emptyList() : getHighlights();

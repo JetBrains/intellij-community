@@ -87,6 +87,7 @@ public class PsiElementListNavigator {
       setTitle(title).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           int[] ids = list.getSelectedIndices();
           if (ids == null || ids.length == 0) return;

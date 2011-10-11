@@ -40,12 +40,14 @@ public class WolfPassFactory extends AbstractProjectComponent implements TextEdi
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, Pass.WOLF);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "WolfPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     final long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
@@ -53,6 +55,7 @@ public class WolfPassFactory extends AbstractProjectComponent implements TextEdi
       return null; //optimization
     }
     return new WolfHighlightingPass(myProject, editor.getDocument(), file){
+      @Override
       protected void applyInformationWithProgress() {
         super.applyInformationWithProgress();
         myPsiModificationCount = psiModificationCount;

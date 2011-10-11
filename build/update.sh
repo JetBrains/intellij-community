@@ -29,6 +29,3 @@ ant -f update.xml
 
 cd $DEV_IDEA_HOME
 cp -R $DEV_IDEA_HOME/out/deploy/* $WORK_IDEA_HOME
-
-cd $WORK_IDEA_HOME/bin
-

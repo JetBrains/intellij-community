@@ -42,6 +42,10 @@ public abstract class RefUtil {
         return true;
       }
     }
+    return isImplicitUsage(element);
+  }
+
+  public static boolean isImplicitUsage(PsiElement element) {
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitUsage(element)) return true;

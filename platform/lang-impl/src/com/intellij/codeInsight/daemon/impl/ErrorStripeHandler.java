@@ -28,6 +28,7 @@ public class ErrorStripeHandler extends ErrorStripeAdapter {
     myProject = project;
   }
 
+  @Override
   public void errorMarkerClicked(ErrorStripeEvent e) {
     RangeHighlighter highlighter = e.getHighlighter();
     if (!highlighter.isValid()) return;

@@ -49,25 +49,30 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     myNewFileName = newFileName;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("rename.file.fix");
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("rename.file.fix");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {
+        @Override
         protected void run(Result result) throws Throwable {
           invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
         }
@@ -75,6 +80,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
@@ -86,6 +92,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   }
 
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -101,6 +108,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

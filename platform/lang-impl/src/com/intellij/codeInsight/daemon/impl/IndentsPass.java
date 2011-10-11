@@ -57,6 +57,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   private final EditorEx myEditor;
   private final PsiFile myFile;
   public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
+    @Override
     public int compare(TextRange o1, TextRange o2) {
       if (o1.getStartOffset() == o2.getStartOffset()) {
         return o1.getEndOffset() - o2.getEndOffset();
@@ -67,6 +68,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   };
 
   private static final CustomHighlighterRenderer RENDERER = new CustomHighlighterRenderer() {
+    @Override
     @SuppressWarnings({"AssignmentToForLoopParameter"})
     public void paint(Editor editor,
                       RangeHighlighter highlighter,

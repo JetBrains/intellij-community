@@ -176,6 +176,9 @@
   <projectService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
                   serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
 
+  <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
+                  serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
+
   <!-- General -->
   <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 

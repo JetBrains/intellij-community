@@ -41,6 +41,7 @@ import com.intellij.util.Alarm;
 public class StatusBarUpdater implements Disposable {
   private final Project myProject;
   private final DumbAwareRunnable myUpdateStatusRunnable = new DumbAwareRunnable() {
+    @Override
     public void run() {
       if (!myProject.isDisposed()) {
         updateStatus();
@@ -53,6 +54,7 @@ public class StatusBarUpdater implements Disposable {
     myProject = project;
 
     CaretListener caretListener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         updateLater();
       }
@@ -89,6 +91,7 @@ public class StatusBarUpdater implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
   }
 

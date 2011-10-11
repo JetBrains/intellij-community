@@ -24,6 +24,7 @@
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="junit_rt" />
   </component>
 </module>
 

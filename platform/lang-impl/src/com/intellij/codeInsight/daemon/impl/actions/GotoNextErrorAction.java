@@ -32,10 +32,12 @@ public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAw
     super(false);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new GotoNextErrorHandler(true);
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
   }

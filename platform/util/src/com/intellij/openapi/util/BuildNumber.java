@@ -19,15 +19,21 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
+
 public class BuildNumber implements Comparable<BuildNumber> {
+  private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
+  private static final int TOP_BASELINE_VERSION = fromFile().getBaselineVersion();
+
   private final String myProductCode;
   private final int myBaselineVersion;
   private final int myBuildNumber;
-  private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
-  private static final int TOP_BASELINE_VERSION = 108;
 
   public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
     myProductCode = productCode;
@@ -70,7 +76,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber fromString(String version, @Nullable String name) {
     if (version == null) return null;
 
-    if (BUILD_NUMBER.equals(version)) return new BuildNumber("IU", TOP_BASELINE_VERSION, Integer.MAX_VALUE);
+    if (BUILD_NUMBER.equals(version)) {
+      final String productCode = name != null ? name : "";
+      return new BuildNumber(productCode, TOP_BASELINE_VERSION, Integer.MAX_VALUE);
+    }
 
     String code = version;
     int productSeparator = code.indexOf('-');
@@ -123,6 +132,20 @@ public class BuildNumber implements Comparable<BuildNumber> {
     catch (NumberFormatException e) {
       throw new RuntimeException("Unparseable version number: " + version +"; plugin name: " + name);
     }
+  }
+
+  public static BuildNumber fromFile() {
+    String text = "999.SNAPSHOT";
+    try {
+      final String homePath = PathManager.getHomePath();
+      final File buildTxtFile = FileUtil.findFirstThatExist(homePath + "/build.txt", homePath + "/community/build.txt");
+      if (buildTxtFile != null) {
+        text = FileUtil.loadFile(buildTxtFile).trim();
+      }
+    }
+    catch (IOException ignored) { }
+
+    return fromString(text);
   }
 
   @Override

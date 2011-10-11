@@ -34,6 +34,7 @@ public class FileIncludeContextHectorProvider implements HectorComponentPanelsPr
     myIncludeManager = includeManager;
   }
 
+  @Override
   @Nullable
   public HectorComponentPanel createConfigurable(@NotNull final PsiFile file) {
     if (DumbService.getInstance(file.getProject()).isDumb()) {

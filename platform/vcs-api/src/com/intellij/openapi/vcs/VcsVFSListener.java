@@ -41,6 +41,7 @@ import java.util.*;
 public abstract class VcsVFSListener implements Disposable {
   private VcsDirtyScopeManager myDirtyScopeManager;
   private final ProjectLevelVcsManager myVcsManager;
+  private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static class MovedFileInfo {
     public final String myOldPath;
@@ -84,6 +85,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener, this);
     CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+    myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
   public void dispose() {
@@ -96,8 +98,16 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected void executeAdd() {
     final List<VirtualFile> addedFiles = acquireAddedFiles();
+    for (Iterator<VirtualFile> iterator = addedFiles.iterator(); iterator.hasNext(); ) {
+      VirtualFile file = iterator.next();
+      if (myVcsFileListenerContextHelper.isAdditionIgnored(file)) {
+        iterator.remove();
+      }
+    }
     final Map<VirtualFile, VirtualFile> copyFromMap = acquireCopiedFiles();
-    executeAdd(addedFiles, copyFromMap);
+    if (! addedFiles.isEmpty()) {
+      executeAdd(addedFiles, copyFromMap);
+    }
   }
 
   /**
@@ -165,6 +175,21 @@ public abstract class VcsVFSListener implements Disposable {
     final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
+
+    for (Iterator<FilePath> iterator = filesToDelete.iterator(); iterator.hasNext(); ) {
+      FilePath file = iterator.next();
+      if (myVcsFileListenerContextHelper.isDeletionIgnored(file)) {
+        iterator.remove();
+      }
+    }
+    for (Iterator<FilePath> iterator = deletedFiles.iterator(); iterator.hasNext(); ) {
+      FilePath file = iterator.next();
+      if (myVcsFileListenerContextHelper.isDeletionIgnored(file)) {
+        iterator.remove();
+      }
+    }
+
+    if (deletedFiles.isEmpty() &&filesToDelete.isEmpty()) return;
 
     if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       if (myRemoveOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY || deletedFiles.isEmpty()) {

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
@@ -83,6 +84,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             myWrapper = null;
             quickFixTestCase.afterActionCompleted(testName, contents);
           }
+        }
+        catch (FileComparisonFailure e){
+          throw e;
         }
         catch (Throwable e) {
           e.printStackTrace();

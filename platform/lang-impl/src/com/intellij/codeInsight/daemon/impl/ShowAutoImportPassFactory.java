@@ -43,12 +43,14 @@ public class ShowAutoImportPassFactory extends AbstractProjectComponent implemen
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, false, -1);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "ShowAutoImportPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     return new ShowAutoImportPass(myProject, file, editor);

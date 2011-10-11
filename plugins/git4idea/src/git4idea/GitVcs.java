@@ -594,4 +594,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myExecutableValidator;
   }
 
+  @Override
+  public boolean fileListenerIsSynchronous() {
+    return false;
+  }
 }

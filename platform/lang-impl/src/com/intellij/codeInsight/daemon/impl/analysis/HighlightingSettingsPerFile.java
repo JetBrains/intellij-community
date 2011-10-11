@@ -92,6 +92,7 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     }
   }
 
+  @Override
   public void loadState(Element element) {
     List children = element.getChildren(SETTING_TAG);
     for (final Object aChildren : children) {
@@ -111,6 +112,7 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     }
   }
 
+  @Override
   public Element getState() {
     final Element element = new Element("state");
     for (Map.Entry<VirtualFile, FileHighlighingSetting[]> entry : myHighlightSettings.entrySet()) {

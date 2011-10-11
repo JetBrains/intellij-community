@@ -68,10 +68,12 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     myDumbService = DumbService.getInstance(project);
   }
                                                      
+  @Override
   public boolean suitableForFile(@NotNull final PsiFile file) {
     return true;
   }
 
+  @Override
   public boolean analyze(@NotNull final PsiFile file,
                          final boolean updateWholeFile,
                          @NotNull final HighlightInfoHolder holder,
@@ -89,6 +91,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return true;
   }
 
+  @Override
   public void visit(@NotNull PsiElement element) {
     if (element instanceof PsiErrorElement) {
       if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element);
@@ -104,11 +107,13 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
   }
 
+  @Override
   @NotNull
   public HighlightVisitor clone() {
     return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators);
   }
 
+  @Override
   public int order() {
     return 2;
   }
@@ -123,10 +128,12 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   static {
     LanguageAnnotators.INSTANCE.addListener(new ExtensionPointListener<Annotator>() {
+      @Override
       public void extensionAdded(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
         cachedAnnotators.clear();
       }
 
+      @Override
       public void extensionRemoved(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
         cachedAnnotators.clear();
       }

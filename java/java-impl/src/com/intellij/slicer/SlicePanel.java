@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -351,7 +352,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
   }
 
-  protected abstract void close();
+  protected void close() {
+    final ProgressIndicator progress = myBuilder.getUi().getProgress();
+    if (progress != null) {
+      progress.cancel();
+    }
+  }
 
   private final class MyRefreshAction extends RefreshAction {
     private MyRefreshAction(JComponent tree) {

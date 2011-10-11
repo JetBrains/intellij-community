@@ -253,8 +253,10 @@
     <action id="Print">
       <keyboard-shortcut first-keystroke="meta P" />
     </action>
+    <action id="ContextHelp">
+    </action>
     <action id="QuickJavaDoc">
-      <keyboard-shortcut first-keystroke="control J" />
+      <keyboard-shortcut first-keystroke="F1" />
       <mouse-shortcut keystroke="control button2" />
       <keyboard-shortcut first-keystroke="shift control meta SLASH" />
     </action>

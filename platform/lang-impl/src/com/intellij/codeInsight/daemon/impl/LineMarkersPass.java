@@ -74,6 +74,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     myUpdateAll = updateAll;
   }
 
+  @Override
   protected void applyInformationWithProgress() {
     try {
       UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
@@ -82,6 +83,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     }
   }
 
+  @Override
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
     final List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
@@ -106,6 +108,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguage(language));
   }
 
+  @Override
   public void addLineMarkers(@NotNull List<PsiElement> elements,
                              @NotNull final List<LineMarkerProvider> providers,
                              @NotNull final List<LineMarkerInfo> result,
@@ -149,6 +152,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     final Set<PsiFile> injectedFiles = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, file, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        @Override
         public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           injectedFiles.add(injectedPsi);
         }
@@ -171,6 +175,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
           LineMarkerInfo converted =
               new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
                                  new Function<PsiElement, String>() {
+                                   @Override
                                    public String fun(PsiElement element) {
                                      return injectedMarker.getLineMarkerTooltip();
                                    }
@@ -191,6 +196,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     return myMarkers;
   }
 
+  @Override
   public double getProgress() {
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;

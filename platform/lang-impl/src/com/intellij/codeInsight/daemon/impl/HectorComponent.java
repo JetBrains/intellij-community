@@ -103,6 +103,7 @@ public class HectorComponent extends JPanel {
       slider.setPaintLabels(true);
       slider.setSnapToTicks(true);
       slider.addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           int value = slider.getValue();
           for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
@@ -146,6 +147,7 @@ public class HectorComponent extends JPanel {
     gc.anchor = GridBagConstraints.EAST;
     add(configurator, gc);
     configurator.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         final JBPopup hector = getOldHector();
         if (hector != null) {
@@ -174,6 +176,7 @@ public class HectorComponent extends JPanel {
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
     final int width = getFontMetrics(getFont()).stringWidth(myTitle) + 60;
@@ -209,6 +212,7 @@ public class HectorComponent extends JPanel {
       .setRequestFocus(true)
       .setMovable(true)
       .setCancelCallback(new Computable<Boolean>() {
+        @Override
         public Boolean compute() {
           for (HectorComponentPanel additionalPanel : myAdditionalPanels) {
             if (!additionalPanel.canClose()) {

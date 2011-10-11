@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class HighlightInfoFilterImpl implements HighlightInfoFilter {
   private static final boolean ourTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
+  @Override
   public boolean accept(@NotNull HighlightInfo info, PsiFile file) {
     if (ourTestMode) return true; // Tests need to verify highlighting is applied no matter what attributes are defined for this kind of highlighting
 

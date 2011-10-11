@@ -43,12 +43,14 @@ public class ShowIntentionsPassFactory extends AbstractProjectComponent implemen
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, false, Pass.POPUP_HINTS);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "ShowIntentionsPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     return new ShowIntentionsPass(myProject, editor, -1);

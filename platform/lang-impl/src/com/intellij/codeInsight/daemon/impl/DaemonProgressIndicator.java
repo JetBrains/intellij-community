@@ -27,6 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 public class DaemonProgressIndicator extends ProgressIndicatorBase {
   private boolean debug;
 
+  @Override
   public synchronized void stop() {
     super.stop();
     super.cancel();

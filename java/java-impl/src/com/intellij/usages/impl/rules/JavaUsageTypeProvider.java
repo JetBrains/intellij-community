@@ -16,9 +16,12 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.UsageTarget;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,15 +34,22 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class JavaUsageTypeProvider implements UsageTypeProvider {
+public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   public UsageType getUsageType(final PsiElement element) {
-    UsageType classUsageType = getClassUsageType(element);
+    return getUsageType(element, null);
+  }
+
+  @Override
+  public UsageType getUsageType(PsiElement element, @Nullable UsageTarget[] targets) {
+    UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
     UsageType methodUsageType = getMethodUsageType(element);
     if (methodUsageType != null) return methodUsageType;
 
-    if (element instanceof PsiLiteralExpression) {return UsageType.LITERAL_USAGE; }
+    if (element instanceof PsiLiteralExpression) {
+      return UsageType.LITERAL_USAGE;
+    }
 
     return null;
   }
@@ -144,8 +154,7 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
   }
 
   @Nullable
-  private static UsageType getClassUsageType(PsiElement element) {
-
+  private static UsageType getClassUsageType(PsiElement element, @Nullable UsageTarget[] targets) {
     if (element.getParent() instanceof PsiAnnotation &&
         element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) return UsageType.ANNOTATION;
 
@@ -208,6 +217,9 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
     if (psiNewExpression != null) {
       final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassReference();
       if (classReference != null && PsiTreeUtil.isAncestor(classReference, element, false)) {
+        if (isInnerClassOf(classReference, targets)) {
+          return UsageType.CLASS_INNER_NEW_OPERATOR;
+        }
         if (psiNewExpression.getArrayDimensions().length > 0) {
           return UsageType.CLASS_NEW_ARRAY;
         }
@@ -216,5 +228,26 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
     }
 
     return null;
+  }
+
+  private static boolean isInnerClassOf(PsiJavaCodeReferenceElement classReference, @Nullable UsageTarget[] targets) {
+    if (targets == null) {
+      return false;
+    }
+    PsiElement qualifier = classReference.getQualifier();
+    if (qualifier instanceof PsiJavaCodeReferenceElement) {
+      for (UsageTarget target : targets) {
+        if (target instanceof PsiElementUsageTarget) {
+          PsiElement element = ((PsiElementUsageTarget)target).getElement();
+          if (element instanceof PsiClass) {
+            String name = target.getName();
+            if (Comparing.equal(((PsiJavaCodeReferenceElement)qualifier).getReferenceName(), name)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }

@@ -106,6 +106,7 @@ public final class QuickFixAction {
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo info) {
         addAvailableActionsForGroups(info, editor, file, result, passId, offset);
         return true;

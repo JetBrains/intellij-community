@@ -130,7 +130,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   @Override
   protected void doSetText(TextWithImports text) {
     restoreFactory(text);
-    myEditor.setDocument(createDocument(text));
+    myEditor.setNewDocumentAndFileType(getCurrentFactory().getFileType(), createDocument(text));
   }
 
   @Override

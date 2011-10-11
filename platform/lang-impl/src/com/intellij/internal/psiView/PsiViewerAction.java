@@ -18,6 +18,11 @@ package com.intellij.internal.psiView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
@@ -33,6 +38,29 @@ public class PsiViewerAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    e.getPresentation().setEnabled(project != null);
+    final Presentation p = e.getPresentation();
+    if (project == null) {
+      p.setVisible(false);
+      p.setEnabled(false);
+      return;
+    }
+
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      p.setVisible(true);
+      p.setEnabled(true);
+      return;
+    }
+
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      if ("PLUGIN_MODULE".equals(ModuleType.get(module).getId())) {
+        p.setVisible(true);
+        p.setEnabled(true);
+        return;
+      }
+    }
+    
+    p.setVisible(false);
+    p.setEnabled(false);
   }
 }

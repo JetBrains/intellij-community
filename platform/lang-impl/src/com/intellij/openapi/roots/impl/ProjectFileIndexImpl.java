@@ -184,9 +184,9 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      return info != null && info.libraryClassRoot != null;
+    DirectoryInfo info = getInfoForDirectory(fileOrDir);
+    if (info != null) {     
+      return info.libraryClassRoot != null;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -195,9 +195,9 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      return info != null && info.isInLibrarySource;
+    DirectoryInfo info = getInfoForDirectory(fileOrDir);
+    if (info != null) {
+      return info.isInLibrarySource;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();

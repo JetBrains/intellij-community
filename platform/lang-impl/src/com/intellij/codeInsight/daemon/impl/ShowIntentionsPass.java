@@ -119,6 +119,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
 
+  @Override
   public void doCollectInformation(ProgressIndicator progress) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
@@ -128,6 +129,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     updateActions(codeAnalyzer);
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -200,6 +202,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
       Pair<PsiFile, Editor> place =
         ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
+          @Override
           public boolean process(PsiFile psiFile, Editor editor) {
             return ShowIntentionActionsHandler.availableFor(psiFile, editor, action);
           }
@@ -227,6 +230,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null,
                                              document.getLineStartOffset(line),
                                              document.getLineEndOffset(line), new Processor<HighlightInfo>() {
+        @Override
         public boolean process(HighlightInfo info) {
           final GutterIconRenderer renderer = info.getGutterIconRenderer();
           if (renderer == null) {
@@ -241,6 +245,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
             return true;
           }
           final IntentionAction actionAdapter = new AbstractIntentionAction() {
+            @Override
             public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
               final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
               action.actionPerformed(
@@ -248,6 +253,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                   ActionManager.getInstance(), 0));
             }
 
+            @Override
             @NotNull
             public String getText() {
               return text;

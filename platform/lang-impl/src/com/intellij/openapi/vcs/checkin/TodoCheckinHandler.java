@@ -19,8 +19,11 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.*;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +40,8 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
@@ -80,8 +85,9 @@ public class TodoCheckinHandler extends CheckinHandler {
         if (myConfiguration.myTodoPanelSettings.getTodoFilterName() != null) {
           myTodoFilter = TodoConfiguration.getInstance().getTodoFilter(myConfiguration.myTodoPanelSettings.getTodoFilterName());
         }
-        final DefaultActionGroup group = new DefaultActionGroup();
-        group.add(new SetTodoFilterAction(myProject, myConfiguration.myTodoPanelSettings, new Consumer<TodoFilter>() {
+
+
+        final Consumer<TodoFilter> consumer = new Consumer<TodoFilter>() {
           @Override
           public void consume(TodoFilter todoFilter) {
             myTodoFilter = todoFilter;
@@ -89,8 +95,19 @@ public class TodoCheckinHandler extends CheckinHandler {
             myConfiguration.myTodoPanelSettings.setTodoFilterName(name);
             setFilterText(name);
           }
-        }));
-        panel.add(ActionManager.getInstance().createActionToolbar("commit dialog todo handler", group, true).getComponent());
+        };
+        final LinkLabel linkLabel = new LinkLabel("Configure Filters", null);
+        linkLabel.setListener(new LinkListener() {
+          @Override
+          public void linkSelected(LinkLabel aSource, Object aLinkData) {
+            DefaultActionGroup group = SetTodoFilterAction.createPopupActionGroup(myProject, myConfiguration.myTodoPanelSettings, consumer);
+            ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,
+                                                                                          group);
+            popupMenu.getComponent().show(linkLabel, 0, linkLabel.getHeight());
+          }
+        }, null);
+        panel.add(linkLabel);
+
         refreshEnable(checkBox);
         return panel;
       }
@@ -133,7 +150,7 @@ public class TodoCheckinHandler extends CheckinHandler {
       final String todoName = VcsBundle.message("before.checkin.new.todo.check.title");
       if (Messages.showOkCancelDialog(myProject,
                               todoName +
-                              " can't be performed while IntelliJ IDEA updates the indices in background.\n" +
+                              " can't be performed while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates the indices in background.\n" +
                               "You can commit the changes without running checks, or you can wait until indices are built.",
                               todoName + " is not possible right now",
                               "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {

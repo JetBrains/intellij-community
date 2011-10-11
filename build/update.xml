@@ -22,6 +22,7 @@
   <macrodef name="run">
     <attribute name="script"/>
     <attribute name="deploy"/>
+
     <sequential>
       <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
         <jvmarg line="-Xms64m -Xmx512m"/>
@@ -52,12 +53,11 @@
           <pathelement location="${project.home}/lib/jna.jar"/>
         </classpath>
       </java>
-
     </sequential>
   </macrodef>
 
   <target name="layout">
     <run script="${project.home}/build/scripts/layouts.gant"
-             deploy="${project.home}/out/deploy"/>
+         deploy="${project.home}/out/deploy"/>
   </target>
 </project>

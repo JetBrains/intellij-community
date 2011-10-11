@@ -83,11 +83,13 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message(myKey, myNewFileName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("create.file.family");
@@ -102,6 +104,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiDirectory myDirectory = (PsiDirectory)startElement;
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {
+        @Override
         protected void run(Result result) throws Throwable {
           invoke(project, myDirectory);
         }

@@ -47,7 +47,7 @@ public class PsiUtilCore {
 
     @NotNull
     public Language getLanguage() {
-      throw new IllegalAccessError();
+      throw new IllegalAccessError(this.toString());
     }
 
     public PsiManager getManager() {
@@ -359,7 +359,8 @@ public class PsiUtilCore {
     return collection.toArray(new PsiFile[collection.size()]);
   }
 
-  /** @return name for element using element structure info
+  /**
+   * @return name for element using element structure info
    */
   @Nullable
   public static String getName(PsiElement element) {

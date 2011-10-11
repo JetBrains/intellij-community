@@ -74,6 +74,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
   }
 
+  @Override
   public void doCollectInformation(ProgressIndicator progress) {
     myDocumentChanged = false;
 
@@ -100,6 +101,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     }
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());

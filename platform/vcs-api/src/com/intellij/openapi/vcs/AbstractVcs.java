@@ -589,5 +589,9 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public int hashCode() {
     return myKey.hashCode();
   }
+
+  public boolean fileListenerIsSynchronous() {
+    return true;
+  }
 }
 

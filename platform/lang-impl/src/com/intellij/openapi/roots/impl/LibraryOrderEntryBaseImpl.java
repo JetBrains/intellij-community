@@ -90,7 +90,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return rootProvider == null ? VirtualFile.EMPTY_ARRAY : filterDirectories(rootProvider.getFiles(type));
   }
 
-  private static VirtualFile[] filterDirectories(VirtualFile[] files) {
+  protected VirtualFile[] filterDirectories(VirtualFile[] files) {
     List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, VirtualFile>() {
       public VirtualFile fun(VirtualFile file) {
         return file.isDirectory() ? file : null;

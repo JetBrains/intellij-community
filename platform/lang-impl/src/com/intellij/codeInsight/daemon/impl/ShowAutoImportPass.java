@@ -61,9 +61,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     myFile = file;
   }
 
+  @Override
   public void doCollectInformation(ProgressIndicator progress) {
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
@@ -85,6 +87,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private static List<HighlightInfo> getVisibleHighlights(final int startOffset, final int endOffset, Project project, final Editor editor) {
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     DaemonCodeAnalyzerImpl.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo info) {
         if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
           highlights.add(info);

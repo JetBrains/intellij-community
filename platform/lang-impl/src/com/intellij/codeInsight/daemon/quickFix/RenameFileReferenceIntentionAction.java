@@ -41,24 +41,29 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
     myFileReference = fileReference;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("rename.file.reference.text", myExistingElementName);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("rename.file.reference.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
       new WriteCommandAction(project) {
+        @Override
         protected void run(Result result) throws Throwable {
           invoke(project, null, descriptor.getPsiElement().getContainingFile());
         }
@@ -66,15 +71,18 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myFileReference.handleElementRename(myExistingElementName);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

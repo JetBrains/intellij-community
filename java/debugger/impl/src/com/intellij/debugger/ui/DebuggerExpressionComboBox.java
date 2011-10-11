@@ -61,7 +61,9 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       if (twi != null) {
         restoreFactory(twi);
       }
-      super.setItem(createDocument(twi));
+      final Document document = createDocument(twi);
+      getEditorComponent().setNewDocumentAndFileType(getCurrentFactory().getFileType(), document);
+      super.setItem(document);
       /* Causes PSI being modified from PSI events. See IDEADEV-22102
       final Editor editor = getEditor();
       if (editor != null) {

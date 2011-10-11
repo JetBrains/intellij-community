@@ -56,12 +56,17 @@ public class GtkPaintingUtil {
   }
 
   public static boolean isSynthUI(final MenuItemUI ui) {
-    final Class<?>[] interfaces = ui.getClass().getInterfaces();
-    for (int i = 0, length = interfaces.length; i < length; i++) {
-      final Class<?> anInterface = interfaces[i];
-      if (V6_SYNTH_UI_CLASS.equals(anInterface.getName()) || V7_SYNTH_UI_CLASS.equals(anInterface.getName())) {
-        return true;
+    Class<?> aClass = ui.getClass();
+
+    while (aClass != null && aClass.getSimpleName().contains("Synth")) {
+      final Class<?>[] interfaces = aClass.getInterfaces();
+      for (int i = 0, length = interfaces.length; i < length; i++) {
+        final Class<?> anInterface = interfaces[i];
+        if (V6_SYNTH_UI_CLASS.equals(anInterface.getName()) || V7_SYNTH_UI_CLASS.equals(anInterface.getName())) {
+          return true;
+        }
       }
+      aClass = aClass.getSuperclass();
     }
 
     return false;

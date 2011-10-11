@@ -72,6 +72,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
         if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
           document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
           PsiDocumentManagerImpl.addRunOnCommit(document, new Runnable() {
+            @Override
             public void run() {
               updateChangesForDocument(document);
               document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
@@ -82,15 +83,18 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     }, this);
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
+      @Override
       public void transactionStarted(final Document doc, final PsiFile file) {
       }
 
+      @Override
       public void transactionCompleted(final Document doc, final PsiFile file) {
         updateChangesForDocument(doc);
       }
     });
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -102,6 +106,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor != null && !application.isUnitTestMode()) {
       application.invokeLater(new Runnable() {
+        @Override
         public void run() {
           EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
           PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -118,14 +123,17 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     changedElements.remove(document);
   }
 
+  @Override
   public void childAdded(PsiTreeChangeEvent event) {
     queueElement(event.getParent(), true, event);
   }
 
+  @Override
   public void childRemoved(PsiTreeChangeEvent event) {
     queueElement(event.getParent(), true, event);
   }
 
+  @Override
   public void childReplaced(PsiTreeChangeEvent event) {
     queueElement(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()), event);
   }
@@ -134,6 +142,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     return newChild != null && oldChild != null && newChild.getClass() == oldChild.getClass();
   }
 
+  @Override
   public void childrenChanged(PsiTreeChangeEvent event) {
     if (((PsiTreeChangeEventImpl)event).isGenericChildrenChange()) {
       return;
@@ -141,11 +150,13 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     queueElement(event.getParent(), true, event);
   }
 
+  @Override
   public void beforeChildMovement(PsiTreeChangeEvent event) {
     queueElement(event.getOldParent(), true, event);
     queueElement(event.getNewParent(), true, event);
   }
 
+  @Override
   public void beforeChildrenChange(PsiTreeChangeEvent event) {
     // this event sent always before every PSI change, even not significant one (like after quick typing/backspacing char)
     // mark file dirty just in case
@@ -155,6 +166,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     }
   }
 
+  @Override
   public void propertyChanged(PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {

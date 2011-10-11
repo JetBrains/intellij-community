@@ -52,6 +52,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     myProject = project;
   }
 
+  @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
     LineTooltipRenderer bigRenderer = null;
     List<HighlightInfo> infos = new SmartList<HighlightInfo>();
@@ -80,6 +81,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     if (!infos.isEmpty()) {
       // show errors first
       Collections.sort(infos, new Comparator<HighlightInfo>() {
+        @Override
         public int compare(final HighlightInfo o1, final HighlightInfo o2) {
           int i = SeverityRegistrar.getInstance(myProject).compare(o2.getSeverity(), o1.getSeverity());
           if (i != 0) return i;
@@ -99,10 +101,12 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     return bigRenderer;
   }
 
+  @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
     return new MyRenderer(text, new Object[] {text});
   }
 
+  @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
     return new MyRenderer(text, width, new Object[] {text});
   }
@@ -121,10 +125,12 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       super(text, width, comparable);
     }
 
+    @Override
     protected void onHide(final JComponent contentComponent) {
       ShowErrorDescriptionAction.rememberCurrentWidth(contentComponent.getWidth());
     }
 
+    @Override
     protected boolean dressDescription(@NotNull final Editor editor) {
       final String[] problems = UIUtil.getHtmlBody(myText).split(BORDER_LINE);
       String text = "";
@@ -169,6 +175,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       return null;
     }
 
+    @Override
     protected void stripDescription() {
       final String[] problems = UIUtil.getHtmlBody(myText).split(BORDER_LINE);
       myText = "<html><body>";
@@ -182,6 +189,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
     }
 
+    @Override
     protected LineTooltipRenderer createRenderer(final String text, final int width) {
       return new MyRenderer(text, width, getEqualityObjects());
     }

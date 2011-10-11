@@ -31,6 +31,7 @@ public final class UsageType {
   public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.catch.declaration"));
   public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(UsageViewBundle.message("usage.type.return"));
   public static final UsageType CLASS_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new"));
+  public static final UsageType CLASS_INNER_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new.inner"));
   public static final UsageType CLASS_NEW_ARRAY = new UsageType(UsageViewBundle.message("usage.type.new.array"));
   public static final UsageType ANNOTATION = new UsageType(UsageViewBundle.message("usage.type.annotation"));
   public static final UsageType TYPE_PARAMETER = new UsageType(UsageViewBundle.message("usage.type.type.parameter"));

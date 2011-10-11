@@ -37,12 +37,14 @@ public class VisibleLineMarkersPassFactory extends VisibleHighlightingPassFactor
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, false, Pass.VISIBLE_LINE_MARKERS);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "VisibleLineMarkersPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);

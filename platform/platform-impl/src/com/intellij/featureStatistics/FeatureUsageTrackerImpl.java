@@ -84,7 +84,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   @Override
   public boolean isToBeAdvertisedInLookup(@NonNls String featureId, Project project) {
     FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
-    if (System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
+    if (descriptor != null && System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
       return true;
     }
     

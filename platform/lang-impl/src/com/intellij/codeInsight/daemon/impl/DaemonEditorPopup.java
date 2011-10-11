@@ -39,10 +39,12 @@ public class DaemonEditorPopup extends PopupHandler {
     myPsiFile = psiFile;
   }
 
+  @Override
   public void invokePopup(final Component comp, final int x, final int y) {
     if (ApplicationManager.getApplication() == null) return;
     final JRadioButtonMenuItem errorsFirst = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
     errorsFirst.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
       }
@@ -52,6 +54,7 @@ public class DaemonEditorPopup extends PopupHandler {
 
     final JRadioButtonMenuItem next = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
     next.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected();
       }
@@ -70,6 +73,7 @@ public class DaemonEditorPopup extends PopupHandler {
     errorsFirst.setSelected(isErrorsFirst);
     next.setSelected(!isErrorsFirst);
     hLevel.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final PsiFile psiFile = myPsiFile;
         if (psiFile == null) return;

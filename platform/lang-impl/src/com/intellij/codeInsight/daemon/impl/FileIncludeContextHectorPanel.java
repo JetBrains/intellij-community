@@ -47,17 +47,21 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
   }
 
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
   }
 
+  @Override
   public void reset() {
     final JComboBox comboBox = myContextFile.getComboBox();
 
@@ -67,6 +71,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     myContextFile.setTextFieldPreferredWidth(30);
   }
 
+  @Override
   public void disposeUIResources() { }
 
   private class MyListCellRenderer extends DefaultListCellRenderer {
@@ -78,6 +83,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
       myMaxWidth = comboBox.getPreferredSize().width;
     }
 
+    @Override
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value,
                                                   final int index,

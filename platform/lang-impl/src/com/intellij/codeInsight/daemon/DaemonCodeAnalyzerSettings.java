@@ -54,11 +54,13 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
     return ServiceManager.getService(DaemonCodeAnalyzerSettings.class);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return DaemonBundle.message("error.highlighting.settings");
@@ -89,6 +91,7 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
     return false;
   }
 
+  @Override
   public Object clone() {
     DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings(myManager);
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
@@ -99,6 +102,7 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
     return settings;
   }
 
+  @Override
   public Element getState() {
     Element e = new Element("state");
     try {
@@ -110,6 +114,7 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
     return e;
   }
 
+  @Override
   public void loadState(final Element state) {
     try {
       readExternal(state);

@@ -83,10 +83,11 @@ public class NamePathComponent extends JPanel{
     myNameLabel = new JLabel(nameLabelText);
     if (bold) myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
-    Insets insets = new Insets(0, 0, 5, 0);
+    Insets insets = new Insets(0, 0, 5, 4);
     this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                  insets, 0, 0));
 
+    insets = new Insets(0, 0, 5, 0);
     this.add(myTfName, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                               insets, 0, 0));
     // todo: review texts
@@ -102,8 +103,10 @@ public class NamePathComponent extends JPanel{
     myPathLabel = new JLabel(pathLabelText);
     myPathLabel.setLabelFor(myTfPath);
     if (bold) myPathLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    insets = new Insets(0, 0, 5, 4);
     this.add(myPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                    insets, 0, 0));
+    insets = new Insets(0, 0, 5, 0);
     this.add(myPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  insets, 0, 0));
   }

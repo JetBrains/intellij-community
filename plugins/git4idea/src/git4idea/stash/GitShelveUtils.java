@@ -18,12 +18,8 @@ package git4idea.stash;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
@@ -33,18 +29,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
-import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.commands.GitFileUtils;
-import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -81,51 +74,12 @@ public class GitShelveUtils {
       }, new TaskDescriptor("", Where.AWT) {
         @Override
         public void run(ContinuationContext context) {
-          GitVFSListener l = GitVcs.getInstance(project).getVFSListener();
-          l.setEventsSuppressed(true);
-
           LOG.info("Unshelving in UI thread. shelvedChangeList: " + shelvedChangeList);
           // we pass null as target change list for Patch Applier to do NOTHING with change lists
           shelveManager.scheduleUnshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(project),
-                                                   shelvedChangeList.getBinaryFiles(), null, false, context);
+                                                   shelvedChangeList.getBinaryFiles(), null, false, context, true);
         }
-      }, new TaskDescriptor("", Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        GitVcs.getInstance(project).getVFSListener().setEventsSuppressed(false);
-        addFilesAfterUnshelve(project, shelvedChangeList, projectPath, context);
-      }
-    });
-  }
-
-  public static void addFilesAfterUnshelve(Project project,
-                                           ShelvedChangeList shelvedChangeList,
-                                           String projectPath, ContinuationContext context) {
-    Collection<FilePath> paths = new ArrayList<FilePath>();
-    for (ShelvedChange c : shelvedChangeList.getChanges(project)) {
-      if (c.getBeforePath() == null || !c.getBeforePath().equals(c.getAfterPath()) || c.getFileStatus() == FileStatus.ADDED) {
-        paths.add(VcsUtil.getFilePath(projectPath + c.getAfterPath()));
-      }
-    }
-    for (ShelvedBinaryFile f : shelvedChangeList.getBinaryFiles()) {
-      if (f.BEFORE_PATH == null || !f.BEFORE_PATH.equals(f.AFTER_PATH) || f.getFileStatus() == FileStatus.ADDED) {
-        paths.add(VcsUtil.getFilePath(projectPath + f.AFTER_PATH));
-      }
-    }
-    final VcsDirtyScopeManager dsm = VcsDirtyScopeManager.getInstance(project);
-    Map<VirtualFile, List<FilePath>> map = GitUtil.sortGitFilePathsByGitRoot(paths);
-    for (Map.Entry<VirtualFile, List<FilePath>> e : map.entrySet()) {
-      try {
-        GitFileUtils.addPaths(project, e.getKey(), e.getValue());
-        dsm.filePathsDirty(e.getValue(), null);
-      }
-      catch (VcsException e1) {
-        if (! context.handleException(e1)) {
-          AbstractVcsHelper.getInstance(project).showError(e1, "Can not add file to Git");
-          LOG.error("Vcs Exception not handled");
-        }
-      }
-    }
+      });
   }
 
   public static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {

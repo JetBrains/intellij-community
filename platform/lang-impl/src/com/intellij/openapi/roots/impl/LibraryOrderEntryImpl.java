@@ -22,9 +22,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,11 +47,15 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @NonNls private static final String LEVEL_ATTR = "level";
   private final MyOrderEntryLibraryTableListener myLibraryListener = new MyOrderEntryLibraryTableListener();
   @NonNls private static final String EXPORTED_ATTR = "exported";
+  private LibraryType myLibraryType;
 
   LibraryOrderEntryImpl(Library library, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     LOG.assertTrue(library.getTable() != null);
     myLibrary = library;
+    if (myLibrary instanceof LibraryEx) {
+      myLibraryType = ((LibraryEx)myLibrary).getType();
+    }
     addListeners();
     init();
   }
@@ -76,6 +82,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
     else {
       myLibrary = that.myLibrary;
+      myLibraryType = that.myLibraryType;
     }
     myExported = that.myExported;
     myScope = that.myScope;
@@ -105,6 +112,9 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
       myLibraryName = null;
       myLibraryLevel = null;
       myLibrary = library;
+      if (library instanceof LibraryEx) {
+        myLibraryType = ((LibraryEx)library).getType();
+      }
     }
   }
 
@@ -259,4 +269,11 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
   }
 
+  @Override
+  protected VirtualFile[] filterDirectories(VirtualFile[] files) {
+    if (myLibraryType != null && myLibraryType.isFileBased()) {
+      return files;
+    }
+    return super.filterDirectories(files);
+  }
 }

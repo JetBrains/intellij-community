@@ -40,6 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
@@ -407,6 +408,10 @@ public class ExpectedHighlightingData {
   }
 
   public void checkResult(Collection<HighlightInfo> infos, String text) {
+    checkResult(infos, text, null);
+  }
+
+  public void checkResult(Collection<HighlightInfo> infos, String text, String filePath) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     String failMessage = "";
 
@@ -460,11 +465,11 @@ public class ExpectedHighlightingData {
     }
 
     if (failMessage.length() > 0) {
-      compareTexts(infos, text, failMessage);
+      compareTexts(infos, text, failMessage, filePath);
     }
   }
 
-  private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage) {
+  private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, String filePath) {
     final ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>(infos);
     Collections.sort(list, new Comparator<HighlightInfo>() {  // by start offset descending then by end offset ascending
       @Override
@@ -513,6 +518,9 @@ public class ExpectedHighlightingData {
     }
     sb.insert(0, text.substring(0, end));
 
+    if (filePath != null && !myText.equals(sb.toString())) {
+      throw new FileComparisonFailure(failMessage, myText, sb.toString(), filePath);
+    }
     Assert.assertEquals(failMessage + "\n", myText, sb.toString());
     Assert.fail(failMessage);
   }
