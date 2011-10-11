@@ -31,8 +31,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
@@ -140,11 +138,6 @@ public abstract class AndroidSdk {
       }
     }
     return sdk;
-  }
-
-  static boolean isAndroid15Sdk(@NotNull String location) {
-    VirtualFile sdkDir = LocalFileSystem.getInstance().findFileByPath(location);
-    return sdkDir != null && sdkDir.findChild(SdkConstants.FD_PLATFORMS) != null;
   }
 
   @Override
@@ -295,20 +288,6 @@ public abstract class AndroidSdk {
       return null;
     }
     return AndroidDebugBridge.getBridge();
-  }
-
-  @Nullable
-  public IAndroidTarget getNewerPlatformTarget() {
-    IAndroidTarget[] targets = getTargets();
-    IAndroidTarget result = null;
-    for (IAndroidTarget target : targets) {
-      if (target.isPlatform()) {
-        if (result == null || target.compareTo(result) > 0) {
-          result = target;
-        }
-      }
-    }
-    return result;
   }
 
   @Nullable
