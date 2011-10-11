@@ -117,11 +117,11 @@ public class ConfigImportHelper {
       selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
     }
 
-    final String prefix = selector.replaceAll("\\d", "");
+    final String prefix = (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
     for (File file : parent.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
-        return name.length() == selector.length() && name.startsWith(prefix);
+        return name.startsWith(prefix);
       }
     })) {
       final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
