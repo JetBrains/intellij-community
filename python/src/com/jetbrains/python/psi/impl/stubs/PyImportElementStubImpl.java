@@ -1,8 +1,8 @@
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
@@ -15,8 +15,9 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
   private final PyQualifiedName myImportedQName;
   private final String myAsName;
 
-  public PyImportElementStubImpl(@Nullable PyQualifiedName importedQName, String asName, final StubElement parent) {
-    super(parent, PyElementTypes.IMPORT_ELEMENT);
+  public PyImportElementStubImpl(@Nullable PyQualifiedName importedQName, String asName, final StubElement parent,
+                                 IStubElementType elementType) {
+    super(parent, elementType);
     myImportedQName = importedQName;
     myAsName = asName;
   }

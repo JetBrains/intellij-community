@@ -215,7 +215,7 @@
     <testGenerator implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestGenerator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
-    <stubElementTypeHolder class="com.jetbrains.cython.CythonElementTypes"/>
+    <stubElementTypeHolder class="com.jetbrains.cython.psi.elementTypes.CythonElementTypes"/>
 
     <localInspection language="Python" shortName="PyArgumentListInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>

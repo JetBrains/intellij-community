@@ -7,6 +7,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,6 +15,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
+import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.cython.CythonResolveUtil;
+import com.jetbrains.cython.psi.CythonIncludeStatement;
 import com.jetbrains.django.util.PythonDataflowUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -28,10 +32,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -201,6 +202,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final PsiElement outerContextElement = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext);
       uexpr = PyUtil.turnDirIntoInit(outerContextElement);
     }
+    if (uexpr == null && CythonLanguageDialect.isInsideCythonFile(realContext)) {
+      final VirtualFile file = CythonResolveUtil.findImplicitDefinitionFile(realContext);
+      if (file != null) {
+        final PyFile implicit = CythonResolveUtil.toPyFile(realContext.getProject(), file);
+        if (implicit != null) {
+          uexpr = implicit.getElementNamed(referencedName);
+        }
+      }
+    }
     if (uexpr != null) {
       ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
     }
@@ -257,7 +267,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static int getRate(PsiElement elt) {
     int rate;
-    if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) {
+    if (CythonLanguageDialect.isInsideCythonFile(elt) && elt instanceof CythonIncludeStatement) {
+      rate = RatedResolveResult.RATE_LOW;
+    }
+    else if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) {
       rate = RatedResolveResult.RATE_LOW;
     }
     else if (elt instanceof PyFile) {
