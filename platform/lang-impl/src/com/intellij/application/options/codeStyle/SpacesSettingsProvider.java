@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.sun.tools.javah.Gen;
 import org.jetbrains.annotations.NotNull;
 
 /**
