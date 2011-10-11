@@ -34,7 +34,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.CvsRoot;
@@ -70,18 +69,13 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     super("CvsRootConfiguration");
   }
 
-  private CvsConnectionSettings getSettings() {
-    return createSettings();
-  }
-
   public CvsConnectionSettings createSettings() {
     return new IDEARootFormatter(this).createConfiguration();
   }
 
-
   @Override
   public IConnection createConnection(ReadWriteStatistics statistics) {
-    return getSettings().createConnection(statistics);
+    return createSettings().createConnection(statistics);
   }
 
   @Override
@@ -148,28 +142,22 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     }
   }
 
-  public void testConnection() throws Exception {
-    testConnection(getSettings().createConnection(new ReadWriteStatistics()), getSettings());
-  }
-
-  public static void testConnection(final IConnection connection, final CvsConnectionSettings settings)
-    throws AuthenticationException, IOException {
+  public void testConnection(Project project) throws AuthenticationException, IOException {
+    final IConnection connection = createSettings().createConnection(new ReadWriteStatistics());
     final ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
                                                                                         CvsExecutionEnvironment.DUMMY_STOPPER,
                                                                                         errorProcessor,
                                                                                         PostCvsActivity.DEAF,
-                                                                                        ProjectManager.getInstance().getDefaultProject());
-
+                                                                                        project);
     final CvsResult result = new CvsResultEx();
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          final GetModulesListOperation operation = new GetModulesListOperation(settings);
+          final GetModulesListOperation operation = new GetModulesListOperation(createSettings());
 
           final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
-
           try {
             if (connection instanceof SelfTestingConnection) {
               ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());
@@ -187,7 +175,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
           }
           catch (BugLog.BugException e) {
             LOG.error(e);
-          }          
+          }
           catch (Exception e) {
             result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
           }
@@ -226,7 +214,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   @Override
   public CvsLoginWorker getLoginWorker(Project project) {
-    return getSettings().getLoginWorker(project);
+    return createSettings().getLoginWorker(project);
   }
 
   @Override
@@ -236,17 +224,17 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   @Override
   public String getRepository() {
-    return getSettings().getRepository();
+    return createSettings().getRepository();
   }
 
   @Override
   public CvsRoot getCvsRoot() {
-    return getSettings().getCvsRoot();
+    return createSettings().getCvsRoot();
   }
 
   @Override
   public boolean isValid() {
-    return getSettings().isValid();
+    return createSettings().isValid();
   }
 
   public CvsRepository createCvsRepository() {
@@ -272,11 +260,11 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   @Override
   public CommandException processException(CommandException t) {
-    return getSettings().processException(t);
+    return createSettings().processException(t);
   }
 
   @Override
   public boolean isOffline() {
-    return getSettings().isOffline();
+    return createSettings().isOffline();
   }
 }

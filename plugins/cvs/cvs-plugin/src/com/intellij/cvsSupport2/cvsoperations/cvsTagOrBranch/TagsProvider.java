@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
-
-import java.util.Collection;
+import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
  */
 public interface TagsProvider {
+  @Nullable
   CvsCommandOperation getOperation() throws VcsException;
 }

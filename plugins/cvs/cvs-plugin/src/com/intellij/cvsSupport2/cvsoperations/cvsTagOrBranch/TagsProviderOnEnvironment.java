@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,20 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
 import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
  */
 public abstract class TagsProviderOnEnvironment implements TagsProvider{
+  @Override
+  @Nullable
   public CvsCommandOperation getOperation() throws VcsException {
-    return new GetAllBranchesOperation(getEnv());
+    final CvsEnvironment env = getCvsEnvironment();
+    if (env == null) return null;
+    return new GetAllBranchesOperation(env);
   }
 
-  @NotNull
-  protected abstract CvsEnvironment getEnv();
-
+  @Nullable
+  protected abstract CvsEnvironment getCvsEnvironment();
 }

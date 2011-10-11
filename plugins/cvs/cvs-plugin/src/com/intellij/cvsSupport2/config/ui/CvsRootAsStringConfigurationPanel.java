@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -45,15 +44,17 @@ public class CvsRootAsStringConfigurationPanel {
     myIsInUpdating = isInUpdating;
     myRootLabel.setLabelFor(myCvsRoot);
     myCvsRoot.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         notifyListeners();
       }
     });
 
     myEditFieldByFieldButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         CvsRootConfiguration cvsRootConfiguration = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
-        saveTo(cvsRootConfiguration, false);
+        saveTo(cvsRootConfiguration);
         EditCvsConfigurationFieldByFieldDialog dialog
           = new EditCvsConfigurationFieldByFieldDialog(myCvsRoot.getText());
         dialog.show();
@@ -66,8 +67,7 @@ public class CvsRootAsStringConfigurationPanel {
 
   protected void notifyListeners() {
     if (myIsInUpdating.getValue()) return;
-    for (Iterator<CvsRootChangeListener> each = myCvsRootListeners.iterator(); each.hasNext();) {
-      CvsRootChangeListener cvsRootChangeListener = each.next();
+    for (CvsRootChangeListener cvsRootChangeListener : myCvsRootListeners) {
       cvsRootChangeListener.onCvsRootChanged();
     }
   }
@@ -80,15 +80,13 @@ public class CvsRootAsStringConfigurationPanel {
     myCvsRootListeners.add(listener);
   }
 
-
-
   public void updateFrom(CvsRootConfiguration config) {
     myCvsRoot.setText(config.CVS_ROOT);
     myCvsRoot.selectAll();
     myCvsRoot.requestFocus();
   }
 
-  public void saveTo(CvsRootConfiguration config, boolean checkParameters) {
+  public void saveTo(CvsRootConfiguration config) {
     config.CVS_ROOT = myCvsRoot.getText().trim();
   }
 

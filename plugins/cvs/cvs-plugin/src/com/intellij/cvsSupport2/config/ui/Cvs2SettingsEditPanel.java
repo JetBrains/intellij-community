@@ -32,13 +32,19 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnEnvir
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.BooleanValueHolder;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,10 +78,10 @@ public class Cvs2SettingsEditPanel {
 
   public Cvs2SettingsEditPanel(Project project) {
     myProject = project;
-    myDateOrRevisionOrTagSettings =
-    new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
-      @NotNull
-      protected CvsEnvironment getEnv() {
+    myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
+      @Override
+      @Nullable
+      protected CvsEnvironment getCvsEnvironment() {
         return createConfigurationWithCurrentSettings();
       }
     }, project);
@@ -98,6 +104,7 @@ public class Cvs2SettingsEditPanel {
     myDateOrRevisionOrTagSettingsPanel.add(myDateOrRevisionOrTagSettings.getPanel(), BorderLayout.CENTER);
 
     myTestButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myPanel.isEnabled()) return;
         testConfiguration();
@@ -105,6 +112,7 @@ public class Cvs2SettingsEditPanel {
     });
 
     addCvsRootChangeListener(new CvsRootChangeListener() {
+      @Override
       public void onCvsRootChanged() {
         setExtPanelEnabling();
       }
@@ -120,10 +128,6 @@ public class Cvs2SettingsEditPanel {
 
   public void addCvsRootChangeListener(CvsRootChangeListener cvsRootChangeListener) {
     myCvsRootConfigurationPanelView.addCvsRootChangeListener(cvsRootChangeListener);
-  }
-
-  private void testConfiguration() {
-    testConnection();
   }
 
   public void updateFrom(final CvsRootConfiguration configuration) {
@@ -143,10 +147,9 @@ public class Cvs2SettingsEditPanel {
     setExtPanelEnabling();
   }
 
-  public boolean saveTo(CvsRootConfiguration configuration, boolean checkParameters) {
+  public boolean saveTo(CvsRootConfiguration configuration) {
     try {
-      myCvsRootConfigurationPanelView.saveTo(configuration, checkParameters);
-
+      myCvsRootConfigurationPanelView.saveTo(configuration);
       CvsApplicationLevelConfiguration globalCvsSettings = CvsApplicationLevelConfiguration.getInstance();
 
       if (!myExtConnectionSettingsEditor.equalsTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION)) {
@@ -167,10 +170,7 @@ public class Cvs2SettingsEditPanel {
       if (!myProxySettingsNonEmptyPanel.equalsTo(configuration.PROXY_SETTINGS)) {
         myProxySettingsNonEmptyPanel.saveTo(configuration.PROXY_SETTINGS);
         myProxySettingsNonEmptyPanel.saveTo(globalCvsSettings.PROXY_SETTINGS);
-
       }
-
-
       myDateOrRevisionOrTagSettings.saveTo(configuration.DATE_OR_REVISION_SETTINGS);
       return true;
     }
@@ -180,49 +180,73 @@ public class Cvs2SettingsEditPanel {
     }
   }
 
-  public void testConnection() {
+  private void testConfiguration() {
     CvsRootConfiguration newConfiguration = createConfigurationWithCurrentSettings();
     if (newConfiguration == null) return;
     testConnection(newConfiguration, myPanel, myProject);
     updateFrom(newConfiguration);
   }
 
+  @Nullable
   private CvsRootConfiguration createConfigurationWithCurrentSettings() {
-    CvsRootConfiguration newConfiguration = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
-    if (!saveTo(newConfiguration, true)) return null;
+    CvsRootConfiguration newConfiguration =
+      CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
+    if (!saveTo(newConfiguration)) return null;
     return newConfiguration;
   }
 
-  public static void testConnection(CvsRootConfiguration configuration, Component component, Project project) {
-    try {
-      final CvsLoginWorker loginWorker = configuration.getLoginWorker(project);
-
-      final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, true);
-      if (ThreeState.NO.equals(checkResult)) {
-        Messages.showMessageDialog(component, CvsBundle.message("test.connection.login.failed.text"), CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
-        return;
-      } else if (ThreeState.UNSURE.equals(checkResult)) {
-        Messages.showMessageDialog(component, "Authentication canceled", CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
-        return;
+  private static void testConnection(final CvsRootConfiguration configuration, final Component component, Project project) {
+    final CvsLoginWorker loginWorker = configuration.getLoginWorker(project);
+    final Ref<Boolean> success = new Ref<Boolean>();
+    ProgressManager.getInstance().run(new Task.Modal(project, CvsBundle.message("message.connecting.to.cvs.server"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setText2(CvsBundle.message("message.current.global.timeout.setting",
+                                             CvsApplicationLevelConfiguration.getInstance().TIMEOUT));
+        try {
+          final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, true);
+          if (ThreeState.NO.equals(checkResult)) {
+            showConnectionFailedMessage(component, CvsBundle.message("test.connection.login.failed.text"));
+          } else if (ThreeState.UNSURE.equals(checkResult)) {
+            showConnectionFailedMessage(component, CvsBundle.message("error.message.authentication.canceled"));
+          } else {
+            success.set(Boolean.TRUE);
+          }
+        }
+        catch (ProcessCanceledException ignore) {}
+        catch (final Exception e) {
+          showConnectionFailedMessage(component, e.getLocalizedMessage());
+        }
       }
-
-      configuration.testConnection();
+    });
+    if (success.get() != Boolean.TRUE) return;
+    try{
+      configuration.testConnection(project);
       showSuccessfulConnectionMessage(component);
     }
-    catch (ProcessCanceledException processCanceledException) {
-    }
-    catch (Exception e) {
-      showConnectionFailedMessage(e, component);
+    catch (ProcessCanceledException ignore) {}
+    catch (final Exception e) {
+      showConnectionFailedMessage(component, e.getLocalizedMessage());
     }
   }
 
-  private static void showConnectionFailedMessage(Exception ex, Component component) {
-    Messages.showMessageDialog(component, ex.getLocalizedMessage(), CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
+  private static void showConnectionFailedMessage(final Component parent, final String message) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        Messages.showMessageDialog(parent, message, CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
+      }
+    });
   }
 
-  private static void showSuccessfulConnectionMessage(Component component) {
-    Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"), CvsBundle.message("operation.name.test.connection"),
-                               Messages.getInformationIcon());
+  private static void showSuccessfulConnectionMessage(final Component component) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"),
+                                   CvsBundle.message("operation.name.test.connection"), Messages.getInformationIcon());
+      }
+    });
   }
 
   public JComponent getPanel() {

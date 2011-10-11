@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.LogOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.SelectTagDialog;
@@ -54,11 +55,13 @@ public class TagsHelper {
   @Nullable
   public static String chooseBranch(TagsProvider tagsProvider, Project project) {
     try {
-      BranchesProvider branchesProvider = getBranchesProvider(tagsProvider.getOperation(), project);
+      final CvsCommandOperation operation = tagsProvider.getOperation();
+      if (operation == null) return null;
+      BranchesProvider branchesProvider = getBranchesProvider(operation, project);
       return chooseFrom(branchesProvider.getAllBranches(), branchesProvider.getAllRevisions());
     }
-    catch (VcsException e1) {
-      showErrorMessage(e1);
+    catch (VcsException e) {
+      showErrorMessage(e);
       return null;
     }
   }
@@ -68,8 +71,8 @@ public class TagsHelper {
     try {
       return chooseFrom(collectAllBranches(files, project), new ArrayList<CvsRevisionNumber>());
     }
-    catch (VcsException e1) {
-      showErrorMessage(e1);
+    catch (VcsException e) {
+      showErrorMessage(e);
       return null;
     }
   }

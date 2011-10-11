@@ -77,6 +77,7 @@ public class LoginPerformer {
     boolean forceCheck = forceCheckParam;
     final Ref<Boolean> promptResult = new Ref<Boolean>();
     final Runnable prompt = new Runnable() {
+      @Override
       public void run() {
         promptResult.set(worker.promptForPassword());
       }
@@ -85,6 +86,14 @@ public class LoginPerformer {
       final ThreeState state = worker.silentLogin(forceCheck);
       if (ThreeState.YES.equals(state)) return ThreeState.YES;
       if (ThreeState.NO.equals(state)) return state;
+      try {
+        // hack: allow indeterminate progress bar time to appear before displaying login dialog.
+        // otherwise progress bar without cancel button appears on top of login dialog, blocking input and hanging IDEA.
+        Thread.sleep(1000L);
+      }
+      catch (InterruptedException ignore) {
+        return ThreeState.NO;
+      }
       UIUtil.invokeAndWaitIfNeeded(prompt);
       if (! Boolean.TRUE.equals(promptResult.get())) {
         return ThreeState.UNSURE; // canceled
