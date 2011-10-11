@@ -74,7 +74,7 @@ public class AnalysisScope {
   protected List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
-  private final SearchScope myScope;
+  private SearchScope myScope;
   private boolean mySearchInLibraries = false;
   protected int myType;
 
@@ -145,6 +145,10 @@ public class AnalysisScope {
     myScope = null;
     myFilesSet = new HashSet<VirtualFile>(virtualFiles);
     myType = VIRTUAL_FILES;
+  }
+
+  public void setScope(SearchScope scope) {
+    myScope = scope;
   }
 
   public void setSearchInLibraries(final boolean searchInLibraries) {

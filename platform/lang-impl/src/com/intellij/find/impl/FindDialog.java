@@ -71,7 +71,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-class FindDialog extends DialogWrapper {
+public class FindDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindDialog");
 
   private ComboBox myInputComboBox;
@@ -392,28 +392,33 @@ class FindDialog extends DialogWrapper {
     initCombobox(myFileFilter);
     filterPanel.add(myUseFileFilter = createCheckbox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
-    myFileFilter.setEditable(true);
+    initFileFilter(myFileFilter, myUseFileFilter);
+
+    return filterPanel;
+  }
+
+  public static void initFileFilter(final JComboBox fileFilter, final JCheckBox useFileFilter) {
+    fileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
     for(int i=fileMasks.length-1; i >= 0; i--) {
-      myFileFilter.addItem(fileMasks [i]);
+      fileFilter.addItem(fileMasks[i]);
     }
-    myFileFilter.setEnabled(false);
+    fileFilter.setEnabled(false);
 
-    myUseFileFilter.addActionListener(
+    useFileFilter.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          if (!myUseFileFilter.isSelected()) {
-            myFileFilter.setEnabled(false);
-          } else {
-            myFileFilter.setEnabled(true);
-            myFileFilter.getEditor().selectAll();
-            myFileFilter.getEditor().getEditorComponent().requestFocusInWindow();
+          if (!useFileFilter.isSelected()) {
+            fileFilter.setEnabled(false);
+          }
+          else {
+            fileFilter.setEnabled(true);
+            fileFilter.getEditor().selectAll();
+            fileFilter.getEditor().getEditorComponent().requestFocusInWindow();
           }
         }
       }
     );
-
-    return filterPanel;
   }
 
   public void doOKAction() {

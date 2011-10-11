@@ -20,8 +20,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiSearchScopeUtil {
+
+  @Nullable
+  public static SearchScope union(@Nullable SearchScope a, @Nullable SearchScope b) {
+    return a == null ? b : b == null ? a : a.union(b);
+  }
+
   /**
    * @deprecated
    * Use com.intellij.psi.search.SearchScope#union(com.intellij.psi.search.SearchScope)

@@ -301,6 +301,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
     scope.setIncludeTestSource(isInspectTestSources());
+    scope.setScope(getCustomScope());
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
