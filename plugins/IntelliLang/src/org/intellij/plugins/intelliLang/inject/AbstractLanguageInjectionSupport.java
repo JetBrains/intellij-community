@@ -109,7 +109,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   }
 
   @Nullable
-  protected static BaseInjection showDefaultInjectionUI(Project project, BaseInjection injection) {
+  protected static BaseInjection showDefaultInjectionUI(final Project project, BaseInjection injection) {
     final BaseInjectionPanel panel = new BaseInjectionPanel(injection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
@@ -128,7 +128,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
         catch (Exception e) {
           final Throwable cause = e.getCause();
           final String message = e.getMessage() + (cause != null? "\n  "+cause.getMessage():"");
-          Messages.showErrorDialog(builder.getWindow(), message, "Unable to Save");
+          Messages.showErrorDialog(project, message, "Unable to Save");
         }
       }
     });
