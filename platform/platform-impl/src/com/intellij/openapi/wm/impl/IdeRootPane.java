@@ -130,6 +130,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     Disposer.register(myDisposable, myWelcomeScreen);
     myWelcomePane = myWelcomeScreen.getWelcomePanel();
     myContentPane.add(myWelcomePane);
+    updateToolbarVisibility();
   }
 
 
@@ -165,12 +166,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       contentPane.remove(myToolWindowsPane);
     }
 
-    if (myWelcomePane != null) {
-      Disposer.dispose(myWelcomeScreen);
-      contentPane.remove(myWelcomePane);
-      myWelcomeScreen = null;
-      myWelcomePane = null;
-    }
+    hideWelcomeScreen(contentPane);
 
     myToolWindowsPane = toolWindowsPane;
     if(myToolWindowsPane != null) {
@@ -181,6 +177,16 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     contentPane.revalidate();
+  }
+
+  private void hideWelcomeScreen(JComponent contentPane) {
+    if (myWelcomePane != null) {
+      Disposer.dispose(myWelcomeScreen);
+      contentPane.remove(myWelcomePane);
+      myWelcomeScreen = null;
+      myWelcomePane = null;
+      updateToolbarVisibility();
+    }
   }
 
   protected final Container createContentPane(){
@@ -278,7 +284,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility(){
-    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR);
+    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR && myWelcomeScreen == null);
   }
 
   private void updateStatusBarVisibility(){
