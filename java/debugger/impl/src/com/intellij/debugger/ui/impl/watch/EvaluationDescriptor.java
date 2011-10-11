@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -87,13 +88,15 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
-  public final Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+  public final Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
       final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
       final ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build(getEvaluationCode(thisEvaluationContext), ContextUtil.getSourcePosition(thisEvaluationContext));
+          final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
+          return getEffectiveCodeFragmentFactory(psiContext).getEvaluatorBuilder().build(getEvaluationCode(thisEvaluationContext),
+                                                            ContextUtil.getSourcePosition(thisEvaluationContext));
         }
       });
 

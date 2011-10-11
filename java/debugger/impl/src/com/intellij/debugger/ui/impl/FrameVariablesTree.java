@@ -510,7 +510,7 @@ public class FrameVariablesTree extends DebuggerTree {
               if (!isConstant) {
                 final TextWithImportsImpl textWithImports = new TextWithImportsImpl(reference);
                 try {
-                  final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(textWithImports, reference, myPosition);
+                  final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.build(textWithImports, reference, myPosition);
                   evaluator.evaluate(myEvalContext);
                   //collect only expressions that do not produce any exceptions on evaluation
                   myExpressions.add(textWithImports);

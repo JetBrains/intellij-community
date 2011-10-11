@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -261,5 +263,10 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
   public LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
+  }
+
+  @Override
+  public EvaluatorBuilder getEvaluatorBuilder() {
+    return EvaluatorBuilderImpl.getInstance();
   }
 }

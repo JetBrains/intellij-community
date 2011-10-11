@@ -20,6 +20,8 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
@@ -122,5 +124,10 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
 
   public LanguageFileType getFileType() {
     return StdFileTypes.JAVA;
+  }
+
+  @Override
+  public EvaluatorBuilder getEvaluatorBuilder() {
+    return EvaluatorBuilderImpl.getInstance();
   }
 }

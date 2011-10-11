@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.psi.PsiElement;
 
+/**
+ * Main interface to extend evaluation for different JVM languages.
+ * @see com.intellij.debugger.engine.evaluation.CodeFragmentFactory
+ */
 public interface EvaluatorBuilder {
-  ExpressionEvaluator build(TextWithImports text, PsiElement contextElement, final SourcePosition position) throws EvaluateException;
-
   ExpressionEvaluator build(PsiElement codeFragment, final SourcePosition position) throws EvaluateException;
 }

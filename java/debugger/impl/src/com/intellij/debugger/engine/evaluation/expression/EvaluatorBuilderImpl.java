@@ -58,21 +58,24 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  public ExpressionEvaluator build(final TextWithImports text, final PsiElement contextElement, final SourcePosition position) throws EvaluateException {
+  public static ExpressionEvaluator build(final TextWithImports text, final PsiElement contextElement, final SourcePosition position) throws EvaluateException {
     if (contextElement == null) {
       throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
     }
 
     final Project project = contextElement.getProject();
 
-    PsiCodeFragment codeFragment = new CodeFragmentFactoryContextWrapper(DebuggerEditorImpl.findAppropriateFactory(text, contextElement)).createCodeFragment(text, contextElement, project);
+    CodeFragmentFactory factory = DebuggerEditorImpl.findAppropriateFactory(text, contextElement);
+    PsiCodeFragment codeFragment = new CodeFragmentFactoryContextWrapper(factory).createCodeFragment(text, contextElement, project);
     if(codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
     DebuggerUtils.checkSyntax(codeFragment);
 
-    return build(codeFragment, position);
+    EvaluatorBuilder evaluatorBuilder = factory.getEvaluatorBuilder();
+
+    return evaluatorBuilder.build(codeFragment, position);
   }
 
   public ExpressionEvaluator build(final PsiElement codeFragment, final SourcePosition position) throws EvaluateException {

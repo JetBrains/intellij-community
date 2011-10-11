@@ -180,7 +180,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
             if (contextPsiElement == null) {
               contextPsiElement = getEvaluationElement(); // as a last resort
             }
-            return EvaluatorBuilderImpl.getInstance().build(getCondition(), contextPsiElement, contextSourcePosition);
+            return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition);
           }
         });
         final Value value = evaluator.evaluate(context);

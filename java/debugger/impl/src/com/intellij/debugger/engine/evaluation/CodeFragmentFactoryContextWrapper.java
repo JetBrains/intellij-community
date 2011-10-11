@@ -17,6 +17,8 @@ package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -66,8 +68,11 @@ public class CodeFragmentFactoryContextWrapper implements CodeFragmentFactory{
   public LanguageFileType getFileType() {
     return myDelegate.getFileType();
   }
-  
-  
+
+  @Override
+  public EvaluatorBuilder getEvaluatorBuilder() {
+    return myDelegate.getEvaluatorBuilder();
+  }
   
   private PsiElement wrapContext(Project project, final PsiElement originalContext) {
     if (project.isDefault()) return originalContext;
