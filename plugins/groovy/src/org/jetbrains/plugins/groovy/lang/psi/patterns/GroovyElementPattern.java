@@ -19,7 +19,6 @@ import com.intellij.patterns.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -44,9 +43,10 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof GrArgumentList) {
+          if (!(literal instanceof GrExpression)) return false;
+
           final GrArgumentList psiExpressionList = (GrArgumentList)parent;
-          final GrExpression[] psiExpressions = psiExpressionList.getExpressionArguments();
-          if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
+          if (psiExpressionList.getExpressionArgumentIndex((GrExpression)literal) != index) return false;
 
           final PsiElement element = psiExpressionList.getParent();
           if (element instanceof GrCall) {
@@ -59,7 +59,15 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
             if (expression instanceof GrReferenceElement) {
               final GrReferenceElement ref = (GrReferenceElement)expression;
 
-              final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
+              PsiNamePatternCondition nameCondition = null;
+
+              for (PatternCondition<?> condition : methodPattern.getCondition().getConditions()) {
+                if (condition instanceof PsiNamePatternCondition) {
+                  nameCondition = (PsiNamePatternCondition)condition;
+                  break;
+                }
+              }
+
               if (nameCondition != null && "withName".equals(nameCondition.getDebugMethodName())) {
                 final String methodName = ref.getReferenceName();
                 //noinspection unchecked
