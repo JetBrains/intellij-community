@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * User: spLeaner
  */
-public class TreeComboBox extends JComboBox {
+public class TreeComboBox extends ComboBoxWithWidePopup {
   final static int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;
   private String myDefaultText;
@@ -111,6 +111,8 @@ public class TreeComboBox extends JComboBox {
       return ((TreeModelWrapper)myComboBox.getModel());
     }
 
+    
+    
     @Override
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value,
@@ -131,7 +133,7 @@ public class TreeComboBox extends JComboBox {
       int indent = 0;
       if (myInList) {
         final TreePath path = getTreeModelWrapper().getPathForRow(index);
-        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * INDENT;
+        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * ((UIUtil.isUnderAquaLookAndFeel() ? 2 : 1) * INDENT);
       }
 
       setIpad(new Insets(1, !myInList || myEditable ? (myUnderAquaLookAndFeel ? 0 : 5)  : (myUnderAquaLookAndFeel ? 23 : 5) + indent, 1, 5));
