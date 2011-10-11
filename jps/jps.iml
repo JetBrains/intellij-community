@@ -25,16 +25,9 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="asm" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/annotations.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="idea-util" level="project" />
+    <orderEntry type="module" module-name="model" exported="" />
+    <orderEntry type="library" name="annotations" level="project" />
   </component>
 </module>
 

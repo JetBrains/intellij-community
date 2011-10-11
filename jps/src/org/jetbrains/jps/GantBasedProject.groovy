@@ -30,7 +30,7 @@ class GantBasedProject extends Project {
   Module createModule(String name, Closure initializer) {
     if (modules[name] != null) error("Module ${name} already exists")
 
-    Module module = super.createModule(name, initializer)
+    Module module = doCreateModule(name, initializer)
     try {
       binding.getVariable(name);
       debug("Variable '$name' is already defined in context. Equally named module will not be accessible. Use project.modules['$name'] instead")
@@ -39,6 +39,10 @@ class GantBasedProject extends Project {
       binding.setVariable(name, module)
     }
     return module
+  }
+
+  private Module doCreateModule(String name, Closure initializer) {
+    return super.createModule(name, initializer)
   }
 
   @Override

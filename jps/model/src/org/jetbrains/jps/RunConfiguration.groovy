@@ -2,8 +2,6 @@ package org.jetbrains.jps
 
 import org.jetbrains.jps.idea.IdeaProjectLoadingUtil
 import org.jetbrains.jps.idea.ModuleMacroExpander
-import org.jetbrains.jps.idea.OwnServiceLoader
-import org.jetbrains.jps.runConf.RunConfigurationLauncherService
 
 /**
  * Represents IntelliJ IDEA run configuration.
@@ -59,17 +57,5 @@ public class RunConfiguration {
     confTag.envs.env.each{ el ->
       this.envVars[el.'@name'] = el.'@value';
     }
-  }
-
-  private static OwnServiceLoader<RunConfigurationLauncherService> runConfLauncherServices = OwnServiceLoader.load(RunConfigurationLauncherService.class)
-
-  def RunConfigurationLauncherService getLauncher() {
-    for (RunConfigurationLauncherService service: runConfLauncherServices.iterator()) {
-      if (service.typeId == type) {
-        return service;
-      }
-    }
-
-    return null;
   }
 }

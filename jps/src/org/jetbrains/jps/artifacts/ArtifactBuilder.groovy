@@ -120,7 +120,7 @@ class ArtifactBuilder {
     artifactOutputs[artifact] = output
     preBuildTasks*.perform(artifact, output)
     projectBuilder.binding.layout.call([output, {
-      artifact.rootElement.build(projectBuilder)
+      new LayoutElementBuilder().build(artifact.rootElement, projectBuilder)
     }])
     postBuildTasks*.perform(artifact, output)
     return output

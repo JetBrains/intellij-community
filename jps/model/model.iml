@@ -7,19 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gant-1.9.5_groovy-1.7.10.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="idea-util" level="project" />
-    <orderEntry type="module" module-name="model" />
     <orderEntry type="library" name="annotations" level="project" />
   </component>
 </module>

@@ -2,6 +2,9 @@ package org.jetbrains.jps.runConf;
 
 import org.jetbrains.jps.ProjectBuilder;
 import org.jetbrains.jps.RunConfiguration;
+import org.jetbrains.jps.idea.OwnServiceLoader;
+
+import java.util.Iterator;
 
 public abstract class RunConfigurationLauncherService {
   private final String typeId;
@@ -28,4 +31,18 @@ public abstract class RunConfigurationLauncherService {
   }
 
   protected abstract void startInternal(RunConfiguration runConf, ProjectBuilder projectBuilder);
+
+  private static OwnServiceLoader<RunConfigurationLauncherService> runConfLauncherServices = OwnServiceLoader.load(RunConfigurationLauncherService.class);
+
+  public static RunConfigurationLauncherService getLauncher(RunConfiguration runConfiguration) {
+    final Iterator<RunConfigurationLauncherService> iterator = runConfLauncherServices.iterator();
+    while (iterator.hasNext()) {
+      RunConfigurationLauncherService service = iterator.next();
+      if (service.typeId.equals(runConfiguration.getType())) {
+        return service;
+      }
+    }
+
+    return null;
+  }
 }

@@ -84,7 +84,7 @@ public class Facade {
 
       case CLEAN:
         //todo[nik]
-        new ProjectBuilder(new GantBinding(), project).clean();
+//        new ProjectBuilder(new GantBinding(), project).clean();
         break;
     }
   }
