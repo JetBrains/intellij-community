@@ -549,7 +549,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
               synchronized (myLock) {
-                if (isRunning()) {
+                if (isRunning() && myToolWindowForm != null) {
                   myToolWindowForm.getPreviewPanel().showProgress();
                 }
               }
@@ -568,7 +568,9 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            myToolWindowForm.getPreviewPanel().hideProgress();
+            if (myToolWindowForm != null) {
+              myToolWindowForm.getPreviewPanel().hideProgress();
+            }
           }
         });
       }
