@@ -48,7 +48,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
 
   @NonNls private static final String CONFIGURATION_ELEMENT_NAME = "Configuration";
   public String PATH_TO_PASSWORD_FILE = null;
-  public int TIMEOUT = 60;
+  public int TIMEOUT = 10;
   public boolean MAKE_CHECKED_OUT_FILES_READONLY = false;
   public boolean CHECKOUT_PRUNE_EMPTY_DIRECTORIES = true;
   public String CHECKOUT_KEYWORD_SUBSTITUTION = null;
