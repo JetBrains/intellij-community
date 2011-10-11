@@ -1,0 +1,19 @@
+<idea-plugin version="2">
+
+  <id>com.intellij</id>
+  <resource-bundle>bundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint name="localInspection"
+                    beanClass="com.intellij.codeInspection.LocalInspectionEP"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection key="foo"/>
+    <localInspection groupKey="foo"/>
+    <localInspection key="foo" groupBundle="bundle"/>
+
+    <localInspection key="foo" bundle="bundle"/>
+    <localInspection groupKey="foo" bundle="bundle"/>
+  </extensions>
+</idea-plugin>

@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.internal.InternalInspectionToolsProvider;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
@@ -24,14 +23,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DeprecatedClassUsageInspection;
 import org.jetbrains.idea.devkit.inspections.*;
 
@@ -165,24 +162,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));
   }
 
-  public void testInspectionMappingsWithApi() throws Throwable {
-    myFixture.testHighlighting("inspectionMapping.xml", "bundle.properties");
-  }
-
   public void testLoadForDefaultProject() throws Exception {
     configureByFile();
     myFixture.testHighlighting(true, true, true);
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    if (getName().endsWith("WithApi")) {
-      String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
-      moduleBuilder.addLibrary("lang-api", pathForClass);
-    }
-  }
-
-  public static Class[] getInspectionClasses() {
+  static Class[] getInspectionClasses() {
     Class[] result = {
       //RegistrationProblemsInspection.class,
       PluginXmlDomInspection.class,
