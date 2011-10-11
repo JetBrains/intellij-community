@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,4 +87,9 @@ public abstract class GitAbstractRebaseResumeAction extends GitRebaseActionBase 
    * @return title for root selection dialog
    */
   protected abstract String getActionTitle();
+
+  @Override
+  protected boolean isEnabled(AnActionEvent e) {
+    return super.isEnabled(e) && isRebasing(e);
+  }
 }
