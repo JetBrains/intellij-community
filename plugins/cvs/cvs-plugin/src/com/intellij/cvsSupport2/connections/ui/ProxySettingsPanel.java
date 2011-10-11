@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ProxySettings;
 import com.intellij.cvsSupport2.connections.CvsRootData;
 import com.intellij.openapi.ui.InputException;
@@ -23,7 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.MessageFormat;
 
 public class ProxySettingsPanel {
   private JPanel myPanel;
@@ -45,6 +45,7 @@ public class ProxySettingsPanel {
     disableAll(false);
 
     myUseProxy.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (myUseProxy.isSelected()) {
           enableAll(false);
@@ -99,7 +100,7 @@ public class ProxySettingsPanel {
   public void updateFrom(ProxySettings proxy_settings) {
     myUseProxy.setSelected(proxy_settings.USE_PROXY);
     myProxyHost.setText(proxy_settings.PROXY_HOST);
-    myProxyPort.setText(getStringPortValue(proxy_settings.PROXY_PORT));
+    myProxyPort.setText(String.valueOf(proxy_settings.PROXY_PORT));
 
     if (proxy_settings.getType() == ProxySettings.HTTP) {
       myHTTP.setSelected(true);
@@ -118,10 +119,6 @@ public class ProxySettingsPanel {
     } else {
       disableAll(false);
     }
-  }
-
-  private String getStringPortValue(int proxy_port) {
-    return String.valueOf(proxy_port);
   }
 
   public boolean equalsTo(ProxySettings proxy_settings) {
@@ -150,12 +147,16 @@ public class ProxySettingsPanel {
     }
   }
 
-  private int getIntPortValue(String text, JComponent component) {
+  private static int getIntPortValue(String text, JComponent component) {
     try {
-      return Integer.parseInt(text);
+      final int result = Integer.parseInt(text);
+      if (result < 0) {
+        throw new InputException(CvsBundle.message("error.message.invalid.port.value", text), component);
+      }
+      return result;
     }
     catch (NumberFormatException e) {
-      throw new InputException(com.intellij.CvsBundle.message("exception.text.invalid.port.value", text), component);
+      throw new InputException(CvsBundle.message("error.message.invalid.port.value", text), component);
     }
   }
 
