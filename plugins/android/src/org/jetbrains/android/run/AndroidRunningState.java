@@ -110,6 +110,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private ConsoleView myConsole;
   private Runnable myRestarter;
+  private final TargetChooser myTargetChooser;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -237,16 +238,24 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public AndroidRunningState(@NotNull ExecutionEnvironment environment,
                              @NotNull AndroidFacet facet,
-                             @NotNull IDevice[] targetDevices,
-                             @Nullable String avdName,
+                             @Nullable TargetChooser targetChooser,
                              @NotNull String commandLine,
                              @NotNull String packageName,
                              AndroidApplicationLauncher applicationLauncher,
                              Map<AndroidFacet, String> additionalFacet2PackageName) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
-    myTargetDevices = targetDevices;
-    myAvdName = avdName;
+    
+    myTargetChooser = targetChooser;
+
+    myTargetDevices = targetChooser instanceof PredefinedTargetChooser 
+                      ? ((PredefinedTargetChooser)targetChooser).getDevices() 
+                      : new IDevice[0];
+
+    myAvdName = targetChooser instanceof EmulatorTargetChooser
+                ? ((EmulatorTargetChooser)targetChooser).getAvd()
+                : null;
+      
     myEnv = environment;
     myApplicationLauncher = applicationLauncher;
     myPackageName = packageName;
@@ -362,7 +371,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (targetDevice != null) {
       myTargetDevices = new IDevice[] {targetDevice};
     }
-    else {
+    else if (myTargetChooser instanceof EmulatorTargetChooser) {
       if (isAndroidSdk15OrHigher()) {
         if (myAvdName == null) {
           chooseAvd();
@@ -377,6 +386,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       else {
         myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
       }
+    }
+    else {
+      message("USB device not found", STDERR);
+      getProcessHandler().destroyProcess();
     }
   }
 
@@ -431,11 +444,20 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (!isAndroidSdk15OrHigher()) {
       return true;
     }
-    String avdName = device.isEmulator() ? device.getAvdName() : null;
-    if (myAvdName != null) {
-      return myAvdName.equals(avdName);
+
+    if (myTargetChooser instanceof EmulatorTargetChooser) {
+      if (device.isEmulator()) {
+        String avdName = device.isEmulator() ? device.getAvdName() : null;
+        if (myAvdName != null) {
+          return myAvdName.equals(avdName);
+        }
+        return myFacet.isCompatibleDevice(device);
+      }
     }
-    return myFacet.isCompatibleDevice(device);
+    else if (myTargetChooser instanceof UsbDeviceTargetChooser) {
+      return !device.isEmulator();
+    }
+    return false;
   }
 
   private boolean isMyDevice(@NotNull IDevice device) {

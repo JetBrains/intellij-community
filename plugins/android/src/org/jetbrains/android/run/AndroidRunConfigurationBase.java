@@ -73,8 +73,11 @@ import java.util.Map;
  */
 public abstract class AndroidRunConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule> {
   @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
+  public static final int SHOW_DIALOG = 0;
+  public static final int EMULATOR = 1;
+  public static final int USB_DEVICE = 2;
 
-  public boolean CHOOSE_DEVICE_MANUALLY = false;
+  public int TARGET_SELECTION_MODE = EMULATOR;
   public String PREFERRED_AVD = "";
   public String COMMAND_LINE = "";
   public boolean WIPE_USER_DATA = false;
@@ -213,19 +216,31 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     Map<AndroidFacet, String> depModule2PackageName = new HashMap<AndroidFacet, String>();
     if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
 
-    IDevice[] targetDevices = new IDevice[0];
-    if (CHOOSE_DEVICE_MANUALLY) {
-      IDevice[] devices = chooseDevicesManually(facet);
-      if (devices.length > 0) {
-        targetDevices = devices;
-        PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(targetDevices));
-      }
-      if (targetDevices.length == 0) return null;
+    TargetChooser targetChooser = null;
+    switch (TARGET_SELECTION_MODE) {
+      case SHOW_DIALOG:
+        final IDevice[] devices = chooseDevicesManually(facet);
+        if (devices.length > 0) {
+          PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(devices));
+        }
+        if (devices.length == 0) return null;
+        targetChooser = new PredefinedTargetChooser(devices);
+        break;
+      case EMULATOR:
+        targetChooser = new EmulatorTargetChooser(PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null);
+        break;
+      case USB_DEVICE:
+        targetChooser = new UsbDeviceTargetChooser();
+        break;
+      default:
+        assert false : "Unknown target selection mode " + TARGET_SELECTION_MODE;
+        break;
     }
+    
     AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
     if (applicationLauncher != null) {
-      return new AndroidRunningState(env, facet, targetDevices, PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null,
-                                     computeCommandLine(), aPackage, applicationLauncher, depModule2PackageName) {
+      return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), aPackage, applicationLauncher,
+                                     depModule2PackageName) {
 
         @NotNull
         @Override
