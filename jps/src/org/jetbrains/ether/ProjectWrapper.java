@@ -110,7 +110,7 @@ public class ProjectWrapper {
     private static final char myFileSeparatorReplacement = '.';
 
     // Original JPS Project
-    private final Project myProject;
+    private final GantBasedProject myProject;
     private final ProjectBuilder myProjectBuilder;
 
     // Project directory
@@ -861,7 +861,7 @@ public class ProjectWrapper {
         backendCallback = dependencyMapping.getCallback();
         affectedFiles = new HashSet<StringCache.S>();
 
-        myProject = new Project(binding == null ? new GantBinding() : binding);
+        myProject = new GantBasedProject(binding == null ? new GantBinding() : binding);
         myProjectBuilder = myProject.getBuilder();
 
         final File prjFile = new File(prjDir);

@@ -8,7 +8,7 @@ import org.codehaus.gant.GantBinding
 final class Jps {
 
   def Jps(GantBinding binding) {
-    Project project = new Project(binding)
+    GantBasedProject project = new GantBasedProject(binding)
     ProjectBuilder projectBuilder = project.builder
     binding.setVariable("project", project)
     binding.setVariable("projectBuilder", projectBuilder)

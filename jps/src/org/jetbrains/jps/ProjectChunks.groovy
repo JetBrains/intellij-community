@@ -40,7 +40,6 @@ class ProjectChunks {
         mapping[it] = chunk
       }
     }
-    project.info("Total ${chunks.size()} chunks for $classpathKind detected")
   }
 
   ModuleChunk findChunk(Module module) {

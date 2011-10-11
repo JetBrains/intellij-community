@@ -2,10 +2,7 @@ package org.jetbrains.jps.server;
 
 import org.codehaus.gant.GantBinding;
 import org.codehaus.groovy.runtime.MethodClosure;
-import org.jetbrains.jps.JavaSdk;
-import org.jetbrains.jps.Library;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.Project;
+import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileScope;
@@ -86,7 +83,8 @@ public class Facade {
         break;
 
       case CLEAN:
-        project.getBuilder().clean();
+        //todo[nik]
+        new ProjectBuilder(new GantBinding(), project).clean();
         break;
     }
   }
@@ -101,7 +99,7 @@ public class Facade {
   }
 
   private Project loadProject(String projectPath, BuildParameters params) {
-    final Project project = new Project(new GantBinding());
+    final Project project = new Project();
     // setup JDKs and global libraries
     final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
     for (GlobalLibrary library : myGlobalLibraries) {

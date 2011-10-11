@@ -2,6 +2,7 @@ def ctx = context(scope: scriptScope(), filetypes : ["gant"])
 
 contributor ([ctx], {
   property name:"project", type:"org.jetbrains.jps.Project"
+  property name:"projectBuilder", type:"org.jetbrains.jps.ProjectBuilder"
   method name:"jdk", type:"org.jetbrains.jps.JavaSdk", params:[name:"String", jdkPath:"String"]
   method name:"jdk", type:"org.jetbrains.jps.JavaSdk", params:[name:"String", jdkPath:"String", initializer:{}]
   method name:"globalLibrary", type:"org.jetbrains.jps.Library", params: [name:"String", initializer:{}]
