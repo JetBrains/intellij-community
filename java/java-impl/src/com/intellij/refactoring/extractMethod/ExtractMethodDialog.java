@@ -101,8 +101,8 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myVariableData = inputVariables;
     myHelpId = helpId;
     mySignature = new MethodSignatureComponent("", project, JavaFileType.INSTANCE);
-    mySignature.setPreferredSize(new Dimension(-1, 100));
-    mySignature.setMinimumSize(new Dimension(-1, 100));
+    mySignature.setPreferredSize(new Dimension(500, 100));
+    mySignature.setMinimumSize(new Dimension(300, 100));
     setTitle(title);
 
     // Create UI components
@@ -479,6 +479,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       }
     }
     return buffer.toString();
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "extract.method.dialog";
   }
 
   protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
