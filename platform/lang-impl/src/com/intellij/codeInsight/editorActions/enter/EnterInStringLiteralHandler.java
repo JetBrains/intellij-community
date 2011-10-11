@@ -44,9 +44,7 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
       Document document = editor.getDocument();
       CharSequence text = document.getText();
       ASTNode token = psiAtOffset.getNode();
-      final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
-      JavaLikeQuoteHandler quoteHandler = fileTypeQuoteHandler instanceof JavaLikeQuoteHandler ?
-                                                       (JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
+      JavaLikeQuoteHandler quoteHandler = getJavaLikeQuoteHandler(editor, psiAtOffset);
 
       if (quoteHandler != null &&
           quoteHandler.getConcatenatableStringTokenTypes() != null &&
@@ -87,5 +85,11 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
       }
     }
     return Result.Continue;
+  }
+
+  protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(Editor editor, PsiElement psiAtOffset) {
+    final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
+    return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler ?
+                                                     (JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
   }
 }
