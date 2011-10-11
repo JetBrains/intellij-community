@@ -246,6 +246,7 @@ public class ClassRepr extends Proto {
         return getPackageName(s.value);
 
     }
+
     public static String getPackageName(final String raw) {
         final int index = raw.lastIndexOf('/');
 
@@ -254,5 +255,15 @@ public class ClassRepr extends Proto {
         }
 
         return raw.substring(0, index);
+    }
+
+    public FieldRepr findField (final StringCache.S name) {
+        for (FieldRepr f : fields) {
+            if (f.name.equals(name)) {
+                return f;
+            }
+        }
+
+        return null;
     }
 }

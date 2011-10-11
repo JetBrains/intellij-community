@@ -104,6 +104,41 @@ public class Mappings {
         return propagateMemberAccess(false, name, className);
     }
 
+    private Collection<Pair<FieldRepr, ClassRepr>> findOverridenFields(final FieldRepr f, final ClassRepr c) {
+        final Set<Pair<FieldRepr, ClassRepr>> result = new HashSet<Pair<FieldRepr, ClassRepr>>();
+
+        new Object() {
+            public void run(final ClassRepr c) {
+                final StringCache.S[] supers = c.getSupers();
+
+                for (StringCache.S succName : supers) {
+                    final ClassRepr r = reprByName(succName);
+
+                    if (r != null) {
+                        boolean cont = true;
+
+                        if (r.fields.contains(f)) {
+                            final FieldRepr ff = r.findField(f.name);
+
+                            if (ff != null) {
+                                if ((ff.access & Opcodes.ACC_PRIVATE) == 0) {
+                                    result.add(new Pair<FieldRepr, ClassRepr>(ff, r));
+                                    cont = false;
+                                }
+                            }
+                        }
+
+                        if (cont) {
+                            run(r);
+                        }
+                    }
+                }
+            }
+        }.run(c);
+
+        return result;
+    }
+
     private ClassRepr reprByName(final StringCache.S name) {
         final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(classToSourceFile.get(name));
 
@@ -216,6 +251,34 @@ public class Mappings {
         }
     }
 
+    private class NegationConstraint extends UsageConstraint {
+        final UsageConstraint x;
+
+        public NegationConstraint(UsageConstraint x) {
+            this.x = x;
+        }
+
+        @Override
+        public boolean checkResidence(final StringCache.S residence) {
+            return !x.checkResidence(residence);
+        }
+    }
+
+    private class IntersectionConstraint extends UsageConstraint {
+        final UsageConstraint x;
+        final UsageConstraint y;
+
+        public IntersectionConstraint(final UsageConstraint x, final UsageConstraint y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        @Override
+        public boolean checkResidence(final StringCache.S residence) {
+            return x.checkResidence(residence) && y.checkResidence(residence);
+        }
+    }
+
     public boolean differentiate(final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> compiledFiles, final Set<StringCache.S> affectedFiles, final Set<StringCache.S> safeFiles) {
         if (removed != null) {
             for (StringCache.S file : removed) {
@@ -316,6 +379,12 @@ public class Mappings {
                     }
                 }
 
+                for (MethodRepr m : diff.methods().added()) {
+                    if ((it.access & Opcodes.ACC_INTERFACE) > 0 || (m.access & Opcodes.ACC_ABSTRACT) > 0) {
+                        affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+                    }
+                }
+
                 for (MethodRepr m : diff.methods().removed()) {
                     final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
                     affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
@@ -378,6 +447,57 @@ public class Mappings {
 
                 final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
+                for (FieldRepr f : diff.fields().added()) {
+                    final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
+                    final boolean fProtected = (f.access & Opcodes.ACC_PROTECTED) > 0;
+                    final boolean fPublic = (f.access & Opcodes.ACC_PUBLIC) > 0;
+                    final boolean fPLocal = !fPrivate && !fProtected && !fPublic;
+
+                    if (!fPrivate) {
+                        final Collection<Pair<FieldRepr, ClassRepr>> overriden = findOverridenFields(f, it);
+
+                        for (Pair<FieldRepr, ClassRepr> p : overriden) {
+                            final FieldRepr ff = p.fst;
+                            final ClassRepr cc = p.snd;
+
+                            final boolean ffPrivate = (ff.access & Opcodes.ACC_PRIVATE) > 0;
+                            final boolean ffProtected = (ff.access & Opcodes.ACC_PROTECTED) > 0;
+                            final boolean ffPublic = (ff.access & Opcodes.ACC_PUBLIC) > 0;
+                            final boolean ffPLocal = !ffPrivate && !ffProtected && !ffPublic;
+
+                            if (!ffPrivate) {
+                                final Collection<StringCache.S> propagated = propagateFieldAccess(ff.name, cc.name);
+                                final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
+
+                                affectFieldUsages(ff, propagated, ff.createUsage(cc.name), localUsages, dependants);
+
+                                if ((fPublic && (ffPublic || ffPLocal)) || (fProtected && ffProtected) || (fPLocal && ffPLocal)) {
+
+                                } else {
+                                    UsageConstraint constaint;
+
+                                    if ((ffProtected && fPublic) || (fProtected && ffPublic) || (ffPLocal && fProtected)) {
+                                        constaint = new NegationConstraint(new InheritanceConstraint(cc.name));
+                                    } else if (ffPublic && ffPLocal) {
+                                        constaint = new NegationConstraint(new PackageConstraint(cc.getPackageName()));
+                                    } else {
+                                        constaint = new IntersectionConstraint(
+                                                new NegationConstraint(new InheritanceConstraint(cc.name)),
+                                                new NegationConstraint(new PackageConstraint(cc.getPackageName()))
+                                        );
+                                    }
+
+                                    for (UsageRepr.Usage u : localUsages) {
+                                        usageConstraints.put(u, constaint);
+                                    }
+                                }
+
+                                affectedUsages.addAll(localUsages);
+                            }
+                        }
+                    }
+                }
+
                 for (FieldRepr f : diff.fields().removed()) {
                     if ((f.access & mask) == mask && f.hasValue()) {
                         return false;
@@ -405,7 +525,8 @@ public class Mappings {
                         } else if ((d.base() & Difference.ACCESS) > 0) {
                             if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                                     (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                                    (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
+                                    (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
+                                    (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
                                 affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
                             } else {
                                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
