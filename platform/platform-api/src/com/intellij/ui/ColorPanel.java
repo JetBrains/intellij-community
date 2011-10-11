@@ -26,36 +26,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ColorPanel extends JPanel {
-  public static final Color[] fixedColors;
-  public static final Color DARK_MAGENTA = new Color(128, 0, 128);
-  public static final Color DARK_BLUE = new Color(0, 0, 128);
-  public static final Color DARK_GREEN = new Color(0, 128, 0);
-  public static final Color BLUE_GREEN = new Color(0, 128, 128);
-  public static final Color DARK_YELLOW = new Color(128, 128, 0);
-  public static final Color DARK_RED = new Color(128, 0, 0);
   public static final Color DISABLED_COLOR = UIUtil.getPanelBackground();
-  private static Color[] myCustomColors;
-  @NonNls private String myActionCommand = "colorPanelChanged";
   private boolean isFiringEvent = false;
-  private int myBoxSize;
-  private GridLayout myCustomGridLayout;
-  private GridLayout myFixedGridLayout;
-  private ColorBox[] myFgFixedColorBoxes;
-  private ColorBox[] myFgCustomColorBoxes;
   private ColorBox myFgSelectedColorBox;
 
-  static {
-    fixedColors = new Color[]{Color.white, Color.lightGray, Color.red, Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta,
-                              Color.black, Color.gray, DARK_RED, DARK_YELLOW, DARK_GREEN, BLUE_GREEN, DARK_BLUE, DARK_MAGENTA};
-  }
-
   public ColorPanel() {
-    this(null, 10);
+    this(10);
   }
 
-  public ColorPanel(Color[] colors, int boxSize) {
-    myBoxSize = boxSize;
-    myFgSelectedColorBox = new ColorBox(null, (myBoxSize + 2) * 2, true);
+  public ColorPanel(int boxSize) {
+    myFgSelectedColorBox = new ColorBox(null, (boxSize + 2) * 2, true);
     myFgSelectedColorBox.setSelectColorAction(
       new Runnable() {
         public void run() {
@@ -64,100 +44,19 @@ public class ColorPanel extends JPanel {
       }
     );
 
-    myFgFixedColorBoxes = new ColorBox[16];
-    myFixedGridLayout = new GridLayout(2, 0, 2, 2);
-    myCustomGridLayout = new GridLayout(2, 0, 2, 2);
-    myFgCustomColorBoxes = new ColorBox[8];
-    if (colors == null){
-      if (myCustomColors == null){
-        myCustomColors =
-          new Color[]{
-            Color.lightGray, Color.lightGray, Color.lightGray, Color.lightGray, Color.lightGray, Color.lightGray, Color.lightGray, Color.lightGray
-            };
-      }
-    }
-    else{
-      myCustomColors = colors;
-    }
-
     JPanel selectedColorPanel = new JPanel(new GridBagLayout());
     selectedColorPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     myFgSelectedColorBox.setBorder(BorderFactory.createEtchedBorder());
     selectedColorPanel.add(myFgSelectedColorBox, new GridBagConstraints());
 
-    initializeColorBoxes();
-    JPanel fixedColorsPanel = new JPanel(myFixedGridLayout);
-    for(int i = 0; i < myFgFixedColorBoxes.length; i++){
-      JPanel jpanel2 = new JPanel(new BorderLayout());
-      jpanel2.setBorder(BorderFactory.createEtchedBorder());
-      jpanel2.add(myFgFixedColorBoxes[i], BorderLayout.CENTER);
-      fixedColorsPanel.add(jpanel2);
-    }
-
-    JPanel customColorsPanel = new JPanel(myCustomGridLayout);
-    customColorsPanel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.LEFT),
-                                                                   BorderFactory.createEmptyBorder(0, 2, 0, 0)));
-    for(int k = 0; k < myFgCustomColorBoxes.length; k++){
-      JPanel jpanel4 = new JPanel(new BorderLayout());
-      jpanel4.setBorder(BorderFactory.createEtchedBorder());
-      jpanel4.add(myFgCustomColorBoxes[k], BorderLayout.CENTER);
-      customColorsPanel.add(jpanel4);
-    }
-
-    JPanel allColorsPanel = new JPanel(new GridBagLayout());
-    allColorsPanel.setBorder(BorderFactory.createEtchedBorder());
-    allColorsPanel.add(fixedColorsPanel, new GridBagConstraints(1, 0, 1, 1, 0.1D, 0.1D, 10, 0, new Insets(2, 2, 2, 1), 0, 0));
-    allColorsPanel.add(customColorsPanel, new GridBagConstraints(2, 0, 1, 1, 0.1D, 0.1D, 17, 0, new Insets(2, 2, 2, 2), 0, 0));
     setLayout(new BorderLayout());
     add(selectedColorPanel, BorderLayout.WEST);
-    //add(allColorsPanel, BorderLayout.CENTER);
   }
 
   public void setEnabled(boolean enabled) {
-    for(int i = 0; i < myFgFixedColorBoxes.length; i++){
-      ColorBox colorBox = myFgFixedColorBoxes[i];
-      colorBox.setEnabled(enabled);
-    }
-    for(int i = 0; i < myFgCustomColorBoxes.length; i++){
-      ColorBox colorBox = myFgCustomColorBoxes[i];
-      colorBox.setEnabled(enabled);
-    }
     myFgSelectedColorBox.setEnabled(enabled);
     super.setEnabled(enabled);
     repaint();
-  }
-
-  void updateColorBoxes() {
-    for(int i = 0; i < myFgCustomColorBoxes.length; i++){
-      myFgCustomColorBoxes[i].setColor(myCustomColors[i]);
-    }
-  }
-
-  protected void initializeColorBoxes() {
-    for(int i = 0; i < myFgFixedColorBoxes.length; i++){
-      myFgFixedColorBoxes[i] = new ColorBox(fixedColors[i], myBoxSize, false);
-    }
-    for(int i = 0; i < myFgCustomColorBoxes.length; i++){
-      myFgCustomColorBoxes[i] = new ColorBox(Color.orange, myBoxSize, true);
-      final int customColorIndex = i;
-      final ColorBox customColorBox = myFgCustomColorBoxes[i];
-      myFgCustomColorBoxes[i].setSelectColorAction(
-        new Runnable() {
-          public void run() {
-            myCustomColors[customColorIndex] = customColorBox.getColor();
-          }
-        }
-      );
-    }
-    updateColorBoxes();
-  }
-
-  public void setActionCommand(String actionCommand) {
-    myActionCommand = actionCommand;
-  }
-
-  public String getActionCommand() {
-    return myActionCommand;
   }
 
   private void fireActionEvent() {
@@ -168,7 +67,7 @@ public class ColorPanel extends JPanel {
       for(int i = listeners.length - 2; i >= 0; i -= 2){
         if (listeners[i] != ActionListener.class) continue;
         if (actionevent == null){
-          actionevent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, getActionCommand());
+          actionevent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
         }
         ((ActionListener)listeners[i + 1]).actionPerformed(actionevent);
       }
@@ -184,10 +83,6 @@ public class ColorPanel extends JPanel {
     listenerList.add(ActionListener.class, actionlistener);
   }
 
-  public void setCustomColor(int index, Color color1) {
-    myCustomColors[index - myFgFixedColorBoxes.length] = color1;
-  }
-
   public Color getSelectedColor() {
     return myFgSelectedColorBox.getColor();
   }
@@ -196,25 +91,6 @@ public class ColorPanel extends JPanel {
     myFgSelectedColorBox.setColor(color);
   }
 
-  public Color[] getCustomColors() {
-    return myCustomColors;
-  }
-
-  public void setPanelGridHeight(int i) {
-    myFixedGridLayout.setRows(i);
-    myCustomGridLayout.setRows(i);
-    doLayout();
-  }
-
-  public void setCustomColors(Color[] colors) {
-    myCustomColors = colors;
-    if (myCustomColors == null){
-      myCustomColors = fixedColors;
-    }
-    if (colors != null){
-      updateColorBoxes();
-    }
-  }
 
   private class ColorBox extends JComponent {
     private final Dimension mySize;
@@ -303,7 +179,7 @@ public class ColorPanel extends JPanel {
       if (myColor == null){
         return;
       }
-      StringBuffer buffer = new StringBuffer(64);
+      StringBuilder buffer = new StringBuilder(64);
       buffer.append(RGB + ": ");
       buffer.append(myColor.getRed());
       buffer.append(", ");
