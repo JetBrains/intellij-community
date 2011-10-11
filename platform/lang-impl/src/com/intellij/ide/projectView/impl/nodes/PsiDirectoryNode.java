@@ -57,6 +57,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
+  
+  protected boolean shouldShowModuleName() {
+    return !PlatformUtils.isCidr();
+  }
 
   protected void updateImpl(PresentationData data) {
     final Project project = getProject();
@@ -71,7 +75,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
         if (!(parentValue instanceof Module )) {
-          if (Comparing.equal(module.getName(), directoryFile.getName())) {
+          if (Comparing.equal(module.getName(), directoryFile.getName()) || shouldShowModuleName()) {
             data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           }
           else {
