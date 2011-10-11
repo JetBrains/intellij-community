@@ -364,6 +364,18 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
   }
 
+  public void testProgressBar_Ignored() {
+    final SMTestProxy test1 = createTestProxy("some_test1", myTestsRootNode);
+    myResultsViewer.onTestStarted(test1);
+    myResultsViewer.performUpdate();
+    myResultsViewer.onTestIgnored(test1);
+    myResultsViewer.performUpdate();
+    assertEquals(0, myResultsViewer.getTestsFailuresCount());
+    assertEquals(1, myResultsViewer.getTestsCurrentCount());
+
+    assertEquals(SMTestRunnerResultsForm.DARK_YELLOW, myResultsViewer.getTestsStatusColor());
+  }
+
   public void testCustomProgress_Terminated() {
     myResultsViewer.onTestingStarted(myTestsRootNode);
 
