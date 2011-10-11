@@ -189,7 +189,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return hasContents(aRev);
   }
 
-  private static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
+  public static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
     final String pattern = FileUtil.getExtension(file.getName());
     if (context.contains(pattern)) return false;
     int rc = Messages.showOkCancelDialog(project,

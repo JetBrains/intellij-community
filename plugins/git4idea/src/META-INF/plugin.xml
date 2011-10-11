@@ -18,7 +18,11 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
-    <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
+    <group id="GitFileActions">
+      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png">
+        <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
+      </action>
+      <separator/>
       <reference ref="CheckinFiles"/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
@@ -29,15 +33,12 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <separator/>
+      <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png"/>
+    </group>
 
+    <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches"/>
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Configure Tracked Branch..."/>
-      <separator/>
-
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png">
-        <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
-      </action>
-      <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png"/>
       <separator/>
 
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
@@ -58,9 +59,23 @@
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
       <action id="Git.Gc" class="git4idea.actions.GitGcAction" text="Run Garbage Collector"/>
       <separator/>
+    </group>
 
-      <add-to-group group-id="VcsGroup" anchor="last"/>
+    <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
+      <reference ref="GitFileActions"/>
+      <separator/>
+      <reference ref="GitRepositoryActions"/>
+
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
+    </group>
+
+    <group id="Git.ContextMenu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
+      <reference ref="GitFileActions"/>
+      <separator/>
+      <group id="Git.RepositoryContextMenu" popup="true" text="_Repository">
+        <reference ref="GitRepositoryActions"/>
+      </group>
+      <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
   </actions>
 

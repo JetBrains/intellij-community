@@ -94,23 +94,27 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           protected DiffRequestPresentable init() throws VcsException {
             if (shelvedChange.isConflictingChange(project)) {
               final CommitContext commitContext = new CommitContext();
-              TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
+              final TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
               final FilePath pathBeforeRename = context.getPathBeforeRename(f);
               final String relativePath = patch.getAfterName() == null ? patch.getBeforeName() : patch.getAfterName();
-              final ApplyPatchForBaseRevisionTexts threeTexts =
-                ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch,
-                                                      new Getter<CharSequence>() {
-                                                        @Override
-                                                        public CharSequence get() {
-                                                          final BaseRevisionTextPatchEP
-                                                            baseRevisionTextPatchEP = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
-                                                          if (baseRevisionTextPatchEP != null && commitContext != null) {
-                                                            return baseRevisionTextPatchEP.provideContent(relativePath, commitContext);
-                                                          }
-                                                          return null;
-                                                        }
-                                                      });
-              return new MergedDiffRequestPresentable(project, threeTexts, f, "Shelved Version");
+              final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
+                @Override
+                public ApplyPatchForBaseRevisionTexts get() {
+                  return ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch,
+                                                          new Getter<CharSequence>() {
+                                                            @Override
+                                                            public CharSequence get() {
+                                                              final BaseRevisionTextPatchEP
+                                                                baseRevisionTextPatchEP = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
+                                                              if (baseRevisionTextPatchEP != null && commitContext != null) {
+                                                                return baseRevisionTextPatchEP.provideContent(relativePath, commitContext);
+                                                              }
+                                                              return null;
+                                                            }
+                                                          });
+                }
+              };
+              return new MergedDiffRequestPresentable(project, revisionTextsGetter, f, "Shelved Version");
             }
             else {
               final Change change = shelvedChange.getChange(project);

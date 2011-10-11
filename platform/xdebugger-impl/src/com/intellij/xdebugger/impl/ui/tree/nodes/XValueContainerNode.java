@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
@@ -24,6 +25,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,9 +127,17 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   public void setErrorMessage(@NotNull final String errorMessage, @Nullable final XDebuggerTreeNodeHyperlink link) {
+    setMessage(errorMessage, XDebuggerUIConstants.ERROR_MESSAGE_ICON, XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES, link);
+  }
+
+  @Override
+  public void setMessage(@NotNull final String message,
+                         final Icon icon, @NotNull final SimpleTextAttributes attributes, @Nullable final XDebuggerTreeNodeHyperlink link) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        setMessageNodes(MessageTreeNode.createErrorMessages(myTree, XValueContainerNode.this, errorMessage, link));
+        setMessageNodes(MessageTreeNode.createMessages(myTree, XValueContainerNode.this, message, link,
+                                                       icon,
+                                                       attributes));
       }
     });
   }

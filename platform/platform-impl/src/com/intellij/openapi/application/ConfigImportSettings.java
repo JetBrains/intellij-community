@@ -1,5 +1,7 @@
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +74,13 @@ public class ConfigImportSettings {
 
   @Nullable
   public String fixConfigDir(String configDir) {
+    String s = FileUtil.toSystemIndependentName(configDir);
+    final String selector = PathManager.getPathsSelector();
+    if (selector == null) return null;
+
+    final String dot = SystemInfo.isMac ? "" : ".";
+    final String prefix = dot + selector.replaceAll("\\d", "");
+    if (s.contains("/" + prefix + "/")) return configDir.replace(prefix, dot + selector);
     return null;
   }
 }

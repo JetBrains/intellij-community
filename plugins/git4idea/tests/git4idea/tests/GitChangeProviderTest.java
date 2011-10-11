@@ -49,6 +49,7 @@ public class GitChangeProviderTest extends GitTest {
   protected Map<String, VirtualFile> myFiles;
   protected VirtualFile afile;
   protected VirtualFile myRootDir;
+  protected VirtualFile mySubDir;
 
   @BeforeMethod
   @Override
@@ -62,6 +63,7 @@ public class GitChangeProviderTest extends GitTest {
 
     afile = myFiles.get("a.txt"); // the file is commonly used, so save it in a field.
     myRootDir = myRepo.getVFRootDir();
+    mySubDir = myRootDir.findChild("dir");
 
     myDirtyScope = new MockDirtyScope(myProject, GitVcs.getInstance(myProject));
   }
@@ -188,6 +190,13 @@ public class GitChangeProviderTest extends GitTest {
     dirty(file);
     moveFileInCommand(file, newParent);
     dirty(file);
+  }
+
+  protected VirtualFile copy(VirtualFile file, VirtualFile newParent) {
+    dirty(file);
+    VirtualFile newFile = copyFileInCommand(file, newParent);
+    dirty(newFile);
+    return newFile;
   }
 
   protected void delete(VirtualFile file) {

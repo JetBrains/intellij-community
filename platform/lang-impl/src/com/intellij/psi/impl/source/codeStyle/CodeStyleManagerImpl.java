@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -458,27 +459,28 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   private static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
 
-    final Pair<ASTNode, CharTable> pair = doFindWhiteSpaceNode(file, offset);
-    ASTNode element = pair.first;
-    if (pair.first == null) {
-      return null;
-    }
-    
-    ASTNode parent = element.getTreeParent();
-    int elementStart = element.getTextRange().getStartOffset();
-    if (element.getElementType() != TokenType.WHITE_SPACE) {
-      /*
-      if (elementStart < offset) return null;
-      Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
-      ChangeUtil.addChild(parent, marker, element);
-      return marker;
-      */
+    final Pair<PsiElement, CharTable> pair = doFindWhiteSpaceNode(file, offset);
+    PsiElement element = pair.first;
+    if (element == null) {
       return null;
     }
 
+    ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
+    if (node == null) {
+      return null;
+    } 
+    ASTNode parent = node.getTreeParent();
+    int elementStart = element.getTextRange().getStartOffset();
+    int rangeShift = 0;
+    if (element.getContainingFile() != null) {
+      // Map injected element offset to the real file offset.
+      rangeShift = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element, elementStart) - elementStart;
+      elementStart += rangeShift;
+    } 
+    
     // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
     if (offset == elementStart) {
-      for (ASTNode prev = TreeUtil.prevLeaf(element); ; prev = TreeUtil.prevLeaf(prev)) {
+      for (ASTNode prev = TreeUtil.prevLeaf(node); ; prev = TreeUtil.prevLeaf(prev)) {
         if (prev == null) {
           return null;
         }
@@ -492,12 +494,26 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     CharTable charTable = pair.second;
-    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
-    setSequentialProcessingAllowed(false);
-    parent.addChild(marker, space1.getTreeNext());
+    ASTNode marker;
+    
+    // The thing is that we have a sub-system that monitors tree changes and marks newly generated elements for postponed
+    // formatting (PostprocessReformattingAspect). In case of injected context that results in marking whole injected region
+    // in case its sub-range is changed.
+    //
+    // We want to avoid that here, so, temporarily suppress that functionality.
+    CodeEditUtil.setAllowSuspendNodesReformatting(false);
+    try {
+      
+      ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
+      marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
+      setSequentialProcessingAllowed(false);
+      parent.addChild(marker, space1.getTreeNext());
+    }
+    finally {
+      CodeEditUtil.setAllowSuspendNodesReformatting(true);
+    }
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(marker);
-    return psiElement == null ? null : psiElement.getTextRange();
+    return psiElement == null ? null : psiElement.getTextRange().shiftRight(rangeShift);
   }
 
   @Nullable
@@ -548,22 +564,30 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * @return        target white space element for the given offset within the given file (if any); <code>null</code> otherwise
    */
   @Nullable
-  public static ASTNode findWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+  public static PsiElement findWhiteSpaceNode(@NotNull PsiFile file, int offset) {
     return doFindWhiteSpaceNode(file, offset).first;
   }
 
   @NotNull
-  private static Pair<ASTNode, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+  private static Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
     ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
     if (!(astNode instanceof FileElement)) {
-      return new Pair<ASTNode, CharTable>(null, null);
+      return new Pair<PsiElement, CharTable>(null, null);
     }
+    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     final CharTable charTable = ((FileElement)astNode).getCharTable();
-    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
-    if( elementAt == null ) {
-      return new Pair<ASTNode, CharTable>(null, charTable);
+    if (elementAt == null) {
+      elementAt = findElementInTreeWithFormatterEnabled(file, offset);
     }
-    return new Pair<ASTNode, CharTable>(SourceTreeToPsiMap.psiElementToTree(elementAt), charTable);
+
+    if( elementAt == null) {
+      return new Pair<PsiElement, CharTable>(null, charTable);
+    }
+    ASTNode node = elementAt.getNode();
+    if (node == null || node.getElementType() != TokenType.WHITE_SPACE) {
+      return new Pair<PsiElement, CharTable>(null, charTable);
+    } 
+    return new Pair<PsiElement, CharTable>(elementAt, charTable);
   }
   
   public Indent getIndent(String text, FileType fileType) {

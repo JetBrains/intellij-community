@@ -227,10 +227,14 @@ public class FilePatchInProgress implements Strippable {
         @Override
         protected DiffRequestPresentable init() throws VcsException {
           if (myPatchInProgress.isConflictingChange()) {
-            final ApplyPatchForBaseRevisionTexts texts = ApplyPatchForBaseRevisionTexts
-              .create(project, myPatchInProgress.getCurrentBase(),
-                      new FilePathImpl(myPatchInProgress.getCurrentBase()), myPatchInProgress.getPatch(), baseContents);
-            return new MergedDiffRequestPresentable(project, texts,
+            final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
+              @Override
+              public ApplyPatchForBaseRevisionTexts get() {
+                return ApplyPatchForBaseRevisionTexts.create(project, myPatchInProgress.getCurrentBase(),
+                          new FilePathImpl(myPatchInProgress.getCurrentBase()), myPatchInProgress.getPatch(), baseContents);
+              }
+            };
+            return new MergedDiffRequestPresentable(project, revisionTextsGetter,
                                                     myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
           } else {
             return new ChangeDiffRequestPresentable(project, PatchChange.this);

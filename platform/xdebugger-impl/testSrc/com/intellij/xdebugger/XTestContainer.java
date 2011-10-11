@@ -16,11 +16,13 @@
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -38,8 +40,13 @@ public class XTestContainer<T> {
     myFinished.release();
   }
 
-  public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
-    setErrorMessage(errorMessage);
+
+  public void setMessage(@NotNull String message,
+                         final Icon icon, @NotNull final SimpleTextAttributes attributes, @Nullable XDebuggerTreeNodeHyperlink link) {
+  }
+
+  public void setErrorMessage(@NotNull String message, @Nullable XDebuggerTreeNodeHyperlink link) {
+    setErrorMessage(message);
   }
 
   public void setErrorMessage(@NotNull String errorMessage) {

@@ -30,21 +30,7 @@ public class CompareFiles extends BaseDiffAction {
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    DiffRequest diffRequest = e.getData(DIFF_REQUEST);
-    if (diffRequest == null) {
-      final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-      if (virtualFiles == null || virtualFiles.length != 2) {
-        presentation.setVisible(false);
-        return;
-      }
-      diffRequest = getDiffRequest(project, virtualFiles);
-    }
-    if (diffRequest == null) {
-      presentation.setVisible(false);
-      return;
-    }
-    final boolean canShow = !diffRequest.isSafeToCallFromUpdate() || DiffManager.getInstance().getDiffTool().canShow(diffRequest);
+    boolean canShow = isAvailable(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(canShow);      
     }
@@ -52,6 +38,22 @@ public class CompareFiles extends BaseDiffAction {
       presentation.setVisible(true);
       presentation.setEnabled(canShow);
     }
+  }
+  
+  private static boolean isAvailable(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    DiffRequest diffRequest = e.getData(DIFF_REQUEST);
+    if (diffRequest == null) {
+      final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      if (virtualFiles == null || virtualFiles.length != 2) {
+        return false;
+      }
+      diffRequest = getDiffRequest(project, virtualFiles);
+    }
+    if (diffRequest == null) {
+      return false;
+    }
+    return !diffRequest.isSafeToCallFromUpdate() || DiffManager.getInstance().getDiffTool().canShow(diffRequest);
   }
 
   protected DiffRequest getDiffData(DataContext dataContext) {
