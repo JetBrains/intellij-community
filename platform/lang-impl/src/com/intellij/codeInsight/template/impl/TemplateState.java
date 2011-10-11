@@ -26,6 +26,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageLiteralEscapers;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
@@ -1000,10 +1001,15 @@ public class TemplateState implements Disposable {
           if (dummyAdjustLineMarkerRange == null && endVarOffset >= 0) {
             // There is a possible case that indent marker element was not inserted (e.g. because there is no blank line
             // at the target offset). However, we want to reformat white space adjacent to the current template (if any).
-            ASTNode whiteSpaceNode = CodeStyleManagerImpl.findWhiteSpaceNode(file, endVarOffset);
-            if (whiteSpaceNode != null) {
-              reformatStartOffset = Math.min(reformatStartOffset, whiteSpaceNode.getTextRange().getStartOffset());
-              reformatEndOffset = Math.max(reformatEndOffset, whiteSpaceNode.getTextRange().getEndOffset());
+            PsiElement whiteSpaceElement = CodeStyleManagerImpl.findWhiteSpaceNode(file, endVarOffset);
+            if (whiteSpaceElement != null) {
+              TextRange whiteSpaceRange = whiteSpaceElement.getTextRange();
+              if (whiteSpaceElement.getContainingFile() != null) {
+                // Support injected white space nodes.
+                whiteSpaceRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(whiteSpaceElement, whiteSpaceRange);
+              }
+              reformatStartOffset = Math.min(reformatStartOffset, whiteSpaceRange.getStartOffset());
+              reformatEndOffset = Math.max(reformatEndOffset, whiteSpaceRange.getEndOffset());
             } 
           }
           style.reformatText(file, reformatStartOffset, reformatEndOffset);

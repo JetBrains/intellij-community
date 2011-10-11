@@ -183,7 +183,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
                 if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
                   ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
                     protected void visitNode(TreeElement element) {
-                      if (CodeEditUtil.isNodeGenerated(element)) {
+                      if (CodeEditUtil.isNodeGenerated(element) && CodeEditUtil.isSuspendedNodesReformattingAllowed()) {
                         postponeFormatting(viewProvider, element);
                         return;
                       }
