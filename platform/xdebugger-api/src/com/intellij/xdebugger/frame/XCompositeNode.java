@@ -15,10 +15,12 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -61,4 +63,6 @@ public interface XCompositeNode extends Obsolescent {
    * @param link describes a hyperlink which will be appended to the error message
    */
   void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link);
+
+  void setMessage(@NotNull String message, final @Nullable Icon icon, final @NotNull SimpleTextAttributes attributes, @Nullable XDebuggerTreeNodeHyperlink link);
 }
