@@ -117,6 +117,9 @@ public class PyStringFormatInspection extends PyInspection {
             // TODO: Switch to Callable.getReturnType()
             if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST((PyFunction) callable)) {
               PyStatementList statementList = ((PyFunction)callable).getStatementList();
+              if (statementList == null) {
+                return -1;
+              }
               PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
               int expressionsSize = -1;
               for (PyReturnStatement returnStatement : returnStatements) {
