@@ -12,7 +12,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="library" name="Javac2" level="project" />
+    <orderEntry type="library" exported="" name="Javac2" level="project" />
     <orderEntry type="module" module-name="antlayout" />
     <orderEntry type="library" scope="TEST" name="JUnit" level="project" />
     <orderEntry type="module-library">
