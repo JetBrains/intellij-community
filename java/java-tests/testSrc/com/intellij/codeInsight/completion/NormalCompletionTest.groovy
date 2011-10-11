@@ -669,6 +669,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSecondMethodParameter() throws Throwable { doTest(); }
+  public void testReturnInCase() throws Throwable { doTest(); }
 
   public void testAnnotationWithoutValueMethod() throws Throwable {
     configureByFile(getTestName(false) + ".java");

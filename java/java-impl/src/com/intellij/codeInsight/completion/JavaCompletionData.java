@@ -22,10 +22,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -478,7 +475,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       if (INSIDE_SWITCH.isAcceptable(position, position)) {
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.CASE), TailType.SPACE));
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.CASE_COLON));
-        return;
+        if (!psiElement().afterLeaf(psiElement().withText(":").withParent(PsiSwitchLabelStatement.class)).accepts(position)) {
+          return;
+        }
       }
 
       addBreakContinue(result, position);
