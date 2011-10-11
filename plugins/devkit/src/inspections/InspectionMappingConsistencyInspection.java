@@ -49,20 +49,31 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
         DomElement element = DomUtil.getDomElement(tag);
         if (element instanceof Extension) {
           ExtensionPoint target = ((Extension)element).getExtensionPoint();
-          if (InheritanceUtil.isInheritor(target.getBeanClass().getValue(), "com.intellij.codeInspection.InspectionEP")) {
-            if (tag.getAttribute("key") != null || tag.getAttribute("bundleKey") != null) {
+          if (target != null && InheritanceUtil.isInheritor(target.getBeanClass().getValue(), "com.intellij.codeInspection.InspectionEP")) {
+            boolean key = tag.getAttribute("key") != null;
+            boolean groupKey = tag.getAttribute("groupKey") != null;
+            if (key) {
+              if (tag.getAttribute("bundle") == null) {
+                checkDefaultBundle(element, holder);
+              }
+            }
+            if (groupKey) {
               if (tag.getAttribute("bundle") == null && tag.getAttribute("groupBundle") == null) {
-                IdeaPlugin plugin = DomUtil.getParentOfType(element, IdeaPlugin.class, true);
-                if (plugin != null && plugin.getResourceBundles().isEmpty()) {
-                  Pair<TextRange,PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
-                  holder.registerProblem(range.second, range.first, "Bundle should be specified");
-                }
+                checkDefaultBundle(element, holder);
               }
             }
           }
         }
       }
     };
+  }
+
+  private static void checkDefaultBundle(DomElement element, ProblemsHolder holder) {
+    IdeaPlugin plugin = DomUtil.getParentOfType(element, IdeaPlugin.class, true);
+    if (plugin != null && plugin.getResourceBundles().isEmpty()) {
+      Pair<TextRange,PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
+      holder.registerProblem(range.second, range.first, "Bundle should be specified");
+    }
   }
 
   @Nls
