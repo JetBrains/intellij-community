@@ -128,8 +128,7 @@ class ProjectBuilder {
       else {
         stage("Cleaning output folders for ${project.modules.size()} modules")
         project.modules.values().each {
-          BuildUtil.deleteDir(this, it.outputPath)
-          BuildUtil.deleteDir(this, it.testOutputPath)
+          cleanModule(it)
         }
         stage("Cleaning output folders for ${project.artifacts.size()} artifacts")
         project.artifacts.values().each {
@@ -145,8 +144,8 @@ class ProjectBuilder {
   }
 
   def cleanModule(Module m) {
-    binding.ant.delete(dir: m.outputPath)
-    binding.ant.delete(dir: m.testOutputPath)
+    BuildUtil.deleteDir(this, getModuleOutputFolder(m, false))
+    BuildUtil.deleteDir(this, getModuleOutputFolder(m, true))
   }
 
   public def buildAll() {
