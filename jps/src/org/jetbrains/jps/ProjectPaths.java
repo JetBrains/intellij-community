@@ -151,7 +151,8 @@ public class ProjectPaths {
       return new File(basePath, module.getName());
     }
 
-    return new File(forTests ? module.getTestOutputPath() : module.getOutputPath());
+    final String path = forTests ? module.getTestOutputPath() : module.getOutputPath();
+    return path != null ? new File(path) : null;
   }
 
   public List<String> getProjectRuntimeClasspath(boolean includeTests) {

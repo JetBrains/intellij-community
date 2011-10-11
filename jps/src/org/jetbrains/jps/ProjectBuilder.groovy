@@ -214,7 +214,6 @@ class ProjectBuilder {
 
   private def buildModules(Collection<Module> modules, boolean includeTests) {
     buildStart()
-    clearChunks(modules)
     buildChunks(modules, false)
     if (includeTests) {
       buildChunks(modules, true)
@@ -314,7 +313,7 @@ class ProjectBuilder {
   }
 
   private String getModuleOutputFolder(Module module, boolean tests) {
-    return getProjectPaths().getModuleOutputDir(module, tests)
+    return getProjectPaths().getModuleOutputDir(module, tests)?.absolutePath
   }
 
   private def compile(ModuleChunk chunk, boolean tests, Collection<StringCache.S> files, Backend callback, ProjectWrapper pw) {
