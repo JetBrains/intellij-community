@@ -15,21 +15,14 @@
  */
 package com.intellij.ui.table;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.ui.TableViewModel;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -55,58 +48,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public ListTableModel<Item> getListTableModel() {
     return (ListTableModel<Item>)super.getModel();
-  }
-
-
-  @Override
-  public boolean editCellAt(final int row, final int column, final EventObject e) {
-    boolean started = super.editCellAt(row, column, e);
-    if (started && e instanceof KeyEvent) {
-      final Runnable r = new Runnable() {
-        @Override
-        public void run() {
-          if (getEditingRow() != row && getEditingColumn() != column) return;
-
-          Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-          if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, TableView.this)) return;
-
-          KeyEvent keyEvent = (KeyEvent)e;
-          if (Character.isDefined(keyEvent.getKeyChar())) {
-            try {
-              selectAll(focusOwner);
-
-              Robot r = new Robot();
-              r.keyPress(keyEvent.getKeyCode());
-              r.keyRelease(keyEvent.getKeyCode());
-            }
-            catch (AWTException e1) {
-              return;
-            }
-          } else {
-            selectAll(focusOwner);
-          }
-        }
-      };
-
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          r.run();
-        }
-      });
-    }
-    return started;
-  }
-
-  private void selectAll(Component focusOwner) {
-    if (focusOwner instanceof TextComponent) {
-      ((TextComponent)focusOwner).selectAll();
-    } else {
-      Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(focusOwner));
-      if (editor != null) {
-        editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
-      }
-    }
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {
