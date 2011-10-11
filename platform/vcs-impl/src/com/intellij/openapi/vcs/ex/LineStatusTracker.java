@@ -141,6 +141,7 @@ public class LineStatusTracker {
         myRanges = new RangesBuilder(myDocument, myUpToDateDocument).getRanges();
       }
       catch (FilesTooBigForDiffException e) {
+        myRanges.clear();
         installAnathema();
         return;
       }
@@ -238,7 +239,9 @@ public class LineStatusTracker {
   private void removeHighlightersFromMarkupModel() {
     synchronized (myLock) {
       for (Range range : myRanges) {
-        range.getHighlighter().dispose();
+        if (range.getHighlighter() != null) {
+          range.getHighlighter().dispose();
+        }
       }
     }
   }
