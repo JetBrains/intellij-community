@@ -136,12 +136,16 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(REVERSE_PATCH);
+
       boolean dvcsIsUsed = false;
-      for (Change change : changes) {
-        final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
-        if (VcsType.distibuted.equals(vcs.getType())) {
-          dvcsIsUsed = true;
-          break;
+
+      if (ProjectLevelVcsManager.getInstance(myProject).dvcsUsedInProject()) {
+        for (Change change : changes) {
+          final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
+          if (vcs != null && VcsType.distibuted.equals(vcs.getType())) {
+            dvcsIsUsed = true;
+            break;
+          }
         }
       }
       final List<Change> modified = new ArrayList<Change>();
