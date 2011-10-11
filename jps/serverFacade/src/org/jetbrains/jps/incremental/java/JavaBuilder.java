@@ -24,12 +24,19 @@ import java.util.concurrent.ExecutorService;
 public class JavaBuilder extends Builder{
   public static final String BUILDER_NAME = "java";
   public static final String JAVA_EXTENSION = ".java";
+  public static final String FORM_EXTENSION = ".form";
 
   private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
       return file.getName().endsWith(JAVA_EXTENSION);
     }
   };
+  private static final FileFilter FORM_SOURCES_FILTER = new FileFilter() {
+    public boolean accept(File file) {
+      return file.getName().endsWith(FORM_EXTENSION);
+    }
+  };
+
   private static final String JAVAC_COMPILER_NAME = "javac";
   private final EmbeddedJavac myJavacCompiler;
 
@@ -47,26 +54,32 @@ public class JavaBuilder extends Builder{
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
 
       final List<File> files = new ArrayList<File>();
+      final List<File> forms = new ArrayList<File>();
       context.processFiles(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
-            if (!context.isMake() || tsStorage.getStamp(file) != file.lastModified()) {
+            if (isFileDirty(file, context, tsStorage)) {
               files.add(file);
+            }
+          }
+          else if (FORM_SOURCES_FILTER.accept(file)){
+            if (isFileDirty(file, context, tsStorage)) {
+              forms.add(file);
             }
           }
           return true;
         }
       });
 
-      return compile(context, chunk, files);
+      return compile(context, chunk, files, forms);
     }
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, List<File> files) throws Exception {
-    if (files.isEmpty()) {
+  private ExitCode compile(final CompileContext context, ModuleChunk chunk, List<File> files, List<File> forms) throws Exception {
+    if (files.isEmpty() && forms.isEmpty()) {
       return ExitCode.OK;
     }
 
