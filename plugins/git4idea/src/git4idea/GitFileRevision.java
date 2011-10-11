@@ -141,4 +141,9 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     if (rev instanceof GitFileRevision) return revision.compareTo(((GitFileRevision)rev).revision);
     return getRevisionDate().compareTo(rev.getRevisionDate());
   }
+
+  @Override
+  public String toString() {
+    return path.getName() + ":" + revision.getShortRev();
+  }
 }
