@@ -19,6 +19,7 @@ package com.intellij.testFramework;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
@@ -359,6 +360,24 @@ public abstract class AbstractVcsTestCase {
       }
     }.execute();
     return res.get();
+  }
+
+  protected VirtualFile copyFileInCommand(final VirtualFile file, final VirtualFile newParent) {
+    return copyFileInCommand(myProject, file, newParent);
+  }
+                                          
+  public static VirtualFile copyFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
+    return new WriteCommandAction<VirtualFile>(project) {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        try {
+          result.setResult(file.copy(this, newParent, file.getName()));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute().getResultObject();
   }
 
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {

@@ -119,6 +119,39 @@ public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
     assertUnversioned();
   }
 
+  @Test
+  public void copy_versioned_makes_destination_unversioned() throws Exception {
+    prohibitAutoAdd();
+    VirtualFile newFile = copy(afile, mySubDir);
+    assertUnversioned(newFile);
+  }
+
+  @Test
+  public void copy_unversioned_makes_destination_unversioned() throws Exception {
+    prohibitAutoAdd();
+    VirtualFile file = create(myRootDir, "new.txt");
+    assertUnversioned(file);
+    VirtualFile newFile = copy(file, mySubDir);
+    assertUnversioned(file, newFile);
+  }
+
+  @Test
+  public void move_versioned_makes_destination_versioned() throws Exception {
+    prohibitAutoAdd();
+    VirtualFile dir = myRootDir.findChild("dir");
+    move(afile, dir);
+    assertUnversioned();
+  }
+
+  @Test
+  public void move_unversioned_makes_destination_unversioned() throws Exception {
+    prohibitAutoAdd();
+    VirtualFile file = create(myRootDir, "new.txt");
+    assertUnversioned(file);
+    move(file, mySubDir);
+    assertUnversioned(file);
+  }
+
   private void assertUnversioned(VirtualFile... files) throws VcsException {
     MockChangelistBuilder builder = new MockChangelistBuilder();
     myChangeProvider.getChanges(myDirtyScope, builder, new EmptyProgressIndicator(),
