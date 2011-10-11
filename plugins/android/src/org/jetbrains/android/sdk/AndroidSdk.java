@@ -238,12 +238,36 @@ public abstract class AndroidSdk {
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
         LOG.info("DDMLib initialized");
-        AndroidDebugBridge.createBridge(adbPath, true);
+        final AndroidDebugBridge bridge = AndroidDebugBridge.createBridge(adbPath, true);
+        waitUntilConnect(bridge);
+        if (!bridge.isConnected()) {
+          LOG.info("Failed to connect debug bridge");
+        }
       }
       else {
         final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
         final boolean forceRestart = myAdbCrashed || (bridge != null && !bridge.isConnected());
-        AndroidDebugBridge.createBridge(adbPath, forceRestart);
+        if (forceRestart) {
+          LOG.info("Restart debug bridge: " + (myAdbCrashed ? "crashed" : "disconnected"));
+        }
+        final AndroidDebugBridge newBridge = AndroidDebugBridge.createBridge(adbPath, forceRestart);
+        waitUntilConnect(newBridge);
+        if (!newBridge.isConnected()) {
+          LOG.info("Failed to connect debug bridge after restart");
+        }
+      }
+    }
+  }
+
+  private static void waitUntilConnect(@NotNull AndroidDebugBridge bridge) {
+    while (!bridge.isConnected() && !Thread.currentThread().isInterrupted()) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(1000);
+      }
+      catch (InterruptedException e) {
+        LOG.debug(e);
+        return;
       }
     }
   }
@@ -340,7 +364,7 @@ public abstract class AndroidSdk {
       synchronized (myLock) {
         final long startTime = System.currentTimeMillis();
 
-        final long timeout = 7000;
+        final long timeout = 8000;
 
         while (!myFinished && !myCanceled) {
           long wastedTime = System.currentTimeMillis() - startTime;
