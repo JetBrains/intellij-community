@@ -99,9 +99,7 @@ public class StepIntersection<Data, Area> {
         dataStep();
         continue;
       }
-      if (intersects) {
-        dataStep();
-      } else if (myDataRange.getStartOffset() < myAreaRange.getStartOffset()) {
+      if (myDataRange.getEndOffset() < myAreaRange.getEndOffset()) {
         dataStep();
       } else {
         areaStep();
@@ -126,18 +124,18 @@ public class StepIntersection<Data, Area> {
     if (myAreaIndex >= myAreas.size()) {
       return;
     }
-    assert myAreaRange == null || myAreaRange.getEndOffset() < myAreasConvertor.convert(myAreas.get(myAreaIndex)).getStartOffset() :
+    /*assert myAreaRange == null || myAreaRange.getEndOffset() < myAreasConvertor.convert(myAreas.get(myAreaIndex)).getStartOffset() :
       "Area ranges intersect: first: " + myAreaRange + ", second: " + myAreasConvertor.convert(myAreas.get(myAreaIndex)) + ", text: '" +
-      myDebugDocumentTextGetter.get() + "'";
+      myDebugDocumentTextGetter.get() + "'";*/
     myCurArea = myAreas.get(myAreaIndex);
     myAreaRange = myAreasConvertor.convert(myCurArea);
   }
 
   private void dataStep() {
     myCurData = myDataIterator.next();
-    assert myDataRange == null || myDataRange.getEndOffset() < myDataConvertor.convert(myCurData).getStartOffset() :
+    /*assert myDataRange == null || myDataRange.getEndOffset() < myDataConvertor.convert(myCurData).getStartOffset() :
       "Data ranges intersect: first: " + myDataRange + ", second: " + myDataConvertor.convert(myCurData) + ", text: '" +
-      myDebugDocumentTextGetter.get() + "'";
+      myDebugDocumentTextGetter.get() + "'";*/
     myDataRange = myDataConvertor.convert(myCurData);
   }
 }
