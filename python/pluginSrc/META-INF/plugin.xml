@@ -4,7 +4,7 @@
 
   <id>Pythonid</id>
   <name>Python</name>
-  <idea-version since-build="108.0" until-build="109.0"/>
+  <idea-version since-build="110.0" until-build="111.0"/>
   <description>Smart editing for Python scripts</description>
   <version>2.6.5</version>
   <depends>com.intellij.modules.ultimate</depends>
@@ -13,6 +13,7 @@
   <depends>org.jetbrains.plugins.yaml</depends>
   <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
   <helpset file="pythonpluginhelp.jar" path="/pycharm/Help.hs"/>
+  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
