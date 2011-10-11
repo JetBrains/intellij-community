@@ -57,6 +57,8 @@ import java.util.Set;
 public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
+  public static final Color DARK_YELLOW = Color.YELLOW.darker();
+
   private SMTRunnerTestTreeView myTreeView;
 
   private TestsProgressAnimator myAnimator;
@@ -77,6 +79,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private int myTestsCurrentCount;
   private int myTestsTotal = 0;
   private int myTestsFailuresCount;
+  private boolean myContainsIgnoredTests;
   private long myStartTime;
   private long myEndTime;
   private StatisticsPanel myStatisticsPane;
@@ -266,7 +269,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   }
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
-    //Do nothing
+    updateOnTestIgnored();
   }
 
   /**
@@ -465,6 +468,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private void updateStatusLabel(final boolean testingFinished) {
     if (myTestsFailuresCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
+    } else if (myContainsIgnoredTests) {
+      myStatusLine.setStatusColor(DARK_YELLOW);
     }
 
     if (testingFinished) {
@@ -563,6 +568,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     if (!isModeConsistent(isCustomMessage)) return;
 
     myTestsFailuresCount++;
+    updateStatusLabel(false);
+  }
+
+  private void updateOnTestIgnored() {
+    myContainsIgnoredTests = true;
     updateStatusLabel(false);
   }
 
