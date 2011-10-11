@@ -48,8 +48,8 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
       public void visitXmlTag(XmlTag tag) {
         DomElement element = DomUtil.getDomElement(tag);
         if (element instanceof Extension) {
-          ExtensionPoint target = ((Extension)element).getExtensionPoint();
-          if (target != null && InheritanceUtil.isInheritor(target.getBeanClass().getValue(), "com.intellij.codeInspection.InspectionEP")) {
+          ExtensionPoint extensionPoint = ((Extension)element).getExtensionPoint();
+          if (extensionPoint != null && InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), "com.intellij.codeInspection.InspectionEP")) {
             boolean key = tag.getAttribute("key") != null;
             boolean groupKey = tag.getAttribute("groupKey") != null;
             if (key) {
@@ -57,10 +57,16 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
                 checkDefaultBundle(element, holder);
               }
             }
+            else if (tag.getAttribute("displayName") == null) {
+              registerProblem(element, holder, "displayName or key should be specified");  
+            }
             if (groupKey) {
               if (tag.getAttribute("bundle") == null && tag.getAttribute("groupBundle") == null) {
                 checkDefaultBundle(element, holder);
               }
+            }
+            else if (tag.getAttribute("groupName") == null) {
+              registerProblem(element, holder, "groupName or groupKey should be specified");
             }
           }
         }
@@ -71,9 +77,13 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
   private static void checkDefaultBundle(DomElement element, ProblemsHolder holder) {
     IdeaPlugin plugin = DomUtil.getParentOfType(element, IdeaPlugin.class, true);
     if (plugin != null && plugin.getResourceBundles().isEmpty()) {
-      Pair<TextRange,PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
-      holder.registerProblem(range.second, range.first, "Bundle should be specified");
+      registerProblem(element, holder, "Bundle should be specified");
     }
+  }
+
+  private static void registerProblem(DomElement element, ProblemsHolder holder, String message) {
+    Pair<TextRange,PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
+    holder.registerProblem(range.second, range.first, message);
   }
 
   @Nls

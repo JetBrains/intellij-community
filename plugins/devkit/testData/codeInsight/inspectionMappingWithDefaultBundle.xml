@@ -9,11 +9,15 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection key="foo"/>
-    <localInspection groupKey="foo"/>
-    <localInspection key="foo" groupBundle="bundle"/>
+    <<warning descr="groupName or groupKey should be specified">localInspection</warning> key="foo"/>
+    <<warning descr="displayName or key should be specified">localInspection</warning> groupKey="foo"/>
+    <<warning descr="groupName or groupKey should be specified">localInspection</warning> key="foo" groupBundle="bundle"/>
 
-    <localInspection key="foo" bundle="bundle"/>
-    <localInspection groupKey="foo" bundle="bundle"/>
+    <<warning descr="groupName or groupKey should be specified">localInspection</warning> key="foo" bundle="bundle"/>
+    <<warning descr="displayName or key should be specified">localInspection</warning> groupKey="foo" bundle="bundle"/>
+
+    <localInspection key="foo" bundle="bundle" groupName="groupName"/>
+    <localInspection groupKey="foo" bundle="bundle" displayName="displayName"/>
+
   </extensions>
 </idea-plugin>
