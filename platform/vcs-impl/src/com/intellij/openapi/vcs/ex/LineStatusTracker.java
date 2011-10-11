@@ -420,8 +420,12 @@ public class LineStatusTracker {
       while (iterator.hasNext()) {
         Range range = iterator.next();
         if (prev.canBeMergedWith(range)) {
-          range.getHighlighter().dispose();
-          prev.getHighlighter().dispose();
+          if (range.getHighlighter() != null) {
+            range.getHighlighter().dispose();
+          }
+          if (prev.getHighlighter() != null) {
+            prev.getHighlighter().dispose();
+          }
           prev = prev.mergeWith(range, LineStatusTracker.this);
         }
         else {
