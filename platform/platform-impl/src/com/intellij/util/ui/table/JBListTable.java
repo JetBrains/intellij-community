@@ -105,8 +105,8 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-        //Mnemonics
-        if (e.isAltDown() || e.isMetaDown() || e.isShiftDown() || e.isControlDown()) {
+        //Mnemonics and actions
+        if (e.isAltDown() || e.isMetaDown() || e.isControlDown()) {
           return false;
         }
 
@@ -195,25 +195,14 @@ public abstract class JBListTable extends JPanel {
                     }
                   };
                   p.add(editor, BorderLayout.CENTER);
+                  p.setFocusable(false);
                   return p;
                 }
           
                 @Override
                 public Object getCellEditorValue() {
                   return editor.getValue();
-                }
-
-            
-            @Override
-            public boolean stopCellEditing() {
-              return super.stopCellEditing();
-            }
-
-            @Override
-            public void cancelCellEditing() {
-              super.cancelCellEditing();
-            }
-          };
+                }};
         }
         return null;
       }
