@@ -348,7 +348,7 @@ public class GenericPatchApplier {
     for (int i = idxStart; i >= 0 && cnt >= 0; i--, cnt--) {
       if (! myLines.get(i).equals(lines.get(cnt))) return (cnt + 1);
     }
-    return 0;
+    return cnt + 1;
   }
 
   private int getDistance(final int idxStart, final List<String> lines) {
@@ -357,7 +357,7 @@ public class GenericPatchApplier {
     for (int i = idxStart; i < myLines.size() && cnt < lines.size(); i++, cnt++) {
       if (! myLines.get(i).equals(lines.get(cnt))) return (lines.size() - cnt);
     }
-    return 0;
+    return lines.size() - cnt;
   }
 
   public void putCutIntoTransformations(TextRange range, final MyAppliedData value) {
