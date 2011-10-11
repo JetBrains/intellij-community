@@ -124,8 +124,8 @@ public class UIUtil {
   public static Color AQUA_SEPARATOR_FOREGROUND_COLOR = new Color(190, 190, 190);
   public static Color AQUA_SEPARATOR_BACKGROUND_COLOR = new Color(240, 240, 240);
 
-  public static final int DEFAULT_HGAP = 10;
-  public static final int DEFAULT_VGAP = 5;
+  public static final int DEFAULT_HGAP = 8;
+  public static final int DEFAULT_VGAP = 4;
   public static final int LARGE_HGAP = 30;
   public static final int LARGE_VGAP = 20;
 
