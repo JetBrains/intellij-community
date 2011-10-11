@@ -426,6 +426,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     myDebugLauncher = null;
   }
 
+  @Nullable
   private Boolean isCompatibleDevice(@NotNull IDevice device) {
     if (!isAndroidSdk15OrHigher()) {
       return true;
@@ -442,7 +443,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       return ArrayUtil.find(myTargetDevices, device) >= 0;
     }
     Boolean compatible = isCompatibleDevice(device);
-    return compatible != null ? compatible.booleanValue() : true;
+    return compatible == null || compatible.booleanValue();
   }
 
   @Nullable
@@ -637,7 +638,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (myStopped) return false;
     message("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath, STDOUT);
     String exceptionMessage = null;
-    String errorMessage = null;
+    String errorMessage;
     try {
       SyncService service = device.getSyncService();
       if (service == null) {
@@ -752,20 +753,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       receiver = new MyReceiver();
     }
-    /*if (receiver.failureMessage != null && receiver.failureMessage.equals("INSTALL_FAILED_ALREADY_EXISTS")) {
-      if (myStopped) return false;
-      receiver = new MyReceiver();
-      getProcessHandler().notifyTextAvailable("Application is already installed. Reinstalling.\n", STDOUT);
-      executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + '\"', receiver);
-      if (myStopped) return false;
-    }*/
-    /*if (!isSuccess(receiver)) {
-      getProcessHandler().notifyTextAvailable("Can't reinstall application. Installing from scratch.\n", STDOUT);
-      executeDeviceCommandAndWriteToConsole(device, "pm uninstall \"" + remotePath + '\"', receiver);
-      if (myStopped) return false;
-      executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + '\"', receiver);
-      if (myStopped) return false;
-    }*/
     boolean success = isSuccess(receiver);
     message(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;
