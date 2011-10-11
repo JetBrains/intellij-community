@@ -76,7 +76,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
                                                                                   }), localList, null, commitContext);
       appliers.add(patchApplier);
     }
-    PatchApplier.executePatchGroup(appliers);
+    PatchApplier.executePatchGroup(appliers, localList);
 
     applyAdditionalInfo(myProject, additionalInfo, commitContext);
   }

@@ -113,6 +113,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private MessageBusConnection myConnect;
   private VcsListener myVcsListener;
   private final FileIndexFacade myExcludedIndex;
+  private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus, final FileIndexFacade excludedFileIndex) {
     myProject = project;
@@ -134,10 +135,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
     myConnect = myMessageBus.connect();
+    myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
     myVcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
         myVcsHistoryCache.clear();
+        myVcsFileListenerContextHelper.possiblySwitchActivation(hasActiveVcss());
       }
     };
     myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);

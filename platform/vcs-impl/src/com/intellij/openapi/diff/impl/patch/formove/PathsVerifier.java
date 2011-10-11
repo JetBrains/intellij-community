@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +53,8 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private ProjectLevelVcsManager myVcsManager;
   private final List<FilePatch> mySkipped;
   private DelayedPrecheckContext myDelayedPrecheckContext;
+  private List<FilePath> myAddedPaths;
+  private List<FilePath> myDeletedPaths;
 
   public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches, BaseMapper baseMapper) {
     myProject = project;
@@ -69,6 +70,9 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     myWritableFiles = new ArrayList<VirtualFile>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     mySkipped = new ArrayList<FilePatch>();
+
+    myAddedPaths = new ArrayList<FilePath>();
+    myDeletedPaths = new ArrayList<FilePath>();
   }
 
   // those to be moved to CL: target + created dirs
@@ -169,11 +173,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
   public Collection<FilePath> getToBeAdded() {
-    return myDelayedPrecheckContext.getOverridenPaths();
+    return myAddedPaths;
   }
 
   public Collection<FilePath> getToBeDeleted() {
-    return myDelayedPrecheckContext.getAlreadyDeletedPaths();
+    return myDeletedPaths;
   }
 
   private class CheckModified extends CheckDeleted {
@@ -200,7 +204,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
         return false;
       }
       addPatch(myPatch, beforeFile);
-      myBeforePaths.add(new FilePathImpl(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory()));
+      final FilePathImpl filePath = new FilePathImpl(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
+      if (myPatch.isDeletedFile() || myPatch.getAfterName() == null) {
+        myDeletedPaths.add(filePath);
+      }
+      myBeforePaths.add(filePath);
       return true;
     }
   }
@@ -225,6 +233,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
         return false;
       }
       final VirtualFile file = createFile(parent, pieces[pieces.length - 1]);
+      myAddedPaths.add(new FilePathImpl(file));
       if (! checkExistsAndValid(file, myAfterName)) {
         return false;
       }

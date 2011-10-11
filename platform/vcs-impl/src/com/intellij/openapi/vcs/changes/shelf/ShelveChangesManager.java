@@ -343,7 +343,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  boolean showSuccessNotification) {
     final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Unshelve changes");
     final GatheringContinuationContext initContext = new GatheringContinuationContext();
-    scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext);
+    scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext, false);
     continuation.run(initContext.getList());
   }
 
@@ -352,7 +352,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  @Nullable final List<ShelvedChange> changes,
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
-                                 final boolean showSuccessNotification, final ContinuationContext context) {
+                                 final boolean showSuccessNotification, final ContinuationContext context,
+                                 final boolean silentAddDelete) {
     context.next(new TaskDescriptor("", Where.AWT) {
       @Override
       public void run(ContinuationContext context) {
@@ -402,7 +403,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
           }
         });
 
-        patchApplier.scheduleSelf(showSuccessNotification, context);
+        patchApplier.scheduleSelf(showSuccessNotification, context, silentAddDelete);
       }
     });
   }
