@@ -17,7 +17,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -26,6 +28,7 @@ import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
@@ -35,10 +38,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -52,7 +52,7 @@ import static java.awt.GridBagConstraints.*;
 /**
  * @author pti
  */
-public class WelcomeScreen {
+public class WelcomeScreen implements Disposable {
   private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 30, 5, 0);
   private static final Insets PLUGINS_CAPTION_INSETS = new Insets(20, 25, 0, 0);
   private static final Insets ACTION_ICON_INSETS = new Insets(5, 20, 15, 0);
@@ -106,12 +106,14 @@ public class WelcomeScreen {
   private int mySelectedGroup = -1;
   private int myPluginsIdx = -1;
 
-  public static JPanel createWelcomePanel() {
-    return new WelcomeScreen().myWelcomePanel;
+  public JPanel getWelcomePanel() {
+    return myWelcomePanel;
   }
 
-  private WelcomeScreen() {
+  public WelcomeScreen(IdeRootPane rootPane) {
     initApplicationSpecificImages();
+
+    myWelcomePanel = new JPanel(new GridBagLayout());
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();
@@ -119,7 +121,7 @@ public class WelcomeScreen {
     // Create Main Panel for Quick Start and Documentation
     myMainPanel = new WelcomeScrollablePanel(new GridLayout(1, 2));
     myMainPanel.setBackground(MAIN_PANEL_BACKGROUND);
-    setUpMainPanel();
+    setUpMainPanel(rootPane);
     JScrollPane mainScrollPane = scrollPane(myMainPanel, null);
 
     // Create Plugins Panel
@@ -130,7 +132,6 @@ public class WelcomeScreen {
 
     // Create Welcome panel
     GridBagConstraints gBC;
-    myWelcomePanel = new JPanel(new GridBagLayout());
     myWelcomePanel.setBackground(WELCOME_PANEL_BACKGROUND);
     gBC = new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(7, 7, 7, 7), 0, 0);
     myWelcomePanel.add(topPanel, gBC);
@@ -138,6 +139,10 @@ public class WelcomeScreen {
     myWelcomePanel.add(mainScrollPane, gBC);
     gBC = new GridBagConstraints(1, 1, 1, 1, 0.3, 1, NORTHWEST, BOTH, new Insets(0, 0, 7, 7), 0, 0);
     myWelcomePanel.add(pluginsScrollPane, gBC);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void initApplicationSpecificImages() {
@@ -182,7 +187,7 @@ public class WelcomeScreen {
     return topPanel;
   }
 
-  private void setUpMainPanel() {
+  private void setUpMainPanel(IdeRootPane rootPane) {
     final ActionManager actionManager = ActionManager.getInstance();
 
     // Create QuickStarts group of actions
@@ -190,10 +195,18 @@ public class WelcomeScreen {
     // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
     final JPanel quickStartPanel = quickStarts.getPanel();
+
+    AnAction[] recentProjectsActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
+    if (recentProjectsActions.length > 0) {
+      JComponent recentProjectsPanel = setUpRecentProjectsPanel(rootPane, recentProjectsActions);
+      quickStartPanel.add(recentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
+                                                                      new Insets(14, 30, 5, 0), 0, 0));
+    }
+
     // Add empty panel at the end of the QuickStarts panel
     JPanel emptyPanel_2 = new JPanel();
     emptyPanel_2.setBackground(MAIN_PANEL_BACKGROUND);
-    quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
+    quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 3, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Create Documentation group of actions
     ActionGroupDescriptor docsGroup = new ActionGroupDescriptor(UIBundle.message("welcome.screen.documentation.action.group.name"), 1);
@@ -208,6 +221,45 @@ public class WelcomeScreen {
     // Add QuickStarts and Docs to main panel
     myMainPanel.add(quickStartPanel);
     myMainPanel.add(docsPanel);
+  }
+  
+  private JComponent setUpRecentProjectsPanel(IdeRootPane rootPane, AnAction[] recentProjectsActions) {
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBackground(MAIN_PANEL_BACKGROUND);
+
+    JLabel caption = new JLabel("Recent Projects");
+    caption.setFont(GROUP_CAPTION_FONT);
+    caption.setForeground(CAPTION_COLOR);
+    panel.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 20, 0), 0, 0));
+
+    JLabel iconLabel = new JLabel();
+    iconLabel.setIcon(IconLoader.getIcon("/general/reopenRecentProject.png"));
+    panel.add(iconLabel, new GridBagConstraints(0, 1, 1, 5, 0, 0, NORTHWEST, NONE, new Insets(5, 0, 15, 20), 0, 0));
+
+    int row = 1;
+    for (final AnAction action : recentProjectsActions) {
+      JLabel actionLabel = new JLabel(underlineHtmlText(row + ". " + StringUtil.escapeXml(action.getTemplatePresentation().getText())));
+      actionLabel.setFont(LINK_FONT);
+      actionLabel.setForeground(CAPTION_COLOR);
+      actionLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      actionLabel.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (e.getButton() == MouseEvent.BUTTON1) {
+            DataContext dataContext = DataManager.getInstance().getDataContext(myWelcomePanel);
+            AnActionEvent event = new AnActionEvent(e, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+            action.actionPerformed(event);
+          }
+        }
+      });
+      
+      action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_0 + row, InputEvent.ALT_DOWN_MASK)),
+                                       rootPane, this);
+      panel.add(actionLabel, new GridBagConstraints(1, row++, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
+      if (row == 9) break;
+    }
+
+    return panel;
   }
 
   private void setUpPluginsPanel() {
@@ -532,6 +584,11 @@ public class WelcomeScreen {
     return HTML_PREFIX + string + HTML_SUFFIX;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static String underlineHtmlText(final String commandLink) {
+    return "<html><nobr><u>" + commandLink + "</u></nobr></html>";
+  }
+
   private class ActionGroupDescriptor {
     private int myIdx = -1;
     private int myCount = 0;
@@ -587,11 +644,6 @@ public class WelcomeScreen {
 
     private String wrapWithHtml(final String description) {
       return HTML_PREFIX + description + HTML_SUFFIX;
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private String underlineHtmlText(final String commandLink) {
-      return "<html><nobr><u>" + commandLink + "</u></nobr></html>";
     }
 
     private void appendActionsFromGroup(final ActionGroup group) {

@@ -27,9 +27,6 @@
 
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
-      <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"
-        icon="/general/reopenRecentProject.png"/>
-
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 

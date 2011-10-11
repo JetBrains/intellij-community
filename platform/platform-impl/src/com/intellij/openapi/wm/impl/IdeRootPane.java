@@ -77,6 +77,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final ActionManager myActionManager;
   private final UISettings myUISettings;
 
+  private static WelcomeScreen myWelcomeScreen;
   private static Component myWelcomePane;
   private final boolean myGlassPaneInitialized;
   private final IdeGlassPaneImpl myGlassPane;
@@ -112,8 +113,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
     PluginManager.dumpPluginClassStatistics();
     if (!willOpenProject.get()) {
-      myWelcomePane = WelcomeScreen.createWelcomePanel();
-      myContentPane.add(myWelcomePane);
+      showWelcomeScreen();
       lifecyclePublisher.welcomeScreenDisplayed();
     }
 
@@ -123,6 +123,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     myGlassPane.setVisible(false);
     Disposer.register(application, myDisposable);
+  }
+
+  private void showWelcomeScreen() {
+    myWelcomeScreen = new WelcomeScreen(this);
+    Disposer.register(myDisposable, myWelcomeScreen);
+    myWelcomePane = myWelcomeScreen.getWelcomePanel();
+    myContentPane.add(myWelcomePane);
   }
 
 
@@ -159,7 +166,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     if (myWelcomePane != null) {
+      Disposer.dispose(myWelcomeScreen);
       contentPane.remove(myWelcomePane);
+      myWelcomeScreen = null;
       myWelcomePane = null;
     }
 
@@ -168,8 +177,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       contentPane.add(myToolWindowsPane,BorderLayout.CENTER);
     }
     else if (!myApplication.isDisposeInProgress()) {
-      myWelcomePane = WelcomeScreen.createWelcomePanel();
-      contentPane.add(myWelcomePane);
+      showWelcomeScreen();
     }
 
     contentPane.revalidate();
