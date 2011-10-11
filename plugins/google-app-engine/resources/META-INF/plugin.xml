@@ -42,7 +42,7 @@
     <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
     <dom.fileDescription implementation="com.intellij.appengine.descriptor.dom.AppEngineWebFileDescription"/>
 
-    <localInspection shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
+    <localInspection language="JAVA" shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
                      groupName="Google App Engine" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
 
