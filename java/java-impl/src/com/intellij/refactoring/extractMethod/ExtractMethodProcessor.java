@@ -20,12 +20,14 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -38,6 +40,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -48,6 +51,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -55,6 +59,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -70,6 +75,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -193,11 +199,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
 
-
+  public boolean prepare() throws PrepareFailedException {
+    return prepare(null);
+  }
+  
   /**
    * Invoked in atomic action
    */
-  public boolean prepare() throws PrepareFailedException {
+  public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)myElements[0];
@@ -236,11 +245,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     myOutputVariables = myControlFlowWrapper.getOutputVariables();
-    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment);
-    chooseTargetClass(inputVariables);
 
-    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), true);
+    checkCanBeChainedConstructor();
 
+    return chooseTargetClass(codeFragment, pass);
+  }
+
+  private boolean checkExitPoints() throws PrepareFailedException {
     PsiType expressionType = null;
     if (myExpression != null) {
       if (myForcedReturnType != null) {
@@ -309,30 +320,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
     myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
-    myStatic = shouldBeStatic();
-
-    if (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC)) {
-      ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass);
-      for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
-        PsiElement element = myElements[i];
-        element.accept(needsThis);
-      }
-      myCanBeStatic = !needsThis.usesMembers();
-    }
-    else {
-      myCanBeStatic = false;
-    }
 
     if (container instanceof PsiMethod) {
       checkLocalClasses((PsiMethod) container);
     }
-
-    checkCanBeChainedConstructor();
-
-
-
-
-
     return true;
   }
 
@@ -758,7 +749,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     adjustFinalParameters(newMethod);
 
     myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
-    if (myNeedChangeContext) {
+    if (isNeedToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
@@ -766,6 +757,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
+  }
+
+  protected boolean isNeedToChangeCallContext() {
+    return true;
   }
 
   private void declareVariableAtMethodCallLocation(String name) {
@@ -982,6 +977,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
 
+  @NotNull
   protected PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier, final boolean generateArgs) throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
 
@@ -1044,6 +1040,78 @@ public class ExtractMethodProcessor implements MatchProvider {
     return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(expr);
   }
 
+  private boolean chooseTargetClass(PsiElement codeFragment, final Pass<ExtractMethodProcessor> extractPass) throws PrepareFailedException {
+    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment);
+
+    myNeedChangeContext = false;
+    myTargetClass = myCodeFragmentMember instanceof PsiMember
+                    ? ((PsiMember)myCodeFragmentMember).getContainingClass()
+                    : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
+    if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
+
+      final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<PsiClass, List<PsiVariable>>();
+      final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+        @Override
+        public boolean execute(@NotNull PsiClass selectedClass) {
+          final List<PsiVariable> array = classes.get(selectedClass);
+          myNeedChangeContext = myTargetClass != selectedClass;
+          myTargetClass = selectedClass;
+          if (array != null) {
+            for (PsiVariable variable : array) {
+              if (!inputVariables.contains(variable)) {
+                inputVariables.addAll(array);
+              }
+            }
+          }
+          try {
+            return applyChosenClassAndExtract(inputVariables, extractPass);
+          }
+          catch (PrepareFailedException e) {
+            if (myShowErrorDialogs) {
+              CommonRefactoringUtil
+                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+              ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
+            }
+            return false;
+          }
+        }
+      };
+
+      classes.put(myTargetClass, null);
+      PsiElement target = myTargetClass.getParent();
+      PsiElement targetMember = myTargetClass;
+      while (true) {
+        if (target instanceof PsiFile) break;
+        if (target instanceof PsiClass) {
+          boolean success = true;
+          final List<PsiVariable> array = new ArrayList<PsiVariable>();
+          for (PsiElement el : myElements) {
+            if (!ControlFlowUtil.collectOuterLocals(array, el, myCodeFragmentMember, targetMember)) {
+              success = false;
+              break;
+            }
+          }
+          if (success) {
+            classes.put((PsiClass)target, array);
+            if (shouldAcceptCurrentTarget(extractPass, target)) {
+              return processor.execute((PsiClass)target);
+            }
+          }
+        }
+        targetMember = target;
+        target = target.getParent();
+      }
+
+      if (classes.size() > 1) {
+        final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
+        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor).showInBestPositionFor(myEditor);
+        return true;
+      }
+    }
+
+    return applyChosenClassAndExtract(inputVariables, extractPass);
+  }
+
   private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
     List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariablesInBody();
     for (PsiVariable variable : usedVariables) {
@@ -1079,6 +1147,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myMethodCall;
   }
 
+  public void setMethodCall(PsiMethodCallExpression methodCall) {
+    myMethodCall = methodCall;
+  }
+
   public boolean isDeclaredInside(PsiVariable variable) {
     if (variable instanceof ImplicitVariable) return false;
     int startOffset = myElements[0].getTextRange().getStartOffset();
@@ -1100,41 +1172,34 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private void chooseTargetClass(List<PsiVariable> inputVariables) {
-    myNeedChangeContext = false;
-    myTargetClass = myCodeFragmentMember instanceof PsiMember
-                    ? ((PsiMember)myCodeFragmentMember).getContainingClass()
-                    : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
-    if (myTargetClass instanceof PsiAnonymousClass) {
-      PsiElement target = myTargetClass.getParent();
-      PsiElement targetMember = myTargetClass;
-      while (true) {
-        if (target instanceof PsiFile) break;
-        if (target instanceof PsiClass && !(target instanceof PsiAnonymousClass)) break;
-        targetMember = target;
-        target = target.getParent();
+  private static boolean shouldAcceptCurrentTarget(Pass<ExtractMethodProcessor> extractPass, PsiElement target) {
+    return extractPass == null && !(target instanceof PsiAnonymousClass);
+  }
+
+  private boolean applyChosenClassAndExtract(List<PsiVariable> inputVariables, @Nullable Pass<ExtractMethodProcessor> extractPass)
+    throws PrepareFailedException {
+    myStatic = shouldBeStatic();
+    if (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC)) {
+      ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass);
+      for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
+        PsiElement element = myElements[i];
+        element.accept(needsThis);
       }
-      if (target instanceof PsiClass) {
-        PsiClass newTargetClass = (PsiClass)target;
-        List<PsiVariable> array = new ArrayList<PsiVariable>();
-        boolean success = true;
-        for (PsiElement element : myElements) {
-          if (!ControlFlowUtil.collectOuterLocals(array, element, myCodeFragmentMember, targetMember)) {
-            success = false;
-            break;
-          }
-        }
-        if (success) {
-          myTargetClass = newTargetClass;
-          for (PsiVariable variable : array) {
-            if (!inputVariables.contains(variable)) {
-              inputVariables.addAll(array);
-            }
-          }
-          myNeedChangeContext = true;
-        }
-      }
+      myCanBeStatic = !needsThis.usesMembers();
     }
+    else {
+      myCanBeStatic = false;
+    }
+
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), true);
+
+    if (!checkExitPoints()){
+      return false;
+    }
+    if (extractPass != null) {
+      extractPass.pass(this);
+    }
+    return true;
   }
 
   private void chooseAnchor() {
