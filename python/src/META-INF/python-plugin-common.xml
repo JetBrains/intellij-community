@@ -649,10 +649,15 @@
                             implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
     <completion.contributor language="Mako"
                             implementationClass="com.jetbrains.mako.editor.MakoFunctionsCompletionContributor"/>
+    <completion.contributor language="HTML"
+                            implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
+    <completion.contributor language="XML"
+                            implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
 
     <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
                   id="MakoBracesHandler"/>
     <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
+    <editorHighlighterProvider filetype="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoEditorHighlighterProvider"/>
 
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
