@@ -493,22 +493,21 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
   }
 
-  private static GregorianCalendar parseDate(String dateString) {
-    int year = 0;
-    int month = 0;
-    int day = 0;
+  private static GregorianCalendar parseDate(final String dateString) {
+    @SuppressWarnings("MultipleVariablesInDeclaration")
+    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
     try {
       year = Integer.parseInt(dateString.substring(0, 4));
       month = Integer.parseInt(dateString.substring(4, 6));
       day = Integer.parseInt(dateString.substring(6, 8));
+      if (dateString.length() > 8) {
+        hour = Integer.parseInt(dateString.substring(8, 10));
+        minute = Integer.parseInt(dateString.substring(10, 12));
+      }
     }
-    catch (Exception ex) {
-      //ignore
-    }
-    if (month > 0) {
-      month--;
-    }
-    return new GregorianCalendar(year, month, day);
+    catch (Exception ignore) { }
+    if (month > 0) month--;
+    return new GregorianCalendar(year, month, day, hour, minute);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

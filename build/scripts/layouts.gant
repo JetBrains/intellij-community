@@ -2,8 +2,31 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-target('default' : "Developers update") {
-  layoutFull(home, deploy)
+target('default': "Developers update") {
+  def patchedDescriptorDir = patchAppDescriptor(deploy)
+  layoutFull(home, deploy, patchedDescriptorDir)
+  ant.delete(dir: patchedDescriptorDir)
+}
+
+String appInfoFileName() {
+  return "idea/IdeaApplicationInfo.xml"
+}
+
+String patchAppDescriptor(String targetDirectory) {
+  def patchedDirectory = "${targetDirectory}/../patched"
+
+  ant.delete(dir: patchedDirectory)
+
+  layout(patchedDirectory) {
+    module("community-resources") {
+      include(name: appInfoFileName())
+    }
+  }
+
+  ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_NUMBER__", value: "IC-$snapshot")
+  ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_DATE__", value: new Date().format("yyyyMMddHHmm"))
+
+  return patchedDirectory
 }
 
 private List platformImplementationModules() {
@@ -29,7 +52,7 @@ private List<String> platformApiModules() {
   return ["core-api", "platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
 }
 
-def layoutFull(String home, String targetDirectory) {
+def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
   project.stage("layout to $targetDirectory")
 
   //noinspection GroovyAssignabilityCheck
@@ -89,11 +112,19 @@ def layoutFull(String home, String targetDirectory) {
         implementationModules.each { module it}
       }
 
-      jar("bootstrap.jar") { module("bootstrap")}
+      jar("bootstrap.jar") { module("bootstrap") }
+
       jar("resources.jar") {
         module("resources")
         module("platform-resources")
-        module("community-resources")
+        module("community-resources") {
+          if (patchedDescriptorDir != null) {
+            exclude(name: appInfoFileName())
+          }
+        }
+        if (patchedDescriptorDir != null) {
+          fileset(dir: patchedDescriptorDir)
+        }
       }
 
       jar("idea_rt.jar") { module("java-runtime")}
