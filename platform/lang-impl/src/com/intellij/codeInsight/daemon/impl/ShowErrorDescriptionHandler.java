@@ -30,6 +30,7 @@ public class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
     myWidth = width;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
@@ -39,6 +40,7 @@ public class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

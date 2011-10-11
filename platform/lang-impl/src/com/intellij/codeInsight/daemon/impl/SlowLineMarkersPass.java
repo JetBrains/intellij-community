@@ -52,6 +52,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
     myEndOffset = endOffset;
   }
 
+  @Override
   public void doCollectInformation(ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
@@ -68,6 +69,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
     myMarkers = markers;
   }
 
+  @Override
   public void addLineMarkers(@NotNull List<PsiElement> elements,
                              @NotNull List<LineMarkerProvider> providers,
                              @NotNull List<LineMarkerInfo> result,
@@ -77,6 +79,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
     }
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, getId());
 

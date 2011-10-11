@@ -24,7 +24,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -135,6 +134,7 @@ public class InspectionProfileConvertor {
     final File profileDirectory = InspectionProfileManager.getProfileDirectory();
     if (profileDirectory == null) return;
     final File[] files = profileDirectory.listFiles(new FileFilter() {
+      @Override
       public boolean accept(File pathname) {
         return pathname.getPath().endsWith(File.separator + DEFAULT_XML);
       }

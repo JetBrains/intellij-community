@@ -31,10 +31,12 @@ public class GotoPreviousErrorAction extends BaseCodeInsightAction implements Du
     super(false);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new GotoNextErrorHandler(false);
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
   }

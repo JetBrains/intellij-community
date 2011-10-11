@@ -110,11 +110,13 @@ public interface HighlightInfoType {
       myAttributesKey = attributesKey;
     }
 
+    @Override
     @NotNull
     public HighlightSeverity getSeverity(PsiElement psiElement) {
       return mySeverity;
     }
 
+    @Override
     public TextAttributesKey getAttributesKey() {
       return myAttributesKey;
     }
@@ -124,11 +126,13 @@ public interface HighlightInfoType {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       mySeverity.readExternal(element);
       myAttributesKey.readExternal(element);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       mySeverity.writeExternal(element);
       myAttributesKey.writeExternal(element);
@@ -165,6 +169,7 @@ public interface HighlightInfoType {
       myAttributesKey = attributesKey;
     }
 
+    @Override
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
@@ -175,6 +180,7 @@ public interface HighlightInfoType {
       return level.getSeverity();
     }
 
+    @Override
     public TextAttributesKey getAttributesKey() {
       return myAttributesKey;
     }
@@ -198,6 +204,7 @@ public interface HighlightInfoType {
       mySeverityKey = severityKey;
     }
 
+    @Override
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
@@ -208,6 +215,7 @@ public interface HighlightInfoType {
       return level.getSeverity();
     }
 
+    @Override
     public TextAttributesKey getAttributesKey() {
       final HighlightSeverity severity = getSeverity(null);
       final HighlightInfoTypeImpl infoType = SeverityRegistrar.getInstance().getHighlightInfoTypeBySeverity(severity);

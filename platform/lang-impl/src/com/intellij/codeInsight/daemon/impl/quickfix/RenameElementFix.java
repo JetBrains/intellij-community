@@ -57,25 +57,30 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
     myText = CodeInsightBundle.message("rename.named.element.text", myElement.getName(), myNewName);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("rename.public.class.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {
+        @Override
         protected void run(Result result) throws Throwable {
           invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
         }
@@ -83,6 +88,7 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myElement.isValid()) {
       return false;
@@ -91,6 +97,7 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
     return namesValidator.isIdentifier(myNewName, project);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(file == myElement.getContainingFile());
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
@@ -98,6 +105,7 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
     processor.run();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

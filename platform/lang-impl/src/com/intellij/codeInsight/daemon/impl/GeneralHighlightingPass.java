@@ -93,6 +93,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
   private static final Comparator<HighlightVisitor> VISITOR_ORDER_COMPARATOR = new Comparator<HighlightVisitor>() {
+    @Override
     public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {
       return o1.order() - o2.order();
     }
@@ -131,6 +132,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myErrorFound = !isWholeFileHighlighting() && fileStatusMap.wasErrorFound(myDocument);
 
     myApplyCommand = new Runnable() {
+      @Override
       public void run() {
         ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
         MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
@@ -176,6 +178,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return old;
   }
 
+  @Override
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>(100);
     final Set<HighlightInfo> outsideResult = new THashSet<HighlightInfo>(100);
@@ -308,6 +311,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     hosts.addAll(elements2);
 
     final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         synchronized (outInjected) {
           outInjected.add(injectedPsi);
@@ -333,6 +337,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final TextAttributes injectedAttributes = myGlobalScheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
 
     return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), progress, myFailFastOnAcquireReadAction, new Processor<PsiFile>() {
+      @Override
       public boolean process(final PsiFile injectedPsi) {
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         if (documentWindow == null) return true;
@@ -471,6 +476,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       for (final HighlightVisitor visitor : filtered) {
         visitor.analyze(injectedPsi, true, holder, new Runnable() {
+          @Override
           public void run() {
             for (PsiElement element : elements) {
               progress.checkCanceled();
@@ -530,6 +536,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myUpdateAll && myStartOffset == 0 && myEndOffset == myDocument.getTextLength();
   }
 
+  @Override
   protected void applyInformationWithProgress() {
     myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
@@ -540,6 +547,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
+  @Override
   @NotNull
   public List<HighlightInfo> getInfos() {
     return new ArrayList<HighlightInfo>(myHighlights);
@@ -560,6 +568,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         //noinspection unchecked
         boolean failed = false;
@@ -790,6 +799,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PassExecutorService.log(progress, pass, "Cancel and restart");
     progress.cancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         try {
           Thread.sleep(new Random().nextInt(100));
@@ -866,6 +876,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
+  @Override
   public double getProgress() {
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;

@@ -35,12 +35,14 @@ public class SlowLineMarkersPassFactory extends AbstractProjectComponent impleme
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.UPDATE_OVERRIDEN_MARKERS);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "SlowLineMarkersPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
@@ -52,6 +54,7 @@ public class SlowLineMarkersPassFactory extends AbstractProjectComponent impleme
     return FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_OVERRIDEN_MARKERS);
   }
 
+  @Override
   public int getPassId() {
     return Pass.UPDATE_OVERRIDEN_MARKERS;
   }

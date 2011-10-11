@@ -37,6 +37,7 @@ import javax.swing.*;
 
 public class ImportPopupHectorComponentProvider implements HectorComponentPanelsProvider {
 
+  @Override
   public HectorComponentPanel createConfigurable(@NotNull final PsiFile file) {
     final Project project = file.getProject();
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
@@ -48,25 +49,30 @@ public class ImportPopupHectorComponentProvider implements HectorComponentPanels
 
     return new HectorComponentPanel() {
       private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
+      @Override
       public JComponent createComponent() {
         DialogUtil.registerMnemonic(myImportPopupCheckBox);
         return myImportPopupCheckBox;
       }
 
+      @Override
       public boolean isModified() {
         return myImportPopupCheckBox.isSelected() != analyzer.isImportHintsEnabled(file);
       }
 
+      @Override
       public void apply() throws ConfigurationException {
         analyzer.setImportHintsEnabled(file, myImportPopupCheckBox.isSelected());
       }
 
+      @Override
       public void reset() {
         myImportPopupCheckBox.setSelected(analyzer.isImportHintsEnabled(file));
         myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(file));
         myImportPopupCheckBox.setVisible(notInLibrary);
       }
 
+      @Override
       public void disposeUIResources() {
         myImportPopupCheckBox = null;
       }

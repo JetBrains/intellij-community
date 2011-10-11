@@ -32,6 +32,7 @@ public class TruncatingIcon implements Icon {
     myHeight = height;
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     Shape old = g.getClip();
     g.clipRect(x, y+myDelegate.getIconHeight()-2-myHeight, myWidth, myHeight+2);
@@ -39,10 +40,12 @@ public class TruncatingIcon implements Icon {
     g.setClip(old);
   }
 
+  @Override
   public int getIconWidth() {
     return myDelegate.getIconWidth();
   }
 
+  @Override
   public int getIconHeight() {
     return myDelegate.getIconHeight();
   }

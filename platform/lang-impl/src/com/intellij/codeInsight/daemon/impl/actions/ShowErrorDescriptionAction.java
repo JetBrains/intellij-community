@@ -40,10 +40,12 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
     setEnabledInModalContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new ShowErrorDescriptionHandler(shouldShowDescription ? width : 0);
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file) && isEnabledForFile(project, editor, file);
   }
@@ -55,6 +57,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
     return info != null && info.description != null;
   }
 
+  @Override
   public void beforeActionPerformedUpdate(final AnActionEvent e) {
     super.beforeActionPerformedUpdate(e);
     changeState();

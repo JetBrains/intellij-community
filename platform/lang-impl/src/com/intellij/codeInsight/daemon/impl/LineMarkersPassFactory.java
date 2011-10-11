@@ -38,12 +38,14 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.VISIBLE_LINE_MARKERS}, new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "LineMarkersPassFactory";
   }
   
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcessForSyntaxPass(editor);

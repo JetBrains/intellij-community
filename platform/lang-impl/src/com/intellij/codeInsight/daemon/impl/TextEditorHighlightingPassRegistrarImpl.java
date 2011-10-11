@@ -60,6 +60,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     }
   }
 
+  @Override
   public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
     Anchor anc = Anchor.FIRST;
     switch (anchor) {
@@ -75,6 +76,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     registerTextEditorHighlightingPass(factory, anc, anchorPass, true, true);
   }
 
+  @Override
   public synchronized int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
                                                              @Nullable int[] runAfterCompletionOf,
                                                              @Nullable int[] runAfterOfStartingOf,
@@ -94,6 +96,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     return passId;
   }
 
+  @Override
   @NotNull
   public List<TextEditorHighlightingPass> instantiatePasses(@NotNull final PsiFile psiFile, @NotNull final Editor editor, @NotNull final int[] passesToIgnore) {
     synchronized (this) {
@@ -113,6 +116,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
+      @Override
       public boolean execute(int passId) {
         if (ArrayUtil.find(passesToIgnore, passId) != -1) {
           return true;
@@ -147,6 +151,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
     final FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
     passesRefusedToCreate.forEach(new TIntProcedure() {
+      @Override
       public boolean execute(int passId) {
         statusMap.markFileUpToDate(document, psiFile, passId);
         return true;
@@ -162,6 +167,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                                 @NotNull final Document document) {
     final THashSet<TextEditorHighlightingPass> ids = new THashSet<TextEditorHighlightingPass>();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
+      @Override
       public boolean execute(int passId) {
         PassConfig passConfig = myRegisteredPassFactories.get(passId);
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
@@ -181,11 +187,13 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     final TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<TIntHashSet>();
 
     myRegisteredPassFactories.forEachEntry(new TIntObjectProcedure<PassConfig>() {
+      @Override
       public boolean execute(int passId, PassConfig config) {
         TIntHashSet allPredecessors = new TIntHashSet(config.completionPredecessorIds);
         allPredecessors.addAll(config.startingPredecessorIds);
         transitivePredecessors.put(passId, allPredecessors);
         allPredecessors.forEach(new TIntProcedure() {
+          @Override
           public boolean execute(int predecessorId) {
             PassConfig predecessor = myRegisteredPassFactories.get(predecessorId);
             if (predecessor == null) return  true;
@@ -203,6 +211,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
     });
     transitivePredecessors.forEachKey(new TIntProcedure() {
+      @Override
       public boolean execute(int passId) {
         if (transitivePredecessors.get(passId).contains(passId)) {
           throw new IllegalArgumentException("There is a cycle introduced involving pass " + myRegisteredPassFactories.get(passId).passFactory);

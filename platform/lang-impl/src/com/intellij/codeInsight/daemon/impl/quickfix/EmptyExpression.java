@@ -28,14 +28,17 @@ public class EmptyExpression extends Expression {
   public EmptyExpression() {
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     return null;
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     return null;
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return null;
   }

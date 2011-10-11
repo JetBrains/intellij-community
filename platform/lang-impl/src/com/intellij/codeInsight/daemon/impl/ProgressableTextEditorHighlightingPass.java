@@ -52,6 +52,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myFile = file;
   }
 
+  @Override
   public final void doCollectInformation(final ProgressIndicator progress) {
     myFinished = false;
     collectInformationWithProgress(progress);
@@ -60,6 +61,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   protected abstract void collectInformationWithProgress(final ProgressIndicator progress);
 
+  @Override
   public final void doApplyInformationToEditor() {
     myFinished = true;
     applyInformationWithProgress();
@@ -110,6 +112,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
     if (repaintIconAlarm.getActiveRequestCount() == 0 || getProgressCount() >= getProgressLimit()) {
       repaintIconAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           if (myProject.isDisposed()) return;
           Editor editor = PsiUtilBase.findEditor(myFile);
@@ -126,10 +129,12 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       super(project, document, false);
     }
 
+    @Override
     public void doCollectInformation(final ProgressIndicator progress) {
 
     }
 
+    @Override
     public void doApplyInformationToEditor() {
 
     }

@@ -44,12 +44,14 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.POST_UPDATE_ALL}, null, true, Pass.EXTERNAL_TOOLS);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "ExternalToolPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS);

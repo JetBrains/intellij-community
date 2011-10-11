@@ -94,10 +94,12 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
     container.getParent().addBefore(comment, container);
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     return context.getManager().isInProject(context) && getContainer(context) != null;
   }
 
+  @Override
   public void invoke(final Project project, @Nullable Editor editor, final PsiElement element) throws IncorrectOperationException {
     PsiElement container = getContainer(element);
     if (container == null) return;
@@ -139,6 +141,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   }
 
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");

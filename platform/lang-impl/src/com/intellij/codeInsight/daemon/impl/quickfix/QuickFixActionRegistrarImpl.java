@@ -30,14 +30,17 @@ public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
     myInfo = info;
   }
 
+  @Override
   public void register(IntentionAction action) {
     QuickFixAction.registerQuickFixAction(myInfo, action);
   }
 
+  @Override
   public void register(TextRange fixRange, IntentionAction action, HighlightDisplayKey key) {
     QuickFixAction.registerQuickFixAction(myInfo, fixRange, action, key);
   }
 
+  @Override
   public void unregister(Condition<IntentionAction> condition) {
     QuickFixAction.unregisterQuickFixAction(myInfo, condition);
   }

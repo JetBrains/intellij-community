@@ -36,12 +36,14 @@ public class CodeFoldingPassFactory extends AbstractProjectComponent implements 
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, false, Pass.UPDATE_FOLDING);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "CodeFoldingPassFactory";
   }
 
+  @Override
   @NotNull
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     return new CodeFoldingPass(myProject, editor, file);

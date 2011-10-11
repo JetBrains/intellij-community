@@ -69,9 +69,11 @@ public class EditorTracker extends AbstractProjectComponent {
     myEditorFactory = editorFactory;
   }
 
+  @Override
   public void projectOpened() {
     myIdeFrame = ((WindowManagerEx)myWindowManager).getFrame(myProject);
     myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
       public void selectionChanged(FileEditorManagerEvent event) {
         if (myIdeFrame == null || myIdeFrame.getFocusOwner() == null) return;
         setActiveWindow(myIdeFrame);
@@ -81,12 +83,14 @@ public class EditorTracker extends AbstractProjectComponent {
     final MyEditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener,myProject);
     Disposer.register(myProject, new Disposable() {
+      @Override
       public void dispose() {
         myEditorFactoryListener.dispose(null);
       }
     });
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -125,6 +129,7 @@ public class EditorTracker extends AbstractProjectComponent {
 
       if (!(window instanceof IdeFrameImpl)) {
         WindowFocusListener listener =  new WindowFocusListener() {
+          @Override
           public void windowGainedFocus(WindowEvent e) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("windowGainedFocus:" + window);
@@ -133,6 +138,7 @@ public class EditorTracker extends AbstractProjectComponent {
             setActiveWindow(window);
           }
 
+          @Override
           public void windowLostFocus(WindowEvent e) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("windowLostFocus:" + window);
@@ -221,6 +227,7 @@ public class EditorTracker extends AbstractProjectComponent {
   private class MyEditorFactoryListener implements EditorFactoryListener {
     private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<Editor, Runnable>();
 
+    @Override
     public void editorCreated(EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
@@ -231,6 +238,7 @@ public class EditorTracker extends AbstractProjectComponent {
       final JComponent contentComponent = editor.getContentComponent();
 
       final HierarchyListener hierarchyListener = new HierarchyListener() {
+        @Override
         public void hierarchyChanged(HierarchyEvent e) {
           registerEditor(editor);
         }
@@ -238,16 +246,19 @@ public class EditorTracker extends AbstractProjectComponent {
       component.addHierarchyListener(hierarchyListener);
 
       final FocusListener focusListener = new FocusListener() {
+        @Override
         public void focusGained(FocusEvent e) {
           editorFocused(editor);
         }
 
+        @Override
         public void focusLost(FocusEvent e) {
         }
       };
       contentComponent.addFocusListener(focusListener);
 
       myExecuteOnEditorRelease.put(event.getEditor(), new Runnable() {
+        @Override
         public void run() {
           component.removeHierarchyListener(hierarchyListener);
           contentComponent.removeFocusListener(focusListener);
@@ -255,6 +266,7 @@ public class EditorTracker extends AbstractProjectComponent {
       });
     }
 
+    @Override
     public void editorReleased(EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;

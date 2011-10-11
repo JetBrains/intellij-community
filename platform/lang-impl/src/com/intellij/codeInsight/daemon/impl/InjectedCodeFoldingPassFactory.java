@@ -36,12 +36,14 @@ public class InjectedCodeFoldingPassFactory extends AbstractProjectComponent imp
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "InjectedCodeFoldingPassFactory";
   }
 
+  @Override
   @NotNull
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     return new InjectedCodeFoldingPass(myProject, editor, file);

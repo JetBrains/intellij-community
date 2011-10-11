@@ -26,6 +26,7 @@ import com.intellij.psi.PsiReference;
  */
 public interface QuickFixProvider<T extends PsiReference> {
   QuickFixProvider NULL = new QuickFixProvider() {
+    @Override
     public void registerQuickfix(HighlightInfo info, PsiReference reference) {}
   };
 

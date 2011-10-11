@@ -34,6 +34,7 @@ class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implem
     super(project, document, DaemonBundle.message("pass.wolf"), file, false);
   }
 
+  @Override
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
     final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
     if (solver instanceof WolfTheProblemSolverImpl) {
@@ -41,6 +42,7 @@ class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implem
     }
   }
 
+  @Override
   protected void applyInformationWithProgress() {
 
   }

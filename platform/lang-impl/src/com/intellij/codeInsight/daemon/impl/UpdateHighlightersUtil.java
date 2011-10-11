@@ -59,6 +59,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateHighlightersUtil {
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NODUPS = new Comparator<HighlightInfo>() {
+    @Override
     public int compare(HighlightInfo o1, HighlightInfo o2) {
       int d = o1.getActualStartOffset() - o2.getActualStartOffset();
       if (d != 0) return d;
@@ -90,6 +91,7 @@ public class UpdateHighlightersUtil {
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private static final Comparator<TextRange> BY_START_OFFSET = new Comparator<TextRange>() {
+    @Override
     public int compare(final TextRange o1, final TextRange o2) {
       return o1.getStartOffset() - o2.getStartOffset();
     }
@@ -171,6 +173,7 @@ public class UpdateHighlightersUtil {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     final boolean myInfoIsError = isSevere(info, severityRegistrar);
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo oldInfo) {
         if (!myInfoIsError && isCovered(info, severityRegistrar, oldInfo)) {
           return false;
@@ -613,6 +616,7 @@ public class UpdateHighlightersUtil {
 
     final List<HighlightInfo> toRemove = new ArrayList<HighlightInfo>();
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null, start, end, new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo info) {
         RangeHighlighter highlighter = info.highlighter;
         boolean remove = false;
@@ -673,6 +677,7 @@ public class UpdateHighlightersUtil {
     }
     Document document = markup.getDocument();
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo info) {
         assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
         return true;
@@ -687,6 +692,7 @@ public class UpdateHighlightersUtil {
       }
       final HighlightInfo info = (HighlightInfo)tooltip;
       boolean contains = !DaemonCodeAnalyzerImpl.processHighlights(document, project, null, info.getActualStartOffset(), info.getActualEndOffset(), new Processor<HighlightInfo>() {
+        @Override
         public boolean process(HighlightInfo highlightInfo) {
           return UpdateHighlightersUtil.BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0;
         }

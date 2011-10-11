@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 
 public class PopupHectorAction extends AnAction {
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);

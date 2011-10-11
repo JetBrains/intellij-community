@@ -40,6 +40,7 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
     myFile = file;
   }
 
+  @Override
   public void doCollectInformation(ProgressIndicator progress) {
     final boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME);
     Runnable runnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
@@ -57,6 +58,7 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
     editor.putUserData(key, Boolean.FALSE);
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     Runnable runnable;
     synchronized (this) {

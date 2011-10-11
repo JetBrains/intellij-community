@@ -36,12 +36,14 @@ public class IndentsPassFactory extends AbstractProjectComponent implements Text
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.BEFORE, Pass.UPDATE_FOLDING, false, false);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "IndentsPassFactory";
   }
 
+  @Override
   @NotNull
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     return new IndentsPass(myProject, editor, file);

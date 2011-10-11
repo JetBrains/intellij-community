@@ -140,6 +140,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     ourMap.clear();
     ourRendererColors.clear();
@@ -188,6 +189,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (String severity : getOrder()) {
       Element info = new Element(INFO);
@@ -253,6 +255,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return createCurrentSeverities().contains(severity);
   }
 
+  @Override
   public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
     return getOrder().indexOf(s1.myName) - getOrder().indexOf(s2.myName);
   }
@@ -326,11 +329,13 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       return myType;
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       myAttributes.readExternal(element);
       myType.readExternal(element);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       myAttributes.writeExternal(element);
       myType.writeExternal(element);

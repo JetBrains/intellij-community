@@ -38,11 +38,13 @@ public class SuppressByCommentFix extends AbstractSuppressByNoInspectionCommentF
     super(ID, false);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("suppress.inspection.statement");
   }
 
+  @Override
   @Nullable
   protected PsiElement getContainer(PsiElement context) {
     return PsiTreeUtil.getParentOfType(context, mySuppressionHolderClass);

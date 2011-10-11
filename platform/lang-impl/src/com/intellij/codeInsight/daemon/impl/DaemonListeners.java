@@ -111,6 +111,7 @@ class DaemonListeners implements Disposable {
 
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
+      @Override
       public void beforeDocumentChange(final DocumentEvent e) {
         if (isUnderIgnoredAction(null)) return;
         Document document = e.getDocument();
@@ -125,6 +126,7 @@ class DaemonListeners implements Disposable {
     }, this);
 
     eventMulticaster.addCaretListener(new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
         if (!worthBothering(editor.getDocument(), editor.getProject())) {
@@ -142,6 +144,7 @@ class DaemonListeners implements Disposable {
     myEditorTracker = editorTracker;
     EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
       private List<Editor> myActiveEditors = Collections.emptyList();
+      @Override
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
         List<Editor> activeEditors = getActiveEditors();
         if (!myActiveEditors.equals(activeEditors)) {
@@ -157,6 +160,7 @@ class DaemonListeners implements Disposable {
     myEditorTracker.addEditorTrackerListener(editorTrackerListener, this);
 
     EditorFactoryListener editorFactoryListener = new EditorFactoryAdapter() {
+      @Override
       public void editorCreated(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
@@ -179,13 +183,16 @@ class DaemonListeners implements Disposable {
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(changeHandler, changeHandler);
 
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         final FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
         if (editors.length == 0) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
             for (FileEditor fileEditor : editors) {
@@ -199,10 +206,12 @@ class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
       public void enteredDumbMode() {
         stopDaemonAndRestartAllFiles();
       }
 
+      @Override
       public void exitDumbMode() {
         stopDaemonAndRestartAllFiles();
       }
@@ -224,6 +233,7 @@ class DaemonListeners implements Disposable {
     TodoConfiguration.getInstance().addPropertyChangeListener(new MyTodoListener(), this);
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), this);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      @Override
       public void propertyChanged(VirtualFilePropertyEvent event) {
         String propertyName = event.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
@@ -257,6 +267,7 @@ class DaemonListeners implements Disposable {
 
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(project);
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
+      @Override
       public void scopesChanged() {
         myDaemonCodeAnalyzer.reloadScopes();
       }
@@ -266,6 +277,7 @@ class DaemonListeners implements Disposable {
     }
 
     ModalityStateListener modalityStateListener = new ModalityStateListener() {
+      @Override
       public void beforeModalityStateChanged(boolean entering) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
         boolean inModalContext = LaterInvocator.isInModalContext();
@@ -289,6 +301,7 @@ class DaemonListeners implements Disposable {
     return psiFile != null && psiFile.getOriginalFile() == psiFile;
   }
 
+  @Override
   public void dispose() {
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE);
     LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
@@ -335,12 +348,14 @@ class DaemonListeners implements Disposable {
   private class MyApplicationListener extends ApplicationAdapter {
     private boolean myDaemonWasRunning;
 
+    @Override
     public void beforeWriteActionStart(Object action) {
       myDaemonWasRunning = myDaemonCodeAnalyzer.isRunning();
       if (!myDaemonWasRunning) return; // we'll restart in writeActionFinished()
       stopDaemon(true);
     }
 
+    @Override
     public void writeActionFinished(Object action) {
       if (myDaemonWasRunning) {
         stopDaemon(true);
@@ -352,6 +367,7 @@ class DaemonListeners implements Disposable {
     private final Object myCutActionName =
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
+    @Override
     public void commandStarted(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (isUnderIgnoredAction(null)) return;
@@ -380,6 +396,7 @@ class DaemonListeners implements Disposable {
       return affectedDocument;
     }
 
+    @Override
     public void commandFinished(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (isUnderIgnoredAction(null)) return;
@@ -401,12 +418,14 @@ class DaemonListeners implements Disposable {
   }
 
   private class MyEditorColorsListener implements EditorColorsListener {
+    @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
       stopDaemonAndRestartAllFiles();
     }
   }
 
   private class MyTodoListener implements PropertyChangeListener {
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         stopDaemonAndRestartAllFiles();
@@ -415,10 +434,12 @@ class DaemonListeners implements Disposable {
   }
 
   private class MyProfileChangeListener extends ProfileChangeAdapter {
+    @Override
     public void profileChanged(Profile profile) {
       stopDaemonAndRestartAllFiles();
     }
 
+    @Override
     public void profileActivated(Profile oldProfile, Profile profile) {
       stopDaemonAndRestartAllFiles();
     }
@@ -427,13 +448,16 @@ class DaemonListeners implements Disposable {
   private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
+    @Override
     public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
       myEscPressed = action == escapeAction;
     }
 
+    @Override
     public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
+    @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {
       Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       //no need to stop daemon if something happened in the console
@@ -446,6 +470,7 @@ class DaemonListeners implements Disposable {
 
   private static class MyEditorMouseListener extends EditorMouseAdapter {
 
+    @Override
     public void mouseExited(EditorMouseEvent e) {
       if (!TooltipController.getInstance().shouldSurvive(e.getMouseEvent())) {
         DaemonTooltipUtil.cancelTooltips();
@@ -454,6 +479,7 @@ class DaemonListeners implements Disposable {
   }
 
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
+    @Override
     public void mouseMoved(EditorMouseEvent e) {
       Editor editor = e.getEditor();
       if (myProject != editor.getProject()) return;
@@ -483,6 +509,7 @@ class DaemonListeners implements Disposable {
       }
     }
 
+    @Override
     public void mouseDragged(EditorMouseEvent e) {
       TooltipController.getInstance().cancelTooltips();
     }

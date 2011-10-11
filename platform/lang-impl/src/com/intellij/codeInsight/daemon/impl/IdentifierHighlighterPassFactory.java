@@ -36,6 +36,7 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
   }
 
+  @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     if (editor.isOneLineMode()) return null;
 

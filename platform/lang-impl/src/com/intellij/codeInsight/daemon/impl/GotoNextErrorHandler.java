@@ -40,11 +40,13 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     myGoForward = goForward;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int caretOffset = editor.getCaretModel().getOffset();
     gotoNextError(project, editor, file, caretOffset);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -71,6 +73,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     final int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
 
     DaemonCodeAnalyzerImpl.processHighlights(document, project, minSeverity, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo info) {
         int startOffset = getNavigationPositionFor(info, document);
         if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
@@ -130,6 +133,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     scrollingModel.runActionOnScrollingFinished(
       new Runnable(){
+        @Override
         public void run() {
           int maxOffset = editor.getDocument().getTextLength() - 1;
           if (maxOffset == -1) return;
