@@ -15,9 +15,7 @@
  */
 package org.jetbrains.android.run;
 
-import com.android.prefs.AndroidLocation;
 import com.android.sdklib.internal.avd.AvdManager;
-import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.ui.ListCellRendererWrapper;
@@ -25,15 +23,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.android.actions.RunAndroidSdkManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AvdsNotSupportedException;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,34 +104,20 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
           Messages.showErrorDialog(myPanel, ExecutionBundle.message("module.not.specified.error.text"));
           return;
         }
+
         AndroidFacet facet = AndroidFacet.getInstance(module);
         if (facet == null) {
           Messages.showErrorDialog(myPanel, AndroidBundle.message("no.facet.error", module.getName()));
           return;
         }
-        AvdManager manager = null;
-        try {
-          manager = facet.getAvdManager();
+
+        final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+        if (platform == null) {
+          Messages.showErrorDialog(myPanel, AndroidBundle.message("android.compilation.error.specify.platform", module.getName()));
+          return;
         }
-        catch (AvdsNotSupportedException e1) {
-          Messages.showInfoMessage(project, AndroidBundle.message("sdk.11.doesnt.support.avd.error"), CommonBundle.getErrorTitle());
-        }
-        catch (AndroidLocation.AndroidLocationException e1) {
-          Messages.showErrorDialog(project, e1.getMessage(), CommonBundle.getErrorTitle());
-        }
-        if (manager != null) {
-          AvdChooser chooser = new AvdChooser(project, facet, manager, false, true);
-          String preferredAvdName = (String)myAvdCombo.getComboBox().getSelectedItem();
-          if (preferredAvdName == null) preferredAvdName = "";
-          chooser.setSelectedAvd(preferredAvdName);
-          chooser.show();
-          updateAvds();
-          AvdManager.AvdInfo avd = chooser.getSelectedAvd();
-          String item = avd != null ? avd.getName() : "";
-          if (chooser.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            myAvdCombo.getComboBox().setSelectedItem(item);
-          }
-        }
+
+        RunAndroidSdkManagerAction.runTool(project, platform.getSdk().getLocation());
       }
     });
     myNetworkSpeedCombo.setModel(new DefaultComboBoxModel(NETWORK_SPEEDS));
