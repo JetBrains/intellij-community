@@ -140,6 +140,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject,getDisposable());
+    myDiffPanel.setRequestFocus(false);
 
     myRevisions.addAll(session.getRevisionList());
     final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
@@ -209,6 +210,11 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     });
 
     setTitle(VcsBundle.message("dialog.title.history.for.file", file.getName()));
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
   }
 
   public void show() {
