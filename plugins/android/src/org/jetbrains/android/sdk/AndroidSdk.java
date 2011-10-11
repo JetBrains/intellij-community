@@ -366,13 +366,13 @@ public abstract class AndroidSdk {
 
         final long timeout = 8000;
 
-        while (!myFinished && !myCanceled) {
+        while (!myFinished && !myCanceled && !indicator.isCanceled()) {
           long wastedTime = System.currentTimeMillis() - startTime;
           if (wastedTime >= timeout) {
             break;
           }
           try {
-            myLock.wait(timeout - wastedTime);
+            myLock.wait(Math.min(timeout - wastedTime, 500));
           }
           catch (InterruptedException e) {
             break;
