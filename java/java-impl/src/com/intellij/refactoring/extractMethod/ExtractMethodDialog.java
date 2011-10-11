@@ -201,7 +201,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     });
 
     myVisibilityPanel = createVisibilityPanel();
-    final JPanel visibilityAndName = new JPanel(new BorderLayout());
+    final JPanel visibilityAndName = new JPanel(new BorderLayout(2, 0));
     visibilityAndName.add(myVisibilityPanel, BorderLayout.WEST);
     visibilityAndName.add(namePanel, BorderLayout.CENTER);
     main.add(visibilityAndName, BorderLayout.CENTER);
