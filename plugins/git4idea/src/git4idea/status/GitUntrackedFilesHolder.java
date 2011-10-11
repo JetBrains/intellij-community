@@ -30,6 +30,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -237,8 +238,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       if (myRepositoryFiles.isIndexFile(path)) {
         indexChanged = true;
       }
-      else if (isCreateDeleteEvent(event) && notIgnored(file)) {
-        filesToRefresh.add(file);
+      else {
+        VirtualFile affectedFile = getAffectedFile(event);
+        if (notIgnored(affectedFile)) {
+          filesToRefresh.add(affectedFile);
+        }
       }
     }
 
@@ -255,13 +259,20 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
   }
 
-  private boolean notIgnored(VirtualFile file) {
-    return belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file);
+  @Nullable
+  private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
+    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+      return event.getFile();
+    } else if (event instanceof VFileCopyEvent) {
+      VFileCopyEvent copyEvent = (VFileCopyEvent) event;
+      return copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
+    }
+    return null;
   }
 
-  private static boolean isCreateDeleteEvent(VFileEvent event) {
-    return event instanceof VFileCreateEvent || event instanceof VFileCopyEvent ||
-           event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent;
+
+  private boolean notIgnored(@Nullable VirtualFile file) {
+    return file != null && belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file);
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
