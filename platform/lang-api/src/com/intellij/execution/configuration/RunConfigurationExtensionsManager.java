@@ -1,6 +1,7 @@
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.Maps;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -134,7 +135,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   public void patchCommandLine(@NotNull final U configuration,
                                final RunnerSettings runnerSettings,
                                @NotNull final GeneralCommandLine cmdLine,
-                               @NotNull final AbstractRunConfiguration.RunnerType type) {
+                               @NotNull final AbstractRunConfiguration.RunnerType type) throws ExecutionException {
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration, runnerSettings)) {
       extension.patchCommandLine(configuration, runnerSettings, cmdLine, type);

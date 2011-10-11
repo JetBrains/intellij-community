@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configuration;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -64,7 +65,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
 
   protected abstract void patchCommandLine(@NotNull final T configuration,
                                            RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
-                                           @NotNull final AbstractRunConfiguration.RunnerType type);
+                                           @NotNull final AbstractRunConfiguration.RunnerType type) throws ExecutionException;
 
   /**
    * Validate extensions after general configuration validation passed
