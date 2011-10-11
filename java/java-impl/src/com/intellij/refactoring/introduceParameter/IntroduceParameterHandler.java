@@ -190,7 +190,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       return;
     }
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox("Use super method", true);
+    final JCheckBox superMethod = new JCheckBox("Refactor super method", true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(validEnclosingMethods.toArray());
