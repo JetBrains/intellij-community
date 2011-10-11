@@ -1,10 +1,8 @@
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
@@ -14,20 +12,17 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
-public class CompileContext implements MessageHandler, UserDataHolder {
+public class CompileContext extends UserDataHolderBase implements MessageHandler{
 
   private final CompileScope myScope;
   private final boolean myIsMake;
   private final MessageHandler myDelegateMessageHandler;
-  private final Map<Key, Object> myUserData = new ConcurrentHashMap<Key, Object>();
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
 
@@ -77,14 +72,6 @@ public class CompileContext implements MessageHandler, UserDataHolder {
 
   public void processMessage(BuildMessage msg) {
     myDelegateMessageHandler.processMessage(msg);
-  }
-
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return (T)myUserData.get(key);
-  }
-
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    myUserData.put(key, value);
   }
 
   public void processFiles(ModuleChunk chunk, FileProcessor processor) throws Exception {

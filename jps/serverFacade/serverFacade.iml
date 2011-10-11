@@ -21,6 +21,8 @@
     <orderEntry type="library" name="idea-util" level="project" />
     <orderEntry type="module" module-name="model" />
     <orderEntry type="library" name="annotations" level="project" />
+    <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="library" name="Javac2" level="project" />
   </component>
 </module>
 

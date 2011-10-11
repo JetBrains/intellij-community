@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.tools.*;
 import java.io.File;
@@ -35,7 +36,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     myContext = context;
   }
 
-  // todo: check if reading source files can be optimized
+// todo: check if reading source files can be optimized
 
   public boolean setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) {
     for (File outputDir : outputDirToSrcRoots.keySet()) {
@@ -74,7 +75,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
       throw new IllegalArgumentException("Invalid kind " + kind);
     }
-    return getFileForOutput(location, kind, externalizeFileName(className, kind), sibling);
+    return getFileForOutput(location, kind, externalizeFileName(className, kind), className, sibling);
   }
 
   public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
@@ -86,10 +87,10 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       name.append(externalizeFileName(packageName)).append(File.separatorChar).append(relativeName);
     }
     final String fileName = name.toString();
-    return getFileForOutput(location, getKind(fileName), fileName, sibling);
+    return getFileForOutput(location, getKind(fileName), fileName, null, sibling);
   }
 
-  private OutputFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, FileObject sibling) throws IOException {
+  private OutputFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, FileObject sibling) throws IOException {
     JavaFileObject src = null;
     if (sibling instanceof JavaFileObject) {
       final JavaFileObject javaFileObject = (JavaFileObject)sibling;
@@ -114,7 +115,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       }
     }
     final File file = (dir == null? new File(fileName) : new File(dir, fileName));
-    return new OutputFileObject(myContext, file, kind, src);
+    return new OutputFileObject(myContext, file, kind, className, src);
   }
 
   private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {

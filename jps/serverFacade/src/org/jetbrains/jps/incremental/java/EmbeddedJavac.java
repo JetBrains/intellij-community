@@ -1,10 +1,9 @@
 package org.jetbrains.jps.incremental.java;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.CompileContext;
 
 import javax.tools.*;
-import java.io.*;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -21,9 +20,12 @@ public class EmbeddedJavac {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
 
-  public static interface OutputConsumer extends DiagnosticListener<JavaFileObject> {
+  public static interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
     void outputLineAvailable(String line);
-    void classFileWritten(OutputFileObject output);
+  }
+
+  public static interface OutputFileConsumer {
+    void save(OutputFileObject fileObject);
   }
 
   public static interface ClassPostProcessor {
@@ -40,12 +42,8 @@ public class EmbeddedJavac {
     myClassProcessors.add(processor);
   }
 
-  public boolean compile(final Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> bootclasspath, File outputDir, final CompileContext compileContext, final OutputConsumer outConsumer) {
-    return compile(options, sources, classpath, bootclasspath, Collections.singletonMap(outputDir, Collections.<File>emptySet()), compileContext, outConsumer);
-  }
-
-  public boolean compile(Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, CompileContext compileContext, final OutputConsumer outConsumer) {
-    final FileManagerContext context = new FileManagerContext(compileContext, outConsumer);
+  public boolean compile(Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, CompileContext compileContext, final DiagnosticOutputConsumer outConsumer, final OutputFileConsumer outputSink) {
+    final FileManagerContext context = new FileManagerContext(compileContext, outConsumer, outputSink); // todo
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
@@ -100,18 +98,23 @@ public class EmbeddedJavac {
     return result;
   }
 
-
   private class FileManagerContext implements JavacFileManager.Context {
 
     private final StandardJavaFileManager myStdManager;
     private final CompileContext myCompileContext;
-    private final OutputConsumer myOutConsumer;
+    private final DiagnosticOutputConsumer myOutConsumer;
+    private final OutputFileConsumer myOutputFileSink;
     private int myTasksInProgress = 0;
     private final Object myCounterLock = new Object();
 
-    public FileManagerContext(CompileContext compileContext, OutputConsumer outConsumer) {
+    public FileManagerContext(CompileContext compileContext, DiagnosticOutputConsumer outConsumer, OutputFileConsumer sink) {
       myCompileContext = compileContext;
       myOutConsumer = outConsumer;
+      myOutputFileSink = sink != null? sink : new OutputFileConsumer() {
+        public void save(OutputFileObject fileObject) {
+          throw new RuntimeException("Output sink for compiler was not specified");
+        }
+      };
       myStdManager = myCompiler.getStandardFileManager(outConsumer, Locale.US, null);
     }
 
@@ -134,7 +137,7 @@ public class EmbeddedJavac {
             //mySequentialTaskExecutor.submit(new Runnable() {
             //  public void run() {
             try {
-              save(cls);
+              myOutputFileSink.save(cls);
             }
             finally {
               decTaskCount();
@@ -178,44 +181,5 @@ public class EmbeddedJavac {
         processor.process(myCompileContext, cls);
       }
     }
-
-    private void save(OutputFileObject cls) {
-      try {
-        final File file = cls.getFile();
-        final OutputFileObject.Content content = cls.getContent();
-        if (content != null) {
-          writeToFile(file, content.getBuffer(), content.getOffset(), content.getLength(), false);
-          myOutConsumer.classFileWritten(cls);
-        }
-        else {
-          myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Missing content for file " + file));
-        }
-      }
-      catch (IOException e) {
-        myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
-      }
-    }
-  }
-
-  private static void writeToFile(@NotNull File file, @NotNull byte[] text, final int off, final int len, boolean append) throws IOException {
-    createParentDirs(file);
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file, append));
-    try {
-      stream.write(text, off, len);
-    }
-    finally {
-      stream.close();
-    }
-  }
-
-  private static boolean createParentDirs(@NotNull File file) {
-    if (!file.exists()) {
-      String parentDirPath = file.getParent();
-      if (parentDirPath != null) {
-        final File parentFile = new File(parentDirPath);
-        return parentFile.exists() && parentFile.isDirectory() || parentFile.mkdirs();
-      }
-    }
-    return true;
   }
 }
