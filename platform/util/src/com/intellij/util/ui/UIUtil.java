@@ -1803,6 +1803,7 @@ public class UIUtil {
 
   public static class MacTreeUI extends BasicTreeUI {
     @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
+    @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
     private static final Icon TREE_COLLAPSED_ICON = getTreeCollapsedIcon();
     private static final Icon TREE_EXPANDED_ICON = getTreeExpandedIcon();
@@ -2015,6 +2016,12 @@ public class UIUtil {
         rowGraphics.setClip(clipBounds);
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
+        Color background = tree.getBackground();
+
+        if ((row % 2) == 0 && Boolean.TRUE.equals(tree.getClientProperty(STRIPED_CLIENT_PROPERTY))) {
+          background = UIUtil.DECORATED_ROW_BG_COLOR;
+        }
+        
         if (sourceList != null && (Boolean)sourceList) {
           if (selected) {
             if (tree.hasFocus()) {
@@ -2025,14 +2032,14 @@ public class UIUtil {
             }
           }
           else {
-            rowGraphics.setColor(tree.getBackground());
+            rowGraphics.setColor(background);
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
         }
         else {
           Color bg = tree.hasFocus() ? getTreeSelectionBackground() : getListUnfocusedSelectionBackground();
           if (!selected) {
-            bg = tree.getBackground();
+            bg = background;
           }
 
           rowGraphics.setColor(bg);

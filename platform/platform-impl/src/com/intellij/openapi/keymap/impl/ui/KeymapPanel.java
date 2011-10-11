@@ -19,9 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -40,30 +40,24 @@ import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FilterComponent;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -71,7 +65,6 @@ import java.util.List;
 
 public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JComboBox myKeymapList;
-  private JBList myShortcutsList;
 
   private final DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();
 
@@ -81,10 +74,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JButton myDeleteButton;
   private JButton myResetToDefault;
 
-  private JButton myAddKeyboardShortcutButton;
-  private JButton myAddMouseShortcutButton;
-  private JButton myRemoveShortcutButton;
-  @NonNls private JEditorPane myDescription;
   private JLabel myBaseKeymapLabel;
 
   private ActionsTree myActionsTree;
@@ -172,9 +161,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myCopyButton.setEnabled(false);
     myDeleteButton.setEnabled(false);
     myResetToDefault.setEnabled(false);
-    myAddKeyboardShortcutButton.setEnabled(true);
-    myAddMouseShortcutButton.setEnabled(true);
-    myRemoveShortcutButton.setEnabled(true);
+
     if (myExportButton != null) {
       myExportButton.setEnabled(false);
     }
@@ -198,9 +185,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     }
     if(mySelectedKeymap.canModify()) {
       myDeleteButton.setEnabled(true);
-      myAddKeyboardShortcutButton.setEnabled(true);
-      myAddMouseShortcutButton.setEnabled(true);
-      myRemoveShortcutButton.setEnabled(true);
+
       if (!getSchemesManager().isShared(mySelectedKeymap)) {
         if (myExportButton != null) {
           myExportButton.setEnabled(true);
@@ -209,8 +194,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     }
 
     myActionsTree.reset(mySelectedKeymap, getCurrentQuickListIds());
-
-    updateShortcutsList();
   }
 
   private KeymapImpl getSelectedKeymap() {
@@ -226,37 +209,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     return result;
   }
 
-  private JPanel createShortcutsPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    myShortcutsList = new JBList(new DefaultListModel());
-    myShortcutsList.getEmptyText().setText(KeyMapBundle.message("shortcuts.keymap.no.shortcuts"));
-
-    myShortcutsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myShortcutsList.setCellRenderer(new ShortcutListRenderer());
-
-    JComponent separator = SeparatorFactory.createSeparator(KeyMapBundle.message("shortcuts.keymap.label"), myShortcutsList);
-    panel.add(separator, new GridBagConstraints(0,0,2,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myShortcutsList);
-    scrollPane.setPreferredSize(new Dimension(160, 200));
-    panel.add(scrollPane, new GridBagConstraints(0,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 2), 0, 0));
-
-    panel.add(
-      createShortcutsButtonsPanel(),
-      new GridBagConstraints(1,1,1,1,0,0,GridBagConstraints.NORTH,GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0)
-    );
-
-    myActionsTree.addTreeSelectionListener(
-      new TreeSelectionListener() {
-        public void valueChanged(TreeSelectionEvent e) {
-          updateShortcutsList();
-        }
-      }
-    );
-
-    return panel;
-  }
 
   private JPanel createKeymapButtonsPanel() {
     final JPanel panel = new JPanel();
@@ -362,22 +314,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
   private JPanel createKeymapSettingsPanel() {
     JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
+    panel.setLayout(new BorderLayout());
 
     myActionsTree = new ActionsTree();
-    JComponent component = myActionsTree.getComponent();
-    component.setPreferredSize(new Dimension(100, 300));
 
-    panel.add(createToolbarPanel(), new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
-    panel.add(component, new GridBagConstraints(0,1,1,1,1,1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
-
-    JPanel rightPanel = new JPanel(new GridLayout(2, 1, 0, 5));
-    rightPanel.add(createDescriptionPanel());
-    rightPanel.add(createShortcutsPanel());
-
-    panel.add(rightPanel, new GridBagConstraints(1,1,1,1,0,1,GridBagConstraints.WEST, GridBagConstraints.VERTICAL,new Insets(0,5,0,0),0,0));
+    panel.add(createToolbarPanel(), BorderLayout.NORTH);
+    panel.add(myActionsTree.getComponent(), BorderLayout.CENTER);
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
+
+    myActionsTree.getTree().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          editSelection(e);
+        }
+      }
+    });
     return panel;
   }
 
@@ -405,6 +358,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     };
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
+    
+    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", IconLoader.getIcon("/actions/properties.png")) {
+      {
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myActionsTree.getTree());
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        final String actionId = myActionsTree.getSelectedActionId();
+        e.getPresentation().setEnabled(actionId != null);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        editSelection(e.getInputEvent());
+      }
+    });
 
     panel.add(toolbar, new GridBagConstraints(0,0,1,1,1,0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
     group = new DefaultActionGroup();
@@ -458,19 +428,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     });
 
     panel.add(searchToolbar, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0,0));
-    return panel;
-  }
-
-  private JPanel createDescriptionPanel() {
-    JPanel panel = new JPanel(new BorderLayout()){
-      public Dimension getMinimumSize() {
-        return new Dimension(300, -1);
-      }
-    };
-    panel.add(SeparatorFactory.createSeparator(KeyMapBundle.message("action.description.ide.border.factory.title"), null), BorderLayout.NORTH);
-    myDescription = new JEditorPane(UIUtil.HTML_MIME, "<html><body></body></html>");
-    myDescription.setEditable(false);
-    panel.add(ScrollPaneFactory.createScrollPane(myDescription), BorderLayout.CENTER);
     return panel;
   }
 
@@ -546,46 +503,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myActionsTree.filter(option, getCurrentQuickListIds());
   }
 
-  private JPanel createShortcutsButtonsPanel() {
-    JPanel panel = new JPanel(new GridLayout(3, 1, 0, 4));
-    panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    myAddKeyboardShortcutButton = new JButton(KeyMapBundle.message("add.keyboard.shortcut.button"));
-    panel.add(myAddKeyboardShortcutButton);
-
-    myAddMouseShortcutButton=new JButton(KeyMapBundle.message("add.mouse.shortcut.button"));
-    panel.add(myAddMouseShortcutButton);
-
-    myRemoveShortcutButton = new JButton(KeyMapBundle.message("remove.shortcut.button"));
-    panel.add(myRemoveShortcutButton);
-
-    myAddKeyboardShortcutButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          addKeyboardShortcut();
-        }
-      }
-    );
-
-    myAddMouseShortcutButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          addMouseShortcut();
-        }
-      }
-    );
-
-    myRemoveShortcutButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          removeShortcut();
-        }
-      }
-    );
-
-    return panel;
-  }
-
-  private void addKeyboardShortcut() {
+  private void addKeyboardShortcut(Shortcut shortcut) {
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -595,8 +513,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(this, actionId, getCurrentQuickListIds());
 
-    Shortcut selected = (Shortcut)myShortcutsList.getSelectedValue();
-    KeyboardShortcut selectedKeyboardShortcut = selected instanceof KeyboardShortcut ? (KeyboardShortcut)selected : null;
+
+    KeyboardShortcut selectedKeyboardShortcut = shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null;
 
     dialog.setData(mySelectedKeymap, selectedKeyboardShortcut);
     dialog.show();
@@ -623,9 +541,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
       if(result == 0) {
         for (String id : conflicts.keySet()) {
-          ArrayList<KeyboardShortcut> list = conflicts.get(id);
-          for (KeyboardShortcut shortcut : list) {
-            mySelectedKeymap.removeShortcut(id, shortcut);
+          for (KeyboardShortcut s : conflicts.get(id)) {
+            mySelectedKeymap.removeShortcut(id, s);
           }
         }
       }
@@ -634,13 +551,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
       }
     }
 
-    // if shortcut is aleady registered to this action, just select it in the list
-
+    // if shortcut is already registered to this action, just select it in the list
     Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
-      if (shortcut.equals(keyboardShortcut)) {
-        myShortcutsList.setSelectedIndex(i);
+    for (Shortcut s : shortcuts) {
+      if (s.equals(keyboardShortcut)) {
         return;
       }
     }
@@ -649,8 +563,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     if (StringUtil.startsWithChar(actionId, '$')) {
       mySelectedKeymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), keyboardShortcut);
     }
-    updateShortcutsList();
-    myShortcutsList.setSelectedIndex(myShortcutsList.getModel().getSize()-1);
 
     repaintLists();
     processCurrentKeymapChanged();
@@ -666,7 +578,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     }
   }
 
-  private void addMouseShortcut(){
+  private void addMouseShortcut(Shortcut shortcut){
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -674,7 +586,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     if (!createKeymapCopyIfNeeded()) return;
 
-    Shortcut shortcut = (Shortcut)myShortcutsList.getSelectedValue();
     MouseShortcut mouseShortcut = shortcut instanceof MouseShortcut ? (MouseShortcut)shortcut : null;
 
     MouseShortcutDialog dialog = new MouseShortcutDialog(
@@ -719,9 +630,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     // if shortcut is aleady registered to this action, just select it in the list
 
     Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
-    for (int i = 0; i < shortcuts.length; i++) {
-      if (shortcuts[i].equals(mouseShortcut)) {
-        myShortcutsList.setSelectedIndex(i);
+    for (Shortcut shortcut1 : shortcuts) {
+      if (shortcut1.equals(mouseShortcut)) {
         return;
       }
     }
@@ -730,8 +640,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     if (StringUtil.startsWithChar(actionId, '$')) {
       mySelectedKeymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), mouseShortcut);
     }
-    updateShortcutsList();
-    myShortcutsList.setSelectedIndex(myShortcutsList.getModel().getSize()-1);
 
     repaintLists();
     processCurrentKeymapChanged();
@@ -777,7 +685,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     return true;
   }
 
-  private void removeShortcut() {
+  private void removeShortcut(Shortcut shortcut) {
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -785,24 +693,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     if (!createKeymapCopyIfNeeded()) return;
 
-    Shortcut shortcut = (Shortcut)myShortcutsList.getSelectedValue();
-    if(shortcut == null) {
-      return;
-    }
-    int selectedIndex = myShortcutsList.getSelectedIndex();
+    if(shortcut == null) return;
+
     mySelectedKeymap.removeShortcut(actionId, shortcut);
     if (StringUtil.startsWithChar(actionId, '$')) {
       mySelectedKeymap.removeShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), shortcut);
-    }
-
-    updateShortcutsList();
-
-    int count = myShortcutsList.getModel().getSize();
-    if(count > 0) {
-      myShortcutsList.setSelectedIndex(Math.max(selectedIndex-1, 0));
-    }
-    else {
-      myShortcutsList.clearSelection();
     }
 
     repaintLists();
@@ -849,7 +744,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     if(keymap == null) {
       return;
     }
-    int result = Messages.showYesNoDialog(this, KeyMapBundle.message("delete.keymap.dialog.message"), KeyMapBundle.message("delete.keymap.dialog.title"), Messages.getWarningIcon());
+    int result = Messages.showYesNoDialog(this, KeyMapBundle.message("delete.keymap.dialog.message"),
+                                          KeyMapBundle.message("delete.keymap.dialog.title"), Messages.getWarningIcon());
     if (result != 0) {
       return;
     }
@@ -871,50 +767,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     return "preferences.keymap";
   }
 
-  private void updateShortcutsList() {
-    DefaultListModel shortcutsModel = (DefaultListModel)myShortcutsList.getModel();
-    shortcutsModel.clear();
-    String actionId = myActionsTree.getSelectedActionId();
-    myDescription.setText(" ");
-    if (actionId != null && mySelectedKeymap != null) {
-      QuickList list = myActionsTree.getSelectedQuickList();
-      if (list != null) {
-        String description = list.getDescription().trim();
-        if (description.length() > 0) {
-          myDescription.setText(prepareDescription(description));
-        }
-      } else {
-        AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
-        if (action != null) {
-          String description = action.getTemplatePresentation().getDescription();
-          if (description != null && description.trim().length() > 0) {
-            myDescription.setText(prepareDescription(description));
-          }
-        }
-      }
-      Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
-      for (Shortcut shortcut : shortcuts) {
-        shortcutsModel.addElement(shortcut);
-      }
-      if(shortcutsModel.size() > 0) {
-        myShortcutsList.setSelectedIndex(0);
-      }
-
-      myAddKeyboardShortcutButton.setEnabled(true);
-      myAddMouseShortcutButton.setEnabled(true);
-      myRemoveShortcutButton.setEnabled(true);
-    }
-    else {
-      myAddKeyboardShortcutButton.setEnabled(false);
-      myAddMouseShortcutButton.setEnabled(false);
-      myRemoveShortcutButton.setEnabled(false);
-    }
-  }
-
-  private @NonNls String prepareDescription(final String description) {
-    return "<html><body>" + (myFilterComponent != null ? SearchUtil.markup(description, myFilterComponent.getFilter()) : description) + "</body></html>";
-  }
-
   private static final class MyKeymapRenderer extends ListCellRendererWrapper<Keymap> {
     public MyKeymapRenderer(final ListCellRenderer listCellRenderer) {
       super(listCellRenderer);
@@ -929,17 +781,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
         }
         setText(name);
       }
-    }
-  }
-
-  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
-  private static final class ShortcutListRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      Shortcut shortcut = (Shortcut)value;
-      setText(KeymapUtil.getShortcutText(shortcut));
-      setIcon(KeymapUtil.getShortcutIcon(shortcut));
-      return this;
     }
   }
 
@@ -1070,5 +911,70 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     if (myFilterComponent != null) {
       myFilterComponent.dispose();
     }
+  }
+
+  private void editSelection(InputEvent e) {
+    final String actionId = myActionsTree.getSelectedActionId();
+    if (actionId == null) return;
+
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    
+    group.add(new AnAction("Add Keyboard Shortcut") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Shortcut firstKeyboard = null;
+        for (Shortcut shortcut : shortcuts) {
+          if (shortcut instanceof KeyboardShortcut) {
+            firstKeyboard = shortcut;
+            break;
+          }
+        }
+
+        addKeyboardShortcut(firstKeyboard);
+      }
+    });
+    
+    group.add(new AnAction("Add Mouse Shortcut") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Shortcut firstMouse = null;
+        for (Shortcut shortcut : shortcuts) {
+          if (shortcut instanceof MouseShortcut) {
+            firstMouse = shortcut;
+            break;
+          }
+        }
+        addMouseShortcut(firstMouse);
+      }
+    });
+
+    group.addSeparator();
+
+    for (final Shortcut shortcut : shortcuts) {
+      group.add(new AnAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          removeShortcut(shortcut);
+        }
+      });
+    }
+
+    final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup("Edit Shortcuts",
+                              group,
+                              dataContext,
+                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                              true);
+
+    if (e instanceof MouseEvent) {
+      popup.show(new RelativePoint((MouseEvent)e));
+    }
+    else {
+      popup.showInBestPositionFor(dataContext);
+    }
+
   }
 }
