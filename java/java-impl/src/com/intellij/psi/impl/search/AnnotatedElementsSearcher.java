@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -16,6 +19,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -36,15 +40,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     final SearchScope useScope = p.getScope();
     Class<? extends PsiModifierListOwner>[] types = p.getTypes();
 
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
-    final Collection<? extends PsiElement> annotations = ApplicationManager.getApplication().runReadAction(
-      new Computable<Collection<? extends PsiElement>>() {
-        @Override
-        public Collection<? extends PsiElement> compute() {
-          return JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
-        }
-      });
-    for (PsiElement elt : annotations) {
+    for (PsiElement elt : getAnnotationCandidates(annClass, useScope)) {
       if (notAnnotation(elt)) continue;
 
       final PsiAnnotation ann = (PsiAnnotation)elt;
@@ -85,6 +81,30 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     }
 
     return true;
+  }
+
+  private static Collection<? extends PsiElement> getAnnotationCandidates(final PsiClass annClass, SearchScope useScope) {
+    AccessToken token = ReadAction.start();
+    try {
+      if (useScope instanceof GlobalSearchScope) {
+        return JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), (GlobalSearchScope)useScope);
+      }
+      final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+      for (PsiElement element : ((LocalSearchScope)useScope).getScope()) {
+        element.accept(new PsiRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            if (element instanceof PsiAnnotation) {
+              result.add((PsiAnnotation)element);
+            }
+          }
+        });
+      }
+      return result;
+    }
+    finally {
+      token.finish();
+    }
   }
 
   public static boolean isInstanceof(PsiElement owner, Class<? extends PsiModifierListOwner>[] types) {

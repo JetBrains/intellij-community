@@ -25,6 +25,7 @@ import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndexKey;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -40,7 +41,7 @@ public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExte
     return JavaStubIndexKeys.ANONYMOUS_BASEREF;
   }
 
-  public Collection<PsiAnonymousClass> get(final String s, final Project project, final GlobalSearchScope scope) {
+  public Collection<PsiAnonymousClass> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }
 }
