@@ -44,7 +44,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FilterComponent;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
@@ -948,9 +951,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
       KeymapImpl keymap = (KeymapImpl)keymap1;
       if (keymap.canModify()) {
         keymap = keymap.copy(true);
-      }
-      else if (keymap.getPresentableName().startsWith("$")) {
-        continue;
       }
 
       myKeymapListModel.addElement(keymap);
