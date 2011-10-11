@@ -39,12 +39,14 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
                                                                  new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "GeneralHighlightingPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
