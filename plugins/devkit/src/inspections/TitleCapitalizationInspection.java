@@ -63,27 +63,52 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if ("setTitle".equals(methodExpression.getReferenceName())) {
-          PsiMethod psiMethod = expression.resolveMethod();
-          if (psiMethod == null) {
-            return;
-          }
-          PsiClass containingClass = psiMethod.getContainingClass();
-          if (containingClass == null || !"com.intellij.openapi.ui.DialogWrapper".equals(containingClass.getQualifiedName())) {
-            return;
-          }
+        String calledName = methodExpression.getReferenceName();
+        if (calledName == null) return;
+        if ("setTitle".equals(calledName)) {
+          if (!isMethodOfClass(expression, "com.intellij.openapi.ui.DialogWrapper")) return;
           PsiExpression[] args = expression.getArgumentList().getExpressions();
           if (args.length == 0) {
             return;
           }
           String titleValue = getTitleValue(args [0]);
-          if (titleValue != null && !hasTitleCapitalization(titleValue)) {
+          if (!hasTitleCapitalization(titleValue)) {
             holder.registerProblem(args [0], "Dialog title '" + titleValue + "' is not properly capitalized. It should have title capitalization",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
-        } 
+        }
+        else if (calledName.startsWith("show") && (calledName.endsWith("Dialog") || calledName.endsWith("Message"))) {
+          if (!isMethodOfClass(expression, "com.intellij.openapi.ui.Messages")) return;
+          PsiExpression[] args = expression.getArgumentList().getExpressions();
+          PsiMethod psiMethod = expression.resolveMethod();
+          assert psiMethod != null;
+          PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+          for (int i = 0, parametersLength = parameters.length; i < parametersLength; i++) {
+            PsiParameter parameter = parameters[i];
+            if (parameter.getName().equals("title") && i < args.length) {
+              String titleValue = getTitleValue(args [i]);
+              if (!hasTitleCapitalization(titleValue)) {
+                holder.registerProblem(args [i], "Message title '" + titleValue + "' is not properly capitalized. It should have title capitalization",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              }
+              break;
+            }
+          }
+        }
       }
     };
+  }
+
+  private static boolean isMethodOfClass(PsiMethodCallExpression expression, String className) {
+    PsiMethod psiMethod = expression.resolveMethod();
+    if (psiMethod == null) {
+      return false;
+    }
+    PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null || !className.equals(containingClass.getQualifiedName())) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -135,6 +160,10 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static boolean hasTitleCapitalization(String value) {
+    if (value == null) {
+      return true;
+    }
+    value = value.replace("&", "");
     return StringUtil.wordsToBeginFromUpperCase(value).equals(value);
   }
 }
