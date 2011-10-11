@@ -44,7 +44,7 @@ public class ResourcesBuilder extends Builder{
       context.processFiles(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws Exception {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {
-            if (!context.isMake() || tsStorage.getStamp(file) != file.lastModified()) {
+            if (isFileDirty(file, context, tsStorage)) {
               try {
                 context.processMessage(new ProgressMessage("Copying " + file.getPath()));
                 copyResource(context, module, file, sourceRoot);
