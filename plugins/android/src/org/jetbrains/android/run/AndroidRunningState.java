@@ -37,6 +37,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -55,6 +56,7 @@ import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +73,8 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDOUT;
  */
 public abstract class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
+
+  @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
 
   public static final int WAITING_TIME = 10;
 
@@ -91,7 +95,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final Object myDebugLock = new Object();
 
   @NotNull
-  private volatile IDevice[] myTargetDevices;
+  private volatile IDevice[] myTargetDevices = new IDevice[0];
 
   private volatile String myAvdName;
   private volatile boolean myDebugMode;
@@ -111,6 +115,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private ConsoleView myConsole;
   private Runnable myRestarter;
   private final TargetChooser myTargetChooser;
+  private final boolean mySupportMultipleDevices;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -156,6 +161,18 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       console = attachConsole();
     }
     myConsole = console;
+
+    if (myTargetChooser instanceof ManualTargetChooser) {
+      myTargetDevices = chooseDevicesManually();
+      if (myTargetDevices.length > 0) {
+        PropertiesComponent.getInstance(myFacet.getModule().getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(
+          myTargetDevices));
+      }
+      if (myTargetDevices.length == 0) {
+        return null;
+      }
+    }
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         start();
@@ -242,15 +259,13 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                              @NotNull String commandLine,
                              @NotNull String packageName,
                              AndroidApplicationLauncher applicationLauncher,
-                             Map<AndroidFacet, String> additionalFacet2PackageName) throws ExecutionException {
+                             Map<AndroidFacet, String> additionalFacet2PackageName,
+                             boolean supportMultipleDevices) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
     
     myTargetChooser = targetChooser;
-
-    myTargetDevices = targetChooser instanceof PredefinedTargetChooser 
-                      ? ((PredefinedTargetChooser)targetChooser).getDevices() 
-                      : new IDevice[0];
+    mySupportMultipleDevices = supportMultipleDevices;
 
     myAvdName = targetChooser instanceof EmulatorTargetChooser
                 ? ((EmulatorTargetChooser)targetChooser).getAvd()
@@ -342,7 +357,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private void start() {
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
-      chooseOrLaunchDevice();
+      if (!chooseOrLaunchDevice()) {
+        return;
+      }
     }
     if (myDebugMode) {
       AndroidDebugBridge.addClientChangeListener(this);
@@ -366,7 +383,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     deviceListener[0] = prepareAndStartAppWhenDeviceIsOnline();
   }
 
-  private void chooseOrLaunchDevice() {
+  private boolean chooseOrLaunchDevice() {
     IDevice targetDevice = chooseDeviceAutomaticaly();
     if (targetDevice != null) {
       myTargetDevices = new IDevice[] {targetDevice};
@@ -380,7 +397,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
         }
         else if (getProcessHandler().isStartNotified()) {
+          message("Canceled", STDERR);
           getProcessHandler().destroyProcess();
+          return false;
         }
       }
       else {
@@ -390,7 +409,37 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     else {
       message("USB device not found", STDERR);
       getProcessHandler().destroyProcess();
+      return false;
     }
+    return true;
+  }
+
+  @NotNull
+  private IDevice[] chooseDevicesManually() {
+    String value = PropertiesComponent.getInstance(myFacet.getModule().getProject()).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
+    String[] selectedSerials = value != null ? fromString(value) : null;
+    DeviceChooser chooser = new DeviceChooser(myFacet, mySupportMultipleDevices, selectedSerials);
+    chooser.show();
+    IDevice[] devices = chooser.getSelectedDevices();
+    if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE || devices.length == 0) {
+      return DeviceChooser.EMPTY_DEVICE_ARRAY;
+    }
+    return devices;
+  }
+
+  private static String toString(IDevice[] devices) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0, n = devices.length; i < n; i++) {
+      builder.append(devices[i].getSerialNumber());
+      if (i < n - 1) {
+        builder.append(' ');
+      }
+    }
+    return builder.toString();
+  }
+
+  private static String[] fromString(String s) {
+    return s.split(" ");
   }
 
   private void message(@NotNull String message, @NotNull Key outputKey) {
