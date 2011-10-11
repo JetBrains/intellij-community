@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.TableCell;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -188,14 +189,14 @@ public class RevisionsList {
     private final MyBorder myBorder = new MyBorder(BORDER_INSETS);
     private final SeparatorWithText myPeriodLabel = new SeparatorWithText();
 
-    private final JLabel myDateLabel = new JLabel();
+    private final JBLabel myDateLabel = new JBLabel();
 
-    private final JLabel myFilesCountLabel = new JLabel();
-    private final JLabel myTitleLabel = new JLabel();
+    private final JBLabel myFilesCountLabel = new JBLabel();
+    private final JBLabel myTitleLabel = new JBLabel();
 
     private final JPanel myLabelPanel = new JPanel();
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
-    private final JLabel myLabelLabel = new JLabel();
+    private final JBLabel myLabelLabel = new JBLabel();
 
     private final ExpandableItemsHandler<TableCell> myToolTipHandler;
 
@@ -278,13 +279,10 @@ public class RevisionsList {
 
       myWrapperPanel.setBackground(table.getBackground());
 
-      Font f = myDateLabel.getFont();
-      Font smallFont = f.deriveFont(Math.max(8.f, f.getSize() * 0.8f));
-      myDateLabel.setFont(smallFont);
-      myFilesCountLabel.setFont(smallFont);
-      smallFont = f.deriveFont(Math.max(9.f, f.getSize() * 0.9f));
-      myLabelLabel.setFont(smallFont);
-      myTitleLabel.setFont(smallFont);
+      myDateLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      myFilesCountLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      myLabelLabel.setComponentStyle(UIUtil.ComponentStyle.REGULAR);
+      myTitleLabel.setComponentStyle(UIUtil.ComponentStyle.REGULAR);
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

@@ -292,7 +292,7 @@ public class UIUtil {
       case SMALL:
         return base.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
       case MINI:
-        return base.deriveFont(defFont.getSize() - 4f);
+        return base.deriveFont(Math.max(defFont.getSize() - 4f, 9f));
       default:
         return base.deriveFont(defFont.getSize());
     }
