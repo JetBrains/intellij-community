@@ -82,7 +82,7 @@ public class IndexCacheManagerImpl implements CacheManager{
       return true;
     }
     final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject).union(scope);
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
