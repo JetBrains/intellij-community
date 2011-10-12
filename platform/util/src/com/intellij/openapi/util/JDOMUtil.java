@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,16 +59,31 @@ public class JDOMUtil {
     }
   };
 
+  private JDOMUtil() { }
+
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent) {
-    return parent != null ? parent.getChildren() : Collections.<Element>emptyList();
+    if (parent != null) {
+      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) final List<Element> children = parent.getChildren();
+      return children;
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
-    return parent != null ? parent.getChildren(name) : Collections.<Element>emptyList();
+    if (parent != null) {
+      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) final List<Element> children = parent.getChildren(name);
+      return children;
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
+  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LoggerHolder {
     private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
   }
@@ -108,8 +123,7 @@ public class JDOMUtil {
       i = addToHash(i, attribute);
     }
 
-    //noinspection unchecked
-    final List<Element> children = element.getChildren();
+    final List<Element> children = getChildren(element);
     for (Element child : children) { //iterator is used here which is more efficient than get(index)
       i = addToHash(i, child);
     }
@@ -453,6 +467,21 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
+  public static String writeChildren(@Nullable final Element element, @NotNull final String lineSeparator) {
+    try {
+      final StringWriter writer = new StringWriter();
+      for (Element child : getChildren(element)) {
+        writeElement(child, writer, lineSeparator);
+        writer.append(lineSeparator);
+      }
+      return writer.toString();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void writeDocument(Document document, Writer writer, String lineSeparator) throws IOException {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
     try {
@@ -559,13 +588,12 @@ public class JDOMUtil {
 
   private static void printDiagnostics(Element element, String prefix) {
     ElementInfo info = getElementInfo(element);
-    prefix = prefix + "/" + info.name;
+    prefix += "/" + info.name;
     if (info.hasNullAttributes) {
       System.err.println(prefix);
     }
 
-    //noinspection unchecked
-    List<Element> children = element.getChildren();
+    List<Element> children = getChildren(element);
     for (final Element child : children) {
       printDiagnostics(child, prefix);
     }
