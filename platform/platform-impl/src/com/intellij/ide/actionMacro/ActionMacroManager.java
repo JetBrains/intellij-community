@@ -44,9 +44,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -66,12 +64,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private static final String ELEMENT_MACRO = "macro";
   private final IdeEventQueue.EventDispatcher myKeyProcessor;
 
-  private InputEvent myLastActionInputEvent;
+  private Set<InputEvent> myLastActionInputEvent = new HashSet<InputEvent>();
 
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;
     myActionManager.addAnActionListener(new AnActionListener() {
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, final AnActionEvent event) {
         if (myIsRecording) {
           String id = myActionManager.getId(action);
           //noinspection HardCodedStringLiteral
@@ -80,9 +78,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           }
 
           if (id != null) {
-            myLastActionInputEvent = event.getInputEvent();
-          } else {
-            myLastActionInputEvent = null;
+            myLastActionInputEvent.add(event.getInputEvent());
           }
         }
       }
@@ -91,14 +87,6 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       }
 
       public void afterActionPerformed(final AnAction action, final DataContext dataContext, final AnActionEvent event) {
-        IdeEventQueue.getInstance().doWhenReady(new Runnable() {
-          @Override
-          public void run() {
-            if (myLastActionInputEvent != null && myLastActionInputEvent.equals(event.getInputEvent())) {
-              myLastActionInputEvent = null;
-            }
-          }
-        });
       }
     });
 
@@ -161,6 +149,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   public void stopRecording(Project project) {
     LOG.assertTrue(myIsRecording);
     myIsRecording = false;
+    myLastActionInputEvent.clear();
     String macroName;
     do {
       macroName = Messages.showInputDialog(project,
@@ -385,7 +374,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       if (e.getID() == KeyEvent.KEY_PRESSED && (plainType && !waiting) && !isEnter) {
          myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
       } else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
-        if ((!e.equals(myLastActionInputEvent) && !waiting) || isEnter) {
+        if ((!myLastActionInputEvent.contains(e) && !waiting) || isEnter) {
           final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
 
           final int pressed = stroke.indexOf("pressed");
@@ -396,7 +385,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           
           myRecordingMacro.appendShortcut(ready);
           if (!isEnter) {
-            myLastActionInputEvent = null;
+            myLastActionInputEvent.remove(e);
           }
         }
       }
