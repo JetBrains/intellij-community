@@ -48,15 +48,17 @@ public class TodoForRanges {
   private final boolean myOldRevision;
   private final List<TextRange> myRanges;
   private final FileType myFileType;
+  private final int myAdditionalOffset;
 
   public TodoForRanges(final Project project, final String fileName, final String text, final boolean oldRevision,
-                       final List<TextRange> ranges, FileType fileType) {
+                       final List<TextRange> ranges, FileType fileType, int additionalOffset) {
     myProject = project;
     myFileName = fileName;
     myText = text;
     myOldRevision = oldRevision;
     myRanges = ranges;
     myFileType = fileType;
+    myAdditionalOffset = additionalOffset;
   }
 
   public List<Pair<TextRange, TextAttributes>> execute() {
@@ -99,7 +101,7 @@ public class TodoForRanges {
           break;
         }
       }
-      offset += range.getLength() + 1;
+      offset += range.getLength() + 1 + myAdditionalOffset;
     }
     return result;
   }

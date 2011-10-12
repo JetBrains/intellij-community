@@ -259,7 +259,7 @@ public class PreparedFragmentedContent {
     highlighter.setText(oldDocument.getText());
     HighlighterIterator iterator = highlighter.createIterator(ranges.get(0).getBefore().getStartOffset());
     FragmentedEditorHighlighter beforeHighlighter =
-      new FragmentedEditorHighlighter(iterator, getBeforeFragments());
+      new FragmentedEditorHighlighter(iterator, getBeforeFragments(), 1);
     setBeforeHighlighter(beforeHighlighter);
 
     final EditorHighlighter highlighter1 =
@@ -268,15 +268,15 @@ public class PreparedFragmentedContent {
     highlighter1.setText(document.getText());
     HighlighterIterator iterator1 = highlighter1.createIterator(ranges.get(0).getAfter().getStartOffset());
     FragmentedEditorHighlighter afterHighlighter =
-      new FragmentedEditorHighlighter(iterator1, getAfterFragments());
+      new FragmentedEditorHighlighter(iterator1, getAfterFragments(), 1);
     setAfterHighlighter(afterHighlighter);
   }
 
   private void setTodoHighlighting(final Document oldDocument, final Document document) {
     final List<Pair<TextRange,TextAttributes>> beforeTodoRanges = new TodoForRanges(myProject, myFileName, oldDocument.getText(), true,
-                                                getBeforeFragments(), myFileType).execute();
+                                                getBeforeFragments(), myFileType, 1).execute();
     final List<Pair<TextRange, TextAttributes>> afterTodoRanges = new TodoForRanges(myProject, myFileName, document.getText(), false,
-                                                getAfterFragments(), myFileType).execute();
+                                                getAfterFragments(), myFileType, 1).execute();
     setBeforeTodoRanges(beforeTodoRanges);
     setAfterTodoRanges(afterTodoRanges);
   }

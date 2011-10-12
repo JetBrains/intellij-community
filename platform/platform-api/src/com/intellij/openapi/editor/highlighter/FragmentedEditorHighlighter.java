@@ -35,10 +35,16 @@ import java.util.TreeMap;
 public class FragmentedEditorHighlighter implements EditorHighlighter {
   private final TreeMap<Integer, Element> myPieces;
   private final Document myDocument;
+  private final int myAdditionalOffset;
 
   public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges) {
+    this(sourceIterator, ranges, 0);
+  }
+
+  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges, final int additionalOffset) {
     myDocument = sourceIterator.getDocument();
     myPieces = new TreeMap<Integer, Element>();
+    myAdditionalOffset = additionalOffset;
     translate(sourceIterator, ranges);
   }
 
@@ -57,7 +63,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
         iterator.advance();
         if (iterator.atEnd()) return;
       }
-      offset += range.getLength() + 1;
+      offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
     }
   }
 
