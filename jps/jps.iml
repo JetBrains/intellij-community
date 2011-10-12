@@ -12,9 +12,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="library" exported="" name="Javac2" level="project" />
     <orderEntry type="module" module-name="antlayout" />
-    <orderEntry type="library" exported="" scope="TEST" name="JUnit" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -25,9 +23,19 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="asm" level="project" />
-    <orderEntry type="library" name="idea-util" level="project" />
-    <orderEntry type="module" module-name="model" exported="" />
-    <orderEntry type="library" name="annotations" level="project" />
+    <orderEntry type="module" module-name="jps-model" exported="" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="javac2" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/junit-addons-1.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

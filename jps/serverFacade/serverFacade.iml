@@ -18,11 +18,11 @@
     </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="library" name="idea-util" level="project" />
-    <orderEntry type="module" module-name="model" />
-    <orderEntry type="library" name="annotations" level="project" />
+    <orderEntry type="module" module-name="jps-model" />
     <orderEntry type="library" name="asm" level="project" />
-    <orderEntry type="library" name="Javac2" level="project" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="javac2" />
+    <orderEntry type="module" module-name="forms-compiler" />
   </component>
 </module>
 
