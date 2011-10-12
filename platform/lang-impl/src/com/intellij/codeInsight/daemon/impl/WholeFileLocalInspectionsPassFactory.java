@@ -22,11 +22,13 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -59,6 +61,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     myProfileManager = profileManager;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -80,6 +83,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     };
     myProfileManager.addProfilesListener(myProfilesListener);
     Disposer.register(myProject, new Disposable() {
+      @Override
       public void dispose() {
         myProfileManager.removeProfilesListener(myProfilesListener);
         myFileTools.clear();
@@ -87,6 +91,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     });
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
@@ -97,6 +102,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     }
 
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true) {
+      @Override
       List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
         List<LocalInspectionToolWrapper> tools = super.getInspectionTools(profile);
         List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(tools.size());
@@ -112,8 +118,14 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         return DaemonBundle.message("pass.whole.inspections");
       }
 
-      void inspectInjectedPsi(PsiElement[] elements, List<LocalInspectionTool> tools) {
-        // inspected in LIP already
+      @Override
+      void inspectInjectedPsi(@NotNull List<PsiElement> elements,
+                              @NotNull List<LocalInspectionTool> tools,
+                              boolean onTheFly,
+                              @NotNull ProgressIndicator indicator,
+                              @NotNull InspectionManagerEx iManager,
+                              boolean inVisibleRange) {
+        // already inspected in LIP
       }
     };
   }

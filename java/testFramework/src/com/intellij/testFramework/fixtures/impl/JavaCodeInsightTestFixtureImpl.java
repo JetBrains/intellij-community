@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -62,13 +61,6 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
       }
     }.execute().getResultObject();
     return ((PsiJavaFile)psiFile).getClasses()[0];
-  }
-
-  @Override
-  protected PsiFile addFileToProject(String rootPath, String relativePath, String fileText) {
-    PsiFile file = super.addFileToProject(rootPath, relativePath, fileText);
-    ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
-    return file;
   }
 
   @Override

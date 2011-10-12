@@ -97,8 +97,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
-  private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
-  private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+  private final Map<String, InspectionProfileEntry> myAvailableTools = new THashMap<String, InspectionProfileEntry>();
   private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
 
   @Override
@@ -127,8 +126,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
-        return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
+        Collection<InspectionProfileEntry> values = myAvailableTools.values();
+        List<InspectionTool> result = new ArrayList<InspectionTool>();
+        for (InspectionProfileEntry value : values) {
+          InspectionTool tool = value instanceof InspectionTool ? (InspectionTool)value : new LocalInspectionToolWrapper((LocalInspectionTool)value);
+          result.add(tool);
+        }
+        return result.toArray(new InspectionTool[result.size()]);
       }
 
       @Override
@@ -147,13 +151,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
+        final InspectionProfileEntry localInspectionTool = myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
       @Override
       public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        return myAvailableLocalTools.get(shortName);
+        InspectionProfileEntry entry = myAvailableTools.get(shortName);
+        return entry == null ? null : entry instanceof InspectionTool ? (InspectionTool)entry : new LocalInspectionToolWrapper((LocalInspectionTool)entry);
       }
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
@@ -199,14 +204,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
-  protected void enableInspectionTool(LocalInspectionTool tool){
+  protected void enableInspectionTool(InspectionProfileEntry tool){
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null){
-      HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
+    if (key == null) {
+      assert tool instanceof LocalInspectionTool;
+      HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionTool)tool).getID());
     }
     myAvailableTools.put(shortName, tool);
-    myAvailableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
   }
 
   protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
@@ -222,7 +227,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected void disableInspectionTool(String shortName){
     myAvailableTools.remove(shortName);
-    myAvailableLocalTools.remove(shortName);
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {

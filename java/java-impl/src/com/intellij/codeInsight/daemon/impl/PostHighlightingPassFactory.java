@@ -15,13 +15,18 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.*;
+import com.intellij.codeHighlighting.MainHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
 */
 public class PostHighlightingPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
+  private static final Key<Long> LAST_POST_PASS_TIMESTAMP = Key.create("LAST_POST_PASS_TIMESTAMP");
   public PostHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, true, Pass.POST_UPDATE_ALL);
@@ -44,17 +50,24 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-    if (textRange == null) return null;
-    int startOffset = 0;
-    int endOffset = editor.getDocument().getTextLength();
+    if (textRange == null) {
+      Long lastStamp = file.getUserData(LAST_POST_PASS_TIMESTAMP);
+      long currentStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
+      if (lastStamp != null && lastStamp == currentStamp) {
+        return null;
+      }
+    }
 
-    return new PostHighlightingPass(myProject, file, editor, editor.getDocument(), startOffset, endOffset);
+    return new PostHighlightingPass(myProject, file, editor, editor.getDocument());
   }
 
   @Override
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
-    int startOffset = 0;
-    int endOffset = document.getTextLength();
-    return new PostHighlightingPass(myProject, file, null, document, startOffset, endOffset);
+    return new PostHighlightingPass(myProject, file, null, document);
+  }
+
+  public static void markFileUpToDate(@NotNull PsiFile file) {
+    long lastStamp = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
+    file.putUserData(LAST_POST_PASS_TIMESTAMP, lastStamp);
   }
 }

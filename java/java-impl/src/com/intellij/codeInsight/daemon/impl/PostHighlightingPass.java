@@ -95,7 +95,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private Collection<HighlightInfo> myHighlights;
   private boolean myHasRedundantImports;
   private final JavaCodeStyleManager myStyleManager;
-  private int myCurentEntryIndex;
+  private int myCurrentEntryIndex;
   private boolean myHasMissortedImports;
   private final ImplicitUsageProvider[] myImplicitUsageProviders;
   private UnusedDeclarationInspection myDeadCodeInspection;
@@ -110,17 +110,15 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   PostHighlightingPass(@NotNull Project project,
                        @NotNull PsiFile file,
                        @Nullable Editor editor,
-                       @NotNull Document document,
-                       int startOffset,
-                       int endOffset) {
+                       @NotNull Document document) {
     super(project, document, true);
     myFile = file;
     myEditor = editor;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
+    myStartOffset = 0;
+    myEndOffset = file.getTextLength();
 
     myStyleManager = JavaCodeStyleManager.getInstance(myProject);
-    myCurentEntryIndex = -1;
+    myCurrentEntryIndex = -1;
 
     myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   }
@@ -146,13 +144,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myRefCountHolder = RefCountHolder.getInstance(myFile);
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
       public void run() {
-        collectHighlights(elementSet, highlights, progress);
+        boolean errorFound = collectHighlights(elementSet, highlights, progress);
         myHighlights = highlights;
-        for (HighlightInfo info : highlights) {
-          if (info.getSeverity() == HighlightSeverity.ERROR) {
-            fileStatusMap.setErrorFoundFlag(myDocument, true);
-            break;
-          }
+        if (errorFound) {
+          fileStatusMap.setErrorFoundFlag(myDocument, true);
         }
       }
     })) {
@@ -169,9 +164,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     if (myHighlights == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, getColorsScheme(), Pass.POST_UPDATE_ALL);
-
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
+    PostHighlightingPassFactory.markFileUpToDate(myFile);
 
     Editor editor = myEditor;
     if (editor != null && timeToOptimizeImports()) {
@@ -212,7 +205,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     });
   }
 
-  private void collectHighlights(@NotNull Collection<PsiElement> elements, @NotNull final List<HighlightInfo> result, @NotNull ProgressIndicator progress) throws ProcessCanceledException {
+  // returns true if error highlight was created
+  private boolean collectHighlights(@NotNull Collection<PsiElement> elements, @NotNull final List<HighlightInfo> result, @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
@@ -241,30 +235,36 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     myDeadCodeInfoType = myDeadCodeKey == null ? null : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(), HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
 
-    if (!unusedSymbolEnabled && !unusedImportEnabled) {
-      return;
-    }
-    for (PsiElement element : elements) {
-      progress.checkCanceled();
-
-      if (unusedSymbolEnabled && element instanceof PsiIdentifier) {
-        PsiIdentifier identifier = (PsiIdentifier)element;
-        HighlightInfo info = processIdentifier(identifier, progress);
-        if (info != null) {
-          result.add(info);
-        }
-      }
-      else if (unusedImportEnabled && element instanceof PsiImportList) {
-        final PsiImportStatementBase[] imports = ((PsiImportList)element).getAllImportStatements();
-        for (PsiImportStatementBase statement : imports) {
-          progress.checkCanceled();
-          final HighlightInfo info = processImport(statement, unusedImportKey);
+    boolean errorFound = false;
+    if (unusedSymbolEnabled) {
+      for (PsiElement element : elements) {
+        progress.checkCanceled();
+        if (element instanceof PsiIdentifier) {
+          PsiIdentifier identifier = (PsiIdentifier)element;
+          HighlightInfo info = processIdentifier(identifier, progress);
           if (info != null) {
+            errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
             result.add(info);
           }
         }
       }
     }
+    if (unusedImportEnabled && myFile instanceof PsiJavaFile) {
+      PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
+      if (importList != null) {
+        final PsiImportStatementBase[] imports = importList.getAllImportStatements();
+        for (PsiImportStatementBase statement : imports) {
+          progress.checkCanceled();
+          final HighlightInfo info = processImport(statement, unusedImportKey);
+          if (info != null) {
+            errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
+            result.add(info);
+          }
+        }
+      }
+    }
+
+    return errorFound;
   }
 
   @Nullable
@@ -689,10 +689,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     int entryIndex = myStyleManager.findEntryIndex(importStatement);
-    if (entryIndex < myCurentEntryIndex) {
+    if (entryIndex < myCurrentEntryIndex) {
       myHasMissortedImports = true;
     }
-    myCurentEntryIndex = entryIndex;
+    myCurrentEntryIndex = entryIndex;
 
     return null;
   }
