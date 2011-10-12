@@ -60,6 +60,7 @@ class DocumentUndoProvider implements Disposable {
 
       if (allEditorsAreViewersFor(document)) return;
       if (!shouldRecordActions(document)) return;
+      if (ApplicationManager.getApplication().isDisposeInProgress()) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (!undoManager.isActive() || !isUndoable(document)) {

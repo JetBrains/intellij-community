@@ -161,8 +161,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
         else {
           final int finalStart = whiteSpaceStart;
-          ApplicationManager
-            .getApplication().runWriteAction(new DocumentRunnable(this, project) {
+          ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, project) {
             public void run() {
               CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
                 public void run() {
@@ -345,7 +344,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
     }
 
-    myText.remove(this, startOffset, endOffset,sToDelete);
+    myText.remove(this, startOffset, endOffset, sToDelete);
   }
 
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
@@ -473,6 +472,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void clearLineModificationFlags() {
     myLineSet.clearModificationFlags();
+  }
+
+  public void clearLineModificationFlagsExcept(int caretLine) {
+    boolean wasModified = caretLine != -1 && myLineSet.isModified(caretLine);
+    clearLineModificationFlags();
+    if (wasModified) {
+      myLineSet.setModified(caretLine);
+    }
   }
 
   @NotNull

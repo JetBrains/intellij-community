@@ -696,7 +696,6 @@
                   serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
 
   <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider"/>
-  <fileDocumentManagerListener implementation="com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper"/>
   <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
 
   <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"

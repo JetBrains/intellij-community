@@ -67,6 +67,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
@@ -299,6 +300,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           public void run() {
             if (ApplicationManager.getApplication() != ApplicationImpl.this) return;
             try {
+              myDisposeInProgress = true;
               saveAll();
             }
             finally {
@@ -311,7 +313,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private boolean disposeSelf() {
-    myDisposeInProgress = true;
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     final Ref<Boolean> canClose = new Ref<Boolean>(Boolean.TRUE);
     for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
@@ -363,7 +364,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
       return;  // do not call super
     }
-    else if (fatal) {
+    if (fatal) {
       LOG.error(ex);
       @NonNls final String errorMessage = "Fatal error initializing class " + componentClassName + ":\n" +
                                           ex.toString() +
@@ -747,15 +748,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     Runnable runnable = new Runnable() {
       public void run() {
-        if (!force) {
-          if (!showConfirmation()) {
-            saveAll();
-            myExitCode = 0;
-            return;
-          }
+        if (!force && !showConfirmation()) {
+          saveAll();
+          myExitCode = 0;
+          return;
         }
 
         getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
+        myDisposeInProgress = true;
 
         FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -910,7 +910,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
       Class action = myWriteActionsStack.get(i);
-      if (actionClass == action || (action != null && ReflectionCache.isAssignable(actionClass, action))) return true;
+      if (actionClass == action || action != null && ReflectionCache.isAssignable(actionClass, action)) return true;
     }
     return false;
   }
@@ -1056,7 +1056,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       final IdeFrame ideFrame = (IdeFrame)frame;
       if (isActive() != active) {
         myActive = Boolean.valueOf(active);
-        System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
+        System.setProperty("idea.active", myActive.toString());
         ApplicationActivationListener publisher = getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC);
         if (active) {
           publisher.applicationActivated(ideFrame);
@@ -1340,6 +1340,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
+  @TestOnly
+  public void setDisposeInProgress(boolean disposeInProgress) {
+    myDisposeInProgress = disposeInProgress;
+  }
+
+  @NonNls
   @Override
   public String toString() {
     return "Application" +

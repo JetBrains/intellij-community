@@ -33,6 +33,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -65,7 +66,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     if (doStrip) {
       final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-      boolean success = stripIfNotCurrentLine((DocumentImpl)document, inChangedLinesOnly);
+      boolean success = stripIfNotCurrentLine(document, inChangedLinesOnly);
       if (!success) {
         myDocumentsToStripLater.add(document);
       }
@@ -95,6 +96,37 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     }
   }
 
+  // clears line modification flags except lines which was not stripped because the caret was in the way
+  public void clearLineModificationFlags(@NotNull Document document) {
+    if (document instanceof DocumentWindow) {
+      document = ((DocumentWindow) document).getDelegate();
+    }
+    if (!(document instanceof DocumentImpl)) {
+      return;
+    }
+    if (!myDocumentsToStripLater.contains(document)) return;
+
+    DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
+    boolean isDisposeInProgress = ApplicationManager.getApplication().isDisposeInProgress(); // ignore caret placing when exiting
+    Editor activeEditor = isDisposeInProgress ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+
+    // when virtual space enabled, we can strip whitespace anywhere
+    boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
+
+    int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
+
+    final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (settings == null) return;
+
+    String stripTrailingSpaces = settings.getStripTrailingSpaces();
+    final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+
+    final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    if (!inChangedLinesOnly || !doStrip || isVirtualSpaceEnabled) caretLine = -1;
+
+    ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLine);
+  }
+
   public static boolean stripIfNotCurrentLine(Document document, boolean inChangedLinesOnly) {
     if (document instanceof DocumentWindow) {
       document = ((DocumentWindow) document).getDelegate();
@@ -103,7 +135,8 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
       return true;
     }
     DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
-    Editor activeEditor = PlatformDataKeys.EDITOR.getData(dataContext);
+    boolean isDisposeInProgress = ApplicationManager.getApplication().isDisposeInProgress(); // ignore caret placing when exiting
+    Editor activeEditor = isDisposeInProgress ? null : PlatformDataKeys.EDITOR.getData(dataContext);
 
     // when virtual space enabled, we can strip whitespace anywhere
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();

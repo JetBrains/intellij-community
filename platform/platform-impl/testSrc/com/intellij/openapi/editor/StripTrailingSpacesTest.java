@@ -1,11 +1,14 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -57,7 +60,7 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testOnlyModifiedLinesGetStripped() throws IOException {
-    String text = "xxx<caret>   \nyyy   ";
+    @NonNls String text = "xxx<caret>   \nyyy   ";
     configureFromFileText("x.txt", text);
     ((DocumentEx)myEditor.getDocument()).clearLineModificationFlags();
     stripTrailingSpaces();
@@ -71,14 +74,41 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   public void testOnlyModifiedLinesWhenDoesNotAllowCaretAfterEndOfLine() throws IOException {
     configureFromFileText("x.txt", "xxx<caret>   \nZ   ");
     type(' ');
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf("Z")+1);
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf("Z") + 1);
     type('Z');
 
     stripTrailingSpaces();
     checkResultByText("xxx\nZZ<caret>");
   }
 
-  private void doTest(String before, String after) throws IOException {
+  public void testModifyLineAndExitApplication_ShouldStripEvenWhenCaretIsAtTheChangedLine() throws IOException {
+    configureFromFileText("x.txt", "xxx        <caret>\n");
+    type(' ');
+
+    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+    application.setDisposeInProgress(true);
+
+    try {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      checkResultByText("xxx<caret>\n");
+    }
+    finally {
+      application.setDisposeInProgress(false);
+    }
+  }
+
+  public void testModifyLine_Save_MoveCaret_SaveAgain_ShouldStrip() throws IOException {
+    configureFromFileText("x.txt", "xxx <caret>\nyyy\n");
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx  <caret>\nyyy\n"); // caret in the way
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf("yyy"));
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx\n<caret>yyy\n"); // now we can strip
+  }
+
+  private void doTest(@NonNls String before, @NonNls String after) throws IOException {
     configureFromFileText("x.txt", before);
     type(' ');
     backspace();

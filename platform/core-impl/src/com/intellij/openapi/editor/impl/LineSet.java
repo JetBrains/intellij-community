@@ -53,6 +53,9 @@ public class LineSet{
   final boolean isModified(int index) {
     return (mySegments.getSegmentData(index) & MODIFIED_MASK) != 0;
   }
+  final void setModified(int index) {
+    setSegmentModified(mySegments, index);
+  }
 
   final int getSeparatorLength(int index) {
     return mySegments.getSegmentData(index) & SEPARATOR_MASK;
