@@ -6,9 +6,7 @@
     <!--
     <idea-version since-build="3000"/>
     -->
-<!-- AC
-</is-internal>
- -->
+
   <extensions defaultExtensionNs="com.intellij">
     <inspectionToolProvider implementation="com.intellij.codeInspection.ComparingReferencesProvider"/>
   </extensions>
