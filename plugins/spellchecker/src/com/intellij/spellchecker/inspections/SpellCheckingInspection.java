@@ -230,9 +230,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   private static ProblemDescriptor createProblemDescriptor(Token token,
                                                            ProblemsHolder holder,
                                                            TextRange textRange, SpellCheckerQuickFix[] fixes, boolean onTheFly) {
-    final String defaultDescription = SpellCheckerBundle.message("typo.in.word.ref");
-    final String tokenDescription = token.getDescription();
-    final String description = tokenDescription == null ? defaultDescription : tokenDescription;
+    final String description = SpellCheckerBundle.message("typo.in.word.ref");
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
     assert highlightRange.getStartOffset()>=0 : token.getText();
 

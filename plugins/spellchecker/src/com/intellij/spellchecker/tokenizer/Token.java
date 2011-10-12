@@ -28,7 +28,6 @@ import java.util.List;
 public class Token<T extends PsiElement> {
 
   private final String text;
-  private final String description;
   private final boolean useRename;
   private int offset;
 
@@ -44,7 +43,6 @@ public class Token<T extends PsiElement> {
     this.useRename = useRename;
     this.splitter = splitter;
     this.offset = 0;
-    this.description = null;
   }
 
   public Token(T element, String text, boolean useRename, int offset, Splitter splitter) {
@@ -67,10 +65,6 @@ public class Token<T extends PsiElement> {
 
   public String getText() {
     return text;
-  }
-
-  public String getDescription() {
-    return description;
   }
 
   public T getElement() {
