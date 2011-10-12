@@ -110,6 +110,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     if (variableKind == VariableKind.PARAMETER) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
       propertyName = PropertyUtil.getPropertyName(method);
+      if (method != null && method.getName().startsWith("with")) {
+        propertyName = StringUtil.decapitalize(method.getName().substring(4));
+      }
     }
 
     final PsiType type = var.getType();
