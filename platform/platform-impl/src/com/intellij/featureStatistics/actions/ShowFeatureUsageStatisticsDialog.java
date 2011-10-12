@@ -16,7 +16,10 @@
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.featureStatistics.*;
+import com.intellij.featureStatistics.FeatureDescriptor;
+import com.intellij.featureStatistics.FeatureStatisticsBundle;
+import com.intellij.featureStatistics.GroupDescriptor;
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,11 +41,12 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
 
 public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
@@ -181,26 +185,6 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
                                                               DateFormatUtil.formatDuration(idletime));
 
     controlsPanel.add(new JLabel(uptimeS + ", " + idleTimeS), BorderLayout.NORTH);
-
-    final JCheckBox compiler = new JCheckBox(FeatureStatisticsBundle.message("feature.statistics.show.while.compiling"));
-    compiler.setSelected(FeatureUsageTracker.getInstance().SHOW_IN_COMPILATION_PROGRESS);
-    compiler.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        FeatureUsageTracker.getInstance().SHOW_IN_COMPILATION_PROGRESS = compiler.isSelected();
-      }
-    });
-    compiler.setVisible(haveCompilerExtensionPoint());
-
-    final JCheckBox other = new JCheckBox(FeatureStatisticsBundle.message("feature.statistics.show.on.startup"));
-    other.setSelected(FeatureUsageTracker.getInstance().SHOW_IN_OTHER_PROGRESS);
-    other.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        FeatureUsageTracker.getInstance().SHOW_IN_OTHER_PROGRESS = other.isSelected();
-      }
-    });
-
-    controlsPanel.add(compiler);
-    controlsPanel.add(other);
 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(controlsPanel, BorderLayout.NORTH);
