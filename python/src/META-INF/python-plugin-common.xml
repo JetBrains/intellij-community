@@ -1,6 +1,8 @@
 <idea-plugin version="2">
   <!-- Components and extensions declared in this file work both in PyCharm and Python plugin. -->
 
+  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
