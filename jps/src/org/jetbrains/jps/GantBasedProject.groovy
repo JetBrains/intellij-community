@@ -115,4 +115,39 @@ class GantBasedProject extends Project {
 
     return results[0]
   }
+
+  @Deprecated
+  def makeAll() {
+    builder.buildAll()
+  }
+
+  @Deprecated
+  def makeProduction() {
+    builder.buildProduction()
+  }
+
+  @Deprecated
+  def buildArtifacts() {
+    builder.buildArtifacts()
+  }
+
+  @Deprecated
+  def buildArtifact(String artifactName) {
+    builder.buildArtifact(artifactName)
+  }
+
+  @Deprecated
+  List<String> runtimeClasspath() {
+    return builder.projectPaths.getProjectRuntimeClasspath(false)
+  }
+
+  @Deprecated
+  List<String> testRuntimeClasspath() {
+    return builder.projectPaths.getProjectRuntimeClasspath(true)
+  }
+
+  @Deprecated
+  def clean() {
+    builder.clean()
+  }
 }

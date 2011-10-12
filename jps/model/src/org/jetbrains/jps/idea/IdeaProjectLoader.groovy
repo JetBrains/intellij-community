@@ -30,6 +30,10 @@ public class IdeaProjectLoader {
     return null
   }
 
+  public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables) {
+    return loadFromPath(project, path, pathVariables, "")
+  }
+
   public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables, String script) {
     return loadFromPath(project, path, pathVariables, script, new SystemOutErrorReporter())
   }
