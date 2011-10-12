@@ -20,9 +20,12 @@ import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,8 +67,9 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   public String getPresentableText() {
     return PsiFormatUtil.formatMethod(
       getElement(),
-      PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
-      PsiFormatUtil.SHOW_TYPE
+      PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                            PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_PARAMETERS,
+      PsiFormatUtilBase.SHOW_TYPE
     );
   }
 
@@ -83,7 +87,13 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   public String getAlphaSortKey() {
     final PsiMethod method = getElement();
     if (method != null) {
-      return method.getName();
+      return method.getName() + " " + StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+        @Override
+        public String fun(PsiParameter psiParameter) {
+          PsiTypeElement typeElement = psiParameter.getTypeElement();
+          return typeElement != null ? typeElement.getText() : "";
+        }
+      }, " ");
     }
     return "";
   }
