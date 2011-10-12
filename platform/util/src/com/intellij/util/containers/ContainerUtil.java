@@ -551,7 +551,22 @@ public class ContainerUtil {
 
   @NotNull
   public static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
-    return concat(new List[]{list1, list2});
+    final int size1 = list1.size();
+    final int size = size1 + list2.size();
+
+    return new AbstractList<T>() {
+      public T get(int index) {
+        if (index < size1) {
+          return list1.get(index);
+        }
+
+        return list2.get(index - size1);
+      }
+
+      public int size() {
+        return size;
+      }
+    };
   }
 
   @NotNull
@@ -582,7 +597,7 @@ public class ContainerUtil {
   }
 
   @NotNull
-  public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
+  public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
     int size = 0;
     for (List<? extends T> each : lists) {
       size += each.size();
@@ -607,8 +622,9 @@ public class ContainerUtil {
   }
 
   @NotNull
-  public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
-    return concat(Arrays.asList(lists));
+  public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
+    List<? extends T>[] array = lists.toArray(new List[lists.size()]);
+    return concat(array);
   }
 
   @NotNull
