@@ -42,15 +42,17 @@ import java.util.List;
 public class LocalInspectionsPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
   public LocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL/*, Pass.POPUP_HINTS*/}, true, Pass.LOCAL_INSPECTIONS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{/*, Pass.POPUP_HINTS*/}, true, Pass.LOCAL_INSPECTIONS);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "LocalInspectionsPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
@@ -79,6 +81,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
       super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true);
     }
 
+    @Override
     List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
       List<LocalInspectionToolWrapper> tools = super.getInspectionTools(profile);
       List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(tools.size());
