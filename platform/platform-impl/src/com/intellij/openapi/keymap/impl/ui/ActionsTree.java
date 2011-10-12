@@ -525,23 +525,17 @@ public class ActionsTree {
             for (Shortcut shortcut : shortcuts) {
               textWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
             }
-            textWidth += metrics.stringWidth(" ") * (shortcuts.length - 1) * 2;
+            textWidth += metrics.stringWidth(" ") * shortcuts.length * 2;
             
             final int rowX = getRowX(tree, currentPath.getPathCount() - 1);
 
             final int treeWidth  = tree.getVisibleRect().width;
-            appendAlign(treeWidth - rowX - textWidth - 15);
+            appendAlign(treeWidth - rowX - textWidth - 5);
 
-            boolean first = true;
             for (Shortcut shortcut : shortcuts) {
-              if (first) {
-                first = false;
-              }
-              else {
-                append("  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-              }
               append(KeymapUtil.getShortcutText(shortcut),
                      new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, Color.blue, Color.red));
+              append("  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
           }
         }
