@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.quickFixes;
+package com.intellij.uiDesigner.inspections;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.uiDesigner.ErrorInfo;

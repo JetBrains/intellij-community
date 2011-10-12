@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.inspections.FormInspectionTool;
 import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;

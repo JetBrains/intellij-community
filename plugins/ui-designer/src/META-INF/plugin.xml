@@ -8,7 +8,7 @@
 
   <extensionPoints>
     <extensionPoint name="formInspectionTool"
-                    interface="com.intellij.uiDesigner.quickFixes.FormInspectionTool"/>
+                    interface="com.intellij.uiDesigner.inspections.FormInspectionTool"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.uiDesigner">
@@ -21,6 +21,7 @@
     <formInspectionTool implementation="com.intellij.uiDesigner.inspections.NoButtonGroupInspection"/>
     <formInspectionTool implementation="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
     <formInspectionTool implementation="com.intellij.uiDesigner.inspections.OneButtonGroupInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

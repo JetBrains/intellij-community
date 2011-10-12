@@ -33,7 +33,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
