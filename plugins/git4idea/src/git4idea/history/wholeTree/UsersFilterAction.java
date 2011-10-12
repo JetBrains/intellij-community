@@ -206,7 +206,7 @@ public class UsersFilterAction extends BasePopupAction {
   }
 
   public void setSelectedPresets(final String selected, final boolean meSelected) {
-    myCurrentText = selected;
+    myCurrentText = selected == null ? "" : selected;
     if (selected == null) {
       myLabel.setText(ALL);
     } else if (meSelected) {
