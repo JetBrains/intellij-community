@@ -59,7 +59,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     return TextAttributesKey.createTextAttributesKey(name, src.getDefaultAttributes().clone());
   }
 
-  static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
+  public static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
 
   public static final TextAttributesKey PY_BYTE_STRING = _copy("PY.STRING.B", STRING);
   public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey(
