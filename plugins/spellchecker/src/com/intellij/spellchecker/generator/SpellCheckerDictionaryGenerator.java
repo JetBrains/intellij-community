@@ -13,9 +13,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.inspections.CheckArea;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -167,36 +167,19 @@ public abstract class SpellCheckerDictionaryGenerator {
   protected void processLeafsNames(@NotNull final PsiElement leafElement, @NotNull final HashSet<String> seenNames) {
     final Token[] tokens = SpellCheckingInspection.tokenize(leafElement, leafElement.getLanguage());
     if (tokens != null) {
-      for (Token token : tokens) {
-        final List<CheckArea> areas = token.getAreas();
-        if (areas == null) {
-          continue;
-        }
-
-        processCheckAreas(areas, seenNames);
+      for (final Token token : tokens) {
+        token.processAreas(new Consumer<TextRange>() {
+          @Override
+          public void consume(TextRange textRange) {
+            final String word = textRange.substring(token.getText());
+            addSeenWord(seenNames, word);
+          }
+        });
       }
     }
   }
 
-  protected void processCheckAreas(List<CheckArea> areas, HashSet<String> seenNames) {
-    for (CheckArea area : areas) {
-      boolean ignored = area.isIgnored();
-      final TextRange textRange = area.getTextRange();
-
-      if (ignored || textRange ==null){
-        continue;
-      }
-
-      final String word = area.getWord();
-      if (word == null) {
-        continue;
-      }
-
-      addSeenWord(seenNames, word);
-    }
-  }
-
-  private void addSeenWord(HashSet<String> seenNames, String word) {
+  protected void addSeenWord(HashSet<String> seenNames, String word) {
     final String lowerWord = word.toLowerCase();
     if (globalSeenNames.contains(lowerWord)) {
       return;

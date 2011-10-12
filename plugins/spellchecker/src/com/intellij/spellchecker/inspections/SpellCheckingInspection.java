@@ -40,6 +40,7 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -175,40 +176,31 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   }
 
 
-  private static void inspect(Token token, ProblemsHolder holder, boolean isOnTheFly,@NotNull Set<String> alreadyChecked, @NotNull SpellCheckerManager manager, NamesValidator... validators) {
-    List<CheckArea> areaList = token.getAreas();
-    if (areaList == null) {
-      return;
-    }
-    for (CheckArea area : areaList) {
-      boolean ignored = area.isIgnored();
-      final TextRange textRange = area.getTextRange();
-
-      if (ignored || textRange ==null){
-        continue;
-      }
-
-      final String word = area.getWord();
-      if (word==null || (!isOnTheFly && alreadyChecked.contains(word))){
-        continue;
-      }
-
-      boolean keyword = isKeyword(token.getElement().getProject(), validators, word);
-      if (keyword){
-        continue;
-      }
-
-      boolean hasProblems = manager.hasProblem(word);
-      if (hasProblems){
-        if (!isOnTheFly){
-          alreadyChecked.add(word);
-          addBatchDescriptor(textRange,token,holder);
-        } else{
-          addRegularDescriptor(textRange,token,holder);
+  private static void inspect(final Token token, final ProblemsHolder holder, final boolean isOnTheFly,@NotNull final Set<String> alreadyChecked, @NotNull final SpellCheckerManager manager, final NamesValidator... validators) {
+    token.processAreas(new Consumer<TextRange>() {
+      @Override
+      public void consume(TextRange textRange) {
+        final String word = textRange.substring(token.getText());
+        if (isOnTheFly && alreadyChecked.contains(word)) {
+          return;
+        }
+  
+        boolean keyword = isKeyword(token.getElement().getProject(), validators, word);
+        if (keyword){
+          return;
+        }
+  
+        boolean hasProblems = manager.hasProblem(word);
+        if (hasProblems){
+          if (!isOnTheFly){
+            alreadyChecked.add(word);
+            addBatchDescriptor(textRange,token,holder);
+          } else{
+            addRegularDescriptor(textRange,token,holder);
+          }
         }
       }
-
-    }
+    });
   }
 
 

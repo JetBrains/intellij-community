@@ -17,11 +17,10 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,26 +28,20 @@ public class TextSplitter extends BaseSplitter {
 
   private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("([&#]|0x[0-9]*)?\\p{L}+'?\\p{L}(_*\\p{L})*");
 
-  public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
+  @Override
+  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
-      return null;
+      return;
     }
-    List<CheckArea> results = new ArrayList<CheckArea>();
-    doSplit(text, range, results);
-    return (results.size() == 0) ? null : results;
+    doSplit(text, range, consumer);
   }
 
-  protected void doSplit(@NotNull String text, @NotNull TextRange range, List<CheckArea> results) {
-    Matcher matcher;
+  protected void doSplit(@NotNull String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     final WordSplitter ws = SplitterFactory.getInstance().getWordSplitter();
-    matcher = EXTENDED_WORD_AND_SPECIAL.matcher(range.substring(text));
+    Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(range.substring(text));
     while (matcher.find()) {
       TextRange found = matcherRange(range, matcher);
-
-      final List<CheckArea> res = ws.split(text, found);
-      if (res != null) {
-        results.addAll(res);
-      }
+      ws.split(text, found, consumer);
     }
   }
 }

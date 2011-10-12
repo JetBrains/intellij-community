@@ -17,12 +17,10 @@ package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.spellchecker.inspections.CheckArea;
 import com.intellij.spellchecker.inspections.Splitter;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 
 public class Token<T extends PsiElement> {
@@ -88,11 +86,11 @@ public class Token<T extends PsiElement> {
   }
 
   @Nullable
-  public List<CheckArea> getAreas() {
+  public void processAreas(Consumer<TextRange> consumer) {
     if (splitter == null || text == null) {
-      return null;
+      return;
     }
-    return splitter.split(text, getRange());
+    splitter.split(text, getRange(), consumer);
   }
 
 

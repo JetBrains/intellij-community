@@ -15,41 +15,28 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 public class CommentSplitter extends BaseSplitter {
+  private static final Pattern HTML = Pattern.compile("<(\\S+?).*?>(.*?)</\\1>");
 
-   private static final Pattern HTML = Pattern.compile("<(\\S+?).*?>(.*?)</\\1>");
-
-
-  public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
+  @Override
+  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
-      return null;
+      return;
     }
 
     List<TextRange> toCheck = excludeByPattern(text, range, HTML, 2);
-
-    if (toCheck == null) return null;
-
     final Splitter ps = SplitterFactory.getInstance().getPlainTextSplitter();
-    List<CheckArea> results = new ArrayList<CheckArea>();
     for (TextRange r : toCheck) {
-      final List<CheckArea> res = ps.split(text, r);
-      if (res != null) {
-        results.addAll(res);
-      }
+      ps.split(text, r, consumer);
     }
-
-    return (results.size() == 0) ? null : results;
   }
-
-
 }

@@ -42,11 +42,11 @@ public class SplitterFactory {
     return wordSplitter;
   }
 
-  public Splitter getAttributeValueSplitter() {
+  public BaseSplitter getAttributeValueSplitter() {
     return textSpl;
   }
 
-  public Splitter getPlainTextSplitter() {
+  public BaseSplitter getPlainTextSplitter() {
     return plainTextSpl;
   }
 
@@ -54,11 +54,11 @@ public class SplitterFactory {
     return comment;
   }
 
-  public Splitter getStringLiteralSplitter() {
+  public BaseSplitter getStringLiteralSplitter() {
     return plainTextSpl;
   }
 
-  public Splitter getPropertiesSplitter() {
+  public BaseSplitter getPropertiesSplitter() {
     return prSpl;
   }
 

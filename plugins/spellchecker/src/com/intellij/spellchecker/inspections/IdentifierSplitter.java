@@ -17,6 +17,7 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.util.Strings;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,36 +37,23 @@ public class IdentifierSplitter extends BaseSplitter {
   @NonNls
   private static final Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
-  public IdentifierSplitter() {
-
-  }
-
-  @Nullable
-  public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
-
+  @Override
+  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || range.getLength() < 1 || range.getStartOffset() < 0) {
-      return null;
+      return;
     }
 
     List<TextRange> extracted = excludeByPattern(text, range, WORD_IN_QUOTES, 1);
 
-    if (extracted == null) {
-      return null;
-    }
-
-    List<CheckArea> results = new ArrayList<CheckArea>();
-
     for (TextRange textRange : extracted) {
       List<TextRange> words = splitByCase(text, textRange);
 
-      if (words == null || words.size() == 0) {
+      if (words.size() == 0) {
         continue;
       }
 
-
-
       if (words.size() == 1) {
-        addWord(text, results, false, words.get(0));
+        addWord(consumer, false, words.get(0));
         continue;
       }
 
@@ -84,15 +72,13 @@ public class IdentifierSplitter extends BaseSplitter {
         Matcher matcher = WORD.matcher(text.substring(word.getStartOffset(), word.getEndOffset()));
         if (matcher.find()) {
           TextRange found = matcherRange(word, matcher);
-          addWord(text, results, flag, found);
+          addWord(consumer, flag, found);
         }
       }
-
     }
-
-    return results;
   }
 
+  @NotNull
   public static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
     //System.out.println("text = " + text + " range = " + range);
     List<TextRange> result = new ArrayList<TextRange>();

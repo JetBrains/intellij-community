@@ -147,4 +147,8 @@ public class TextRange implements Segment, Serializable {
   public boolean equalsToRange(int startOffset, int endOffset) {
     return startOffset == myStartOffset && endOffset == myEndOffset;
   }
+
+  public static TextRange allOf(String s) {
+    return new TextRange(0, s.length());
+  }
 }

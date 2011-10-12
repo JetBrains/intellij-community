@@ -15,15 +15,13 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,11 +32,11 @@ public class PropertiesSplitter extends BaseSplitter {
   private static final Pattern WORD = Pattern.compile("\\p{L}*");
 
 
-  public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
+  @Override
+  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
-      return null;
+      return;
     }
-    List<CheckArea> results = new ArrayList<CheckArea>();
     final IdentifierSplitter splitter = SplitterFactory.getInstance().getIdentifierSplitter();
     Matcher matcher = WORD.matcher(range.substring(text));
     while (matcher.find()) {
@@ -46,13 +44,7 @@ public class PropertiesSplitter extends BaseSplitter {
         continue;
       }
       TextRange found = matcherRange(range, matcher);
-      final List<CheckArea> res = splitter.split(text, found);
-      if (res != null) {
-        results.addAll(res);
-      }
-
+      splitter.split(text, found, consumer);
     }
-
-    return (results.size() == 0) ? null : results;
   }
 }

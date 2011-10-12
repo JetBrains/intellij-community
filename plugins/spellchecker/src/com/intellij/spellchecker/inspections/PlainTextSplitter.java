@@ -17,12 +17,12 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -39,12 +39,13 @@ public class PlainTextSplitter extends BaseSplitter {
     Pattern.compile("((ftp|http|file|https)://([^/]+)(/.*)?(/.*))");
 
 
-  public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
+  @Override
+  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
-      return null;
+      return;
     }
     if (Verifier.checkCharacterData(range.substring(text)) != null) {
-      return null;
+      return;
     }
 
     List<TextRange> toCheck;
@@ -60,23 +61,12 @@ public class PlainTextSplitter extends BaseSplitter {
       toCheck = Collections.singletonList(range);
     }
 
-    if (toCheck == null) return null;
-
-    List<CheckArea> results = new ArrayList<CheckArea>();
     final TextSplitter ws = SplitterFactory.getInstance().getTextSplitterNew();
     for (TextRange r : toCheck) {
 
       checkCancelled();
 
-      final List<CheckArea> res = ws.split(text, r);
-      if (res != null) {
-        results.addAll(res);
-      }
-
+      ws.split(text, r, consumer);
     }
-
-    return (results.size() == 0) ? null : results;
   }
-
-
 }

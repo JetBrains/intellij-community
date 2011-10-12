@@ -16,17 +16,11 @@
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 
 public interface Splitter {
-
-  @Nullable
-  List<CheckArea> split(@Nullable String text, @NotNull TextRange range);
-
-  @Nullable
-  List<CheckArea> split(@Nullable String text);
+  void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer);
 }

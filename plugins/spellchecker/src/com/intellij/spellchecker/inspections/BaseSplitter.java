@@ -17,12 +17,14 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,7 +35,7 @@ public abstract class BaseSplitter implements Splitter {
   public static final int MIN_RANGE_LENGTH = 3;
 
 
-  protected static void addWord(@NotNull String text, @NotNull List<CheckArea> results, boolean ignore, @Nullable TextRange found) {
+  protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
     if (found == null || ignore) {
       return;
     }
@@ -41,9 +43,8 @@ public abstract class BaseSplitter implements Splitter {
     if (tooShort) {
       return;
     }
-    results.add(new CheckArea(text, found, false));
+    consumer.consume(found);
   }
-
 
 
   protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<TextRange> words) {
@@ -83,18 +84,25 @@ public abstract class BaseSplitter implements Splitter {
     return TextRange.from(range.getStartOffset() + start, end - start);
   }
 
-  public List<CheckArea> split(@Nullable String text) {
+  public List<CheckArea> split(@Nullable final String text) {
     if (text == null) {
-      return null;
+      return Collections.emptyList();
     }
-    return split(text, new TextRange(0, text.length()));
+    final List<CheckArea> result = new ArrayList<CheckArea>();
+    split(text, new TextRange(0, text.length()), new Consumer<TextRange>() {
+      @Override
+      public void consume(TextRange textRange) {
+        result.add(new CheckArea(text, textRange));
+      }
+    });
+    return result;
   }
 
   protected static boolean tooSmall(int from, int till) {
     return till - from <= MIN_RANGE_LENGTH;
   }
 
-  @Nullable
+  @NotNull
   static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
     List<TextRange> toCheck = new ArrayList<TextRange>();
     int from = range.getStartOffset();

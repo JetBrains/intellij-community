@@ -421,25 +421,11 @@ public class SplitterTest extends TestCase {
     if (text == null || toCheck == null) return null;
     List<String> words = new ArrayList<String>();
     for (CheckArea area : toCheck) {
-      if (!area.isIgnored()) {
-        words.add(area.getWord());
-      }
+      words.add(area.getWord());
     }
     return (words.size() != 0) ? words : null;
   }
 
-
-  @Nullable
-  private static List<String> wordsToIgnore(List<CheckArea> toCheck, String text) {
-    if (text == null || toCheck == null) return null;
-    List<String> words = new ArrayList<String>();
-    for (CheckArea area : toCheck) {
-      if (area.isIgnored()) {
-        words.add(area.getWord());
-      }
-    }
-    return (words.size() != 0) ? words : null;
-  }
 
   private static void correctListToCheck(List<CheckArea> toCheck, String text, @NotNull String[] expected) {
     List<String> words = wordsToCheck(toCheck, text);
