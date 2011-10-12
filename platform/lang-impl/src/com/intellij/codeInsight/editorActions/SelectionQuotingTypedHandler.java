@@ -18,16 +18,21 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author AG
  * @author yole
  */
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
+  public static final ExtensionPointName<DequotingFilter> EP_NAME =
+    ExtensionPointName.create("com.intellij.selectionDequotingFilter");
   private TextRange myReplacedTextRange;
 
   @Override
@@ -42,7 +47,11 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       char c2 = getMatchingDelimiter(c);
       if (selectedText.length() > 1) {
         final char firstChar = selectedText.charAt(0);
-        if (isSimilarDelimiters(firstChar, c) && selectedText.charAt(selectedText.length() - 1) == getMatchingDelimiter(firstChar)) {
+        if (isSimilarDelimiters(firstChar, c) &&
+            selectedText.charAt(selectedText.length() - 1) == getMatchingDelimiter(firstChar) &&
+            (isQuote(firstChar) || firstChar != c) &&
+            !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c)
+          ) {
           selectedText = selectedText.substring(1, selectedText.length() - 1);
         }
       }
@@ -53,6 +62,13 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       return Result.STOP;
     }
     return super.checkAutoPopup(c, project, editor, psiFile);
+  }
+
+  private boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
+    for(DequotingFilter filter: Extensions.getExtensions(EP_NAME)) {
+      if (filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c)) return true;
+    }
+    return false;
   }
 
   private static char getMatchingDelimiter(final char c) {
@@ -90,5 +106,12 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       return Result.STOP;
     }
     return Result.CONTINUE;
+  }
+  
+  public static abstract class DequotingFilter {
+    public abstract boolean skipReplacementQuotesOrBraces(@NotNull PsiFile file,
+                                                          @NotNull Editor editor,
+                                                          @NotNull String selectedText,
+                                                          char c);
   }
 }
