@@ -49,6 +49,9 @@
                   interface="com.intellij.openapi.util.Condition"/>
   <extensionPoint name="typedHandler"
                   interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"/>
+  <extensionPoint name="selectionDequotingFilter"
+                    interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter"/>
+
   <extensionPoint name="joinLinesHandler"
                   interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate"/>
   <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate"/>
