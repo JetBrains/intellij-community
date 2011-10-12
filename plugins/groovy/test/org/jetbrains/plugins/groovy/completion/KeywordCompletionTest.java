@@ -82,6 +82,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
   public void testVar7() throws Throwable { doTest(); }
   public void testVar8() throws Throwable { doTest(); }
   public void testWhile55() throws Throwable { doTest(); }
+  public void testDefInsideCase() throws Throwable { doTest(); }
 
 
   @Override
