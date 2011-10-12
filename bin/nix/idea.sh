@@ -23,9 +23,16 @@ if [ -z "$JDK" ]; then
     JAVA_BIN_PATH=`which java`
     if [ -n "$JAVA_BIN_PATH" ]; then
       if [ "$OS_TYPE" = "MAC" ]; then
-        JAVA_LOCATION=`readlink "$JAVA_BIN_PATH" | xargs dirname | xargs dirname | xargs dirname`
-        if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
-          JDK="$JAVA_LOCATION/CurrentJDK/Home"
+        if [ -h "$JAVA_BIN_PATH" ] ; then
+          JAVA_LOCATION=`readlink "$JAVA_BIN_PATH" | xargs dirname | xargs dirname | xargs dirname`
+          if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
+            JDK="$JAVA_LOCATION/CurrentJDK/Home"
+          fi
+        else
+          JAVA_LOCATION=`echo "$JAVA_BIN_PATH" | xargs dirname | xargs dirname`
+          if [ -f "$JAVA_LOCATION/lib/tools.jar" ]; then
+            JDK="$JAVA_LOCATION"
+          fi
         fi
       else
         JAVA_LOCATION=`readlink -f "$JAVA_BIN_PATH"`
