@@ -123,6 +123,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     setProgressLimit(300 * 2);
   }
 
+  @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     try {
       if (!HighlightLevelUtil.shouldInspect(myFile)) return;
@@ -263,6 +264,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                             @NotNull final LocalInspectionToolSession session,
                                             @NotNull final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
     boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, indicator, myFailFastOnAcquireReadAction, new Processor<LocalInspectionTool>() {
+      @Override
       public boolean process(final LocalInspectionTool tool) {
         indicator.checkCanceled();
 
@@ -353,6 +355,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static void acceptElements(@NotNull List<PsiElement> elements,
                                      @NotNull PsiElementVisitor elementVisitor) {
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
       element.accept(elementVisitor);
@@ -360,7 +363,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspectInjectedPsi(@NotNull final List<PsiElement> elements,
+  void inspectInjectedPsi(@NotNull final List<PsiElement> elements,
                                   @NotNull final List<LocalInspectionTool> tools,
                                   final boolean onTheFly,
                                   @NotNull final ProgressIndicator indicator,
@@ -369,6 +372,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           injected.add(injectedPsi);
         }
@@ -376,6 +380,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     if (injected.isEmpty()) return;
     if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction, new Processor<PsiFile>() {
+      @Override
       public boolean process(final PsiFile injectedPsi) {
         doInspectInjectedPsi(injectedPsi, tools, onTheFly, indicator, iManager, inVisibleRange);
         return true;
@@ -504,6 +509,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     throw new RuntimeException("Cannot map " + highlightType);
   }
 
+  @Override
   protected void applyInformationWithProgress() {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
   }
@@ -704,6 +710,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
+  @Override
   @NotNull
   public List<HighlightInfo> getInfos() {
     return myInfos;

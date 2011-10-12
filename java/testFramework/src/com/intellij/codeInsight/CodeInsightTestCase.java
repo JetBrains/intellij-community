@@ -18,8 +18,6 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -42,7 +40,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -138,7 +135,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(final FileType fileType, @NonNls final String text, final String _extension) throws Exception {
+  protected PsiFile configureByText(final FileType fileType, @NonNls final String text, @Nullable String _extension) throws Exception {
     final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
     File dir = createTempDirectory();

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -52,6 +51,7 @@ public class FileStatusMap implements Disposable {
     myProject = project;
   }
 
+  @Override
   public void dispose() {
     // clear dangling references to PsiFiles/Documents. SCR#10358
     markAllFilesDirty();
@@ -93,7 +93,7 @@ public class FileStatusMap implements Disposable {
   private static class FileStatus {
     public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
-    // if contains the special value "WHOLE_FILE_MARKER" than the corresponding range is (0, document length)
+    // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)
     private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<RangeMarker>();
     private boolean errorFound;
 
@@ -120,6 +120,7 @@ public class FileStatusMap implements Disposable {
 
     public void combineScopesWith(final TextRange scope, final int fileLength, final Document document) {
       dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
+        @Override
         public boolean execute(int id, RangeMarker oldScope) {
           RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
           if (newScope != oldScope) {
@@ -138,6 +139,7 @@ public class FileStatusMap implements Disposable {
       s.append("; errorFound = ").append(errorFound);
       s.append("; dirtyScopes: (");
       dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
+        @Override
         public boolean execute(int passId, RangeMarker rangeMarker) {
           s.append(" pass: " + passId + " -> " + (rangeMarker ==  WHOLE_FILE_MARKER ? "Whole file" : rangeMarker)+ ";");
           return true;
@@ -212,7 +214,7 @@ public class FileStatusMap implements Disposable {
   
   public void markFileScopeDirty(@NotNull Document document, int passId) {
     assertAllowModifications();
-    synchronized(myDocumentToStatusMap){
+    synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         return;
@@ -226,8 +228,7 @@ public class FileStatusMap implements Disposable {
         if (marker != null && marker != WHOLE_FILE_MARKER) {
           marker.dispose();
         }
-        marker = WHOLE_FILE_MARKER;
-        status.dirtyScopes.put(passId, marker);
+        status.dirtyScopes.put(passId, WHOLE_FILE_MARKER);
       }
     }
   }
