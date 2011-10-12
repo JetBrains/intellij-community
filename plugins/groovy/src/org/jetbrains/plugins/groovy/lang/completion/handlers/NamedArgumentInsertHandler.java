@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -64,6 +65,13 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
         editor.getCaretModel().moveToOffset(tailOffset + 2);
       }
       else {
+        if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
+          char a = s.charAt(0);
+          if (Character.isLetterOrDigit(a)) {
+            return;
+          }
+        }
+
         Matcher m = Pattern.compile("([ \\t]*):([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
         if (m.matches()) {
           int caret = tailOffset + m.end(2);
