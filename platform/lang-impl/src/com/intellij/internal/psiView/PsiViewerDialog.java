@@ -738,13 +738,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myPsiTree.expandRow(0);
     myPsiTree.setRootVisible(false);
 
-      Block rootBlock = buildBlocks(rootElement);
-      if(rootBlock == null){
-        myBlockTreeBuilder = null;
-        myBlockTree.setRootVisible(false);
-        myBlockTree.setVisible(false);
-        return;
-      }
+    Block rootBlock = rootElement == null ? null : buildBlocks(rootElement);
+    if (rootBlock == null) {
+      myBlockTreeBuilder = null;
+      myBlockTree.setRootVisible(false);
+      myBlockTree.setVisible(false);
+      return;
+    }
 
     myBlockTree.setVisible(true);
     BlockTreeStructure blockTreeStructure = new BlockTreeStructure();
