@@ -398,8 +398,10 @@ class ProjectBuilder {
       catch (Exception e) {
         final String reason = e.toString();
 
-        chunk.modules.each {
-          Reporter.reportBuildFailure(it, tests, reason)
+        if (pw != null) {
+          chunk.modules.each {
+            Reporter.reportBuildFailure(it, tests, reason)
+          }
         }
 
         throw e;
@@ -417,7 +419,9 @@ class ProjectBuilder {
     }
 
     chunk.modules.each {
-      Reporter.reportBuildSuccess(it, tests)
+      if (pw != null) {
+        Reporter.reportBuildSuccess(it, tests)
+      }
       exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
     }
   }

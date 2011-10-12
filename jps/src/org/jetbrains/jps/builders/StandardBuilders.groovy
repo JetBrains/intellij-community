@@ -71,16 +71,17 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
     def ant = projectBuilder.binding.ant
 
-    final BuildListener listener = new AntListener(state.targetFolder, state.sourceRoots, state.callback);
-
-    ant.project.addBuildListener(listener);
+    if (state.projectWrapper != null) {
+      final BuildListener listener = new AntListener(state.targetFolder, state.sourceRoots, state.callback)
+      ant.project.addBuildListener(listener)
+    };
 
     ant.javac(params) {
       if (customArgs) {
         compilerarg(line: customArgs)
       }
 
-      if (state.sourceFiles != null) {
+      if (state.projectWrapper != null && state.sourceFiles != null) {
         List patterns = []
 
         state.sourceFiles.each {
@@ -116,7 +117,9 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
       }
     }
 
-    ant.project.removeBuildListener(listener);
+    if (state.projectWrapper != null) {
+      ant.project.removeBuildListener(listener)
+    };
 
     if (state.sourceFiles != null) {
       projectBuilder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
