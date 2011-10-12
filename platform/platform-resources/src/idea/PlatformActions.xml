@@ -204,8 +204,10 @@
           <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
           <reference ref="EditorToggleCase"/>
-          <action id="ConvertIndentsToSpaces" class="com.intellij.openapi.editor.actions.ConvertIndentsToSpacesAction"/>
-          <action id="ConvertIndentsToTabs" class="com.intellij.openapi.editor.actions.ConvertIndentsToTabsAction"/>
+          <group id="ConvertIndentsGroup" popup="true">
+            <action id="ConvertIndentsToSpaces" class="com.intellij.openapi.editor.actions.ConvertIndentsToSpacesAction"/>
+            <action id="ConvertIndentsToTabs" class="com.intellij.openapi.editor.actions.ConvertIndentsToTabsAction"/>
+          </group>
         </group>
       </group>
 
