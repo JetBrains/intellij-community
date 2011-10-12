@@ -16,4 +16,8 @@
 package com.intellij.debugger;
 
 public class NoDataException extends Exception{
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
+  }
 }
