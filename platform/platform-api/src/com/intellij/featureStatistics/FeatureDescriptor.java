@@ -37,13 +37,11 @@ public class FeatureDescriptor{
   private int myUsageCount;
   private long myLastTimeShown;
   private long myLastTimeUsed;
-  private long myAverageFrequency;
   private int myShownCount;
   private ProductivityFeaturesProvider myProvider;
   @NonNls private static final String ATTRIBUTE_COUNT = "count";
   @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
   @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
-  @NonNls private static final String ATTRIBUTE_AVERAGE_FREQUENCY = "average-frequency";
   @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_TIP_FILE = "tip-file";
@@ -136,12 +134,9 @@ public class FeatureDescriptor{
 
   void triggerUsed() {
     long current = System.currentTimeMillis();
-    myAverageFrequency *= myUsageCount;
     long delta = myUsageCount > 0 ? current - Math.max(myLastTimeUsed, ApplicationManager.getApplication().getStartTime()) : 0;
     myLastTimeUsed = current;
     myUsageCount++;
-    myAverageFrequency += delta;
-    myAverageFrequency /= myUsageCount;
   }
 
   public boolean isUnused() {
@@ -194,10 +189,6 @@ public class FeatureDescriptor{
     return myLastTimeUsed;
   }
 
-  public long getAverageFrequency() {
-    return myAverageFrequency;
-  }
-
   public int getShownCount() {
     return myShownCount;
   }
@@ -206,7 +197,6 @@ public class FeatureDescriptor{
     myUsageCount = statistics.getUsageCount();
     myLastTimeShown = statistics.getLastTimeShown();
     myLastTimeUsed = statistics.getLastTimeUsed();
-    myAverageFrequency = statistics.getAverageFrequency();
     myShownCount = statistics.getShownCount();
   }
 
@@ -214,13 +204,11 @@ public class FeatureDescriptor{
     String count = element.getAttributeValue(ATTRIBUTE_COUNT);
     String lastShown = element.getAttributeValue(ATTRIBUTE_LAST_SHOWN);
     String lastUsed = element.getAttributeValue(ATTRIBUTE_LAST_USED);
-    String averageFrequency = element.getAttributeValue(ATTRIBUTE_AVERAGE_FREQUENCY);
     String shownCount = element.getAttributeValue(ATTRIBUTE_SHOWN_COUNT);
 
     myUsageCount = count == null ? 0 : Integer.parseInt(count);
     myLastTimeShown = lastShown == null ? 0 : Long.parseLong(lastShown);
     myLastTimeUsed = lastUsed == null ? 0 : Long.parseLong(lastUsed);
-    myAverageFrequency = averageFrequency == null ? 0 : Long.parseLong(averageFrequency);
     myShownCount = shownCount == null ? 0 : Integer.parseInt(shownCount);
   }
 
@@ -228,7 +216,6 @@ public class FeatureDescriptor{
     element.setAttribute(ATTRIBUTE_COUNT, String.valueOf(getUsageCount()));
     element.setAttribute(ATTRIBUTE_LAST_SHOWN, String.valueOf(getLastTimeShown()));
     element.setAttribute(ATTRIBUTE_LAST_USED, String.valueOf(getLastTimeUsed()));
-    element.setAttribute(ATTRIBUTE_AVERAGE_FREQUENCY, String.valueOf(getAverageFrequency()));
     element.setAttribute(ATTRIBUTE_SHOWN_COUNT, String.valueOf(getShownCount()));
   }
 }

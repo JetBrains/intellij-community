@@ -75,11 +75,6 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return new Date(fd2.getLastTimeUsed()).compareTo(new Date(fd1.getLastTimeUsed()));
     }
   };
-  private static final Comparator<FeatureDescriptor> FREQUENCY_COMPARATOR = new Comparator<FeatureDescriptor>() {
-    public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      return new Date(fd1.getAverageFrequency()).compareTo(new Date(fd2.getAverageFrequency()));
-    }
-  };
 
   private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.feature")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {
@@ -120,19 +115,8 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return LAST_USED_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> USAGE_FREQUENCY = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.usage.frequency")) {
-    public String valueOf(FeatureDescriptor featureDescriptor) {
-      long tm = featureDescriptor.getAverageFrequency();
-      if (tm <= 0) return FeatureStatisticsBundle.message("feature.statistics.not.applicable");
-      return DateFormatUtil.formatFrequency(tm);
-    }
 
-    public Comparator<FeatureDescriptor> getComparator() {
-      return FREQUENCY_COMPARATOR;
-    }
-  };
-
-  private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{DISPLAY_NAME, GROUP_NAME, USED_TOTAL, LAST_USED, USAGE_FREQUENCY};
+  private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{DISPLAY_NAME, GROUP_NAME, USED_TOTAL, LAST_USED};
 
   public ShowFeatureUsageStatisticsDialog(Project project) {
     super(project, true);
