@@ -79,6 +79,9 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
     assertTrue(isApplicable("class Foo { void foo(<caret>xxx String bar, int goo ) {} }", template));
     assertTrue(isApplicable("class Foo { void foo(String bar, <caret>xxx int goo ) {} }", template));
     assertTrue(isApplicable("class Foo { void foo(String bar, <caret>xxx goo ) {} }", template));
+    assertTrue(isApplicable("class Foo { <caret>xxx void foo(String bar, xxx goo ) {} }", template));
+    assertTrue(isApplicable("class Foo { void foo(<caret>String[] bar) {} }", template));
+    assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String bar, xxx goo ) {} }", template));
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {

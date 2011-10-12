@@ -124,7 +124,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      if (psiElement().withParents(PsiTypeElement.class, PsiClass.class).accepts(parent)) {
+      if (psiElement().withParents(PsiTypeElement.class, PsiMember.class).accepts(parent)) {
         return false;
       }
 
