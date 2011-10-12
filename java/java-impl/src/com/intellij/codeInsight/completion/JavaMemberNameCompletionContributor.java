@@ -298,7 +298,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         if (containingClass != null) {
           final String name = containingClass.getName();
           if (StringUtil.isNotEmpty(name)) {
-            LookupItemUtil.addLookupItem(set, name, matcher);
+            addLookupItems(set, null, matcher, name);
           }
         }
         return;
@@ -355,7 +355,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     return result.result;
   }
 
-  private static void addLookupItems(Set<LookupElement> lookupElements, @Nullable final SuggestedNameInfo callback, PrefixMatcher matcher, String[] strings) {
+  private static void addLookupItems(Set<LookupElement> lookupElements, @Nullable final SuggestedNameInfo callback, PrefixMatcher matcher, String... strings) {
     for (int i = 0; i < strings.length; i++) {
       String name = strings[i];
       if (!matcher.prefixMatches(name)) {

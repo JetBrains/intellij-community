@@ -20,7 +20,7 @@ import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -62,6 +62,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -145,7 +146,7 @@ public class CreateFromUsageUtils {
     CodeStyleManager csManager = CodeStyleManager.getInstance(method.getProject());
     try {
       String bodyText = template.getText(properties);
-      if (!"".equals(bodyText)) bodyText += "\n";
+      if (!bodyText.isEmpty()) bodyText += "\n";
       methodText = returnType.getPresentableText() + " foo () {\n" + bodyText + "}";
       methodText = FileTemplateUtil.indent(methodText, method.getProject(), fileType);
     }
@@ -568,7 +569,7 @@ public class CreateFromUsageUtils {
         }
       }
       else {
-        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getInstance(expression.getProject()).getExpectedTypes(expr, false);
+        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
         if (someExpectedTypes.length > 0) {
           types.add(someExpectedTypes);
         }
@@ -580,7 +581,6 @@ public class CreateFromUsageUtils {
         PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
-    ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(expression.getProject());
     List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
     List<String> expectedMethodNames = new ArrayList<String>();
     List<String> expectedFieldNames  = new ArrayList<String>();
@@ -621,13 +621,14 @@ public class CreateFromUsageUtils {
 
     if (expectedTypes == null || expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiType.VOID : PsiType.getJavaLangObject(manager, resolveScope);
-      expectedTypes = new ExpectedTypeInfo[] {provider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
+      expectedTypes = new ExpectedTypeInfo[] {ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
     }
 
     return expectedTypes;
   }
 
 
+  @Nullable
   public static PsiType[] guessType(PsiExpression expression, final boolean allowVoidType) {
     final PsiManager manager = expression.getManager();
     final GlobalSearchScope resolveScope = expression.getResolveScope();
@@ -678,6 +679,7 @@ public class CreateFromUsageUtils {
       final Set<PsiType> typesSet = new HashSet<PsiType>();
 
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
+        @Nullable
         public PsiType visitType(PsiType type) {
           if (PsiType.NULL.equals(type)) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
@@ -713,8 +715,7 @@ public class CreateFromUsageUtils {
         }
       };
 
-      ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
-      PsiType[] types = provider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
+      PsiType[] types = ExpectedTypesProvider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
       if (types.length == 0) {
         return allowVoidType
                ? new PsiType[]{PsiType.VOID}
@@ -751,13 +752,12 @@ public class CreateFromUsageUtils {
 
     List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
     PsiManager manager = expression.getManager();
-    ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     for (int i = 0; i < Math.min(MAX_GUESSED_MEMBERS_COUNT, members.length); i++) {
       ProgressManager.checkCanceled();
       PsiMember member = members[i];
       PsiClass aClass = member.getContainingClass();
-      if (aClass instanceof PsiAnonymousClass) continue;
+      if (aClass instanceof PsiAnonymousClass || aClass == null) continue;
 
       if (facade.getResolveHelper().isAccessible(aClass, expression, null)) {
         PsiClassType type;
@@ -774,7 +774,7 @@ public class CreateFromUsageUtils {
         else {
           type = factory.createType(aClass);
         }
-        l.add(provider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
+        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
       }
     }
 
@@ -939,11 +939,13 @@ public class CreateFromUsageUtils {
       return null;
     }
 
+    @NotNull
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+      assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
       PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
       if (parameterList == null) return LookupElement.EMPTY_ARRAY;
@@ -951,13 +953,11 @@ public class CreateFromUsageUtils {
       PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
 
       Set<String> parameterNames = new HashSet<String>();
-      PsiParameter[] parameters = parameterList.getParameters();
-      for (PsiParameter psiParameter : parameters) {
+      for (PsiParameter psiParameter : parameterList.getParameters()) {
         if (psiParameter == parameter) continue;
         parameterNames.add(psiParameter.getName());
       }
 
-      HashSet<String> names = new HashSet<String>();
       Set<LookupElement> set = new LinkedHashSet<LookupElement>();
 
       for (String name : myNames) {
@@ -967,8 +967,7 @@ public class CreateFromUsageUtils {
           name += j;
         }
 
-        names.add(name);
-        LookupItemUtil.addLookupItem(set, name);
+        set.add(LookupElementBuilder.create(name));
       }
 
       String[] suggestedNames = ExpressionUtil.getNames(context);
@@ -980,9 +979,7 @@ public class CreateFromUsageUtils {
             name += j;
           }
 
-          if (!names.contains(name)) {
-            LookupItemUtil.addLookupItem(set, name);
-          }
+          set.add(LookupElementBuilder.create(name));
         }
       }
 
