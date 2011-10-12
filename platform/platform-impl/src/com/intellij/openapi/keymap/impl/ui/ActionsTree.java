@@ -525,7 +525,7 @@ public class ActionsTree {
             for (Shortcut shortcut : shortcuts) {
               textWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
             }
-            textWidth += metrics.stringWidth(" ") * (shortcuts.length - 1);
+            textWidth += metrics.stringWidth(" ") * (shortcuts.length - 1) * 2;
             
             final int rowX = getRowX(tree, currentPath.getPathCount() - 1);
 
@@ -538,7 +538,7 @@ public class ActionsTree {
                 first = false;
               }
               else {
-                append(" ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                append("  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
               }
               append(KeymapUtil.getShortcutText(shortcut),
                      new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, Color.blue, Color.red));
