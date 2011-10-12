@@ -1,18 +1,18 @@
 package com.jetbrains.python.spellchecker;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator;
-import com.intellij.spellchecker.inspections.CheckArea;
 import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * @author yole
@@ -23,12 +23,16 @@ public class PythonSpellcheckerDictionaryGenerator extends SpellCheckerDictionar
   }
 
   @Override
-  protected void processFolder(HashSet<String> seenNames, PsiManager manager, VirtualFile folder) {
+  protected void processFolder(final HashSet<String> seenNames, PsiManager manager, VirtualFile folder) {
     if (!myExcludedFolders.contains(folder)) {
-      List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(folder.getName());
-      if (checkAreas != null) {
-        processCheckAreas(checkAreas, seenNames);
-      }
+      final String name = folder.getName();
+      SplitterFactory.getInstance().getIdentifierSplitter().split(name, TextRange.allOf(name), new Consumer<TextRange>() {
+        @Override
+        public void consume(TextRange textRange) {
+          final String word = textRange.substring(name);
+          addSeenWord(seenNames, word);
+        }
+      });
     }
     super.processFolder(seenNames, manager, folder);
   }
