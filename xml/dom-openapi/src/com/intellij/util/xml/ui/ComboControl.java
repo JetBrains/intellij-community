@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -183,7 +184,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     }
 
     public String toString() {
-      return first;
+      return StringUtil.notNullize(first);
     }
   }
 
