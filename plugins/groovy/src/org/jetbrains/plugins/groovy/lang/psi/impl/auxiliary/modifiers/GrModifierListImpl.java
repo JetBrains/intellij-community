@@ -26,7 +26,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -44,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
+import org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -164,7 +164,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
       if (pParent instanceof GrTypeDefinition) {
         PsiModifierList pModifierList = ((GrTypeDefinition)pParent).getModifierList();
-        if (pModifierList != null && pModifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) != null) {
+        if (pModifierList != null && pModifierList.findAnnotation(ConstructorAnnotationsProcessor.IMMUTABLE) != null) {
           if (modifier.equals(GrModifier.FINAL)) return true;
         }
       }

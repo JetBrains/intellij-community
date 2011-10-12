@@ -23,7 +23,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
@@ -40,6 +39,8 @@ import java.util.Set;
  */
 public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
 
+  public static final String IMMUTABLE = "groovy.lang.Immutable";
+
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass psiClass,
@@ -52,7 +53,7 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
     if (modifierList == null) return;
 
     final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
-    final boolean immutable = modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) != null ||
+    final boolean immutable = modifierList.findAnnotation(IMMUTABLE) != null ||
                               modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
     final PsiAnnotation canonical = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL);
     if (!immutable && canonical == null && tupleConstructor == null) {
