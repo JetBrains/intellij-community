@@ -5,6 +5,9 @@
       <element id="module-output" name="jps" />
       <element id="module-output" name="antlayout" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/javac2-all.jar" path-in-jar="/" />
+      <element id="module-output" name="model" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/util.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/asm-all-3.3.1.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
