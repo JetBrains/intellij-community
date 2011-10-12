@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
@@ -204,7 +205,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (myLatestBuild.getMessage() != null) {
         StringBuilder builder = new StringBuilder();
         builder.append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>")
-          .append(AbstractUpdateDialog.formatLinks(myLatestBuild.getMessage()))
+          .append(StringUtil.formatLinks(myLatestBuild.getMessage()))
           .append("</body></html>");
         myUpdateMessageLabel.setText(builder.toString());
         myUpdateMessageLabel.addHyperlinkListener(new BrowserHyperlinkListener());

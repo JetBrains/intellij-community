@@ -2127,4 +2127,15 @@ public class StringUtil {
     }
     return false;
   }
+
+  public static String formatLinks(String message) {
+    Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9\\./\\-\\+]+");
+    StringBuffer result = new StringBuffer();
+    Matcher m = linkPattern.matcher(message);
+    while (m.find()) {
+      m.appendReplacement(result, "<a href=\"" + m.group() + "\">" + m.group() + "</a>");
+    }
+    m.appendTail(result);
+    return result.toString();
+  }
 }

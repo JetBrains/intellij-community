@@ -89,4 +89,8 @@ public class StringUtilTest extends TestCase {
     assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
   }
+  
+  public void testFormatLinks() {
+    assertEquals("<a href=\"http://a-b+c\">http://a-b+c</a>", StringUtil.formatLinks("http://a-b+c"));
+  }
 }

@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBScrollPane;
@@ -84,7 +85,7 @@ public class NewChannelDialog extends DialogWrapper {
     StringBuilder builder = new StringBuilder().append("<html>");
     builder.append("<head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
     builder.append("<b>").append(myChannel.getName()).append("</b><br>");
-    builder.append(AbstractUpdateDialog.formatLinks(myChannel.getLatestBuild().getMessage())).append("<br><br>");
+    builder.append(StringUtil.formatLinks(myChannel.getLatestBuild().getMessage())).append("<br><br>");
     LicensingFacade facade = LicensingFacade.getInstance();
     if (facade != null) {
       if (!myChannel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
