@@ -476,6 +476,7 @@ public class ActionsTree {
           QuickList list = (QuickList)userObject;
           icon = QUICK_LIST_ICON;
           text = list.getDisplayName();
+          shortcuts = myKeymap.getShortcuts(list.getActionId());
 
           changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
         }
