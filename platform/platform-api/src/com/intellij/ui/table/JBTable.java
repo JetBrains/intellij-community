@@ -17,6 +17,7 @@ package com.intellij.ui.table;
 
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
@@ -53,6 +54,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private Integer myMinRowHeight;
   private boolean myStriped;
   private boolean isTypeAhead = true;
+
+  private AsyncProcessIcon myBusyIcon;
+  private boolean myBusy;
 
 
   public JBTable() {
@@ -308,6 +312,65 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     //noinspection HardCodedStringLiteral
     keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
     super.removeNotify();
+    if (myBusyIcon != null) {
+      remove(myBusyIcon);
+      Disposer.dispose(myBusyIcon);
+      myBusyIcon = null;
+    }
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+    if (myBusyIcon != null) {
+      myBusyIcon.updateLocation(this);
+    }
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    if (myBusyIcon != null) {
+      myBusyIcon.updateLocation(this);
+    }
+  }
+
+  public void setPaintBusy(boolean paintBusy) {
+    if (myBusy == paintBusy) return;
+
+    myBusy = paintBusy;
+    updateBusy();
+  }
+
+  private void updateBusy() {
+    if (myBusy) {
+      if (myBusyIcon == null) {
+        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon.setOpaque(false);
+        myBusyIcon.setPaintPassiveIcon(false);
+        add(myBusyIcon);
+      }
+    }
+
+    if (myBusyIcon != null) {
+      if (myBusy) {
+        myBusyIcon.resume();
+      }
+      else {
+        myBusyIcon.suspend();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myBusyIcon != null) {
+              repaint();
+            }
+          }
+        });
+      }
+      if (myBusyIcon != null) {
+        myBusyIcon.updateLocation(this);
+      }
+    }
   }
 
   public boolean isStriped() {
