@@ -26,7 +26,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        baseDir = "testData" + File.separator + "incremental" + File.separator;
+        baseDir = "jps/testData" + File.separator + "incremental" + File.separator;
 
         for (int i = 0; ; i++) {
             final File tmp = new File(tempDir + File.separator + "__temp__" + i);
