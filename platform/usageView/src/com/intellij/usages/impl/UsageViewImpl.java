@@ -16,6 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.ide.*;
+import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -568,11 +569,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myProject;
   }
 
-  private class CloseAction extends AnAction implements DumbAware {
-    private CloseAction() {
-      super(UsageViewBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
-    }
-
+  private class CloseAction extends CloseTabToolbarAction {
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myContent != null);
