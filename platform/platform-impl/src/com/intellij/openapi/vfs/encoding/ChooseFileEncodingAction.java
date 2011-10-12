@@ -70,32 +70,35 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     e.getPresentation().setDescription(result.first);
   }
 
-  public static boolean isEnabled(@Nullable VirtualFile virtualFile) {
+  // returns null if "change encoding" action is enabled for the file;
+  //         reason why not, if it is disabled
+  public static String isEnabledAndWhyNot(@Nullable VirtualFile virtualFile) {
     if (virtualFile == null) {
-      return false;
+      return "file not specified";
     }
-    boolean enabled = true;
     Charset charset = cachedCharsetFromContent(virtualFile);
     if (charset != null) {
-      enabled = false;
+      return "charset specified inside the file";
     }
-    else if (!virtualFile.isDirectory()) {
-      FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
-      if (fileType.isBinary()
-          || fileType == StdFileTypes.GUI_DESIGNER_FORM
-          || fileType == StdFileTypes.IDEA_MODULE
-          || fileType == StdFileTypes.IDEA_PROJECT
-          || fileType == StdFileTypes.IDEA_WORKSPACE
-          || fileType == StdFileTypes.PATCH
-          || fileType == StdFileTypes.PROPERTIES
+    if (virtualFile.isDirectory()) {
+      return null;
+    }
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    if (fileType.isBinary()) return "binary file";
+    if (fileType == StdFileTypes.GUI_DESIGNER_FORM
+        || fileType == StdFileTypes.IDEA_MODULE
+        || fileType == StdFileTypes.IDEA_PROJECT
+        || fileType == StdFileTypes.IDEA_WORKSPACE
+        || fileType == StdFileTypes.PATCH) return "IDEA internal file";
 
-          || fileType == StdFileTypes.XML
-          || fileType == StdFileTypes.JSPX && fileType != FileTypes.PLAIN_TEXT // in community tests JSPX==TEXT
-        ) {
-        enabled = false;
-      }
+    if (fileType == StdFileTypes.PROPERTIES) return ".properties file";
+
+    if (fileType == StdFileTypes.XML
+        || fileType == StdFileTypes.JSPX && fileType != FileTypes.PLAIN_TEXT // in community tests JSPX==PLAIN_TEXT
+      ) {
+      return "XML file";
     }
-    return enabled;
+    return null;
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
@@ -127,7 +130,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @NotNull
   public static Pair<String,Boolean> update(@Nullable VirtualFile virtualFile) {
     String pattern;
-    boolean enabled = virtualFile != null && isEnabled(virtualFile);
+    String failReason = isEnabledAndWhyNot(virtualFile);
+    boolean enabled = failReason == null;
     Charset charsetFromContent = cachedCharsetFromContent(virtualFile);
     if (virtualFile != null && FileDocumentManager.getInstance().isFileModified(virtualFile)) {
       //no sense to reload file with UTF-detected chars using other encoding
@@ -136,10 +140,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         enabled = false;
       }
       else if (enabled) {
-        pattern = "Save ''{0}''-encoded file in";
+        pattern = "Save ''{0}'' file in another encoding";
       }
       else {
-        pattern = "Encoding ''{0}''";
+        pattern = "Encoding ''{0}'' ("+failReason+")";
       }
     }
     else {
@@ -150,13 +154,13 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         enabled = false;
       }
       else if (enabled) {
-        pattern = "Reload ''{0}''-encoded file in";
+        pattern = "Reload ''{0}'' file in another encoding";
       }
       else if (charsetFromContent != null) {
         pattern = "Encoding (content-specified): {0}";
       }
       else {
-        pattern = "Encoding ''{0}''";
+        pattern = "Encoding ''{0}'' ("+failReason+")";
       }
     }
 

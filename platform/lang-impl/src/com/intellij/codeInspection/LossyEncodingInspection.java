@@ -104,7 +104,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                                      VirtualFile virtualFile,
                                                      Charset charset, List<ProblemDescriptor> descriptors) {
     if (!FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
-        && ChooseFileEncodingAction.isEnabled(virtualFile) // can't reload in another encoding, no point trying
+        && ChooseFileEncodingAction.isEnabledAndWhyNot(virtualFile) == null // can't reload in another encoding, no point trying
       ) {
       // check if file was loaded in correct encoding
       byte[] bytes;

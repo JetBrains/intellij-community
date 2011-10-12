@@ -56,6 +56,7 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
           setText(t.displayName());
         }
         else if (file != null) {
+          String failReason;
           Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
           if (charset != null) {
             setText(charset.displayName());
@@ -63,8 +64,8 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
           else if (LoadTextUtil.wasCharsetDetectedFromBytes(file)) {
             setText(file.getCharset().displayName());
           }
-          else if (!ChooseFileEncodingAction.isEnabled(file)) {
-            setText("N/A");
+          else if ((failReason = ChooseFileEncodingAction.isEnabledAndWhyNot(file)) != null) {
+            setText("N/A ("+failReason+")");
           }
         }
         setEnabled(enabled);
