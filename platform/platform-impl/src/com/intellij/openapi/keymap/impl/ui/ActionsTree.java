@@ -412,8 +412,13 @@ public class ActionsTree {
       alarm.addComponentRequest(new Runnable() {
         public void run() {
           final ArrayList<DefaultMutableTreeNode> nodesToSelect = getNodesByPaths(mySelectionPaths);
-          for (DefaultMutableTreeNode node : nodesToSelect) {
-            TreeUtil.selectNode(myTree, node);
+          if (!nodesToSelect.isEmpty()) {
+            for (DefaultMutableTreeNode node : nodesToSelect) {
+              TreeUtil.selectNode(myTree, node);
+            }
+          }
+          else {
+            myTree.setSelectionRow(0);
           }
         }
       }, 100);
