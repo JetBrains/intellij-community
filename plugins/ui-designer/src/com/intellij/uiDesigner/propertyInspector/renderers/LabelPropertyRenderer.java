@@ -35,6 +35,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
   public LabelPropertyRenderer() {
     setOpaque(true);
     putClientProperty("html.disable", true);
+    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
   }
 
   public LabelPropertyRenderer(String staticText) {

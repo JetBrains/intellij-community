@@ -54,7 +54,7 @@ public abstract class AbstractTextFieldEditor<V> extends PropertyEditor<V> {
       }
     }
     else{
-      myTf.setBorder(null);
+      myTf.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     }
 
     return myTf;
