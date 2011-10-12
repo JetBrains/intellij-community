@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,20 +81,6 @@ public abstract class BaseSplitter implements Splitter {
   @NotNull
   protected static TextRange subRange(@NotNull TextRange range, int start, int end) {
     return TextRange.from(range.getStartOffset() + start, end - start);
-  }
-
-  public List<CheckArea> split(@Nullable final String text) {
-    if (text == null) {
-      return Collections.emptyList();
-    }
-    final List<CheckArea> result = new ArrayList<CheckArea>();
-    split(text, new TextRange(0, text.length()), new Consumer<TextRange>() {
-      @Override
-      public void consume(TextRange textRange) {
-        result.add(new CheckArea(text, textRange));
-      }
-    });
-    return result;
   }
 
   protected static boolean tooSmall(int from, int till) {
