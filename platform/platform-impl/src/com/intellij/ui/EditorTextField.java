@@ -604,7 +604,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
 
-    Dimension size = new Dimension(100, UIUtil.isUnderAquaLookAndFeel() ? 28 : 20);
+    Dimension size = new Dimension(100, 20);
     if (myEditor != null) {
       final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
 
@@ -638,7 +638,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       return super.getMinimumSize();
     }
 
-    return new Dimension(100, UIUtil.isUnderAquaLookAndFeel() ? 28 : 20);
+    return new Dimension(100, 20);
   }
 
   public void setPreferredWidth(int preferredWidth) {

@@ -57,10 +57,6 @@ public abstract class JBListTable extends JPanel {
     mainTable = new JBTable(model) {
       private MouseEvent myMouseEvent;
 
-      {
-        setRowHeight(20);
-      }
-
       @Override
       protected void processKeyEvent(KeyEvent e) {
         myMouseEvent = null;
