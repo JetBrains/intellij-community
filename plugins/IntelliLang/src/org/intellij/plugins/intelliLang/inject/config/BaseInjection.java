@@ -149,8 +149,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   
   public boolean acceptsPsiElement(final PsiElement element) {
     ProgressManager.checkCanceled();
-    for (int i = 0, myPlacesSize = myPlaces.size(); i < myPlacesSize; i++) {
-      final InjectionPlace place = myPlaces.get(i);
+    for (final InjectionPlace place : myPlaces) {
       if (place.isEnabled() && place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
         return true;
       }
