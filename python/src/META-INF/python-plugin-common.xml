@@ -658,6 +658,7 @@
                   id="MakoBracesHandler"/>
     <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
     <editorHighlighterProvider filetype="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoEditorHighlighterProvider"/>
+    <lang.findUsagesProvider language="Mako" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
 
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
