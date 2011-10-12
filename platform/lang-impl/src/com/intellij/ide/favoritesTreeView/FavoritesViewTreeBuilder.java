@@ -18,9 +18,11 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -45,8 +47,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Collection;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
   private final FileStatusListener myFileStatusListener;
@@ -57,8 +61,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
                                   JTree tree,
                                   DefaultTreeModel treeModel,
                                   ProjectAbstractTreeStructureBase treeStructure) {
-    super(project, tree, treeModel, treeStructure, null);
-    final MessageBusConnection connection = myProject.getMessageBus().connect(this);
+    super(project, 
+          tree, 
+          treeModel, 
+          treeStructure, 
+          new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID));
+    final MessageBusConnection bus = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       protected DefaultMutableTreeNode getRootNode() {
         return FavoritesViewTreeBuilder.this.getRootNode();
@@ -69,23 +77,23 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
 
       protected boolean isFlattenPackages() {
-        return ((FavoritesTreeStructure)getTreeStructure()).isFlattenPackages();
+        return getStructure().isFlattenPackages();
       }
 
       protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
         if (findNodeByElement(parent) == null){
-          getUpdater().addSubtreeToUpdate(getRootNode());
+          queueUpdate(true);
         } else {
           super.childrenChanged(parent, true);
         }
       }
     };
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    bus.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        getUpdater().addSubtreeToUpdate(getRootNode());
+        queueUpdate(true);
       }
     });
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
@@ -113,6 +121,18 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     initRootNode();
   }
 
+  @NotNull
+  public FavoritesTreeStructure getStructure() {
+    final AbstractTreeStructure structure = getTreeStructure();
+    assert structure instanceof FavoritesTreeStructure;
+    return (FavoritesTreeStructure)structure;
+  }
+  
+  public AbstractTreeNode getRoot() {
+    final Object rootElement = getRootElement();
+    assert rootElement instanceof AbstractTreeNode;
+    return (AbstractTreeNode)rootElement;
+  }
 
   public void updateFromRoot() {
     updateFromRootCB();
@@ -120,7 +140,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   @NotNull
   public ActionCallback updateFromRootCB() {
-    ((FavoritesTreeStructure)getTreeStructure()).rootsChanged();
+    getStructure().rootsChanged();
     if (isDisposed()) return new ActionCallback.Done();
     getUpdater().cancelAllRequests();
     return super.updateFromRootCB();
@@ -153,15 +173,16 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     if (node != null) return node;
     return super.findNodeByElement(element);
   }
-
+  
   @Nullable
   DefaultMutableTreeNode findSmartFirstLevelNodeByElement(final Object element) {
-    final Collection<AbstractTreeNode> favorites = ((AbstractTreeNode)((FavoritesTreeStructure)getTreeStructure()).getRootElement()).getChildren();
-    for (AbstractTreeNode favorite : favorites) {
+    for (Object child : getRoot().getChildren()) {
+      AbstractTreeNode favorite = (AbstractTreeNode)child;
       Object currentValue = favorite.getValue();
       if (currentValue instanceof SmartPsiElementPointer){
         currentValue = ((SmartPsiElementPointer)favorite.getValue()).getElement();
-      } /*else if (currentValue instanceof PsiJavaFile) {
+      }
+       /*else if (currentValue instanceof PsiJavaFile) {
         final PsiClass[] classes = ((PsiJavaFile)currentValue).getClasses();
         if (classes.length > 0) {
           currentValue = classes[0];
@@ -187,7 +208,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object[] childElements = getTreeStructure().getChildElements(nodeDescriptor);
+    final Object[] childElements = getStructure().getChildElements(nodeDescriptor);
     return childElements != null && childElements.length > 0;
   }
 
@@ -197,7 +218,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      queueUpdateFrom(getRootNode(), false);
     }
 
     public void fileStatusChanged(@NotNull VirtualFile vFile) {

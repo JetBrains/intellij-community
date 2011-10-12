@@ -9,18 +9,19 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.GroupByTypeComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class FavoritesComparator extends GroupByTypeComparator {
-
-  public FavoritesComparator(ProjectView projectView, String paneId) {
-    super(projectView, paneId);
+  public FavoritesComparator(ProjectView view, String id) {
+    super(view, id);
   }
 
-  public int compare(NodeDescriptor nd1, NodeDescriptor nd2) {
-    if (nd1 instanceof FavoritesTreeNodeDescriptor && nd2 instanceof FavoritesTreeNodeDescriptor){
-      FavoritesTreeNodeDescriptor fd1 = (FavoritesTreeNodeDescriptor)nd1;
-      FavoritesTreeNodeDescriptor fd2 = (FavoritesTreeNodeDescriptor)nd2;
-      return super.compare(fd1.getElement(), fd2.getElement());
+  public int compare(NodeDescriptor d1, NodeDescriptor d2) {
+    if (d1 instanceof FavoritesTreeNodeDescriptor && d2 instanceof FavoritesTreeNodeDescriptor) {
+      d1 = ((FavoritesTreeNodeDescriptor)d1).getElement();
+      d2 = ((FavoritesTreeNodeDescriptor)d2).getElement();
     }
-    return 0;
+    return super.compare(d1, d2);
   }
 }
