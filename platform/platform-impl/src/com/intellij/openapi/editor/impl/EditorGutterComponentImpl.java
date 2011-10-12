@@ -366,12 +366,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         continue;
       }
       int logLine = myLineNumberConvertor.convert(logicalPosition.line);
-      String s = String.valueOf(logLine + 1);
-      g.drawString(s,
-                   getLineNumberAreaOffset() + getLineNumberAreaWidth() -
-                   myEditor.getFontMetrics(Font.PLAIN).stringWidth(s) -
-                   4,
-                   (i + 1) * lineHeight - myEditor.getDescent());
+      if (logLine >= 0) {
+        String s = String.valueOf(logLine + 1);
+        g.drawString(s,
+                     getLineNumberAreaOffset() + getLineNumberAreaWidth() -
+                     myEditor.getFontMetrics(Font.PLAIN).stringWidth(s) -
+                     4,
+                     (i + 1) * lineHeight - myEditor.getDescent());
+      }
     }
 
     g2.setTransform(old);

@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.util.containers.Convertor;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -28,17 +30,24 @@ import java.util.TreeMap;
 */
 public class LineNumberConvertor implements Convertor<Integer, Integer> {
   private final TreeMap<Integer, Integer> myFragmentStarts;
+  private final Set<Integer> myEmptyLines;
 
   public LineNumberConvertor() {
     myFragmentStarts = new TreeMap<Integer, Integer>();
+    myEmptyLines = new HashSet<Integer>();
   }
 
   public void put(final int start, final int offset) {
     myFragmentStarts.put(start, offset);
   }
+  
+  public void emptyLine(final int line) {
+    myEmptyLines.add(line); // real number
+  }
 
   @Override
   public Integer convert(Integer o) {
+    if (myEmptyLines.contains(o)) return -1;
     final Map.Entry<Integer, Integer> floor = myFragmentStarts.floorEntry(o);
     return floor == null ? o : floor.getValue() + o - floor.getKey();
   }

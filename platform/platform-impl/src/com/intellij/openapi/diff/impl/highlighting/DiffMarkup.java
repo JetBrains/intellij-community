@@ -36,7 +36,8 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class DiffMarkup implements EditorSource, Disposable {
@@ -99,7 +100,7 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
   void setSeparatorMarker(int line) {
     RangeHighlighter marker = getMarkupModel().addLineHighlighter(line, LAYER, null);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
-    final FragmentBoundRenderer renderer = new FragmentBoundRenderer();
+    final FragmentBoundRenderer renderer = new FragmentBoundRenderer(getEditor().getLineHeight(), getEditor());
     marker.setLineSeparatorColor(renderer.getColor());
     marker.setLineSeparatorRenderer(renderer);
     marker.setLineMarkerRenderer(renderer);

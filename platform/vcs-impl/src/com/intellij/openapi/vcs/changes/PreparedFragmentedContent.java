@@ -89,9 +89,19 @@ public class PreparedFragmentedContent {
     List<BeforeAfter<TextRange>> expandedRanges =
       expand(fragmentedContent.getRanges(), VcsConfiguration.getInstance(myProject).SHORT_DIFF_EXTRA_LINES,
              fragmentedContent.getBefore(), fragmentedContent.getAfter());
+    // add "artificial" empty lines
+
     // line starts
     BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0,0);
     for (BeforeAfter<TextRange> lineNumbers : expandedRanges) {
+      if (lines.getBefore() > 0 || lines.getAfter() > 0) {
+        oldConvertor.emptyLine(lines.getBefore());
+        newConvertor.emptyLine(lines.getAfter());
+        lines = new BeforeAfter<Integer>(lines.getBefore() + 1, lines.getAfter() + 1);
+        sbOld.append('\n');
+        sbNew.append('\n');
+      }
+
       myLineRanges.add(lines);
       oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
       newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
