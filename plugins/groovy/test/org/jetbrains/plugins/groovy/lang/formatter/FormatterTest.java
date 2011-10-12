@@ -153,6 +153,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testRedundantClosureSpace() throws Throwable { doTest(); }
   public void testIndentNamedArguments() throws Throwable { doTest(); }
   public void testIndentAssigned() throws Throwable { doTest(); }
+  public void testCommentBeforeMultilineString() throws Throwable { doTest(); }
 
   public void testAlignChainedCalls() throws Throwable {
     getGroovySettings().ALIGN_MULTILINE_CHAINED_METHODS = true;

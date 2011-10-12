@@ -130,8 +130,12 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
+      if (((GroovyBlock)child1).getNode() == ((GroovyBlock)child2).getNode()) {
+        return Spacing.getReadOnlySpacing();
+      }
+
       Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), mySettings).getSpacing();
-      return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
+      return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock)child1), ((GroovyBlock)child2), mySettings);
     }
     return null;
   }
