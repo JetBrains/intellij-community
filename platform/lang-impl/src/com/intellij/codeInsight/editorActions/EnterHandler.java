@@ -607,16 +607,16 @@ public class EnterHandler extends BaseEnterHandler {
       PsiElement atLineStart = myFile.findElementAt(lineStart);
       if (atLineStart == null) return false;
 
-      final String documentationCommentLinePrefix = commenter.getDocumentationCommentLinePrefix();
-      final String docommentPrefix = commenter.getDocumentationCommentPrefix();
+      final String linePrefix = commenter.getDocumentationCommentLinePrefix();
+      final String docPrefix = commenter.getDocumentationCommentPrefix();
+
       final String text = atLineStart.getText();
       final TextRange textRange = atLineStart.getTextRange();
 
-      if (text.equals(documentationCommentLinePrefix) ||
-          text.equals(docommentPrefix) ||
-          text.regionMatches(lineStart - textRange.getStartOffset(), docommentPrefix, 0, docommentPrefix.length()) ||
-           text.regionMatches(lineStart - textRange.getStartOffset(), documentationCommentLinePrefix, 0 , documentationCommentLinePrefix.length())
-        ) {
+      if (text.equals(linePrefix) ||
+          text.equals(docPrefix) ||
+          docPrefix != null && text.regionMatches(lineStart - textRange.getStartOffset(), docPrefix, 0, docPrefix.length()) ||
+          linePrefix != null && text.regionMatches(lineStart - textRange.getStartOffset(), linePrefix, 0 , linePrefix.length()) ) {
         PsiElement element = myFile.findElementAt(myOffset);
         if (element == null) return false;
 
@@ -637,7 +637,7 @@ public class EnterHandler extends BaseEnterHandler {
           docAsterisk = false;
         }
       }
-      else if (atLineStart instanceof PsiComment && ((PsiComment)atLineStart).getTokenType() == commenter.getBlockCommentTokenType()) {
+      else if (linePrefix != null && atLineStart instanceof PsiComment && ((PsiComment)atLineStart).getTokenType() == commenter.getBlockCommentTokenType()) {
         // Check if C-Style comment already uses asterisks.
         boolean usesAstersk = false;
         int commentLine = myDocument.getLineNumber(textRange.getStartOffset());
@@ -646,12 +646,12 @@ public class EnterHandler extends BaseEnterHandler {
           if (nextLineOffset < textRange.getEndOffset()) {
             final CharSequence chars = myDocument.getCharsSequence();
             nextLineOffset = CharArrayUtil.shiftForward(chars, nextLineOffset, " \t");
-            usesAstersk = CharArrayUtil.regionMatches(chars, nextLineOffset, documentationCommentLinePrefix);
+            usesAstersk = CharArrayUtil.regionMatches(chars, nextLineOffset, linePrefix);
           }
         }
         if (usesAstersk) {
           removeTrailingSpaces(myDocument, myOffset);
-          myDocument.insertString(myOffset, documentationCommentLinePrefix + " ");
+          myDocument.insertString(myOffset, linePrefix + " ");
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         }
         docAsterisk = usesAstersk;
