@@ -114,8 +114,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     final PsiType type = var.getType();
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
+    suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
     final String[] suggestedNames = suggestedNameInfo.names;
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
+    addLookupItems(set, suggestedNameInfo, matcher, suggestedNames);
     if (set.isEmpty()) {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
         set.add(LookupElementBuilder.create("object"));
@@ -126,36 +127,16 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     }
 
     if (set.isEmpty() && includeOverlapped) {
-      suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, "")) {
-        public void nameChoosen(String name) {
-        }
-      };
-
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
+      addLookupItems(set, null, matcher, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(parent, false), matcher), suggestedNameInfo);
+    addLookupItems(set, suggestedNameInfo, matcher, getUnresolvedReferences(parent, false));
 
     PsiExpression initializer = var.getInitializer();
     if (initializer != null) {
       SuggestedNameInfo initializerSuggestions = IntroduceVariableBase.getSuggestedName(type, initializer);
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, initializerSuggestions.names, matcher), initializerSuggestions);
-    }
-  }
-
-  private static void tunePreferencePolicy(final List<LookupElement> list, final SuggestedNameInfo suggestedNameInfo) {
-    final InsertHandler<LookupElement> insertHandler = new InsertHandler<LookupElement>() {
-      public void handleInsert(final InsertionContext context, final LookupElement item) {
-        suggestedNameInfo.nameChoosen(item.getLookupString());
-      }
-    };
-
-    for (int i = 0; i < list.size(); i++) {
-      LookupElement item = list.get(i);
-      if (item instanceof LookupItem) {
-        ((LookupItem)item).setPriority(list.size() - i).setInsertHandler(insertHandler);
-      }
+      addLookupItems(set, initializerSuggestions, matcher, initializerSuggestions.names);
     }
   }
 
@@ -241,7 +222,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
+    addLookupItems(set, suggestedNameInfo, matcher, suggestedNames);
 
     if (set.isEmpty() && includeOverlapped) {
       // use suggested names as suffixes
@@ -252,22 +233,17 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
 
 
-      suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)) {
-        public void nameChoosen(String name) {
-        }
-      };
-
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
+      addLookupItems(set, null, matcher, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
     }
 
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(var.getParent(), false), matcher), suggestedNameInfo);
+    addLookupItems(set, suggestedNameInfo, matcher, getUnresolvedReferences(var.getParent(), false));
 
     PsiExpression initializer = var.getInitializer();
     PsiClass containingClass = var.getContainingClass();
     if (initializer != null && containingClass != null) {
       SuggestedNameInfo initializerSuggestions = InplaceIntroduceFieldPopup.
         suggestFieldName(var.getType(), null, initializer, var.hasModifierProperty(PsiModifier.STATIC), containingClass);
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, initializerSuggestions.names, matcher), initializerSuggestions);
+      addLookupItems(set, initializerSuggestions, matcher, initializerSuggestions.names);
     }
   }
 
@@ -280,7 +256,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo,
                                                                 includeOverlapped, methodPrefix);
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, strings, matcher), suggestedNameInfo);
+    addLookupItems(set, suggestedNameInfo, matcher, strings);
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager,
@@ -331,12 +307,12 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     PsiClass ourClassParent = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (ourClassParent == null) return;
-    LookupItemUtil.addLookupItems(set, getUnresolvedReferences(ourClassParent, true), matcher);
+    addLookupItems(set, null, matcher, getUnresolvedReferences(ourClassParent, true));
 
-    LookupItemUtil.addLookupItems(set, getPropertiesHandlersNames(
+    addLookupItems(set, null, matcher, getPropertiesHandlersNames(
       ourClassParent,
       ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
-      PsiUtil.getTypeByPsiElement(element), element), matcher);
+      PsiUtil.getTypeByPsiElement(element), element));
   }
 
   private static String[] getPropertiesHandlersNames(final PsiClass psiClass,
@@ -377,5 +353,25 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     final Change result = new Change();
     CodeStyleManager.getInstance(element.getProject()).performActionWithFormatterDisabled(result);
     return result.result;
+  }
+
+  private static void addLookupItems(Set<LookupElement> lookupElements, @Nullable final SuggestedNameInfo callback, PrefixMatcher matcher, String[] strings) {
+    for (int i = 0; i < strings.length; i++) {
+      String name = strings[i];
+      if (!matcher.prefixMatches(name)) {
+        continue;
+      }
+      
+      LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
+      if (callback != null) {
+        element = LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+          @Override
+          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+            callback.nameChoosen(item.getLookupString());
+          }
+        });
+      }
+      lookupElements.add(element);
+    }
   }
 }

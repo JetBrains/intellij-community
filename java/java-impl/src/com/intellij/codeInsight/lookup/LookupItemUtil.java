@@ -25,14 +25,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -72,15 +68,6 @@ public class LookupItemUtil{
       return set.add(item) ? item : null;
     }
     return null;
-  }
-
-  public static List<LookupElement> addLookupItems(Set<LookupElement> set, Object[] objects, PrefixMatcher matcher) {
-    final ArrayList<LookupElement> list = new ArrayList<LookupElement>(objects.length);
-    for (Object object : objects) {
-      LOG.assertTrue(object != null, "Lookup item can't be null!");
-      ContainerUtil.addIfNotNull(addLookupItem(set, object, matcher), list);
-    }
-    return list;
   }
 
   /**

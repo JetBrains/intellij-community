@@ -868,6 +868,15 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
   public void testClassReferenceInFor() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor2() throws Throwable { doTest ' ' }
+  public void testClassReferenceInFor3() throws Throwable {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    try {
+      doTest ' '
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
+  }
 
   public void testVoidMethodsInNonVoidContext() throws Throwable {
     configure()
