@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,8 @@ public abstract class UsefulTestCase extends TestCase {
   protected static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
   static {
-    System.setProperty("apple.awt.UIElement",
-                       "true"); // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+    // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+    System.setProperty("apple.awt.UIElement", "true");
 
     try {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -109,20 +109,23 @@ public abstract class UsefulTestCase extends TestCase {
 
     if (shouldContainTempFiles()) {
       String testName = getTestName(true);
-      if (StringUtil.isEmptyOrSpaces(testName)) testName = "unitTest";
-      myTempDir = ORIGINAL_TEMP_DIR + "/" + testName + "_"+ PRNG.nextInt(1000);
+      if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
+      myTempDir = ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ PRNG.nextInt(1000);
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myTestRootDisposable);
-    cleanupSwingDataStructures();
-
-    if (shouldContainTempFiles()) {
-      FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-      FileUtil.delete(new File(myTempDir));
+    try {
+      Disposer.dispose(myTestRootDisposable);
+      cleanupSwingDataStructures();
+    }
+    finally {
+      if (shouldContainTempFiles()) {
+        FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
+        FileUtil.delete(new File(myTempDir));
+      }
     }
 
     super.tearDown();
