@@ -53,7 +53,7 @@ public class ShowFilePathAction extends AnAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    if (!isSupported()) {
+    if (SystemInfo.isMac || !isSupported()) {
       e.getPresentation().setVisible(false);
       return;
     }
@@ -167,7 +167,6 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    if (SystemInfo.isMac) return false; // This action is unnecessary on Macs
     return SystemInfo.isWindows ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) ||
            SystemInfo.hasXdgOpen || SystemInfo.isGnome || SystemInfo.isKDE;
