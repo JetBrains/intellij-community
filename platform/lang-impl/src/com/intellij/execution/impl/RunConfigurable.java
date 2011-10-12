@@ -299,7 +299,8 @@ class RunConfigurable extends BaseConfigurable {
         final Object userObject2 = ((DefaultMutableTreeNode)o2).getUserObject();
         if (userObject1 instanceof ConfigurationType && userObject2 instanceof ConfigurationType) {
           return ((ConfigurationType)userObject1).getDisplayName().compareTo(((ConfigurationType)userObject2).getDisplayName());
-        } else if (userObject1 instanceof String && userObject2 instanceof ConfigurationType) {
+        }
+        else if (userObject1 instanceof String && userObject2 instanceof ConfigurationType) {
           return 1;
         }
 
@@ -472,8 +473,9 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.setLeftComponent(createLeftPanel());
     myPanel.setRightComponent(myRightPanel);
     myPanel.setBorder(null);
-    myPanel.getDividerLocation();
-    myPanel.setDividerLocation((int)myConfig.getFloat(DIVIDER_PROPORTION, 200));
+    final int value = (int)myConfig.getFloat(DIVIDER_PROPORTION, 200);
+
+    myPanel.setDividerLocation(value > 0 ? value : 200);
     myWholePanel.add(myPanel, BorderLayout.CENTER);
 
     updateDialog();
