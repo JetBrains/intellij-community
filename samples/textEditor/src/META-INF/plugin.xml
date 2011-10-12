@@ -18,7 +18,7 @@
   <actions>
     <!-- Add your actions here -->
       <action id="documentFiles.myActionID" class="myDocumentFiles.MyActionClass" text="Text _Editor"
-              description="a sample custom editor of text files.">
+              description="Sample custom editor for text files">
           <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PowerSaveGroup"/>
           <keyboard-shortcut keymap="$default" first-keystroke="ctrl F10"/>
       </action>
