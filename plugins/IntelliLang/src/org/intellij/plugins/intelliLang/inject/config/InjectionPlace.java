@@ -18,14 +18,26 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayFactory;
 
 /**
 * @author Gregory.Shrago
 */
 // todo inline class
 public class InjectionPlace {
+
+  public static final InjectionPlace[] EMPTY_ARRAY = new InjectionPlace[0];
+
+  public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = new ArrayFactory<InjectionPlace>() {
+    @Override
+    public InjectionPlace[] create(int count) {
+      return count == 0? EMPTY_ARRAY : new InjectionPlace[count];
+    }
+  };
+
   private final ElementPattern<PsiElement> myElementPattern;
   private final boolean myEnabled;
+
 
   public InjectionPlace(final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
     this.myElementPattern = myElementPattern;

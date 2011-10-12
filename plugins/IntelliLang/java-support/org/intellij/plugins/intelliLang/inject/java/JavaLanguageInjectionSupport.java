@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformIcons;
@@ -314,7 +315,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
     else {
       final BaseInjection originalCopy = originalInjection.copy();
-      final InjectionPlace currentPlace = template.getInjectionPlaces().get(0);
+      final InjectionPlace currentPlace = template.getInjectionPlaces()[0];
       originalCopy.mergeOriginalPlacesFrom(template, true);
       originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
@@ -383,7 +384,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
     final MethodParameterInjection result = new MethodParameterInjection();
     result.copyFrom(injection);
-    result.getInjectionPlaces().clear();
+    result.setInjectionPlaces(InjectionPlace.EMPTY_ARRAY);
     result.setClassName(className);
     final ArrayList<MethodInfo> infos = new ArrayList<MethodInfo>();
     if (classes.length > 0) {
@@ -398,8 +399,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           if (!visitedSignatures.add(methodInfo.getMethodSignature())) continue;
           if (isInjectable(method.getReturnType(), method.getProject())) {
             final int parameterIndex = -1;
-            final InjectionPlace place = ContainerUtil.find(
-              injection.getInjectionPlaces(), new InjectionPlace(compiler.compileElementPattern(getPatternStringForJavaPlace(method, parameterIndex)), true));
+            int index = ArrayUtil.find(injection.getInjectionPlaces(), new InjectionPlace(compiler.compileElementPattern(getPatternStringForJavaPlace(method, parameterIndex)), true));
+            final InjectionPlace place = index > -1 ? injection.getInjectionPlaces()[index] : null;
             methodInfo.setReturnFlag(place != null && place.isEnabled() || includeAllPlaces);
             add = true;
           }
@@ -407,9 +408,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           for (int i = 0; i < parameters.length; i++) {
             final PsiParameter p = parameters[i];
             if (isInjectable(p.getType(), p.getProject())) {
-              final InjectionPlace place = ContainerUtil.find(
-                injection.getInjectionPlaces(),
-                new InjectionPlace(compiler.compileElementPattern(getPatternStringForJavaPlace(method, i)), true));
+              int index = ArrayUtil.find(injection.getInjectionPlaces(), new InjectionPlace(compiler.compileElementPattern(getPatternStringForJavaPlace(method, i)), true));
+              final InjectionPlace place = index > -1 ? injection.getInjectionPlaces()[index] : null;
               methodInfo.getParamFlags()[i] = place != null && place.isEnabled() || includeAllPlaces;
               add = true;
             }

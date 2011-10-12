@@ -24,20 +24,17 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.compiler.PatternCompiler;
-import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
-import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -118,14 +115,12 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       final String text = sb.toString();
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }
-    other.getInjectionPlaces().clear();
-    other.getInjectionPlaces().addAll(places);
+    other.setInjectionPlaces(places.toArray(new InjectionPlace[places.size()]));
   }
 
   protected void resetImpl() {
-    final List<InjectionPlace> places = myOrigInjection.getInjectionPlaces();
     final StringBuilder sb = new StringBuilder();
-    for (InjectionPlace place : places) {
+    for (InjectionPlace place : myOrigInjection.getInjectionPlaces()) {
       sb.append(place.isEnabled()?"+ ":"- ").append(place.getText()).append("\n");
     }
     myTextArea.setText(sb.toString());

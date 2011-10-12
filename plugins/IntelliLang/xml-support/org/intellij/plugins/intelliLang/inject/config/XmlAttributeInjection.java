@@ -78,8 +78,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
 
   @Override
   public void generatePlaces() {
-    getInjectionPlaces().clear();
-    getInjectionPlaces().add(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
+    setInjectionPlaces(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 
   private boolean matches(@NotNull XmlAttribute attr) {

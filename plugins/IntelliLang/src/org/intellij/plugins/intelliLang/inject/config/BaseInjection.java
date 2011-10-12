@@ -29,6 +29,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,10 +41,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,13 +69,16 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @NotNull
-  private final ArrayList<InjectionPlace> myPlaces = new ArrayList<InjectionPlace>();
+  private InjectionPlace[] myPlaces = InjectionPlace.EMPTY_ARRAY;
 
   @NotNull
-  public List<InjectionPlace> getInjectionPlaces() {
+  public InjectionPlace[] getInjectionPlaces() {
     return myPlaces;
   }
 
+  public void setInjectionPlaces(@NotNull InjectionPlace... places) {
+    myPlaces = places;
+  }
 
   @NotNull
   public String getSupportId() {
@@ -149,7 +150,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   
   public boolean acceptsPsiElement(final PsiElement element) {
     ProgressManager.checkCanceled();
-    for (final InjectionPlace place : myPlaces) {
+    for (InjectionPlace place : myPlaces) {
       if (place.isEnabled() && place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
         return true;
       }
@@ -160,7 +161,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public boolean intersectsWith(final BaseInjection template) {
     if (!Comparing.equal(getInjectedLanguageId(), template.getInjectedLanguageId())) return false;
     for (InjectionPlace other : template.getInjectionPlaces()) {
-      if (myPlaces.contains(other)) return true;
+      if (ArrayUtil.contains(other, myPlaces)) return true;
     }
     return false;
   }
@@ -187,9 +188,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     final BaseInjection that = (BaseInjection)o;
 
     if (!sameLanguageParameters(that)) return false;
-    if (myPlaces.size() != that.myPlaces.size()) return false;
-    for (int i = 0, len = myPlaces.size(); i < len; i++) {
-      if (myPlaces.get(i).isEnabled() != that.myPlaces.get(i).isEnabled()) {
+    if (myPlaces.length != that.myPlaces.length) return false;
+    for (int i = 0, len = myPlaces.length; i < len; i++) {
+      if (myPlaces[i].isEnabled() != that.myPlaces[i].isEnabled()) {
         return false;
       }
     }
@@ -219,8 +220,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     setValuePattern(other.getValuePattern());
     mySingleFile = other.mySingleFile;
 
-    myPlaces.clear();
-    myPlaces.addAll(other.getInjectionPlaces());
+    myPlaces = other.getInjectionPlaces().clone();
     return this;
   }
 
@@ -243,16 +243,18 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       setValuePattern(element.getChildText("value-pattern"));
       mySingleFile = element.getChild("single-file") != null;
       readExternalImpl(element);
-      for (Element placeElement : (List<Element>)element.getChildren("place")) {
+      final List<Element> placeElements = (List<Element>)element.getChildren("place");
+      myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
+      for (int i = 0, placeElementsSize = placeElements.size(); i < placeElementsSize; i++) {
+        Element placeElement = placeElements.get(i);
         final boolean enabled = !Boolean.parseBoolean(placeElement.getAttributeValue("disabled"));
         final String text = placeElement.getText();
-        myPlaces.add(new InjectionPlace(helper.createElementPattern(text, getDisplayName()), enabled));
+        myPlaces[i] = new InjectionPlace(helper.createElementPattern(text, getDisplayName()), enabled);
       }
     }
-    if (myPlaces.isEmpty()) {
+    if (myPlaces.length == 0) {
       generatePlaces();
     }
-    myPlaces.trimToSize();
   }
 
 
@@ -282,13 +284,12 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (mySingleFile) {
       e.addContent(new Element("single-file"));
     }
-    final ArrayList<InjectionPlace> places = new ArrayList<InjectionPlace>(myPlaces);
-    Collections.sort(places, new Comparator<InjectionPlace>() {
+    Arrays.sort(myPlaces, new Comparator<InjectionPlace>() {
       public int compare(final InjectionPlace o1, final InjectionPlace o2) {
         return Comparing.compare(o1.getText(), o2.getText());
       }
     });
-    for (InjectionPlace place : places) {
+    for (InjectionPlace place : myPlaces) {
       final Element child = new Element("place").setContent(new CDATA(place.getText()));
       if (!place.isEnabled()) child.setAttribute("disabled", "true");
       e.addContent(child);
@@ -365,18 +366,18 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public void mergeOriginalPlacesFrom(final BaseInjection injection, final boolean enabled) {
     for (InjectionPlace place : injection.getInjectionPlaces()) {
-      if (!myPlaces.contains(place)) {
-        myPlaces.add(enabled || !place.isEnabled() ? place : place.enabled(false));
+      if (!ArrayUtil.contains(place, myPlaces)) {
+        myPlaces = ArrayUtil.append(myPlaces, enabled || !place.isEnabled() ? place : place.enabled(false), InjectionPlace.ARRAY_FACTORY);
       }
     }
   }
 
   public void setPlaceEnabled(@Nullable final String text, final boolean enabled) {
-    for (int i = 0; i < myPlaces.size(); i++) {
-      final InjectionPlace cur = myPlaces.get(i);
+    for (int i = 0; i < myPlaces.length; i++) {
+      final InjectionPlace cur = myPlaces[i];
       if (text == null || Comparing.equal(text, cur.getText())) {
         if (cur.isEnabled() != enabled) {
-          myPlaces.set(i, cur.enabled(enabled));
+          myPlaces[i] = cur.enabled(enabled);
         }
       }
     }

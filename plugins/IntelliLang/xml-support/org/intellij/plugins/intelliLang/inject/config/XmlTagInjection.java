@@ -19,9 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendStringPattern;
 
 public class XmlTagInjection extends AbstractTagInjection {
@@ -52,8 +49,7 @@ public class XmlTagInjection extends AbstractTagInjection {
 
   @Override
   public void generatePlaces() {
-    getInjectionPlaces().clear();
-    getInjectionPlaces().add(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
+    setInjectionPlaces(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 
   public static String getPatternString(final AbstractTagInjection injection) {

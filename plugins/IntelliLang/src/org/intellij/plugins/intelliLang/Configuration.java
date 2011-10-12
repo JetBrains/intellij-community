@@ -456,8 +456,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
         if (replace) {
           originalInjections.add(injection);
           final BaseInjection newInjection = injection.copy();
-          newInjection.getInjectionPlaces().clear();
-          newInjection.getInjectionPlaces().addAll(newPlaces);
+          newInjection.setInjectionPlaces(newPlaces.toArray(new InjectionPlace[newPlaces.size()]));
           newInjections.add(newInjection);
         }
       }

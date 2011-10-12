@@ -117,11 +117,14 @@ public class MethodParameterInjection extends BaseInjection {
 
   @Override
   public void generatePlaces() {
-    getInjectionPlaces().clear();
     final PatternCompiler<PsiElement> compiler = getCompiler();
-    for (String text : getPatternString(this)) {
-      getInjectionPlaces().add(new InjectionPlace(compiler.createElementPattern(text, getDisplayName()), true));
+    List<String> patternString = getPatternString(this);
+    InjectionPlace[] places = InjectionPlace.ARRAY_FACTORY.create(patternString.size());
+    for (int i = 0, patternStringSize = patternString.size(); i < patternStringSize; i++) {
+      String text = patternString.get(i);
+      places[i] = new InjectionPlace(compiler.createElementPattern(text, getDisplayName()), true);
     }
+    setInjectionPlaces(places);
   }
 
   @SuppressWarnings({"RedundantIfStatement"})
