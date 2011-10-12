@@ -26,17 +26,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ReorderableListController;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +53,7 @@ import java.util.List;
  * User: anna
  * Date: 13-Apr-2006
  */
-public class QuickListsPanel extends JPanel implements SearchableConfigurable, MasterDetails {
+public class QuickListsPanel extends JPanel implements SearchableConfigurable {
   private final DefaultListModel myQuickListsModel = new DefaultListModel();
   private JBList myQuickListsList = new JBList(myQuickListsModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -315,12 +311,11 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, M
     return null;
   }
 
-  private static class MyQuickListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+  private static class MyQuickListCellRenderer extends ColoredListCellRenderer {
+    @Override
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       QuickList quickList = (QuickList)value;
-      setText(quickList.getDisplayName());
-      return this;
+      append(quickList.getDisplayName());
     }
   }
 

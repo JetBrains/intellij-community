@@ -21,12 +21,12 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 
 public class QuickListPanel {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
@@ -52,38 +47,20 @@ public class QuickListPanel {
   private JButton myMoveActionDownButton;
   private JButton myMoveActionUpButton;
   private JPanel myPanel;
-  private JTree myActionsTree;
   private JBList myActionsList;
   private JTextField myDisplayName;
   private JTextField myDescription;
   private JButton myAddSeparatorButton;
   private final boolean myEditable;
+  private final QuickList[] myAllQuickLists;
 
   public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
+    myAllQuickLists = allQuickLists;
     myEditable = !QuickListsManager.getInstance().getSchemesManager().isShared(origin);
-    Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists);
-    DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
-    DefaultTreeModel model = new DefaultTreeModel(root);
-    myActionsTree.setModel(model);
-    myActionsTree.setCellRenderer(new MyTreeCellRenderer(myActionsTree));
 
     myActionsList.setModel(new DefaultListModel());
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
-
-    myActionsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        update();
-      }
-    });
-
-    myActionsTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && !e.isPopupTrigger()) {
-          includeSelectedAction();
-        }
-      }
-    });
 
     myActionsList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -98,12 +75,6 @@ public class QuickListPanel {
         update();
       }
     });
-
-    myActionsTree.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        includeSelectedAction();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     myIncludeActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -183,23 +154,28 @@ public class QuickListPanel {
   }
 
   private void includeSelectedAction() {
-    String[] ids = getTreeSelectedActionIds();
-    for (String id : ids) {
-      includeActionId(id);
-    }
-    DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
-    int size = listModel.getSize();
-    ListSelectionModel selectionModel = myActionsList.getSelectionModel();
-    if (size > 0) {
-      selectionModel.removeIndexInterval(0, size - 1);
-    }
-    for (String id1 : ids) {
-      int idx = listModel.lastIndexOf(id1);
-      if (idx >= 0) {
-        selectionModel.addSelectionInterval(idx, idx);
+    final ChooseActionsDialog dlg = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), myAllQuickLists);
+    dlg.show();
+
+    if (dlg.isOK()) {
+      String[] ids = dlg.getTreeSelectedActionIds();
+      for (String id : ids) {
+        includeActionId(id);
       }
+      DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
+      int size = listModel.getSize();
+      ListSelectionModel selectionModel = myActionsList.getSelectionModel();
+      if (size > 0) {
+        selectionModel.removeIndexInterval(0, size - 1);
+      }
+      for (String id1 : ids) {
+        int idx = listModel.lastIndexOf(id1);
+        if (idx >= 0) {
+          selectionModel.addSelectionInterval(idx, idx);
+        }
+      }
+      update();
     }
-    update();
   }
 
   private void addSeparator() {
@@ -222,7 +198,7 @@ public class QuickListPanel {
 
   private void update() {
     if (myEditable) {
-      myIncludeActionButton.setEnabled(getTreeSelectedActionIds().length > 0);
+      myIncludeActionButton.setEnabled(true);
       myRemoveActionButton.setEnabled(myActionsList.getSelectedValues().length > 0);
       boolean enableMove = myActionsList.getSelectedValues().length == 1;
       myMoveActionUpButton.setEnabled(enableMove && myActionsList.getSelectedIndex() > 0);
@@ -244,26 +220,6 @@ public class QuickListPanel {
     model.addElement(id);
   }
 
-  private String[] getTreeSelectedActionIds() {
-    TreePath[] paths = myActionsTree.getSelectionPaths();
-    if (paths == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-
-    ArrayList<String> actions = new ArrayList<String>();
-    for (TreePath path : paths) {
-      Object node = path.getLastPathComponent();
-      if (node instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode defNode = (DefaultMutableTreeNode)node;
-        Object userObject = defNode.getUserObject();
-        if (userObject instanceof String) {
-          actions.add((String)userObject);
-        }
-        else if (userObject instanceof QuickList) {
-          actions.add(((QuickList)userObject).getActionId());
-        }
-      }
-    }
-    return ArrayUtil.toStringArray(actions);
-  }
 
   public JPanel getPanel() {
     return myPanel;
