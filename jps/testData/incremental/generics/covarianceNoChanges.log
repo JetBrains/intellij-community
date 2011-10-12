@@ -1,0 +1,18 @@
+Request to make modules:
+module CovarianceNoChanges
+End of request
+digraph X {
+  CovarianceNoChanges[label="CovarianceNoChanges"];
+}
+digraph X {
+  CovarianceNoChanges[label="CovarianceNoChanges"];
+}
+Propagated modules:
+module CovarianceNoChanges
+End of propagated
+Cleaning output files:
+out/production/CovarianceNoChanges/Derived.class
+End of files
+Compiling files:
+src/Derived.java
+End of files

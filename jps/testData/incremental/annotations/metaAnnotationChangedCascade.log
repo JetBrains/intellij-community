@@ -1,0 +1,24 @@
+Request to make modules:
+module MetaAnnotationChangedCascade
+End of request
+digraph X {
+  MetaAnnotationChangedCascade[label="MetaAnnotationChangedCascade"];
+}
+digraph X {
+  MetaAnnotationChangedCascade[label="MetaAnnotationChangedCascade"];
+}
+Propagated modules:
+module MetaAnnotationChangedCascade
+End of propagated
+Cleaning output files:
+out/production/MetaAnnotationChangedCascade/A.class
+out/production/MetaAnnotationChangedCascade/C.class
+out/production/MetaAnnotationChangedCascade/A1.class
+out/production/MetaAnnotationChangedCascade/C1.class
+End of files
+Compiling files:
+src/A.java
+src/C.java
+src/A1.java
+src/C1.java
+End of files

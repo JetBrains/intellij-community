@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact name="files">
+    <output-path>$PROJECT_DIR$/out/artifacts/files</output-path>
+    <root id="root">
+      <element id="file-copy" path="$PROJECT_DIR$/data/f.txt" output-file-name="g.txt" />
+      <element id="file-copy" path="$PROJECT_DIR$/data/f.txt" />
+      <element id="directory" name="dir">
+        <element id="dir-copy" path="$PROJECT_DIR$/data" />
+      </element>
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,26 @@
+Request to make modules:
+module AddImplements
+End of request
+digraph X {
+  AddImplements[label="AddImplements"];
+}
+digraph X {
+  AddImplements[label="AddImplements"];
+}
+Propagated modules:
+module AddImplements
+End of propagated
+Cleaning output files:
+out/production/AddImplements/Super.class
+End of files
+Compiling files:
+src/Super.java
+End of files
+Cleaning output files:
+out/production/AddImplements/Client2.class
+out/production/AddImplements/Client3.class
+End of files
+Compiling files:
+src/Client2.java
+src/Client3.java
+End of files

@@ -1,0 +1,2 @@
+org.jetbrains.jps.artifacts.ant.PreprocessingAntArtifactPropertiesProvider
+org.jetbrains.jps.artifacts.ant.PostprocessingAntArtifactPropertiesProvider

@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="JUnit">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/junit.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/junit-addons-1.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../junit-addons-1.4/src.jar!/src/main" />
+      <root url="jar://$PROJECT_DIR$/../junit-addons-1.4/src.jar!/src/example" />
+    </SOURCES>
+  </library>
+</component>

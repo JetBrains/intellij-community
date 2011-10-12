@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactManager">
+    <artifact type="exploded-war" name="explodedWar">
+      <output-path>$PROJECT_DIR$/out/artifacts/explodedWar</output-path>
+      <root id="root">
+        <element id="javaee-facet-resources" facet="iprProject/web/Web" />
+        <element id="directory" name="WEB-INF">
+          <element id="directory" name="classes">
+            <element id="module-output" name="iprProject" />
+          </element>
+          <element id="directory" name="lib">
+            <element id="library" level="project" name="junit" />
+            <element id="library" level="application" name="jdom" />
+          </element>
+        </element>
+      </root>
+    </artifact>
+    <artifact type="jar" name="archive">
+      <output-path>$PROJECT_DIR$/out/artifacts/archive</output-path>
+      <root id="archive" name="archive.jar">
+        <element id="directory" name="files">
+          <element id="artifact" artifact-name="files" />
+        </element>
+        <element id="archive" name="sources.zip">
+          <element id="dir-copy" path="$PROJECT_DIR$/src" />
+        </element>
+      </root>
+    </artifact>
+    <artifact name="files">
+      <output-path>$PROJECT_DIR$/out/artifacts/files</output-path>
+      <root id="root">
+        <element id="file-copy" path="$PROJECT_DIR$/data/f.txt" output-file-name="g.txt" />
+        <element id="file-copy" path="$PROJECT_DIR$/data/f.txt" />
+        <element id="directory" name="dir">
+          <element id="dir-copy" path="$PROJECT_DIR$/data" />
+        </element>
+      </root>
+    </artifact>
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/iprProject.iml" filepath="$PROJECT_DIR$/iprProject.iml" />
+    </modules>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="libraryTable">
+    <library name="junit">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/lib/junit.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+  </component>
+</project>
+

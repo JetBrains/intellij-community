@@ -1,0 +1,24 @@
+Request to make modules:
+module RemoveAnnotationTarget
+End of request
+digraph X {
+  RemoveAnnotationTarget[label="RemoveAnnotationTarget"];
+}
+digraph X {
+  RemoveAnnotationTarget[label="RemoveAnnotationTarget"];
+}
+Propagated modules:
+module RemoveAnnotationTarget
+End of propagated
+Cleaning output files:
+out/production/RemoveAnnotationTarget/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/RemoveAnnotationTarget/C2.class
+End of files
+Compiling files:
+src/C2.java
+End of files

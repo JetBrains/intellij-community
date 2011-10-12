@@ -1,0 +1,24 @@
+Request to make modules:
+module UnsetStaticFinal
+End of request
+digraph X {
+  UnsetStaticFinal[label="UnsetStaticFinal"];
+}
+digraph X {
+  UnsetStaticFinal[label="UnsetStaticFinal"];
+}
+Propagated modules:
+module UnsetStaticFinal
+End of propagated
+Cleaning output files:
+out/production/UnsetStaticFinal/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files
+Cleaning output files:
+out/production/UnsetStaticFinal/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

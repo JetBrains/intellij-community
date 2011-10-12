@@ -1,0 +1,18 @@
+Request to make modules:
+module AddAnnotationTarget
+End of request
+digraph X {
+  AddAnnotationTarget[label="AddAnnotationTarget"];
+}
+digraph X {
+  AddAnnotationTarget[label="AddAnnotationTarget"];
+}
+Propagated modules:
+module AddAnnotationTarget
+End of propagated
+Cleaning output files:
+out/production/AddAnnotationTarget/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

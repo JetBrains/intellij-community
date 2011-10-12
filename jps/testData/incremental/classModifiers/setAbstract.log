@@ -1,0 +1,24 @@
+Request to make modules:
+module SetAbstract
+End of request
+digraph X {
+  SetAbstract[label="SetAbstract"];
+}
+digraph X {
+  SetAbstract[label="SetAbstract"];
+}
+Propagated modules:
+module SetAbstract
+End of propagated
+Cleaning output files:
+out/production/SetAbstract/Service.class
+End of files
+Compiling files:
+src/Service.java
+End of files
+Cleaning output files:
+out/production/SetAbstract/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

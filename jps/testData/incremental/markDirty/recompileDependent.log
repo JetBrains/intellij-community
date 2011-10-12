@@ -1,0 +1,24 @@
+Request to make modules:
+module RecompileDependent
+End of request
+digraph X {
+  RecompileDependent[label="RecompileDependent"];
+}
+digraph X {
+  RecompileDependent[label="RecompileDependent"];
+}
+Propagated modules:
+module RecompileDependent
+End of propagated
+Cleaning output files:
+out/production/RecompileDependent/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files
+Cleaning output files:
+out/production/RecompileDependent/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

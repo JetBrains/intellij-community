@@ -1,0 +1,17 @@
+def ctx = context(scope: scriptScope(), filetypes : ["gant"])
+
+contributor ([ctx], {
+  property name:"project", type:"org.jetbrains.jps.Project"
+  property name:"projectBuilder", type:"org.jetbrains.jps.ProjectBuilder"
+  method name:"jdk", type:"org.jetbrains.jps.JavaSdk", params:[name:"String", jdkPath:"String"]
+  method name:"jdk", type:"org.jetbrains.jps.JavaSdk", params:[name:"String", jdkPath:"String", initializer:{}]
+  method name:"globalLibrary", type:"org.jetbrains.jps.Library", params: [name:"String", initializer:{}]
+  method name:"library", type:"org.jetbrains.jps.Library", params: [name:"String", initializer:{}]
+
+  method name:"layout", type:"org.jetbrains.jps.LayoutInfo", params: [name:"String", layout:{}]
+  method name:"module", type:"void", params: [name:"String"]
+  method name:"module", type:"void", params: [name:"String", layout:{}]
+  ["jar", "dir", "zip"].each { methodName ->
+    method name:methodName, type:"void", params: [name:"String", layout:{}]
+  }
+})

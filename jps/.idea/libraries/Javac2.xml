@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Javac2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/javac2-all.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../test/idea.ultimate/community/java/compiler/javac2/src" />
+    </SOURCES>
+  </library>
+</component>

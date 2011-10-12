@@ -1,0 +1,26 @@
+Request to make modules:
+module AddInterfaceMethod2
+End of request
+digraph X {
+  AddInterfaceMethod2[label="AddInterfaceMethod2"];
+}
+digraph X {
+  AddInterfaceMethod2[label="AddInterfaceMethod2"];
+}
+Propagated modules:
+module AddInterfaceMethod2
+End of propagated
+Cleaning output files:
+out/production/AddInterfaceMethod2/Service.class
+End of files
+Compiling files:
+src/Service.java
+End of files
+Cleaning output files:
+out/production/AddInterfaceMethod2/DerivedService.class
+out/production/AddInterfaceMethod2/ServiceImpl.class
+End of files
+Compiling files:
+src/DerivedService.java
+src/ServiceImpl.java
+End of files

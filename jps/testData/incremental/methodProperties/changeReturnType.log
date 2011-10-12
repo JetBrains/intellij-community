@@ -1,0 +1,26 @@
+Request to make modules:
+module ChangeReturnType
+End of request
+digraph X {
+  ChangeReturnType[label="ChangeReturnType"];
+}
+digraph X {
+  ChangeReturnType[label="ChangeReturnType"];
+}
+Propagated modules:
+module ChangeReturnType
+End of propagated
+Cleaning output files:
+out/production/ChangeReturnType/Base.class
+End of files
+Compiling files:
+src/Base.java
+End of files
+Cleaning output files:
+out/production/ChangeReturnType/Client.class
+out/production/ChangeReturnType/Derived.class
+End of files
+Compiling files:
+src/Client.java
+src/Derived.java
+End of files

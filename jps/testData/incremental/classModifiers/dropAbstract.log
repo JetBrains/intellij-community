@@ -1,0 +1,18 @@
+Request to make modules:
+module dropAbstract
+End of request
+digraph X {
+  dropAbstract[label="dropAbstract"];
+}
+digraph X {
+  dropAbstract[label="dropAbstract"];
+}
+Propagated modules:
+module dropAbstract
+End of propagated
+Cleaning output files:
+out/production/dropAbstract/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

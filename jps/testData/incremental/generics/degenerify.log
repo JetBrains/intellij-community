@@ -1,0 +1,24 @@
+Request to make modules:
+module Degenerify
+End of request
+digraph X {
+  Degenerify[label="Degenerify"];
+}
+digraph X {
+  Degenerify[label="Degenerify"];
+}
+Propagated modules:
+module Degenerify
+End of propagated
+Cleaning output files:
+out/production/Degenerify/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/Degenerify/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

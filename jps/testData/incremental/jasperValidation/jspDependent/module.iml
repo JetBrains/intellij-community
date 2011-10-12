@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4" relativePaths="true" type="JAVA_MODULE">
+  <component name="ModuleRootManager" />
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/classes" />
+    <exclude-output />
+    <exploded url="file://$MODULE_DIR$/exploded" />
+    <exclude-exploded />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/xxx.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntryProperties />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ACTIVE_VCS_NAME" value="&lt;None&gt;" />
+    <option name="USE_PROJECT_VCS" value="true" />
+  </component>
+  <component name="FacetManager">
+    <facet type="web" name="module">
+      <configuration>
+        <webroots>
+          <root url="file://$MODULE_DIR$/root" relative="/" />
+        </webroots>
+        <packaging>
+          <containerElement type="module" name="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+          </containerElement>
+          <containerElement type="library" level="module">
+            <url>jar://$MODULE_DIR$/lib/xxx.jar!/</url>
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/xxx.jar" />
+          </containerElement>
+        </packaging>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/WEB-INF/web.xml" version="2.3" />
+        </descriptors>
+        <building>
+          <setting name="EXPLODED_URL" value="file://$MODULE_DIR$/exploded" />
+          <setting name="EXPLODED_ENABLED" value="true" />
+          <setting name="JAR_URL" value="file://$MODULE_DIR$/dep/war/module.war" />
+          <setting name="JAR_ENABLED" value="false" />
+          <setting name="SYNC_EXPLODED_DIR" value="true" />
+          <setting name="BUILD_ON_FRAME_DEACTIVATION" value="false" />
+          <setting name="RUN_JASPER_VALIDATION" value="true" />
+        </building>
+      </configuration>
+    </facet>
+  </component>
+</module>
+

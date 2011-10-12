@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/antLayout/antlayout.iml" filepath="$PROJECT_DIR$/antLayout/antlayout.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/appLauncher/appLauncher.iml" filepath="$PROJECT_DIR$/plugins/appLauncher/appLauncher.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gwt/gwt.iml" filepath="$PROJECT_DIR$/plugins/gwt/gwt.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/javaee/javaee.iml" filepath="$PROJECT_DIR$/plugins/javaee/javaee.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/jpa/jpa.iml" filepath="$PROJECT_DIR$/plugins/jpa/jpa.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/jps.iml" filepath="$PROJECT_DIR$/jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/model/model.iml" filepath="$PROJECT_DIR$/model/model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/scala/scala.iml" filepath="$PROJECT_DIR$/plugins/scala/scala.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/serverFacade/serverFacade.iml" filepath="$PROJECT_DIR$/serverFacade/serverFacade.iml" />
+    </modules>
+  </component>
+</project>
+

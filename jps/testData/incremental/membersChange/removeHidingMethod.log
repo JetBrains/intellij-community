@@ -1,0 +1,25 @@
+Request to make modules:
+module RemoveHidingMethod
+End of request
+digraph X {
+  RemoveHidingMethod[label="RemoveHidingMethod"];
+}
+digraph X {
+  RemoveHidingMethod[label="RemoveHidingMethod"];
+}
+Propagated modules:
+module RemoveHidingMethod
+End of propagated
+Cleaning output files:
+out/production/RemoveHidingMethod/BaseAction.class
+End of files
+Compiling files:
+src/BaseAction.java
+End of files
+Cleaning output files:
+out/production/RemoveHidingMethod/Client$1.class
+out/production/RemoveHidingMethod/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

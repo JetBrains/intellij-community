@@ -1,0 +1,24 @@
+Request to make modules:
+module AddThrows
+End of request
+digraph X {
+  AddThrows[label="AddThrows"];
+}
+digraph X {
+  AddThrows[label="AddThrows"];
+}
+Propagated modules:
+module AddThrows
+End of propagated
+Cleaning output files:
+out/production/AddThrows/packageA/Server.class
+End of files
+Compiling files:
+src/packageA/Server.java
+End of files
+Cleaning output files:
+out/production/AddThrows/packageA/Client.class
+End of files
+Compiling files:
+src/packageA/Client.java
+End of files

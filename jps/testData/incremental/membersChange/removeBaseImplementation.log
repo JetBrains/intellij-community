@@ -1,0 +1,24 @@
+Request to make modules:
+module RemoveBaseImplementation
+End of request
+digraph X {
+  RemoveBaseImplementation[label="RemoveBaseImplementation"];
+}
+digraph X {
+  RemoveBaseImplementation[label="RemoveBaseImplementation"];
+}
+Propagated modules:
+module RemoveBaseImplementation
+End of propagated
+Cleaning output files:
+out/production/RemoveBaseImplementation/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/RemoveBaseImplementation/B.class
+End of files
+Compiling files:
+src/B.java
+End of files

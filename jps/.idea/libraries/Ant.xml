@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="Ant">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/ant-1.7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ant-launcher.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../apache-ant-1.7.1/src/tests/antunit/core/location/src" />
+      <root url="file://$PROJECT_DIR$/../apache-ant-1.7.1/src/tests/antunit/core/uuencode/src" />
+      <root url="file://$PROJECT_DIR$/../apache-ant-1.7.1/src" />
+      <root url="file://$PROJECT_DIR$/../apache-ant-1.7.1/src/tests/junit" />
+      <root url="file://$PROJECT_DIR$/../apache-ant-1.7.1/src/main" />
+    </SOURCES>
+  </library>
+</component>

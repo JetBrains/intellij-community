@@ -1,0 +1,28 @@
+Request to make modules:
+module ChangeAnnotationRetentionPolicy2
+End of request
+digraph X {
+  ChangeAnnotationRetentionPolicy2[label="ChangeAnnotationRetentionPolicy2"];
+}
+digraph X {
+  ChangeAnnotationRetentionPolicy2[label="ChangeAnnotationRetentionPolicy2"];
+}
+Propagated modules:
+module ChangeAnnotationRetentionPolicy2
+End of propagated
+Cleaning output files:
+out/production/ChangeAnnotationRetentionPolicy2/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/ChangeAnnotationRetentionPolicy2/C.class
+out/production/ChangeAnnotationRetentionPolicy2/C1.class
+out/production/ChangeAnnotationRetentionPolicy2/C2.class
+End of files
+Compiling files:
+src/C.java
+src/C1.java
+src/C2.java
+End of files
