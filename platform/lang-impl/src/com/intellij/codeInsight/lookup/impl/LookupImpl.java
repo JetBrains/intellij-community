@@ -1086,13 +1086,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final PrefixMatcher firstItemMatcher = itemMatcher(firstItem);
     final String oldPrefix = firstItemMatcher.getPrefix();
     final String presentPrefix = oldPrefix + myAdditionalPrefix;
-    String commonPrefix = firstItem.getLookupString();
+    String commonPrefix = handleCaseInsensitiveVariant(itemMatcher(firstItem).getPrefix(), firstItem.getLookupString());
 
     for (int i = 1; i < listModel.getSize(); i++) {
       LookupElement item = (LookupElement)listModel.getElementAt(i);
       if (!oldPrefix.equals(itemMatcher(item).getPrefix())) return false;
 
-      final String lookupString = item.getLookupString();
+      final String lookupString = handleCaseInsensitiveVariant(itemMatcher(item).getPrefix(), item.getLookupString());
       final int length = Math.min(commonPrefix.length(), lookupString.length());
       if (length < commonPrefix.length()) {
         commonPrefix = commonPrefix.substring(0, length);
