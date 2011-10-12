@@ -44,8 +44,9 @@ public abstract class WizardStep extends StepAdapter{
   public abstract boolean nextIsEnabled();
   public abstract boolean setActive();
   protected abstract JComponent createComponent();
-  protected abstract void dispose();
+  protected void dispose() {}
 
+  @Override
   public JComponent getComponent(){
     if (myComponent == null) {
       myComponent = createComponent();
@@ -55,6 +56,7 @@ public abstract class WizardStep extends StepAdapter{
     return myComponent;
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }

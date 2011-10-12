@@ -32,6 +32,7 @@ import com.intellij.util.ui.ListTableModel;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -42,12 +43,15 @@ import java.util.List;
  */
 public class CustomizeKeywordSubstitutionStep extends WizardStep {
   private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo(CvsBundle.message("import.wizard.keyword.substitution.column.name")) {
+    @Override
     public Object valueOf(Object object) {
       return ((FileExtension)object).getKeywordSubstitutionsWithSelection();
     }
 
+    @Override
     public Comparator getComparator() {
       return new Comparator() {
+        @Override
         public int compare(Object o1, Object o2) {
           KeywordSubstitutionWrapper firstSubstitution = ((FileExtension)o1).getKeywordSubstitutionsWithSelection()
             .getSelection();
@@ -59,30 +63,37 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
       };
     }
 
+    @Override
     public boolean isCellEditable(Object o) {
       return true;
     }
 
+    @Override
     public void setValue(Object o, Object aValue) {
       ((FileExtension)o).setKeywordSubstitution(((KeywordSubstitutionWrapper)aValue));
     }
 
+    @Override
     public TableCellRenderer getRenderer(Object o) {
       return ComboBoxTableCellRenderer.INSTANCE;
     }
 
+    @Override
     public TableCellEditor getEditor(Object item) {
       return ComboBoxTableCellEditor.INSTANCE;
     }
   };
 
   private final static ColumnInfo EXTENSION_COLUMN = new ColumnInfo(CvsBundle.message("import.wizard.file.extension.column.name")) {
+    @Override
     public Object valueOf(Object o) {
       return ((FileExtension)o).getExtension();
     }
 
+    @Override
     public Comparator getComparator() {
       return new Comparator(){
+        @Override
         public int compare(Object o, Object o1) {
           return ((FileExtension)o).getExtension().compareTo(((FileExtension)o1).getExtension());
         }
@@ -106,9 +117,6 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     init();
   }
 
-  protected void dispose() {
-  }
-
   private List<FileExtension> collectFileTypes() {
     Collection<FileExtension> storedExtensions = myImportConfiguration.getExtensions();
 
@@ -125,24 +133,30 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     return result;
   }
 
+  @Override
   public void saveState() {
     myImportConfiguration.setExtensions(myModel.getItems());
   }
 
+  @Override
   public boolean nextIsEnabled() {
     return true;
   }
 
+  @Override
   public boolean setActive() {
     return true;
   }
 
+  @Override
   protected JComponent createComponent() {
+    final JPanel panel = new JPanel(new BorderLayout());
     TableView<FileExtension> myTable = new TableView<FileExtension>(myModel);
     myTable.setMinRowHeight(new JComboBox().getPreferredSize().height + 2);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     scrollPane.setOpaque(false);
-    return scrollPane;
+    panel.add(scrollPane);
+    return panel;
   }
 
   public List<FileExtension> getFileExtensions() {
