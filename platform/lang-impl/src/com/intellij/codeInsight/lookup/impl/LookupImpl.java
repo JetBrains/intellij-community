@@ -230,7 +230,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void setCalculating(final boolean calculating) {
     myCalculating = calculating;
-    myIconPanel.setVisible(calculating);
+    Runnable setVisible = new Runnable() {
+      @Override
+      public void run() {
+        myIconPanel.setVisible(myCalculating);
+      }
+    };
+    if (myCalculating) {
+      new Alarm().addRequest(setVisible, 100);
+    } else {
+      setVisible.run();
+    }
+
     if (calculating) {
       myProcessIcon.resume();
     } else {
