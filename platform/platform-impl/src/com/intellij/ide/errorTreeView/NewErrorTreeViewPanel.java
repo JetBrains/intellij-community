@@ -89,7 +89,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar) {
-    this(project, helpId, createExitAction, true, null);
+    this(project, helpId, createExitAction, createToolbar, null);
   }
 
   public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, Runnable rerunAction) {
