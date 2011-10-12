@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -67,7 +68,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final String prefix = result.getPrefixMatcher().getPrefix();
         final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
         if (template != null) {
-          result.addElement(new LiveTemplateLookupElement(template));
+          result.addElement(new LiveTemplateLookupElement(template, true));
         }
         for (final TemplateImpl possible : templates) {
           result.restartCompletionOnPrefixChange(possible.getKey());
@@ -77,11 +78,11 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     });
   }
 
-  private void ensureTemplatesShown(Ref<Boolean> templatesShown, List<TemplateImpl> templates, CompletionResultSet result) {
+  private static void ensureTemplatesShown(Ref<Boolean> templatesShown, List<TemplateImpl> templates, CompletionResultSet result) {
     if (!templatesShown.get()) {
       templatesShown.set(true);
       for (final TemplateImpl possible : templates) {
-        result.addElement(new LiveTemplateLookupElement(possible));
+        result.addElement(new LiveTemplateLookupElement(possible, false));
       }
     }
   }
@@ -107,4 +108,13 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
       }
     });
   }
+
+  public static class Skipper extends CompletionPreselectSkipper {
+
+    @Override
+    public boolean skipElement(LookupElement element, CompletionLocation location) {
+      return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
+    }
+  }
+
 }

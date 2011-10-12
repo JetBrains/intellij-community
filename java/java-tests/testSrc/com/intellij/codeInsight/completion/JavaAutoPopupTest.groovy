@@ -66,7 +66,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     type('er')
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
-    assertEquals 'iter', lookup.currentItem.lookupString
+    assertEquals 'iterable', lookup.currentItem.lookupString
     assert lookup.focused
 
     type 'a'
@@ -651,7 +651,7 @@ class Foo {
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "itera"
     type ','
     assert !lookup
-    assert myFixture.editor.document.text.contains('iter,')
+    assert myFixture.editor.document.text.contains('itera,')
   }
 
   public void testTemplateSelectionBySpace() {
@@ -995,7 +995,7 @@ public class UTest {
     assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
   }
 
-  public void testTabShouldPreferLookupsToLiveTemplate() {
+  public void _testTabShouldPreferLookupsToLiveTemplate() {
     myFixture.configureByText "a.java", """
 class LiveComplete {
     public void innerThing() { }

@@ -438,6 +438,8 @@
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="before javaClassName"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor" id="liveTemplates" order="first"/>
 
+  <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper" id="skipLiveTemplate"/>
+
   <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" order="first, before liveTemplates"/>
 
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>

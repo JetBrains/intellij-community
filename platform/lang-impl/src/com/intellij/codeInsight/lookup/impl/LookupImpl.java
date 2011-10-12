@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
@@ -453,13 +454,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (!model.isEmpty()) {
       LookupElement first = model.iterator().next();
-      if (isFocused() && (!isExactPrefixItem(first, true) || mySelectionTouched)) {
+      if (isFocused() && (!isExactPrefixItem(first, true) || mySelectionTouched || shouldSkip(first))) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant, snapshot.second);
       }
       else {
         myList.setSelectedIndex(0);
       }
     }
+  }
+
+  private static boolean shouldSkip(LookupElement element) {
+    return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 
   private boolean isSelectionVisible() {
@@ -1264,7 +1269,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isExactPrefixItem(item, true)) {
+      if (isExactPrefixItem(item, true) && !shouldSkip(item)) {
         return i;
       }
     }
