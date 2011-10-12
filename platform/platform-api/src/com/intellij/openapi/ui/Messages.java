@@ -45,6 +45,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
 public class Messages {
   public static final int OK = 0;
@@ -763,7 +764,9 @@ public class Messages {
           textField.setText(textArea.getText());
         }
       });
-      textArea.setText(textField.getText().replaceAll("[\\ ]*=[\\ ]*", "=").replaceAll(" ", "\n"));
+      String s = textField.getText().replaceAll("[\\ ]*=[\\ ]*", "=");
+      List<String> lines = StringUtil.splitHonorQuotes(s, ' ');
+      textArea.setText(StringUtil.join(lines, "\n"));
       InsertPathAction.copyFromTo(textField, textArea);
       DialogBuilder builder = new DialogBuilder(textField);
       JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
