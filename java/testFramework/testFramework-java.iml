@@ -21,7 +21,6 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="testFramework" exported="" />
     <orderEntry type="module" module-name="relaxng" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="junit_rt" />
   </component>
   <component name="copyright">
     <Base>

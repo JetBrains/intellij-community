@@ -1,0 +1,24 @@
+Request to make modules:
+module ChangeInterfaceTypeParameter
+End of request
+digraph X {
+  ChangeInterfaceTypeParameter[label="ChangeInterfaceTypeParameter"];
+}
+digraph X {
+  ChangeInterfaceTypeParameter[label="ChangeInterfaceTypeParameter"];
+}
+Propagated modules:
+module ChangeInterfaceTypeParameter
+End of propagated
+Cleaning output files:
+out/production/ChangeInterfaceTypeParameter/B.class
+End of files
+Compiling files:
+src/B.java
+End of files
+Cleaning output files:
+out/production/ChangeInterfaceTypeParameter/C.class
+End of files
+Compiling files:
+src/C.java
+End of files

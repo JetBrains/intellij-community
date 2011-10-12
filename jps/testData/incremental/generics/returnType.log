@@ -1,0 +1,24 @@
+Request to make modules:
+module ReturnType
+End of request
+digraph X {
+  ReturnType[label="ReturnType"];
+}
+digraph X {
+  ReturnType[label="ReturnType"];
+}
+Propagated modules:
+module ReturnType
+End of propagated
+Cleaning output files:
+out/production/ReturnType/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files
+Cleaning output files:
+out/production/ReturnType/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

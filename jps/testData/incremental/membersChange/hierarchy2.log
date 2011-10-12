@@ -1,0 +1,30 @@
+Request to make modules:
+module Hierarchy2
+End of request
+digraph X {
+  Hierarchy2[label="Hierarchy2"];
+}
+digraph X {
+  Hierarchy2[label="Hierarchy2"];
+}
+Propagated modules:
+module Hierarchy2
+End of propagated
+Cleaning output files:
+out/production/Hierarchy2/Service.class
+End of files
+Compiling files:
+src/Service.java
+End of files
+Cleaning output files:
+out/production/Hierarchy2/Client1$1.class
+out/production/Hierarchy2/Client1.class
+out/production/Hierarchy2/Client2$1.class
+out/production/Hierarchy2/Client2.class
+out/production/Hierarchy2/ServiceAdapter.class
+End of files
+Compiling files:
+src/Client1.java
+src/Client2.java
+src/ServiceAdapter.java
+End of files

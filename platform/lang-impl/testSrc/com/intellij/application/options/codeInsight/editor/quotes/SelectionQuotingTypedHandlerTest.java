@@ -92,6 +92,10 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     doTest('[', "<selection><caret>(aaa)</selection>\nbbb\n\n", "[aaa]\nbbb\n\n");
   }
 
+  public void testDoubleBrackets() {
+    doTest('[', "<selection><caret>[aaa]</selection>\nbbb\n\n", "[[aaa]]\nbbb\n\n");
+  }
+
   public void testChangeNonSimilar() {
     doTest('[', "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "[\"aaa\"]\nbbb\n\n");
   }

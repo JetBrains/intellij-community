@@ -1,0 +1,24 @@
+Request to make modules:
+module SetProtected
+End of request
+digraph X {
+  SetProtected[label="SetProtected"];
+}
+digraph X {
+  SetProtected[label="SetProtected"];
+}
+Propagated modules:
+module SetProtected
+End of propagated
+Cleaning output files:
+out/production/SetProtected/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/SetProtected/B.class
+End of files
+Compiling files:
+src/B.java
+End of files

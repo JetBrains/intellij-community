@@ -102,4 +102,12 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
   public void testNonCanonicalNaming() throws Exception {
     doTest();
   }
+
+  public void testExtractFromAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testExtractFromIfStatementInsideAnonymous() throws Exception {
+    doTest();
+  }
 }

@@ -1,0 +1,11 @@
+Request to make modules:
+module PackageInfoNoRecompile
+End of request
+digraph X {
+  PackageInfoNoRecompile[label="PackageInfoNoRecompile"];
+}
+digraph X {
+  PackageInfoNoRecompile[label="PackageInfoNoRecompile"];
+}
+Propagated modules:
+End of propagated

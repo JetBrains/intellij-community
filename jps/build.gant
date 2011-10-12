@@ -1,0 +1,56 @@
+import org.jetbrains.jps.*
+import org.codehaus.groovy.ant.Groovy
+
+includeTool << Jps
+
+def projectHome = "$basedir"
+def libs = "$projectHome/lib/"
+
+def gantHome = GANT_HOME
+
+projectBuilder.targetFolder = "${projectHome}/build"
+    
+library("ANT") {
+  classpath "$libs/ant-1.7.1.jar"
+}
+
+library("groovy") {
+  classpath "$libs/groovy-all-1.7.1.jar"
+}
+
+library("gant") {
+  new File("$gantHome/lib").eachFile {
+    classpath it
+  }
+}
+
+module("JPS") {
+  targetLevel ="1.5"
+  classpath antLayout, gant, groovy
+  src "${projectHome}/src"
+}
+
+module("antLayout") {
+  targetLevel = "1.5"
+  classpath ANT
+  src "${projectHome}/antLayout/src"
+}
+
+target('default' : 'Default target') {
+  projectBuilder.clean()
+  projectBuilder.makeAll()
+
+  layout("${projectBuilder.targetFolder}/deploy") {
+    jar("jps.jar") {
+      module("JPS")
+      module("antLayout")
+      zipfileset(src: "${projectHome}/lib/javac2-all.jar") {
+        exclude (name: "JDOM*.class")
+      }
+    }
+
+    jar("jps-sources.zip") {
+      fileset(dir: "$projectHome/src")
+    }
+  }
+}

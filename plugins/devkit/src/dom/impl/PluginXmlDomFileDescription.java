@@ -32,11 +32,6 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
     super(IdeaPlugin.class, "idea-plugin");
   }
 
-  protected void initializeFileDescription() {
-    super.initializeFileDescription();
-    registerImplementation(IdeaPlugin.class, IdeaPluginImpl.class);
-  }
-
   @Override
   public Icon getFileIcon(int flags) {
     return ICON;

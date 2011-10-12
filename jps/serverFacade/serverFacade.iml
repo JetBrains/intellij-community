@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/gant-1.9.5_groovy-1.7.10.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="module" module-name="jps-model" />
+    <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="javac2" />
+    <orderEntry type="module" module-name="forms-compiler" />
+  </component>
+</module>
+

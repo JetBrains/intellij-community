@@ -1,0 +1,3 @@
+This file exists to ensure the bug with libraries directory processing is fixed.
+For example, in case of Subversion .svn directory is created under the .idea directories.
+Such directories must be ignored.

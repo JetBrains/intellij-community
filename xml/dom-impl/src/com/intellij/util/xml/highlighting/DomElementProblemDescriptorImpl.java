@@ -28,11 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.GenericValue;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.xml.util.XmlTagUtil;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +147,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     if (element != null) {
       assert element.isValid() : element;
       if (element instanceof XmlTag) {
-        return createTagNameRange((XmlTag)element);
+        return DomUtil.getProblemRange((XmlTag)element);
       }
 
       int length = element.getTextRange().getLength();
@@ -167,18 +163,9 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
     final XmlTag tag = getParentXmlTag();
     if (tag != null) {
-      return createTagNameRange(tag);
+      return DomUtil.getProblemRange(tag);
     }
     return NO_PROBLEM;
-  }
-
-  private static Pair<TextRange, PsiElement> createTagNameRange(final XmlTag tag) {
-    final PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
-    if (startToken == null) {
-      return Pair.create(tag.getTextRange(), (PsiElement)tag);
-    }
-
-    return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
   }
 
   public String toString() {

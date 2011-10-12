@@ -1,0 +1,10 @@
+<testData>
+
+  <deleted_by_make>
+    <file path="classes/a/A.class" />
+  </deleted_by_make>
+
+  <recompile>
+    <file path="source/a/A.java" />
+  </recompile>
+</testData>

@@ -59,9 +59,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -349,9 +347,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       public JComponent getPreferredFocusedComponent() {
         final MouseEvent me = getMouseEvent();
         if (me == null) {
-          return myTypeEditor;
+          return myTypeEditor.getFocusTarget();
         }
-        return me.getPoint().getX() <= getTypesColumnWidth() ? myTypeEditor : myNameEditor;
+        return me.getPoint().getX() <= getTypesColumnWidth() ? myTypeEditor.getFocusTarget() : myNameEditor.getFocusTarget();
       }
 
       @Override

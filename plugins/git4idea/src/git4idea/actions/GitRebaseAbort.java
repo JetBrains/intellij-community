@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
@@ -81,5 +82,10 @@ public class GitRebaseAbort extends GitRepositoryAction {
   @NotNull
   protected String getActionName() {
     return GitBundle.getString("rebase.abort.action.name");
+  }
+
+  @Override
+  protected boolean isEnabled(AnActionEvent e) {
+    return super.isEnabled(e) && isRebasing(e);
   }
 }

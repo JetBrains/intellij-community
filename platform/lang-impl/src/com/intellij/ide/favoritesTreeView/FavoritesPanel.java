@@ -22,7 +22,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
@@ -37,7 +36,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * @author Konstantin Bulenkov
@@ -56,17 +54,6 @@ public class FavoritesPanel {
     myTreeBuilder = myViewPanel.getBuilder();
     if (myTreeBuilder != null) {
       Disposer.register(myProject, myTreeBuilder);
-      myTreeBuilder.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
-        @Override
-        public int compare(NodeDescriptor nd1, NodeDescriptor nd2) {
-          if (nd1 instanceof FavoritesTreeNodeDescriptor && nd2 instanceof FavoritesTreeNodeDescriptor) {
-            final AbstractTreeNode e1 = ((FavoritesTreeNodeDescriptor)nd1).getElement();
-            final AbstractTreeNode e2 = ((FavoritesTreeNodeDescriptor)nd2).getElement();
-            return e1 == null || e2 == null ? 0 : e1.getName().compareToIgnoreCase(e2.getName());
-          }
-          return 0;
-        }
-      });
     }
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();
     setupDnD();

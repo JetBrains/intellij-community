@@ -40,7 +40,7 @@ import java.util.*;
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new THashMap<Class<? extends Language>, Language>();
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = Collections.synchronizedMap(new THashMap<Class<? extends Language>, Language>());
   private static final Map<String, Language> ourRegisteredIDs = new THashMap<String, Language>();
   private final Language myBaseLanguage;
   private final String myID;

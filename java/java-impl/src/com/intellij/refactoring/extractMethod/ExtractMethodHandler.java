@@ -121,11 +121,13 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     callback.pass(elements);
   }
 
-  private static void invokeOnElements(Project project, Editor editor, PsiFile file, PsiElement[] elements) {
-    final ExtractMethodProcessor processor = getProcessor(elements, project, file, editor, true);
-    if (processor != null) {
-      invokeOnElements(project, editor, processor, true);
-    }
+  private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
+    getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
+      @Override
+      public void pass(ExtractMethodProcessor processor) {
+        invokeOnElements(project, editor, processor, true);
+      }
+    });
   }
 
   private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
@@ -153,10 +155,11 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
   @Nullable
   private static ExtractMethodProcessor getProcessor(final PsiElement[] elements,
-                                                    final Project project,
-                                                    final PsiFile file,
-                                                    final Editor editor,
-                                                    final boolean showErrorMessages) {
+                                                     final Project project,
+                                                     final PsiFile file,
+                                                     final Editor editor,
+                                                     final boolean showErrorMessages, 
+                                                     final @Nullable Pass<ExtractMethodProcessor> pass) {
     if (elements == null || elements.length == 0) {
       if (showErrorMessages) {
         String message = RefactoringBundle
@@ -181,7 +184,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
     processor.setShowErrorDialogs(showErrorMessages);
     try {
-      if (!processor.prepare()) return null;
+      if (!processor.prepare(pass)) return null;
     }
     catch (PrepareFailedException e) {
       if (showErrorMessages) {
@@ -211,7 +214,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
                                                     final PsiElement[] elements,
                                                     final PsiFile file,
                                                     final boolean openEditor) {
-    return getProcessor(elements, project, file, openEditor ? openEditor(project, file) : null, false);
+    return getProcessor(elements, project, file, openEditor ? openEditor(project, file) : null, false, null);
   }
 
   public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {

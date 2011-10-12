@@ -71,6 +71,7 @@ public class HighlightInfo implements Segment {
     return severity;
   }
 
+  @Nullable
   public TextAttributes getTextAttributes(final PsiElement element,
                                           @Nullable  final EditorColorsScheme editorColorsScheme) {
     if (forcedTextAttributes != null) {
@@ -78,6 +79,10 @@ public class HighlightInfo implements Segment {
     }
 
     final EditorColorsScheme colorsScheme = getColorsScheme(editorColorsScheme);
+    if (colorsScheme == null) {
+      return null;
+    }
+
     if (forcedTextAttributesKey != null) {
       return colorsScheme.getAttributes(forcedTextAttributesKey);
     }
@@ -104,6 +109,9 @@ public class HighlightInfo implements Segment {
       return forcedTextAttributes.getErrorStripeColor();
     }
     final EditorColorsScheme scheme = getColorsScheme(colorsScheme);
+    if (scheme == null) {
+      return null;
+    }
     if (forcedTextAttributesKey != null) {
       final Color errorStripeColor = scheme.getAttributes(forcedTextAttributesKey).getErrorStripeColor();
       // let's copy above behaviour of forcedTextAttributes stripe color, but I'm not sure that the behaviour is correct in general
@@ -133,7 +141,7 @@ public class HighlightInfo implements Segment {
 
   }
 
-  @NotNull
+  @Nullable
   private static EditorColorsScheme getColorsScheme(@Nullable final EditorColorsScheme customScheme) {
     if (customScheme != null) {
       return customScheme;

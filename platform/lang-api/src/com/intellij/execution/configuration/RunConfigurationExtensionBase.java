@@ -15,10 +15,12 @@
  */
 package com.intellij.execution.configuration;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -63,7 +65,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
 
   protected abstract void patchCommandLine(@NotNull final T configuration,
                                            RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
-                                           @NotNull final AbstractRunConfiguration.RunnerType type);
+                                           @NotNull final AbstractRunConfiguration.RunnerType type) throws ExecutionException;
 
   /**
    * Validate extensions after general configuration validation passed
@@ -77,16 +79,6 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
   protected abstract void validateConfiguration(@NotNull final T configuration,
                                                 final boolean isExecution) throws Exception;
 
-  /**
-   * validate runner settings 
-   */
-  protected void checkRunnerSettings(@NotNull T configuration,
-                                     @NotNull final ProgramRunner runner,
-                                     @Nullable final RunnerSettings runnerSettings,
-                                     @Nullable final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-        throws RuntimeConfigurationException {
-  }
-  
   /**
    * Setup extension settings for created run configuration
    *

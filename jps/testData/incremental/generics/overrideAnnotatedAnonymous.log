@@ -1,0 +1,25 @@
+Request to make modules:
+module OverrideAnnotatedAnonymous
+End of request
+digraph X {
+  OverrideAnnotatedAnonymous[label="OverrideAnnotatedAnonymous"];
+}
+digraph X {
+  OverrideAnnotatedAnonymous[label="OverrideAnnotatedAnonymous"];
+}
+Propagated modules:
+module OverrideAnnotatedAnonymous
+End of propagated
+Cleaning output files:
+out/production/OverrideAnnotatedAnonymous/packageA/Base.class
+End of files
+Compiling files:
+src/packageA/Base.java
+End of files
+Cleaning output files:
+out/production/OverrideAnnotatedAnonymous/packageA/Derived$1.class
+out/production/OverrideAnnotatedAnonymous/packageA/Derived.class
+End of files
+Compiling files:
+src/packageA/Derived.java
+End of files

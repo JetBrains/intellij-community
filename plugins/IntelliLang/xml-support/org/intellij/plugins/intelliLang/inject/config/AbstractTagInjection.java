@@ -44,16 +44,17 @@ import java.util.TreeSet;
  */
 public class AbstractTagInjection extends BaseInjection {
 
+  private static final Logger LOG = Logger.getInstance("org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection");
+
   @NotNull @NonNls
   private StringMatcher myTagName = StringMatcher.ANY;
 
   @NotNull @NonNls
   private Set<String> myTagNamespace = Collections.emptySet();
-
   @NotNull @NonNls
   private String myXPathCondition = "";
-  private Object myCompiledXPathCondition;
 
+  private XPath myCompiledXPathCondition;
   private boolean myApplyToSubTagTexts;
 
   public AbstractTagInjection() {
@@ -91,37 +92,29 @@ public class AbstractTagInjection extends BaseInjection {
 
   @Nullable
   public XPath getCompiledXPathCondition() {
-    if (isInvalid(myCompiledXPathCondition)) {
-      return null;
-    }
-    else if (myCompiledXPathCondition != null) {
-      return (XPath)myCompiledXPathCondition;
-    }
-    else if (myXPathCondition != null && myXPathCondition.length() > 0) {
-      try {
-        final XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
-        if (xPathSupport != null) {
-          return (XPath)(myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition));
-        }
-        else {
-          myCompiledXPathCondition = XPathSupportProxy.UNSUPPORTED;
-        }
-      }
-      catch (JaxenException e) {
-        myCompiledXPathCondition = XPathSupportProxy.INVALID;
-        Logger.getInstance(getClass().getName()).info("Invalid XPath expression", e);
-      }
-    }
-    return null;
-  }
-
-  private static boolean isInvalid(Object expr) {
-    return expr == XPathSupportProxy.INVALID || expr == XPathSupportProxy.UNSUPPORTED;
+    return myCompiledXPathCondition;
   }
 
   public void setXPathCondition(@Nullable String condition) {
     myXPathCondition = condition != null ? condition : "";
-    myCompiledXPathCondition = null;
+    if (StringUtil.isNotEmpty(myXPathCondition)) {
+      try {
+        final XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
+        if (xPathSupport != null) {
+          myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition); 
+        }
+        else {
+          myCompiledXPathCondition = null;
+        }
+      }
+      catch (JaxenException e) {
+        myCompiledXPathCondition = null;
+        LOG.warn("Invalid XPath expression", e);
+      }
+    }
+    else {
+      myCompiledXPathCondition = null;
+    }
   }
 
   @SuppressWarnings({"RedundantIfStatement"})
@@ -212,7 +205,8 @@ public class AbstractTagInjection extends BaseInjection {
         return condition.booleanValueOf(context);
       }
       catch (JaxenException e) {
-        myCompiledXPathCondition = XPathSupportProxy.INVALID;
+        LOG.warn(e);
+        myCompiledXPathCondition = null;
         return false;
       }
     }

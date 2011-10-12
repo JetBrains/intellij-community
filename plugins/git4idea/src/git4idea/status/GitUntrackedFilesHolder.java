@@ -32,7 +32,10 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -172,7 +175,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   /**
    * Resets the list of untracked files after retrieving the full list of them from Git.
    */
-  private void rescanAll() throws VcsException {
+  public void rescanAll() throws VcsException {
     Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, null);
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles = untrackedFiles;
@@ -216,15 +219,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   @Override
   public void before(List<? extends VFileEvent> events) {
-    for (VFileEvent event : events) {
-      // only moved files to preserve old location
-      if (event instanceof  VFileMoveEvent) {
-        VirtualFile file = event.getFile();
-        if (notIgnored(file)) {
-          myPossiblyUntrackedFiles.add(file);
-        }
-      }
-    }
   }
 
   @Override
@@ -243,9 +237,12 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       String path = file.getPath();
       if (myRepositoryFiles.isIndexFile(path)) {
         indexChanged = true;
-      } 
+      }
       else {
-        filesToRefresh.addAll(getAffectedFilesFromEvent(event));
+        VirtualFile affectedFile = getAffectedFile(event);
+        if (notIgnored(affectedFile)) {
+          filesToRefresh.add(affectedFile);
+        }
       }
     }
 
@@ -262,42 +259,20 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
   }
 
-  @NotNull
-  private Collection<VirtualFile> getAffectedFilesFromEvent(@NotNull VFileEvent event) {
-    // moved files: old file location is handled in before(), new - here
-    if (event instanceof VFileCreateEvent || event instanceof  VFileDeleteEvent || event instanceof VFileMoveEvent) {
-      VirtualFile file = event.getFile();
-      if (notIgnored(file)) {
-        return Collections.singleton(file);
-      } else {
-        return Collections.emptyList();
-      }
-    }
-    // copied files: event.getFile() always returns old location, so both location are handled here
-    else if (event instanceof VFileCopyEvent) {
-      ArrayList<VirtualFile> affectedFiles = new ArrayList<VirtualFile>(2); 
-      VirtualFile oldFile = event.getFile();
-      if (notIgnored(oldFile)) {
-        affectedFiles.add(oldFile);
-      }
+  @Nullable
+  private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
+    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+      return event.getFile();
+    } else if (event instanceof VFileCopyEvent) {
       VFileCopyEvent copyEvent = (VFileCopyEvent) event;
-      VirtualFile newFile = copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
-      if (notIgnored(newFile)) {
-        affectedFiles.add(newFile);
-      }
-      return affectedFiles;
-    } else {
-      return Collections.emptyList();
+      return copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
     }
+    return null;
   }
+
 
   private boolean notIgnored(@Nullable VirtualFile file) {
     return file != null && belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file);
-  }
-
-  private static boolean isCreateDeleteEvent(VFileEvent event) {
-    return event instanceof VFileCreateEvent || event instanceof VFileCopyEvent ||
-           event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent;
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {

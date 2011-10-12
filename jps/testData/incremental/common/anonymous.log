@@ -1,0 +1,25 @@
+Request to make modules:
+module Anonymous
+End of request
+digraph X {
+  Anonymous[label="Anonymous"];
+}
+digraph X {
+  Anonymous[label="Anonymous"];
+}
+Propagated modules:
+module Anonymous
+End of propagated
+Cleaning output files:
+out/production/Anonymous/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files
+Cleaning output files:
+out/production/Anonymous/Client$1.class
+out/production/Anonymous/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

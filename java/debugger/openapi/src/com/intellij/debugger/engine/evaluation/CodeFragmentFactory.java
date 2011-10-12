@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -31,4 +32,11 @@ public interface CodeFragmentFactory {
   boolean isContextAccepted(PsiElement contextElement);
 
   LanguageFileType getFileType();
+
+  /**
+   * In case if createCodeFragment returns java code use
+   * com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl#getInstance()
+   * @return builder, which can evaluate expression for your code fragment
+   */
+  EvaluatorBuilder getEvaluatorBuilder();
 }

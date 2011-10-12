@@ -170,7 +170,7 @@ public class MavenExternalParameters {
     cmdList.add(MessageFormat.format("-D{0}={1}", key, value));
   }
 
-  private static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
+  public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
     final File file = MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {

@@ -13,24 +13,28 @@
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildParticipantProvider implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipantProvider"/>
+
     <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions" extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin" implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension" implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
+
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
 
-    <localInspection shortName="PluginXmlValidity" displayName="Plugin.xml Validity" groupBundle="org.jetbrains.idea.devkit.DevKitBundle"
+    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" groupBundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection shortName="ComponentNotRegistered" bundle="org.jetbrains.idea.devkit.DevKitBundle"
+    <localInspection language="JAVA" shortName="ComponentNotRegistered" bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
-    <localInspection shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
+    <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"/>
-    <localInspection shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
+    <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
@@ -39,13 +43,20 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
-    <localInspection shortName="DialogTitleCapitalization"
+    <localInspection language="JAVA" shortName="DialogTitleCapitalization"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name"
                      displayName="Incorrect dialog title capitalization"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.TitleCapitalizationInspection"/>
+    <localInspection language="XML" shortName="InspectionMappingConsistency"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     displayName="&lt;inspection&gt; tag consistency"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>

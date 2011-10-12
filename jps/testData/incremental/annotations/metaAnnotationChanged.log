@@ -1,0 +1,20 @@
+Request to make modules:
+module MetaAnnotationChanged
+End of request
+digraph X {
+  MetaAnnotationChanged[label="MetaAnnotationChanged"];
+}
+digraph X {
+  MetaAnnotationChanged[label="MetaAnnotationChanged"];
+}
+Propagated modules:
+module MetaAnnotationChanged
+End of propagated
+Cleaning output files:
+out/production/MetaAnnotationChanged/A1.class
+out/production/MetaAnnotationChanged/C1.class
+End of files
+Compiling files:
+src/A1.java
+src/C1.java
+End of files

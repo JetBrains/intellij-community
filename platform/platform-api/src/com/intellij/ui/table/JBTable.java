@@ -52,6 +52,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private Integer myMinRowHeight;
   private boolean myStriped;
+  private boolean isTypeAhead = true;
 
 
   public JBTable() {
@@ -361,12 +362,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       setEditingRow(row);
       setEditingColumn(column);
       editor.addCellEditorListener(this);
-
+      if (isTypeAhead) {
+        JTableCellEditorHelper.typeAhead(this, e, row, column);
+      }
       return true;
     }
     return false;
   }
-
 
   private static boolean isTableDecorationSupported() {
     return UIUtil.isUnderAlloyLookAndFeel()
@@ -375,6 +377,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       || UIUtil.isUnderMetalLookAndFeel()
       || UIUtil.isUnderNimbusLookAndFeel()
       || UIUtil.isUnderWindowsLookAndFeel();
+  }
+
+  public void disableTypeAheadInCellEditors() {
+    isTypeAhead = false;
   }
 
   @Override

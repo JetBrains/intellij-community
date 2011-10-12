@@ -1,0 +1,26 @@
+Request to make modules:
+module SetStatic
+End of request
+digraph X {
+  SetStatic[label="SetStatic"];
+}
+digraph X {
+  SetStatic[label="SetStatic"];
+}
+Propagated modules:
+module SetStatic
+End of propagated
+Cleaning output files:
+out/production/SetStatic/Base.class
+End of files
+Compiling files:
+src/Base.java
+End of files
+Cleaning output files:
+out/production/SetStatic/Client1.class
+out/production/SetStatic/Client2.class
+End of files
+Compiling files:
+src/Client1.java
+src/Client2.java
+End of files

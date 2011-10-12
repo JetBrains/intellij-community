@@ -1,0 +1,26 @@
+Request to make modules:
+module SetFinal
+End of request
+digraph X {
+  SetFinal[label="SetFinal"];
+}
+digraph X {
+  SetFinal[label="SetFinal"];
+}
+Propagated modules:
+module SetFinal
+End of propagated
+Cleaning output files:
+out/production/SetFinal/Base.class
+End of files
+Compiling files:
+src/Base.java
+End of files
+Cleaning output files:
+out/production/SetFinal/Client1.class
+out/production/SetFinal/Client2.class
+End of files
+Compiling files:
+src/Client1.java
+src/Client2.java
+End of files

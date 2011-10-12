@@ -1,0 +1,24 @@
+Request to make modules:
+module ChangeStaticMethodSignature
+End of request
+digraph X {
+  ChangeStaticMethodSignature[label="ChangeStaticMethodSignature"];
+}
+digraph X {
+  ChangeStaticMethodSignature[label="ChangeStaticMethodSignature"];
+}
+Propagated modules:
+module ChangeStaticMethodSignature
+End of propagated
+Cleaning output files:
+out/production/ChangeStaticMethodSignature/packageA/Server.class
+End of files
+Compiling files:
+src/packageA/Server.java
+End of files
+Cleaning output files:
+out/production/ChangeStaticMethodSignature/packageA/Client.class
+End of files
+Compiling files:
+src/packageA/Client.java
+End of files

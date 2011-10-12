@@ -1,0 +1,25 @@
+Request to make modules:
+module AddStatic
+End of request
+digraph X {
+  AddStatic[label="AddStatic"];
+}
+digraph X {
+  AddStatic[label="AddStatic"];
+}
+Propagated modules:
+module AddStatic
+End of propagated
+Cleaning output files:
+out/production/AddStatic/A$B.class
+out/production/AddStatic/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/AddStatic/B.class
+End of files
+Compiling files:
+src/B.java
+End of files

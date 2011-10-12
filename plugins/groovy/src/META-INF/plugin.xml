@@ -620,7 +620,7 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection"/>
     <localInspection language="Groovy" shortName="GroovyDocCheck" displayName="GroovyDoc issues" groupName="Probable bugs"
-                     enabledByDefault="true" level="ERROR" key="groovy.doc.issues"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection"/>
     <localInspection language="Groovy" shortName="GroovyRangeTypeCheck" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="incorrect.range.argument" groupName="Probable bugs" enabledByDefault="false" level="WARNING"

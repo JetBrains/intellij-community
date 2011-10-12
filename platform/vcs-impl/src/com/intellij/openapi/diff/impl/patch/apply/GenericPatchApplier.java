@@ -42,6 +42,7 @@ public class GenericPatchApplier {
   private final List<PatchHunk> myHunks;
   private boolean myHadAlreadyAppliedMet;
 
+  private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
 
@@ -56,6 +57,7 @@ public class GenericPatchApplier {
       }
     });
     myNotExact = new ArrayList<SplitHunk>();
+    myNotBound = new ArrayList<SplitHunk>();
   }
 
   public ApplyPatchStatus getStatus() {
@@ -99,6 +101,7 @@ public class GenericPatchApplier {
     for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
       SplitHunk hunk = iterator.next();
       final SplitHunk copy = createWithAllContextCopy(hunk);
+      if (copy.isInsertion()) continue;
       if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk)) {
         iterator.remove();
       }
@@ -108,6 +111,7 @@ public class GenericPatchApplier {
     }
     for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
       SplitHunk hunk = iterator.next();
+      if (hunk.isInsertion()) continue;
       if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk)) {
         iterator.remove();
       }
@@ -175,10 +179,12 @@ public class GenericPatchApplier {
     for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
       final SplitHunk hunk = iterator.next();
       hunk.cutSameTail();
-      if (testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk)) {
-        iterator.remove();
+      if (! testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk)) {
+        myNotBound.add(hunk);
       }
     }
+    Collections.sort(myNotBound, HunksComparator.getInstance());
+    myNotExact.clear();
   }
   
   private boolean testForPartialContextMatch(final SplitHunk splitHunk, final MismatchSolver mismatchSolver, final int maxWalkFromBinding) {
@@ -186,7 +192,7 @@ public class GenericPatchApplier {
     final BeforeAfter<List<String>> first = steps.get(0);
     final BetterPoint betterPoint = new BetterPoint();
 
-    assert ! splitHunk.isInsertion();
+    if (splitHunk.isInsertion()) return false;
 
     // if it is not just insertion, then in first step will be both parts
     final Iterator<FirstLineDescriptor> iterator = mismatchSolver.getStartLineVariationsIterator();
@@ -698,7 +704,7 @@ public class GenericPatchApplier {
         int i = myCurrentIdx;
         int maxWalk = Math.max(-1, i - myLeftWalk);
         myCurrentIdx = -1;
-        for (; i >= 0 && i > maxWalk; i--) {
+        for (; i >= 0 && i > maxWalk && i < myLines.size(); i--) {
           final String s = myLines.get(i);
           if (myLine.equals(s) && ! isSeized(i)) {
             myCurrentIdx = i;
@@ -719,7 +725,13 @@ public class GenericPatchApplier {
   private boolean testForExactMatch(final SplitHunk splitHunk) {
     final int offset = splitHunk.getContextBefore().size();
     final List<BeforeAfter<List<String>>> steps = splitHunk.getPatchSteps();
-    assert ! splitHunk.isInsertion();
+    if (splitHunk.isInsertion()) {
+      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().length() == 0;
+      if (emptyFile) {
+        myNotBound.add(splitHunk);
+      }
+      return emptyFile;
+    }
 
     int idx = splitHunk.getStartLineBefore() + offset;
     int cnt = 0;
@@ -857,7 +869,7 @@ public class GenericPatchApplier {
   public String getAfter() {
     final StringBuilder sb = new StringBuilder();
     // put not bind into the beginning
-    for (SplitHunk hunk : myNotExact) {
+    for (SplitHunk hunk : myNotBound) {
       linesToSb(sb, hunk.getAfterAll());
     }
     iterateTransformations(new Consumer<TextRange>() {
@@ -1113,5 +1125,18 @@ public class GenericPatchApplier {
 
   public TreeMap<TextRange, MyAppliedData> getTransformations() {
     return myTransformations;
+  }
+  
+  private static class HunksComparator implements Comparator<SplitHunk> {
+    private final static HunksComparator ourInstance = new HunksComparator();
+
+    public static HunksComparator getInstance() {
+      return ourInstance;
+    }
+
+    @Override
+    public int compare(SplitHunk o1, SplitHunk o2) {
+      return Integer.valueOf(o1.getStartLineBefore()).compareTo(Integer.valueOf(o2.getStartLineBefore()));
+    }
   }
 }

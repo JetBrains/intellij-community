@@ -1,13 +1,12 @@
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.Maps;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
@@ -19,7 +18,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author traff
@@ -117,13 +119,6 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     }
   }
 
-  public void checkRunnerSettings(@NotNull final U configuration, ProgramRunner runner, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configPerRunnerSettings) throws Exception {
-    // only for enabled extensions
-    for (T extension : getEnabledExtensions(configuration, null)) {
-      extension.checkRunnerSettings(configuration, runner, runnerSettings, configPerRunnerSettings);
-    }
-  }
-
   public void extendCreatedConfiguration(@NotNull final U configuration,
                                          @NotNull final Location location) {
     for (T extension : getApplicableExtensions(configuration)) {
@@ -138,8 +133,9 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   }
 
   public void patchCommandLine(@NotNull final U configuration,
-                               final RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
-                               @NotNull final AbstractRunConfiguration.RunnerType type) {
+                               final RunnerSettings runnerSettings,
+                               @NotNull final GeneralCommandLine cmdLine,
+                               @NotNull final AbstractRunConfiguration.RunnerType type) throws ExecutionException {
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration, runnerSettings)) {
       extension.patchCommandLine(configuration, runnerSettings, cmdLine, type);

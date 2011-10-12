@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,9 +64,10 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     fillModel(configs);
 
     myCvs2SettingsEditPanel.addCvsRootChangeListener(new CvsRootChangeListener() {
+      @Override
       public void onCvsRootChanged() {
         if (mySelection == null) return;
-        myCvs2SettingsEditPanel.saveTo(mySelection, false);
+        myCvs2SettingsEditPanel.saveTo(mySelection);
         myList.repaint();
       }
     });
@@ -103,8 +104,10 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     myCvs2SettingsEditPanel.setReadOnly();
   }
 
+  @Override
   protected Action[] createLeftSideActions() {
     AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         new ConfigureCvsGlobalSettingsDialog().show();
       }
@@ -112,6 +115,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     return new Action[]{globalSettingsAction};
   }
 
+  @Override
   protected void doOKAction() {
     if (saveSelectedConfiguration()) {
       super.doOKAction();
@@ -144,6 +148,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     return actionPanel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myList.setCellRenderer(new CvsListCellRenderer());
 
@@ -174,7 +179,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private boolean saveSelectedConfiguration() {
     if (getSelectedConfiguration() == null) return true;
-    return myCvs2SettingsEditPanel.saveTo(getSelectedConfiguration(), true);
+    return myCvs2SettingsEditPanel.saveTo(getSelectedConfiguration());
   }
 
   private void copySelectedConfiguration() {
@@ -213,6 +218,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private void addSelectionListener() {
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex < 0 || selectedIndex >= myModel.getSize()) {
@@ -231,7 +237,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private boolean select(CvsRootConfiguration cvs2Configuration) {
     if (mySelection != null) {
-      if (!myCvs2SettingsEditPanel.saveTo(mySelection, true)) {
+      if (!myCvs2SettingsEditPanel.saveTo(mySelection)) {
         return false;
       }
     }
@@ -267,10 +273,12 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(!myIsReadOnly);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       createNewConfiguration();
     }
@@ -282,10 +290,12 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
       registerCustomShortcutSet(CommonShortcuts.DELETE, myList);
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedConfiguration() != null && !myIsReadOnly);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       removeSelectedConfiguration();
     }
@@ -299,15 +309,18 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
                                 myList);
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedConfiguration() != null && !myIsReadOnly);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       copySelectedConfiguration();
     }
   }
 
+  @Override
   @NonNls
   public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)){
@@ -316,14 +329,17 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     return null;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.versioncontrol.cvs.roots");
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     if (myModel.isEmpty()) return null;
     return myCvs2SettingsEditPanel.getPreferredFocusedComponent();

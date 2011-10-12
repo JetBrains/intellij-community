@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -227,11 +228,16 @@ public abstract class BasicAction extends DumbAwareAction {
     // only enable action if all the targets are under the vcs and the action supports all of them
 
     presentation.setEnabled(enabled);
-    presentation.setVisible(enabled);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      presentation.setVisible(enabled);
+    }
+    else {
+      presentation.setVisible(true);
+    }
   }
 
   /**
-   * Check if the action should be enabled for the set of the fils
+   * Check if the action should be enabled for the set of the files
    *
    * @param project the context project
    * @param vcs     the vcs to use

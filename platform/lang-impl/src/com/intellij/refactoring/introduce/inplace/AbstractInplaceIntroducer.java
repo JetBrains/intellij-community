@@ -136,6 +136,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   protected final void setPreviewText(final String text) {
+    if (myPreview == null) return; //already disposed
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

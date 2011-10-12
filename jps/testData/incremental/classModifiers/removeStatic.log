@@ -1,0 +1,25 @@
+Request to make modules:
+module RemoveStatic
+End of request
+digraph X {
+  RemoveStatic[label="RemoveStatic"];
+}
+digraph X {
+  RemoveStatic[label="RemoveStatic"];
+}
+Propagated modules:
+module RemoveStatic
+End of propagated
+Cleaning output files:
+out/production/RemoveStatic/A$B.class
+out/production/RemoveStatic/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
+out/production/RemoveStatic/B.class
+End of files
+Compiling files:
+src/B.java
+End of files

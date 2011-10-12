@@ -246,7 +246,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       buf.append(")");
       setPreviewText(buf.toString());
       final MarkupModel markupModel = DocumentMarkupModel.forDocument(getPreviewEditor().getDocument(), myProject, true);
-     // markupModel.removeAllHighlighters();
+      markupModel.removeAllHighlighters();
       for (TextRange textRange : ranges2Remove) {
         markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, getTestAttributesForRemoval(), HighlighterTargetArea.EXACT_RANGE);
       }

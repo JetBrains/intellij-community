@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactManager">
+    <artifact type="jar" name="data">
+      <output-path>$PROJECT_DIR$/out/</output-path>
+      <root id="archive" name="data.jar">
+        <element id="file-copy" path="$PROJECT_DIR$/data/a.txt" />
+      </root>
+    </artifact>
+  </component>
+</project>
+

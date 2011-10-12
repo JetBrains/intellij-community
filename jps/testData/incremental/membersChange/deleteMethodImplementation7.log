@@ -1,0 +1,26 @@
+Request to make modules:
+module DeleteMethodImplementation7
+End of request
+digraph X {
+  DeleteMethodImplementation7[label="DeleteMethodImplementation7"];
+}
+digraph X {
+  DeleteMethodImplementation7[label="DeleteMethodImplementation7"];
+}
+Propagated modules:
+module DeleteMethodImplementation7
+End of propagated
+Cleaning output files:
+out/production/DeleteMethodImplementation7/BaseImpl.class
+out/production/DeleteMethodImplementation7/BaseImplImpl.class
+End of files
+Compiling files:
+src/BaseImpl.java
+src/BaseImplImpl.java
+End of files
+Cleaning output files:
+out/production/DeleteMethodImplementation7/ConcreteBase.class
+End of files
+Compiling files:
+src/ConcreteBase.java
+End of files

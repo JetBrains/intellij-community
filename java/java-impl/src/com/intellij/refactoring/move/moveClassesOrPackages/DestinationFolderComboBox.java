@@ -111,6 +111,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     });
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
+    final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -125,7 +126,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             return;
           }
         }
-        setComboboxModel(getComboBox(), root, fileIndex, mySourceRoots, project, true, errorMessageUpdater);
+        setComboboxModel(getComboBox(), root, root, fileIndex, mySourceRoots, project, true, errorMessageUpdater);
       }
     });
 
@@ -134,14 +135,21 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       public void documentChanged(DocumentEvent e) {
         JComboBox comboBox = getComboBox();
         DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)comboBox.getSelectedItem();
-        setComboboxModel(comboBox, selectedItem != null ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
+        setComboboxModel(comboBox, selectedItem != null ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
       }
     });
-    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
+    setComboboxModel(getComboBox(), initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
     getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateErrorMessage(errorMessageUpdater, fileIndex, getComboBox().getSelectedItem());
+        Object selectedItem = getComboBox().getSelectedItem();
+        updateErrorMessage(errorMessageUpdater, fileIndex, selectedItem);
+        if (selectedItem instanceof DirectoryChooser.ItemWrapper) {
+          PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
+          if (directory != null) {
+            selection[0] = fileIndex.getSourceRootForFile(directory.getVirtualFile());
+          }
+        }
       }
     });
   }
@@ -189,6 +197,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
 
   private void setComboboxModel(final JComboBox comboBox,
                                 final VirtualFile initialTargetDirectorySourceRoot,
+                                final VirtualFile oldSelection,
                                 final ProjectFileIndex fileIndex,
                                 final VirtualFile[] sourceRoots,
                                 final Project project,
@@ -203,17 +212,22 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     }
     final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
     DirectoryChooser.ItemWrapper initial = null;
+    DirectoryChooser.ItemWrapper oldOne = null;
     for (PsiDirectory targetDirectory : targetDirectories) {
       DirectoryChooser.ItemWrapper itemWrapper = new DirectoryChooser.ItemWrapper(targetDirectory, pathsToCreate.get(targetDirectory));
       items.add(itemWrapper);
-      if (fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile()) == initialTargetDirectorySourceRoot) {
+      final VirtualFile sourceRootForFile = fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile());
+      if (sourceRootForFile == initialTargetDirectorySourceRoot) {
         initial = itemWrapper;
+      } else if (sourceRootForFile == oldSelection) {
+        oldOne = itemWrapper;
       }
     }
     if (initialTargetDirectorySourceRoot == null) {
       items.add(null);
     }
-    final DirectoryChooser.ItemWrapper selection = initial != null || items.contains(null) || items.isEmpty() ? initial : items.get(0);
+    final DirectoryChooser.ItemWrapper selection = initial != null || items.contains(null) || items.isEmpty() ? initial 
+                                                                                                              : oldOne != null ? oldOne : items.get(0);
     final ComboBoxModel model = comboBox.getModel();
     if (model instanceof CollectionComboBoxModel) {
       boolean sameModel = model.getSize() == items.size();

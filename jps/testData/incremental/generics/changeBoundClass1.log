@@ -1,0 +1,23 @@
+Request to make modules:
+module ChangeBoundClass1
+End of request
+digraph X {
+  ChangeBoundClass1[label="ChangeBoundClass1"];
+}
+digraph X {
+  ChangeBoundClass1[label="ChangeBoundClass1"];
+}
+Propagated modules:
+module ChangeBoundClass1
+End of propagated
+Cleaning output files:
+out/production/ChangeBoundClass1/Value.class
+End of files
+Compiling files:
+End of files
+Cleaning output files:
+out/production/ChangeBoundClass1/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

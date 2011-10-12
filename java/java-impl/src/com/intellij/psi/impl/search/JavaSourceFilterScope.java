@@ -25,11 +25,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
-  public JavaSourceFilterScope(final GlobalSearchScope delegate) {
+  public JavaSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
     super(delegate);
     myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
   }

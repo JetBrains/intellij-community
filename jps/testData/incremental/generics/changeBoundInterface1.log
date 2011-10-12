@@ -1,0 +1,24 @@
+Request to make modules:
+module ChangeBoundInterface1
+End of request
+digraph X {
+  ChangeBoundInterface1[label="ChangeBoundInterface1"];
+}
+digraph X {
+  ChangeBoundInterface1[label="ChangeBoundInterface1"];
+}
+Propagated modules:
+module ChangeBoundInterface1
+End of propagated
+Cleaning output files:
+out/production/ChangeBoundInterface1/I.class
+End of files
+Compiling files:
+src/I.java
+End of files
+Cleaning output files:
+out/production/ChangeBoundInterface1/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

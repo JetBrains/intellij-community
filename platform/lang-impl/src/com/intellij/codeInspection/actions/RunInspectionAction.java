@@ -37,9 +37,12 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.SearchScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Arrays;
 
 /**
@@ -100,6 +103,10 @@ public class RunInspectionAction extends GotoActionBase {
         analysisScope = new AnalysisScope(project, Arrays.asList(virtualFile));
       }
     }
+
+    final FileFilterPanel fileFilterPanel = new FileFilterPanel();
+    fileFilterPanel.init();
+
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
@@ -108,7 +115,19 @@ public class RunInspectionAction extends GotoActionBase {
       module != null ? module.getName() : null,
       true,
       AnalysisUIOptions.getInstance(project),
-      psiElement);
+      psiElement) {
+
+      @Override
+      protected JComponent getAdditionalActionSettings(Project project) {
+        return fileFilterPanel.getPanel();
+      }
+
+      @Override
+      public SearchScope getCustomScope() {
+        return PsiSearchScopeUtil.union(fileFilterPanel.getSearchScope(), super.getCustomScope());
+      }
+    };
+
     AnalysisScope scope = analysisScope;
     dlg.show();
     if (!dlg.isOK()) return;

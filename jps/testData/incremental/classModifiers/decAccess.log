@@ -1,0 +1,24 @@
+Request to make modules:
+module DecAccess
+End of request
+digraph X {
+  DecAccess[label="DecAccess"];
+}
+digraph X {
+  DecAccess[label="DecAccess"];
+}
+Propagated modules:
+module DecAccess
+End of propagated
+Cleaning output files:
+out/production/DecAccess/impl/Service.class
+End of files
+Compiling files:
+src/impl/Service.java
+End of files
+Cleaning output files:
+out/production/DecAccess/Client.class
+End of files
+Compiling files:
+src/impl/Client.java
+End of files

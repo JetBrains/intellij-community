@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -42,7 +43,11 @@ public class PackageWrapper {
   public PsiManager getManager() { return myManager; }
 
   public PsiDirectory[] getDirectories() {
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(myQualifiedName);
+    String qName = myQualifiedName;
+    while (qName.endsWith(".")) {
+      qName = StringUtil.trimEnd(qName, ".");
+    }
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(qName);
     if (aPackage != null) {
       return aPackage.getDirectories();
     } else {

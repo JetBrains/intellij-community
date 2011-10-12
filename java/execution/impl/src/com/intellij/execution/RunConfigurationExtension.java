@@ -45,7 +45,7 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   protected void patchCommandLine(@NotNull RunConfigurationBase configuration,
                                   RunnerSettings runnerSettings,
                                   @NotNull GeneralCommandLine cmdLine,
-                                  @NotNull AbstractRunConfiguration.RunnerType type) {}
+                                  @NotNull AbstractRunConfiguration.RunnerType type)  throws ExecutionException {}
 
   @Override
   protected boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {

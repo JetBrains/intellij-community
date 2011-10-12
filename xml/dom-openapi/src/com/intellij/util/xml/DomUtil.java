@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -21,6 +22,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -444,5 +446,13 @@ public class DomUtil {
   public static boolean hasXml(@NotNull DomElement element) {
     return element.getXmlElement() != null;
   }
-  
+
+  public static Pair<TextRange, PsiElement> getProblemRange(final XmlTag tag) {
+    final PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
+    if (startToken == null) {
+      return Pair.create(tag.getTextRange(), (PsiElement)tag);
+    }
+
+    return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
+  }
 }

@@ -15,10 +15,7 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -33,6 +30,8 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,6 +107,17 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     vcs.showErrors(exceptions, actionName);
   }
 
+  protected boolean isRebasing(AnActionEvent e) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    for (VirtualFile file : files) {
+      if (GitRepositoryManager.getInstance(project).getRepositoryForFile(file).getState() == GitRepository.State.REBASING) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Get git roots for the project. The method shows dialogs in the case when roots cannot be retrieved, so it should be called
    * from the event dispatch thread.
@@ -170,22 +180,26 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    Presentation presentation = e.getPresentation();
-    DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    boolean enabled = isEnabled(e);
+    e.getPresentation().setEnabled(enabled);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(enabled);
+    }
+    else {
+      e.getPresentation().setVisible(true);
+    }
+  }
+
+  protected boolean isEnabled(AnActionEvent e) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
+      return false;
     }
     GitVcs vcs = GitVcs.getInstance(project);
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     if (roots == null || roots.length == 0) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
+      return false;
     }
-    presentation.setEnabled(true);
-    presentation.setVisible(true);
+    return true;
   }
 }

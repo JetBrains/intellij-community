@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DynamicElementsStorage">
+    <option name="containingClasses">
+      <map>
+        <entry key="org.codehaus.gant.GantBinding">
+          <value>
+            <DClassElement>
+              <option name="name" value="org.codehaus.gant.GantBinding" />
+              <option name="myName" value="org.codehaus.gant.GantBinding" />
+            </DClassElement>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
+

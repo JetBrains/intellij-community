@@ -708,6 +708,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
+    protected boolean isNeedToChangeCallContext() {
+      return false;
+    }
+
+    @Override
     protected void declareNecessaryVariablesAfterCall(final PsiVariable outputVariable) throws IncorrectOperationException {
       if (myMultipleExitPoints) {
         final String object = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(StringUtil.decapitalize(myInnerClassName), outputVariable, true);
@@ -718,11 +723,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         if (methodCallStatement instanceof PsiIfStatement) {
           methodCallStatement.getParent().addBefore(declarationStatement, methodCallStatement);
           final PsiExpression conditionExpression = ((PsiIfStatement)methodCallStatement).getCondition();
-          conditionExpression.replace(myElementFactory.createExpressionFromText(object + ".is()", myInnerMethod));
+          setMethodCall((PsiMethodCallExpression)conditionExpression.replace(myElementFactory.createExpressionFromText(object + ".is()", myInnerMethod)));
         } else if (myElements[0] instanceof PsiExpression){
           methodCallStatement.getParent().addBefore(declarationStatement, methodCallStatement);
         } else {
-          methodCallStatement.replace(declarationStatement);
+          final PsiDeclarationStatement replace = (PsiDeclarationStatement)methodCallStatement.replace(declarationStatement);
+          setMethodCall((PsiMethodCallExpression)((PsiLocalVariable)replace.getDeclaredElements()[0]).getInitializer());
         }
 
         final List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariables();

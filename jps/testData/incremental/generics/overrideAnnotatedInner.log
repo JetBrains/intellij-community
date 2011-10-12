@@ -1,0 +1,25 @@
+Request to make modules:
+module OverrideAnnotatedInner
+End of request
+digraph X {
+  OverrideAnnotatedInner[label="OverrideAnnotatedInner"];
+}
+digraph X {
+  OverrideAnnotatedInner[label="OverrideAnnotatedInner"];
+}
+Propagated modules:
+module OverrideAnnotatedInner
+End of propagated
+Cleaning output files:
+out/production/OverrideAnnotatedInner/packageA/Base.class
+End of files
+Compiling files:
+src/packageA/Base.java
+End of files
+Cleaning output files:
+out/production/OverrideAnnotatedInner/packageA/Derived$Inner.class
+out/production/OverrideAnnotatedInner/packageA/Derived.class
+End of files
+Compiling files:
+src/packageA/Derived.java
+End of files

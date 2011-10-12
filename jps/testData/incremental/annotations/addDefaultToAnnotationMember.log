@@ -1,0 +1,18 @@
+Request to make modules:
+module AddDefaultToAnnotationMember
+End of request
+digraph X {
+  AddDefaultToAnnotationMember[label="AddDefaultToAnnotationMember"];
+}
+digraph X {
+  AddDefaultToAnnotationMember[label="AddDefaultToAnnotationMember"];
+}
+Propagated modules:
+module AddDefaultToAnnotationMember
+End of propagated
+Cleaning output files:
+out/production/AddDefaultToAnnotationMember/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

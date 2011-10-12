@@ -1,0 +1,3 @@
+@A() 
+public class C {
+}
