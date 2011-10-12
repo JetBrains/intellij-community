@@ -34,6 +34,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,14 +79,26 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
             myRecordingMacro.appendAction(id);
           }
 
-          myLastActionInputEvent = event.getInputEvent();
+          if (id != null) {
+            myLastActionInputEvent = event.getInputEvent();
+          } else {
+            myLastActionInputEvent = null;
+          }
         }
       }
 
       public void beforeEditorTyping(char c, DataContext dataContext) {
       }
 
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext, final AnActionEvent event) {
+        IdeEventQueue.getInstance().doWhenReady(new Runnable() {
+          @Override
+          public void run() {
+            if (myLastActionInputEvent != null && myLastActionInputEvent.equals(event.getInputEvent())) {
+              myLastActionInputEvent = null;
+            }
+          }
+        });
       }
     });
 
@@ -359,7 +372,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     public void postProcessKeyEvent(KeyEvent e) {
       final boolean waiting = !IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
 
-      final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED;
+      final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && UIUtil.isReallyTypedEvent(e);
       boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
       boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
