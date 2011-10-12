@@ -523,4 +523,9 @@ public class PsiImplUtil {
 
     return null;
   }
+
+  public static GrMethod[] getMethodOrReflectedMethods(GrMethod method) {
+    final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+    return reflectedMethods.length > 0 ? reflectedMethods : new GrMethod[]{method};
+  }
 }
