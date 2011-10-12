@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class FoldingUtil {
+public class FoldingUtil {
   private FoldingUtil() {}
 
   @Nullable

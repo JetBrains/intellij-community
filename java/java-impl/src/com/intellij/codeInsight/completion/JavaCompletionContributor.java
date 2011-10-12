@@ -138,7 +138,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaCompletionData.START_FOR.accepts(position)) {
-      return ElementClassFilter.VARIABLE;
+      return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.VARIABLE);
     }
 
     if (IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position)) {

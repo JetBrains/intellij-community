@@ -100,12 +100,6 @@ public abstract class JavaStatisticsManager {
     return "member#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
   }
 
-  @NonNls @NotNull
-  public static String getNameUseKey1(PsiType qualifierType) {
-    qualifierType = TypeConversionUtil.erasure(qualifierType);
-    return "memberForName#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
-  }
-
   @NonNls
   public static String getMemberUseKey2(PsiMember member) {
     if (member instanceof PsiMethod){
@@ -113,8 +107,7 @@ public abstract class JavaStatisticsManager {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append("method#");
       buffer.append(method.getName());
-      PsiParameter[] parms = method.getParameterList().getParameters();
-      for (PsiParameter parm : parms) {
+      for (PsiParameter parm : method.getParameterList().getParameters()) {
         buffer.append("#");
         buffer.append(parm.getType().getPresentableText());
       }
@@ -128,7 +121,7 @@ public abstract class JavaStatisticsManager {
     return CLASS_PREFIX + ((PsiClass)member).getQualifiedName();
   }
 
-  public static StatisticsInfo createInfo(final PsiType qualifierType, final PsiMember member) {
+  public static StatisticsInfo createInfo(@Nullable final PsiType qualifierType, final PsiMember member) {
     return new StatisticsInfo(getMemberUseKey1(qualifierType), getMemberUseKey2(member));
   }
 

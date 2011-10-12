@@ -25,7 +25,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FoldingPolicy {
+public class FoldingPolicy {
   private FoldingPolicy() {}
 
   public static boolean isCollapseByDefault(PsiElement element) {

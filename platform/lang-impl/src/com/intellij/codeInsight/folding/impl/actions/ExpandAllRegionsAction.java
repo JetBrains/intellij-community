@@ -16,13 +16,56 @@
 
 package com.intellij.codeInsight.folding.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.folding.impl.ExpandAllRegionsHandler;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
+import com.intellij.codeInsight.folding.impl.FoldingPolicy;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 
-public class ExpandAllRegionsAction extends BaseCodeInsightAction implements DumbAware {
-  protected CodeInsightActionHandler getHandler(){
-    return new ExpandAllRegionsHandler();
+public class ExpandAllRegionsAction extends EditorAction {
+  public ExpandAllRegionsAction() {
+    super(new EditorActionHandler() {
+      @Override
+      public void execute(final Editor editor, DataContext dataContext) {
+        Project project = editor.getProject();
+        assert project != null;
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+        CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
+        editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+          public void run() {
+            boolean anythingDone = false;
+            FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
+            for (FoldRegion region : regions) {
+              // try to restore to default state at first
+              PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
+              if (!region.isExpanded() && (element == null || !FoldingPolicy.isCollapseByDefault(element))) {
+                region.setExpanded(true);
+                anythingDone = true;
+              }
+            }
+
+            if (!anythingDone){
+              for (FoldRegion region : regions) {
+                region.setExpanded(true);
+              }
+            }
+
+          }
+        });
+      }
+
+      @Override
+      public boolean isEnabled(Editor editor, DataContext dataContext) {
+        return super.isEnabled(editor, dataContext) && editor.getProject() != null;
+      }
+    });
   }
+
 }

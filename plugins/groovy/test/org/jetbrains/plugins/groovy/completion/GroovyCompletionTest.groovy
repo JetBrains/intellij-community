@@ -437,6 +437,24 @@ class A {
 """
   }
 
+  public void testCompletionNamedArgumentReplace() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg<caret>222: 'a')}
+}
+""")
+    myFixture.completeBasic()
+    myFixture.type("1\t")
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: 'a')}
+}
+"""
+  }
+
   public void testCompletionNamedArgumentWithSpace() {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {

@@ -75,6 +75,10 @@ public class VariablesCompletionTest extends CompletionTestCase {
     doTest("LocalReserved.java", "LocalReserved_after.java");
   }
 
+  public void testUniqueNameInFor() throws Exception {
+    doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
+  }
+
   private void doTest(String before, String after) throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + before);
     checkResultByFile(FILE_PREFIX + "locals/" + after);

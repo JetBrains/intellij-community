@@ -16,13 +16,39 @@
 
 package com.intellij.codeInsight.folding.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.folding.impl.CollapseAllRegionsHandler;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 
-public class CollapseAllRegionsAction extends BaseCodeInsightAction implements DumbAware {
-  protected CodeInsightActionHandler getHandler(){
-    return new CollapseAllRegionsHandler();
+public class CollapseAllRegionsAction extends EditorAction {
+  public CollapseAllRegionsAction() {
+    super(new EditorActionHandler() {
+      @Override
+      public void execute(final Editor editor, DataContext dataContext) {
+        Project project = editor.getProject();
+        assert project != null;
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+        CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
+        editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+          public void run() {
+            for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
+              region.setExpanded(false);
+            }
+          }
+        });
+      }
+
+      @Override
+      public boolean isEnabled(Editor editor, DataContext dataContext) {
+        return super.isEnabled(editor, dataContext) && editor.getProject() != null;
+      }
+    });
   }
+
 }

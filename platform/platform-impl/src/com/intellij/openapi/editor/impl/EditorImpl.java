@@ -29,7 +29,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -4246,6 +4245,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   int getVerticalScrollbarOrientation() {
     return myScrollBarOrientation;
+  }
+
+  public boolean isMirrored() {
+    return myScrollBarOrientation != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
   MyScrollBar getVerticalScrollBar() {

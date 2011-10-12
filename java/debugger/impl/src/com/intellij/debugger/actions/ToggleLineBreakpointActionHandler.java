@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.codeInsight.folding.impl.ExpandRegionHandler;
+import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -64,7 +64,7 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       return;
     }
 
-    ExpandRegionHandler.expandRegionAtCaret(project, event.getData(PlatformDataKeys.EDITOR));
+    ExpandRegionAction.expandRegionAtCaret(project, event.getData(PlatformDataKeys.EDITOR));
 
     Document document = place.getDocument();
     int line = document.getLineNumber(place.getOffset());

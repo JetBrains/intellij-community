@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import java.io.File;
 
 public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
+
   private final MavenProject myMavenProject;
   private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
@@ -221,7 +222,7 @@ public class MavenRootModelAdapter {
   }
 
   @Nullable
-  private Module findModuleByName(String moduleName) {
+  public Module findModuleByName(String moduleName) {
     return myModuleModel.findModuleByName(moduleName);
   }
 
