@@ -36,12 +36,12 @@ public class FontEditorPreview implements PreviewPanel{
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public FontEditorPreview(final ColorAndFontOptions options) {
+  public FontEditorPreview(final ColorAndFontOptions options, boolean editable) {
     myOptions = options;
 
     @Nls String text = getIDEDemoText();
 
-    myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, myOptions);
+    myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, myOptions, editable);
 
     installTrafficLights(myEditor);
   }
@@ -70,10 +70,10 @@ public class FontEditorPreview implements PreviewPanel{
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
   }
 
-  static Editor createPreviewEditor(String text, int column, int line, int selectedLine, ColorAndFontOptions options) {
+  static Editor createPreviewEditor(String text, int column, int line, int selectedLine, ColorAndFontOptions options, boolean editable) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
-    EditorEx editor = (EditorEx)editorFactory.createViewer(editorDocument);
+    EditorEx editor = (EditorEx) (editable ? editorFactory.createEditor(editorDocument) : editorFactory.createViewer(editorDocument));
     editor.setColorsScheme(options.getSelectedScheme());
     EditorSettings settings = editor.getSettings();
     settings.setLineNumbersShown(true);

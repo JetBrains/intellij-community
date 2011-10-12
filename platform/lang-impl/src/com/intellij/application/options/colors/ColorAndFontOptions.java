@@ -348,7 +348,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private static class FontConfigurableFactory implements ColorAndFontPanelFactory {
     public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
-      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), new FontEditorPreview(options), "Font", null, null){
+      FontEditorPreview previewPanel = new FontEditorPreview(options, true);
+      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, "Font", null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -363,7 +364,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
    private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactory {
     public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(options) {
+      FontEditorPreview previewPanel = new FontEditorPreview(options, false) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);

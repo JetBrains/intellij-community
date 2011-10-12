@@ -66,7 +66,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     myHighlightData = extractant2.extractHighlights(text);
 
     int selectedLine = -1;
-    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(extractant2.cutDefinedTags(text), 10, 3, selectedLine, myOptions);
+    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(extractant2.cutDefinedTags(text), 10, 3, selectedLine, myOptions, false);
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
