@@ -76,9 +76,6 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
       drawCurved(g, 0, r.y, 4, points, width + editorWidth, true,width);
       g.setColor(getColor().darker());
       drawCurved(g, 0, r.y, 3, points, width + editorWidth, true,width);
-      
-      g.setColor(Color.red);
-      UIUtil.drawLine(g,0,0,1,1);
     } else {
       List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
       drawCurved(g, 0, r.y, 4, points, 0, false,0);
