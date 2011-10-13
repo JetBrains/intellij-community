@@ -15,9 +15,7 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -50,10 +48,5 @@ public class SpellcheckingStrategy {
     if (element instanceof XmlText) return myXmlTextTokenizer;
     if (element instanceof PsiPlainText) return TEXT_TOKENIZER;
     return EMPTY_TOKENIZER;
-  }
-
-  @NotNull
-  public Language getLanguage() {
-    return PlainTextLanguage.INSTANCE;
   }
 }

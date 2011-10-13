@@ -35,6 +35,7 @@ import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
+import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -85,27 +86,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return SpellCheckerManager.getHighlightDisplayLevel();
   }
 
-  private static final Map<Language, SpellcheckingStrategy> factories = new HashMap<Language, SpellcheckingStrategy>();
-
-  public static void ensureFactoriesAreLoaded() {
-    synchronized (factories) {
-      // Spellchecker should not rely classpath in unit test mode given module dependent classpath !
-      if (!factories.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) return;
-      final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
-      if (spellcheckingStrategies != null) {
-        for (SpellcheckingStrategy spellcheckingStrategy : spellcheckingStrategies) {
-          final Language language = spellcheckingStrategy.getLanguage();
-          if (language != Language.ANY) {
-            factories.put(language, spellcheckingStrategy);
-          }
-        }
-      }
-    }
-  }
-
-
   private static SpellcheckingStrategy getFactoryByLanguage(@NotNull Language lang) {
-    return factories.containsKey(lang) ? factories.get(lang) : factories.get(PlainTextLanguage.INSTANCE);
+    return LanguageSpellchecking.INSTANCE.forLanguage(lang);
   }
 
   @NotNull
@@ -113,9 +95,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
 
     return new PsiElementVisitor() {
-      {
-        ensureFactoriesAreLoaded();
-      }
       @Override
       public void visitElement(final PsiElement element) {
 

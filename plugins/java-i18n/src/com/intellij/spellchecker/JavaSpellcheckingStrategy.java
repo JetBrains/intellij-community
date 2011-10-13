@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
@@ -32,20 +30,18 @@ import org.jetbrains.annotations.NotNull;
  * @author shkate@jetbrains.com
  */
 public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
+  private final MethodNameTokenizerJava myMethodNameTokenizer = new MethodNameTokenizerJava();
+  private final DocCommentTokenizer myDocCommentTokenizer = new DocCommentTokenizer();
+  private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();
+  private final NamedElementTokenizer myNamedElementTokenizer = new NamedElementTokenizer();
 
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PsiMethod) return new MethodNameTokenizerJava();
-    if (element instanceof PsiDocComment) return new DocCommentTokenizer();
-    if (element instanceof PsiLiteralExpression) return new LiteralExpressionTokenizer();
-    if (element instanceof PsiNamedElement) return new NamedElementTokenizer();
+    if (element instanceof PsiMethod) return myMethodNameTokenizer;
+    if (element instanceof PsiDocComment) return myDocCommentTokenizer;
+    if (element instanceof PsiLiteralExpression) return myLiteralExpressionTokenizer;
+    if (element instanceof PsiNamedElement) return myNamedElementTokenizer;
     return super.getTokenizer(element);
-  }
-
-  @NotNull
-  @Override
-  public Language getLanguage() {
-    return StdLanguages.JAVA;
   }
 }

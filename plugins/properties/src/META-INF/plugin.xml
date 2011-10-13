@@ -63,7 +63,7 @@
     <projectService serviceInterface="com.intellij.lang.properties.PropertiesReferenceManager" serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
 
     <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
-    <spellchecker.support implementation="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
+    <spellchecker.support language="Properties" implementationClass="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
 
     <fileBasedIndex implementation="com.intellij.lang.properties.xml.XmlPropertiesIndex"/>
     <standardResource url="http://java.sun.com/dtd/properties.dtd" path="schemas/properties.dtd"/>

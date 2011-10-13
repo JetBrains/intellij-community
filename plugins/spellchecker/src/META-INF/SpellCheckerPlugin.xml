@@ -9,7 +9,7 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="spellchecker.support" interface="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
     <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
   </extensionPoints>
 
@@ -31,8 +31,8 @@
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
     
-    <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
-    <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
+    <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>

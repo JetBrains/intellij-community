@@ -42,7 +42,6 @@ public abstract class SpellCheckerDictionaryGenerator {
     myDefaultDictName = defaultDictName;
     mySpellCheckerManager = SpellCheckerManager.getInstance(myProject);
     myDictOutputFolder = dictOutputFolder;
-    SpellCheckingInspection.ensureFactoriesAreLoaded();
   }
 
   public void addFolder(String dictName, VirtualFile path) {
