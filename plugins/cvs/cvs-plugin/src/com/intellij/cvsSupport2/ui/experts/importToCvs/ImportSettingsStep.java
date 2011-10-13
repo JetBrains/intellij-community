@@ -15,11 +15,10 @@
  */
 package com.intellij.cvsSupport2.ui.experts.importToCvs;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.ui.experts.CvsWizard;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -137,8 +136,9 @@ public class ImportSettingsStep extends WizardStep {
       myModuleName.requestFocus();
     }
 
-    if (!Comparing.equal(myDirectoryToImport, mySelectImportLocationStep.getSelectedFile())) {
-      myDirectoryToImport = mySelectImportLocationStep.getSelectedFile();
+    final File selectedFile = mySelectImportLocationStep.getSelectedFile();
+    if (selectedFile != null && !selectedFile.equals(myDirectoryToImport)) {
+      myDirectoryToImport = selectedFile;
       myModuleName.setText(myDirectoryToImport.getName());
       myModuleName.selectAll();
     }
