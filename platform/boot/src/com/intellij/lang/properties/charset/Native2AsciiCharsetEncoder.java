@@ -49,10 +49,10 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
           if (out.remaining() < 6) throw new BufferOverflowException();
           out.put((byte)'\\');
           out.put((byte)'u');
-          out.put((byte)Character.toUpperCase(Character.forDigit(c >> 12, 16)));
-          out.put((byte)Character.toUpperCase(Character.forDigit((c >> 8) & 0xf, 16)));
-          out.put((byte)Character.toUpperCase(Character.forDigit((c >> 4) & 0xf, 16)));
-          out.put((byte)Character.toUpperCase(Character.forDigit(c & 0xf, 16)));
+          out.put(toHexChar(c >> 12));
+          out.put(toHexChar((c >> 8) & 0xf));
+          out.put(toHexChar((c >> 4) & 0xf));
+          out.put(toHexChar(c & 0xf));
         }
       }
       catch (BufferUnderflowException e) {
@@ -64,5 +64,12 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
       }
     }
     return CoderResult.UNDERFLOW;
+  }
+
+  private static byte toHexChar(int digit) {
+    if (digit < 10) {
+      return (byte)('0' + digit);
+    }
+    return (byte)('A' - 10 + digit);
   }
 }
