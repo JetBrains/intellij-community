@@ -87,6 +87,7 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
     return "Dynamic Property: " + getName();
   }
 
+  @NotNull
   public String getName() {
     return myField.getName();
   }

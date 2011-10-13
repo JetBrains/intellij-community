@@ -36,7 +36,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   private volatile GrModifierList myModifierList;
   private PsiElement myScope;
 
-  public GrLightParameter(@Nullable String name, @NotNull PsiType type, @NotNull PsiElement scope) {
+  public GrLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement scope) {
     super(scope.getManager(), name, type, GroovyFileType.GROOVY_LANGUAGE);
     myScope = scope;
     myModifierList = new GrLightModifierList(this);
