@@ -297,7 +297,7 @@ public class UIUtil {
       case SMALL:
         return Math.max(defSize - 2f, 11f);
       case MINI:
-        return Math.max(defSize - 4f, 9f;
+        return Math.max(defSize - 4f, 9f);
       default:
         return defSize;
     }
