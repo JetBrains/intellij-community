@@ -185,7 +185,7 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
   }
 
   public boolean isUnfair() {
-    return getTool() instanceof UnfairLocalInspectionTool;
+    return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
 
   public String getID() {

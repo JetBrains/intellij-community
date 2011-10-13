@@ -105,7 +105,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     mySource = inspectionProfile;
     setProfileManager(inspectionProfile.getProfileManager());
     copyFrom(inspectionProfile);
-    initInspectionTools();
   }
 
   public InspectionProfileImpl(final String inspectionProfile,

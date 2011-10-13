@@ -191,11 +191,8 @@ public class InspectionToolRegistrar {
       if (inspectionTool != null) return inspectionTool;
     }
     final Class<? extends InspectionProfileEntry> inspectionToolClass;
-    if (profileEntry instanceof LocalInspectionToolWrapper) {
-      inspectionToolClass = ((LocalInspectionToolWrapper)profileEntry).getTool().getClass();
-    }
-    else if (profileEntry instanceof GlobalInspectionToolWrapper) {
-      inspectionToolClass = ((GlobalInspectionToolWrapper)profileEntry).getTool().getClass();
+    if (profileEntry instanceof InspectionToolWrapper) {
+      inspectionToolClass = ((InspectionToolWrapper)profileEntry).getTool().getClass();
     }
     else {
       inspectionToolClass = profileEntry.getClass();

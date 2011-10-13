@@ -464,13 +464,15 @@
     <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
+
     <localInspection language="JAVA" suppressId="UnusedDeclaration" alternativeId="unused" shortName="UNUSED_SYMBOL" displayName="Unused symbol"
                      groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection" />
+                     implementationClass="com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection" unfair="true"/>
     <localInspection language="JAVA" shortName="UNUSED_IMPORT" displayName="Unused import (editor light)" groupName="Imports" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" />
+
     <localInspection language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" displayName="Unchecked warning" groupName=""
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="WARNING" unfair="true"
                      implementationClass="com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection" />
     <localInspection language="JAVA" shortName="SuspiciousNameCombination" bundle="messages.InspectionsBundle"
                      key="suspicious.name.combination.display.name" groupName="Probable bugs" enabledByDefault="true" level="WARNING"

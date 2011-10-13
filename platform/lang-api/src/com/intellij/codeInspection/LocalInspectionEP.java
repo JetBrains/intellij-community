@@ -34,4 +34,7 @@ public class LocalInspectionEP extends InspectionEP {
 
   @Attribute("runForWholeFile")
   public boolean runForWholeFile;
+
+  @Attribute("unfair")
+  public boolean unfair;
 }

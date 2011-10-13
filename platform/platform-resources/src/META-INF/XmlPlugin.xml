@@ -313,11 +313,11 @@
                      groupName="XML" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection"/>
     <localInspection language="XML" shortName="XmlDuplicatedId" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true"
+                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlDuplicatedIdInspection"/>
     <localInspection language="XML" shortName="RequiredAttributes" bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupName="HTML" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
+                     implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection" unfair="true"/>
     <localInspection language="XML" shortName="HtmlExtraClosingTag" bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag" groupName="HTML"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
