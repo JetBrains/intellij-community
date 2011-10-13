@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -353,20 +354,20 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private void drawPressAddButtonMessage(final ConfigurationType configurationType) {
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    panel.setBorder(new EmptyBorder(30, 0, 0, 0));
+    panel.add(new JLabel("Press the"));
+
     final JEditorPane browser = new JEditorPane();
     browser.setBorder(null);
     browser.setEditable(false);
     browser.setEditorKit(new HTMLEditorKit());
     browser.setBackground(myRightPanel.getBackground());
     final URL addUrl = getClass().getResource(GENERAL_ADD_ICON_PATH);
-    final URL defaultsURL = getClass().getResource(EDIT_DEFAULTS_ICON_PATH);
-    final Font font = UIUtil.getLabelFont();
     final String configurationTypeDescription = configurationType != null
                                                 ? configurationType.getConfigurationTypeDescription()
                                                 : ExecutionBundle.message("run.configuration.default.type.description");
-    browser.setText(ExecutionBundle.message("empty.run.configuration.panel.text.label", font.getFontName(), addUrl, defaultsURL,
-                                            configurationTypeDescription, configurationType != null ? configurationType.getId() : ""));
-    browser.setPreferredSize(new Dimension(200, 50));
+    browser.setText(ExecutionBundle.message("empty.run.configuration.panel.text.label2", addUrl, configurationType != null ? configurationType.getId() : ""));
     browser.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -390,8 +391,14 @@ class RunConfigurable extends BaseConfigurable {
         }
       }
     });
+    panel.add(browser);
+
+    panel.add(new JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
+    scrollPane.setBorder(null);
+
     myRightPanel.removeAll();
-    myRightPanel.add(browser, BorderLayout.CENTER);
+    myRightPanel.add(scrollPane, BorderLayout.CENTER);
     if (configurationType == null) {
       myRightPanel.add(createRecentLimitPanel(), BorderLayout.SOUTH);
     }
