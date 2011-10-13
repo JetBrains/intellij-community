@@ -109,7 +109,7 @@ public class Splitter extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     Dimension first = myFirstComponent.getPreferredSize();
-    Dimension second = myFirstComponent.getPreferredSize();
+    Dimension second = mySecondComponent.getPreferredSize();
     if (myVerticalSplit) {
       return new Dimension(Math.max(first.width, second.width), first.height + second.height + myDividerWidth);
     }

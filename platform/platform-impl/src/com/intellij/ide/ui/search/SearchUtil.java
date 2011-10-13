@@ -252,9 +252,11 @@ public class SearchUtil {
       final JTabbedPane tabbedPane = (JTabbedPane)rootComponent;
       final String path = SearchableOptionsRegistrarImpl.getInstance().getInnerPath(configurable, option);
       if (path != null) {
-        final int index = SearchUtil.getSelection(path, tabbedPane);
+        final int index = getSelection(path, tabbedPane);
         if (index > -1 && index < tabbedPane.getTabCount()) {
-          tabbedPane.setSelectedIndex(index);
+          if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
+            glassPanel.addSpotlight((JComponent)tabbedPane.getTabComponentAt(index));
+          }
         }
       }
     }

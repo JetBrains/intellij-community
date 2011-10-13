@@ -36,6 +36,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.ProgressBarUI;
@@ -295,7 +297,7 @@ public class UIUtil {
       case SMALL:
         return Math.max(defSize - 2f, 11f);
       case MINI:
-        return defSize - 4f;
+        return Math.max(defSize - 4f, 9f;
       default:
         return defSize;
     }
@@ -2480,5 +2482,13 @@ public class UIUtil {
     }
   }
 
+  public static void addInsets(JComponent component, Insets insets) {
+    if (component.getBorder() != null) {
+      component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
+    }
+    else {
+      component.setBorder(new EmptyBorder(insets));
+    }
+  }
 }
 

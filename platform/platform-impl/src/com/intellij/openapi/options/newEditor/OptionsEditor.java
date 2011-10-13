@@ -252,7 +252,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }, this);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
-    mySpotlightUpdate = new MergingUpdateQueue("OptionsSpotlight", 500, false, this, this, this);
+    mySpotlightUpdate = new MergingUpdateQueue("OptionsSpotlight", 200, false, this, this, this);
 
     IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
 
@@ -348,7 +348,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
           myLoadingDecorator.stopLoading();
 
-          updateSpotlight(true);
+          updateSpotlight(false);
 
           checkModified(oldConfigurable);
           checkModified(configurable);
@@ -1107,7 +1107,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     public boolean updateForCurrentConfigurable() {
       final Configurable current = getContext().getCurrentConfigurable();
 
-      if (current != null && !myConfigurable2Content.containsKey(current)) return false;
+      if (!isShowing(current)) return false;
 
       String text = getFilterText();
 
