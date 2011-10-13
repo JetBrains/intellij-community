@@ -2,7 +2,10 @@ package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
-import com.android.ide.common.resources.*;
+import com.android.ide.common.resources.ResourceDeltaKind;
+import com.android.ide.common.resources.ResourceFolder;
+import com.android.ide.common.resources.ResourceRepository;
+import com.android.ide.common.resources.ResourceResolver;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.resources.configuration.VersionQualifier;
 import com.android.io.FolderWrapper;
@@ -87,6 +90,8 @@ class RenderUtil {
 
     loadResources(projectResources, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
+    String missingRClassMessage = null;
+    boolean missingRClass = false;
     
     final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
     try {
@@ -94,11 +99,8 @@ class RenderUtil {
     }
     catch (ClassNotFoundException e) {
       LOG.debug(e);
-      final String message = e.getMessage();
-      warningBuilder.append(message != null && message.length() > 0
-                            ? ("Class not found error: " + message + ".")
-                            : "R class not found.")
-        .append(" Try to build project\n");
+      missingRClassMessage = e.getMessage();
+      missingRClass = true;
     }
 
     final ResourceResolver resolver =
@@ -132,6 +134,13 @@ class RenderUtil {
 
     final String format = FileUtil.getExtension(imgPath);
     ImageIO.write(session.getImage(), format, new File(imgPath));
+
+    if (missingRClass && callback.hasLoadedClasses()) {
+      warningBuilder.append(missingRClassMessage != null && missingRClassMessage.length() > 0
+                            ? ("Class not found error: " + missingRClassMessage + ".")
+                            : "R class not found.")
+        .append(" Try to build project\n");
+    }
 
     final Set<String> missingClasses = callback.getMissingClasses();
     if (missingClasses.size() > 0) {

@@ -31,6 +31,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   private BufferedImage myImage;
 
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
+  private final JBLabel myWarningLabel = new JBLabel();
 
   private double myZoomFactor = 1.0;
   private boolean myZoomToFit = true;
@@ -98,6 +99,8 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
     add(titlePanel);
     add(myErrorLabel);
+    add(myWarningLabel);
+
     add(new MyImagePanelWrapper());
   }
 
@@ -135,6 +138,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
   public void update() {
     myImagePanel.setVisible(true);
+
     if (myErrorMessage != null) {
       myErrorLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
                                     myErrorMessage.myLinkText,
@@ -142,13 +146,17 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
       myErrorLabel.setIcon(Messages.getErrorIcon());
       myErrorLabel.setVisible(true);
     }
-    else if (myWarnMessage != null && myWarnMessage.length() > 0) {
-      myErrorLabel.setHyperlinkText(myWarnMessage, "", "");
-      myErrorLabel.setIcon(Messages.getWarningIcon());
-      myErrorLabel.setVisible(true);
-    }
     else {
       myErrorLabel.setVisible(false);
+    }
+
+    if (myErrorMessage == null && myWarnMessage != null && myWarnMessage.length() > 0) {
+      myWarningLabel.setText("<html><body>" + myWarnMessage.replace("\n", "<br>") + "</body></html>");
+      myWarningLabel.setIcon(Messages.getWarningIcon());
+      myWarningLabel.setVisible(true);
+    }
+    else {
+      myWarningLabel.setVisible(false);
     }
 
     repaint();

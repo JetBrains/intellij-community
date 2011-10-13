@@ -321,6 +321,10 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     return myMissingClasses;
   }
 
+  public boolean hasLoadedClasses() {
+    return myLoadedClasses.size() > 0;
+  }
+
   @NotNull
   public Set<String> getBrokenClasses() {
     return myBrokenClasses;
