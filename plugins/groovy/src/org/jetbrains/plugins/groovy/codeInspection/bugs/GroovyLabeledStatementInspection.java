@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -23,7 +24,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.spock.SpockUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -64,10 +64,8 @@ public class GroovyLabeledStatementInspection extends BaseInspection {
       super.visitLabeledStatement(labeledStatement);
 
       final String name = labeledStatement.getLabelName();
-      if (ResolveUtil.resolveLabeledStatement(name, labeledStatement, true) != null) {
-
-        if (SpockUtils.isInSpockTest(labeledStatement)) return;
-
+      GrLabeledStatement existing = ResolveUtil.resolveLabeledStatement(name, labeledStatement, true);
+      if (existing != null && PsiTreeUtil.isAncestor(existing, labeledStatement, true)) {
         registerError(labeledStatement.getLabel(), name);
       }
     }

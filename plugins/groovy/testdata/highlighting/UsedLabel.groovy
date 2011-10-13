@@ -7,3 +7,20 @@ for (s in ['a', 'b']) {
     }
   }
 }
+
+def good() {
+  bar:
+  println "hi"
+
+  bar:
+  println "hi"
+}
+
+def bad() {
+  bar:
+  for (i in 1.100) {
+    <warning descr="Label 'bar' is already in use">bar</warning>:
+    println "hi"
+    oo: println "hi"
+  }
+}
