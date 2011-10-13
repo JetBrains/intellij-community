@@ -20,4 +20,9 @@ public class ProjectBuildException extends Exception{
   public ProjectBuildException(Throwable cause) {
     super(cause);
   }
+
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
+  }
 }
