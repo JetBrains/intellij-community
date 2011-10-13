@@ -30,6 +30,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -77,6 +78,10 @@ public class RunAndroidSdkManagerAction extends AnAction {
       }
       sdkPath = sdks[index];
     }
+    runTool(project, sdkPath);
+  }
+
+  public static void runTool(@NotNull Project project, @NotNull String sdkPath) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(sdkPath + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName()));
     AndroidUtils.runExternalToolInSeparateThread(project, commandLine);

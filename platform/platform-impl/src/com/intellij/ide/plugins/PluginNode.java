@@ -313,4 +313,18 @@ public class PluginNode implements IdeaPluginDescriptor {
   public boolean isBundled() {
     return false;
   }
+
+  @Nullable
+  public String getStatusText() {
+    switch (status) {
+      case STATUS_UNKNOWN:
+        return "Available";
+      case STATUS_INSTALLED:
+        return "Installed";
+      case STATUS_NEWEST:
+        return "Ready to update";
+      default:
+        return null;
+    }
+  }
 }

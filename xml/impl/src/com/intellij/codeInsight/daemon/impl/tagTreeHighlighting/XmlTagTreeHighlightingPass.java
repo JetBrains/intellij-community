@@ -191,8 +191,11 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       final int start = pair.first != null ? pair.first.getStartOffset() : pair.second.getStartOffset();
       final int end = pair.second != null ? pair.second.getEndOffset() : pair.first.getEndOffset();
 
-      final RangeHighlighter highlighter = createHighlighter(markupModel, new TextRange(start, end), colorsForLineMarkers[i]);
-      newHighlighters.add(highlighter);
+      final Color lineMarkerColor = colorsForLineMarkers[i];
+      if (lineMarkerColor != null) {
+        final RangeHighlighter highlighter = createHighlighter(markupModel, new TextRange(start, end), lineMarkerColor);
+        newHighlighters.add(highlighter);
+      }
     }
 
     myEditor.putUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
@@ -245,6 +248,11 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     for (int i = 0; i < colors.length; i++) {
       final Color color = baseColors[i];
+
+      if (color == null) {
+        colors[i] = null;
+        continue;
+      }
 
       int r = (int)(color.getRed() * factor);
       int g = (int)(color.getGreen() * factor);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,18 @@ import org.jdom.Element;
 /**
  * author: lesya
  */
-public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevision, Cloneable{
+public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevision, Cloneable, Comparable<DateOrRevisionSettings> {
   public String BRANCH = "";
   public String DATE = "";
   public boolean USE_BRANCH = false;
   public boolean USE_DATE = false;
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -45,35 +47,54 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
 
     final DateOrRevisionSettings dateOrRevisionSettings = (DateOrRevisionSettings)o;
 
-    if (USE_BRANCH != dateOrRevisionSettings.USE_BRANCH) return false;
-    if (USE_DATE != dateOrRevisionSettings.USE_DATE) return false;
-    if (BRANCH != null ? !BRANCH.equals(dateOrRevisionSettings.BRANCH) : dateOrRevisionSettings.BRANCH != null) return false;
-    if (DATE != null ? !DATE.equals(dateOrRevisionSettings.DATE) : dateOrRevisionSettings.DATE != null) return false;
-
+    if (USE_BRANCH != dateOrRevisionSettings.USE_BRANCH) {
+      return false;
+    }
+    if (USE_BRANCH) {
+      if (!BRANCH.equals(dateOrRevisionSettings.BRANCH)) {
+        return false;
+      }
+    }
+    if (USE_DATE != dateOrRevisionSettings.USE_DATE) {
+      return false;
+    }
+    if (USE_DATE) {
+      if (!DATE.equals(dateOrRevisionSettings.DATE)) {
+        return false;
+      }
+    }
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = (BRANCH != null ? BRANCH.hashCode() : 0);
-    result = 29 * result + (DATE != null ? DATE.hashCode() : 0);
-    result = 29 * result + (USE_BRANCH ? 1 : 0);
+    result = USE_BRANCH ? 1 : 0;
+    if (USE_BRANCH) {
+      result = BRANCH.hashCode();
+    }
     result = 29 * result + (USE_DATE ? 1 : 0);
+    if (USE_DATE) {
+      result = 29 * result + DATE.hashCode();
+    }
     return result;
   }
 
+  @Override
   public boolean shouldUseDate() {
     return USE_DATE;
   }
 
+  @Override
   public boolean shouldUseBranch() {
     return USE_BRANCH;
   }
 
+  @Override
   public String getBranch() {
     return BRANCH;
   }
 
+  @Override
   public String getDate() {
     if (DATE == null) return "";
     return DATE;
@@ -98,10 +119,12 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
     return this;
   }
 
-  public Object clone() throws CloneNotSupportedException {
-    return super.clone();
+  @Override
+  public DateOrRevisionSettings clone() throws CloneNotSupportedException {
+    return (DateOrRevisionSettings)super.clone();
   }
 
+  @Override
   public int compareTo(final DateOrRevisionSettings dateOrRevision) {
     if (USE_DATE && dateOrRevision.USE_DATE && DATE != null && dateOrRevision.DATE != null) {
       return DATE.compareTo(dateOrRevision.DATE);

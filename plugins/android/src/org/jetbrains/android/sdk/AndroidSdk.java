@@ -31,8 +31,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
@@ -142,11 +140,6 @@ public abstract class AndroidSdk {
     return sdk;
   }
 
-  static boolean isAndroid15Sdk(@NotNull String location) {
-    VirtualFile sdkDir = LocalFileSystem.getInstance().findFileByPath(location);
-    return sdkDir != null && sdkDir.findChild(SdkConstants.FD_PLATFORMS) != null;
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (obj == null) return false;
@@ -238,12 +231,36 @@ public abstract class AndroidSdk {
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
         LOG.info("DDMLib initialized");
-        AndroidDebugBridge.createBridge(adbPath, true);
+        final AndroidDebugBridge bridge = AndroidDebugBridge.createBridge(adbPath, true);
+        waitUntilConnect(bridge);
+        if (!bridge.isConnected()) {
+          LOG.info("Failed to connect debug bridge");
+        }
       }
       else {
         final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
         final boolean forceRestart = myAdbCrashed || (bridge != null && !bridge.isConnected());
-        AndroidDebugBridge.createBridge(adbPath, forceRestart);
+        if (forceRestart) {
+          LOG.info("Restart debug bridge: " + (myAdbCrashed ? "crashed" : "disconnected"));
+        }
+        final AndroidDebugBridge newBridge = AndroidDebugBridge.createBridge(adbPath, forceRestart);
+        waitUntilConnect(newBridge);
+        if (!newBridge.isConnected()) {
+          LOG.info("Failed to connect debug bridge after restart");
+        }
+      }
+    }
+  }
+
+  private static void waitUntilConnect(@NotNull AndroidDebugBridge bridge) {
+    while (!bridge.isConnected() && !Thread.currentThread().isInterrupted()) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(1000);
+      }
+      catch (InterruptedException e) {
+        LOG.debug(e);
+        return;
       }
     }
   }
@@ -271,20 +288,6 @@ public abstract class AndroidSdk {
       return null;
     }
     return AndroidDebugBridge.getBridge();
-  }
-
-  @Nullable
-  public IAndroidTarget getNewerPlatformTarget() {
-    IAndroidTarget[] targets = getTargets();
-    IAndroidTarget result = null;
-    for (IAndroidTarget target : targets) {
-      if (target.isPlatform()) {
-        if (result == null || target.compareTo(result) > 0) {
-          result = target;
-        }
-      }
-    }
-    return result;
   }
 
   @Nullable
@@ -340,15 +343,15 @@ public abstract class AndroidSdk {
       synchronized (myLock) {
         final long startTime = System.currentTimeMillis();
 
-        final long timeout = 7000;
+        final long timeout = 10000;
 
-        while (!myFinished && !myCanceled) {
+        while (!myFinished && !myCanceled && !indicator.isCanceled()) {
           long wastedTime = System.currentTimeMillis() - startTime;
           if (wastedTime >= timeout) {
             break;
           }
           try {
-            myLock.wait(timeout - wastedTime);
+            myLock.wait(Math.min(timeout - wastedTime, 500));
           }
           catch (InterruptedException e) {
             break;

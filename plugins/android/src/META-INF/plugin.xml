@@ -19,6 +19,7 @@
     <component>
       <implementation-class>org.jetbrains.android.uipreview.AndroidLayoutPreviewToolWindowManager</implementation-class>
       <skipForDefaultProject/>
+      <headless-implementation-class></headless-implementation-class>
     </component>
   </project-components>
   <actions>

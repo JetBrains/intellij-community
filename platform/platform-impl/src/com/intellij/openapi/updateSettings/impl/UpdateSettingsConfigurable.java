@@ -23,26 +23,14 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author pti
@@ -76,8 +64,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     UpdateSettings settings = UpdateSettings.getInstance();
     settings.CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
 
-    settings.myPluginHosts.clear();
-    settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
     settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType().getCode();
   }
 
@@ -85,14 +71,12 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     UpdateSettings settings = UpdateSettings.getInstance();
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
     myUpdatesSettingsPanel.updateLastCheckedLabel();
-    myUpdatesSettingsPanel.setPluginHosts(settings.myPluginHosts);
     myUpdatesSettingsPanel.setSelectedChannelType(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE));
   }
 
   public boolean isModified() {
     if (myUpdatesSettingsPanel == null) return false;
     UpdateSettings settings = UpdateSettings.getInstance();
-    if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
     if (settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected()) return true;
     final JComboBox channelsBox = myUpdatesSettingsPanel.myUpdateChannelsBox;
     return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
@@ -100,10 +84,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
   public void disposeUIResources() {
     myUpdatesSettingsPanel = null;
-  }
-
-  public Collection<? extends String> getPluginsHosts() {
-    return myUpdatesSettingsPanel.getPluginsHosts();
   }
 
   private class UpdatesSettingsPanel {
@@ -115,10 +95,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
 
-    private JButton myAddButton;
-    private JButton myDeleteButton;
-    private JBList myUrlsList;
-    private JButton myEditButton;
     private JComboBox myUpdateChannelsBox;
 
     public UpdatesSettingsPanel() {
@@ -141,72 +117,13 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
-          CheckForUpdateAction.actionPerformed(project, false, UpdateSettingsConfigurable.this);
+          CheckForUpdateAction.actionPerformed(project, false, null);  //todo load configured hosts on the fly
           updateLastCheckedLabel();
         }
       });
       myBtnCheckNow.setEnabled(myCheckNowEnabled);
 
       LabelTextReplacingUtil.replaceText(myPanel);
-
-      myUrlsList.getEmptyText().setText(IdeBundle.message("update.no.update.hosts"));
-      myUrlsList.setModel(new DefaultListModel());
-      myUrlsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-      myUrlsList.addListSelectionListener(new ListSelectionListener() {
-        public void valueChanged(final ListSelectionEvent e) {
-          myDeleteButton.setEnabled(ListUtil.canRemoveSelectedItems(myUrlsList));
-          myEditButton.setEnabled(ListUtil.canRemoveSelectedItems(myUrlsList));
-        }
-      });
-
-      myAddButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
-                                                                                    IdeBundle.message("update.plugin.host.url.message"),
-                                                                                    IdeBundle.message("update.add.new.plugin.host.title"),
-                                                                                    Messages.getQuestionIcon(), "",
-                                                                                    new NonEmptyInputValidator());
-          dlg.show();
-          final String input = dlg.getInputString();
-          if (input != null) {
-            ((DefaultListModel)myUrlsList.getModel()).addElement(input);
-          }
-        }
-      });
-
-      myEditButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
-                                                                                    IdeBundle.message("update.plugin.host.url.message"),
-                                                                                    IdeBundle.message("update.edit.plugin.host.title"),
-                                                                                    Messages.getQuestionIcon(),
-                                                                                    (String)myUrlsList.getSelectedValue(),
-                                                                                    new InputValidator() {
-                                                                                      public boolean checkInput(final String inputString) {
-                                                                                        return inputString.length() > 0;
-                                                                                      }
-
-                                                                                      public boolean canClose(final String inputString) {
-                                                                                        return checkInput(inputString);
-                                                                                      }
-                                                                                    });
-          dlg.show();
-          final String input = dlg.getInputString();
-          if (input != null) {
-            ((DefaultListModel)myUrlsList.getModel()).set(myUrlsList.getSelectedIndex(), input);
-          }
-        }
-      });
-
-      myDeleteButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          ListUtil.removeSelectedItems(myUrlsList);
-        }
-      });
-      myEditButton.setEnabled(false);
-      myDeleteButton.setEnabled(false);
-
 
       final UpdateSettings settings = UpdateSettings.getInstance();
       myUpdateChannelsBox.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
@@ -216,22 +133,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       final long lastChecked = UpdateSettings.getInstance().LAST_TIME_CHECKED;
       myLastCheckedDate
         .setText(lastChecked == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(lastChecked));
-    }
-
-    public List<String> getPluginsHosts() {
-      final List<String> result = new ArrayList<String>();
-      for (int i = 0; i < myUrlsList.getModel().getSize(); i++) {
-        result.add((String)myUrlsList.getModel().getElementAt(i));
-      }
-      return result;
-    }
-
-    public void setPluginHosts(final List<String> pluginHosts) {
-      final DefaultListModel model = (DefaultListModel)myUrlsList.getModel();
-      model.clear();
-      for (String host : pluginHosts) {
-        model.addElement(host);
-      }
     }
 
     public ChannelStatus getSelectedChannelType() {
@@ -250,40 +151,5 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
-  }
-
-  public static class HostMessages extends Messages {
-    public static class InputHostDialog extends InputDialog {
-      private final Component myParentComponent;
-
-      public InputHostDialog(Component parentComponent,
-                             String message,
-                             String title,
-                             Icon icon,
-                             String initialValue,
-                             InputValidator validator) {
-        super(parentComponent, message, title, icon, initialValue, validator);
-        myParentComponent = parentComponent;
-      }
-
-      protected Action[] createActions() {
-        final Action[] actions = super.createActions();
-        return ArrayUtil.append(actions, new AbstractAction("Check Now") {
-          public void actionPerformed(final ActionEvent e) {
-            try {
-              if (UpdateChecker.checkPluginsHost(getTextField().getText(), new ArrayList<PluginDownloader>())) {
-                showInfoMessage(myParentComponent, "Plugins Host was successfully checked", "Check Plugins Host");
-              }
-              else {
-                showErrorDialog(myParentComponent, "Plugin descriptions contain some errors. Please, check idea.log for details.");
-              }
-            }
-            catch (Exception e1) {
-              showErrorDialog(myParentComponent, "Connection failed: " + e1.getMessage());
-            }
-          }
-        });
-      }
-    }
   }
 }

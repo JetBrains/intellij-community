@@ -22,6 +22,9 @@ import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class DiffPanelState extends SimpleDiffPanelState {
   public DiffPanelState(ContentChangeListener changeListener, Project project, @NotNull Disposable parentDisposable) {
     super(project,changeListener, parentDisposable);
@@ -43,6 +46,9 @@ public class DiffPanelState extends SimpleDiffPanelState {
   public void removeActions() {
     myAppender1.removeActions();
     myAppender2.removeActions();
+  }
+
+  public void drawOnDivider(final Graphics g, final JComponent component) {
   }
 }
 

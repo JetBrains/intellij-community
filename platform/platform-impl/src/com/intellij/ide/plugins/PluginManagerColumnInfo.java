@@ -16,15 +16,11 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Comparator;
 
@@ -90,59 +86,61 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     }
   }
 
+  protected boolean isSortByName() {
+    return COLUMN_NAME == columnIdx;
+  }
+  
+  protected boolean isSortByDownloads() {
+    return columnIdx == COLUMN_DOWNLOADS;
+  }
+
+  protected boolean isSortByDate() {
+    return columnIdx == COLUMN_DATE;
+  }
+
   public Comparator<IdeaPluginDescriptor> getComparator() {
-    switch (columnIdx) {
-      case COLUMN_NAME:
-        return new Comparator<IdeaPluginDescriptor>() {
-          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            return StringUtil.compare(o1.getName(), o2.getName(), true);
-          }
-        };
-
-      case COLUMN_DOWNLOADS:
-        return new Comparator<IdeaPluginDescriptor>() {
-          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            String count1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDownloads() : ((IdeaPluginDescriptorImpl)o1).getDownloads();
-            String count2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDownloads() : ((IdeaPluginDescriptorImpl)o2).getDownloads();
-            if (count1 != null && count2 != null) {
-              return new Long(count1).compareTo(new Long(count2));
-            }
-            else if (count1 != null) {
-              return 1;
-            }
-            else {
-              return -1;
-            }
-          }
-        };
-
-      case COLUMN_CATEGORY:
-        return new Comparator<IdeaPluginDescriptor>() {
-          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            return StringUtil.compare(o1.getCategory(), o2.getCategory(), true);
-          }
-        };
-
-      case COLUMN_DATE:
-        return new Comparator<IdeaPluginDescriptor>() {
-          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
-            long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
-            if (date1 > date2) {
-              return 1;
-            }
-            else if (date1 < date2) return -1;
-            return 0;
-          }
-        };
-
-      default:
-        return new Comparator<IdeaPluginDescriptor>() {
-          public int compare(IdeaPluginDescriptor o, IdeaPluginDescriptor o1) {
-            return 0;
-          }
-        };
+    if (isSortByName()) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          return StringUtil.compare(o1.getName(), o2.getName(), true);
+        }
+      };
     }
+    if (isSortByDownloads()) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          String count1 = o1.getDownloads();
+          String count2 = o2.getDownloads();
+          if (count1 != null && count2 != null) {
+            return -Long.valueOf(count1).compareTo(Long.valueOf(count2));
+          }
+          else if (count1 != null) {
+            return -1;
+          }
+          else {
+            return 1;
+          }
+        }
+      };
+    }
+    if (isSortByDate()) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
+          long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
+          if (date1 < date2) {
+            return 1;
+          }
+          else if (date1 > date2) return -1;
+          return 0;
+        }
+      };
+    }
+    return new Comparator<IdeaPluginDescriptor>() {
+      public int compare(IdeaPluginDescriptor o, IdeaPluginDescriptor o1) {
+        return 0;
+      }
+    };
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -166,68 +164,17 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return PluginNode.STATUS_MISSING;
   }
 
-  public TableCellRenderer getRenderer(IdeaPluginDescriptor o) {
-    return new PluginTableCellRenderer(this);
-  }
-
-  protected int getHorizontalAlignment() {
-    return SwingConstants.LEADING;
-  }
-
   public Class getColumnClass() {
-    if (columnIdx == COLUMN_SIZE || columnIdx == COLUMN_DOWNLOADS) {
-      return Integer.class;
-    }
-    else {
-      return String.class;
-    }
+    return String.class;
   }
 
-  private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
-    private final PluginManagerColumnInfo myColumnInfo;
-
-    private PluginTableCellRenderer(final PluginManagerColumnInfo columnInfo) {
-      myColumnInfo = columnInfo;
-    }
-
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Object descriptor = ((PluginTable)table).getObjectAt(row);
-      if (column == COLUMN_NAME) {
-        setIcon(IconLoader.getIcon("/nodes/pluginnotinstalled.png"));
-      }
-
-      setHorizontalAlignment(myColumnInfo.getHorizontalAlignment());
-      if (descriptor instanceof IdeaPluginDescriptorImpl) {
-        final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-        if (ideaPluginDescriptor.isDeleted()) {
-          if (!isSelected) setForeground(FileStatus.COLOR_MISSING);
-          setToolTipText(IdeBundle.message("plugin.deleted.status.tooltip"));
-        } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
-          if (!isSelected) setForeground(FileStatus.COLOR_MODIFIED);
-          setToolTipText(IdeBundle.message("plugin.outdated.version.status.tooltip"));
-        } else if (InstalledPluginsTableModel.wasUpdated(ideaPluginDescriptor.getPluginId())) {
-          if (!isSelected) setForeground(FileStatus.COLOR_MODIFIED);
-          setToolTipText(IdeBundle.message("plugin.updated.status.tooltip"));
-        }
-      } else if (descriptor instanceof PluginNode) {
-        final PluginNode pluginNode = (PluginNode)descriptor;
-        if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED){
-          if (!isSelected) setForeground(FileStatus.COLOR_ADDED);
-          if (column == COLUMN_NAME) setIcon(IconLoader.getIcon("/nodes/plugin.png"));
-          setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
-        } else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
-          if (!isSelected) setForeground(FileStatus.COLOR_MODIFIED);
-          setToolTipText(IdeBundle.message("plugin.is.already.installed.status.tooltip"));
-        }
-      }
-
-      return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-    }
+  protected static Font getNameFont() {
+    Font f = new JLabel().getFont();
+    return f.deriveFont(Math.min(14.f, f.getSize() * 1.1f));
   }
 
-
-  @Override
-  public int getWidth(JTable table) {
-    return (columnIdx == 0) ? 35 : -1;
+  protected static Font getSmallFont() {
+    Font f = new JLabel().getFont();
+    return f.deriveFont(Math.max(8.f, f.getSize() * 0.8f));
   }
 }

@@ -16,15 +16,13 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.Table;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,22 +31,16 @@ import java.awt.*;
  * Time: 4:19:20 PM
  * To change this template use Options | File Templates.
  */
-public class PluginTable extends Table {
+public class PluginTable extends JBTable {
   public PluginTable(final PluginTableModel model) {
     super(model);
-
-    initializeHeader();
-
+    setTableHeader(null);
     for (int i = 0; i < model.getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        String name = columnInfo.getName();
-        final int width;
-        final FontMetrics fontMetrics = getFontMetrics(getFont());
-        width = fontMetrics.stringWidth(" " + name + " ") + 10;
-
+        final int width = new JCheckBox().getPreferredSize().width;
         column.setWidth(width);
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
@@ -79,11 +71,6 @@ public class PluginTable extends Table {
   public TableCellRenderer getCellRenderer(final int row, final int column) {
     final ColumnInfo columnInfo = ((PluginTableModel)getModel()).getColumnInfos()[column];
     return columnInfo.getRenderer(getObjectAt(row));
-  }
-
-  private void initializeHeader() {
-    final JTableHeader header = getTableHeader();
-    header.setReorderingAllowed(false);
   }
 
   public Object[] getElements() {

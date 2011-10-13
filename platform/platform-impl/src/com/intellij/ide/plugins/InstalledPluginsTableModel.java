@@ -26,11 +26,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,8 +54,22 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private final Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<PluginId, Set<PluginId>>();
 
+  private static final String ENABLED_DISABLED = "All";
+  private static final String ENABLED = "Yes";
+  private static final String DISABLED = "No";
+  public static final String[] ENABLED_VALUES = new String[] {ENABLED_DISABLED, ENABLED, DISABLED};
+  private String myEnabledFilter = ENABLED_DISABLED;
+
+  private static final String BUNDLED_NONBUNDLED = "All";
+  private static final String BUNDLED = "Yes";
+  private static final String NON_BUNDLED = "No";
+  public static final String[] BUNDLED_VALUES = new String[] {BUNDLED_NONBUNDLED, BUNDLED, NON_BUNDLED};
+  private String myBundledFilter = BUNDLED_NONBUNDLED;
+  private boolean myBundledEnabled = false;
+
+
   public InstalledPluginsTableModel() {
-    super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo(), new BundledColumnInfo()};
+    super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new MyPluginManagerColumnInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
     reset(view);
 
@@ -85,6 +99,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl) {
         setEnabled(ideaPluginDescriptor);
       }
+      myBundledEnabled |= !ideaPluginDescriptor.isBundled();
     }
 
     updatePluginDependencies();
@@ -162,7 +177,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   @Override
-  public void filter(final ArrayList<IdeaPluginDescriptor> filtered) {
+  public void filter(final List<IdeaPluginDescriptor> filtered) {
     view.clear();
     for (IdeaPluginDescriptor descriptor : filtered) {
       if (PluginManager.getPlugin(descriptor.getPluginId()) != null) {
@@ -207,6 +222,43 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public Map<PluginId, Boolean> getEnabledMap() {
     return myEnabled;
+  }
+
+  public String getEnabledFilter() {
+    return myEnabledFilter;
+  }
+
+  public void setEnabledFilter(String enabledFilter, String filter) {
+    myEnabledFilter = enabledFilter;
+    filter(filter);
+  }
+
+  public String getBundledFilter() {
+    return myBundledFilter;
+  }
+
+  public void setBundledFilter(String bundledFilter, String filter) {
+    myBundledFilter = bundledFilter;
+    filter(filter);
+  }
+
+  public boolean isBundledEnabled() {
+    return myBundledEnabled;
+  }
+
+  @Override
+  public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
+    if (myEnabledFilter != ENABLED_DISABLED) {
+      final boolean enabled = isEnabled(descriptor.getPluginId());
+      if (enabled && myEnabledFilter == DISABLED) return false;
+      if (!enabled && myEnabledFilter == ENABLED) return false;
+    }
+    if (myBundledFilter != BUNDLED_NONBUNDLED) {
+      final boolean bundled = descriptor.isBundled();
+      if (bundled && myBundledFilter == NON_BUNDLED) return false;
+      if (!bundled && myBundledFilter == BUNDLED) return false;
+    }
+    return true;
   }
 
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptorImpl, Boolean> {
@@ -310,73 +362,66 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
-  private static class BundledColumnInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
-    public BundledColumnInfo() {
-      super("Bundled");
-    }
+  private class InstalledPluginsTableRenderer extends DefaultTableCellRenderer {
 
-    @NotNull
-    public Boolean valueOf(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      return ideaPluginDescriptor.isBundled();
+    private JLabel myNameLabel = new JLabel();
+    private JLabel myBundledLabel = new JLabel();
+    private JPanel myPanel = new JPanel(new GridBagLayout());
+
+    private final IdeaPluginDescriptor myPluginDescriptor;
+
+    public InstalledPluginsTableRenderer(IdeaPluginDescriptor pluginDescriptor) {
+      myPluginDescriptor = pluginDescriptor;
+
+      myNameLabel.setFont(PluginManagerColumnInfo.getNameFont());
+      myBundledLabel.setFont(PluginManagerColumnInfo.getSmallFont());
+      myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
+      
+      final GridBagConstraints gn =
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                               new Insets(0, 0, 0, 0), 0, 0);
+      myPanel.add(myNameLabel, gn);
+      gn.insets.left = 5;
+      gn.anchor = GridBagConstraints.NORTHWEST;
+      gn.weightx = 1;
+      gn.fill = GridBagConstraints.HORIZONTAL;
+      myPanel.add(Box.createHorizontalBox(), gn);
+      gn.gridy = 1;
+      myPanel.add(myBundledLabel, gn);
     }
 
     @Override
-    public Comparator<IdeaPluginDescriptor> getComparator() {
-      return new Comparator<IdeaPluginDescriptor>() {
-        public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
-          return valueOf(o1).compareTo(valueOf(o2));
-        }
-      };
-    }
-
-    @Override
-    public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      if (ideaPluginDescriptor.isBundled()) {
-        return new BooleanTableCellRenderer() {
-          @Override
-          public Component getTableCellRendererComponent(final JTable table,
-                                                         final Object value,
-                                                         final boolean isSelected,
-                                                         final boolean hasFocus,
-                                                         final int row,
-                                                         final int column) {
-            final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setEnabled(false);
-            return renderer;
-          }
-        };
-      }
-      return new DefaultTableCellRenderer() {
-        protected void setValue(final Object value) {
-          setText("");
-        }
-      };
-    }
-  }
-
-  private class NameColumnInfo extends PluginManagerColumnInfo {
-    public NameColumnInfo() {
-      super(COLUMN_NAME);
-    }
-
-    public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      final DefaultTableCellRenderer cellRenderer = (DefaultTableCellRenderer)super.getRenderer(ideaPluginDescriptor);
-      if (cellRenderer != null && ideaPluginDescriptor != null) {
-        final IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)ideaPluginDescriptor;
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      final Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      if (myPluginDescriptor != null) {
+        myNameLabel.setText(myPluginDescriptor.getName());
+        myBundledLabel.setText("Bundled: " + (myPluginDescriptor.isBundled() ? "Yes" : "No"));
+        final IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)myPluginDescriptor;
         if (descriptor.isDeleted()) {
-          cellRenderer.setIcon(IconLoader.getIcon("/actions/clean.png"));
+          myNameLabel.setIcon(IconLoader.getIcon("/actions/clean.png"));
         }
-        else if (hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
-          cellRenderer.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
+        else if (hasNewerVersion(myPluginDescriptor.getPluginId())) {
+          myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
         }
         else {
-          cellRenderer.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+          myNameLabel.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
         }
 
-        final PluginId pluginId = ideaPluginDescriptor.getPluginId();
+        final Color fg = orig.getForeground();
+        final Color bg = orig.getBackground();
+        final Color grayedFg = isSelected ? fg : Color.GRAY;
+
+        myPanel.setBackground(bg);
+        myNameLabel.setBackground(bg);
+        myBundledLabel.setBackground(bg);
+
+        myNameLabel.setForeground(fg);
+        myBundledLabel.setForeground(grayedFg);
+
+        final PluginId pluginId = myPluginDescriptor.getPluginId();
         final Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
         if (required != null && required.size() > 0) {
-          cellRenderer.setForeground(Color.RED);
+          myNameLabel.setForeground(Color.RED);
 
           final StringBuilder s = new StringBuilder();
           if (myEnabled.get(pluginId) == null) {
@@ -392,15 +437,43 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }, ","));
 
           s.append(required.size() == 1 ? "\" is not enabled!" : "\" are not enabled!");
-          cellRenderer.setToolTipText(s.toString());
+          myPanel.setToolTipText(s.toString());
         }
 
-        if (PluginManager.isIncompatible(ideaPluginDescriptor)) {
-          cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
-          cellRenderer.setForeground(Color.red);
+        if (PluginManager.isIncompatible(myPluginDescriptor)) {
+          myPanel.setToolTipText(
+            IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
+          myNameLabel.setForeground(Color.red);
         }
       }
-      return cellRenderer;
+
+      return myPanel;
+    }
+  }
+
+  private class MyPluginManagerColumnInfo extends PluginManagerColumnInfo {
+    public MyPluginManagerColumnInfo() {
+      super(PluginManagerColumnInfo.COLUMN_NAME);
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
+      return new InstalledPluginsTableRenderer(pluginDescriptor);
+    }
+
+    @Override
+    protected boolean isSortByName() {
+      return true;
+    }
+
+    @Override
+    protected boolean isSortByDownloads() {
+      return false;
+    }
+
+    @Override
+    protected boolean isSortByDate() {
+      return false;
     }
   }
 }

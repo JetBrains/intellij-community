@@ -18,11 +18,15 @@ package org.jetbrains.plugins.groovy.formatter;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import javax.swing.*;
 
 /**
  * @author Rustam Vishnyakov
@@ -66,11 +70,63 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    return new SmartIndentOptionsEditor();
+    return new SmartIndentOptionsEditor() {
+      private JTextField myLabelIndent;
+      private JLabel myLabelIndentLabel;
+
+      private JCheckBox myLabelIndentAbsolute;
+
+      protected void addComponents() {
+        super.addComponents();
+
+        myLabelIndent = new JTextField(4);
+        add(myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent")), myLabelIndent);
+
+        myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
+        add(myLabelIndentAbsolute, true);
+      }
+
+      public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
+        boolean isModified = super.isModified(settings, options);
+
+        isModified |= isFieldModified(myLabelIndent, options.LABEL_INDENT_SIZE);
+        isModified |= isFieldModified(myLabelIndentAbsolute, options.LABEL_INDENT_ABSOLUTE);
+
+        return isModified;
+      }
+
+      public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
+        super.apply(settings, options);
+        options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, Integer.MIN_VALUE, options.LABEL_INDENT_SIZE);
+        options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
+      }
+
+      public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
+        super.reset(settings, options);
+        myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
+        myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
+      }
+
+      public void setEnabled(final boolean enabled) {
+        super.setEnabled(enabled);
+        myLabelIndent.setEnabled(enabled);
+        myLabelIndentLabel.setEnabled(enabled);
+        myLabelIndentAbsolute.setEnabled(enabled);
+      }
+    };
   }
 
   private final static String INDENT_OPTIONS_SAMPLE =
+    /*
+    "topLevelLabel:\n" +
+    "foo(42)\n" +
+    */
     "def foo(int arg) {\n" +
+    "  label1:\n" +
+    "  for (i in 1..10) {\n" +
+    "    label2:\n" +
+    "    foo(i)\n" +
+    "  }\n" +
     "  return Math.max(arg,\n" +
     "      0)\n" +
     "}";

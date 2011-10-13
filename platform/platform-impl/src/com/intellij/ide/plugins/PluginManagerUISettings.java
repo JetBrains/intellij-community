@@ -28,8 +28,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-
 /**
  * @author yole
  */
@@ -43,19 +41,12 @@ import javax.swing.*;
 public class PluginManagerUISettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
   
-  public int AVAILABLE_SORT_COLUMN = 0;
-  public int INSTALLED_SORT_COLUMN = 1;
-  public int CART_SORT_COLUMN = 0;
-  public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
-  public int INSTALLED_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
-  public int CART_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
+  public String AVAILABLE_SORT_MODE = PluginTableModel.NAME;
 
-  @NonNls private static final String INSTALLED = "installed";
-  @NonNls private static final String AVAILABLE = "available";
+  @NonNls private static final String AVAILABLE_PROPORTIONS = "available-proportions";
 
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
-  private final TableColumnsProportionData myAvailableTableProportions = new TableColumnsProportionData();
-  private final TableColumnsProportionData myInstalledTableProportions = new TableColumnsProportionData();
+  private final SplitterProportionsData myAvailableSplitterProportionsData = new SplitterProportionsDataImpl();
 
   public static PluginManagerUISettings getInstance() {
     return ServiceManager.getService(PluginManagerUISettings.class);
@@ -66,12 +57,10 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
     try {
       DefaultJDOMExternalizer.writeExternal(this, element);
       mySplitterProportionsData.writeExternal(element);
-      final Element availableTable = new Element(AVAILABLE);
-      myAvailableTableProportions.writeExternal(availableTable);
-      element.addContent(availableTable);
-      final Element installedTable = new Element(INSTALLED);
-      myInstalledTableProportions.writeExternal(installedTable);
-      element.addContent(installedTable);
+
+      final Element availableProportions = new Element(AVAILABLE_PROPORTIONS);
+      myAvailableSplitterProportionsData.writeExternal(availableProportions);
+      element.addContent(availableProportions);
     }
     catch (WriteExternalException e) {
       LOG.info(e);
@@ -83,13 +72,9 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
     try {
       DefaultJDOMExternalizer.readExternal(this, element);
       mySplitterProportionsData.readExternal(element);
-      final Element availableTable = element.getChild(AVAILABLE);
-      if (availableTable != null) {
-        myAvailableTableProportions.readExternal(availableTable);
-      }
-      final Element installedTable = element.getChild(INSTALLED);
-      if (installedTable != null) {
-        myInstalledTableProportions.readExternal(element);
+      final Element availableProportionsElement = element.getChild(AVAILABLE_PROPORTIONS);
+      if (availableProportionsElement != null) {
+        myAvailableSplitterProportionsData.readExternal(availableProportionsElement);
       }
     }
     catch (InvalidDataException e) {
@@ -100,12 +85,8 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   public SplitterProportionsData getSplitterProportionsData() {
     return mySplitterProportionsData;
   }
-
-  public TableColumnsProportionData getAvailableTableProportions() {
-    return myAvailableTableProportions;
-  }
-
-  public TableColumnsProportionData getInstalledTableProportions() {
-    return myInstalledTableProportions;
+  
+  public SplitterProportionsData getAvailableSplitterProportionsData() {
+    return myAvailableSplitterProportionsData;
   }
 }

@@ -25,10 +25,15 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -64,22 +69,44 @@ public class ImportModuleFromImlFileAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final boolean visible = isVisible(e);
+    final List<VirtualFile> modules = getModuleNames(e);
     final Presentation presentation = e.getPresentation();
+    final boolean visible = !modules.isEmpty();
     presentation.setVisible(visible);
     presentation.setEnabled(visible);
+    String text;
+    if (modules.size() > 1) {
+      text = "Import " + modules.size() + " Modules";
+    }
+    else if (modules.size() == 1) {
+      text = "Import '" + modules.get(0).getNameWithoutExtension() + "' Module";
+    }
+    else {
+      text = getTemplatePresentation().getText();
+    }
+    presentation.setText(text);
   }
 
-  private static boolean isVisible(AnActionEvent e) {
+  private static List<VirtualFile> getModuleNames(AnActionEvent e) {
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    if (getEventProject(e) == null || files == null || files.length == 0) {
-      return false;
+    final Project project = getEventProject(e);
+    if (project == null || files == null || files.length == 0) {
+      return Collections.emptyList();
     }
+
+    List<VirtualFile> modulesFiles = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       if (!file.getFileType().equals(StdFileTypes.IDEA_MODULE)) {
-        return false;
+        return Collections.emptyList();
       }
+
+      modulesFiles.add(file);
     }
-    return true;
+
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (Module module : moduleManager.getModules()) {
+      modulesFiles.remove(module.getModuleFile());
+    }
+    return modulesFiles;
   }
 }

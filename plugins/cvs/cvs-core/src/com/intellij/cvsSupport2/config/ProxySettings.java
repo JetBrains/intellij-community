@@ -35,16 +35,50 @@ public class ProxySettings implements JDOMExternalizable, Cloneable {
   public int PROXY_PORT = 1234;
   public int TYPE = HTTP;
   public String LOGIN = "";
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ProxySettings that = (ProxySettings)o;
+    if (USE_PROXY != that.USE_PROXY) return false;
+    if (!USE_PROXY) {
+      return false;
+    }
+    return PROXY_PORT == that.PROXY_PORT &&
+           TYPE == that.TYPE &&
+           LOGIN.equals(that.LOGIN) &&
+           PASSWORD.equals(that.PASSWORD) &&
+           PROXY_HOST.equals(that.PROXY_HOST);
+  }
+
+  @Override
+  public int hashCode() {
+    if (!USE_PROXY) {
+      return 1;
+    }
+    int result = 31 * PROXY_HOST.hashCode();
+    result = 31 * result + PROXY_PORT;
+    result = 31 * result + TYPE;
+    result = 31 * result + LOGIN.hashCode();
+    result = 31 * result + PASSWORD.hashCode();
+    return result;
+  }
+
   public String PASSWORD = "";
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public ProxySettings clone() {
     try {
       return (ProxySettings)super.clone();

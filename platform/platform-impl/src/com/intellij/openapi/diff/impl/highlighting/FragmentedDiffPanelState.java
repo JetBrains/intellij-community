@@ -23,15 +23,19 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.Consumer;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import javax.swing.*;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -45,10 +49,12 @@ public class FragmentedDiffPanelState extends DiffPanelState {
   // fragment _start_ lines
   private List<BeforeAfter<Integer>> myRanges;
   private final NumberedFragmentHighlighter myFragmentHighlighter;
+  private FragmentSeparatorsPositionConsumer mySeparatorsPositionConsumer;
 
   public FragmentedDiffPanelState(ContentChangeListener changeListener, Project project, boolean drawNumber, @NotNull Disposable parentDisposable) {
     super(changeListener, project, parentDisposable);
     myFragmentHighlighter = new NumberedFragmentHighlighter(myAppender1, myAppender2, drawNumber);
+    mySeparatorsPositionConsumer = new FragmentSeparatorsPositionConsumer();
   }
 
   @Override
@@ -104,8 +110,22 @@ public class FragmentedDiffPanelState extends DiffPanelState {
                                             new TextRange(start.getAfter(), end.getAfter())));
 
       if (previousBefore > 0 && previousAfter > 0) {
-        myAppender1.setSeparatorMarker(previousBefore);
-        myAppender2.setSeparatorMarker(previousAfter);
+        final int finalPreviousBefore = previousBefore;
+        mySeparatorsPositionConsumer.prepare(previousBefore, previousAfter);
+
+        myAppender1.setSeparatorMarker(previousBefore, new Consumer<Integer>() {
+          @Override
+          public void consume(Integer integer) {
+            mySeparatorsPositionConsumer.addLeft(finalPreviousBefore, integer);
+          }
+        });
+        final int finalPreviousAfter = previousAfter;
+        myAppender2.setSeparatorMarker(previousAfter, new Consumer<Integer>() {
+          @Override
+          public void consume(Integer integer) {
+            mySeparatorsPositionConsumer.addRight(finalPreviousAfter, integer);
+          }
+        });
       }
       previousBefore = myRanges.get(i).getBefore();
       previousAfter = myRanges.get(i).getAfter();
@@ -140,5 +160,54 @@ public class FragmentedDiffPanelState extends DiffPanelState {
 
   public List<Integer> getRightLines() {
     return myFragmentHighlighter.getRightLines();
+  }
+
+  public FragmentSeparatorsPositionConsumer getSeparatorsPositionConsumer() {
+    return mySeparatorsPositionConsumer;
+  }
+
+  @Override
+  public void drawOnDivider(Graphics g, JComponent component) {
+    if (myAppender1.getEditor() == null || myAppender2.getEditor() == null) return;
+
+    final int startLeft = getStartVisibleLine(myAppender1.getEditor());
+    final int startRight = getStartVisibleLine(myAppender2.getEditor());
+
+    final int width = component.getWidth();
+    final int lineHeight = myAppender1.getEditor().getLineHeight();
+
+    final TreeMap<Integer, FragmentSeparatorsPositionConsumer.TornSeparator> left = mySeparatorsPositionConsumer.getLeft();
+
+    final int leftScrollOffset = myAppender1.getEditor().getScrollingModel().getVerticalScrollOffset();
+    final int rightScrollOffset = myAppender2.getEditor().getScrollingModel().getVerticalScrollOffset();
+
+    for (Map.Entry<Integer, FragmentSeparatorsPositionConsumer.TornSeparator> entry : left.entrySet()) {
+      final FragmentSeparatorsPositionConsumer.TornSeparator tornSeparator = entry.getValue();
+      if (tornSeparator.getLeftLine() >= startLeft || tornSeparator.getRightLine() >= startRight) {
+        final int leftOffset = tornSeparator.getLeftOffset();
+        int leftBaseY = myAppender1.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getLeftLine(), 0)).y - lineHeight/2 -
+          leftScrollOffset;
+
+        final int rightOffset = tornSeparator.getRightOffset();
+        int rightBaseY = myAppender2.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getRightLine(), 0)).y - lineHeight/2 -
+          rightScrollOffset;
+
+        g.setColor(FragmentBoundRenderer.darkerBorder());
+        g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark - 1, width, rightBaseY + rightOffset + TornLineParams.ourDark + 1);
+        g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark + 1, width, rightBaseY + rightOffset + TornLineParams.ourDark - 1);
+        g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark - 1, width, rightBaseY + rightOffset - TornLineParams.ourDark + 1);
+        g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark + 1, width, rightBaseY + rightOffset - TornLineParams.ourDark - 1);
+        g.setColor(FragmentBoundRenderer.darkerBorder().darker());
+        // +- 2
+        g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
+        g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
+      }
+    }
+  }
+  
+  private int getStartVisibleLine(final Editor editor) {
+    int offset = editor.getScrollingModel().getVerticalScrollOffset();
+     LogicalPosition logicalPosition = editor.xyToLogicalPosition(new Point(0, offset));
+     return logicalPosition.line;
   }
 }

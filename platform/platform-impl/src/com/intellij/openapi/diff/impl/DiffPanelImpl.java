@@ -121,7 +121,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     if (horisontal) {
       mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
-                                  new DiffDividerPaint(this, FragmentSide.SIDE1));
+                                  new DiffDividerPaint(this, FragmentSide.SIDE1), myData);
     }
     else {
       mySplitter = new HorisontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());

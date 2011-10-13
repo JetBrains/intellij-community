@@ -18,11 +18,15 @@ package org.jetbrains.android.run;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
-import com.android.sdklib.internal.avd.AvdManager;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Condition;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.BooleanCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,37 +36,43 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Apr 3, 2009
- * Time: 6:02:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
-public class DeviceChooser extends DialogWrapper {
+public class DeviceChooser implements Disposable {
+  private static final String[] COLUMN_TITLES = new String[]{"Serial Number", "AVD name", "State", "Compatible"};
   public static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
+  
+  private final List<DeviceChooserListener> myListeners = new ArrayList<DeviceChooserListener>();
+  private final Alarm myRefreshingAlarm = new Alarm(this);
 
-  private final AndroidFacet myFacet;
+  private volatile boolean myProcessSelectionFlag = true;
+  private IDevice[] myOldDevices = EMPTY_DEVICE_ARRAY;
+
   @Nullable
   private JPanel myPanel;
-  private JTable myDeviceTable;
-  private static final String[] COLUMN_TITLES = new String[]{"Serial Number", "AVD name", "State", "Compatible"};
+  private JBTable myDeviceTable;
+
+  private final AndroidFacet myFacet;
+  private final Condition<IDevice> myFilter;
 
   private int[] mySelectedRows;
 
-  public DeviceChooser(@NotNull AndroidFacet facet, boolean multipleSelection, @Nullable String[] selectedSerials) {
-    super(facet.getModule().getProject(), true);
-    setTitle(AndroidBundle.message("choose.device.dialog.title"));
-    init();
+  public DeviceChooser(boolean multipleSelection,
+                       @NotNull final Action okAction,
+                       @NotNull AndroidFacet facet,
+                       @Nullable Condition<IDevice> filter) {
     myFacet = facet;
+    myFilter = filter;
+
     DefaultTableModel defaultTableModel = new DefaultTableModel();
     myDeviceTable.setModel(defaultTableModel);
     myDeviceTable.setSelectionMode(multipleSelection ?
@@ -70,14 +80,16 @@ public class DeviceChooser extends DialogWrapper {
                                    ListSelectionModel.SINGLE_SELECTION);
     myDeviceTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        updateOkButton();
+        if (myProcessSelectionFlag) {
+          fireSelectedDevicesChanged();
+        }
       }
     });
     myDeviceTable.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && isOKActionEnabled()) {
-          doOKAction();
+        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && okAction.isEnabled()) {
+          okAction.actionPerformed(null);
         }
       }
     });
@@ -85,16 +97,33 @@ public class DeviceChooser extends DialogWrapper {
     myDeviceTable.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && isOKActionEnabled()) {
-          doOKAction();
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && okAction.isEnabled()) {
+          okAction.actionPerformed(null);
         }
       }
     });
-    getOKAction().setEnabled(false);
+  }
+
+  public void init(@Nullable String[] selectedSerials) {
     updateTable();
     if (selectedSerials != null) {
       resetSelection(selectedSerials);
     }
+    addUpdatingRequest();
+  }
+
+  private void addUpdatingRequest() {
+    if (myRefreshingAlarm.isDisposed()) {
+      return;
+    }
+    myRefreshingAlarm.cancelAllRequests();
+    myRefreshingAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        updateTable();
+        addUpdatingRequest();
+      }
+    }, 500, ModalityState.stateForComponent(myPanel));
   }
 
   private void resetSelection(@NotNull String[] selectedSerials) {
@@ -103,60 +132,54 @@ public class DeviceChooser extends DialogWrapper {
     Collections.addAll(selectedSerialsSet, selectedSerials);
     IDevice[] myDevices = model.myDevices;
     ListSelectionModel selectionModel = myDeviceTable.getSelectionModel();
-    selectionModel.clearSelection();
+    boolean cleared = false;
+
     for (int i = 0, n = myDevices.length; i < n; i++) {
       String serialNumber = myDevices[i].getSerialNumber();
       if (selectedSerialsSet.contains(serialNumber)) {
+        if (!cleared) {
+          selectionModel.clearSelection();
+          cleared = true;
+        }
         selectionModel.addSelectionInterval(i, i);
       }
     }
   }
 
-  @Override
-  public JComponent getPreferredFocusedComponent() {
+  void updateTable() {
+    final AndroidDebugBridge bridge = myFacet.getDebugBridge();
+    IDevice[] devices = bridge != null ? getFilteredDevices(bridge) : EMPTY_DEVICE_ARRAY;
+    if (!Arrays.equals(myOldDevices, devices)) {
+      myOldDevices = devices;
+      final IDevice[] selectedDevices = getSelectedDevices();
+      final TIntArrayList selectedRows = new TIntArrayList();
+      for (int i = 0; i < devices.length; i++) {
+        if (ArrayUtil.indexOf(selectedDevices, devices[i]) >= 0) {
+          selectedRows.add(i);
+        }
+      }
+      
+      myProcessSelectionFlag = false;
+      myDeviceTable.setModel(new MyDeviceTableModel(devices));
+      if (selectedRows.size() == 0 && devices.length > 0) {
+        myDeviceTable.getSelectionModel().setSelectionInterval(0, 0);
+      }
+      for (int selectedRow : selectedRows.toNativeArray()) {
+        if (selectedRow < devices.length) {
+          myDeviceTable.getSelectionModel().addSelectionInterval(selectedRow, selectedRow);
+        }
+      }
+      fireSelectedDevicesChanged();
+      myProcessSelectionFlag = true;
+    }
+  }
+
+  public JTable getDeviceTable() {
     return myDeviceTable;
   }
 
-  private void updateTable() {
-    final AndroidDebugBridge bridge = myFacet.getDebugBridge();
-    IDevice[] devices = bridge != null ? bridge.getDevices() : EMPTY_DEVICE_ARRAY;
-    int[] selectedRows = myDeviceTable.getSelectedRows();
-    myDeviceTable.setModel(new MyDeviceTableModel(devices));
-    if (selectedRows.length == 0 && devices.length > 0) {
-      myDeviceTable.getSelectionModel().setSelectionInterval(0, 0);
-    }
-    for (int selectedRow : selectedRows) {
-      if (selectedRow < devices.length) {
-        myDeviceTable.getSelectionModel().addSelectionInterval(selectedRow, selectedRow);
-      }
-    }
-    updateOkButton();
-  }
-
-  private void updateOkButton() {
-    IDevice[] devices = getSelectedDevices();
-    boolean enabled = devices.length > 0;
-    for (IDevice device : devices) {
-      if (!device.isOnline()) {
-        enabled = false;
-      }
-    }
-    getOKAction().setEnabled(enabled);
-  }
-
-  @NotNull
-  private static String getDeviceState(@NotNull IDevice device) {
-    IDevice.DeviceState state = device.getState();
-    return state != null ? capitalize(state.name().toLowerCase()) : "";
-  }
-
-  @Override
-  protected void doOKAction() {
-    mySelectedRows = myDeviceTable.getSelectedRows();
-    super.doOKAction();
-  }
-
-  protected JComponent createCenterPanel() {
+  @Nullable
+  public JPanel getPanel() {
     return myPanel;
   }
 
@@ -171,7 +194,7 @@ public class DeviceChooser extends DialogWrapper {
         if (bridge == null) {
           return EMPTY_DEVICE_ARRAY;
         }
-        IDevice[] devices = bridge.getDevices();
+        IDevice[] devices = getFilteredDevices(bridge);
         for (IDevice device : devices) {
           if (device.getSerialNumber().equals(serial.toString())) {
             result.add(device);
@@ -183,38 +206,44 @@ public class DeviceChooser extends DialogWrapper {
     return result.toArray(new IDevice[result.size()]);
   }
 
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{new RefreshAction(), new LaunchEmulatorAction(), getOKAction(), getCancelAction()};
-  }
-
-  private class LaunchEmulatorAction extends AbstractAction {
-    public LaunchEmulatorAction() {
-      putValue(NAME, "Launch Emulator");
+  @NotNull
+  private IDevice[] getFilteredDevices(AndroidDebugBridge bridge) {
+    final IDevice[] devices = bridge.getDevices();
+    if (devices.length == 0 || myFilter == null) {
+      return devices;
     }
 
-    public void actionPerformed(ActionEvent e) {
-      AvdManager.AvdInfo avd = null;
-      AvdManager manager = myFacet.getAvdManagerSilently();
-      if (manager != null) {
-        AvdChooser chooser = new AvdChooser(myFacet.getModule().getProject(), myFacet, manager, true, false);
-        chooser.show();
-        avd = chooser.getSelectedAvd();
-        if (chooser.getExitCode() != OK_EXIT_CODE) return;
-        if (avd == null) return;
+    final List<IDevice> filteredDevices = new ArrayList<IDevice>();
+    for (IDevice device : devices) {
+      if (myFilter.value(device)) {
+        filteredDevices.add(device);
       }
-      myFacet.launchEmulator(avd != null ? avd.getName() : null, "", null);
+    }
+    return filteredDevices.toArray(new IDevice[filteredDevices.size()]);
+  }
+
+  public void finish() {
+    mySelectedRows = myDeviceTable.getSelectedRows();
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  @NotNull
+  private static String getDeviceState(@NotNull IDevice device) {
+    IDevice.DeviceState state = device.getState();
+    return state != null ? capitalize(state.name().toLowerCase()) : "";
+  }
+
+  public void fireSelectedDevicesChanged() {
+    for (DeviceChooserListener listener : myListeners) {
+      listener.selectedDevicesChanged();
     }
   }
 
-  private class RefreshAction extends AbstractAction {
-    RefreshAction() {
-      putValue(NAME, "Refresh");
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      updateTable();
-    }
+  public void addListener(@NotNull DeviceChooserListener listener) {
+    myListeners.add(listener);
   }
 
   private class MyDeviceTableModel extends AbstractTableModel {

@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 
@@ -28,17 +29,26 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     super(title, project);
   }
 
+  @Override
   protected void init() {
     super.init();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         final boolean isLastStep = (getCurrentStep() + 1) == getNumberOfSteps();
-        getRootPane().setDefaultButton(isLastStep ? getFinishButton() : getNextButton());
+        final JButton defaultButton;
+        if (SystemInfo.isMac) {
+          defaultButton = getNextButton();
+        } else {
+          defaultButton = isLastStep ? getFinishButton() : getNextButton();
+        }
+        getRootPane().setDefaultButton(defaultButton);
         updateStep();
       }
     });
   }
 
+  @Override
   protected String getHelpID() {
     return null;
   }
@@ -54,6 +64,7 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     super.doNextAction();
   }
 
+  @Override
   public void updateStep() {
     super.updateStep();
     final int numberOfSteps = getNumberOfSteps();
@@ -63,13 +74,13 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
       doPreviousAction();
       return;
     }
-    currentStep.getPreferredFocusedComponent().requestFocus();
     if (!currentStep.nextIsEnabled()) {
       getNextButton().setEnabled(false);
       getFinishButton().setEnabled(false);
     }
     else {
       getFinishButton().setEnabled((getCurrentStep() + 1) == numberOfSteps);
+      getNextButton().setEnabled(true);
     }
   }
 
@@ -85,6 +96,7 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     }
   }
 
+  @Override
   protected void doOKAction() {
     for (final WizardStep step : mySteps) {
       step.saveState();
@@ -92,6 +104,7 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     super.doOKAction();
   }
 
+  @Override
   public void dispose() {
     try {
       for (final WizardStep step : mySteps) {

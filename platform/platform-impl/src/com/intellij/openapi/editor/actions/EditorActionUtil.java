@@ -62,20 +62,20 @@ public class EditorActionUtil {
       );
     }
 
-    Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
-    int lineNumber = editor.getCaretModel().getVisualPosition().line;
-    if (viewRectangle != null) {
-      VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
-      int start = startPos.line + 1;
-      VisualPosition endPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y + viewRectangle.height));
-      int end = endPos.line - 2;
-      if (lineNumber < start) {
-        editor.getCaretModel().moveCaretRelatively(0, start - lineNumber, false, false, true);
-      }
-      else if (lineNumber > end) {
-        editor.getCaretModel().moveCaretRelatively(0, end - lineNumber, false, false, true);
-      }
-    }
+    //Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
+    //int lineNumber = editor.getCaretModel().getVisualPosition().line;
+    //if (viewRectangle != null) {
+    //  VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
+    //  int start = startPos.line + 1;
+    //  VisualPosition endPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y + viewRectangle.height));
+    //  int end = endPos.line - 2;
+      //if (lineNumber < start) {
+      //  editor.getCaretModel().moveCaretRelatively(0, start - lineNumber, false, false, true);
+      //}
+      //else if (lineNumber > end) {
+      //  editor.getCaretModel().moveCaretRelatively(0, end - lineNumber, false, false, true);
+      //}
+    //}
   }
 
   public static void moveCaretRelativelyAndScroll(Editor editor,

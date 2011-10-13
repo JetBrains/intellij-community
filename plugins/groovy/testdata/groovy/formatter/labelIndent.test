@@ -1,0 +1,19 @@
+foo:
+bar()
+
+def foo() {
+bar()
+foo:
+bar()
+bar()
+}
+-----
+foo:
+bar()
+
+def foo() {
+  bar()
+foo:
+  bar()
+  bar()
+}
