@@ -62,7 +62,7 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
 
   @Override
   public String getLocationString() {
-    return ((PsiAnonymousClass)getElement()).getBaseClassType().getCanonicalText();
+    return ((PsiAnonymousClass)getElement()).getBaseClassType().getClassName();
   }
 
   @Override
