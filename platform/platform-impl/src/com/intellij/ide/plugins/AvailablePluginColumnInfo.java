@@ -89,7 +89,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
       final GridBagConstraints gc =
         new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new Insets(0, 0, 0, 0), 0, 0);
+                               new Insets(0, LEFT_MARGIN, 0, 0), 0, 0);
       final JPanel namePanel = new JPanel(new BorderLayout(0, LEFT_MARGIN));
       namePanel.add(myNameLabel, BorderLayout.WEST);
       namePanel.add(myStatusLabel, BorderLayout.CENTER);
@@ -105,7 +105,6 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       gc.gridwidth = 1;
       gc.gridy = 1;
       myPanel.add(myCategoryLabel, gc);
-      gc.insets.left = LEFT_MARGIN;
       myPanel.add(myDateLabel, gc);
       myPanel.add(myDownloadsLabel, gc);
 
