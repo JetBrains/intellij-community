@@ -97,8 +97,7 @@ public class ImportSettingsStep extends WizardStep {
     myImportConfiguration.VENDOR = getVendor();
     myImportConfiguration.LOG_MESSAGE = getLogMessage();
     myImportConfiguration.CHECKOUT_AFTER_IMPORT = myCheckoutAfterImport.isSelected();
-    myImportConfiguration.MAKE_NEW_FILES_READ_ONLY = myImportConfiguration.CHECKOUT_AFTER_IMPORT &&
-                                                     myMakeCheckedOutFilesReadOnly.isSelected();
+    myImportConfiguration.MAKE_NEW_FILES_READ_ONLY = myMakeCheckedOutFilesReadOnly.isSelected();
   }
 
   private boolean isValidInput() {
