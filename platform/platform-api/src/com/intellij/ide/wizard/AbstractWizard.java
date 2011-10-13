@@ -235,6 +235,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     public Dimension getPreferredSize() {
       return new Dimension(myIcon != null ? myIcon.getIconWidth() : 0, 0);
     }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return new Dimension(myIcon != null ? myIcon.getIconWidth() : 0, 0);
+    }
   }
 
   protected JComponent createCenterPanel() {
