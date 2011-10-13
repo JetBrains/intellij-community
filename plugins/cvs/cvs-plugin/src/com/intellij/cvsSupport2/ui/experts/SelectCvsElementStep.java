@@ -45,6 +45,7 @@ public class SelectCvsElementStep extends WizardStep {
   private final int mySelectionMode;
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
+  private final Ref<Boolean> myErrors = new Ref<Boolean>();
 
   public SelectCvsElementStep(String title, CvsWizard wizard,
                               Project project,
@@ -65,22 +66,22 @@ public class SelectCvsElementStep extends WizardStep {
 
   @Override
   public boolean nextIsEnabled() {
-    return myCvsTree.getCurrentSelection().length > 0;
+    return myCvsTree.getCurrentSelection().length > 0 && myErrors.isNull();
   }
 
   private boolean isLogged(final CvsRootConfiguration selectedConfiguration) {
-    final Ref<Boolean> errors = new Ref<Boolean>();
+    myErrors.set(null);
     final LoginPerformer performer = new LoginPerformer(
       myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
       new Consumer<VcsException>() {
         @Override
         public void consume(VcsException e) {
-          errors.set(Boolean.TRUE);
+          myErrors.set(Boolean.TRUE);
         }
       });
     try {
       final boolean logged = performer.loginAll(false);
-      return logged && errors.isNull();
+      return logged && myErrors.isNull();
     } catch (CvsRootException e) {
       Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.invalid.cvs.root"));
       return false;
@@ -90,9 +91,17 @@ public class SelectCvsElementStep extends WizardStep {
   @Override
   public boolean preNextCheck() {
     CvsRootConfiguration selectedConfiguration = mySelectCVSConfigurationStep.getSelectedConfiguration();
+    if (selectedConfiguration == null) {
+      return false;
+    }
     final boolean logged = isLogged(selectedConfiguration);
     if (logged) {
-      myCvsTree.setCvsRootConfiguration(selectedConfiguration);
+      try {
+        myCvsTree.setCvsRootConfiguration((CvsRootConfiguration)selectedConfiguration.clone());
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
     }
     return logged;
   }
@@ -120,6 +129,7 @@ public class SelectCvsElementStep extends WizardStep {
     myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, new Consumer<VcsException>() {
       @Override
       public void consume(VcsException e) {
+        myErrors.set(Boolean.TRUE);
         Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error"));
       }
     });

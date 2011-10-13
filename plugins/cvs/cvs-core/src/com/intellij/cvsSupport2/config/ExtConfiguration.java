@@ -34,14 +34,17 @@ public class ExtConfiguration implements JDOMExternalizable, Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.ExtConfiguration");
   public boolean USE_INTERNAL_SSH_IMPLEMENTATION = false;
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
      DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public ExtConfiguration clone() {
     try {
       return (ExtConfiguration) super.clone();
@@ -49,5 +52,34 @@ public class ExtConfiguration implements JDOMExternalizable, Cloneable{
       LOG.error(e);
       return new ExtConfiguration();
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ExtConfiguration that = (ExtConfiguration)o;
+    if (USE_INTERNAL_SSH_IMPLEMENTATION != that.USE_INTERNAL_SSH_IMPLEMENTATION) return false;
+    if (USE_INTERNAL_SSH_IMPLEMENTATION) {
+      return true;
+    }
+    if (!ADDITIONAL_PARAMETERS.equals(that.ADDITIONAL_PARAMETERS)) return false;
+    if (!CVS_RSH.equals(that.CVS_RSH)) return false;
+    if (!PRIVATE_KEY_FILE.equals(that.PRIVATE_KEY_FILE)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    if (USE_INTERNAL_SSH_IMPLEMENTATION) {
+      return 1;
+    }
+    int result = CVS_RSH.hashCode();
+    result = 31 * result + PRIVATE_KEY_FILE.hashCode();
+    result = 31 * result + ADDITIONAL_PARAMETERS.hashCode();
+    result = 31 * result + (USE_INTERNAL_SSH_IMPLEMENTATION ? 1 : 0);
+    return result;
   }
 }
