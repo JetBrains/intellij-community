@@ -23,9 +23,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,5 +85,24 @@ public class FormInspectionUtil {
       if (prop.getName().equals(name)) return prop;
     }
     return null;
+  }
+
+  public static void updateStringPropertyValue(GuiEditor editor,
+                                               RadComponent component,
+                                               IntroStringProperty prop,
+                                               StringDescriptor descriptor,
+                                               String result) {
+    if (descriptor.getBundleName() == null) {
+      prop.setValueEx(component, StringDescriptor.create(result));
+    }
+    else {
+      final String newKeyName = StringEditorDialog.saveModifiedPropertyValue(editor.getModule(), descriptor,
+                                                                             editor.getStringDescriptorLocale(), result,
+                                                                             editor.getPsiFile());
+      if (newKeyName != null) {
+        prop.setValueEx(component, new StringDescriptor(descriptor.getBundleName(), newKeyName));
+      }
+    }
+    editor.refreshAndSave(false);
   }
 }
