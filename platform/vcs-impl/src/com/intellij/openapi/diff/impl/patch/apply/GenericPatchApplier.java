@@ -173,6 +173,33 @@ public class GenericPatchApplier {
     }
   }
 
+  private boolean complementIfShort(final SplitHunk hunk) {
+    final List<BeforeAfter<List<String>>> steps = hunk.getPatchSteps();
+    if (steps.size() > 1) return false;
+    final BeforeAfter<List<String>> first = steps.get(0);
+    final boolean complementFirst = first.getBefore().isEmpty() || first.getAfter().isEmpty() ||
+      first.getBefore().size() == 1 || first.getAfter().size() == 1;
+    if (! complementFirst) return false;
+
+    final List<String> contextBefore = hunk.getContextBefore();
+    if (! contextBefore.isEmpty()) {
+      final String firstContext = contextBefore.get(contextBefore.size() - 1);
+      first.getBefore().add(0, firstContext);
+      first.getAfter().add(0, firstContext);
+      contextBefore.remove(contextBefore.size() - 1);
+      return true;
+    }
+    final List<String> contextAfter = hunk.getContextAfter();
+    if (! contextAfter.isEmpty()) {
+      final String firstContext = contextAfter.get(0);
+      first.getBefore().add(firstContext);
+      first.getAfter().add(firstContext);
+      contextAfter.remove(0);
+      return true;
+    }
+    return false;
+  }
+
   // applies in a way that patch _can_ be solved manually even in the case of total mismatch
   public void trySolveSomehow() {
     assert ! myNotExact.isEmpty();
@@ -180,7 +207,13 @@ public class GenericPatchApplier {
       final SplitHunk hunk = iterator.next();
       hunk.cutSameTail();
       if (! testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk)) {
-        myNotBound.add(hunk);
+        if (complementIfShort(hunk)) {
+          if (! testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk)) {
+            myNotBound.add(hunk);
+          }
+        } else {
+          myNotBound.add(hunk);
+        }
       }
     }
     Collections.sort(myNotBound, HunksComparator.getInstance());
