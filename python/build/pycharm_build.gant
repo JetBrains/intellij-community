@@ -53,8 +53,6 @@ private List platformImplementationModules() {
           "testRunner",
           "smRunner",
           "xdebugger-impl",
-          "testFramework",
-          "tests_bootstrap",
           "xml",
           "relaxng",
           "lvcs-impl",

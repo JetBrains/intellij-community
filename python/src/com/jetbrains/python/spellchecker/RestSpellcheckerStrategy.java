@@ -4,9 +4,9 @@ import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.jetbrains.rest.RestLanguage;
 import com.jetbrains.rest.RestTokenTypes;
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 public class RestSpellcheckerStrategy extends SpellcheckingStrategy {
   private static final Tokenizer<PsiElement> REST_ELEMENT_TOKENIZER = new Tokenizer<PsiElement>() {
     @Override
-    public Token[] tokenize(@NotNull PsiElement element) {
-      return new Token[]{new Token<PsiElement>(element, element.getText(), false, SplitterFactory.getInstance().getPlainTextSplitter())};
+    public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+      consumer.consumeToken(element, PlainTextSplitter.getInstance());
     }
   };
 
@@ -37,11 +37,5 @@ public class RestSpellcheckerStrategy extends SpellcheckingStrategy {
       return REST_ELEMENT_TOKENIZER;
     }
     return EMPTY_TOKENIZER;
-  }
-
-  @NotNull
-  @Override
-  public Language getLanguage() {
-    return RestLanguage.INSTANCE;
   }
 }
