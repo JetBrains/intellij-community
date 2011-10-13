@@ -37,10 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -141,10 +138,13 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
     
-    JPanel editorPanel = new JPanel(new BorderLayout());
+    JPanel editorPanel = new JPanel(new BorderLayout(4, 4));
     editorPanel.setPreferredSize(new Dimension(250, 100));
     editorPanel.setMinimumSize(editorPanel.getPreferredSize());
     editorPanel.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
+    JLabel templateTextLabel = new JLabel(CodeInsightBundle.message("dialog.edit.template.template.text.title"));
+    templateTextLabel.setLabelFor(myTemplateEditor.getContentComponent());
+    editorPanel.add(templateTextLabel, BorderLayout.NORTH);
     panel.add(editorPanel, gb.nextLine().next().weighty(1).weightx(1).coverColumn(2));
 
     myEditVariablesButton = new JButton(CodeInsightBundle.message("dialog.edit.template.button.edit.variables"));
@@ -177,7 +177,6 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     add(createNorthPanel(), BorderLayout.NORTH);
     add(panel, BorderLayout.CENTER);
-    setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
   }
 
   private void applyVariables(final List<Variable> variables) {
@@ -220,7 +219,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 0;
     gbConstraints.gridy = 0;
-    panel.add(new JLabel(CodeInsightBundle.message("dialog.edit.template.label.expand.with")), gbConstraints);
+    JLabel expandWithLabel = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.expand.with"));
+    panel.add(expandWithLabel, gbConstraints);
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
@@ -244,6 +244,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         
       }
     });
+    expandWithLabel.setLabelFor(myExpandByCombo);
     
     panel.add(myExpandByCombo, gbConstraints);
     gbConstraints.weightx = 1;
