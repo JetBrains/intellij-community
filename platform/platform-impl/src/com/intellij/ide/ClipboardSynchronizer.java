@@ -109,7 +109,13 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   public boolean isDataFlavorAvailable(@NotNull final DataFlavor dataFlavor) {
-    return myClipboardHandler.isDataFlavorAvailable(dataFlavor);
+    try {
+      return myClipboardHandler.isDataFlavorAvailable(dataFlavor);
+    }
+    catch (IllegalStateException e) {
+      LOG.info(e);
+      return false;
+    }
   }
 
   @Nullable
