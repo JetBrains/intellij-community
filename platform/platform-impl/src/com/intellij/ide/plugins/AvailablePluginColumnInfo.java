@@ -66,6 +66,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
   private static class AvailableTableRenderer extends DefaultTableCellRenderer {
     private static final int LEFT_MARGIN = new JLabel().getFontMetrics(UIUtil.getLabelFont()).stringWidth("  ");
     private final JLabel myNameLabel = new JLabel();
+    private final JLabel myStatusLabel = new JLabel();
     private final JLabel myCategoryLabel = new JLabel();
     private final JLabel myDateLabel = new JLabel();
     private final JLabel myDownloadsLabel = new JLabel();
@@ -77,16 +78,23 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       myPluginDescriptor = pluginDescriptor;
 
       myNameLabel.setFont(getNameFont());
-      myCategoryLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      myDateLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      myDownloadsLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+
+      final Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+      myStatusLabel.setFont(smallFont);
+      myCategoryLabel.setFont(smallFont);
+      myDateLabel.setFont(smallFont);
+      myDownloadsLabel.setFont(smallFont);
 
       myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
 
       final GridBagConstraints gc =
         new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                new Insets(0, 0, 0, 0), 0, 0);
-      myPanel.add(myNameLabel, gc);
+      final JPanel namePanel = new JPanel(new BorderLayout(0, LEFT_MARGIN));
+      namePanel.add(myNameLabel, BorderLayout.WEST);
+      namePanel.add(myStatusLabel, BorderLayout.CENTER);
+      namePanel.setOpaque(false);
+      myPanel.add(namePanel, gc);
 
       gc.weightx = 1;
       gc.fill = GridBagConstraints.HORIZONTAL;
@@ -121,6 +129,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         final Color grayedFg = isSelected ? fg : Color.GRAY;
         myNameLabel.setForeground(fg);
         myCategoryLabel.setForeground(grayedFg);
+        myStatusLabel.setForeground(grayedFg);
         myDateLabel.setForeground(grayedFg);
         myDownloadsLabel.setForeground(grayedFg);
 
@@ -132,10 +141,12 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         final PluginNode pluginNode = (PluginNode)myPluginDescriptor;
         if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
+          myStatusLabel.setText("[Downloaded]");
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
         }
         else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_MODIFIED);
+          myStatusLabel.setText("[Installed]");
           myPanel.setToolTipText(IdeBundle.message("plugin.is.already.installed.status.tooltip"));
         }
       }
