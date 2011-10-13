@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -124,7 +123,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     if (runFindActionOnClose) {
       setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
-      setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
       getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('F'));
     }
 
