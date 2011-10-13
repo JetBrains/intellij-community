@@ -1,13 +1,15 @@
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.ant.PseudoClassLoader;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.*;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -24,8 +26,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
@@ -37,8 +38,9 @@ import java.util.concurrent.ExecutorService;
  */
 public class JavaBuilder extends Builder{
   public static final String BUILDER_NAME = "java";
-  public static final String JAVA_EXTENSION = ".java";
-  public static final String FORM_EXTENSION = ".form";
+
+  private static final String JAVA_EXTENSION = ".java";
+  private static final String FORM_EXTENSION = ".form";
   private static final Key<PseudoClassLoader> PSEUDO_CLASSLOADER_KEY = Key.create("_preudo_class_loader");
 
   private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
@@ -52,7 +54,6 @@ public class JavaBuilder extends Builder{
     }
   };
 
-  private static final String JAVAC_COMPILER_NAME = "javac";
   private final EmbeddedJavac myJavacCompiler;
 
   public JavaBuilder(ExecutorService tasksExecutor) {
@@ -83,6 +84,7 @@ public class JavaBuilder extends Builder{
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
       final Set<File> filesToCompile = new HashSet<File>();
       final List<File> formsToCompile = new ArrayList<File>();
+      final List<File> upToDatForms = new ArrayList<File>();
       final Set<String> srcRoots = new HashSet<String>();
 
       context.processFiles(chunk, new FileProcessor() {
@@ -97,23 +99,42 @@ public class JavaBuilder extends Builder{
             if (isFileDirty(file, context, tsStorage)) {
               formsToCompile.add(file);
             }
+            else {
+              upToDatForms.add(file);
+            }
           }
           return true;
         }
       });
 
+      final Set<File> formsBoundSources = new HashSet<File>();
+      // force compilation of boun source file if the form is dirty
       for (File form : formsToCompile) {
         for (String root : srcRoots) {
           final File boundSource = getBoundSource(root, form);
           if (boundSource != null) {
             // force compilation of classes that modified forms are bound to
             filesToCompile.add(boundSource);
+            formsBoundSources.add(boundSource);
             break;
           }
         }
       }
 
-      return compile(context, chunk, filesToCompile, formsToCompile);
+      // form should be considered dirty if the class it is bound to is also dirty!
+      for (File form : upToDatForms) {
+        for (String root : srcRoots) {
+          final File boundSource = getBoundSource(root, form);
+          if (boundSource != null && filesToCompile.contains(boundSource)) {
+            formsToCompile.add(form);
+            formsBoundSources.add(boundSource);
+            break;
+          }
+        }
+      }
+      upToDatForms.clear();
+
+      return compile(context, chunk, filesToCompile, formsToCompile, formsBoundSources);
     }
     catch (Exception e) {
       String message = e.getMessage();
@@ -126,8 +147,9 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private File getBoundSource(String srcRoot, File formFile) {
-    final String boundClassName = getBoundClassName(formFile);
+  @Nullable
+  private static File getBoundSource(String srcRoot, File formFile) throws IOException {
+    final String boundClassName = FormsParsing.readBoundClassName(formFile);
     if (boundClassName == null) {
       return null;
     }
@@ -145,7 +167,7 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms) throws Exception {
+  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms, Set<File> formsBoundSources) throws Exception {
     if (files.isEmpty() && forms.isEmpty()) {
       return ExitCode.OK;
     }
@@ -169,19 +191,21 @@ public class JavaBuilder extends Builder{
         urls.add(file.toURI().toURL());
       }
     }
+    urls.add(getResourcePath(GridConstraints.class).toURI().toURL()); // forms_rt.jar
+
     final PseudoClassLoader pseudoLoader = new PseudoClassLoader(urls.toArray(new URL[urls.size()]));
     PSEUDO_CLASSLOADER_KEY.set(context, pseudoLoader);
 
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
-    final OutputFilesSink outputSink = new OutputFilesSink(context);
-
+    final OutputFilesSink outputSink = new OutputFilesSink(context, formsBoundSources);
+    Collection<File> successfulForms = Collections.emptyList();
     try {
       final boolean compilationOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, diagnosticSink, outputSink);
       if (!compilationOk || diagnosticSink.getErrorCount() > 0) {
         throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
       }
 
-      instrumentForms(context, pseudoLoader, forms, outs);
+      successfulForms = instrumentForms(context, chunk, pseudoLoader, forms, outputSink);
 
       // todo: add notNull
 
@@ -194,11 +218,14 @@ public class JavaBuilder extends Builder{
       for (File file : outputSink.getSuccessfullyCompiled()) {
         tsStorage.saveStamp(file);
       }
+      for (File file : successfulForms) {
+        tsStorage.saveStamp(file);
+      }
     }
   }
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
-    return Arrays.asList("-verbose")/*Collections.emptyList()*/;
+    return Arrays.asList(/*"-verbose"*/)/*Collections.emptyList()*/;
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
@@ -225,19 +252,23 @@ public class JavaBuilder extends Builder{
   }
 
 
-  private String getBoundClassName(File formFile) {
-    return null; // todo
-  }
-
-  private void instrumentForms(CompileContext context, final PseudoClassLoader loader, Collection<File> formsToInstrument, Map<File, Set<File>> outs) throws ProjectBuildException {
+  private static Collection<File> instrumentForms(CompileContext context, ModuleChunk chunk, final PseudoClassLoader loader, Collection<File> formsToInstrument, OutputFilesSink outputSink) throws ProjectBuildException {
+    if (formsToInstrument.isEmpty()) {
+      return Collections.emptyList();
+    }
     final Map<String, File> class2form = new HashMap<String, File>();
 
+    final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
+    for (OutputFileObject fileObject : outputSink.getUnsavedFiles()) {
+      compiledClassNames.put(fileObject.getClassName(), fileObject);
+    }
+
+    final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(
+      ProjectPaths.getSourcePathsWithDependents(chunk, context.isCompilingTests()),
+      ProjectPaths.getOutputPathsWithDependents(chunk, context.isCompilingTests())
+    );
+
     for (File formFile : formsToInstrument) {
-      final File outputDir = findOutputDir(formFile, outs);
-      if (outputDir == null) {
-        context.processMessage(new CompilerMessage(JavaBuilder.JAVAC_COMPILER_NAME, BuildMessage.Kind.ERROR, "No output directory found for the form", formFile.getAbsolutePath()));
-        continue;
-      }
       final LwRootContainer rootContainer;
       try {
         rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(loader.getLoader()));
@@ -255,99 +286,73 @@ public class JavaBuilder extends Builder{
         continue;
       }
 
-      // todo: temporarily commented
-      //final File classFile = getClassFile(outputDir, classToBind.replace('.', '/'));
-      //if (classFile == null) {
-      //  context.processMessage(new CompilerMessage(JavaBuilder.JAVAC_COMPILER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath()));
-      //  continue;
-      //}
-      //
-      //final File alreadyProcessedForm = class2form.get(classToBind);
-      //if (alreadyProcessedForm != null) {
-      //  context.processMessage(new CompilerMessage(
-      //    JavaBuilder.JAVAC_COMPILER_NAME, BuildMessage.Kind.WARNING,
-      //    formFile.getAbsolutePath() + ": The form is bound to the class " + classToBind + ".\nAnother form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class",
-      //    formFile.getAbsolutePath())
-      //  );
-      //  continue;
-      //}
-      //
-      //class2form.put(classToBind, formFile);
-      //
-      //try {
-      //  int version;
-      //  InputStream stream = new FileInputStream(classFile);
-      //  try {
-      //    version = getClassFileVersion(new ClassReader(stream));
-      //  }
-      //  finally {
-      //    stream.close();
-      //  }
-      //  AntClassWriter classWriter = new AntClassWriter(getAsmClassWriterFlags(version), loader);
-      //  AntNestedFormLoader formLoader = new AntNestedFormLoader(loader.getLoader(), myNestedFormPathList);
-      //  final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader.getLoader(), formLoader, false, classWriter);
-      //  codeGenerator.patchFile(classFile);
-      //
-      //  final FormErrorInfo[] warnings = codeGenerator.getWarnings();
-      //  for (final FormErrorInfo warning : warnings) {
-      //    context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
-      //  }
-      //
-      //  final FormErrorInfo[] errors = codeGenerator.getErrors();
-      //  if (errors.length > 0) {
-      //    StringBuilder message = new StringBuilder();
-      //    for (final FormErrorInfo error : errors) {
-      //      if (message.length() > 0) {
-      //        message.append("\n");
-      //      }
-      //      message.append(formFile.getAbsolutePath()).append(": ").append(error.getErrorMessage());
-      //    }
-      //    context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.ERROR, message.toString()));
-      //  }
-      //}
-      //catch (Exception e) {
-      //  context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
-      //}
-    }
-  }
+      final OutputFileObject outputClassFile = findClassFile(compiledClassNames, classToBind);
+      if (outputClassFile == null) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath()));
+        continue;
+      }
 
-  private static File findOutputDir(File src, Map<File, Set<File>> outs) {
-    if (outs.isEmpty()) {
-      return null;
-    }
-    if (outs.size() == 1) {
-      return outs.keySet().iterator().next();
-    }
+      final File alreadyProcessedForm = class2form.get(classToBind);
+      if (alreadyProcessedForm != null) {
+        context.processMessage(new CompilerMessage(
+          BUILDER_NAME, BuildMessage.Kind.WARNING,
+          formFile.getAbsolutePath() + ": The form is bound to the class " + classToBind + ".\nAnother form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class",
+          formFile.getAbsolutePath())
+        );
+        continue;
+      }
 
-    File file = src.getParentFile();
-    while (file != null) {
-      for (Map.Entry<File, Set<File>> entry : outs.entrySet()) {
-        if (entry.getValue().contains(file)) {
-          return entry.getKey();
+      class2form.put(classToBind, formFile);
+
+      try {
+        final OutputFileObject.Content originalContent = outputClassFile.getContent();
+        final ClassReader classReader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
+
+        final int version = getClassFileVersion(classReader);
+        final FormsInstrumenterClassWriter classWriter = new FormsInstrumenterClassWriter(classReader, getAsmClassWriterFlags(version), loader);
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader.getLoader(), nestedFormsLoader, false, classWriter);
+        final byte[] patchedBytes = codeGenerator.patchClass(classReader);
+        if (patchedBytes != null) {
+          outputClassFile.updateContent(patchedBytes);
+        }
+
+        final FormErrorInfo[] warnings = codeGenerator.getWarnings();
+        for (final FormErrorInfo warning : warnings) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
+        }
+
+        final FormErrorInfo[] errors = codeGenerator.getErrors();
+        if (errors.length > 0) {
+          StringBuilder message = new StringBuilder();
+          for (final FormErrorInfo error : errors) {
+            if (message.length() > 0) {
+              message.append("\n");
+            }
+            message.append(formFile.getAbsolutePath()).append(": ").append(error.getErrorMessage());
+          }
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message.toString()));
         }
       }
-      file = file.getParentFile();
+      catch (Exception e) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
+      }
     }
-    return null;
+    return class2form.values();
   }
 
-
-  //private File getClassFile(File outputDir, String className) {
-  //  final String classOrInnerName = getClassOrInnerName(outputDir, className);
-  //  return classOrInnerName != null? new File(outputDir, classOrInnerName + ".class") : null;
-  //}
-
-  //private String getClassOrInnerName(final File outputDir, String className) {
-  //  final File classFile = new File(outputDir, className + ".class");
-  //  if (classFile.exists()) {
-  //    return className;
-  //  }
-  //  int position = className.lastIndexOf('/');
-  //  if (position == -1) {
-  //    return null;
-  //  }
-  //  return getClassOrInnerName(outputDir, className.substring(0, position) + '$' + className.substring(position + 1));
-  //}
+  private static OutputFileObject findClassFile(Map<String, OutputFileObject> outputs, String classToBind) {
+    while (true) {
+      final OutputFileObject fo = outputs.get(classToBind);
+      if (fo != null) {
+        return fo;
+      }
+      final int dotIndex = classToBind.lastIndexOf('.');
+      if (dotIndex <= 0) {
+        return null;
+      }
+      classToBind = classToBind.substring(0, dotIndex) + "$" + classToBind.substring(dotIndex + 1);
+    }
+  }
 
   private static int getClassFileVersion(ClassReader reader) {
     final Ref<Integer> result = new Ref<Integer>(0);
@@ -364,7 +369,6 @@ public class JavaBuilder extends Builder{
   }
 
   private static class DiagnosticSink implements EmbeddedJavac.DiagnosticOutputConsumer {
-
     private final CompileContext myContext;
     private volatile int myErrorCount = 0;
     private volatile int myWarningCount = 0;
@@ -374,7 +378,7 @@ public class JavaBuilder extends Builder{
     }
 
     public void outputLineAvailable(String line) {
-      myContext.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.INFO, line));
+      myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
     }
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
@@ -401,7 +405,7 @@ public class JavaBuilder extends Builder{
         srcPath = null;
       }
       myContext.processMessage(new CompilerMessage(
-        JAVAC_COMPILER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath,
+        BUILDER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath,
         diagnostic.getStartPosition(), diagnostic.getEndPosition(), diagnostic.getPosition(),
         diagnostic.getLineNumber(), diagnostic.getColumnNumber()
       ));
@@ -417,18 +421,19 @@ public class JavaBuilder extends Builder{
   }
 
   private static class OutputFilesSink implements EmbeddedJavac.OutputFileConsumer {
-
     private final CompileContext myContext;
+    private final Set<File> myFormsBoundSources;
     private final Set<File> mySuccessfullyCompiled = new HashSet<File>();
     private final List<OutputFileObject> myUnsavedFiles = new ArrayList<OutputFileObject>();
 
-    public OutputFilesSink(CompileContext context) {
+    public OutputFilesSink(CompileContext context, Set<File> formsBoundSources) {
       myContext = context;
+      myFormsBoundSources = formsBoundSources;
     }
 
     public void save(OutputFileObject fileObject) {
       try {
-        if (shouldInstrument(fileObject)) {
+        if (shouldKeep(fileObject)) {
           myUnsavedFiles.add(fileObject);
         }
         else {
@@ -436,7 +441,7 @@ public class JavaBuilder extends Builder{
         }
       }
       catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+        myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
       }
     }
 
@@ -450,7 +455,7 @@ public class JavaBuilder extends Builder{
           writeToDisk(file);
         }
         catch (IOException e) {
-          myContext.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
         }
       }
     }
@@ -459,8 +464,13 @@ public class JavaBuilder extends Builder{
       return mySuccessfullyCompiled;
     }
 
-    private boolean shouldInstrument(OutputFileObject fileObject) {
-      return false; // todo!!!
+    private boolean shouldKeep(OutputFileObject fileObject) {
+      final JavaFileObject source = fileObject.getSource();
+      if (source != null && myFormsBoundSources.contains(new File(source.toUri()))) {
+        return true;
+      }
+      // todo: consider @NotNull presence as well
+      return false;
     }
 
     private void writeToDisk(OutputFileObject fileObject) throws IOException {
@@ -484,59 +494,95 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  // todo: temporarily commented
-  //private class AntNestedFormLoader implements NestedFormLoader {
-  //  private final ClassLoader myLoader;
-  //  private final List myNestedFormPathList;
-  //  private final HashMap myFormCache = new HashMap();
-  //
-  //  public AntNestedFormLoader(final ClassLoader loader, List nestedFormPathList) {
-  //    myLoader = loader;
-  //    myNestedFormPathList = nestedFormPathList;
-  //  }
-  //
-  //  public LwRootContainer loadForm(String formFilePath) throws Exception {
-  //    if (myFormCache.containsKey(formFilePath)) {
-  //      return (LwRootContainer)myFormCache.get(formFilePath);
-  //    }
-  //
-  //    String lowerFormFilePath = formFilePath.toLowerCase();
-  //    for (Iterator iterator = myFormFiles.iterator(); iterator.hasNext();) {
-  //      File file = (File)iterator.next();
-  //      String name = file.getAbsolutePath().replace(File.separatorChar, '/').toLowerCase();
-  //      if (name.endsWith(lowerFormFilePath)) {
-  //        return loadForm(formFilePath, new FileInputStream(file));
-  //      }
-  //    }
-  //
-  //    if (myNestedFormPathList != null) {
-  //      for (int i = 0; i < myNestedFormPathList.size(); i++) {
-  //        PrefixedPath path = (PrefixedPath)myNestedFormPathList.get(i);
-  //        File formFile = path.findFile(formFilePath);
-  //        if (formFile != null) {
-  //          return loadForm(formFilePath, new FileInputStream(formFile));
-  //        }
-  //      }
-  //    }
-  //    InputStream resourceStream = myLoader.getResourceAsStream(formFilePath);
-  //    if (resourceStream != null) {
-  //      return loadForm(formFilePath, resourceStream);
-  //    }
-  //    throw new Exception("Cannot find nested form file " + formFilePath);
-  //  }
-  //
-  //  private LwRootContainer loadForm(String formFileName, InputStream resourceStream) throws Exception {
-  //    final LwRootContainer container = Utils.getRootContainer(resourceStream, null);
-  //    myFormCache.put(formFileName, container);
-  //    return container;
-  //  }
-  //
-  //  public String getClassToBindName(LwRootContainer container) {
-  //    final String className = container.getClassToBind();
-  //    String result = getClassOrInnerName(className.replace('.', '/'));
-  //    if (result != null) return result.replace('/', '.');
-  //    return className;
-  //  }
-  //}
+  public static class FormsInstrumenterClassWriter extends ClassWriter {
+    private final PseudoClassLoader myPseudoClassLoader;
+
+    public FormsInstrumenterClassWriter(ClassReader classReader, int flags, final PseudoClassLoader pseudoLoader) {
+      super(classReader, flags);
+      myPseudoClassLoader = pseudoLoader;
+    }
+
+    protected String getCommonSuperClass(final String type1, final String type2) {
+      try {
+        PseudoClassLoader.PseudoClass p1 = myPseudoClassLoader.loadClass(type1);
+        PseudoClassLoader.PseudoClass p2 = myPseudoClassLoader.loadClass(type2);
+        return p1.getCommonSuperClassName(p2);
+      }
+      catch (ClassNotFoundException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e.getMessage());
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e.getMessage());
+      }
+    }
+  }
+
+  private static class MyNestedFormLoader implements NestedFormLoader {
+    private final Collection<File> mySourceRoots;
+    private final Collection<File> myOutputRoots;
+    private final HashMap<String, LwRootContainer> myCache = new HashMap<String, LwRootContainer>();
+
+    /**
+     * @param sourceRoots all source roots for current module chunk and all dependent recursively
+     * @param outputRoots output roots for this module chunk and all dependent recursively
+     */
+    public MyNestedFormLoader(Collection<File> sourceRoots, Collection<File> outputRoots) {
+      mySourceRoots = sourceRoots;
+      myOutputRoots = outputRoots;
+    }
+
+    public LwRootContainer loadForm(String formFilePath) throws Exception {
+      if (myCache.containsKey(formFilePath)) {
+        return myCache.get(formFilePath);
+      }
+
+      for (File sourceRoot : mySourceRoots) {
+        File formFile = new File(sourceRoot, formFilePath);
+        if (formFile.exists()) {
+          return loadForm(formFilePath, new BufferedInputStream(new FileInputStream(formFile)));
+        }
+      }
+
+      throw new Exception("Cannot find nested form file " + formFilePath);
+    }
+
+    private LwRootContainer loadForm(String formFileName, InputStream resourceStream) throws Exception {
+      final LwRootContainer container = Utils.getRootContainer(resourceStream, null);
+      myCache.put(formFileName, container);
+      return container;
+    }
+
+    public String getClassToBindName(LwRootContainer container) {
+      final String className = container.getClassToBind();
+      for (File outputRoot : myOutputRoots) {
+        final String result = getJVMClassName(outputRoot, className.replace('.', '/'));
+        if (result != null) {
+          return result.replace('/', '.');
+        }
+      }
+      return className;
+    }
+  }
+
+  @Nullable
+  private static String getJVMClassName(File outputRoot, String className) {
+    while (true) {
+      final File candidateClass = new File(outputRoot, className + ".class");
+      if (candidateClass.exists()) {
+        return className;
+      }
+      final int position = className.lastIndexOf('/');
+      if (position < 0) {
+        return null;
+      }
+      className = className.substring(0, position) + '$' + className.substring(position + 1);
+    }
+  }
+
+  private static File getResourcePath(Class aClass) {
+    return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
+  }
 
 }
