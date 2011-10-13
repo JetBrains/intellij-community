@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.containers;
 
-import org.jetbrains.annotations.NotNull;
+package com.intellij.ide;
 
 /**
- * @author peter
+ * @author yole
  */
-public class InstanceMap<T> extends FactoryMap<Class<? extends T>,T>{
-  @NotNull
-  protected T create(final Class<? extends T> key) {
-    try {
-      return key.newInstance();
-    }
-    catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
+public interface TitledHandler {
+  String getActionTitle();
 }

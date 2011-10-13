@@ -30,6 +30,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +55,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private final Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<PluginId, Set<PluginId>>();
 
-  private static final String ENABLED_DISABLED = "All";
-  private static final String ENABLED = "Yes";
-  private static final String DISABLED = "No";
+  private static final String ENABLED_DISABLED = "All plugins";
+  private static final String ENABLED = "Enabled plugins";
+  private static final String DISABLED = "Disabled plugins";
   public static final String[] ENABLED_VALUES = new String[] {ENABLED_DISABLED, ENABLED, DISABLED};
   private String myEnabledFilter = ENABLED_DISABLED;
 
@@ -374,7 +375,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       myPluginDescriptor = pluginDescriptor;
 
       myNameLabel.setFont(PluginManagerColumnInfo.getNameFont());
-      myBundledLabel.setFont(PluginManagerColumnInfo.getSmallFont());
+      myBundledLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
       
       final GridBagConstraints gn =

@@ -46,6 +46,11 @@
 
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
+
+    <reference ref="InspectCode">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+    </reference>
   </actions>
 
 </component>

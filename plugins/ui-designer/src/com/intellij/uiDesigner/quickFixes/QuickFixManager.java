@@ -272,6 +272,9 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
+      if (selectedValue.second instanceof PopupQuickFix) {
+        return ((PopupQuickFix) selectedValue.second).getPopupStep();
+      }
       if (finalChoice || !myShowSuppresses) {
         return doFinalStep(new Runnable() {
           public void run() {
@@ -284,7 +287,7 @@ public abstract class QuickFixManager <T extends JComponent>{
         });
       }
       if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
-        !(selectedValue.second instanceof SuppressFix)) {
+          !(selectedValue.second instanceof SuppressFix)) {
         ArrayList<ErrorWithFix> suppressList = new ArrayList<ErrorWithFix>();
         buildSuppressFixes(selectedValue.first, suppressList, false);
         return new QuickFixPopupStep(suppressList, false);
@@ -293,8 +296,8 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     public boolean hasSubstep(final ErrorWithFix selectedValue) {
-      return myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
-        !(selectedValue.second instanceof SuppressFix);
+      return (myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
+        !(selectedValue.second instanceof SuppressFix)) || selectedValue.second instanceof PopupQuickFix;
     }
 
     @Override public boolean isAutoSelectionEnabled() {

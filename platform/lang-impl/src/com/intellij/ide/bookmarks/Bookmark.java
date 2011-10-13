@@ -82,7 +82,7 @@ public class Bookmark {
           myHighlighter.setGutterIconRenderer(new MyGutterIconRenderer());
 
           myHighlighter.setErrorStripeMarkColor(Color.black);
-          myHighlighter.setErrorStripeTooltip(StringUtil.escapeXml(getNotEmptyDescription()));
+          myHighlighter.setErrorStripeTooltip(getBookmarkTooltip());
         }
       }
     }
@@ -192,6 +192,18 @@ public class Bookmark {
       .message("bookmark.file.X.line.Y", presentableUrl, myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()) + 1);
   }
 
+  private String getBookmarkTooltip() {
+    StringBuilder result = new StringBuilder("Bookmark");
+    if (myMnemonic != 0) {
+      result.append(" ").append(myMnemonic);
+    }
+    String description = StringUtil.escapeXml(getNotEmptyDescription());
+    if (description != null) {
+      result.append(": ").append(description);
+    }
+    return result.toString();
+  }
+  
   private static class MnemonicIcon implements Icon {
     private final char myMnemonic;
 
@@ -240,7 +252,7 @@ public class Bookmark {
     }
 
     public String getTooltipText() {
-      return StringUtil.escapeXml(getNotEmptyDescription());
+      return getBookmarkTooltip();
     }
 
     @Override

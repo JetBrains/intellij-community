@@ -15,10 +15,12 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -27,12 +29,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeRootPane;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.InputEvent;
 import java.io.*;
 import java.util.*;
 
@@ -189,9 +193,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
             synchronized (myState) {
               myState.recentPaths.clear();
             }
+            IdeFrame frame = e.getData(IdeFrame.KEY);
+            if (frame != null) {
+              IdeRootPane rootPane = (IdeRootPane) frame.getComponent();
+              WelcomeScreen welcomeScreen = rootPane.getWelcomeScreen();
+              if (welcomeScreen != null) {
+                welcomeScreen.hideRecentProjectsPanel();
+              }
+            }
           }
         }
       };
+      
       list.add(Separator.getInstance());
       list.add(clearListAction);
     }
@@ -269,30 +282,6 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
 
     return null;
-  }
-
-  private class ReopenProjectAction extends AnAction implements DumbAware {
-    private final String myProjectPath;
-
-    public ReopenProjectAction(final String projectPath, final String projectName) {
-      myProjectPath = projectPath;
-
-      String _text = projectPath;
-      if (projectName != null) {
-        _text = String.format("%s", projectName);
-      }
-
-      final Presentation presentation = getTemplatePresentation();
-      presentation.setText(_text, false);
-      presentation.setDescription(projectPath);
-    }
-
-
-    public void actionPerformed(AnActionEvent e) {
-      final int modifiers = e.getModifiers();
-      final boolean forceOpenInNewFrame = (modifiers & InputEvent.CTRL_MASK) != 0 || (modifiers & InputEvent.SHIFT_MASK) != 0;
-      doOpenProject(myProjectPath, PlatformDataKeys.PROJECT.getData(e.getDataContext()), forceOpenInNewFrame);
-    }
   }
 
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {

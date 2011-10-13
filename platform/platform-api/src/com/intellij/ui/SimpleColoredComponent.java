@@ -317,11 +317,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     LOG.assertTrue(font != null);
 
+    int baseSize = font.getSize();
+    boolean wasSmaller = false;
     for (int i = 0; i < myAttributes.size(); i++) {
       SimpleTextAttributes attributes = myAttributes.get(i);
-      if (font.getStyle() != attributes.getFontStyle()) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getFontStyle());
+      boolean isSmaller = attributes.isSmaller();
+      if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
+      wasSmaller = isSmaller;
       final FontMetrics metrics = getFontMetrics(font);
       width += metrics.stringWidth(myFragments.get(i));
 
@@ -365,11 +369,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     Font font = getFont();
     LOG.assertTrue(font != null);
 
+    int baseSize = font.getSize();
+    boolean wasSmaller = false;
     for (int i = 0; i < myAttributes.size(); i++) {
       SimpleTextAttributes attributes = myAttributes.get(i);
-      if (font.getStyle() != attributes.getFontStyle()) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getFontStyle());
+      boolean isSmaller = attributes.isSmaller();
+      if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
+      wasSmaller = isSmaller;
+
       final FontMetrics metrics = getFontMetrics(font);
       final int curWidth = metrics.stringWidth(myFragments.get(i));
       if (x >= curX && x < curX + curWidth) {
@@ -455,12 +464,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     UIUtil.applyRenderingHints(g);
     applyAdditionalHints(g);
 
+    int baseSize = getFont().getSize();
+    boolean wasSmaller = false;
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
+
       Font font = g.getFont();
-      if (font.getStyle() != attributes.getFontStyle()) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getFontStyle());
+      boolean isSmaller = attributes.isSmaller();
+      if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
+      wasSmaller = isSmaller;
+
       g.setFont(font);
       final FontMetrics metrics = g.getFontMetrics(font);
 

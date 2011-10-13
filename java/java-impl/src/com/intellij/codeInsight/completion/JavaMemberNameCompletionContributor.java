@@ -191,7 +191,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
   private static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
     if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final List<String> unresolvedRefs = new ArrayList<String>();
+    final Set<String> unresolvedRefs = new LinkedHashSet<String>();
 
     if (parentOfType != null) {
       parentOfType.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -200,10 +200,12 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
           if (parent instanceof PsiReference) return;
           if (referenceOnMethod && parent instanceof PsiMethodCallExpression &&
               reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
-            if (reference.resolve() == null && reference.getReferenceName() != null) unresolvedRefs.add(reference.getReferenceName());
+            if (reference.resolve() == null) {
+              ContainerUtil.addIfNotNull(unresolvedRefs, reference.getReferenceName());
+            }
           }
-          else if (!referenceOnMethod && !(parent instanceof PsiMethodCallExpression) &&reference.resolve() == null && reference.getReferenceName() != null) {
-            unresolvedRefs.add(reference.getReferenceName());
+          else if (!referenceOnMethod && !(parent instanceof PsiMethodCallExpression) &&reference.resolve() == null) {
+            ContainerUtil.addIfNotNull(unresolvedRefs, reference.getReferenceName());
           }
         }
       });

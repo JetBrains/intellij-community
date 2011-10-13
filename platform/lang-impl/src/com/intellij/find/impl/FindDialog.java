@@ -133,7 +133,6 @@ public class FindDialog extends DialogWrapper {
       }
     }
     setOKButtonText(FindBundle.message("find.button"));
-    setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     init();
     initByModel();
     //myLivePreviewController = new LivePreviewController(this, new LivePreview(myProject), getContentPane());

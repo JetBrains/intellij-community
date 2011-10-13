@@ -16,23 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Max Medvedev
  */
 public abstract class AstTransformContributor {
   private static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
-
-  private static final ThreadLocal<Set<GrTypeDefinition>> IN_PROGRESS_METHODS = new ThreadLocal<Set<GrTypeDefinition>>();
-  private static final ThreadLocal<Set<GrTypeDefinition>> IN_PROGRESS_FIELDS = new ThreadLocal<Set<GrTypeDefinition>>();
 
   public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
 
@@ -42,53 +39,31 @@ public abstract class AstTransformContributor {
 
   }
 
-  public static Collection<PsiMethod> runContributorsForMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
-    Set<GrTypeDefinition> inProgress = IN_PROGRESS_METHODS.get();
-    if (inProgress == null) {
-      inProgress = new HashSet<GrTypeDefinition>();
-      IN_PROGRESS_METHODS.set(inProgress);
-    }
-
-    boolean added = inProgress.add(clazz);
-    assert added;
-
-    try {
-      for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-        contributor.collectMethods(clazz, collector);
+  public static Collection<PsiMethod> runContributorsForMethods(@NotNull final GrTypeDefinition clazz) {
+    Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
+      @Override
+      public Collection<PsiMethod> compute() {
+        Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
+        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+          contributor.collectMethods(clazz, collector);
+        }
+        return collector;
       }
-    }
-    finally {
-      inProgress.remove(clazz);
-      //if (inProgress.isEmpty()) {
-      //  IN_PROGRESS.remove();       Don't remove empty set, ThreadLocal automatically removes value when thread stop.
-      //}
-    }
-
-    return collector;
+    });
+    return result == null ? Collections.<PsiMethod>emptyList() : result;
   }
 
-  public static Collection<GrField> runContributorsForFields(@NotNull final GrTypeDefinition clazz, Collection<GrField> collector) {
-    Set<GrTypeDefinition> inProgress = IN_PROGRESS_FIELDS.get();
-    if (inProgress == null) {
-      inProgress = new HashSet<GrTypeDefinition>();
-      IN_PROGRESS_FIELDS.set(inProgress);
-    }
-
-    boolean added = inProgress.add(clazz);
-    assert added;
-
-    try {
-      for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-        contributor.collectFields(clazz, collector);
+  public static List<GrField> runContributorsForFields(@NotNull final GrTypeDefinition clazz) {
+    List<GrField> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
+      @Override
+      public List<GrField> compute() {
+        List<GrField> collector = new ArrayList<GrField>();
+        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+          contributor.collectFields(clazz, collector);
+        }
+        return collector;
       }
-    }
-    finally {
-      inProgress.remove(clazz);
-      //if (inProgress.isEmpty()) {
-      //  IN_PROGRESS.remove();       Don't remove empty set, ThreadLocal automatically removes value when thread stop.
-      //}
-    }
-
-    return collector;
+    });
+    return result == null ? Collections.<GrField>emptyList() : result;
   }
 }

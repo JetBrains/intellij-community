@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.debugger;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -163,6 +164,14 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
           return;
         }
 
+        if (resolved instanceof PsiMember && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
+          String qName = StaticImportMethodFix.getMemberQualifiedName((PsiMember)resolved);
+          if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
+            replaceWithReference(referenceExpression, qName);
+            return;
+          }
+        }
+
         if (resolved instanceof GrField && !referenceExpression.isQualified()) {
           replaceWithReference(referenceExpression, (closure == null ? "delegate" : "owner") + "." + referenceExpression.getReferenceName());
           return;
@@ -186,12 +195,6 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
           parameters.put(name, value);
         }
 
-        if (resolved instanceof PsiClass) {
-          String qName = ((PsiClass)resolved).getQualifiedName();
-          if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
-            replaceWithReference(referenceExpression, qName);
-          }
-        }
       }
 
       @Override

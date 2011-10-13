@@ -92,8 +92,7 @@ public class FieldPanel extends AbstractFieldPanel {
 
   public void setEditable(boolean editable) {
     myTextField.setEditable(editable);
-    for (int i = 0; i < myButtons.size(); i++) {
-      JButton button = (JButton)myButtons.get(i);
+    for (JButton button : myButtons) {
       button.setEnabled(editable);
     }
   }

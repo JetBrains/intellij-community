@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -75,8 +74,6 @@ import java.util.List;
  * @author ilyas
  */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
-
-  private Key<CachedValue<GrReflectedMethod[]>> CACHED_REFLECTED_METHODS_KEY = Key.create("Cached reflected methods");
 
   protected GrMethodBaseImpl(final GrMethodStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -506,17 +503,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    CachedValue<GrReflectedMethod[]> cached = getUserData(CACHED_REFLECTED_METHODS_KEY);
-    if (cached == null) {
-      cached = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<GrReflectedMethod[]>() {
-        @Override
-        public Result<GrReflectedMethod[]> compute() {
-          return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      });
-      putUserData(CACHED_REFLECTED_METHODS_KEY, cached);
-    }
-
-    return cached.getValue();
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
+      @Override
+      public Result<GrReflectedMethod[]> compute() {
+        return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 }

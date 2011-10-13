@@ -77,8 +77,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final ActionManager myActionManager;
   private final UISettings myUISettings;
 
-  private static WelcomeScreen myWelcomeScreen;
-  private static Component myWelcomePane;
+  private WelcomeScreen myWelcomeScreen;
+  private Component myWelcomePane;
   private final boolean myGlassPaneInitialized;
   private final IdeGlassPaneImpl myGlassPane;
 
@@ -133,6 +133,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
   }
 
+  public WelcomeScreen getWelcomeScreen() {
+    return myWelcomeScreen;
+  }
 
   public void setGlassPane(final Component glass) {
     if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");

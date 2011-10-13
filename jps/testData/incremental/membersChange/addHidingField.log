@@ -1,0 +1,25 @@
+Request to make modules:
+module AddHidingField
+End of request
+digraph X {
+  AddHidingField[label="AddHidingField"];
+}
+digraph X {
+  AddHidingField[label="AddHidingField"];
+}
+Propagated modules:
+module AddHidingField
+End of propagated
+Cleaning output files:
+out/production/AddHidingField/BaseAction.class
+End of files
+Compiling files:
+src/BaseAction.java
+End of files
+Cleaning output files:
+out/production/AddHidingField/Client$1.class
+out/production/AddHidingField/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

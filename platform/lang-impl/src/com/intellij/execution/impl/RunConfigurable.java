@@ -359,7 +359,7 @@ class RunConfigurable extends BaseConfigurable {
     panel.add(new JLabel("Press the"));
 
     final JEditorPane browser = new JEditorPane();
-    browser.setBorder(null);
+    browser.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
     browser.setEditable(false);
     browser.setEditorKit(new HTMLEditorKit());
     browser.setBackground(myRightPanel.getBackground());

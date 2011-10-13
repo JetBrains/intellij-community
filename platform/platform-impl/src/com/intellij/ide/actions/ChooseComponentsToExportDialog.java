@@ -74,6 +74,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     for (final ComponentElementProperties componentElementProperty : componentElementProperties) {
       myChooser.addElement(componentElementProperty, true, componentElementProperty);
     }
+    myChooser.sort(new Comparator<ComponentElementProperties>() {
+      @Override
+      public int compare(ComponentElementProperties o1,
+                         ComponentElementProperties o2) {
+        return o1.toString().compareTo(o2.toString());
+      }
+    });
 
     final ActionListener browseAction = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -89,9 +96,20 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     String exportPath = PropertiesComponent.getInstance().getOrInit("export.settings.path", DEFAULT_PATH);
     myPathPanel.setText(exportPath);
+    myPathPanel.setChangeListener(new Runnable() {
+      @Override
+      public void run() {
+        updateControls();
+      }
+    });
+    updateControls();
 
     setTitle(title);
     init();
+  }
+
+  private void updateControls() {
+    setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPathPanel.getText()));    
   }
 
   @Override

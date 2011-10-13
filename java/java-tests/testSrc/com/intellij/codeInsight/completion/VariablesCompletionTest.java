@@ -91,6 +91,11 @@ public class VariablesCompletionTest extends CompletionTestCase {
     doTest("TestSource8.java", "TestResult8.java");
   }
 
+  public void testUnresolvedReference() throws Exception {
+    configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
+    assertStringItems("o", "psiClass");
+  }
+
   public void testFieldNameCompletion1() throws Exception {
     configureByFileNoCompletion(FILE_PREFIX + "locals/" + "FieldNameCompletion1.java");
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);

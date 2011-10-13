@@ -91,6 +91,11 @@ public class GeneratorTest extends LightGroovyTestCase {
     doTest();
   }
 
+  public void testTupleConstructorAnno() throws Throwable {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}");
+    doTest();
+  }
+
   public void testDelegateAnno() throws Throwable {
     myFixture.addClass("package groovy.lang; public @interface Delegate {}");
     doTest();

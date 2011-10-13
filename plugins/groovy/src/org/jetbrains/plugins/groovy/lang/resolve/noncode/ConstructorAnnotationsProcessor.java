@@ -18,18 +18,16 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -37,19 +35,15 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
+public class ConstructorAnnotationsProcessor extends AstTransformContributor {
 
   public static final String IMMUTABLE = "groovy.lang.Immutable";
 
   @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass psiClass,
-                                     PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
-                                     ResolveState state) {
-    if (!(psiClass instanceof GrTypeDefinition) || psiClass.getName() == null) return;
+  public void collectMethods(@NotNull GrTypeDefinition typeDefinition, Collection<PsiMethod> collector) {
+    if (typeDefinition.getName() == null) return;
 
-    PsiModifierList modifierList = psiClass.getModifierList();
+    PsiModifierList modifierList = typeDefinition.getModifierList();
     if (modifierList == null) return;
 
     final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
@@ -60,16 +54,14 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
       return;
     }
 
-    final GrTypeDefinition typeDefinition = (GrTypeDefinition)psiClass;
-
     if (tupleConstructor != null &&
         typeDefinition.getConstructors().length > 0 &&
         !PsiUtil.getAnnoAttributeValue(tupleConstructor, "force", false)) {
       return;
     }
 
-    final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
-    fieldsConstructor.setConstructor(true).setNavigationElement(psiClass);
+    final GrLightMethodBuilder fieldsConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
+    fieldsConstructor.setConstructor(true).setNavigationElement(typeDefinition);
 
     Set<String> excludes = new HashSet<String>();
     if (tupleConstructor != null) {
@@ -96,15 +88,13 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
                   !immutable, excludes);
 
 
-    if (!processor.execute(fieldsConstructor, state)) return;
+    collector.add(fieldsConstructor.setContainingClass(typeDefinition));
 
-    final LightMethodBuilder defaultConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
-    defaultConstructor.setConstructor(true);
-    processor.execute(defaultConstructor, state);
+    collector.add(new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName()).addParameter("args", CommonClassNames.JAVA_UTIL_MAP, false).setConstructor(true).setContainingClass(typeDefinition));
   }
 
   private static void addParametersForSuper(@NotNull PsiClass typeDefinition,
-                                            LightMethodBuilder fieldsConstructor,
+                                            GrLightMethodBuilder fieldsConstructor,
                                             boolean superFields,
                                             boolean superProperties, Set<PsiClass> visited, Set<String> excludes) {
     PsiClass parent = typeDefinition.getSuperClass();
@@ -115,7 +105,7 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
   }
 
   private static void addParameters(@NotNull PsiClass psiClass,
-                                    LightMethodBuilder fieldsConstructor,
+                                    GrLightMethodBuilder fieldsConstructor,
                                     boolean includeProperties,
                                     boolean includeFields, boolean optional, Set<String> excludes) {
 

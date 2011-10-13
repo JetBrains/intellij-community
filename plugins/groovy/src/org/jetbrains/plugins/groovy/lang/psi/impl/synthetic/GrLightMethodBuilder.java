@@ -28,8 +28,7 @@ import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -65,12 +64,14 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private Runnable myOnRename;
 
   private Object myData;
+  private boolean myConstructor;
 
   public GrLightMethodBuilder(PsiManager manager, String name) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myName = name;
     myParameterList = new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE);
     myModifierList = new GrLightModifierList(this);
+    myConstructor = false;
   }
 
   public void setNamedParametersArray(@NotNull String[] namedParametersArray) {
@@ -154,7 +155,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    return GrReflectedMethod.EMPTY_ARRAY;
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
+      @Override
+      public Result<GrReflectedMethod[]> compute() {
+        return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrLightMethodBuilder.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 
   public GrLightMethodBuilder addModifier(String modifier) {
@@ -251,7 +257,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @Override
   public boolean isConstructor() {
-    return false;
+    return myConstructor;
+  }
+
+  public GrLightMethodBuilder setConstructor(boolean constructor) {
+    myConstructor = constructor;
+    return this;
   }
 
   public boolean isVarArgs() {

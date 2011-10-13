@@ -16,6 +16,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -37,7 +38,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.TitledHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

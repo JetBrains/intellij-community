@@ -37,6 +37,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_UNDERLINE = STYLE_WAVED << 1;
   public static final int STYLE_BOLD_DOTTED_LINE = STYLE_UNDERLINE << 1;
   public static final int STYLE_SEARCH_MATCH = STYLE_BOLD_DOTTED_LINE << 1;
+  public static final int STYLE_SMALLER = STYLE_SEARCH_MATCH << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -85,7 +86,8 @@ public final class SimpleTextAttributes {
            STYLE_WAVED |
            STYLE_UNDERLINE |
            STYLE_BOLD_DOTTED_LINE |
-           STYLE_SEARCH_MATCH) & style) != 0) {
+           STYLE_SEARCH_MATCH |
+           STYLE_SMALLER) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -146,6 +148,10 @@ public final class SimpleTextAttributes {
 
   public boolean isSearchMatch() {
     return (myStyle & STYLE_SEARCH_MATCH) != 0;
+  }
+  
+  public boolean isSmaller() {
+    return (myStyle & STYLE_SMALLER) != 0;
   }
 
   public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {

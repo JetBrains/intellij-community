@@ -25,7 +25,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -54,19 +53,7 @@ public class AssignMnemonicFix extends QuickFix {
       if (!myEditor.ensureEditable()) {
         return;
       }
-      IntroStringProperty prop = (IntroStringProperty) textProperty;
-      if (descriptor.getBundleName() == null) {
-        prop.setValueEx(myComponent, StringDescriptor.create(result));
-      }
-      else {
-        final String newKeyName = StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor,
-                                                                               myEditor.getStringDescriptorLocale(), result,
-                                                                               myEditor.getPsiFile());
-        if (newKeyName != null) {
-          prop.setValueEx(myComponent, new StringDescriptor(descriptor.getBundleName(), newKeyName));
-        }
-      }
-      myEditor.refreshAndSave(false);
+      FormInspectionUtil.updateStringPropertyValue(myEditor, myComponent, (IntroStringProperty)textProperty, descriptor, result);
     }
   }
 

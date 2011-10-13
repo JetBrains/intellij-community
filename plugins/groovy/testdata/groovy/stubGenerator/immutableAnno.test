@@ -42,6 +42,12 @@ public void act() {
 return ;
 }
 
+public FailingB() {
+
+}
+public FailingB(java.util.Map args) {
+
+}
 public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }

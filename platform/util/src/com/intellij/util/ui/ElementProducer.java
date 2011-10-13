@@ -20,4 +20,5 @@ package com.intellij.util.ui;
  */
 public interface ElementProducer<E> {
   E createElement();
+  boolean canCreateElement();
 }

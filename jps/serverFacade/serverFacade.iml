@@ -7,22 +7,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gant-1.9.5_groovy-1.7.10.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="module" module-name="jps-model" />
-    <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="module" module-name="jps-model" exported="" />
+    <orderEntry type="library" exported="" name="asm" level="project" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="javac2" />
-    <orderEntry type="module" module-name="forms-compiler" />
+    <orderEntry type="module" module-name="javac2" exported="" />
+    <orderEntry type="module" module-name="forms-compiler" exported="" />
+    <orderEntry type="library" exported="" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="forms_rt" exported="" />
+    <orderEntry type="library" exported="" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="notNull" exported="" />
   </component>
 </module>
 

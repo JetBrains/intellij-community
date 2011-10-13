@@ -17,6 +17,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 

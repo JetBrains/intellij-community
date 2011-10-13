@@ -355,7 +355,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
-    @NonNls private static final String PACKAGE_INFO_FILE = "package-info.java";
     private final Object[] OOCB_DEPENDENCY = { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
 
     public Result<PsiModifierList> compute() {

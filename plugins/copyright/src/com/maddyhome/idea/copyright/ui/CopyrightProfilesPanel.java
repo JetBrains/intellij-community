@@ -150,7 +150,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
                 registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
             }
             public void actionPerformed(AnActionEvent event) {
-                final String name = askForProfileName("Create new copyright profile", "");
+                final String name = askForProfileName("Create Copyright Profile", "");
                 if (name == null) return;
                 final CopyrightProfile copyrightProfile = new CopyrightProfile(name);
                 addProfileNode(copyrightProfile);
@@ -164,7 +164,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
                 registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
             }
             public void actionPerformed(AnActionEvent event) {
-                final String profileName = askForProfileName("Copy copyright profile", "");
+                final String profileName = askForProfileName("Copy Copyright Profile", "");
                 if (profileName == null) return;
                 final CopyrightProfile clone = new CopyrightProfile();
                 clone.copyFrom((CopyrightProfile) getSelectedObject());

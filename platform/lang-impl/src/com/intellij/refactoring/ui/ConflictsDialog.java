@@ -123,7 +123,7 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   protected JComponent createSouthPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout(10, 0));
     panel.add(super.createSouthPanel(), BorderLayout.CENTER);
     panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.WEST);
     return panel;

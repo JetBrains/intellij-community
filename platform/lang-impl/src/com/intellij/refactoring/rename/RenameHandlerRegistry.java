@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
