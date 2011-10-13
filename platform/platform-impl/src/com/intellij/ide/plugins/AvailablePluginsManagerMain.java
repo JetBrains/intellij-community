@@ -90,7 +90,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     if (!inToolbar) {
       actionGroup.add(new ActionInstallPlugin(this, installed));
     }
-    actionGroup.add(new AnAction("Reload plugins", "Reload plugins", IconLoader.getIcon("/vcs/refresh.png")) {
+    actionGroup.add(new AnAction("Reload list of plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png")) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         loadAvailablePlugins();

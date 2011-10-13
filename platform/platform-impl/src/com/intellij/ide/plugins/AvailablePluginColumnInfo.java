@@ -20,6 +20,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -63,6 +64,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
   }
 
   private static class AvailableTableRenderer extends DefaultTableCellRenderer {
+    private static final int LEFT_MARGIN = new JLabel().getFontMetrics(UIUtil.getLabelFont()).stringWidth("  ");
     private final JLabel myNameLabel = new JLabel();
     private final JLabel myCategoryLabel = new JLabel();
     private final JLabel myDateLabel = new JLabel();
@@ -75,9 +77,9 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       myPluginDescriptor = pluginDescriptor;
 
       myNameLabel.setFont(getNameFont());
-      myCategoryLabel.setFont(getSmallFont());
-      myDateLabel.setFont(getSmallFont());
-      myDownloadsLabel.setFont(getSmallFont());
+      myCategoryLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      myDateLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      myDownloadsLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
       myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
 
@@ -95,6 +97,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       gc.gridwidth = 1;
       gc.gridy = 1;
       myPanel.add(myCategoryLabel, gc);
+      gc.insets.left = LEFT_MARGIN;
       myPanel.add(myDateLabel, gc);
       myPanel.add(myDownloadsLabel, gc);
 

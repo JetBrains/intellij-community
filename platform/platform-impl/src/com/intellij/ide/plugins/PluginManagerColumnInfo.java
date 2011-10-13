@@ -172,9 +172,4 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     Font f = new JLabel().getFont();
     return f.deriveFont(Math.min(14.f, f.getSize() * 1.1f));
   }
-
-  protected static Font getSmallFont() {
-    Font f = new JLabel().getFont();
-    return f.deriveFont(Math.max(8.f, f.getSize() * 0.8f));
-  }
 }
