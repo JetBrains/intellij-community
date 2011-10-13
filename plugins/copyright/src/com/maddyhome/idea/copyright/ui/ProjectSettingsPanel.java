@@ -29,16 +29,11 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.PanelWithButtons;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
-import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jetbrains.annotations.NotNull;
@@ -47,18 +42,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class ProjectSettingsPanel extends PanelWithButtons {
+public class ProjectSettingsPanel {
   private final Project myProject;
   private final CopyrightProfilesPanel myProfilesModel;
   private final CopyrightManager myManager;
@@ -66,11 +57,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
   private final TableView<ScopeSetting> myScopeMappingTable;
   private final ListTableModel<ScopeSetting> myScopeMappingModel;
   private final JComboBox myProfilesComboBox = new JComboBox();
-
-  private JButton myAddButton;
-  private JButton myRemoveButton;
-  private JButton myMoveUpButton;
-  private JButton myMoveDownButton;
 
   private final HyperlinkLabel myScopesLink = new HyperlinkLabel();
 
@@ -91,7 +77,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         for (ScopeSetting setting : toRemove) {
           myScopeMappingModel.removeRow(myScopeMappingModel.indexOf(setting));
         }
-        updateButtons();
       }
     });
     myManager = CopyrightManager.getInstance(project);
@@ -113,13 +98,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
       }
     });
 
-    myScopeMappingTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
-    initPanel();
-
     myScopesLink.setVisible(!myProject.isDefault());
     myScopesLink.setHyperlinkText("Select Scopes to add new scopes or modify existing ones");
     myScopesLink.addHyperlinkListener(new HyperlinkListener() {
@@ -135,84 +113,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     });
   }
 
-  private void updateButtons() {
-    myAddButton.setEnabled(!myProfilesModel.getAllProfiles().isEmpty());
-    int index = myScopeMappingTable.getSelectedRow();
-    if (0 <= index && index < myScopeMappingModel.getRowCount()) {
-      myRemoveButton.setEnabled(true);
-      myMoveUpButton.setEnabled(index > 0);
-      myMoveDownButton.setEnabled(index < myScopeMappingModel.getRowCount() - 1);
-    }
-    else {
-      myRemoveButton.setEnabled(false);
-      myMoveUpButton.setEnabled(false);
-      myMoveDownButton.setEnabled(false);
-    }
-  }
-
-  @Nullable
-  protected String getLabelText() {
-    return null;
-  }
-
-  protected JButton[] createButtons() {
-    myAddButton = new JButton("Add");
-    myAddButton.setMnemonic('d');
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        TableUtil.stopEditing(myScopeMappingTable);
-        List<ScopeSetting> newList = new ArrayList<ScopeSetting>(myScopeMappingModel.getItems());
-        newList.add(new ScopeSetting(DefaultScopesProvider.getAllScope(),
-                                     myProfilesModel.getAllProfiles().values().iterator().next()));
-        myScopeMappingModel.setItems(newList);
-        TableUtil.editCellAt(myScopeMappingTable, myScopeMappingModel.getRowCount() - 1, 0);
-      }
-    });
-    myRemoveButton = new JButton("Remove");
-    myRemoveButton.setMnemonic('R');
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        TableUtil.stopEditing(myScopeMappingTable);
-        int index = myScopeMappingTable.getSelectedRow();
-        if (0 <= index && index < myScopeMappingModel.getRowCount()) {
-          myScopeMappingModel.removeRow(index);
-          if (index < myScopeMappingModel.getRowCount()) {
-            myScopeMappingTable.setRowSelectionInterval(index, index);
-          }
-          else {
-            if (index > 0) {
-              myScopeMappingTable.setRowSelectionInterval(index - 1, index - 1);
-            }
-          }
-          updateButtons();
-        }
-        myScopeMappingTable.requestFocus();
-      }
-    });
-
-    myMoveUpButton = new JButton("Move Up");
-    myMoveUpButton.setMnemonic('U');
-    myMoveUpButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          TableUtil.moveSelectedItemsUp(myScopeMappingTable);
-        }
-      }
-    );
-
-    myMoveDownButton = new JButton("Move Down");
-    myMoveDownButton.setMnemonic('D');
-    myMoveDownButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          TableUtil.moveSelectedItemsDown(myScopeMappingTable);
-        }
-      }
-    );
-
-    return new JButton[]{myAddButton, myRemoveButton, myMoveUpButton, myMoveDownButton};
-  }
-
   private void fillCopyrightProfiles() {
     final DefaultComboBoxModel boxModel = (DefaultComboBoxModel)myProfilesComboBox.getModel();
     boxModel.removeAllElements();
@@ -222,10 +122,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     }
   }
 
-  protected JComponent createMainComponent() {
-    return ScrollPaneFactory.createScrollPane(myScopeMappingTable);
-  }
-
   public JComponent getMainComponent() {
     final JPanel panel = new JPanel(new BorderLayout(0, 10));
     final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
@@ -233,7 +129,19 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
     panel.add(component, BorderLayout.NORTH);
-    panel.add(this, BorderLayout.CENTER);
+    ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
+      @Override
+      public ScopeSetting createElement() {
+        return new ScopeSetting(DefaultScopesProvider.getAllScope(), myProfilesModel.getAllProfiles().values().iterator().next());
+      }
+
+      @Override
+      public boolean canCreateElement() {
+        return !myProfilesModel.getAllProfiles().isEmpty();
+      }
+    };
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myScopeMappingTable, producer);
+    panel.add(decorator.createPanel(), BorderLayout.CENTER);
     panel.add(myScopesLink, BorderLayout.SOUTH);
     return panel;
   }
@@ -293,7 +201,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
       myManager.unmapCopyright(scopeName);
     }
     myScopeMappingModel.setItems(mappings);
-    updateButtons();
   }
 
 

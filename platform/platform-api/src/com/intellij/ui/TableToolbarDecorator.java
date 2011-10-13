@@ -35,10 +35,12 @@ import java.beans.PropertyChangeListener;
  */
 class TableToolbarDecorator extends ToolbarDecorator {
   private final JTable myTable;
+  @Nullable private final ElementProducer<?> myProducer;
   private TableModel myTableModel;
 
   TableToolbarDecorator(@NotNull JTable table, @Nullable final ElementProducer<?> producer) {
     myTable = table;
+    myProducer = producer;
     myTableModel = table.getModel();
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTableModel instanceof EditableModel;
     if (myTableModel instanceof EditableModel) {
@@ -81,7 +83,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
           p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
         }
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, true);
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, myProducer == null || myProducer.canCreateElement());
       }
       else {
         p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, false);

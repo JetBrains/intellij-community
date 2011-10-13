@@ -33,7 +33,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Keyword to detect copyright in comments"/>
+          <text value="Keyword to detect copyright in comments:"/>
         </properties>
       </component>
       <component id="25309" class="javax.swing.JTextField" binding="myKeywordTf" default-binding="true">
@@ -58,7 +58,7 @@
         </constraints>
         <properties>
           <labelFor value="31075"/>
-          <text value="Allow replacing copyright if old copyright contains"/>
+          <text value="Allow replacing copyright if old copyright contains:"/>
         </properties>
       </component>
       <component id="31075" class="javax.swing.JTextField" binding="myAllowReplaceTextField">
@@ -74,7 +74,7 @@
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Copyright text (may contain velocity templates)"/>
+          <text value="Copyright text (may contain Velocity templates):"/>
         </properties>
       </component>
     </children>
