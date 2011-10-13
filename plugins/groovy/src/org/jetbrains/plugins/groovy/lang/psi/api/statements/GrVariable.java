@@ -20,6 +20,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -38,6 +39,9 @@ public interface GrVariable extends PsiVariable, GrNamedElement {
       return new GrVariable[count];
     }
   };
+
+  @NotNull
+  String getName();
 
   @Nullable
   GrExpression getInitializerGroovy();

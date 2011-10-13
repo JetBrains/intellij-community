@@ -38,7 +38,7 @@ public class GrMissingIfStatement implements GrFixer {
     final PsiElement elseElement = ifStatement.getElseKeyword();
 
     if (elseElement != null && (elseBranch == null || !(elseBranch instanceof GrBlockStatement) &&
-            startLine(document, elseBranch) > startLine(document, elseElement))) {
+            GrForBodyFixer.startLine(editor.getDocument(), elseBranch) > GrForBodyFixer.startLine(editor.getDocument(), elseElement))) {
       document.insertString(elseElement.getTextRange().getEndOffset(), "{}");
     }
 
@@ -46,7 +46,8 @@ public class GrMissingIfStatement implements GrFixer {
     if (thenBranch instanceof GrBlockStatement) return;
 
     boolean transformingOneLiner = false;
-    if (thenBranch != null && startLine(document, thenBranch) == startLine(document, ifStatement)) {
+    if (thenBranch != null && GrForBodyFixer.startLine(editor.getDocument(), thenBranch) ==
+                              GrForBodyFixer.startLine(editor.getDocument(), ifStatement)) {
       if (ifStatement.getCondition() != null) {
         return;
       }
@@ -62,9 +63,5 @@ public class GrMissingIfStatement implements GrFixer {
       document.insertString(rParenth.getTextRange().getEndOffset(), "{");
       document.insertString(thenBranch.getTextRange().getEndOffset() + 1, "}");
     }
-  }
-
-  private static int startLine(Document doc, PsiElement psiElement) {
-    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 }

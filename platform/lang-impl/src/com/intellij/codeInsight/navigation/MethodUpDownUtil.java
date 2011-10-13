@@ -71,7 +71,7 @@ public class MethodUpDownUtil {
       Object value = ((StructureViewTreeElement)treeElement).getValue();
       if (value instanceof PsiElement) {
         PsiElement element = (PsiElement)value;
-        if (array.contains(element) || !file.equals(element.getContainingFile())) return;
+        if (array.contains(element) || !file.equals(element.getContainingFile())) continue;
         array.add(element);
       }
       addStructureViewElements(treeElement, array, file);

@@ -805,7 +805,13 @@ public class AbstractPopup implements JBPopup {
 
                     return new ActionCallback.Done();
                   }
-                }, true);
+                }, true).doWhenRejected(new Runnable() {
+                  @Override
+                  public void run() {
+                    removeActivity(myActivityKey);
+                    result.setRejected();
+                  }
+                });
               }
             });
           } else {

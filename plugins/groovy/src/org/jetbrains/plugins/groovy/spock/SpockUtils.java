@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.spock;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrBitwiseExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -220,16 +218,6 @@ public class SpockUtils {
     if (e instanceof GrLabeledStatement) return null;
 
     return e;
-  }
-
-  public static boolean isInSpockTest(@Nullable PsiElement element) {
-    GrMethod method = PsiTreeUtil.getParentOfType(element, GrMethod.class);
-    if (method == null) return false;
-
-    PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) return false;
-
-    return GroovyPsiManager.isInheritorCached(containingClass, SPEC_CLASS_NAME);
   }
 
   @Nullable

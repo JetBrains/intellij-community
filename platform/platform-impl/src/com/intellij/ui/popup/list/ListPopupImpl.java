@@ -456,11 +456,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     if (myListModel.isVisible(value)) {
       myList.setSelectedValue(value, true);
       myList.repaint();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          handleSelect(true);
-        }
-      });
+      handleSelect(true);
     }
   }
 

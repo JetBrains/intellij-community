@@ -10,7 +10,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -32,7 +31,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     setNavigationElement(navigationElement);
   }
   
-  public LightVariableBuilder(PsiManager manager, @Nullable String name, @NotNull PsiType type, Language language) {
+  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, Language language) {
     super(manager, language);
     myName = name;
     myType = type;
@@ -66,6 +65,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return myModifierList.hasModifierProperty(name);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;

@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -31,4 +32,8 @@ public interface GrSwitchStatement extends GroovyPsiElement, GrStatement {
 
   @NotNull
   GrCaseSection[] getCaseSections();
+
+  @Nullable PsiElement getRParenth();
+
+  @Nullable PsiElement getLBrace();
 }

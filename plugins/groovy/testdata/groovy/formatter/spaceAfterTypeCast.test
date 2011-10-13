@@ -1,0 +1,3 @@
+def foo = (Object) bar()
+-----
+def foo = ( Object )bar()

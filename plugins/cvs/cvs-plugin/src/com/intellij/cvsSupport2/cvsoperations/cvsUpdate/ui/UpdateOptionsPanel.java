@@ -73,7 +73,7 @@ public class UpdateOptionsPanel {
     myMergingGroup = new JRadioButton[]{myDoNotMerge, myMergeWithBranch, myMergeTwoBranches};
 
     myKeywordSubstitutionPanel.setLayout(new BorderLayout());
-    myKeywordSubstitutionPanel.add(myChangeKeywordSubstitutionPanel.getPanel(), BorderLayout.CENTER);
+    myKeywordSubstitutionPanel.add(myChangeKeywordSubstitutionPanel.getComponent(), BorderLayout.CENTER);
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnVirtualFiles(files),
                                                                     project);
     myDateOrRevisionOrTagSettings.setHeadCaption(CvsBundle.message("label.default.update.branch"));

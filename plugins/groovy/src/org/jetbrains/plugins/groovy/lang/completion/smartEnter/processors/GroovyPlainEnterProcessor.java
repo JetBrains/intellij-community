@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors;
 import com.intellij.psi.PsiElement;
 import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -41,18 +40,12 @@ public class GroovyPlainEnterProcessor implements EnterProcessor {
               block.getTextRange().getEndOffset());
     }
 
-    getEnterHandler().execute(editor, ((EditorEx) editor).getDataContext());
+    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE)
+      .execute(editor, ((EditorEx)editor).getDataContext());
     return true;
   }
 
-  private EditorActionHandler getEnterHandler() {
-    EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
-            IdeActions.ACTION_EDITOR_START_NEW_LINE
-    );
-    return enterHandler;
-  }
-
-  private GrCodeBlock getControlStatementBlock(int caret, PsiElement element) {
+  private static GrCodeBlock getControlStatementBlock(int caret, PsiElement element) {
     GrStatement body = null;
     if (element instanceof GrIfStatement) {
       body = ((GrIfStatement) element).getThenBranch();

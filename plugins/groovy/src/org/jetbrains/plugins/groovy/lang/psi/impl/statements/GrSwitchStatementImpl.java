@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -48,5 +50,15 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
   @NotNull
   public GrCaseSection[] getCaseSections() {
     return findChildrenByClass(GrCaseSection.class);
+  }
+
+  @Override
+  public PsiElement getRParenth() {
+    return findChildByType(GroovyTokenTypes.mRPAREN);
+  }
+
+  @Override
+  public PsiElement getLBrace() {
+    return findChildByType(GroovyTokenTypes.mLCURLY);
   }
 }
