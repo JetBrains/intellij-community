@@ -227,6 +227,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     else if (element instanceof PsiDocComment) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiJavaFile) {
+        if (((PsiJavaFile)parent).getName().equals(PsiPackage.PACKAGE_INFO_FILE)) {
+          return false;
+        }
         PsiElement firstChild = parent.getFirstChild();
         if (firstChild instanceof PsiWhiteSpace) {
           firstChild = firstChild.getNextSibling();

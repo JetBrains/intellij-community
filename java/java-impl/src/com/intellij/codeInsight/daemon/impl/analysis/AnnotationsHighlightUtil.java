@@ -44,7 +44,6 @@ import java.util.Set;
  */
 public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
-  @NonNls private static final String PACKAGE_INFO_JAVA = "package-info.java";
 
   public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
     PsiReference ref = pair.getReference();
@@ -297,7 +296,7 @@ public class AnnotationsHighlightUtil {
       return null;
     }
     PsiFile file = statement.getContainingFile();
-    if (file != null && !PACKAGE_INFO_JAVA.equals(file.getName())) {
+    if (file != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                statement.getAnnotationList().getTextRange(),
                                                JavaErrorMessages.message("invalid.package.annotation.containing.file"));

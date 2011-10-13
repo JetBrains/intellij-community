@@ -472,7 +472,7 @@ public class JavaDocInfoGenerator {
 
   private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage) {
     for(PsiDirectory directory: psiPackage.getDirectories()) {
-      final PsiFile packageInfoFile = directory.findFile("package-info.java");
+      final PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
         final ASTNode node = packageInfoFile.getNode();
         if (node != null) {
