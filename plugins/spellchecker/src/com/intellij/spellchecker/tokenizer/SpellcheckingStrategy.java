@@ -28,7 +28,6 @@ import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
-  protected final Tokenizer<PsiPlainText> myPlainTextTokenizer = TokenizerBase.create(SplitterFactory.getInstance().getPlainTextSplitter());
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
   protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = TokenizerBase.create(SplitterFactory.getInstance().getAttributeValueSplitter());
   protected final Tokenizer<XmlText> myXmlTextTokenizer = new XmlTextTokenizer();
@@ -48,7 +47,7 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiComment) return myCommentTokenizer;
     if (element instanceof XmlAttributeValue) return myXmlAttributeTokenizer;
     if (element instanceof XmlText) return myXmlTextTokenizer;
-    if (element instanceof PsiPlainText) return myPlainTextTokenizer;
+    if (element instanceof PsiPlainText) return TEXT_TOKENIZER;
     return EMPTY_TOKENIZER;
   }
 
