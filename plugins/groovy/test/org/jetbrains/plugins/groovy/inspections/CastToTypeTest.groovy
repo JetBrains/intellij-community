@@ -36,7 +36,7 @@ public class CastToTypeTest extends LightCodeInsightFixtureTestCase {
     final IntentionAction quickFix = myFixture.findSingleIntention(name);
     assertNotNull(quickFix)
     myFixture.launchAction(quickFix)
-    myFixture.checkResultByFile(getTestName(true) + '_after.groovy')
+    myFixture.checkResultByFile(getTestName(false) + '_after.groovy')
   }
 
   void testSimple() {doTest('Cast to List<? extends Abc>')}
