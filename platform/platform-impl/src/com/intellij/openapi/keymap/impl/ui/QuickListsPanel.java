@@ -99,9 +99,13 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable {
       myQuickListsModel.addElement(list);
     }
 
-    if (myQuickListsModel.size() > 0) {
-      myQuickListsList.setSelectedIndex(0);
-    }
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myQuickListsModel.size() > 0) {
+          myQuickListsList.setSelectedIndex(0);
+        }
+      }
+    });
   }
 
   public boolean isModified() {
