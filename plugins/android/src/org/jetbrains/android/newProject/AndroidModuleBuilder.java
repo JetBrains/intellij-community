@@ -31,7 +31,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -56,6 +54,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
+import org.jetbrains.android.run.TargetSelectionMode;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -85,6 +84,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private ProjectType myProjectType;
   private Module myTestedModule;
   private Sdk mySdk;
+  private TargetSelectionMode myTargetSelectionMode;
+  private String myPreferredAvd;
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
@@ -146,7 +147,9 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     createResourcesAndLibs(project, contentRoot);
     PsiDirectory sourceDir = sourceRoot != null ? PsiManager.getInstance(project).findDirectory(sourceRoot) : null;
     createActivityAndSetupManifest(facet, sourceDir);
-    addRunConfiguration(facet);
+    if (myTargetSelectionMode != null) {
+      addRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
+    }
   }
 
   @NotNull
@@ -276,12 +279,14 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                   if (project.isDisposed() || facet.getModule().isDisposed()) {
                     return;
                   }
-                  
-                  if (myProjectType == ProjectType.APPLICATION) {
-                    addRunConfiguration(facet);
-                  }
-                  else if (myProjectType == ProjectType.TEST) {
-                    addTestRunConfiguration(facet);
+
+                  if (myTargetSelectionMode != null) {
+                    if (myProjectType == ProjectType.APPLICATION) {
+                      addRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
+                    }
+                    else if (myProjectType == ProjectType.TEST) {
+                      addTestRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
+                    }
                   }
                 }
               });
@@ -354,35 +359,36 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     }
   }
 
-  private static boolean isFirstModule(@NotNull Module module) {
-    Project project = module.getProject();
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    return modules.length == 0 || (modules.length == 1 && ArrayUtil.find(modules, module) >= 0);
-  }
-
-  private void addRunConfiguration(AndroidFacet facet) {
+  private void addRunConfiguration(@NotNull AndroidFacet facet,
+                                   @NotNull TargetSelectionMode targetSelectionMode,
+                                   @Nullable String targetAvd) {
+    String activityClass;
     if (isHelloAndroid()) {
-      String activityClass = myPackageName + '.' + myActivityName;
-      Module module = facet.getModule();
-      AndroidUtils.addRunConfiguration(module.getProject(), facet, activityClass, !isFirstModule(module));
+      activityClass = myPackageName + '.' + myActivityName;
     }
+    else {
+      activityClass = null;
+    }
+    Module module = facet.getModule();
+    AndroidUtils.addRunConfiguration(module.getProject(), facet, activityClass, false, targetSelectionMode, targetAvd);
   }
 
-  private static void addTestRunConfiguration(final AndroidFacet facet) {
-    String moduleName = facet.getModule().getName();
+  private static void addTestRunConfiguration(final AndroidFacet facet, @NotNull TargetSelectionMode mode, @Nullable String preferredAvd) {
     Project project = facet.getModule().getProject();
-    int result = Messages.showYesNoDialog(project, AndroidBundle.message("create.run.configuration.question", moduleName),
-                                          AndroidBundle.message("create.run.configuration.title"), Messages.getQuestionIcon());
-    if (result == 0) {
-      RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-      Module module = facet.getModule();
-      RunnerAndConfigurationSettings settings = runManager
-        .createRunConfiguration(module.getName(), AndroidTestRunConfigurationType.getInstance().getFactory());
-      AndroidTestRunConfiguration configuration = (AndroidTestRunConfiguration)settings.getConfiguration();
-      configuration.setModule(module);
-      runManager.addConfiguration(settings, false);
-      runManager.setActiveConfiguration(settings);
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+    Module module = facet.getModule();
+    RunnerAndConfigurationSettings settings = runManager
+      .createRunConfiguration(module.getName(), AndroidTestRunConfigurationType.getInstance().getFactory());
+
+    AndroidTestRunConfiguration configuration = (AndroidTestRunConfiguration)settings.getConfiguration();
+    configuration.setModule(module);
+    configuration.setTargetSelectionMode(mode);
+    if (preferredAvd != null) {
+      configuration.PREFERRED_AVD = preferredAvd;
     }
+
+    runManager.addConfiguration(settings, false);
+    runManager.setActiveConfiguration(settings);
   }
 
   private boolean isHelloAndroid() {
@@ -511,5 +517,13 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   public void setTestedModule(Module module) {
     myTestedModule = module;
+  }
+
+  public void setTargetSelectionMode(TargetSelectionMode targetSelectionMode) {
+    myTargetSelectionMode = targetSelectionMode;
+  }
+
+  public void setPreferredAvd(String preferredAvd) {
+    myPreferredAvd = preferredAvd;
   }
 }

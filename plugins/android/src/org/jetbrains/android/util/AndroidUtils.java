@@ -77,8 +77,7 @@ import org.jetbrains.android.dom.manifest.IntentFilter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
-import org.jetbrains.android.run.AndroidRunConfiguration;
-import org.jetbrains.android.run.AndroidRunConfigurationType;
+import org.jetbrains.android.run.*;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
@@ -305,7 +304,9 @@ public class AndroidUtils {
   public static void addRunConfiguration(final Project project,
                                          final AndroidFacet facet,
                                          @Nullable final String activityClass,
-                                         boolean ask) {
+                                         final boolean ask,
+                                         @Nullable final TargetSelectionMode targetSelectionMode,
+                                         @Nullable final String preferredAvdName) {
     final Runnable r = new Runnable() {
       public void run() {
         RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
@@ -321,6 +322,14 @@ public class AndroidUtils {
         else {
           configuration.MODE = AndroidRunConfiguration.LAUNCH_DEFAULT_ACTIVITY;
         }
+
+        if (targetSelectionMode != null) {
+          configuration.setTargetSelectionMode(targetSelectionMode);
+        }
+        if (preferredAvdName != null) {
+          configuration.PREFERRED_AVD = preferredAvdName;
+        }
+        
         runManager.addConfiguration(settings, false);
         runManager.setActiveConfiguration(settings);
       }
@@ -452,12 +461,12 @@ public class AndroidUtils {
     return exitCode == 0;
   }
 
-  public static void runExternalToolInSeparateThread(@NotNull final Project project,
+  public static void runExternalToolInSeparateThread(@Nullable final Project project,
                                                      @NotNull final GeneralCommandLine commandLine) {
     runExternalToolInSeparateThread(project, commandLine, null);
   }
 
-  public static void runExternalToolInSeparateThread(@NotNull final Project project,
+  public static void runExternalToolInSeparateThread(@Nullable final Project project,
                                                      @NotNull final GeneralCommandLine commandLine,
                                                      @Nullable final ProcessHandler processHandler) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

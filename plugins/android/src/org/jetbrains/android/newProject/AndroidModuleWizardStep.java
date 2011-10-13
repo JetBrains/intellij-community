@@ -16,23 +16,37 @@
 
 package org.jetbrains.android.newProject;
 
+import com.android.prefs.AndroidLocation;
+import com.android.sdklib.SdkManager;
+import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.android.actions.RunAndroidSdkManagerAction;
+import org.jetbrains.android.run.TargetSelectionMode;
+import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,6 +56,7 @@ import java.awt.event.ActionListener;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidModuleWizardStep extends ModuleWizardStep {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.newProject.AndroidModuleWizardStep");
 
   private final AndroidAppPropertiesEditor myAppPropertiesEditor;
 
@@ -59,13 +74,23 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   private AndroidSdkComboBoxWithBrowseButton mySdkComboBoxWithBrowseButton;
   private JCheckBox myCreateDefaultStructure;
   private JPanel myApplicationPanel;
+  private JRadioButton myDoNotCreateConfigurationRadioButton;
+  private JRadioButton myShowDeviceChooserRadioButton;
+  private JRadioButton myUSBDeviceRadioButton;
+  private JRadioButton myEmulatorRadioButton;
+  private LabeledComponent<ComboboxWithBrowseButton> myAvdComboComponent;
+  private JPanel myDeploymentTargetPanel;
 
-  private final WizardContext myWizardContext;
+  private final ComboboxWithBrowseButton myAvdCombo;
+  private final Alarm myAvdsUpdatingAlarm = new Alarm();
+
+  private String[] myOldAvds = ArrayUtil.EMPTY_STRING_ARRAY;
+
+  @NonNls private static final String TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_SELECTION_MODE_FOR_NEW_MODULE2";
+  @NonNls private static final String TARGET_AVD_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_AVD_FOR_NEW_MODULE2";
 
   public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, WizardContext context) {
     super();
-
-    myWizardContext = context;
     myApplicationProjectButton.setSelected(true);
 
     myAppPropertiesEditor = new AndroidAppPropertiesEditor(moduleBuilder.getName());
@@ -87,6 +112,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       @Override
       public void actionPerformed(ActionEvent e) {
         updatePropertiesEditor();
+        updateDeploymentTargetPanel();
       }
     };
     myApplicationProjectButton.addActionListener(listener);
@@ -102,8 +128,92 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
         if (enabled) {
           updatePropertiesEditor();
         }
+        updateDeploymentTargetPanel();
       }
     });
+
+    final ActionListener l = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myAvdComboComponent.setEnabled(myEmulatorRadioButton.isSelected());
+      }
+    };
+
+    myEmulatorRadioButton.addActionListener(l);
+    myDoNotCreateConfigurationRadioButton.addActionListener(l);
+    myShowDeviceChooserRadioButton.addActionListener(l);
+    myUSBDeviceRadioButton.addActionListener(l);
+
+    myAvdCombo = myAvdComboComponent.getComponent();
+
+    myAvdCombo.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+        if (selectedSdk == null || !(selectedSdk.getSdkType() instanceof AndroidSdkType)) {
+          Messages.showErrorDialog(myPanel, AndroidBundle.message("specify.platform.error"));
+          return;
+        }
+
+        final AndroidSdkAdditionalData sdkAdditionalData = (AndroidSdkAdditionalData)selectedSdk.getSdkAdditionalData();
+        if (sdkAdditionalData == null) {
+          Messages.showErrorDialog(myPanel, AndroidBundle.message("android.wizard.invalid.sdk.error"));
+          return;
+        }
+
+        final AndroidPlatform platform = sdkAdditionalData.getAndroidPlatform();
+        if (platform == null) {
+          Messages.showErrorDialog(myPanel, AndroidBundle.message("cannot.parse.sdk.error"));
+          return;
+        }
+
+        RunAndroidSdkManagerAction.runTool(platform.getSdk().getLocation());
+      }
+    });
+
+    myAvdCombo.setMinimumSize(new Dimension(100, myAvdCombo.getMinimumSize().height));
+
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+    final String targetSelectionModeStr = properties.getValue(TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY);
+
+    if (targetSelectionModeStr != null) {
+      if (targetSelectionModeStr.length() > 0) {
+        try {
+          final TargetSelectionMode targetSelectionMode = TargetSelectionMode.valueOf(targetSelectionModeStr);
+          switch (targetSelectionMode) {
+            case SHOW_DIALOG:
+              myShowDeviceChooserRadioButton.setSelected(true);
+              break;
+            case EMULATOR:
+              myEmulatorRadioButton.setSelected(true);
+              break;
+            case USB_DEVICE:
+              myUSBDeviceRadioButton.setSelected(true);
+              break;
+            default:
+              assert false : "Unknown target selection mode " + targetSelectionMode;
+          }
+        }
+        catch (IllegalArgumentException ignored) {
+        }
+      }
+      else {
+        myDoNotCreateConfigurationRadioButton.setSelected(true);
+      }
+    }
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myAvdsUpdatingAlarm);
+  }
+
+  private void updateDeploymentTargetPanel() {
+    final boolean enabled = myCreateDefaultStructure.isSelected() &&
+                            (myApplicationProjectButton.isSelected() || myTestProjectButton.isSelected());
+    UIUtil.setEnabled(myDeploymentTargetPanel, enabled, true);
+    if (enabled) {
+      myAvdComboComponent.setEnabled(myEmulatorRadioButton.isSelected());
+    }
   }
 
   private void updatePropertiesEditor() {
@@ -133,8 +243,10 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     myAppPropertiesEditor.getApplicationNameField().setText(myModuleBuilder.getName());
 
     Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+    
     if (selectedSdk == null) {
-      String defaultPlatformName = PropertiesComponent.getInstance().getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
+      String defaultPlatformName = properties.getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
       if (defaultPlatformName != null) {
         Sdk sdk = ProjectJdkTable.getInstance().findJdk(defaultPlatformName);
         if (sdk != null && sdk.getSdkType().equals(AndroidSdkType.getInstance())) {
@@ -144,6 +256,16 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     }
     mySdkComboBoxWithBrowseButton.rebuildSdksListAndSelectSdk(selectedSdk);
 
+    boolean shouldReset = myAvdCombo.getComboBox().getSelectedItem() == null;
+    startUpdatingAvds();
+    if (shouldReset) {
+      final String targetAvd = properties.getValue(TARGET_AVD_FOR_NEW_MODULE_PROPERTY);
+      if (targetAvd != null && targetAvd.length() > 0) {
+        myAvdCombo.getComboBox().setSelectedItem(targetAvd);
+      }
+    }
+
+    updateDeploymentTargetPanel();
     return myPanel;
   }
 
@@ -172,7 +294,9 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
     assert selectedSdk != null;
 
-    PropertiesComponent.getInstance().setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, selectedSdk.getName());
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+
+    properties.setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, selectedSdk.getName());
     myModuleBuilder.setSdk(selectedSdk);
 
     if (!myCreateDefaultStructure.isSelected()) {
@@ -190,10 +314,98 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       assert myTestPropertiesEditor != null;
       myModuleBuilder.setTestedModule(myTestPropertiesEditor.getModule());
     }
+    
+    if (myApplicationProjectButton.isSelected() || myTestProjectButton.isSelected()) {
+      String preferredAvdName = null;
+      TargetSelectionMode targetSelectionMode = null;
+      
+      if (myEmulatorRadioButton.isSelected()) {
+        preferredAvdName = (String)myAvdCombo.getComboBox().getSelectedItem();
+        targetSelectionMode = TargetSelectionMode.EMULATOR;
+      }
+      else if (myShowDeviceChooserRadioButton.isSelected()) {
+        targetSelectionMode = TargetSelectionMode.SHOW_DIALOG;
+      }
+      else if (myUSBDeviceRadioButton.isSelected()) {
+        targetSelectionMode = TargetSelectionMode.USB_DEVICE;
+      }
+      
+      myModuleBuilder.setTargetSelectionMode(targetSelectionMode);
+      myModuleBuilder.setPreferredAvd(preferredAvdName);
+      
+      properties.setValue(TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY, targetSelectionMode != null ? targetSelectionMode.name() : "");
+      properties.setValue(TARGET_AVD_FOR_NEW_MODULE_PROPERTY, preferredAvdName != null ? preferredAvdName : "");
+    }
   }
 
   @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch.android";
+  }
+
+  private void startUpdatingAvds() {
+    if (!myAvdCombo.getComboBox().isPopupVisible()) {
+      doUpdateAvds();
+    }
+    addUpdatingRequest();
+  }
+
+  private void addUpdatingRequest() {
+    if (myAvdsUpdatingAlarm.isDisposed()) {
+      return;
+    }
+    myAvdsUpdatingAlarm.cancelAllRequests();
+    myAvdsUpdatingAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        startUpdatingAvds();
+      }
+    }, 500);
+  }
+
+  private void doUpdateAvds() {
+    final Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+
+    String[] newAvds = ArrayUtil.EMPTY_STRING_ARRAY;
+
+    if (selectedSdk != null && selectedSdk.getSdkType() instanceof AndroidSdkType) {
+      final AndroidSdkAdditionalData sdkAdditionalData = (AndroidSdkAdditionalData)selectedSdk.getSdkAdditionalData();
+      if (sdkAdditionalData != null) {
+        final AndroidPlatform androidPlatform = sdkAdditionalData.getAndroidPlatform();
+        if (androidPlatform != null) {
+          newAvds = getAvds(androidPlatform);
+        }
+      }
+    }
+
+    if (!Arrays.equals(myOldAvds, newAvds)) {
+      myOldAvds = newAvds;
+      final JComboBox combo = myAvdCombo.getComboBox();
+      final Object selected = combo.getSelectedItem();
+      combo.setModel(new DefaultComboBoxModel(newAvds));
+      combo.setSelectedItem(selected);
+    }
+  }
+
+  @NotNull
+  private static String[] getAvds(@NotNull AndroidPlatform androidPlatform) {
+    final AndroidSdk sdkObject = androidPlatform.getSdk();
+    if (sdkObject instanceof AndroidSdkImpl) {
+      final SdkManager sdkManager = ((AndroidSdkImpl)sdkObject).getSdkManager();
+      try {
+        final AvdManager avdManager = new AvdManager(sdkManager, new MessageBuildingSdkLog());
+        final AvdManager.AvdInfo[] validAvds = avdManager.getValidAvds();
+
+        final String[] avdNames = new String[validAvds.length];
+        for (int i = 0; i < validAvds.length; i++) {
+          avdNames[i] = validAvds[i].getName();
+        }
+        return avdNames;
+      }
+      catch (AndroidLocation.AndroidLocationException e) {
+        LOG.info(e);
+      }
+    }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }
