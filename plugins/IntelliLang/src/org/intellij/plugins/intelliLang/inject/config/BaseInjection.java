@@ -195,7 +195,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       }
     }
     // enabled flag is not counted this way:
-    if (!myPlaces.equals(that.myPlaces)) return false;
+    if (!Arrays.equals(myPlaces, that.myPlaces)) return false;
     return true;
   }
 
