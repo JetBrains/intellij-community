@@ -92,10 +92,13 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       }
     });
 
+    final int clickableArea = new JCheckBox("").getMinimumSize().width;
     myPluginsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(final MouseEvent e) {
-        toggleSelection();
+        if (e.getX() < clickableArea) {
+          toggleSelection();
+        }
         e.consume();
       }
     });
@@ -120,7 +123,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   }
 
   private String buildRequires(final IdeaPluginDescriptor descriptor) {
-    StringBuffer requiresBuffer = new StringBuffer();
+    StringBuilder requiresBuffer = new StringBuilder();
     for (PluginId id : StartupWizardModel.getNonOptionalDependencies(descriptor)) {
       final IdeaPluginDescriptor dependent = findPlugin(id);
       if (dependent != null) {
