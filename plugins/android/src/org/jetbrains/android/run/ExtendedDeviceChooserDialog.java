@@ -135,11 +135,6 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     }
   }
 
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{new RefreshAction(), getOKAction(), getCancelAction()};
-  }
-
   private void updateEnabled() {
     myAvdCombo.setEnabled(myLaunchEmulatorRadioButton.isSelected());
     myAvdLabel.setEnabled(myLaunchEmulatorRadioButton.isSelected());
@@ -186,19 +181,5 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
 
   public boolean isToLaunchEmulator() {
     return myLaunchEmulatorRadioButton.isSelected();
-  }
-
-  private class RefreshAction extends AbstractAction {
-    RefreshAction() {
-      putValue(NAME, "Refresh");
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      myDeviceChooser.updateTable();
-      final JComboBox combo = myAvdCombo.getComboBox();
-      if (combo.getSelectedItem() == null && combo.getModel().getSize() > 0) {
-        combo.setSelectedIndex(0);
-      }
-    }
   }
 }

@@ -335,7 +335,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
             public boolean value(IDevice device) {
               return device.isEmulator() && isCompatibleDevice(device) != Boolean.FALSE;
             }
-          }, false);
+          });
         }
       }, ModalityState.defaultModalityState());
       return devicesWrapper[0].length > 0 ? devicesWrapper[0] : null;
@@ -453,11 +453,11 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @NotNull
-  private IDevice[] chooseDevicesManually(@Nullable Condition<IDevice> filter, boolean showLaunchEmulator) {
+  private IDevice[] chooseDevicesManually(@Nullable Condition<IDevice> filter) {
     final Project project = myFacet.getModule().getProject();
     String value = PropertiesComponent.getInstance(project).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
     String[] selectedSerials = value != null ? fromString(value) : null;
-    DeviceChooserDialog chooser = new DeviceChooserDialog(myFacet, mySupportMultipleDevices, selectedSerials, filter, showLaunchEmulator);
+    DeviceChooserDialog chooser = new DeviceChooserDialog(myFacet, mySupportMultipleDevices, selectedSerials, filter);
     chooser.show();
     IDevice[] devices = chooser.getSelectedDevices();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE || devices.length == 0) {
