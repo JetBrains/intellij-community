@@ -86,8 +86,8 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
   private String[] myOldAvds = ArrayUtil.EMPTY_STRING_ARRAY;
 
-  @NonNls private static final String TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_SELECTION_MODE_FOR_NEW_MODULE2";
-  @NonNls private static final String TARGET_AVD_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_AVD_FOR_NEW_MODULE2";
+  @NonNls private static final String TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_SELECTION_MODE_FOR_NEW_MODULE";
+  @NonNls private static final String TARGET_AVD_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_AVD_FOR_NEW_MODULE";
 
   public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, WizardContext context) {
     super();
