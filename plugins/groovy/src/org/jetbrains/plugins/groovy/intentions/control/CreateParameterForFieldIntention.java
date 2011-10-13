@@ -254,8 +254,10 @@ public class CreateParameterForFieldIntention extends Intention {
   private static List<GrField> findCandidates(GrMethod constructor, final GrTypeDefinition clazz) {
     final List<GrField> usedFields = new ArrayList<GrField>();
     final GrOpenBlock block = constructor.getBlock();
-    LOG.assertTrue(block != null);
-
+    if (block == null) {
+      return usedFields;
+    }
+    
     final PsiManager manager = clazz.getManager();
     block.accept(new GroovyRecursiveElementVisitor() {
       @Override

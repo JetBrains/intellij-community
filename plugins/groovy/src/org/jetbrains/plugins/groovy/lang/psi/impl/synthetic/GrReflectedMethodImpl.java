@@ -17,12 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -145,7 +142,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return myBaseMethod;
+    return myBaseMethod.getNavigationElement();
   }
 
   @Override
@@ -249,8 +246,6 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   }
 
   public static GrReflectedMethod[] createReflectedMethods(GrMethod method) {
-    if (method instanceof LightElement) return GrReflectedMethod.EMPTY_ARRAY;
-
     final PsiClassType categoryType = method.hasModifierProperty(PsiModifier.STATIC) ? null : getCategoryType(method);
 
     final GrParameter[] parameters = method.getParameters();
@@ -269,53 +264,46 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return methods;
   }
 
-  private static final Key<CachedValue<PsiClassType>> CACHED_CATEGORY_TYPE = Key.create("Cached category type");
-
   @Nullable
   private static PsiClassType getCategoryType(GrMethod method) {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return null;
-    CachedValue<PsiClassType> cached = containingClass.getUserData(CACHED_CATEGORY_TYPE);
+    return CachedValuesManager.getManager(method.getProject()).getCachedValue(containingClass, new CachedValueProvider<PsiClassType>() {
+      @Override
+      public Result<PsiClassType> compute() {
+        return Result.create(inferCategoryType(containingClass), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
 
-    if (cached == null) {
-      cached = CachedValuesManager.getManager(containingClass.getProject()).createCachedValue(new CachedValueProvider<PsiClassType>() {
-        public Result<PsiClassType> compute() {
-          return Result.create(inferCategoryType(containingClass), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
+      @Nullable
+      private PsiClassType inferCategoryType(final PsiClass aClass) {
+        return RecursionManager.doPreventingRecursion(aClass, true, new Computable<PsiClassType>() {
+          @Nullable
+          @Override
+          public PsiClassType compute() {
+            final PsiModifierList modifierList = aClass.getModifierList();
+            if (modifierList == null) return null;
 
-        @Nullable
-        private PsiClassType inferCategoryType(final PsiClass aClass) {
-          return RecursionManager.doPreventingRecursion(aClass, true, new Computable<PsiClassType>() {
-            @Nullable
-            @Override
-            public PsiClassType compute() {
-              final PsiModifierList modifierList = aClass.getModifierList();
-              if (modifierList == null) return null;
+            final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
+            if (annotation == null) return null;
 
-              final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
-              if (annotation == null) return null;
+            PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+            if (!(value instanceof GrReferenceExpression)) return null;
 
-              PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
-              if (!(value instanceof GrReferenceExpression)) return null;
+            if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
+            if (!(value instanceof GrReferenceExpression)) return null;
 
-              if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
-              if (!(value instanceof GrReferenceExpression)) return null;
+            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
+            if (!(resolved instanceof PsiClass)) return null;
 
-              final PsiElement resolved = ((GrReferenceExpression)value).resolve();
-              if (!(resolved instanceof PsiClass)) return null;
+            String className = ((PsiClass)resolved).getQualifiedName();
+            if (className == null) className = ((PsiClass)resolved).getName();
+            if (className == null) return null;
 
-              String className = ((PsiClass)resolved).getQualifiedName();
-              if (className == null) className = ((PsiClass)resolved).getName();
-              if (className == null) return null;
-
-              return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
-            }
-          });
-        }
-      }, false);
-    }
-
-    return cached.getValue();
+            return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
+          }
+        });
+      }
+    });
   }
 
   @NotNull

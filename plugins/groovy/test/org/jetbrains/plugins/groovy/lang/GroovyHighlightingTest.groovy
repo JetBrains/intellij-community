@@ -4,36 +4,35 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.*;
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection;
-import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
-import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
-import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection;
-import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection;
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
-import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
-import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
+import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
+import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 
 /**
  * @author peter
@@ -478,5 +477,28 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   
   public void testMissingReturnInClosure() {
     doTest(new MissingReturnInspection());
+  }
+
+  public void testImmutableConstructorFromJava() {
+    myFixture.addFileToProject "a.groovy", '''@groovy.transform.Immutable class Foo { int a; String b }'''
+    myFixture.configureByText 'a.java', '''
+class Bar {{
+  new Foo<error>()</error>;
+  new Foo<error>(2)</error>;
+  new Foo(2, "3");
+}}'''
+    myFixture.checkHighlighting(false, false, false)
+  }
+
+  public void testTupleConstructorFromJava() {
+    myFixture.addFileToProject "a.groovy", '''@groovy.transform.TupleConstructor class Foo { int a; String b }'''
+    myFixture.configureByText 'a.java', '''
+class Bar {{
+  new Foo();
+  new Foo(2);
+  new Foo(2, "3");
+  new Foo<error>(2, "3", 9)</error>;
+}}'''
+    myFixture.checkHighlighting(false, false, false)
   }
 }
