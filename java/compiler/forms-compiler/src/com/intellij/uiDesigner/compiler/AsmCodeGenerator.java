@@ -30,7 +30,10 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author yole
@@ -150,6 +153,17 @@ public class AsmCodeGenerator {
   }
 
   public byte[] patchClass(InputStream classStream) {
+    try {
+      final ClassReader reader = new ClassReader(classStream);
+      return patchClass(reader);
+    }
+    catch (IOException e) {
+      myErrors.add(new FormErrorInfo(null, "Error reading class data stream"));
+      return null;
+    }
+  }
+
+  public byte[] patchClass(ClassReader reader) {
     myClassToBind = myRootContainer.getClassToBind();
     if (myClassToBind == null){
       myWarnings.add(new FormErrorInfo(null, "No class to bind specified"));
@@ -165,15 +179,6 @@ public class AsmCodeGenerator {
     if (nonEmptyPanel != null) {
       myErrors.add(new FormErrorInfo(nonEmptyPanel,
                                      "There are non empty panels with XY layout. Please lay them out in a grid."));
-      return null;
-    }
-
-    ClassReader reader;
-    try {
-      reader = new ClassReader(classStream);
-    }
-    catch (IOException e) {
-      myErrors.add(new FormErrorInfo(null, "Error reading class data stream"));
       return null;
     }
 
