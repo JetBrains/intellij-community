@@ -146,12 +146,13 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
       }
     }
 
-    int targetSelectionMode = configuration.TARGET_SELECTION_MODE;
-    myShowChooserRadioButton.setSelected(targetSelectionMode == AndroidRunConfigurationBase.SHOW_DIALOG);
-    myEmulatorRadioButton.setSelected(targetSelectionMode == AndroidRunConfigurationBase.EMULATOR);
-    myUsbDeviceRadioButton.setSelected(targetSelectionMode == AndroidRunConfigurationBase.USB_DEVICE);
+    final TargetSelectionMode targetSelectionMode = configuration.getTargetSelectionMode();
+
+    myShowChooserRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.SHOW_DIALOG);
+    myEmulatorRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.EMULATOR);
+    myUsbDeviceRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.USB_DEVICE);
     
-    myAvdComboComponent.setEnabled(targetSelectionMode == AndroidRunConfigurationBase.EMULATOR);
+    myAvdComboComponent.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
     
     myCommandLineField.setText(configuration.COMMAND_LINE);
     myConfigurationSpecificEditor.resetFrom(configuration);
@@ -166,13 +167,13 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myModuleSelector.applyTo(configuration);
 
     if (myShowChooserRadioButton.isSelected()) {
-      configuration.TARGET_SELECTION_MODE = AndroidRunConfigurationBase.SHOW_DIALOG;
+      configuration.setTargetSelectionMode(TargetSelectionMode.SHOW_DIALOG);
     }
     else if (myEmulatorRadioButton.isSelected()) {
-      configuration.TARGET_SELECTION_MODE = AndroidRunConfigurationBase.EMULATOR;
+      configuration.setTargetSelectionMode(TargetSelectionMode.EMULATOR);
     }
     else if (myUsbDeviceRadioButton.isSelected()) {
-      configuration.TARGET_SELECTION_MODE = AndroidRunConfigurationBase.USB_DEVICE;
+      configuration.setTargetSelectionMode(TargetSelectionMode.USB_DEVICE);
     }
 
     configuration.COMMAND_LINE = myCommandLineField.getText();

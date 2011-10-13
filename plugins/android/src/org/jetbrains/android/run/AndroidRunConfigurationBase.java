@@ -26,6 +26,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -70,11 +71,9 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AndroidRunConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule> {
-  public static final int SHOW_DIALOG = 0;
-  public static final int EMULATOR = 1;
-  public static final int USB_DEVICE = 2;
-
-  public int TARGET_SELECTION_MODE = EMULATOR;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunConfigurationBase");
+  
+  public String TARGET_SELECTION_MODE = TargetSelectionMode.EMULATOR.name();
   public String PREFERRED_AVD = "";
   public String COMMAND_LINE = "";
   public boolean WIPE_USER_DATA = false;
@@ -143,6 +142,21 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return result;
   }
 
+  @NotNull
+  public TargetSelectionMode getTargetSelectionMode() {
+    try {
+      return TargetSelectionMode.valueOf(TARGET_SELECTION_MODE);
+    }
+    catch (IllegalArgumentException e) {
+      LOG.info(e);
+      return TargetSelectionMode.EMULATOR;
+    }
+  }
+  
+  public void setTargetSelectionMode(@NotNull TargetSelectionMode mode) {
+    TARGET_SELECTION_MODE = mode.name();
+  }
+
   private static boolean fillRuntimeAndTestDependencies(@NotNull Module module, @NotNull Map<AndroidFacet, String> module2PackageName) {
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
@@ -168,15 +182,6 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     }
     return true;
   }
-
-  /*private static boolean containsRealDevice(@NotNull IDevice[] devices) {
-    for (IDevice device : devices) {
-      if (!device.isEmulator()) {
-        return true;
-      }
-    }
-    return false;
-  }*/
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getConfigurationModule().getModule();
@@ -214,7 +219,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
 
     TargetChooser targetChooser = null;
-    switch (TARGET_SELECTION_MODE) {
+    switch (getTargetSelectionMode()) {
       case SHOW_DIALOG:
         targetChooser = new ManualTargetChooser();
         break;
