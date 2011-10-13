@@ -1,0 +1,24 @@
+Request to make modules:
+module AddStaticFieldToDerived
+End of request
+digraph X {
+  AddStaticFieldToDerived[label="AddStaticFieldToDerived"];
+}
+digraph X {
+  AddStaticFieldToDerived[label="AddStaticFieldToDerived"];
+}
+Propagated modules:
+module AddStaticFieldToDerived
+End of propagated
+Cleaning output files:
+out/production/AddStaticFieldToDerived/Derived.class
+End of files
+Compiling files:
+src/Derived.java
+End of files
+Cleaning output files:
+out/production/AddStaticFieldToDerived/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

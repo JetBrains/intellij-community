@@ -1,0 +1,24 @@
+Request to make modules:
+module AddLessAccessibleFieldToDerived
+End of request
+digraph X {
+  AddLessAccessibleFieldToDerived[label="AddLessAccessibleFieldToDerived"];
+}
+digraph X {
+  AddLessAccessibleFieldToDerived[label="AddLessAccessibleFieldToDerived"];
+}
+Propagated modules:
+module AddLessAccessibleFieldToDerived
+End of propagated
+Cleaning output files:
+out/production/AddLessAccessibleFieldToDerived/Derived.class
+End of files
+Compiling files:
+src/Derived.java
+End of files
+Cleaning output files:
+out/production/AddLessAccessibleFieldToDerived/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

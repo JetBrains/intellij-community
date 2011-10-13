@@ -1,0 +1,24 @@
+Request to make modules:
+module AddFieldToInterface
+End of request
+digraph X {
+  AddFieldToInterface[label="AddFieldToInterface"];
+}
+digraph X {
+  AddFieldToInterface[label="AddFieldToInterface"];
+}
+Propagated modules:
+module AddFieldToInterface
+End of propagated
+Cleaning output files:
+out/production/AddFieldToInterface/BaseInterface.class
+End of files
+Compiling files:
+src/BaseInterface.java
+End of files
+Cleaning output files:
+out/production/AddFieldToInterface/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

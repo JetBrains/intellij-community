@@ -1,0 +1,18 @@
+Request to make modules:
+module AddFieldToBaseClass
+End of request
+digraph X {
+  AddFieldToBaseClass[label="AddFieldToBaseClass"];
+}
+digraph X {
+  AddFieldToBaseClass[label="AddFieldToBaseClass"];
+}
+Propagated modules:
+module AddFieldToBaseClass
+End of propagated
+Cleaning output files:
+out/production/AddFieldToBaseClass/BaseServer.class
+End of files
+Compiling files:
+src/BaseServer.java
+End of files
