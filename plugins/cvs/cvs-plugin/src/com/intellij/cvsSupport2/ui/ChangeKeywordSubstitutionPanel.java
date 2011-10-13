@@ -61,7 +61,7 @@ public class ChangeKeywordSubstitutionPanel {
     }
   }
 
-  public Component getPanel() {
+  public JComponent getComponent() {
     return myPanel;
   }
 

@@ -36,15 +36,12 @@ public class GrWhileBodyFixer implements GrFixer{
 
     PsiElement body = whileStatement.getBody();
     if (body instanceof GrBlockStatement) return;
-    if (body != null && startLine(doc, body) == startLine(doc, whileStatement) && whileStatement.getCondition() != null) return;
+    if (body != null && GrForBodyFixer.startLine(editor.getDocument(), body) ==
+                        GrForBodyFixer.startLine(editor.getDocument(), whileStatement) && whileStatement.getCondition() != null) return;
 
     final PsiElement rParenth = whileStatement.getRParenth();
     assert rParenth != null;
 
     doc.insertString(rParenth.getTextRange().getEndOffset(), "{}");
-  }
-
-  private static int startLine(Document doc, PsiElement psiElement) {
-    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 }

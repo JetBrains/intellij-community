@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -58,6 +59,8 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
 
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();
+    final PsiElement left = leftNode.getPsi();
+    final PsiElement right = rightNode.getPsi();
 
     //Braces Placement
     // For multi-line strings
@@ -110,7 +113,9 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
 
     // For parentheses in arguments and typecasts
     if (LEFT_BRACES.contains(leftType) || RIGHT_BRACES.contains(rightType)) {
-      return NO_SPACING_WITH_NEWLINE;
+      PsiElement parent = (LEFT_BRACES.contains(leftType) ? left : right).getParent();
+      boolean shouldHaveSpace = parent instanceof GrTypeCastExpression && settings.SPACE_WITHIN_CAST_PARENTHESES;
+      return shouldHaveSpace ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
     }
     // For type parameters
     if ((mLT.equals(leftType) || mGT.equals(rightNode.getElementType())) &&
@@ -195,8 +200,6 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return LAZY_SPACING;
     }
 
-    final PsiElement left = leftNode.getPsi();
-    final PsiElement right = rightNode.getPsi();
     if (left instanceof GrStatement &&
         right instanceof GrStatement &&
         left.getParent() instanceof GrStatementOwner &&
@@ -230,6 +233,10 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
           return NO_SPACING;
         }
       }
+    }
+
+    if (leftType == mRPAREN && left.getParent() instanceof GrTypeCastExpression) {
+      return settings.SPACE_AFTER_TYPE_CAST ? COMMON_SPACING : NO_SPACING;
     }
 
     return COMMON_SPACING;

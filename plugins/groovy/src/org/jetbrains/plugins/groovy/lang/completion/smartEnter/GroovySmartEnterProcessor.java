@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter;
 
-import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -45,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -65,28 +66,18 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor");
 
-  private static final GrFixer[] ourFixers;
-  private static final EnterProcessor[] ourEnterProcessors;
-
-  static {
-    final List<GrFixer> fixers = new ArrayList<GrFixer>();
-    fixers.add(new GrMissingIfStatement());
-    fixers.add(new GrIfConditionFixer());
-    fixers.add(new GrLiteralFixer());
-    fixers.add(new GrMethodCallFixer());
-    fixers.add(new GrMethodBodyFixer());
-    fixers.add(new GrMethodParametersFixer());
-    fixers.add(new GrWhileConditionFixer());
-    fixers.add(new GrWhileBodyFixer());
-    fixers.add(new GrForBodyFixer());
-    fixers.add(new GrListFixer());
-
-    ourFixers = fixers.toArray(new GrFixer[fixers.size()]);
-
-    List<EnterProcessor> processors = new ArrayList<EnterProcessor>();
-    processors.add(new GroovyPlainEnterProcessor());
-    ourEnterProcessors = processors.toArray(new EnterProcessor[processors.size()]);
-  }
+  private static final List<GrFixer> ourFixers = Arrays.asList(
+    new GrMissingIfStatement(),
+    new GrIfConditionFixer(),
+    new GrLiteralFixer(),
+    new GrMethodCallFixer(),
+    new GrMethodBodyFixer(),
+    new GrMethodParametersFixer(),
+    new GrWhileConditionFixer(),
+    new GrWhileBodyFixer(),
+    new GrForBodyFixer(),
+    new GrSwitchBodyFixer(),
+    new GrListFixer());
 
   private int myFirstErrorOffset = Integer.MAX_VALUE;
   private static final int MAX_ATTEMPTS = 20;
@@ -117,7 +108,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
     try {
       commit(editor);
-       if (myFirstErrorOffset != Integer.MAX_VALUE) {
+      if (myFirstErrorOffset != Integer.MAX_VALUE) {
         editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       }
 
@@ -164,7 +155,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
       if (block.getStatements().length > 0 && block.getStatements()[0] == atCaret) {
         atCaret = block;
       }
-    } else if (parent instanceof GrForStatement) {
+    } else if (parent instanceof GrForStatement || parent instanceof GrSwitchStatement) {
       atCaret = parent;
     }
 
@@ -190,14 +181,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 //    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
 
 
-    for (EnterProcessor processor : ourEnterProcessors) {
-      if (atCaret == null) {
-        // Can't restore element at caret after enter processor execution!
-        break;
-      }
-
-      if (processor.doEnter(editor, atCaret, isModified(editor))) return;
-    }
+    if (atCaret != null && new GroovyPlainEnterProcessor().doEnter(editor, atCaret, isModified(editor))) return;
 
     if (!isModified(editor)) {
       plainEnter(editor);
@@ -259,10 +243,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     }
 
     PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
-            GrStatement.class,
-            GrCodeBlock.class,
-            PsiMember.class,
-            GrDocComment.class
+                                                              GrStatement.class,
+                                                              GrCodeBlock.class,
+                                                              PsiMember.class,
+                                                              GrDocComment.class
     );
 
     if (statementAtCaret instanceof GrBlockStatement) return null;
@@ -275,9 +259,9 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     }
 
     return statementAtCaret instanceof GrStatement ||
-            statementAtCaret instanceof GrMember
-            ? statementAtCaret
-            : null;
+           statementAtCaret instanceof GrMember
+           ? statementAtCaret
+           : null;
   }
 
   protected void moveCaretInsideBracesIfAny(@NotNull final Editor editor, @NotNull final PsiFile file) throws IncorrectOperationException {
@@ -293,7 +277,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     caretOffset = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
 
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
-            CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
+        CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit(editor);
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;

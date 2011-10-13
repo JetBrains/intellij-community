@@ -1,11 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.smartEnter;
 
-import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
-import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
-import com.intellij.lang.Language;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -40,27 +35,13 @@ public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
   public void testGotoParentInIf() throws Throwable { doTest(); }
 
   public void testListFixer() throws Throwable {doTest();}
-
-  protected static List<SmartEnterProcessor> getSmartProcessors(Language grLanguage) {
-    return SmartEnterProcessors.INSTANCE.forKey(grLanguage);
-  }
+  public void testSwitchBraces() throws Throwable {doTest();}
 
   public void doTest() throws Exception {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-
-    final List<SmartEnterProcessor> processors = getSmartProcessors(GroovyFileType.GROOVY_LANGUAGE);
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        final Editor editor = myFixture.getEditor();
-        for (SmartEnterProcessor processor : processors) {
-          processor.process(getProject(), editor, myFixture.getFile());
-        }
-
-      }
-    }.execute();
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT);
     myFixture.checkResult(data.get(1));
   }
 

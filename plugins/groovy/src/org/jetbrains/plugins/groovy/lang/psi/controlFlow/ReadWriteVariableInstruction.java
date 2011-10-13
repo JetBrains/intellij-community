@@ -15,14 +15,32 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.psi.PsiVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 /**
  * @author ven
- */
-public interface ReadWriteVariableInstruction extends Instruction {
-  String getVariableName();
+*/
+public class ReadWriteVariableInstruction extends InstructionImpl {
+  private final boolean myIsWrite;
+  private final String myName;
 
-  boolean isWrite();
+  public ReadWriteVariableInstruction(@NotNull String varName, PsiElement element, int num, boolean isWrite) {
+    super(element, num);
+    myName = varName;
+    myIsWrite = isWrite;
+  }
+
+  @NotNull public String getVariableName() {
+    return myName;
+  }
+
+  public boolean isWrite() {
+    return myIsWrite;
+  }
+
+  protected String getElementPresentation() {
+    return (isWrite() ? "WRITE " : "READ ") + myName;
+  }
 }

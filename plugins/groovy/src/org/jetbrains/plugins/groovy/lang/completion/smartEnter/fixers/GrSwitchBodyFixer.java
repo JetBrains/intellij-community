@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,29 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 14.08.2008
+ * @author peter
  */
-public class GrForBodyFixer implements GrFixer{
-   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-     GrForStatement forStatement = PsiTreeUtil.getParentOfType(psiElement, GrForStatement.class);
-    if (forStatement == null) return;
+public class GrSwitchBodyFixer implements GrFixer{
+  public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+    GrSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(psiElement, GrSwitchStatement.class);
+    if (switchStatement == null) return;
+    if (!PsiTreeUtil.isAncestor(switchStatement.getCondition(), psiElement, false)) return;
 
     final Document doc = editor.getDocument();
 
-    PsiElement body = forStatement.getBody();
-    if (body instanceof GrBlockStatement) return;
-    if (body != null && startLine(doc, body) == startLine(doc, forStatement)) return;
+    PsiElement lBrace = switchStatement.getLBrace();
+    if (lBrace != null) return;
 
-    PsiElement eltToInsertAfter = forStatement.getRParenth();
-    String text = "{}";
+    PsiElement eltToInsertAfter = switchStatement.getRParenth();
+    String text = "{\n}";
     if (eltToInsertAfter == null) {
-      eltToInsertAfter = forStatement;
-      text = "){}";
+      eltToInsertAfter = switchStatement.getCondition();
+      text = "){\n}";
     }
     doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
   }
 
-  static int startLine(Document doc, PsiElement psiElement) {
-    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
-  }
 }
