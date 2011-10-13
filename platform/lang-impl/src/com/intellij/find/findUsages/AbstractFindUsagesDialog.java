@@ -21,16 +21,17 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -84,7 +85,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     setButtonsMargin(null);
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
-    setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     setTitle(isSingleFile ? FindBundle.message("find.usages.in.file.dialog.title") : FindBundle.message("find.usages.dialog.title"));
   }
 
