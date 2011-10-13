@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -40,7 +41,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModuleDeleteProvider  implements DeleteProvider  {
+public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   public boolean canDeleteElement(DataContext dataContext) {
     return LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext) != null;
   }
@@ -82,6 +83,11 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
         ApplicationManager.getApplication().runWriteAction(action);
       }
     }, ProjectBundle.message("module.remove.command"), null);
+  }
+
+  @Override
+  public String getActionTitle() {
+    return "Remove Module";
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,

@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.refactoring.lang;
-
-import com.intellij.refactoring.RefactoringActionHandler;
+package com.intellij.ide;
 
 /**
  * @author yole
  */
-public interface TitledHandler extends RefactoringActionHandler {
+public interface TitledHandler {
   String getActionTitle();
 }

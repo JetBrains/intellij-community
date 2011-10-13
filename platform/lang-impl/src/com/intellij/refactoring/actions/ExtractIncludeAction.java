@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -23,7 +24,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.refactoring.lang.LanguageExtractInclude;
 
 /**

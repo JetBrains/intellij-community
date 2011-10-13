@@ -18,10 +18,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,6 +69,9 @@ public class DeleteAction extends AnAction implements DumbAware {
     if (event.getInputEvent() instanceof KeyEvent) {
       Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
+    }
+    if (provider instanceof TitledHandler) {
+      presentation.setText(((TitledHandler)provider).getActionTitle());
     }
     final boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
