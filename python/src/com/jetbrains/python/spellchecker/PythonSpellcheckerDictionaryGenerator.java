@@ -1,5 +1,6 @@
 package com.jetbrains.python.spellchecker;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +31,7 @@ public class PythonSpellcheckerDictionaryGenerator extends SpellCheckerDictionar
         @Override
         public void consume(TextRange textRange) {
           final String word = textRange.substring(name);
-          addSeenWord(seenNames, word);
+          addSeenWord(seenNames, word, Language.ANY);
         }
       });
     }
