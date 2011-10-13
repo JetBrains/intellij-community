@@ -20,15 +20,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -63,8 +59,6 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
-    Navigatable navigatable = EditSourceUtil.getDescriptor(element);
-    if (!(navigatable instanceof OpenFileDescriptor)) return;
     Editor editor = PsiUtilBase.findEditor(element);
 
     if (editor == null) {
