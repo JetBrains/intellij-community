@@ -109,6 +109,8 @@ public class WelcomeScreen implements Disposable {
   private int mySelectedColumn = -1;
   private int mySelectedGroup = -1;
   private int myPluginsIdx = -1;
+  
+  private JComponent myRecentProjectsPanel;
 
   public JPanel getWelcomePanel() {
     return myWelcomePanel;
@@ -202,8 +204,8 @@ public class WelcomeScreen implements Disposable {
 
     AnAction[] recentProjectsActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     if (recentProjectsActions.length > 0) {
-      JComponent recentProjectsPanel = setUpRecentProjectsPanel(rootPane, recentProjectsActions);
-      quickStartPanel.add(recentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
+      myRecentProjectsPanel = setUpRecentProjectsPanel(rootPane, recentProjectsActions);
+      quickStartPanel.add(myRecentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
                                                                       new Insets(14, 30, 5, 0), 0, 0));
     }
 
@@ -273,6 +275,10 @@ public class WelcomeScreen implements Disposable {
     }
 
     return panel;
+  }
+
+  public void hideRecentProjectsPanel() {
+    myRecentProjectsPanel.setVisible(false);
   }
 
   private void setUpPluginsPanel() {
