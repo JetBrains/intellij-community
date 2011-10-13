@@ -321,7 +321,11 @@ public class TestAll implements Test {
   }
 
   public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
-    myTestCaseLoader = new TestCaseLoader((ourMode & FILTER_CLASSES) != 0 ? "tests/testGroups.properties" : "");
+    String classFilterName = "tests/testGroups.properties";
+    if (Boolean.parseBoolean(System.getProperty("idea.ignore.predefined.groups")) || (ourMode & FILTER_CLASSES) == 0) {
+      classFilterName = "";
+    }
+    myTestCaseLoader = new TestCaseLoader(classFilterName);
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
 
