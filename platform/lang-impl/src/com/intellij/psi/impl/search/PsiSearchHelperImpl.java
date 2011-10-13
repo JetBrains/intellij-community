@@ -611,7 +611,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
 
       if (progress != null) {
-        progress.setText(PsiBundle.message("psi.search.for.word.progress", StringUtil.join(allWords, ", ")));
+        final StringBuilder result = new StringBuilder();
+        for (String string : allWords) {
+          if (string != null && string.length() != 0) {
+            if (result.length() > 50) {
+              result.append("...");
+              break;
+            }
+            if (result.length() != 0) result.append(", ");
+            result.append(string);
+          }
+        }
+        progress.setText(PsiBundle.message("psi.search.for.word.progress", result.toString()));
       }
 
       return processPsiFileRoots(new ArrayList<VirtualFile>(candidateFiles.keySet()), new Processor<PsiElement>() {
