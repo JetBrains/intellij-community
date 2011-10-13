@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.IdentifierSplitter;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -27,7 +27,7 @@ public class PythonSpellcheckerDictionaryGenerator extends SpellCheckerDictionar
   protected void processFolder(final HashSet<String> seenNames, PsiManager manager, VirtualFile folder) {
     if (!myExcludedFolders.contains(folder)) {
       final String name = folder.getName();
-      SplitterFactory.getInstance().getIdentifierSplitter().split(name, TextRange.allOf(name), new Consumer<TextRange>() {
+      IdentifierSplitter.getInstance().split(name, TextRange.allOf(name), new Consumer<TextRange>() {
         @Override
         public void consume(TextRange textRange) {
           final String word = textRange.substring(name);
