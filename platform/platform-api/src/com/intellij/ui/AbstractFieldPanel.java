@@ -39,7 +39,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractFieldPanel");
   private final JComponent myComponent;
   private Runnable myChangeListener;
-  protected ArrayList myButtons = new ArrayList(1);
+  protected ArrayList<JButton> myButtons = new ArrayList<JButton>(1);
   protected JLabel myLabel;
   private ActionListener myBrowseButtonActionListener;
   private String myViewerDialogTitle;
@@ -72,8 +72,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     if (myLabel != null) {
       myLabel.setEnabled(enabled);
     }
-    for (int i = 0; i < myButtons.size(); i++) {
-      JButton button = (JButton)myButtons.get(i);
+    for (JButton button: myButtons) {
       button.setEnabled(enabled);
     }
   }
@@ -103,10 +102,6 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public final void setChangeListener(Runnable runnable) {
     myChangeListener = runnable;
-  }
-
-  public JButton[] getButtons() {
-    return (JButton[])myButtons.toArray(new JButton[myButtons.size()]);
   }
 
   public void createComponent() {
