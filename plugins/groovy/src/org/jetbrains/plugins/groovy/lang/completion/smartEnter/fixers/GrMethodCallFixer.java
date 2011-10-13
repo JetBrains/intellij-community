@@ -59,16 +59,13 @@ public class GrMethodCallFixer implements GrFixer {
     }
 
     final GrExpression[] params = argList.getExpressionArguments();
-    if (params.length > 0 && startLine(editor, argList) != startLine(editor, params[0])) {
+    if (params.length > 0 && GrForBodyFixer.startLine(editor.getDocument(), argList) !=
+                             GrForBodyFixer.startLine(editor.getDocument(), params[0])) {
       endOffset = argList.getTextRange().getStartOffset() + 1;
     }
 
     endOffset = CharArrayUtil.shiftBackward(editor.getDocument().getCharsSequence(), endOffset - 1, " \t\n") + 1;
     editor.getDocument().insertString(endOffset, ")");
-  }
-
-  private static int startLine(Editor editor, PsiElement psiElement) {
-    return editor.getDocument().getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 }
 
