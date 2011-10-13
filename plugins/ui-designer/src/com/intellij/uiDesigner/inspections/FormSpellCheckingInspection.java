@@ -60,12 +60,11 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
     PlainTextSplitter.getInstance().split(value, TextRange.allOf(value), new Consumer<TextRange>() {
       @Override
       public void consume(TextRange textRange) {
-        String word = textRange.substring(value);
+        final String word = textRange.substring(value);
         if (manager.hasProblem(word)) {
           final List<String> suggestions = manager.getSuggestions(value);
-          EditorQuickFixProvider quickFixProvider = null;
           if (suggestions.size() > 0 && prop instanceof IntroStringProperty) {
-            quickFixProvider = new EditorQuickFixProvider() {
+            EditorQuickFixProvider changeToProvider = new EditorQuickFixProvider() {
               @Override
               public QuickFix createQuickFix(final GuiEditor editor, final RadComponent component) {
                 return new PopupQuickFix<String>(editor, "Change to...", component) {
@@ -88,8 +87,22 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
                 };
               }
             };
+            EditorQuickFixProvider acceptProvider = new EditorQuickFixProvider() {
+              @Override
+              public QuickFix createQuickFix(final GuiEditor editor, RadComponent component) {
+                return new QuickFix(editor, "Save '" + word + "' to dictionary", component) {
+                  @Override
+                  public void run() {
+                    manager.acceptWordAsCorrect(word, editor.getProject());
+                  }
+                };
+              }
+            };
+            collector.addError(getID(), component, prop, "Typo in word '" + word + "'", changeToProvider, acceptProvider);
           }
-          collector.addError(getID(), component, prop, "Typo in word '" + word + "'", quickFixProvider);
+          else {
+            collector.addError(getID(), component, prop, "Typo in word '" + word + "'");
+          }
         }
       }
     });

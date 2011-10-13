@@ -57,18 +57,20 @@ public class FormEditorErrorCollector extends FormErrorCollector {
 
   public void addError(@NotNull final String inspectionId, final IComponent component, @Nullable IProperty prop,
                        @NotNull String errorMessage,
-                       @Nullable EditorQuickFixProvider editorQuickFixProvider) {
+                       EditorQuickFixProvider... editorQuickFixProviders) {
     if (myResults == null) {
       myResults = new ArrayList<ErrorInfo>();
     }
-    QuickFix[] quickFixes = QuickFix.EMPTY_ARRAY;
-    if (editorQuickFixProvider != null) {
-      quickFixes = new QuickFix[1];
-      quickFixes [0] = editorQuickFixProvider.createQuickFix(myEditor, myComponent);
+    List<QuickFix> quickFixes = new ArrayList<QuickFix>();
+    for (EditorQuickFixProvider provider : editorQuickFixProviders) {
+      if (provider != null) {
+        quickFixes.add(provider.createQuickFix(myEditor, myComponent));
+      }
     }
 
     final ErrorInfo errorInfo = new ErrorInfo(myComponent, prop == null ? null : prop.getName(), errorMessage,
-                                              myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId), myFormPsiFile), quickFixes);
+                                              myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId), myFormPsiFile),
+                                              quickFixes.toArray(new QuickFix[quickFixes.size()]));
     errorInfo.setInspectionId(inspectionId);
     myResults.add(errorInfo);
   }
