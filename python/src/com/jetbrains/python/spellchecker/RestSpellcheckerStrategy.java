@@ -38,10 +38,4 @@ public class RestSpellcheckerStrategy extends SpellcheckingStrategy {
     }
     return EMPTY_TOKENIZER;
   }
-
-  @NotNull
-  @Override
-  public Language getLanguage() {
-    return RestLanguage.INSTANCE;
-  }
 }

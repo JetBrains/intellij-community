@@ -872,8 +872,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <support implementation="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
-    <support implementation="com.jetbrains.python.spellchecker.RestSpellcheckerStrategy"/>
+    <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
+    <support language="ReST" implementationClass="com.jetbrains.python.spellchecker.RestSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
 

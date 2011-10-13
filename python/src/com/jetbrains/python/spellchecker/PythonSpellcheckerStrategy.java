@@ -1,6 +1,5 @@
 package com.jetbrains.python.spellchecker;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -9,7 +8,6 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -57,12 +55,6 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
 
   private StringLiteralTokenizer myStringLiteralTokenizer = new StringLiteralTokenizer();
   private FormatStringTokenizer myFormatStringTokenizer = new FormatStringTokenizer();
-
-  @NotNull
-  @Override
-  public Language getLanguage() {
-    return PythonLanguage.getInstance();
-  }
 
   @NotNull
   @Override
