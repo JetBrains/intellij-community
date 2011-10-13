@@ -37,6 +37,25 @@ public class PseudoClassLoader {
   static final WeakHashMap myCache = new WeakHashMap();
 
   final Map myDefinedClasses = new HashMap ();
+  final Map myDefinedClassesData = new HashMap ();
+
+  private class MemoryClassLoader extends ClassLoader {
+    public MemoryClassLoader(URLClassLoader classpathLoader) {
+      super(classpathLoader);
+    }
+
+    protected Class findClass(String name) throws ClassNotFoundException {
+      final byte[] data = (byte[])myDefinedClassesData.get(name);
+      if (data == null) {
+        throw new ClassNotFoundException(name);
+      }
+      return defineClass(name, data, 0, data.length);
+    }
+
+    public URL findResource(String name) {
+      return super.findResource(name);
+    }
+  }
 
   public class PseudoClass {
     final String myName;
@@ -165,10 +184,11 @@ public class PseudoClassLoader {
     }
   }
 
-  final URLClassLoader myLoader;
+  final MemoryClassLoader myLoader;
 
   public PseudoClassLoader(final URL[] classpath) {
-    myLoader = new URLClassLoader (classpath, null);
+    final URLClassLoader classpathLoader = new URLClassLoader(classpath, null);
+    myLoader = new MemoryClassLoader(classpathLoader);
   }
 
   public ClassLoader getLoader () {
@@ -177,6 +197,7 @@ public class PseudoClassLoader {
 
   public void defineClass (final String internalName, final byte[] data) {
     myDefinedClasses.put(internalName, createPseudoClass(new ClassReader(data)));
+    myDefinedClassesData.put(internalName.replace('/', '.'), data);
   }
 
   private static class V extends EmptyVisitor {
