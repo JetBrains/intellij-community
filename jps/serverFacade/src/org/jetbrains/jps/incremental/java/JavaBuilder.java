@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.ant.PseudoClassLoader;
+import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -177,6 +178,9 @@ public class JavaBuilder extends Builder{
       ProjectPaths.KEY.set(context, paths = new ProjectPaths(context.getProject()));
     }
 
+    // todo: consider corresponding setting in CompilerWorkspaceConfiguration
+    final boolean addNotNullAssertions = true;
+
     final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
     final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
@@ -197,7 +201,7 @@ public class JavaBuilder extends Builder{
     PSEUDO_CLASSLOADER_KEY.set(context, pseudoLoader);
 
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
-    final OutputFilesSink outputSink = new OutputFilesSink(context, formsBoundSources);
+    final OutputFilesSink outputSink = new OutputFilesSink(context, formsBoundSources, addNotNullAssertions);
     Collection<File> successfulForms = Collections.emptyList();
     try {
       final boolean compilationOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, diagnosticSink, outputSink);
@@ -207,7 +211,7 @@ public class JavaBuilder extends Builder{
 
       successfulForms = instrumentForms(context, chunk, pseudoLoader, forms, outputSink);
 
-      // todo: add notNull
+      instrumentNotNull(context, outputSink, pseudoLoader);
 
       return ExitCode.OK;
     }
@@ -225,7 +229,8 @@ public class JavaBuilder extends Builder{
   }
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
-    return Arrays.asList(/*"-verbose"*/)/*Collections.emptyList()*/;
+    // todo: read full set of options from settings
+    return Arrays.asList("-g")/*Collections.emptyList()*/;
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
@@ -251,6 +256,38 @@ public class JavaBuilder extends Builder{
     return map;
   }
 
+  // todo: probably instrument other NotNull-like annotations defined in project settings?
+  private static void instrumentNotNull(CompileContext context, OutputFilesSink sink, final PseudoClassLoader loader) {
+    for (OutputFileObject fileObject : sink.getUnsavedFiles()) {
+      final OutputFileObject.Content originalContent = fileObject.getContent();
+      final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
+      final int version = getClassFileVersion(reader);
+      if (version >= Opcodes.V1_5) {
+        final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), loader);
+        try {
+          final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+          reader.accept(instrumenter, 0);
+          if (instrumenter.isModification()) {
+            fileObject.updateContent(writer.toByteArray());
+          }
+        }
+        catch (Exception e) {
+          final JavaFileObject source = fileObject.getSource();
+          File sourceFile = null;
+          if (source != null) {
+            sourceFile = new File(source.toUri());
+          }
+          final StringBuilder msg = new StringBuilder();
+          msg.append("@NotNull instrumentation failed ");
+          if (sourceFile != null) {
+            msg.append(" for ").append(sourceFile.getName());
+          }
+          msg.append(": ").append(e.getMessage());
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, msg.toString(), sourceFile != null? sourceFile.getPath() : null));
+        }
+      }
+    }
+  }
 
   private static Collection<File> instrumentForms(CompileContext context, ModuleChunk chunk, final PseudoClassLoader loader, Collection<File> formsToInstrument, OutputFilesSink outputSink) throws ProjectBuildException {
     if (formsToInstrument.isEmpty()) {
@@ -309,7 +346,7 @@ public class JavaBuilder extends Builder{
         final ClassReader classReader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
         final int version = getClassFileVersion(classReader);
-        final FormsInstrumenterClassWriter classWriter = new FormsInstrumenterClassWriter(classReader, getAsmClassWriterFlags(version), loader);
+        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), loader);
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader.getLoader(), nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
@@ -423,12 +460,14 @@ public class JavaBuilder extends Builder{
   private static class OutputFilesSink implements EmbeddedJavac.OutputFileConsumer {
     private final CompileContext myContext;
     private final Set<File> myFormsBoundSources;
+    private final boolean myAddNotNullAssertions;
     private final Set<File> mySuccessfullyCompiled = new HashSet<File>();
     private final List<OutputFileObject> myUnsavedFiles = new ArrayList<OutputFileObject>();
 
-    public OutputFilesSink(CompileContext context, Set<File> formsBoundSources) {
+    public OutputFilesSink(CompileContext context, Set<File> formsBoundSources, boolean addNotNullAssertions) {
       myContext = context;
       myFormsBoundSources = formsBoundSources;
+      myAddNotNullAssertions = addNotNullAssertions;
     }
 
     public void save(OutputFileObject fileObject) {
@@ -465,11 +504,14 @@ public class JavaBuilder extends Builder{
     }
 
     private boolean shouldKeep(OutputFileObject fileObject) {
+      if (myAddNotNullAssertions) {
+        return true; // every file should be checked for the presence of NotNull
+      }
       final JavaFileObject source = fileObject.getSource();
       if (source != null && myFormsBoundSources.contains(new File(source.toUri()))) {
         return true;
       }
-      // todo: consider @NotNull presence as well
+      // todo: probably we should check if @NotNull annotations are present in this particular class
       return false;
     }
 
@@ -494,11 +536,11 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  public static class FormsInstrumenterClassWriter extends ClassWriter {
+  public static class InstrumenterClassWriter extends ClassWriter {
     private final PseudoClassLoader myPseudoClassLoader;
 
-    public FormsInstrumenterClassWriter(ClassReader classReader, int flags, final PseudoClassLoader pseudoLoader) {
-      super(classReader, flags);
+    public InstrumenterClassWriter(int flags, final PseudoClassLoader pseudoLoader) {
+      super(flags);
       myPseudoClassLoader = pseudoLoader;
     }
 
@@ -509,12 +551,10 @@ public class JavaBuilder extends Builder{
         return p1.getCommonSuperClassName(p2);
       }
       catch (ClassNotFoundException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e.getMessage());
+        throw new RuntimeException(e.getMessage(), e);
       }
       catch (IOException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e.getMessage());
+        throw new RuntimeException(e.getMessage(), e);
       }
     }
   }
