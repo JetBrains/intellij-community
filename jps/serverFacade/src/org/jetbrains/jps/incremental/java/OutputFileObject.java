@@ -2,8 +2,7 @@ package org.jetbrains.jps.incremental.java;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.util.Arrays;
 
@@ -77,6 +76,10 @@ public class OutputFileObject extends SimpleJavaFileObject {
 
   public Content getContent() {
     return myContent;
+  }
+
+  public void updateContent(byte[] updatedContent) {
+    myContent = new Content(updatedContent, 0, updatedContent.length);
   }
 
   @Override
