@@ -932,7 +932,6 @@ class FormatProcessor {
       }
       else {
         int indentOffset = indentedParentBlock.getWhiteSpace().getIndentOffset();
-        indentOffset += getChildIndentSize(childAttributes.getChildIndent());
         if (indentOffset > alignOffset) {
           return new IndentInfo(0, 0, alignOffset);
         }
@@ -942,22 +941,6 @@ class FormatProcessor {
       }
     }
   }
-
-  private int getChildIndentSize(Indent indent) {
-    if (!(indent instanceof IndentImpl)) return 0;
-    Indent.Type indentType = ((IndentImpl)indent).getType();
-    if (indentType == Indent.Type.NONE) return 0;
-    if (indentType == Indent.Type.CONTINUATION || indentType == Indent.Type.CONTINUATION_WITHOUT_FIRST) {
-      return myIndentOption.CONTINUATION_INDENT_SIZE;
-    }
-    if (indentType == Indent.Type.LABEL) return myIndentOption.LABEL_INDENT_SIZE;
-    if (indentType == Indent.Type.NORMAL) return myIndentOption.INDENT_SIZE;
-    if (indentType == Indent.Type.SPACES) {
-      return ((IndentImpl)indent).getSpaces();
-    }
-    return 0;
-  }
-
 
   private static int getAlignOffsetBefore(final Alignment alignment, @Nullable final LeafBlockWrapper blockAfter) {
     if (alignment == null) return -1;
