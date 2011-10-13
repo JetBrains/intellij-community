@@ -336,6 +336,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     panel.add(new JLabel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label")), gbConstraints);
 
     gbConstraints.gridx = 1;
+    gbConstraints.insets = new Insets(0, 4, 0, 0);
     myExpandByCombo = new JComboBox();
     myExpandByCombo.addItem(SPACE);
     myExpandByCombo.addItem(TAB);

@@ -223,6 +223,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(new JLabel(CodeInsightBundle.message("dialog.edit.template.label.expand.with")), gbConstraints);
 
     gbConstraints.gridx = 1;
+    gbConstraints.insets = new Insets(0, 4, 0, 0);
     myExpandByCombo = new JComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
