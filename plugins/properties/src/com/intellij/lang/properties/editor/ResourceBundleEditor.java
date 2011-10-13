@@ -318,7 +318,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             if (editor == null) continue;
             reinitSettings(editor);
             IProperty property = propertiesFile.findPropertyByKey(propertyName);
-            final String value = property == null ? "" : property.getValue();
+            final String value;
+            if (property == null) {
+              value = "";
+            }
+            else {
+              String rawValue = property.getValue();
+              value = rawValue == null ? "" : ResourceBundleUtil.fromPropertyValueToValueEditor(rawValue); 
+            }
             final Document document = editor.getDocument();
             CommandProcessor.getInstance().executeCommand(null, new Runnable() {
               public void run() {
@@ -362,7 +369,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     else {
       myBackSlashPressed.remove(propertiesFile);
     }
-    String value = getPropertyValueFromText(text);
+    String value = ResourceBundleUtil.fromValueEditorToPropertyValue(text);
     IProperty property = propertiesFile.findPropertyByKey(propertyName);
     try {
       if (property == null) {
@@ -375,23 +382,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  private static String getPropertyValueFromText(final String text) {
-    StringBuilder value = new StringBuilder();
-    for (int i=0; i<text.length();i++) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        if (!PropertiesUtil.isUnescapedBackSlashAtTheEnd(value.toString())) {
-          value.append("\\");
-        }
-        value.append("\n");
-      }
-      else {
-        value.append(c);
-      }
-    }
-    return value.toString();
   }
 
   private void installDocumentListeners() {
