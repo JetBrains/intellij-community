@@ -26,18 +26,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PropertiesSplitter extends BaseSplitter {
-
+  private static final PropertiesSplitter INSTANCE = new PropertiesSplitter();
+  
+  public static PropertiesSplitter getInstance() {
+    return INSTANCE;
+  }
 
   @NonNls
   private static final Pattern WORD = Pattern.compile("\\p{L}*");
-
 
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
       return;
     }
-    final IdentifierSplitter splitter = SplitterFactory.getInstance().getIdentifierSplitter();
+    final IdentifierSplitter splitter = IdentifierSplitter.getInstance();
     Matcher matcher = WORD.matcher(range.substring(text));
     while (matcher.find()) {
       if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {

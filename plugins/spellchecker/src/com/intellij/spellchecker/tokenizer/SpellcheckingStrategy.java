@@ -24,12 +24,13 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.spellchecker.inspections.TextSplitter;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
-  protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = TokenizerBase.create(SplitterFactory.getInstance().getAttributeValueSplitter());
+  protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = TokenizerBase.create(TextSplitter.getInstance());
   protected final Tokenizer<XmlText> myXmlTextTokenizer = new XmlTextTokenizer();
 
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
@@ -39,7 +40,7 @@ public class SpellcheckingStrategy {
     }
   };
 
-  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<PsiElement>(SplitterFactory.getInstance().getPlainTextSplitter());
+  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<PsiElement>(PlainTextSplitter.getInstance());
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {

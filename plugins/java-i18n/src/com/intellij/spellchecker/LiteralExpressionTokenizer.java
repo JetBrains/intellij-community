@@ -20,7 +20,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +44,6 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
       return;
     }
 
-    consumer.consumeToken(element, SplitterFactory.getInstance().getStringLiteralSplitter());
+    consumer.consumeToken(element, PlainTextSplitter.getInstance());
   }
 }

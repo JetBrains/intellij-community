@@ -19,7 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.IdentifierSplitter;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -40,6 +40,6 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
       offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
     }
     String text = identifier.getText();
-    consumer.consumeToken(parent, text, true, offset, TextRange.allOf(text), SplitterFactory.getInstance().getIdentifierSplitter());
+    consumer.consumeToken(parent, text, true, offset, TextRange.allOf(text), IdentifierSplitter.getInstance());
   }
 }

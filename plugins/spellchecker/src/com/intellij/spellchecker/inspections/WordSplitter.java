@@ -25,6 +25,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class WordSplitter extends BaseSplitter {
+  private static final WordSplitter INSTANCE = new WordSplitter();
+
+  public static WordSplitter getInstance() {
+    return INSTANCE;
+  }
 
   @NonNls
   private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{4};?|#\\p{Alnum}{3,6}|0x\\p{Alnum}?");
@@ -41,7 +46,7 @@ public class WordSplitter extends BaseSplitter {
       addWord(consumer, true, found);
     }
     else {
-      SplitterFactory.getInstance().getIdentifierSplitter().split(text, range, consumer);
+      IdentifierSplitter.getInstance().split(text, range, consumer);
     }
   }
 }

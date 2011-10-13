@@ -25,7 +25,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.IdentifierSplitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
     final boolean isInSource = (virtualFile != null) && fileIndex.isInContent(virtualFile);
     if (isInSource) {
       consumer.consumeToken(element, element.getText(), true, 0, getRangeToCheck(element.getText(), psiClass.getName()),
-                                             SplitterFactory.getInstance().getIdentifierSplitter());
+                            IdentifierSplitter.getInstance());
     }
   }
 

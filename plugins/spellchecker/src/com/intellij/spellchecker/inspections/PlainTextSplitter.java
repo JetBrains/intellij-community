@@ -28,7 +28,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class PlainTextSplitter extends BaseSplitter {
+  private static final PlainTextSplitter INSTANCE = new PlainTextSplitter();
 
+  public static PlainTextSplitter getInstance() {
+    return INSTANCE;
+  }
 
   @NonNls
   private static final Pattern MAIL =
@@ -61,7 +65,7 @@ public class PlainTextSplitter extends BaseSplitter {
       toCheck = Collections.singletonList(range);
     }
 
-    final TextSplitter ws = SplitterFactory.getInstance().getTextSplitterNew();
+    final TextSplitter ws = TextSplitter.getInstance();
     for (TextRange r : toCheck) {
 
       checkCancelled();

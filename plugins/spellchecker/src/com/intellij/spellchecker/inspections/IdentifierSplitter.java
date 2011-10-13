@@ -29,6 +29,11 @@ import java.util.regex.Pattern;
 
 
 public class IdentifierSplitter extends BaseSplitter {
+  private static final IdentifierSplitter INSTANCE = new IdentifierSplitter();
+  
+  public static IdentifierSplitter getInstance() {
+    return INSTANCE;
+  }
 
   @NonNls
   private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");

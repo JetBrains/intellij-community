@@ -25,6 +25,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TextSplitter extends BaseSplitter {
+  private static final TextSplitter INSTANCE = new TextSplitter();
+
+  public static TextSplitter getInstance() {
+    return INSTANCE;
+  }
 
   private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("([&#]|0x[0-9]*)?\\p{L}+'?\\p{L}(_*\\p{L})*");
 
@@ -37,7 +42,7 @@ public class TextSplitter extends BaseSplitter {
   }
 
   protected void doSplit(@NotNull String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
-    final WordSplitter ws = SplitterFactory.getInstance().getWordSplitter();
+    final WordSplitter ws = WordSplitter.getInstance();
     Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(range.substring(text));
     while (matcher.find()) {
       TextRange found = matcherRange(range, matcher);

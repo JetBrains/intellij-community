@@ -26,6 +26,12 @@ import java.util.regex.Pattern;
 
 public class CommentSplitter extends BaseSplitter {
   private static final Pattern HTML = Pattern.compile("<(\\S+?).*?>(.*?)</\\1>");
+  
+  private static final CommentSplitter INSTANCE = new CommentSplitter();
+  
+  public static CommentSplitter getInstance() {
+    return INSTANCE;
+  }
 
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
@@ -34,7 +40,7 @@ public class CommentSplitter extends BaseSplitter {
     }
 
     List<TextRange> toCheck = excludeByPattern(text, range, HTML, 2);
-    final Splitter ps = SplitterFactory.getInstance().getPlainTextSplitter();
+    final Splitter ps = PlainTextSplitter.getInstance();
     for (TextRange r : toCheck) {
       ps.split(text, r, consumer);
     }

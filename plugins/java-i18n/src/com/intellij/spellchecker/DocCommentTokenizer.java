@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.spellchecker.inspections.CommentSplitter;
-import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
 
   @Override
   public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {
-    final CommentSplitter splitter = SplitterFactory.getInstance().getCommentSplitter();
+    final CommentSplitter splitter = CommentSplitter.getInstance();
 
     for (PsiElement el : comment.getChildren()) {
       if (el instanceof PsiDocTag) {

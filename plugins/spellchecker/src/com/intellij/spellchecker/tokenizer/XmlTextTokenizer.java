@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,6 +31,6 @@ public class XmlTextTokenizer extends Tokenizer<XmlText> {
     if(element.getContainingFile().getContext() != null) return; // outer element should care of spell checking
     List<Pair<PsiElement,TextRange>> list = InjectedLanguageUtil.getInjectedPsiFiles(element);
     if (list != null && list.size() > 0) return;
-    consumer.consumeToken(element,  SplitterFactory.getInstance().getPlainTextSplitter());
+    consumer.consumeToken(element, PlainTextSplitter.getInstance());
   }
 }

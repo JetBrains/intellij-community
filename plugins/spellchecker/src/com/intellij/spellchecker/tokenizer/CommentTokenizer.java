@@ -16,7 +16,7 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.psi.PsiComment;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.spellchecker.inspections.CommentSplitter;
 import org.jetbrains.annotations.NotNull;
 
 public class CommentTokenizer extends Tokenizer<PsiComment> {
@@ -25,6 +25,6 @@ public class CommentTokenizer extends Tokenizer<PsiComment> {
   public void tokenize(@NotNull PsiComment element, TokenConsumer consumer) {
     // doccomment chameleon expands as PsiComment inside PsiComment, avoid duplication
     if (element.getParent() instanceof PsiComment) return;
-    consumer.consumeToken(element, SplitterFactory.getInstance().getCommentSplitter());
+    consumer.consumeToken(element, CommentSplitter.getInstance());
   }
 }
