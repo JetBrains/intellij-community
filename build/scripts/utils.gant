@@ -130,6 +130,14 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   project.info("##teamcity[publishArtifacts '$relativePath']")
 })
 
+def suspendUntilDebuggerConnect = System.getProperty("debug.suspend") ?: "n"
+def debugPort = System.getProperty("debug.port") ?: 5555
+if (suspendUntilDebuggerConnect == 'y') {
+  println """\
+------------->----------- This process is suspended until remote debugger connects to the port $debugPort ----<----
+-------------------------------------------^------^------^------^------^------^------^-----------------------  
+"""
+}
 binding.setVariable("commonJvmArgs", {
   return [
    "-ea",
@@ -139,7 +147,7 @@ binding.setVariable("commonJvmArgs", {
    "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
    "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
    "-Xdebug",
-   "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5555"]
+   "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendUntilDebuggerConnect,address=$debugPort"]
 })
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->

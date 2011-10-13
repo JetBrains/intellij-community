@@ -55,8 +55,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -184,23 +184,17 @@ public class GroovyCompletionUtil {
   }
 
   public static boolean asVariableInBlock(PsiElement context) {
-    if (context.getParent() instanceof GrReferenceExpression &&
-        (context.getParent().getParent() instanceof GrOpenBlock ||
-         context.getParent().getParent() instanceof GrClosableBlock) &&
-        isNewStatement(context, true)) {
-      return true;
+    if (context.getParent() instanceof GrReferenceExpression) {
+      PsiElement parent = context.getParent().getParent();
+      if (parent instanceof GrApplicationStatement) {
+        parent = parent.getParent();
+      }
+      if ((parent instanceof GrCodeBlock || parent instanceof GrCaseSection) && isNewStatement(context, true)) {
+        return true;
+      }
     }
 
-    if (context.getParent() instanceof GrReferenceExpression &&
-        context.getParent().getParent() instanceof GrApplicationStatement &&
-        (context.getParent().getParent().getParent() instanceof GrOpenBlock ||
-         context.getParent().getParent().getParent() instanceof GrClosableBlock) &&
-        isNewStatement(context, true)) {
-      return true;
-    }
-
-    return context.getParent() instanceof GrTypeDefinitionBody &&
-           isNewStatement(context, true);
+    return context.getParent() instanceof GrTypeDefinitionBody && isNewStatement(context, true);
   }
 
   public static boolean asTypedMethod(PsiElement context) {

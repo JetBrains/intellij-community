@@ -78,6 +78,9 @@ public class VariablesCompletionTest extends CompletionTestCase {
   public void testUniqueNameInFor() throws Exception {
     doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
+  public void testWithBuilderParameter() throws Exception {
+    doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
+  }
 
   private void doTest(String before, String after) throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + before);

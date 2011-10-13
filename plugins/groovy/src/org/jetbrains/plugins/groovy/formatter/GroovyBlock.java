@@ -37,12 +37,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -130,8 +132,12 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
+      if (((GroovyBlock)child1).getNode() == ((GroovyBlock)child2).getNode()) {
+        return Spacing.getReadOnlySpacing();
+      }
+
       Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), mySettings).getSpacing();
-      return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
+      return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock)child1), ((GroovyBlock)child2), mySettings);
     }
     return null;
   }
@@ -186,6 +192,9 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     }
     if (psiParent instanceof GrDocComment || psiParent instanceof GrDocTag) {
       return new ChildAttributes(Indent.getSpaceIndent(GroovyIndentProcessor.GDOC_COMMENT_INDENT), null);
+    }
+    if (psiParent instanceof GrVariable || psiParent instanceof GrAssignmentExpression) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }

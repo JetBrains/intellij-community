@@ -68,7 +68,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   public static void showTemplatesLookup(final Project project, final Editor editor, String prefix, List<TemplateImpl> matchingTemplates) {
     List<LookupElement> array = new ArrayList<LookupElement>();
     for (TemplateImpl template : matchingTemplates) {
-      array.add(new LiveTemplateLookupElement(template));
+      array.add(new LiveTemplateLookupElement(template, false));
     }
     LookupElement[] items = array.toArray(new LookupElement[array.size()]);
 

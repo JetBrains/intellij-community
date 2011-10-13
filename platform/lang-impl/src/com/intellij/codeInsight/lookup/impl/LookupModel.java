@@ -44,6 +44,11 @@ public class LookupModel {
   private SortedList<LookupElement> mySortedItems;
   private LookupArranger myArranger;
   private Classifier<LookupElement> myRelevanceClassifier;
+  @Nullable public LookupElement preselectedItem;
+
+  public LookupModel(LookupElement preselectedItem) {
+    this.preselectedItem = preselectedItem;
+  }
 
   public List<LookupElement> getItems() {
     synchronized (lock) {
@@ -141,6 +146,12 @@ public class LookupModel {
   public List<LookupElement> classifyByRelevance(List<LookupElement> list) {
     synchronized (lock) {
       return ContainerUtil.flatten(myRelevanceClassifier.classify(list));
+    }
+  }
+
+  LookupArranger getArranger() {
+    synchronized (lock) {
+      return myArranger;
     }
   }
 }

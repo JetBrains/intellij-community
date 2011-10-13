@@ -685,9 +685,6 @@
     <localInspection language="Groovy" shortName="GroovyUnresolvedAccess" displayName="Access to unresolved expression" groupName="Probable bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection"/>
-    <localInspection language="Groovy" shortName="GroovyImmutableAnnotation" displayName="Check '@Immutable' annotation conventions"
-                     groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection"/>
     <localInspection language="Groovy" shortName="GroovySingletonAnnotation" displayName="Check '@Singleton' annotation conventions"
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection"/>

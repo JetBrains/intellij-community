@@ -9,9 +9,6 @@
    <!--
     <idea-version since-build="2000"/>
     -->
-   <!--
-    <is-internal/>
-    -->
 
     <extensions defaultExtensionNs="com.intellij">
       <intentionAction>

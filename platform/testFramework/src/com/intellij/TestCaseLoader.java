@@ -60,7 +60,7 @@ public class TestCaseLoader {
   private final String[] slowTestNames;
 
   public TestCaseLoader(String classFilterName) {
-    InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
+    InputStream excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResourceAsStream(classFilterName);
     String preconfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
     if (preconfiguredGroup == null || "".equals(preconfiguredGroup.trim())) {
       myTestGroupName = "";

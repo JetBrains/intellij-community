@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,9 +110,11 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   protected boolean isRebasing(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    for (VirtualFile file : files) {
-      if (GitRepositoryManager.getInstance(project).getRepositoryForFile(file).getState() == GitRepository.State.REBASING) {
-        return true;
+    if (files != null) {
+      for (VirtualFile file : files) {
+        if (GitRepositoryManager.getInstance(project).getRepositoryForFile(file).getState() == GitRepository.State.REBASING) {
+          return true;
+        }
       }
     }
     return false;

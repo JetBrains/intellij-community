@@ -21,14 +21,18 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.TemplateManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.KeyEvent;
+
 /**
  * @author peter
  */
 public class LiveTemplateLookupElement extends LookupElement {
   private final String myPrefix;
   private final TemplateImpl myTemplate;
+  public final boolean sudden;
 
-  public LiveTemplateLookupElement(TemplateImpl template) {
+  public LiveTemplateLookupElement(TemplateImpl template, boolean sudden) {
+    this.sudden = sudden;
     myPrefix = template.getKey();
     myTemplate = template;
   }
@@ -45,7 +49,18 @@ public class LiveTemplateLookupElement extends LookupElement {
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
-    presentation.setTypeText(myTemplate.getDescription());
+    if (sudden) {
+      presentation.setItemTextBold(true);
+      char shortcutChar = myTemplate.getShortcutChar();
+      if (shortcutChar == TemplateSettings.DEFAULT_CHAR) {
+        shortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
+      }
+      presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcutChar) + "] ");
+      presentation.setTailText(" (" + myTemplate.getDescription() + ")", true);
+    } else {
+      presentation.setTypeText(myTemplate.getDescription());
+
+    }
   }
 
   @Override

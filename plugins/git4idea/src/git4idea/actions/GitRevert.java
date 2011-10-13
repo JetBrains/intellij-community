@@ -67,9 +67,11 @@ public class GitRevert extends BasicAction {
   @Override
   protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
     for (VirtualFile file : vFiles) {
-      FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
-      if (status == FileStatus.UNKNOWN || status == FileStatus.NOT_CHANGED) return false;
+      FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
+      if (file.isDirectory() || (fileStatus != FileStatus.NOT_CHANGED && fileStatus != FileStatus.UNKNOWN)) {
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 }

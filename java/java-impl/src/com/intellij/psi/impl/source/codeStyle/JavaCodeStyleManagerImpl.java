@@ -52,6 +52,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String IS_PREFIX = "is";
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
+  @NonNls private static final String WITH_PREFIX = "with";
   @NonNls private static final String SET_PREFIX = "set";
 
   private final Project myProject;
