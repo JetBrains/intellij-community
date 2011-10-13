@@ -15,10 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.formatter;
 
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Rustam Vishnyakov
@@ -27,7 +31,17 @@ public class GroovyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
-    return new GroovyCodeStyleConfigurable(settings, originalSettings);
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, "Groovy") {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+        return new TabbedLanguageCodeStylePanel(GroovyFileType.GROOVY_LANGUAGE, getCurrentSettings(), settings) {};
+      }
+
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.groovy";
+      }
+    };
   }
 
   @Override

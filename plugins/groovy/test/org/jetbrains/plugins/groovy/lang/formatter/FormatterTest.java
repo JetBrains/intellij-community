@@ -155,6 +155,11 @@ public class FormatterTest extends GroovyFormatterTestCase {
     getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
+  public void testSpaceAfterTypeCast() throws Throwable {
+    getGroovySettings().SPACE_AFTER_TYPE_CAST = false;
+    getGroovySettings().SPACE_WITHIN_CAST_PARENTHESES = true;
+    doTest();
+  }
 
   public void testChainCallWithClosures() throws Throwable { doTest(); }
   public void testFormatDiamonds() throws Throwable { doTest(); }
