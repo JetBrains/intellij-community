@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class Token<T extends PsiElement> {
@@ -85,7 +84,6 @@ public class Token<T extends PsiElement> {
     return range;
   }
 
-  @Nullable
   public void processAreas(Consumer<TextRange> consumer) {
     if (splitter == null || text == null) {
       return;

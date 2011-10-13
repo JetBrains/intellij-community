@@ -18,9 +18,8 @@ package com.intellij.spellchecker;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,15 +28,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {
 
-   @Override
-   @Nullable
-  public Token[] tokenize(@NotNull PsiMethod element) {
+  @Override
+  public void tokenize(@NotNull PsiMethod element, TokenConsumer consumer) {
     final PsiMethod[] methods = (element).findDeepestSuperMethods();
     boolean isInSource = true;
     for (PsiMethod psiMethod : methods) {
       isInSource &= isMethodDeclarationInSource(psiMethod);
     }
-    return isInSource ? super.tokenize(element) : null;
+    if (isInSource) {
+      super.tokenize(element, consumer);
+    }
   }
 
   private static boolean isMethodDeclarationInSource(@NotNull PsiMethod psiMethod) {

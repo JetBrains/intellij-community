@@ -28,23 +28,27 @@ import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
+  protected final Tokenizer<PsiPlainText> myPlainTextTokenizer = TokenizerBase.create(SplitterFactory.getInstance().getPlainTextSplitter());
+  protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
+  protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = TokenizerBase.create(SplitterFactory.getInstance().getAttributeValueSplitter());
+  protected final Tokenizer<XmlText> myXmlTextTokenizer = new XmlTextTokenizer();
+
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
-  public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer();
-  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new Tokenizer<PsiElement>() {
+  public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
-    public Token[] tokenize(@NotNull final PsiElement element) {
-      return element.getText() != null ? new Token[]{new Token<PsiElement>(element, element.getText(), false, SplitterFactory
-        .getInstance().getPlainTextSplitter())} : null;
+    public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
     }
   };
+
+  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<PsiElement>(SplitterFactory.getInstance().getPlainTextSplitter());
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
-    if (element instanceof PsiComment) return new CommentTokenizer();
-    if (element instanceof XmlAttributeValue) return new XmlAttributeTokenizer();
-    if (element instanceof XmlText) return new XmlTextTokenizer();
-    if (element instanceof PsiPlainText) return new TextTokenizer();
+    if (element instanceof PsiComment) return myCommentTokenizer;
+    if (element instanceof XmlAttributeValue) return myXmlAttributeTokenizer;
+    if (element instanceof XmlText) return myXmlTextTokenizer;
+    if (element instanceof PsiPlainText) return myPlainTextTokenizer;
     return EMPTY_TOKENIZER;
   }
 

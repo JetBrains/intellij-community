@@ -21,10 +21,9 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.inspections.SplitterFactory;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -34,19 +33,17 @@ import java.util.Collections;
  * @author shkate@jetbrains.com
  */
 public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> {
-
   @Override
-  @Nullable
-  public Token[] tokenize(@NotNull PsiLiteralExpression element) {
+  public void tokenize(@NotNull PsiLiteralExpression element, TokenConsumer consumer) {
     if (!(element.getType() instanceof PsiClassType)) {
-      return null;  // not a string literal
+      return;  // not a string literal
     }
 
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
     if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS))) {
-      return null;
+      return;
     }
 
-    return new Token[]{new Token<PsiLiteralExpression>(element, SplitterFactory.getInstance().getStringLiteralSplitter())};
+    consumer.consumeToken(element, SplitterFactory.getInstance().getStringLiteralSplitter());
   }
 }

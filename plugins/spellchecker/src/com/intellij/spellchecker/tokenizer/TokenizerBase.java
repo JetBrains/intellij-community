@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,26 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.psi.PsiElement;
+import com.intellij.spellchecker.inspections.Splitter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class XmlAttributeTokenizer  extends Tokenizer<XmlAttributeValue>{
+/**
+ * @author yole
+ */
+public class TokenizerBase<T extends PsiElement> extends Tokenizer<T> {
+  public static <T extends PsiElement> TokenizerBase<T> create(Splitter splitter) {
+    return new TokenizerBase<T>(splitter);
+  }
+  
+  private final Splitter mySplitter;
 
-
-  @Nullable
-  @Override
-  public Token[] tokenize(@NotNull XmlAttributeValue element) {
-    return new Token[]{new Token<XmlAttributeValue>(element, element.getText(),false, SplitterFactory.getInstance().getAttributeValueSplitter())};
+  public TokenizerBase(Splitter splitter) {
+    mySplitter = splitter;
   }
 
-
+  @Override
+  public void tokenize(@NotNull T element, TokenConsumer consumer) {
+    consumer.consumeToken(element, mySplitter);
+  }
 }

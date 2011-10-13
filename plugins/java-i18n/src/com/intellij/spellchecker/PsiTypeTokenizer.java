@@ -26,13 +26,10 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.spellchecker.inspections.SplitterFactory;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -42,16 +39,18 @@ import java.util.List;
  */
 public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
 
-  @Nullable
   @Override
-  public Token[] tokenize(@NotNull PsiTypeElement element) {
+  public void tokenize(@NotNull PsiTypeElement element, TokenConsumer consumer) {
     final PsiType type = element.getType();
-    if (type instanceof PsiDisjunctionType) return tokenizeComplexType(element);
+    if (type instanceof PsiDisjunctionType) {
+      tokenizeComplexType(element, consumer);
+      return;
+    }
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
 
     if (psiClass == null || psiClass.getContainingFile() == null || psiClass.getContainingFile().getVirtualFile() == null) {
-      return null;
+      return;
     }
 
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
@@ -59,29 +58,21 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
 
     final boolean isInSource = (virtualFile != null) && fileIndex.isInContent(virtualFile);
-
-    return !isInSource
-           ? null
-           : new Token[]{
-             new Token<PsiTypeElement>(element, element.getText(), true, 0, getRangeToCheck(element.getText(), psiClass.getName()),
-                                       SplitterFactory.getInstance().getIdentifierSplitter())};
+    if (isInSource) {
+      consumer.consumeToken(element, element.getText(), true, 0, getRangeToCheck(element.getText(), psiClass.getName()),
+                                             SplitterFactory.getInstance().getIdentifierSplitter());
+    }
   }
 
-  @Nullable
-  private Token[] tokenizeComplexType(PsiTypeElement element) {
+  private void tokenizeComplexType(PsiTypeElement element, TokenConsumer consumer) {
     final List<PsiTypeElement> subTypes = PsiTreeUtil.getChildrenOfTypeAsList(element, PsiTypeElement.class);
-    final List<Token> result = new ArrayList<Token>(subTypes.size());
     for (PsiTypeElement subType : subTypes) {
-      final Token[] tokens = tokenize(subType);
-      if (tokens != null) {
-        result.addAll(Arrays.asList(tokens));
-      }
+      tokenize(subType, consumer);
     }
-    return result.size() != 0 ? result.toArray(new Token[result.size()]) : null;
   }
 
   @NotNull
-  private TextRange getRangeToCheck(@NotNull String text, @NotNull String name) {
+  private static TextRange getRangeToCheck(@NotNull String text, @NotNull String name) {
     final int i = text.indexOf(name);
     return new TextRange(i, i + name.length());
   }

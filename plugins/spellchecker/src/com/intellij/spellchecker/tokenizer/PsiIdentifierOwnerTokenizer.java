@@ -21,29 +21,25 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwner> {
-
-  @Nullable
   @Override
-  public Token[] tokenize(@NotNull PsiNameIdentifierOwner element) {
+  public void tokenize(@NotNull PsiNameIdentifierOwner element, TokenConsumer consumer) {
     PsiElement identifier = element.getNameIdentifier();
     if (identifier == null) {
-      return null;
+      return;
     }
     PsiElement parent = element;
     final TextRange range = identifier.getTextRange();
-    if (range.isEmpty()) return null;
+    if (range.isEmpty()) return;
 
     int offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
     if(offset < 0 ) {
       parent = PsiTreeUtil.findCommonParent(identifier, element);
       offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
     }
-    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset, SplitterFactory.getInstance().getIdentifierSplitter())};
+    String text = identifier.getText();
+    consumer.consumeToken(parent, text, true, offset, TextRange.allOf(text), SplitterFactory.getInstance().getIdentifierSplitter());
   }
-
-
 }

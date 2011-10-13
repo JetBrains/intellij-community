@@ -1,6 +1,7 @@
 package com.intellij.spellchecker.generator;
 
-import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -14,7 +15,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.inspections.Splitter;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -33,14 +35,12 @@ public abstract class SpellCheckerDictionaryGenerator {
   protected final MultiMap<String, VirtualFile> myDict2FolderMap;
   protected final Set<VirtualFile> myExcludedFolders = new HashSet<VirtualFile>();
   protected SpellCheckerManager mySpellCheckerManager;
-  protected NamesValidator[] myNamesValidators;
 
   public SpellCheckerDictionaryGenerator(final Project project, final String dictOutputFolder, final String defaultDictName) {
     myDict2FolderMap = new MultiMap<String, VirtualFile>();
     myProject = project;
     myDefaultDictName = defaultDictName;
     mySpellCheckerManager = SpellCheckerManager.getInstance(myProject);
-    myNamesValidators = SpellCheckingInspection.getNamesValidators();
     myDictOutputFolder = dictOutputFolder;
     SpellCheckingInspection.ensureFactoriesAreLoaded();
   }
@@ -165,27 +165,28 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   protected void processLeafsNames(@NotNull final PsiElement leafElement, @NotNull final HashSet<String> seenNames) {
-    final Token[] tokens = SpellCheckingInspection.tokenize(leafElement, leafElement.getLanguage());
-    if (tokens != null) {
-      for (final Token token : tokens) {
-        token.processAreas(new Consumer<TextRange>() {
+    final Language language = leafElement.getLanguage();
+    SpellCheckingInspection.tokenize(leafElement, language, new TokenConsumer() {
+      @Override
+      public void consumeToken(PsiElement element, final String text, boolean useRename, int offset, TextRange rangeToCheck, Splitter splitter) {
+        splitter.split(text, rangeToCheck, new Consumer<TextRange>() {
           @Override
           public void consume(TextRange textRange) {
-            final String word = textRange.substring(token.getText());
-            addSeenWord(seenNames, word);
+            final String word = textRange.substring(text);
+            addSeenWord(seenNames, word, language);
           }
         });
       }
-    }
+    });
   }
 
-  protected void addSeenWord(HashSet<String> seenNames, String word) {
+  protected void addSeenWord(HashSet<String> seenNames, String word, Language language) {
     final String lowerWord = word.toLowerCase();
     if (globalSeenNames.contains(lowerWord)) {
       return;
     }
 
-    boolean keyword = SpellCheckingInspection.isKeyword(myProject, myNamesValidators, word);
+    boolean keyword = LanguageNamesValidation.INSTANCE.forLanguage(language).isKeyword(word, myProject);
     if (keyword){
       return;
     }

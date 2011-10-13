@@ -26,10 +26,10 @@ public class HtmlSpellcheckingStrategy extends SpellcheckingStrategy {
   @NotNull
   @Override
     public Tokenizer getTokenizer(PsiElement element) {
-      if (element instanceof PsiComment) return new CommentTokenizer();
-      if (element instanceof XmlAttributeValue) return new XmlAttributeTokenizer();
-      if (element instanceof XmlText) return new XmlTextTokenizer();
-      return new Tokenizer();
+      if (element instanceof PsiComment) return myCommentTokenizer;
+      if (element instanceof XmlAttributeValue) return myXmlAttributeTokenizer;
+      if (element instanceof XmlText) return myXmlTextTokenizer;
+      return EMPTY_TOKENIZER;
     }
 
   @NotNull

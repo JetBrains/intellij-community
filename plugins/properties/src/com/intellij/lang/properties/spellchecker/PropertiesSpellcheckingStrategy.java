@@ -17,32 +17,36 @@ package com.intellij.lang.properties.spellchecker;
 
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.spellchecker.tokenizer.TokenizerBase;
 import org.jetbrains.annotations.NotNull;
 
 
 public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
+  private Tokenizer<PropertyValueImpl> myPropertyValueTokenizer = TokenizerBase.create(SplitterFactory.getInstance().getStringLiteralSplitter());
+  private Tokenizer<PropertyImpl> myPropertyTokenizer = new MyPropertyTokenizer();
+  
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PropertyValueImpl) {
-      return new Tokenizer<PropertyValueImpl>() {
-        public Token[] tokenize(@NotNull PropertyValueImpl element) {
-          return new Token[]{new Token<PropertyValueImpl>(element, SplitterFactory.getInstance().getStringLiteralSplitter())};
-        }
-      };
+      return myPropertyValueTokenizer;
     }
     if (element instanceof PropertyImpl) {
-      return new Tokenizer<PropertyImpl>() {
-        public Token[] tokenize(@NotNull PropertyImpl element) {
-          return new Token[]{new Token<PropertyImpl>(element, element.getKey(), true, SplitterFactory.getInstance().getPropertiesSplitter())};
-        }
-      };
+      return myPropertyTokenizer;
     }
     return super.getTokenizer(element);
+  }
+
+  private static class MyPropertyTokenizer extends Tokenizer<PropertyImpl> {
+    public void tokenize(@NotNull PropertyImpl element, TokenConsumer consumer) {
+      String key = element.getKey();
+      consumer.consumeToken(element, key, true, 0, TextRange.allOf(key), SplitterFactory.getInstance().getPropertiesSplitter());
+    }
   }
 }

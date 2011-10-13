@@ -15,19 +15,16 @@
  */
 package com.intellij.spellchecker;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.spellchecker.inspections.CommentSplitter;
 import com.intellij.spellchecker.inspections.SplitterFactory;
-import com.intellij.spellchecker.tokenizer.Token;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,19 +33,10 @@ import java.util.Set;
  * @author shkate@jetbrains.com
  */
 public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
+  private static final Set<String> excludedTags = ImmutableSet.of("author", "see", "by", "link");
 
-  private static final Set<String> excludedTags = new HashSet<String>();
-  {
-    excludedTags.add("author");
-    excludedTags.add("see");
-    excludedTags.add("by");
-    excludedTags.add("link");
-  }
-
-  @Nullable
   @Override
-  public Token[] tokenize(@NotNull PsiDocComment comment) {
-    List<Token> result = new ArrayList<Token>();
+  public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {
     final CommentSplitter splitter = SplitterFactory.getInstance().getCommentSplitter();
 
     for (PsiElement el : comment.getChildren()) {
@@ -56,16 +44,13 @@ public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
         PsiDocTag tag = (PsiDocTag)el;
         if (!excludedTags.contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
-            result.add(new Token<PsiElement>(data, splitter));
+            consumer.consumeToken(data, splitter);
           }
         }
       }
       else {
-        result.add(new Token<PsiElement>(el, splitter));
+        consumer.consumeToken(el, splitter);
       }
     }
-    Token[] t = new Token[result.size()];
-    result.toArray(t);
-    return result.size() == 0 ? null : t;
   }
 }

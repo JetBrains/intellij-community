@@ -18,17 +18,13 @@ package com.intellij.spellchecker.tokenizer;
 import com.intellij.psi.PsiComment;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class CommentTokenizer extends Tokenizer<PsiComment> {
 
-  @Nullable
   @Override
-  public Token[] tokenize(@NotNull PsiComment element) {
+  public void tokenize(@NotNull PsiComment element, TokenConsumer consumer) {
     // doccomment chameleon expands as PsiComment inside PsiComment, avoid duplication
-    if (element.getParent() instanceof PsiComment) return null;
-    return new Token[]{new Token<PsiComment>(element, element.getText(),false, SplitterFactory.getInstance().getCommentSplitter())};
+    if (element.getParent() instanceof PsiComment) return;
+    consumer.consumeToken(element, SplitterFactory.getInstance().getCommentSplitter());
   }
-
-
 }
