@@ -1,8 +1,10 @@
 package org.jetbrains.jps.server;
 
-import org.codehaus.gant.GantBinding;
 import org.codehaus.groovy.runtime.MethodClosure;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.JavaSdk;
+import org.jetbrains.jps.Library;
+import org.jetbrains.jps.Module;
+import org.jetbrains.jps.Project;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileScope;
