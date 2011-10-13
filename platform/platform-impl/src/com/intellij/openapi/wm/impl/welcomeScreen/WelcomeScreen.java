@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.ReopenProjectAction;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -27,11 +28,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.ui.LabeledIcon;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -82,6 +82,10 @@ public class WelcomeScreen implements Disposable {
   private static final Color PLUGINS_PANEL_BACKGROUND = new Color(248, 248, 248);
   private static final Color PLUGINS_PANEL_BORDER = new Color(234, 234, 234);
   private static final Color CAPTION_COLOR = new Color(47, 67, 96);
+  public static final SimpleTextAttributes CAPTION_BOLD_UNDERLINE_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE | SimpleTextAttributes.STYLE_BOLD, CAPTION_COLOR);
+  public static final SimpleTextAttributes CAPTION_UNDERLINE_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, CAPTION_COLOR);
   private static final Color DISABLED_CAPTION_COLOR = UIUtil.getInactiveTextColor();
   private static final Color ACTION_BUTTON_COLOR = WELCOME_PANEL_BACKGROUND;
   private static final Color BUTTON_POPPED_COLOR = new Color(241, 241, 241);
@@ -238,8 +242,17 @@ public class WelcomeScreen implements Disposable {
 
     int row = 1;
     for (final AnAction action : recentProjectsActions) {
-      JLabel actionLabel = new JLabel(underlineHtmlText(row + ". " + StringUtil.escapeXml(action.getTemplatePresentation().getText())));
-      actionLabel.setFont(LINK_FONT);
+      SimpleColoredComponent actionLabel = new SimpleColoredComponent();
+      actionLabel.append(String.valueOf(row), CAPTION_UNDERLINE_ATTRIBUTES);
+      actionLabel.append(". ", new SimpleTextAttributes(0, CAPTION_COLOR));
+      actionLabel.append(action.getTemplatePresentation().getText(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
+
+      if (action instanceof ReopenProjectAction) {
+        String path = FileUtil.getLocationRelativeToUserHome(((ReopenProjectAction)action).getProjectPath());
+        actionLabel.append("   " + path, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, Color.GRAY));
+      }
+
+      actionLabel.setFont(new Font(CAPTION_FONT_NAME, Font.PLAIN, 12));
       actionLabel.setForeground(CAPTION_COLOR);
       actionLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       actionLabel.addMouseListener(new MouseAdapter() {

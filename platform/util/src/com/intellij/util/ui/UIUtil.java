@@ -282,18 +282,22 @@ public class UIUtil {
 
   @NotNull
   public static Font getFont(@NotNull FontSize size, @Nullable Font base) {
-    Font defFont = getLabelFont();
-    if (base == null) base = defFont;
+    if (base == null) base = getLabelFont();
 
+    return base.deriveFont(getFontSize(size));
+  }
+
+  public static float getFontSize(FontSize size) {
+    int defSize = getLabelFont().getSize();
     switch (size) {
       case TREE:
-        return base.deriveFont(Math.max(defFont.getSize() - 2f, 12f));
+        return Math.max(defSize - 2f, 12f);
       case SMALL:
-        return base.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
+        return Math.max(defSize - 2f, 11f);
       case MINI:
-        return base.deriveFont(defFont.getSize() - 4f);
+        return defSize - 4f;
       default:
-        return base.deriveFont(defFont.getSize());
+        return defSize;
     }
   }
 
