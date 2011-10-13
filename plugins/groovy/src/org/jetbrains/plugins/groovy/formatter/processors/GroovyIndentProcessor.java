@@ -100,9 +100,14 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       return indentForSwitchStatement(psiParent, child);
     }
 
-    // For labels
-    if (child.getPsi() instanceof GrLabel) {
-      return Indent.getLabelIndent();
+    if (psiParent instanceof GrLabeledStatement) {
+      if (child.getPsi() instanceof GrLabel) {
+        CommonCodeStyleSettings.IndentOptions indentOptions = parent.getSettings().getIndentOptions();
+        if (indentOptions.LABEL_INDENT_ABSOLUTE) {
+          return Indent.getAbsoluteLabelIndent();
+        }
+        return Indent.getLabelIndent();
+      }
     }
 
     // for control structures

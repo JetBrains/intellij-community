@@ -140,6 +140,17 @@ public class FormatterTest extends GroovyFormatterTestCase {
     doTest();
   }
 
+  public void _testLabelIndent() throws Throwable {
+    getGroovySettings().getIndentOptions().LABEL_INDENT_SIZE = -2;
+    doTest();
+  }
+
+  public void _testLabelIndentAbsolute() throws Throwable {
+    getGroovySettings().getIndentOptions().LABEL_INDENT_ABSOLUTE = true;
+    getGroovySettings().getIndentOptions().LABEL_INDENT_SIZE = 1;
+    doTest();
+  }
+
   public void testClosureParametersAligned() throws Throwable {
     getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
