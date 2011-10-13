@@ -46,6 +46,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
@@ -75,6 +76,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
 
   @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
+  private static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
   public static final int WAITING_TIME = 10;
 
@@ -95,7 +97,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final Object myDebugLock = new Object();
 
   @NotNull
-  private volatile IDevice[] myTargetDevices = new IDevice[0];
+  private volatile IDevice[] myTargetDevices = EMPTY_DEVICE_ARRAY;
 
   private volatile String myAvdName;
   private volatile boolean myDebugMode;
@@ -114,7 +116,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private ConsoleView myConsole;
   private Runnable myRestarter;
-  private final TargetChooser myTargetChooser;
+  private TargetChooser myTargetChooser;
   private final boolean mySupportMultipleDevices;
 
   public void setDebugMode(boolean debugMode) {
@@ -163,13 +165,26 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     myConsole = console;
 
     if (myTargetChooser instanceof ManualTargetChooser) {
-      myTargetDevices = chooseDevicesManually();
-      if (myTargetDevices.length > 0) {
-        PropertiesComponent.getInstance(myFacet.getModule().getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(
-          myTargetDevices));
-      }
-      if (myTargetDevices.length == 0) {
+
+      final ExtendedDeviceChooserDialog chooser = new ExtendedDeviceChooserDialog(myFacet, mySupportMultipleDevices);
+      chooser.show();
+      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
         return null;
+      }
+      
+      if (chooser.isToLaunchEmulator()) {
+        final String selectedAvd = chooser.getSelectedAvd();
+        if (selectedAvd == null) {
+          return null;
+        }
+        myTargetChooser = new EmulatorTargetChooser(selectedAvd);
+      }
+      else {
+        final IDevice[] selectedDevices = chooser.getSelectedDevices();
+        if (selectedDevices.length == 0) {
+          return null;
+        }
+        myTargetDevices = selectedDevices;
       }
     }
 
@@ -289,27 +304,44 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private IDevice chooseDeviceAutomaticaly() {
+  private IDevice[] chooseDevicesAutomaticaly() {
     final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
     if (bridge == null) {
-      return null;
+      return EMPTY_DEVICE_ARRAY;
     }
     IDevice[] devices = bridge.getDevices();
-    boolean exactlyCompatible = false;
+    
+    boolean showChooserDialog = false;
     IDevice targetDevice = null;
     for (IDevice device : devices) {
-      Boolean compatible = isCompatibleDevice(device);
-      if (compatible == Boolean.FALSE) {
-        continue;
-      }
-      if (targetDevice == null ||
-          (targetDevice.isEmulator() && !device.isEmulator()) ||
-          (targetDevice.isEmulator() == device.isEmulator() && !exactlyCompatible)) {
-        exactlyCompatible = compatible != null;
-        targetDevice = device;
+      if (isCompatibleDevice(device) != Boolean.FALSE) {
+        if (targetDevice == null) {
+          targetDevice = device;
+        }
+        else {
+          showChooserDialog = true;
+          break;
+        }
       }
     }
-    return targetDevice;
+
+    if (showChooserDialog) {
+      final IDevice[][] devicesWrapper = {null};
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          devicesWrapper[0] = chooseDevicesManually(new Condition<IDevice>() {
+            @Override
+            public boolean value(IDevice device) {
+              return device.isEmulator() && isCompatibleDevice(device) != Boolean.FALSE;
+            }
+          }, false);
+        }
+      }, ModalityState.defaultModalityState());
+      return devicesWrapper[0].length > 0 ? devicesWrapper[0] : null;
+    }
+
+    return targetDevice != null ? new IDevice[] {targetDevice} : EMPTY_DEVICE_ARRAY;
   }
 
   private void chooseAvd() {
@@ -384,9 +416,15 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean chooseOrLaunchDevice() {
-    IDevice targetDevice = chooseDeviceAutomaticaly();
-    if (targetDevice != null) {
-      myTargetDevices = new IDevice[] {targetDevice};
+    IDevice[] targetDevices = chooseDevicesAutomaticaly();
+    if (targetDevices == null) {
+      message("Canceled", STDERR);
+      getProcessHandler().destroyProcess();
+      return false;
+    }
+
+    if (targetDevices.length > 0) {
+      myTargetDevices = targetDevices;
     }
     else if (myTargetChooser instanceof EmulatorTargetChooser) {
       if (isAndroidSdk15OrHigher()) {
@@ -415,19 +453,21 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @NotNull
-  private IDevice[] chooseDevicesManually() {
-    String value = PropertiesComponent.getInstance(myFacet.getModule().getProject()).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
+  private IDevice[] chooseDevicesManually(@Nullable Condition<IDevice> filter, boolean showLaunchEmulator) {
+    final Project project = myFacet.getModule().getProject();
+    String value = PropertiesComponent.getInstance(project).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
     String[] selectedSerials = value != null ? fromString(value) : null;
-    DeviceChooser chooser = new DeviceChooser(myFacet, mySupportMultipleDevices, selectedSerials);
+    DeviceChooserDialog chooser = new DeviceChooserDialog(myFacet, mySupportMultipleDevices, selectedSerials, filter, showLaunchEmulator);
     chooser.show();
     IDevice[] devices = chooser.getSelectedDevices();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE || devices.length == 0) {
       return DeviceChooser.EMPTY_DEVICE_ARRAY;
     }
+    PropertiesComponent.getInstance(project).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(devices));
     return devices;
   }
 
-  private static String toString(IDevice[] devices) {
+  public static String toString(IDevice[] devices) {
     StringBuilder builder = new StringBuilder();
     for (int i = 0, n = devices.length; i < n; i++) {
       builder.append(devices[i].getSerialNumber());

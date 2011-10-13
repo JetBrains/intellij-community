@@ -15,24 +15,18 @@
  */
 package org.jetbrains.android.run;
 
-import com.android.sdklib.internal.avd.AvdManager;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import org.jetbrains.android.actions.RunAndroidSdkManagerAction;
-import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,8 +51,8 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   private JRadioButton myShowChooserRadioButton;
   private JRadioButton myEmulatorRadioButton;
   private JRadioButton myUsbDeviceRadioButton;
-  private LabeledComponent<ComboboxWithBrowseButton> myAvdComboComponent;
-  private ComboboxWithBrowseButton myAvdCombo;
+  private LabeledComponent<AvdComboBox> myAvdComboComponent;
+  private AvdComboBox myAvdCombo;
   private RawCommandLineEditor myCommandLineField;
   private String incorrectPreferredAvd;
   private JComponent anchor;
@@ -80,7 +74,16 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myCommandLineField.setDialogCaption(myCommandLineComponent.getRawText());
     myCommandLineComponent.getLabel().setLabelFor(myCommandLineField.getTextField());
     myModuleSelector = new ConfigurationModuleSelector(project, myModulesComboBox);
+
+    myAvdComboComponent.setComponent(new AvdComboBox(true, false) {
+      @Override
+      public Module getModule() {
+        return getModuleSelector().getModule();
+      }
+    });
     myAvdCombo = myAvdComboComponent.getComponent();
+
+    Disposer.register(this, myAvdCombo);
 
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -88,55 +91,17 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
         myAvdComboComponent.setEnabled(enabled);
       }
     };
+    myModulesComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myAvdCombo.startUpdatingAvds(ModalityState.current());
+      }
+    });
     myShowChooserRadioButton.addActionListener(listener);
     myEmulatorRadioButton.addActionListener(listener);
     myUsbDeviceRadioButton.addActionListener(listener);
-    
-    myModulesComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateAvds();
-      }
-    });
-    myAvdCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Module module = myModuleSelector.getModule();
-        if (module == null) {
-          Messages.showErrorDialog(myPanel, ExecutionBundle.message("module.not.specified.error.text"));
-          return;
-        }
 
-        AndroidFacet facet = AndroidFacet.getInstance(module);
-        if (facet == null) {
-          Messages.showErrorDialog(myPanel, AndroidBundle.message("no.facet.error", module.getName()));
-          return;
-        }
-
-        final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-        if (platform == null) {
-          Messages.showErrorDialog(myPanel, AndroidBundle.message("android.compilation.error.specify.platform", module.getName()));
-          return;
-        }
-
-        RunAndroidSdkManagerAction.runTool(project, platform.getSdk().getLocation());
-      }
-    });
     myNetworkSpeedCombo.setModel(new DefaultComboBoxModel(NETWORK_SPEEDS));
     myNetworkLatencyCombo.setModel(new DefaultComboBoxModel(NETWORK_LATENCIES));
-  }
-
-  private void updateAvds() {
-    Module module = myModuleSelector.getModule();
-    AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
-    Object selected = myAvdCombo.getComboBox().getSelectedItem();
-    if (facet != null) {
-      DefaultComboBoxModel model = (DefaultComboBoxModel)myAvdCombo.getComboBox().getModel();
-      model.removeAllElements();
-      model.addElement("");
-      for (AvdManager.AvdInfo avd : facet.getAllCompatibleAvds()) {
-        model.addElement(avd.getName());
-      }
-    }
-    myAvdCombo.getComboBox().setSelectedItem(selected);
   }
 
   @Override

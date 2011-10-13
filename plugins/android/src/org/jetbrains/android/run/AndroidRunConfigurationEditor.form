@@ -103,6 +103,7 @@
                     </constraints>
                     <properties>
                       <componentClass value="com.intellij.ui.ComboboxWithBrowseButton"/>
+                      <enabled value="true"/>
                       <labelLocation value="West"/>
                       <text value="&amp;Prefer Android Virtual Device for deployment"/>
                     </properties>
