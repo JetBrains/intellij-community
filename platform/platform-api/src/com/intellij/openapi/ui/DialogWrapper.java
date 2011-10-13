@@ -343,7 +343,7 @@ public abstract class DialogWrapper {
     List<JButton> buttons = new ArrayList<JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (SystemInfo.isMacOSLeopard && Arrays.asList(actions).contains(getHelpAction())) {
+    if (UIUtil.isUnderAquaLookAndFeel() && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
     }
