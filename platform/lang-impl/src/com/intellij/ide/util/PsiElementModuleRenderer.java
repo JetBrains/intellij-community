@@ -59,62 +59,29 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     boolean selected,
     boolean hasFocus
   ) {
+    myText = "";
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
       if (element.isValid()) {
         PsiFile psiFile = element.getContainingFile();
         Module module = ModuleUtil.findModuleForPsiElement(element);
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-        if (module != null) {
-          boolean inTestSource = false;
-          if (psiFile != null) {
-            VirtualFile vFile = psiFile.getVirtualFile();
-            if (vFile != null) {
-              inTestSource = fileIndex.isInTestSourceContent(vFile);
-            }
-          }
-          myText = module.getName();
-          if (inTestSource) {
-            setIcon(TEST_ICON);
-          }
-          else {
-            setIcon(ModuleType.get(module).getNodeIcon(false));
-          }
-        } else {
-          if (psiFile != null) {
-            VirtualFile vFile = psiFile.getVirtualFile();
-            if (vFile != null) {
-              final boolean isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
-              if (isInLibraries){
-                setIcon(LIB_ICON);
-                for (OrderEntry order : fileIndex.getOrderEntriesForFile(vFile)) {
-                  if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-                    myText = order.getPresentableName();
-                    break;
-                  }
-                }
-
-                myText = myText.substring(myText.lastIndexOf(File.separatorChar) + 1);
-                VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
-                if (jar != null && !myText.equals(jar.getName())) {
-                  myText += " (" + jar.getName() + ")";
-                }
-              } /*else {
-              setIcon(IconUtilEx.getEmptyIcon(false));
-              setText(value.toString());
-            }*/
+        boolean isInLibraries = false;
+        if (psiFile != null) {
+          VirtualFile vFile = psiFile.getVirtualFile();
+          if (vFile != null) {
+            isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
+            if (isInLibraries){
+              showLibraryLocation(fileIndex, vFile);
             }
           }
         }
-      }
-      else {
-        myText = "";
+        if (module != null && !isInLibraries) {
+          showProjectLocation(psiFile, module, fileIndex);
+        }
       }
     }
-    /*else {
-      setIcon(IconUtilEx.getEmptyIcon(false));
-      setText(value == null ? "" : value.toString());
-    }*/
+
     setText(myText);
     setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
     setHorizontalTextPosition(SwingConstants.LEFT);
@@ -124,6 +91,38 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     if (UIUtil.isUnderNimbusLookAndFeel()) {
       setOpaque(false);
     }
+  }
 
+  private void showProjectLocation(PsiFile psiFile, Module module, ProjectFileIndex fileIndex) {
+    boolean inTestSource = false;
+    if (psiFile != null) {
+      VirtualFile vFile = psiFile.getVirtualFile();
+      if (vFile != null) {
+        inTestSource = fileIndex.isInTestSourceContent(vFile);
+      }
+    }
+    myText = module.getName();
+    if (inTestSource) {
+      setIcon(TEST_ICON);
+    }
+    else {
+      setIcon(ModuleType.get(module).getNodeIcon(false));
+    }
+  }
+
+  private void showLibraryLocation(ProjectFileIndex fileIndex, VirtualFile vFile) {
+    setIcon(LIB_ICON);
+    for (OrderEntry order : fileIndex.getOrderEntriesForFile(vFile)) {
+      if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
+        myText = order.getPresentableName();
+        break;
+      }
+    }
+
+    myText = myText.substring(myText.lastIndexOf(File.separatorChar) + 1);
+    VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
+    if (jar != null && !myText.equals(jar.getName())) {
+      myText += " (" + jar.getName() + ")";
+    }
   }
 }
