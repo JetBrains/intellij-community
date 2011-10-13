@@ -478,7 +478,7 @@ public class BraceHighlightingHandler {
             Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
             if (y < viewRect.y) {
               int start = lbraceStart;
-              if (!(myPsiFile instanceof PsiPlainTextFile)) {
+              if (!(myPsiFile instanceof PsiPlainTextFile) && myPsiFile.isValid()) {
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();
                 start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilBase.getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
               }
