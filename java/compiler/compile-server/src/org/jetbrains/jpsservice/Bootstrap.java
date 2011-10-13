@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.jgoodies.forms.layout.CellConstraints;
 import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
@@ -56,6 +57,7 @@ public class Bootstrap {
     cp.add(getResourcePath(GroovyException.class));  // groovy
     cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt
+    cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     final File jpsFacadeJar = getResourcePath(Facade.class);
