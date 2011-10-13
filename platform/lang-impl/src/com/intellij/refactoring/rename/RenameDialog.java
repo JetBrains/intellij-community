@@ -166,7 +166,7 @@ public class RenameDialog extends RefactoringDialog {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(0, 0, 4, 0);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -174,7 +174,7 @@ public class RenameDialog extends RefactoringDialog {
     myNameLabel = new JLabel();
     panel.add(myNameLabel, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 8, 4, "".equals(myNewNamePrefix.getText()) ? 0 : 1);
+    gbConstraints.insets = new Insets(0, 0, 4, "".equals(myNewNamePrefix.getText()) ? 0 : 1);
     gbConstraints.gridwidth = 1;
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.weightx = 0;
@@ -182,7 +182,7 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.anchor = GridBagConstraints.WEST;
     panel.add(myNewNamePrefix, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(0, 0, 8, 0);
     gbConstraints.gridwidth = 2;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
@@ -196,7 +196,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   protected void createCheckboxes(JPanel panel, GridBagConstraints gbConstraints) {
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(0, 0, 4, 0);
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.weighty = 0;
@@ -207,7 +207,7 @@ public class RenameDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(true);
     panel.add(myCbSearchInComments, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(0, 0, 4, 0);
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
@@ -224,7 +224,7 @@ public class RenameDialog extends RefactoringDialog {
 
     for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
-        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.insets = new Insets(0, 0, 4, 0);
         gbConstraints.gridwidth = myAutomaticRenamers.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
         gbConstraints.gridx = myAutomaticRenamers.size() % 2;
         gbConstraints.weightx = 1;
