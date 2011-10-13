@@ -101,16 +101,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     }
   }
 
-  public void testSimpleEvaluate() {
-    myFixture.addFileToProject("Foo.groovy", "println 'hello'");
-    addBreakpoint 'Foo.groovy', 0
-    runDebugger 'Foo', {
-      waitForBreakpoint()
-      eval '2?:3', '2'
-      eval 'null?:3', '3'
-    }
-  }
-
   public void testVariableInScript() {
     myFixture.addFileToProject("Foo.groovy", """def a = 2
 a""");
@@ -118,6 +108,8 @@ a""");
     runDebugger 'Foo', {
       waitForBreakpoint()
       eval 'a', '2'
+      eval '2?:3', '2'
+      eval 'null?:3', '3'
     }
   }
 
@@ -136,19 +128,29 @@ a++""");
     }
   }
 
-  public void testQualifyClassNames() {
+  public void testQualifyNames() {
+    myFixture.addFileToProject "com/Goo.groovy", '''
+package com
+interface Goo {
+  int mainConstant = 42
+}
+'''
     myFixture.addFileToProject("com/Foo.groovy", """
 package com
 class Foo { static bar = 2 }""")
 
 
     myFixture.addFileToProject("com/Bar.groovy", """package com
-println 2""")
+import static com.Goo.*
 
-    addBreakpoint 'com/Bar.groovy', 1
+println 2 //3
+""")
+
+    addBreakpoint 'com/Bar.groovy', 3
     runDebugger 'com.Bar', {
       waitForBreakpoint()
       eval 'Foo.bar', '2'
+      eval 'mainConstant', '42'
     }
   }
 
