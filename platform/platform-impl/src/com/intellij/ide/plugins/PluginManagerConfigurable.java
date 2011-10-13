@@ -23,6 +23,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
@@ -30,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,10 +47,16 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public boolean TREE_VIEW = false;
 
   private PluginManagerMain myPluginManagerMain;
-  private final PluginManagerUISettings myUISettings;
+  protected final PluginManagerUISettings myUISettings;
+  protected boolean myAvailable;
 
   public PluginManagerConfigurable(final PluginManagerUISettings UISettings) {
     myUISettings = UISettings;
+  }
+  
+  public PluginManagerConfigurable(final PluginManagerUISettings UISettings, boolean available) {
+    myUISettings = UISettings;
+    myAvailable = available;
   }
 
   public String getDisplayName() {
@@ -61,31 +65,10 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public void reset() {
     myPluginManagerMain.reset();
-    myUISettings.getSplitterProportionsData().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
-
-    final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
-    final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
-
-    myUISettings.getAvailableTableProportions().restoreProportion(availablePluginsTable);
-    myUISettings.getInstalledTableProportions().restoreProportion(installedPluginTable);
-
-    restoreSorting(availablePluginsTable, true);
-    restoreSorting(installedPluginTable, false);
-  }
-
-  private void restoreSorting(final PluginTable table, final boolean available) {
-    final RowSorter<? extends TableModel> rowSorter = table.getRowSorter();
-    if (rowSorter != null) {
-      final int column = available ? myUISettings.AVAILABLE_SORT_COLUMN : myUISettings.INSTALLED_SORT_COLUMN;
-      if (column >= 0) {
-        final int orderOrdinal = available ? myUISettings.AVAILABLE_SORT_COLUMN_ORDER : myUISettings.INSTALLED_SORT_COLUMN_ORDER;
-        for (final SortOrder sortOrder : SortOrder.values()) {
-          if (sortOrder.ordinal() == orderOrdinal && column < table.getColumnCount()) {
-            rowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(column, sortOrder)));
-          }
-        }
-      }
+    if (myAvailable) {
+      myPluginManagerMain.pluginsModel.setSortMode(myUISettings.AVAILABLE_SORT_MODE);
     }
+    getSplitterProportions().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
   }
 
   public String getHelpTopic() {
@@ -94,50 +77,27 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public void disposeUIResources() {
     if (myPluginManagerMain != null) {
-      myUISettings.getSplitterProportionsData().saveSplitterProportions(myPluginManagerMain.getMainPanel());
-      final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
-      final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
-      myUISettings.getAvailableTableProportions().saveProportion(availablePluginsTable);
-      myUISettings.getInstalledTableProportions().saveProportion(installedPluginTable);
+      getSplitterProportions().saveSplitterProportions(myPluginManagerMain.getMainPanel());
 
-      saveSorting(availablePluginsTable, true);
-      saveSorting(installedPluginTable, false);
+      if (myAvailable) {
+        myUISettings.AVAILABLE_SORT_MODE = myPluginManagerMain.pluginsModel.getSortMode();
+      }
 
       Disposer.dispose(myPluginManagerMain);
       myPluginManagerMain = null;
     }
   }
 
-  private void saveSorting(final PluginTable availablePluginsTable, final boolean available) {
-    final RowSorter<? extends TableModel> rowSorter = availablePluginsTable.getRowSorter();
-    if (rowSorter != null) {
-      final List<? extends RowSorter.SortKey> sortKeys = rowSorter.getSortKeys();
-      if (sortKeys.size() > 0) {
-        final RowSorter.SortKey sortKey = sortKeys.get(0);
-        if (available) {
-          myUISettings.AVAILABLE_SORT_COLUMN = sortKey.getColumn();
-          myUISettings.AVAILABLE_SORT_COLUMN_ORDER = sortKey.getSortOrder().ordinal();
-        }
-        else {
-          myUISettings.INSTALLED_SORT_COLUMN = sortKey.getColumn();
-          myUISettings.INSTALLED_SORT_COLUMN_ORDER = sortKey.getSortOrder().ordinal();
-
-        }
-      }
-    }
+  private SplitterProportionsData getSplitterProportions() {
+    return myAvailable ? myUISettings.getAvailableSplitterProportionsData() : myUISettings.getSplitterProportionsData();
   }
 
   public JComponent createComponent() {
-    if (myPluginManagerMain == null) {
-      myPluginManagerMain = new PluginManagerMain( );
+    return getOrCreatePanel().getMainPanel();
+  }
 
-      final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
-      final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
-      restoreSorting(availablePluginsTable, true);
-      restoreSorting(installedPluginTable, false);
-    }
-
-    return myPluginManagerMain.getMainPanel();
+  protected PluginManagerMain createPanel() {
+    return new InstalledPluginsManagerMain();
   }
 
   public void apply() throws ConfigurationException {
@@ -148,10 +108,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
     if (myPluginManagerMain.isRequireShutdown()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      final PluginTable availablePluginsTable = myPluginManagerMain.getAvailablePluginsTable();
-      final PluginTable installedPluginTable = myPluginManagerMain.getInstalledPluginTable();
-      saveSorting(availablePluginsTable, true);
-      saveSorting(installedPluginTable, false);
       if (app.isRestartCapable()) {
         if (showRestartIDEADialog() == 0) {
           app.restart();
@@ -169,6 +125,13 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
         }
       }
     }
+  }
+
+  public PluginManagerMain getOrCreatePanel() {
+    if (myPluginManagerMain == null) {
+      myPluginManagerMain = createPanel();
+    }
+    return myPluginManagerMain;
   }
 
   private static int showShutDownIDEADialog() {

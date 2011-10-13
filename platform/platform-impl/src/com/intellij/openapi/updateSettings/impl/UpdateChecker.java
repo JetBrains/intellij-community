@@ -16,10 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -148,10 +145,10 @@ public final class UpdateChecker {
   }
 
   public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
-                                                     final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
+                                                     final @Nullable PluginHostsConfigurable hostsConfigurable) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
-    for (String host : getPluginHosts(settingsConfigurable)) {
+    for (String host : getPluginHosts(hostsConfigurable)) {
       try {
         checkPluginsHost(host, downloaded);
       }
@@ -210,10 +207,10 @@ public final class UpdateChecker {
     }
   }
 
-  private static List<String> getPluginHosts(@Nullable UpdateSettingsConfigurable settingsConfigurable) {
+  private static List<String> getPluginHosts(@Nullable PluginHostsConfigurable hostsConfigurable) {
     final ArrayList<String> hosts = new ArrayList<String>();
-    if (settingsConfigurable != null) {
-      hosts.addAll(settingsConfigurable.getPluginsHosts());
+    if (hostsConfigurable != null) {
+      hosts.addAll(hostsConfigurable.getPluginsHosts());
     }
     else {
       hosts.addAll(UpdateSettings.getInstance().myPluginHosts);

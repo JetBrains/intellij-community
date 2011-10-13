@@ -198,7 +198,7 @@
   <applicationConfigurable instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
   <!-- Plugins -->
-  <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.plugins.InstalledPluginManagerConfigurable"/>
   <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel"/>
   <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
   <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
