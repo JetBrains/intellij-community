@@ -55,9 +55,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private final Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<PluginId, Set<PluginId>>();
 
-  private static final String ENABLED_DISABLED = "All";
-  private static final String ENABLED = "Yes";
-  private static final String DISABLED = "No";
+  private static final String ENABLED_DISABLED = "All plugins";
+  private static final String ENABLED = "Enabled plugins";
+  private static final String DISABLED = "Disabled plugins";
   public static final String[] ENABLED_VALUES = new String[] {ENABLED_DISABLED, ENABLED, DISABLED};
   private String myEnabledFilter = ENABLED_DISABLED;
 

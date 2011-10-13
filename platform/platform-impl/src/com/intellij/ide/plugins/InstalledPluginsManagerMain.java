@@ -103,7 +103,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
     else {
       actionGroup.add(new MyFilterEnabledAction());
-      actionGroup.add(new MyFilterBundleAction());
+      //actionGroup.add(new MyFilterBundleAction());
     }
     return actionGroup;
   }
@@ -189,7 +189,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setText("Enabled: " + ((InstalledPluginsTableModel)pluginsModel).getEnabledFilter());
+      e.getPresentation().setText("Show: " + ((InstalledPluginsTableModel)pluginsModel).getEnabledFilter());
     }
 
     @NotNull
