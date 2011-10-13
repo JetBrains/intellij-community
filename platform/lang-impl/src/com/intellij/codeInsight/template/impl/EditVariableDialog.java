@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
@@ -75,12 +74,7 @@ class EditVariableDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(
-      CodeInsightBundle.message("templates.dialog.edit.variables.border.title"), false, false, true));
-    panel.setLayout(new BorderLayout());
-    panel.add(createVariablesTable(), BorderLayout.CENTER);
-    return panel;
+    return createVariablesTable();
   }
 
   private JComponent createVariablesTable() {
