@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -33,7 +31,7 @@ import java.awt.*;
 public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider {
   protected final ContentManager myContentManager;
   private final String myHelpId;
-  private final DefaultActionGroup myToolbalGroup = new DefaultActionGroup(null, false);
+  private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup(null, false);
 
   public PanelWithActionsAndCloseButton(@NotNull ContentManager contentManager, @NonNls String helpId) {
     super(new BorderLayout());
@@ -56,12 +54,12 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   }
 
   protected void init(){
-    addActionsTo(myToolbalGroup);
-    myToolbalGroup.add(new MyCloseAction());
-    myToolbalGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+    addActionsTo(myToolbarGroup);
+    myToolbarGroup.add(new MyCloseAction());
+    myToolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
 
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbalGroup, false)
+    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, false)
         .getComponent(), BorderLayout.WEST);
     add(createCenterPanel(), BorderLayout.CENTER);
   }
@@ -75,18 +73,11 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   protected abstract JComponent createCenterPanel();
 
-  protected void addActionsTo(DefaultActionGroup group){
+  protected void addActionsTo(DefaultActionGroup group) {}
 
-  }
+  protected void dispose() {}
 
-  protected void dispose(){
-
-  }
-
-  private class MyCloseAction extends AnAction implements DumbAware {
-    public MyCloseAction() {
-      super(CommonBundle.message("close.action.name"), null, IconLoader.getIcon("/actions/cancel.png"));
-    }
+  private class MyCloseAction extends CloseTabToolbarAction {
 
     public void actionPerformed(AnActionEvent e) {
       Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
