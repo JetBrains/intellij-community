@@ -106,6 +106,17 @@ public class Splitter extends JPanel {
     setOrientation(myVerticalSplit);
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension first = myFirstComponent.getPreferredSize();
+    Dimension second = mySecondComponent.getPreferredSize();
+    if (myVerticalSplit) {
+      return new Dimension(Math.max(first.width, second.width), first.height + second.height + myDividerWidth);
+    }
+
+    return new Dimension(first.width + second.width + myDividerWidth, Math.max(first.height, second.height));
+  }
+
   public boolean isHonorMinimumSize() {
     return myHonorMinimumSize;
   }
