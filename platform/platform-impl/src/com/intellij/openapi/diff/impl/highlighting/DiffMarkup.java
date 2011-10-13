@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,10 +98,10 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     marker.setLineMarkerRenderer(LineRenderer.bottom());
   }
 
-  void setSeparatorMarker(int line) {
+  void setSeparatorMarker(int line, Consumer<Integer> consumer) {
     RangeHighlighter marker = getMarkupModel().addLineHighlighter(line, LAYER, null);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
-    final FragmentBoundRenderer renderer = new FragmentBoundRenderer(getEditor().getLineHeight(), getEditor());
+    final FragmentBoundRenderer renderer = new FragmentBoundRenderer(getEditor().getLineHeight(), getEditor(), consumer);
     marker.setLineSeparatorColor(renderer.getColor());
     marker.setLineSeparatorRenderer(renderer);
     marker.setLineMarkerRenderer(renderer);

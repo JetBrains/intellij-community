@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -25,6 +26,7 @@ import java.awt.*;
 
 class DiffSplitter extends Splitter implements DiffSplitterI {
   private final DiffDividerPaint myPaint;
+  private final DiffPanelState myData;
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
         public void visibleAreaChanged(VisibleAreaEvent e) {
@@ -32,8 +34,9 @@ class DiffSplitter extends Splitter implements DiffSplitterI {
         }
       };
 
-  public DiffSplitter(JComponent component1, JComponent component2, DiffDividerPaint dividerPaint) {
+  public DiffSplitter(JComponent component1, JComponent component2, DiffDividerPaint dividerPaint, DiffPanelState data) {
     myPaint = dividerPaint;
+    myData = data;
     setDividerWidth(30);
     setFirstComponent(component1);
     setSecondComponent(component2);
@@ -44,6 +47,7 @@ class DiffSplitter extends Splitter implements DiffSplitterI {
       public void paint(Graphics g) {
         super.paint(g);
         myPaint.paint(g, this);
+        myData.drawOnDivider(g, this);
       }
     };
   }

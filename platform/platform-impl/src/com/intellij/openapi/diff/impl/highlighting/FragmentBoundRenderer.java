@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 
@@ -36,18 +37,23 @@ import java.util.Random;
  *         Time: 7:44 PM
  */
 public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorRenderer {
-  private final static int ourGutterApproxBound = 60;
   private final int myLineHeight;
   private final Editor myEditor;
+  private final Consumer<Integer> myOffsetsConsumer;
   private final ShoeneLine myShoeneLine;
   private final Color myMainColor;
 
-  public FragmentBoundRenderer(int lineHeight, final Editor editor) {
+  public FragmentBoundRenderer(int lineHeight, final Editor editor, final Consumer<Integer> offsetsConsumer) {
     myLineHeight = lineHeight;
     myEditor = editor;
+    myOffsetsConsumer = offsetsConsumer;
     myShoeneLine = new ShoeneLine(2);
+    myMainColor = darkerBorder();
+  }
+
+  public static Color darkerBorder() {
     final Color borderColor = UIUtil.getBorderColor();
-    myMainColor = new Color(borderColor.getRed() + 10, borderColor.getGreen() + 10, borderColor.getBlue() + 10);
+    return new Color(borderColor.getRed() + 10, borderColor.getGreen() + 10, borderColor.getBlue() + 10);
   }
   // only top
 
@@ -73,14 +79,26 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
       i = i == 0 ? 0 : i - 1;
       points = points.subList(i, points.size());
 
-      drawCurved(g, 0, r.y, 4, points, width + editorWidth, true,width);
+      drawCurved(g, 0, r.y, TornLineParams.ourDark, points, width + editorWidth, true,width);
       g.setColor(getColor().darker());
-      drawCurved(g, 0, r.y, 3, points, width + editorWidth, true,width);
+      drawCurved(g, 0, r.y, TornLineParams.ourLight, points, width + editorWidth, true,width);
+      
+      int j = points.size() - 1;
+      final int finalX = width + editorWidth + width;
+      for (; j > 0; j--) {
+        if (points.get(j).getFirst() >= finalX) break;
+      }
+      j = j == 0 ? 0 : j - 1;
+      myOffsetsConsumer.consume(points.get(j).getSecond());
+
     } else {
       List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
-      drawCurved(g, 0, r.y, 4, points, 0, false,0);
+      drawCurved(g, 0, r.y, TornLineParams.ourDark, points, 0, false,0);
       g.setColor(getColor().darker());
-      drawCurved(g, 0, r.y, 3, points, 0, false,0);
+      drawCurved(g, 0, r.y, TornLineParams.ourLight, points, 0, false,0);
+
+      int i = getLastPointInBeforeGutter(width, points);
+      myOffsetsConsumer.consume(points.get(i).getSecond());
     }
   }
 
@@ -99,16 +117,21 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
     myShoeneLine.ensureLastX(length + width);
     g.setColor(getColor());
     List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+    int i = getLastPointInBeforeGutter(width, points);
+    points = points.subList(i, points.size());
+    drawCurved(g, x1, y, TornLineParams.ourDark, points, width, false,0);
+    g.setColor(getColor().darker());
+    drawCurved(g, x1, y, TornLineParams.ourLight, points, width, false,0);
+  }
+
+  private int getLastPointInBeforeGutter(int width, List<Pair<Integer, Integer>> points) {
     int i = 0;
     for (; i < points.size(); i++) {
       Pair<Integer, Integer> integerIntegerPair = points.get(i);
       if (integerIntegerPair.getFirst() >= width) break;
     }
     i = i == 0 ? 0 : i - 1;
-    points = points.subList(i, points.size());
-    drawCurved(g, x1, y, 4, points, width, false,0);
-    g.setColor(getColor().darker());
-    drawCurved(g, x1, y, 3, points, width, false,0);
+    return i;
   }
 
   private void drawCurved(Graphics g,
