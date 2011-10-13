@@ -35,11 +35,13 @@ import java.util.Arrays;
 public class ActionInstallPlugin extends AnAction implements DumbAware {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");
 
+  private final PluginManagerMain installed;
   private final PluginManagerMain host;
 
-  public ActionInstallPlugin(PluginManagerMain mgr) {
+  public ActionInstallPlugin(PluginManagerMain mgr, PluginManagerMain installed) {
     super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"), IconLoader.getIcon("/actions/install.png"));
     host = mgr;
+    this.installed = installed;
   }
 
   public void update(AnActionEvent e) {
@@ -94,9 +96,9 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         }
       }
       try {
-        if (PluginManagerMain.downloadPlugins(list, host.getAvailablePluginsModel().view)) {
-          host.getInstalledPluginsModel().modifyData(new ArrayList<IdeaPluginDescriptor>(list));
-          host.setRequireShutdown(true);
+        if (PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view)) {
+          installed.getPluginsModel().modifyData(new ArrayList<IdeaPluginDescriptor>(list));
+          installed.setRequireShutdown(true);
         }
       }
       catch (IOException e1) {

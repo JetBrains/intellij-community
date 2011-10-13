@@ -37,6 +37,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -45,6 +46,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
@@ -55,6 +57,7 @@ import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +74,9 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDOUT;
  */
 public abstract class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
+
+  @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
+  private static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
   public static final int WAITING_TIME = 10;
 
@@ -91,7 +97,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final Object myDebugLock = new Object();
 
   @NotNull
-  private volatile IDevice[] myTargetDevices;
+  private volatile IDevice[] myTargetDevices = EMPTY_DEVICE_ARRAY;
 
   private volatile String myAvdName;
   private volatile boolean myDebugMode;
@@ -110,6 +116,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private ConsoleView myConsole;
   private Runnable myRestarter;
+  private TargetChooser myTargetChooser;
+  private final boolean mySupportMultipleDevices;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -155,6 +163,31 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       console = attachConsole();
     }
     myConsole = console;
+
+    if (myTargetChooser instanceof ManualTargetChooser) {
+
+      final ExtendedDeviceChooserDialog chooser = new ExtendedDeviceChooserDialog(myFacet, mySupportMultipleDevices);
+      chooser.show();
+      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+        return null;
+      }
+      
+      if (chooser.isToLaunchEmulator()) {
+        final String selectedAvd = chooser.getSelectedAvd();
+        if (selectedAvd == null) {
+          return null;
+        }
+        myTargetChooser = new EmulatorTargetChooser(selectedAvd);
+      }
+      else {
+        final IDevice[] selectedDevices = chooser.getSelectedDevices();
+        if (selectedDevices.length == 0) {
+          return null;
+        }
+        myTargetDevices = selectedDevices;
+      }
+    }
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         start();
@@ -237,16 +270,22 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public AndroidRunningState(@NotNull ExecutionEnvironment environment,
                              @NotNull AndroidFacet facet,
-                             @NotNull IDevice[] targetDevices,
-                             @Nullable String avdName,
+                             @Nullable TargetChooser targetChooser,
                              @NotNull String commandLine,
                              @NotNull String packageName,
                              AndroidApplicationLauncher applicationLauncher,
-                             Map<AndroidFacet, String> additionalFacet2PackageName) throws ExecutionException {
+                             Map<AndroidFacet, String> additionalFacet2PackageName,
+                             boolean supportMultipleDevices) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
-    myTargetDevices = targetDevices;
-    myAvdName = avdName;
+    
+    myTargetChooser = targetChooser;
+    mySupportMultipleDevices = supportMultipleDevices;
+
+    myAvdName = targetChooser instanceof EmulatorTargetChooser
+                ? ((EmulatorTargetChooser)targetChooser).getAvd()
+                : null;
+      
     myEnv = environment;
     myApplicationLauncher = applicationLauncher;
     myPackageName = packageName;
@@ -265,27 +304,44 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private IDevice chooseDeviceAutomaticaly() {
+  private IDevice[] chooseDevicesAutomaticaly() {
     final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
     if (bridge == null) {
-      return null;
+      return EMPTY_DEVICE_ARRAY;
     }
     IDevice[] devices = bridge.getDevices();
-    boolean exactlyCompatible = false;
+    
+    boolean showChooserDialog = false;
     IDevice targetDevice = null;
     for (IDevice device : devices) {
-      Boolean compatible = isCompatibleDevice(device);
-      if (compatible == Boolean.FALSE) {
-        continue;
-      }
-      if (targetDevice == null ||
-          (targetDevice.isEmulator() && !device.isEmulator()) ||
-          (targetDevice.isEmulator() == device.isEmulator() && !exactlyCompatible)) {
-        exactlyCompatible = compatible != null;
-        targetDevice = device;
+      if (isCompatibleDevice(device) != Boolean.FALSE) {
+        if (targetDevice == null) {
+          targetDevice = device;
+        }
+        else {
+          showChooserDialog = true;
+          break;
+        }
       }
     }
-    return targetDevice;
+
+    if (showChooserDialog) {
+      final IDevice[][] devicesWrapper = {null};
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          devicesWrapper[0] = chooseDevicesManually(new Condition<IDevice>() {
+            @Override
+            public boolean value(IDevice device) {
+              return device.isEmulator() && isCompatibleDevice(device) != Boolean.FALSE;
+            }
+          });
+        }
+      }, ModalityState.defaultModalityState());
+      return devicesWrapper[0].length > 0 ? devicesWrapper[0] : null;
+    }
+
+    return targetDevice != null ? new IDevice[] {targetDevice} : EMPTY_DEVICE_ARRAY;
   }
 
   private void chooseAvd() {
@@ -333,7 +389,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private void start() {
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
-      chooseOrLaunchDevice();
+      if (!chooseOrLaunchDevice()) {
+        return;
+      }
     }
     if (myDebugMode) {
       AndroidDebugBridge.addClientChangeListener(this);
@@ -357,12 +415,18 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     deviceListener[0] = prepareAndStartAppWhenDeviceIsOnline();
   }
 
-  private void chooseOrLaunchDevice() {
-    IDevice targetDevice = chooseDeviceAutomaticaly();
-    if (targetDevice != null) {
-      myTargetDevices = new IDevice[] {targetDevice};
+  private boolean chooseOrLaunchDevice() {
+    IDevice[] targetDevices = chooseDevicesAutomaticaly();
+    if (targetDevices == null) {
+      message("Canceled", STDERR);
+      getProcessHandler().destroyProcess();
+      return false;
     }
-    else {
+
+    if (targetDevices.length > 0) {
+      myTargetDevices = targetDevices;
+    }
+    else if (myTargetChooser instanceof EmulatorTargetChooser) {
       if (isAndroidSdk15OrHigher()) {
         if (myAvdName == null) {
           chooseAvd();
@@ -371,13 +435,51 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
         }
         else if (getProcessHandler().isStartNotified()) {
+          message("Canceled", STDERR);
           getProcessHandler().destroyProcess();
+          return false;
         }
       }
       else {
         myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
       }
     }
+    else {
+      message("USB device not found", STDERR);
+      getProcessHandler().destroyProcess();
+      return false;
+    }
+    return true;
+  }
+
+  @NotNull
+  private IDevice[] chooseDevicesManually(@Nullable Condition<IDevice> filter) {
+    final Project project = myFacet.getModule().getProject();
+    String value = PropertiesComponent.getInstance(project).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
+    String[] selectedSerials = value != null ? fromString(value) : null;
+    DeviceChooserDialog chooser = new DeviceChooserDialog(myFacet, mySupportMultipleDevices, selectedSerials, filter);
+    chooser.show();
+    IDevice[] devices = chooser.getSelectedDevices();
+    if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE || devices.length == 0) {
+      return DeviceChooser.EMPTY_DEVICE_ARRAY;
+    }
+    PropertiesComponent.getInstance(project).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(devices));
+    return devices;
+  }
+
+  public static String toString(IDevice[] devices) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0, n = devices.length; i < n; i++) {
+      builder.append(devices[i].getSerialNumber());
+      if (i < n - 1) {
+        builder.append(' ');
+      }
+    }
+    return builder.toString();
+  }
+
+  private static String[] fromString(String s) {
+    return s.split(" ");
   }
 
   private void message(@NotNull String message, @NotNull Key outputKey) {
@@ -426,15 +528,25 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     myDebugLauncher = null;
   }
 
+  @Nullable
   private Boolean isCompatibleDevice(@NotNull IDevice device) {
     if (!isAndroidSdk15OrHigher()) {
       return true;
     }
-    String avdName = device.isEmulator() ? device.getAvdName() : null;
-    if (myAvdName != null) {
-      return myAvdName.equals(avdName);
+
+    if (myTargetChooser instanceof EmulatorTargetChooser) {
+      if (device.isEmulator()) {
+        String avdName = device.isEmulator() ? device.getAvdName() : null;
+        if (myAvdName != null) {
+          return myAvdName.equals(avdName);
+        }
+        return myFacet.isCompatibleDevice(device);
+      }
     }
-    return myFacet.isCompatibleDevice(device);
+    else if (myTargetChooser instanceof UsbDeviceTargetChooser) {
+      return !device.isEmulator();
+    }
+    return false;
   }
 
   private boolean isMyDevice(@NotNull IDevice device) {
@@ -442,7 +554,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       return ArrayUtil.find(myTargetDevices, device) >= 0;
     }
     Boolean compatible = isCompatibleDevice(device);
-    return compatible != null ? compatible.booleanValue() : true;
+    return compatible == null || compatible.booleanValue();
   }
 
   @Nullable
@@ -637,7 +749,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (myStopped) return false;
     message("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath, STDOUT);
     String exceptionMessage = null;
-    String errorMessage = null;
+    String errorMessage;
     try {
       SyncService service = device.getSyncService();
       if (service == null) {
@@ -752,20 +864,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       receiver = new MyReceiver();
     }
-    /*if (receiver.failureMessage != null && receiver.failureMessage.equals("INSTALL_FAILED_ALREADY_EXISTS")) {
-      if (myStopped) return false;
-      receiver = new MyReceiver();
-      getProcessHandler().notifyTextAvailable("Application is already installed. Reinstalling.\n", STDOUT);
-      executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + '\"', receiver);
-      if (myStopped) return false;
-    }*/
-    /*if (!isSuccess(receiver)) {
-      getProcessHandler().notifyTextAvailable("Can't reinstall application. Installing from scratch.\n", STDOUT);
-      executeDeviceCommandAndWriteToConsole(device, "pm uninstall \"" + remotePath + '\"', receiver);
-      if (myStopped) return false;
-      executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + '\"', receiver);
-      if (myStopped) return false;
-    }*/
     boolean success = isSuccess(receiver);
     message(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;

@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.run;
 
-import com.android.ddmlib.*;
+import com.android.ddmlib.Log;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsole;
@@ -26,7 +26,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -55,7 +54,6 @@ import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,9 +70,11 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AndroidRunConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule> {
-  @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
+  public static final int SHOW_DIALOG = 0;
+  public static final int EMULATOR = 1;
+  public static final int USB_DEVICE = 2;
 
-  public boolean CHOOSE_DEVICE_MANUALLY = false;
+  public int TARGET_SELECTION_MODE = EMULATOR;
   public String PREFERRED_AVD = "";
   public String COMMAND_LINE = "";
   public boolean WIPE_USER_DATA = false;
@@ -213,19 +213,26 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     Map<AndroidFacet, String> depModule2PackageName = new HashMap<AndroidFacet, String>();
     if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
 
-    IDevice[] targetDevices = new IDevice[0];
-    if (CHOOSE_DEVICE_MANUALLY) {
-      IDevice[] devices = chooseDevicesManually(facet);
-      if (devices.length > 0) {
-        targetDevices = devices;
-        PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(targetDevices));
-      }
-      if (targetDevices.length == 0) return null;
+    TargetChooser targetChooser = null;
+    switch (TARGET_SELECTION_MODE) {
+      case SHOW_DIALOG:
+        targetChooser = new ManualTargetChooser();
+        break;
+      case EMULATOR:
+        targetChooser = new EmulatorTargetChooser(PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null);
+        break;
+      case USB_DEVICE:
+        targetChooser = new UsbDeviceTargetChooser();
+        break;
+      default:
+        assert false : "Unknown target selection mode " + TARGET_SELECTION_MODE;
+        break;
     }
+    
     AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
     if (applicationLauncher != null) {
-      return new AndroidRunningState(env, facet, targetDevices, PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null,
-                                     computeCommandLine(), aPackage, applicationLauncher, depModule2PackageName) {
+      return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), aPackage, applicationLauncher,
+                                     depModule2PackageName, supportMultipleDevices()) {
 
         @NotNull
         @Override
@@ -284,34 +291,6 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
   protected abstract AndroidApplicationLauncher getApplicationLauncher(AndroidFacet facet);
 
   protected abstract boolean supportMultipleDevices();
-
-  private static String toString(IDevice[] devices) {
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0, n = devices.length; i < n; i++) {
-      builder.append(devices[i].getSerialNumber());
-      if (i < n - 1) {
-        builder.append(' ');
-      }
-    }
-    return builder.toString();
-  }
-
-  private static String[] fromString(String s) {
-    return s.split(" ");
-  }
-
-  @NotNull
-  private IDevice[] chooseDevicesManually(@NotNull AndroidFacet facet) {
-    String value = PropertiesComponent.getInstance(getProject()).getValue(ANDROID_TARGET_DEVICES_PROPERTY);
-    String[] selectedSerials = value != null ? fromString(value) : null;
-    DeviceChooser chooser = new DeviceChooser(facet, supportMultipleDevices(), selectedSerials);
-    chooser.show();
-    IDevice[] devices = chooser.getSelectedDevices();
-    if (chooser.getExitCode() != DeviceChooser.OK_EXIT_CODE || devices.length == 0) {
-      return DeviceChooser.EMPTY_DEVICE_ARRAY;
-    }
-    return devices;
-  }
 
   @Override
   public void customizeLogConsole(LogConsole console) {

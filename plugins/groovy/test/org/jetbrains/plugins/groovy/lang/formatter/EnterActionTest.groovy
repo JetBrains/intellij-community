@@ -235,6 +235,13 @@ def c = { a ->
 """
 
   }
+  public void testEnterInIf() {
+    doTest """if (2==2) <caret>
+""", """if (2==2)
+  <caret>
+"""
+
+  }
 
 }
 

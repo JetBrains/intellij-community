@@ -24,12 +24,10 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,16 +39,16 @@ import java.util.Map;
 public class AvailablePluginsTableModel extends PluginTableModel {
   private final Map<PluginId, String> myUpdateVersions = new HashMap<PluginId, String>();
 
+  public static final String ALL = "All";
+  private String myCategory = ALL;
+  private LinkedHashSet<String> myAvailableCategories = new LinkedHashSet<String>();
+
+  protected static final String DOWNLOADS = "Downloads";
+  protected static final String RELEASE_DATE = "Updated";
+  public static final String [] SORT_MODES = new String[] {NAME, DOWNLOADS, RELEASE_DATE};
+
   public AvailablePluginsTableModel() {
-    super(new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME),
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS),
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE) {
-            @Override
-            protected int getHorizontalAlignment() {
-              return SwingConstants.TRAILING;
-            }
-          },
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY));
+    super.columns = new ColumnInfo[] {new AvailablePluginColumnInfo(mySortMode)};
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
     view = new ArrayList<IdeaPluginDescriptor>();
@@ -58,16 +56,44 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   public void addData(List<IdeaPluginDescriptor> list) {
     view.clear();
+    myAvailableCategories.clear();
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.
     for (IdeaPluginDescriptor descr : list) {
       updateStatus(descr);
       view.add(descr);
+      myAvailableCategories.add(descr.getCategory());
       myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
     }
 
     fireTableDataChanged();
+  }
+
+  @Override
+  public void setSortMode(String sortMode) {
+    ((AvailablePluginColumnInfo)columns[getNameColumn()]).setSortMode(sortMode);
+    super.setSortMode(sortMode);
+  }
+
+  public String getCategory() {
+    return myCategory;
+  }
+
+  public void setCategory(String category, String filter) {
+    myCategory = category;
+    filter(filter);
+  }
+
+  @Override
+  public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
+    if (myCategory == ALL) return true;
+    final String category = descriptor.getCategory();
+    return category == null || category.equals(myCategory);
+  }
+
+  public LinkedHashSet<String> getAvailableCategories() {
+    return myAvailableCategories;
   }
 
   private static void updateStatus(final IdeaPluginDescriptor descr) {
@@ -108,7 +134,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   }
 
   @Override
-  public void filter(final ArrayList<IdeaPluginDescriptor> filtered) {
+  public void filter(final List<IdeaPluginDescriptor> filtered) {
     view.clear();
     for (IdeaPluginDescriptor descriptor : filtered) {
       view.add(descriptor);

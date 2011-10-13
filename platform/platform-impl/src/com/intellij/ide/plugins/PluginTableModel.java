@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
@@ -22,7 +23,9 @@ import com.intellij.util.ui.SortableColumnModel;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,9 +35,12 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 abstract public class PluginTableModel extends AbstractTableModel implements SortableColumnModel {
+  protected static final String NAME = "Name";
   protected ColumnInfo[] columns;
   protected List<IdeaPluginDescriptor> view;
   private RowSorter.SortKey myDefaultSortKey;
+  protected final List<IdeaPluginDescriptor> filtered = new ArrayList<IdeaPluginDescriptor>();
+  protected String mySortMode = NAME;
 
   protected PluginTableModel() {
   }
@@ -118,9 +124,46 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public abstract void modifyData(List<IdeaPluginDescriptor> list);
 
-  public void filter(ArrayList<IdeaPluginDescriptor> filtered){
+  public void filter(List<IdeaPluginDescriptor> filtered){
     fireTableDataChanged();
   }
 
+  protected void filter(String filter) {
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Set<String> search = optionsRegistrar.getProcessedWords(filter);
+
+    final ArrayList<IdeaPluginDescriptor> desc = new ArrayList<IdeaPluginDescriptor>();
+
+    final List<IdeaPluginDescriptor> toProcess = new ArrayList<IdeaPluginDescriptor>(view);
+    toProcess.addAll(filtered);
+    filtered.clear();
+    for (IdeaPluginDescriptor descriptor : toProcess) {
+      if (isPluginDescriptorAccepted(descriptor) &&
+          PluginManagerMain.isAccepted(filter, search, descriptor)) {
+        desc.add(descriptor);
+      }
+      else {
+        filtered.add(descriptor);
+      }
+    }
+    filter(desc);
+  }
+
   public abstract int getNameColumn();
+
+  public abstract boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor);
+
+  private void sort() {
+    Collections.sort(view, columns[getNameColumn()].getComparator());
+    fireTableDataChanged();
+  }
+
+  public String getSortMode() {
+    return mySortMode;
+  }
+
+  public void setSortMode(String sortMode) {
+    mySortMode = sortMode;
+    sort();
+  }
 }

@@ -34,7 +34,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
@@ -63,7 +62,6 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   private static final String SEPARATOR = ":";
   private static final String AT = "@";
-
 
   public CvsRootConfiguration() {
     super("CvsRootConfiguration");
@@ -198,8 +196,16 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     }
   }
 
+  @Override
   public int hashCode() {
-    return CVS_ROOT.hashCode() ^ DATE_OR_REVISION_SETTINGS.hashCode();
+    int result = CVS_ROOT != null ? CVS_ROOT.hashCode() : 0;
+    result = 31 * result + PROXY_SETTINGS.hashCode();
+    result = 31 * result + EXT_CONFIGURATION.hashCode();
+    result = 31 * result + SSH_CONFIGURATION.hashCode();
+    result = 31 * result + SSH_FOR_EXT_CONFIGURATION.hashCode();
+    result = 31 * result + LOCAL_CONFIGURATION.hashCode();
+    result = 31 * result + DATE_OR_REVISION_SETTINGS.hashCode();
+    return result;
   }
 
   public boolean equals(Object obj) {
@@ -208,8 +214,13 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     }
     final CvsRootConfiguration another = (CvsRootConfiguration)obj;
 
-    return CVS_ROOT.equals(another.CVS_ROOT) && DATE_OR_REVISION_SETTINGS.equals(another.DATE_OR_REVISION_SETTINGS) &&
-           Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
+    return CVS_ROOT.equals(another.CVS_ROOT) &&
+           DATE_OR_REVISION_SETTINGS.equals(another.DATE_OR_REVISION_SETTINGS) &&
+           EXT_CONFIGURATION.equals(another.EXT_CONFIGURATION) &&
+           SSH_CONFIGURATION.equals(another.SSH_CONFIGURATION) &&
+           SSH_FOR_EXT_CONFIGURATION.equals(another.SSH_FOR_EXT_CONFIGURATION) &&
+           LOCAL_CONFIGURATION.equals(another.LOCAL_CONFIGURATION) &&
+           PROXY_SETTINGS.equals(another.PROXY_SETTINGS);
   }
 
   @Override
@@ -252,9 +263,14 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   @Override
-  protected Object clone() throws CloneNotSupportedException {
+  public Object clone() throws CloneNotSupportedException {
     final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
-    result.DATE_OR_REVISION_SETTINGS = (DateOrRevisionSettings)DATE_OR_REVISION_SETTINGS.clone();
+    result.DATE_OR_REVISION_SETTINGS = DATE_OR_REVISION_SETTINGS.clone();
+    result.PROXY_SETTINGS = PROXY_SETTINGS.clone();
+    result.EXT_CONFIGURATION = EXT_CONFIGURATION.clone();
+    result.SSH_CONFIGURATION = SSH_CONFIGURATION.clone();
+    result.SSH_FOR_EXT_CONFIGURATION = SSH_FOR_EXT_CONFIGURATION.clone();
+    result.LOCAL_CONFIGURATION = LOCAL_CONFIGURATION.clone();
     return result;
   }
 

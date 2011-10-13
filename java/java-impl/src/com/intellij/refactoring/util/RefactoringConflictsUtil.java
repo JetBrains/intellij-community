@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -129,8 +129,11 @@ public class RefactoringConflictsUtil {
     }
   }
 
-  public static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove,
-                                       @Nullable Set<PsiMethod> abstractMethods, @Nullable PsiClass targetClass,
+  public static void checkUsedElements(PsiMember member,
+                                       PsiElement scope,
+                                       @NotNull Set<PsiMember> membersToMove,
+                                       @Nullable Set<PsiMethod> abstractMethods,
+                                       @Nullable PsiClass targetClass,
                                        @NotNull PsiElement context,
                                        MultiMap<PsiElement, String> conflicts) {
     final Set<PsiMember> moving = new HashSet<PsiMember>(membersToMove);
@@ -141,7 +144,7 @@ public class RefactoringConflictsUtil {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)){
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
           PsiExpression qualifier = refExpr.getQualifierExpression();
           PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
           checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
@@ -152,10 +155,11 @@ public class RefactoringConflictsUtil {
       final PsiNewExpression newExpression = (PsiNewExpression)scope;
       final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
       if (anonymousClass != null) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)){
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)) {
           checkAccessibility(anonymousClass, context, anonymousClass, member, conflicts);
         }
-      } else {
+      }
+      else {
         final PsiMethod refElement = newExpression.resolveConstructor();
         if (refElement != null) {
           if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
@@ -168,7 +172,7 @@ public class RefactoringConflictsUtil {
       PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
-        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)){
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
           checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
         }
       }
@@ -195,7 +199,7 @@ public class RefactoringConflictsUtil {
     }
     else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
       final PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
-      if (fieldInSubClass != null) {
+      if (fieldInSubClass != null && fieldInSubClass != refMember) {
         conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
                                                                        " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
                                                                        " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
@@ -209,7 +213,7 @@ public class RefactoringConflictsUtil {
                                             final PsiElement target,
                                             final MultiMap<PsiElement,String> conflicts) {
     if (scopes == null) return;
-    final VirtualFile vFile = PsiUtilBase.getVirtualFile(target);
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
     if (vFile == null) return;
 
     analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);

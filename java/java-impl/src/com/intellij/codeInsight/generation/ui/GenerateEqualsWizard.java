@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     if (myHashCodePanel != null) {
       myHashCodePanel.getTable().getModel().addTableModelListener(listener);
       addStep(new MyStep(myHashCodePanel));
-      myHashcodeStepCode = myEqualsStepCode > 0 ? myEqualsStepCode + 1 : 1;
+      myHashcodeStepCode = myEqualsStepCode > 0 ? myEqualsStepCode + 1 : 0;
     }
     else {
       myHashcodeStepCode = -1;

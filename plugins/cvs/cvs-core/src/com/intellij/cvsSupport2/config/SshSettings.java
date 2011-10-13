@@ -33,23 +33,24 @@ public class SshSettings implements JDOMExternalizable, Cloneable {
 
   public boolean USE_PPK = false;
   public String PATH_TO_PPK = "";
-  public String PORT = "";
 
   public SshTypesToUse SSH_TYPE = SshTypesToUse.ALLOW_BOTH;
   @NonNls private static final String SSH_TYPE_ATTRIBUTE = "SSH_TYPE";
 
-
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     String sshType = element.getAttributeValue(SSH_TYPE_ATTRIBUTE);
     SSH_TYPE = SshTypesToUse.fromName(sshType);
   }
   
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     element.setAttribute(SSH_TYPE_ATTRIBUTE, SSH_TYPE.toString());
   }
 
+  @Override
   public SshSettings clone() {
     try {
       return (SshSettings)super.clone();
@@ -60,4 +61,28 @@ public class SshSettings implements JDOMExternalizable, Cloneable {
     }
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SshSettings that = (SshSettings)o;
+
+    if (!SSH_TYPE.equals(that.SSH_TYPE)) return false;
+    if (USE_PPK != that.USE_PPK) return false;
+    if (!USE_PPK) {
+      return true;
+    }
+    return PATH_TO_PPK.equals(that.PATH_TO_PPK);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (USE_PPK ? 1 : 0);
+    if (USE_PPK) {
+      result = 31 * result + PATH_TO_PPK.hashCode();
+    }
+    result = 31 * result + SSH_TYPE.hashCode();
+    return result;
+  }
 }

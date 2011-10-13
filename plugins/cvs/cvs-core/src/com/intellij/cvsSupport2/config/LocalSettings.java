@@ -35,10 +35,12 @@ public class LocalSettings implements JDOMExternalizable, Cloneable {
 
   private boolean myCvsClientVerified = false;
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -51,6 +53,7 @@ public class LocalSettings implements JDOMExternalizable, Cloneable {
     myCvsClientVerified = cvsClientVerified;
   }
 
+  @Override
   public LocalSettings clone() {
     try {
       return (LocalSettings)super.clone();
@@ -59,5 +62,17 @@ public class LocalSettings implements JDOMExternalizable, Cloneable {
       LOG.error(e);
       return new LocalSettings();
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return PATH_TO_CVS_CLIENT.equals(((LocalSettings)o).PATH_TO_CVS_CLIENT);
+  }
+
+  @Override
+  public int hashCode() {
+    return PATH_TO_CVS_CLIENT.hashCode();
   }
 }

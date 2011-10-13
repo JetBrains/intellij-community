@@ -35,9 +35,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
@@ -194,6 +192,9 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       return new ChildAttributes(Indent.getSpaceIndent(GroovyIndentProcessor.GDOC_COMMENT_INDENT), null);
     }
     if (psiParent instanceof GrVariable || psiParent instanceof GrAssignmentExpression) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
+    if (psiParent instanceof GrIfStatement || psiParent instanceof GrLoopStatement) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);

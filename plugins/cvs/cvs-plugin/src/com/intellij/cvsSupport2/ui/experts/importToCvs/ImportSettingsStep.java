@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ public class ImportSettingsStep extends WizardStep {
   private JCheckBox myMakeCheckedOutFilesReadOnly;
   private JLabel myVendorErrorMessage;
   private JLabel myReleaseTagErrorMessage;
-  private MyDocumentListener myDocumentListener;
   private JLabel myNameLabel;
   private JLabel myVendorLabel;
   private JLabel myReleaseTagLabel;
@@ -60,6 +59,7 @@ public class ImportSettingsStep extends WizardStep {
     super(CvsBundle.message("dialog.title.import.settings"), wizard);
 
     myCheckoutAfterImport.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateCheckoutSettingsVisibility();
       }
@@ -68,11 +68,11 @@ public class ImportSettingsStep extends WizardStep {
     mySelectImportLocationStep = selectImportLocationStep;
     myImportConfiguration = importConfiguration;
 
-    checkFields(null);
+    checkFields();
 
-    //addListenerTo(myModuleName);
-    addListenerTo(myVendor);
-    addListenerTo(myReleaseTag);
+    final MyDocumentListener listener = new MyDocumentListener();
+    myVendor.getDocument().addDocumentListener(listener);
+    myReleaseTag.getDocument().addDocumentListener(listener);
 
     myLogMessageLabel.setLabelFor(myLogMessage);
     myNameLabel.setLabelFor(myModuleName);
@@ -87,17 +87,10 @@ public class ImportSettingsStep extends WizardStep {
   }
 
   private void updateCheckoutSettingsVisibility() {
-    myMakeCheckedOutFilesReadOnly.setVisible(myCheckoutAfterImport.isSelected());
+    myMakeCheckedOutFilesReadOnly.setEnabled(myCheckoutAfterImport.isSelected());
   }
 
-  protected void dispose() {
-  }
-
-  private void addListenerTo(JTextField editor) {
-    myDocumentListener = new MyDocumentListener(editor);
-    editor.getDocument().addDocumentListener(myDocumentListener);
-  }
-
+  @Override
   public void saveState() {
     super.saveState();
     myImportConfiguration.RELEASE_TAG = getReleaseTag();
@@ -107,30 +100,29 @@ public class ImportSettingsStep extends WizardStep {
     myImportConfiguration.MAKE_NEW_FILES_READ_ONLY = myMakeCheckedOutFilesReadOnly.isSelected();
   }
 
-  private boolean checkFields() {
+  private boolean isValidInput() {
     JTextField[] fields = new JTextField[]{myReleaseTag, myVendor};
-    boolean result = true;
-    //result &=  CvsFieldValidator.checkField(myModuleName, new JTextField[0], false, myModuleErrorMessage, null);
-    result &= CvsFieldValidator.checkField(myVendor, fields, true, myVendorErrorMessage, null);
+    boolean result = CvsFieldValidator.checkField(myVendor, fields, true, myVendorErrorMessage, null);
     result &= CvsFieldValidator.checkField(myReleaseTag, fields, true, myReleaseTagErrorMessage, null);
     return result;
   }
 
-  private void checkFields(JComponent editor) {
-    if (!checkFields()) {
-      getWizard().disableNextAndFinish();
+  private void checkFields() {
+    final CvsWizard wizard = getWizard();
+    if (!isValidInput()) {
+      wizard.disableNextAndFinish();
     }
     else {
-      getWizard().enableNextAndFinish();
+      wizard.enableNextAndFinish();
     }
-
-    if (editor != null) editor.requestFocus();
   }
 
+  @Override
   public boolean nextIsEnabled() {
-    return checkFields();
+    return isValidInput();
   }
 
+  @Override
   public boolean setActive() {
     if (!myIsInitialized) {
       myIsInitialized = true;
@@ -141,7 +133,10 @@ public class ImportSettingsStep extends WizardStep {
       myMakeCheckedOutFilesReadOnly.setSelected(myImportConfiguration.MAKE_NEW_FILES_READ_ONLY);
       updateCheckoutSettingsVisibility();
       selectAll();
+      myModuleName.selectAll();
+      myModuleName.requestFocus();
     }
+
     if (!Comparing.equal(myDirectoryToImport, mySelectImportLocationStep.getSelectedFile())) {
       myDirectoryToImport = mySelectImportLocationStep.getSelectedFile();
       myModuleName.setText(myDirectoryToImport.getName());
@@ -157,6 +152,7 @@ public class ImportSettingsStep extends WizardStep {
     myVendor.selectAll();
   }
 
+  @Override
   protected JComponent createComponent() {
     return myPanel;
   }
@@ -178,22 +174,23 @@ public class ImportSettingsStep extends WizardStep {
   }
 
   private class MyDocumentListener implements DocumentListener {
-    private final JComponent myComponent;
 
-    public MyDocumentListener(JComponent component) {
-      myComponent = component;
+    public MyDocumentListener() {
     }
 
+    @Override
     public void changedUpdate(DocumentEvent e) {
-      checkFields(myComponent);
+      checkFields();
     }
 
+    @Override
     public void insertUpdate(DocumentEvent e) {
-      checkFields(myComponent);
+      checkFields();
     }
 
+    @Override
     public void removeUpdate(DocumentEvent e) {
-      checkFields(myComponent);
+      checkFields();
     }
   }
 }
