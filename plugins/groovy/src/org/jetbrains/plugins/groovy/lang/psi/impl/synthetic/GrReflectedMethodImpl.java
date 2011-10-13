@@ -43,7 +43,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -229,6 +231,21 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   @Override
   public GrModifierList getModifierList() {
     return (GrModifierList)super.getModifierList();
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return myBaseMethod.getIcon(flags);
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return PsiUtil.getJavaNameIdentifier(myBaseMethod);
+  }
+
+  @Override
+  public boolean isPhysical() {
+    return myBaseMethod.isPhysical();
   }
 
   public static GrReflectedMethod[] createReflectedMethods(GrMethod method) {

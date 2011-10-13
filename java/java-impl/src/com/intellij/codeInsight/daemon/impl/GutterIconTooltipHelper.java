@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -36,6 +37,10 @@ public class GutterIconTooltipHelper {
   }
 
   public static String composeText(@NotNull PsiElement[] elements, String start, final String pattern) {
+    return composeText(Arrays.asList(elements), start, pattern);
+  }
+
+  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, String start, final String pattern) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);

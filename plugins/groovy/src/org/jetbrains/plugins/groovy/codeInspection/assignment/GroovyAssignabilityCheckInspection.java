@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -42,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -52,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -68,6 +67,11 @@ import java.util.Map;
  */
 public class GroovyAssignabilityCheckInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
+
+  @Override
+  protected GroovyFix buildFix(PsiElement location) {
+    return super.buildFix(location);    //To change body of overridden methods use File | Settings | File Templates.
+  }
 
   @Nls
   @NotNull
@@ -104,8 +108,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (checkForImplicitEnumAssigning(expectedType, expression, element)) return;
       final PsiType rType = expression.getType();
       if (rType == null || rType == PsiType.VOID) return;
+
       if (!TypesUtil.isAssignable(expectedType, rType, element)) {
-        registerError(element, GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText()));
+        final LocalQuickFix[] fixes = {new GrCastFix(expression, expectedType)};
+        final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText());
+        registerError(element, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }
 
@@ -146,26 +153,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiType expectedType = method.getReturnType();
       if (expectedType == null || PsiType.VOID.equals(expectedType)) return;
 
-      checkReturnTypes(block, expectedType);
-    }
-
-    @Override
-    public void visitClosure(GrClosableBlock closure) {
-      super.visitClosure(closure);
-
-      checkReturnTypes(closure, GroovyExpectedTypesProvider.getExpectedClosureReturnType(closure));
-    }
-
-    private void checkReturnTypes(GrCodeBlock closure, final PsiType expectedReturnType) {
-      if (expectedReturnType == null || PsiType.VOID == expectedReturnType) return;
-
-      ControlFlowUtils.visitAllExitPoints(closure, new ControlFlowUtils.ExitPointVisitor() {
+      ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
         @Override
         public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
           if (returnValue != null &&
               !(returnValue.getParent() instanceof GrReturnStatement) &&
               !isNewInstanceInitialingByTuple(returnValue)) {
-            checkAssignability(expectedReturnType, returnValue, returnValue);
+            checkAssignability(expectedType, returnValue, returnValue);
           }
           return true;
         }
@@ -598,8 +592,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         }
       }
       if (argumentTypes != null &&
-          !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                place, false)) {
+          !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(), place, false)) {
 
         //check for implicit use of property getter which returns closure
         if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {

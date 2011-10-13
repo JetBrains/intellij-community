@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -76,7 +75,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -383,13 +385,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
             GrMethod[] groovyMethods = body.getMethods();
             GrField[] fields = body.getFields();
             for (GrMethod method : groovyMethods) {
-              final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
-              if (reflectedMethods.length > 0) {
-                result.addAll(Arrays.asList(reflectedMethods));
-              }
-              else {
-                result.add(method);
-              }
+              Collections.addAll(result, PsiImplUtil.getMethodOrReflectedMethods(method));
             }
 
             for (GrField field : fields) {
