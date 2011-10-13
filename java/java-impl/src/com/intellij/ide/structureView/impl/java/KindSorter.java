@@ -33,6 +33,9 @@ public class KindSorter implements Sorter {
     }
 
     private int getWeight(final Object value) {
+      if (value instanceof JavaAnonymousClassTreeElement) {
+        return 55;
+      }
       if (value instanceof JavaClassTreeElement) {
         return 10;
       }
