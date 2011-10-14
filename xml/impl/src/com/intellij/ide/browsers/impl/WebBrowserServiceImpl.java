@@ -36,7 +36,8 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   @Override
   public boolean canOpenInBrowser(@NotNull PsiElement psiElement) {
     final PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
-    return psiFile != null && psiFile.getVirtualFile() != null && getProvider(psiElement) != null;
+    return psiFile != null && psiFile.getVirtualFile() != null &&
+           (HtmlUtil.isHtmlFile(psiFile) || getProvider(psiElement) != null);
   }
 
   @Override
