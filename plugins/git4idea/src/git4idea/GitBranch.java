@@ -99,6 +99,7 @@ public class GitBranch extends GitReference {
   /**
    * Checks if the branch exists in the repository.
    * @return true if the branch exists, false otherwise.
+   * @deprecated use {@link git4idea.repo.GitRepository#getBranches()}
    */
   public boolean exists(VirtualFile root) {
     final VirtualFile remoteBranch = root.findFileByRelativePath(".git/refs/remotes/" + myName);
