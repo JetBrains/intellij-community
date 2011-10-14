@@ -21,11 +21,15 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author yole
  */
 public class MockFileIndexFacade extends FileIndexFacade {
   private final Module myModule;
+  private final List<VirtualFile> myLibraryRoots = new ArrayList<VirtualFile>();
 
   public MockFileIndexFacade(final Project project) {
     super(project);
@@ -49,6 +53,11 @@ public class MockFileIndexFacade extends FileIndexFacade {
 
   @Override
   public boolean isInLibraryClasses(VirtualFile file) {
+    for (VirtualFile libraryRoot : myLibraryRoots) {
+      if (VfsUtilCore.isAncestor(libraryRoot, file, false)) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -70,5 +79,9 @@ public class MockFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isValidAncestor(VirtualFile baseDir, VirtualFile child) {
     return VfsUtilCore.isAncestor(baseDir, child, false);
+  }
+
+  public void addLibraryRoot(VirtualFile file) {
+    myLibraryRoots.add(file);
   }
 }

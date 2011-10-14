@@ -15,9 +15,10 @@
  */
 package com.intellij.core;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFinder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 
 import java.io.File;
@@ -30,6 +31,10 @@ public class JavaCoreEnvironment extends CoreEnvironment {
   
   public JavaCoreEnvironment(Disposable parentDisposable) {
     super(parentDisposable);
+
+    registerFileType(JavaClassFileType.INSTANCE, "class");
+    addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
+
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     myFileManager = new CoreJavaFileManager(myPsiManager, myJarFileSystem);
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
@@ -41,5 +46,9 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
   public void addToClasspath(File path) {
     myFileManager.addToClasspath(path);
+    final VirtualFile root = myJarFileSystem.findFileByPath(path + "!/");
+    if (root != null) {
+      myFileIndexFacade.addLibraryRoot(root);
+    }
   }
 }

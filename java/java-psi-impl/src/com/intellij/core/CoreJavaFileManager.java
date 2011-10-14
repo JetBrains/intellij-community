@@ -57,7 +57,10 @@ public class CoreJavaFileManager implements JavaFileManager {
           if (!(psiFile instanceof PsiJavaFile)) {
             throw new UnsupportedOperationException("no java file for .class");
           }
-          throw new UnsupportedOperationException("TODO");
+          final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
+          if (classes.length == 1) {
+            return classes[0];
+          }
         }
       }
     }

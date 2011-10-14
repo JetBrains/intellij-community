@@ -30,11 +30,14 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
@@ -64,7 +67,7 @@ public class CoreEnvironment {
   protected MockProject myProject;
   private CoreLocalFileSystem myLocalFileSystem;
   protected final CoreJarFileSystem myJarFileSystem;
-  private MockFileIndexFacade myFileIndexFacade;
+  protected final MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
 
   public CoreEnvironment(Disposable parentDisposable) {
@@ -115,6 +118,7 @@ public class CoreEnvironment {
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
     
     myProject.registerService(PsiModificationTracker.class, new PsiModificationTrackerImpl(myProject));
+    myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
     
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
@@ -155,6 +159,16 @@ public class CoreEnvironment {
     });
   }
 
+  protected <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
+    instance.addExplicitExtension(fileType, object);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        instance.removeExplicitExtension(fileType, object);
+      }
+    });
+  }
+
   protected <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
                                             final Class<? extends T> aClass) {
     final String name = extensionPointName.getName();
@@ -171,5 +185,9 @@ public class CoreEnvironment {
 
   public CoreLocalFileSystem getLocalFileSystem() {
     return myLocalFileSystem;
+  }
+
+  public void addLibraryRoot(VirtualFile file) {
+    myFileIndexFacade.addLibraryRoot(file);
   }
 }
