@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -38,7 +39,6 @@ import java.util.List;
  * @author yole
  */
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
-
   private Boolean myHidden = null;
   private final Condition<RefactoringSupportProvider> myCondition = new Condition<RefactoringSupportProvider>() {
     @Override
@@ -61,9 +61,8 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected final RefactoringActionHandler getHandler(DataContext dataContext) {
-
     PsiElement element = null;
-    Editor editor = LangDataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (editor != null && file != null) {
       element = getElementAtCaret(editor, file);
@@ -96,6 +95,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
         }
       }
     }
+
     return null;
   }
 
@@ -113,7 +113,6 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     }
     return null;
   }
-
 
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {

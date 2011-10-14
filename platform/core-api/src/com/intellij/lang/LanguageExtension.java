@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     this(epName, null);
   }
 
-  public LanguageExtension(@NonNls final String epName, T defaultImplementation) {
+  public LanguageExtension(@NonNls final String epName, @Nullable final T defaultImplementation) {
     super(epName);
     myDefaultImplementation = defaultImplementation;
   }
@@ -43,6 +44,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return key.getID();
   }
 
+  @Nullable
   public T forLanguage(@NotNull Language l) {
     T cached = l.getUserData(IN_LANGUAGE_CACHE);
     if (cached != null) return cached;
