@@ -173,6 +173,12 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting("idh.xml");
   }
 
+  public void testIdHighlighting1() throws Throwable {
+    VirtualFile virtualFile = copyFileToProject("idh.xml", "res/layout-large/idh.xml");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    myFixture.checkHighlighting(false, false, false);
+  }
+
   public void testIdReferenceCompletion() throws Throwable {
     toTestCompletion("idref1.xml", "idref1_after.xml");
   }
