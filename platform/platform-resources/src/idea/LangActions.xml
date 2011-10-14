@@ -166,6 +166,7 @@
     </action>
 
     <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
+    <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
