@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <excludeFromCompile>
+      <directory url="file://$PROJECT_DIR$/src" includeSubdirectories="true" />
+    </excludeFromCompile>
+    <resourceExtensions />
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.ftl" />
+    </wildcardResourcePatterns>
+    <annotationProcessing enabled="true" useClasspath="false">
+      <processorPath value="$PROJECT_DIR$/src" />
+      <processor name="my.proc" options="a=b c=d" />
+      <processModule name="compilerConfiguration" generatedDirName="gen" />
+    </annotationProcessing>
+  </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/compilerConfiguration.iml" filepath="$PROJECT_DIR$/compilerConfiguration.iml" />
+    </modules>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
+

@@ -105,6 +105,7 @@ public class IdeaProjectLoader {
     loadProjectLibraries(getComponent(root, "libraryTable"))
     loadArtifacts(getComponent(root, "ArtifactManager"))
     loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
+    loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
   }
 
   def loadFromDirectoryBased(File dir) {
@@ -125,6 +126,7 @@ public class IdeaProjectLoader {
     if (compilerXml.exists()) {
       loadCompilerConfiguration(new XmlParser(false, false).parse(compilerXml))
     }
+    loadWorkspaceConfiguration(new File(dir, "workspace.xml"))
 
     Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
     loadModules(modulesXmlRoot.component[0])
@@ -160,6 +162,15 @@ public class IdeaProjectLoader {
     }
   }
 
+  private def loadWorkspaceConfiguration(File workspaceFile) {
+    if (!workspaceFile.exists()) return
+
+    def root = new XmlParser(false, false).parse(workspaceFile)
+    def options = loadOptions(getComponent(root, "CompilerWorkspaceConfiguration"))
+    project.compilerConfiguration.addNotNullAssertions = parseBoolean(options["ASSERT_NOT_NULL"], true);
+    project.compilerConfiguration.clearOutputDirectoryOnRebuild = parseBoolean(options["CLEAR_OUTPUT_DIRECTORY"], true);
+  }
+
   private def loadCompilerConfiguration(Node root) {
     def rawPatterns = []
     def includePatterns = []
@@ -184,10 +195,40 @@ public class IdeaProjectLoader {
       configuration.resourcePatterns = rawPatterns;
     }
 
-    def javacComponentTag = getComponent(root, "JavacSettings");
-    javacComponentTag?.option?.each {Node optionTag ->
-      configuration.javacOptions[optionTag."@name"] = optionTag."@value";
+    configuration.javacOptions.putAll(loadOptions(getComponent(root, "JavacSettings")))
+
+    def annotationProcessingTag = componentTag.annotationProcessing
+    if (annotationProcessingTag != null) {
+      configuration.annotationProcessing.enabled = parseBoolean(annotationProcessingTag."@enabled", false)
+      configuration.annotationProcessing.obtainProcessorsFromClasspath = parseBoolean(annotationProcessingTag."@useClasspath", true)
+      List<String> processorPaths = []
+      annotationProcessingTag.processorPath?.each {
+        processorPaths << projectMacroExpander.expandMacros(it."@value")
+      }
+      configuration.annotationProcessing.processorsPath = processorPaths.join(File.pathSeparator)
+      annotationProcessingTag.processor?.each {
+        configuration.annotationProcessing.processorsOptions[it."@name"] = it."@options" ?: ""
+      }
+      annotationProcessingTag.processModule?.each {
+        configuration.annotationProcessing.processModule[it."@name"] = it."@generatedDirName"
+      }
     }
+  }
+
+  private static boolean parseBoolean(Object value, boolean defaultValue) {
+    if (value instanceof NodeList) {
+      if (value.isEmpty()) return defaultValue
+      value = value[0]
+    }
+    return value != null ? Boolean.parseBoolean((String)value) : defaultValue
+  }
+  
+  private Map<String, String> loadOptions(Node optionsTag) {
+    def result = new HashMap<String, String>()
+    optionsTag?.option?.each {Node optionTag ->
+      result[optionTag."@name"] = optionTag."@value";
+    }
+    return result
   }
 
   private String convertPattern(String pattern) {
