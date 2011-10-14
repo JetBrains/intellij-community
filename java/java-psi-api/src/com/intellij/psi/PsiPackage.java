@@ -90,7 +90,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   @Nullable PsiModifierList getAnnotationList();
 
   /**
-   * This method must be invoked on the package after all directoris corresponding
+   * This method must be invoked on the package after all directories corresponding
    * to it have been renamed/moved accordingly to qualified name change.
    *
    * @param newQualifiedName the new qualified name of the package.
