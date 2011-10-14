@@ -15,15 +15,11 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.*;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.StatementParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -49,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Properties;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 
@@ -748,37 +743,9 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (!(element instanceof PsiCatchSection)) {
       throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: " + element);
     }
-    setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
+    JavaPsiImplementationHelper.getInstance(myManager.getProject()).setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
     final PsiCatchSection catchSection = (PsiCatchSection)CodeStyleManager.getInstance(myManager.getProject()).reformat(element);
     GeneratedMarkerVisitor.markGenerated(catchSection);
     return catchSection;
   }
-
-  private void setupCatchBlock(final String exceptionName, @Nullable final PsiElement context, final PsiCatchSection psiCatchSection)
-     throws IncorrectOperationException {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    LOG.assertTrue(catchBodyTemplate != null);
-
-    final Properties props = new Properties();
-    props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
-    if (context != null && context.isPhysical()) {
-      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
-      if (directory != null) {
-        JavaTemplateUtil.setPackageNameAttribute(props, directory);
-      }
-    }
-
-    final PsiCodeBlock codeBlockFromText;
-    try {
-      codeBlockFromText = createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
-    }
-    catch (ProcessCanceledException ce) {
-      throw ce;
-    }
-    catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template", e);
-    }
-    psiCatchSection.getCatchBlock().replace(codeBlockFromText);
-  }
-
 }

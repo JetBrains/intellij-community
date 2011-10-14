@@ -15,10 +15,14 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -31,10 +35,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author yole
@@ -222,5 +228,32 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     else {
       return -1;
     }
+  }
+
+  @Override
+  public void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection catchSection) {
+    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    LOG.assertTrue(catchBodyTemplate != null);
+
+    final Properties props = new Properties();
+    props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
+    if (context != null && context.isPhysical()) {
+      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
+      if (directory != null) {
+        JavaTemplateUtil.setPackageNameAttribute(props, directory);
+      }
+    }
+
+    final PsiCodeBlock codeBlockFromText;
+    try {
+      codeBlockFromText = PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
+    }
+    catch (ProcessCanceledException ce) {
+      throw ce;
+    }
+    catch (Exception e) {
+      throw new IncorrectOperationException("Incorrect file template", e);
+    }
+    catchSection.getCatchBlock().replace(codeBlockFromText);
   }
 }

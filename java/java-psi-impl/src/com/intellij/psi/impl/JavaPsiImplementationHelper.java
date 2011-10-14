@@ -47,4 +47,6 @@ public abstract class JavaPsiImplementationHelper {
   public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
 
   public abstract PsiElement getDefaultMemberAnchor(PsiClass psiClass, PsiMember firstPsi);
+
+  public abstract void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection element);
 }
