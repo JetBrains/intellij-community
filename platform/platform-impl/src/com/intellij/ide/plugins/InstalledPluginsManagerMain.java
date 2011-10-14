@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -52,7 +52,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, createAvailableConfigurable());
+        new SingleConfigurableEditor(myActionsPanel, createAvailableConfigurable()) {
+          @Override
+          protected Action[] createActions() {
+            return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+          }
+        }.show();
       }
     });
     myActionsPanel.add(button, BorderLayout.NORTH);
