@@ -29,7 +29,9 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,7 +44,7 @@ public class ClasspathBootstrap {
   public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
 
   public static List<File> getApplicationClasspath() {
-    final List<File> cp = new ArrayList<File>();
+    final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourcePath(Server.class));
     cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
     cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
@@ -80,7 +82,7 @@ public class ClasspathBootstrap {
     //    }
     //  }
     //}
-    return cp;
+    return new ArrayList<File>(cp);
   }
 
   private static File getResourcePath(Class aClass) {
