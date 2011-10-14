@@ -22,6 +22,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,19 +59,28 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   @Override
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    String fileName = qName.replace(".", "/") + ".class";
     for (File file : myClasspath) {
-      if (file.isFile()) {
-        VirtualFile classFile = myJarFileSystem.findFileByPath(file.getPath() + "!/" + fileName);
-        if (classFile != null) {
-          PsiFile psiFile = myPsiManager.findFile(classFile);
-          if (!(psiFile instanceof PsiJavaFile)) {
-            throw new UnsupportedOperationException("no java file for .class");
-          }
-          final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-          if (classes.length == 1) {
-            return classes[0];
-          }
+      final PsiClass psiClass = findClassInClasspathEntry(qName, file);
+      if (psiClass != null) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiClass findClassInClasspathEntry(String qName, File file) {
+    String fileName = qName.replace(".", "/") + ".class";
+    if (file.isFile()) {
+      VirtualFile classFile = myJarFileSystem.findFileByPath(file.getPath() + "!/" + fileName);
+      if (classFile != null) {
+        PsiFile psiFile = myPsiManager.findFile(classFile);
+        if (!(psiFile instanceof PsiJavaFile)) {
+          throw new UnsupportedOperationException("no java file for .class");
+        }
+        final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
+        if (classes.length == 1) {
+          return classes[0];
         }
       }
     }
@@ -79,7 +89,14 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    throw new UnsupportedOperationException("TODO");
+    List<PsiClass> result = new ArrayList<PsiClass>();
+    for (File file : myClasspath) {
+      final PsiClass psiClass = findClassInClasspathEntry(qName, file);
+      if (psiClass != null) {
+        result.add(psiClass);
+      }
+    }
+    return result.toArray(new PsiClass[result.size()]);
   }
 
   @Override
