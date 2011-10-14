@@ -3,8 +3,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -80,6 +78,12 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
   }
 
   public void testForwardReferences() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testArrayFromVarargs() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
