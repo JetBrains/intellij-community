@@ -17,9 +17,10 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.CaptionPanel;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -33,6 +34,8 @@ import java.awt.geom.Path2D;
 * @author Konstantin Bulenkov
 */
 class NavBarItem extends SimpleColoredComponent implements Disposable {
+  private static Image SEPARATOR_ACTIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorActive.png"));
+  private static Image SEPARATOR_PASSIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorPassive.png"));
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -179,18 +182,20 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
         g.fill(path);
       }
     }
-    if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {
-      path = new Path2D.Double();
-      path.moveTo(0, 0);
-      path.lineTo(off, h / 2);                //   \
-      path.lineTo(0, h);                      //   /
-      g.setPaint(CaptionPanel.getBorderColor(!myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode()));
-      g.draw(path);
+    if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {      
+      //path = new Path2D.Double();
+      //path.moveTo(0, 0);
+      //path.lineTo(off, h / 2);                //   \
+      //path.lineTo(0, h);                      //   /
+      //g.setPaint(CaptionPanel.getBorderColor(!myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode()));
+      Image img = !myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode() ? SEPARATOR_ACTIVE : SEPARATOR_PASSIVE;
+      g.drawImage(img, null, null);
+      //g.draw(path);
     }
   }
   
   private static int getDecorationOffset() {
-    return 7;
+    return 11;
   }
   
   private static int getFirstElementLeftOffset() {
@@ -209,7 +214,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
     if (! isPopupElement && NavBarPanel.isDecorated()) {
-      size.width += 7 + myPadding.width() + (isFirstElement() ? getFirstElementLeftOffset() : 0);
+      size.width += getDecorationOffset() + myPadding.width() + (isFirstElement() ? getFirstElementLeftOffset() : 0);
       size.height += myPadding.height();
     }
     return size;
