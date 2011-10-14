@@ -215,7 +215,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
         panel.get().setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
         panel.get().setOpaque(!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
-        panel.get().setBorder(UIUtil.isUnderAquaLookAndFeel() ? BorderFactory.createEmptyBorder(2, 0, 2, 4) : new NavBarBorder(true, 0));
+        panel.get().setBorder(new NavBarBorder(true, 0));
         myNavigationBar.setBorder(null);
         panel.get().add(myScrollPane, BorderLayout.CENTER);
         if (!SystemInfo.isMac) {
