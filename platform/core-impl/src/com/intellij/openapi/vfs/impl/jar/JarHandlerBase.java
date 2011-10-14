@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -23,7 +24,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,8 +138,10 @@ public class JarHandlerBase {
   }
 
   protected EntryInfo getEntryInfo(final VirtualFile file) {
-    String parentPath = getRelativePath(file);
-    return getEntryInfo(parentPath);
+    synchronized (lock) {
+      String parentPath = getRelativePath(file);
+      return getEntryInfo(parentPath);
+    }
   }
 
   public EntryInfo getEntryInfo(String parentPath) {
@@ -171,7 +173,7 @@ public class JarHandlerBase {
 
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray(file));
+    return new BufferExposingByteArrayInputStream(contentsToByteArray(file));
   }
 
   @NotNull

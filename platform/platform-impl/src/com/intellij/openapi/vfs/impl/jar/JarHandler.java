@@ -25,9 +25,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -131,67 +133,6 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
     }
 
     return mirror;
-  }
-
-  @Override
-  public long getLength(@NotNull final VirtualFile file) {
-    synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
-      return entry != null ? entry.getSize() : 0;
-    }
-  }
-
-  @Override
-  @NotNull
-  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray(file));
-  }
-
-  @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-    synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
-      if (entry == null) {
-        return new byte[0];
-      }
-
-      final ZipFile zip = getZip();
-      assert zip != null : file;
-
-      final InputStream stream = zip.getInputStream(entry);
-      assert stream != null : file;
-
-      try {
-        return FileUtil.loadBytes(stream, (int)entry.getSize());
-      }
-      finally {
-        stream.close();
-      }
-    }
-  }
-
-  @Override
-  public long getTimeStamp(@NotNull final VirtualFile file) {
-    if (file.getParent() == null) return -1L; // Optimization
-    synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
-      return entry != null ? entry.getTime() : -1L;
-    }
-  }
-
-  @Override
-  public boolean isDirectory(@NotNull final VirtualFile file) {
-    if (file.getParent() == null) return true; // Optimization
-    synchronized (lock) {
-      final String path = getRelativePath(file);
-      final EntryInfo info = getEntriesMap().get(path);
-      return info == null || info.isDirectory;
-    }
-  }
-
-  private Map<String, EntryInfo> getEntriesMap() {
-    return initEntries();
   }
 
   @Override
