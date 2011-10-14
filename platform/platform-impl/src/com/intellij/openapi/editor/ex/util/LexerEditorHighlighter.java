@@ -202,7 +202,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int repaintEnd = -1;
     int insertSegmentCount = 0;
     int oldEndIndex = -1;
-    SegmentArrayWithData insertSegments = createSegments();
+    SegmentArrayWithData insertSegments = new SegmentArrayWithData();
 
     while(myLexer.getTokenType() != null) {
       int tokenStart = myLexer.getTokenStart();
