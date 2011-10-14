@@ -15,23 +15,40 @@
  */
 package com.intellij.core;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFinder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
+
+import java.io.File;
 
 /**
  * @author yole
  */
 public class JavaCoreEnvironment extends CoreEnvironment {
+  private final CoreJavaFileManager myFileManager;
+  
   public JavaCoreEnvironment(Disposable parentDisposable) {
     super(parentDisposable);
+
+    registerFileType(JavaClassFileType.INSTANCE, "class");
+    addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
+
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, null, null);
+    myFileManager = new CoreJavaFileManager(myPsiManager, myJarFileSystem);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
     registerComponentInstance(myProject.getPicoContainer(),
                               JavaPsiFacade.class,
                               javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+  }
 
+  public void addToClasspath(File path) {
+    myFileManager.addToClasspath(path);
+    final VirtualFile root = myJarFileSystem.findFileByPath(path + "!/");
+    if (root != null) {
+      myFileIndexFacade.addLibraryRoot(root);
+    }
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -191,8 +192,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
     int state = StringUtil.compareVersionNumbers(descr.getVersion(), existing.getVersion());
+    final PluginId pluginId = existing.getPluginId();
     if (state > 0 && !PluginManager.isIncompatible(descr) && !updatedPlugins.contains(descr.getPluginId())) {
-      NewVersions2Plugins.put(existing.getPluginId(), 1);
+      NewVersions2Plugins.put(pluginId, 1);
+      UpdateSettings.getInstance().myOutdatedPlugins.add(pluginId.getIdString());
 
       final IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)existing;
       plugin.setDownloadsCount(descr.getDownloads());
@@ -202,8 +205,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       plugin.setUrl(descr.getUrl());
 
     } else {
-      if (NewVersions2Plugins.remove(existing.getPluginId()) != null) {
-        updatedPlugins.add(existing.getPluginId());
+      UpdateSettings.getInstance().myOutdatedPlugins.remove(pluginId.getIdString());
+      if (NewVersions2Plugins.remove(pluginId) != null) {
+        updatedPlugins.add(pluginId);
       }
     }
   }
@@ -401,7 +405,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         if (descriptor.isDeleted()) {
           myNameLabel.setIcon(IconLoader.getIcon("/actions/clean.png"));
         }
-        else if (hasNewerVersion(myPluginDescriptor.getPluginId())) {
+        else if (hasNewerVersion(myPluginDescriptor.getPluginId()) || 
+                 UpdateSettings.getInstance().myOutdatedPlugins.contains(myPluginDescriptor.getPluginId().getIdString())) {
           myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
         }
         else {

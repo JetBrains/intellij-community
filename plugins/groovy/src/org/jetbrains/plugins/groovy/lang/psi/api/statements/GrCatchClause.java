@@ -1,8 +1,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
@@ -17,4 +17,9 @@ public interface GrCatchClause extends GrParametersOwner {
   @Nullable
   GrOpenBlock getBody();
 
+  @Nullable
+  PsiElement getLBrace();
+
+  @Nullable
+  PsiElement getRParenth();
 }

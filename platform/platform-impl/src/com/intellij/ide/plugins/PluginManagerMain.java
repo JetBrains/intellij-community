@@ -15,21 +15,24 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +44,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -82,6 +88,12 @@ public abstract class PluginManagerMain implements Disposable {
   private ActionToolbar myActionToolbar;
 
   protected final MyPluginsFilter myFilter = new MyPluginsFilter();
+  protected PluginManagerUISettings myUISettings;
+
+  public PluginManagerMain(
+    PluginManagerUISettings uiSettings) {
+    myUISettings = uiSettings;
+  }
 
   protected void init() {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
@@ -148,7 +160,7 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginsModel.dependent(pluginDescriptor);
   }
 
- 
+
   protected void modifyPluginsList(ArrayList<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     if (pluginsList == null) {
@@ -157,6 +169,7 @@ public abstract class PluginManagerMain implements Disposable {
     else {
       pluginsModel.modifyData(list);
     }
+    pluginsModel.sort();
     pluginsList = list;
     if (selected != null) {
       select(selected);
@@ -167,6 +180,80 @@ public abstract class PluginManagerMain implements Disposable {
 
   public JPanel getMainPanel() {
     return main;
+  }
+
+  /**
+   * Start a new thread which downloads new list of plugins from the site in
+   * the background and updates a list of plugins in the table.
+   */
+  protected void loadPluginsFromHostInBackground() {
+    setDownloadStatus(true);
+
+    new com.intellij.util.concurrency.SwingWorker() {
+      ArrayList<IdeaPluginDescriptor> list = null;
+      Exception error;
+
+      public Object construct() {
+        try {
+          list = RepositoryHelper.process(null);
+        }
+        catch (Exception e) {
+          error = e;
+        }
+        return list;
+      }
+
+      public void finished() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            if (list != null) {
+              modifyPluginsList(list);
+              propagateUpdates(list);
+              setDownloadStatus(false);
+            }
+            else if (error != null) {
+              LOG.info(error);
+              setDownloadStatus(false);
+              if (0 == Messages.showOkCancelDialog(
+                IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
+                IdeBundle.message("title.plugins"),
+                CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText(), Messages.getErrorIcon())) {
+                loadPluginsFromHostInBackground();
+              }
+            }
+          }
+        });
+      }
+    }.start();
+  }
+
+  protected abstract void propagateUpdates(ArrayList<IdeaPluginDescriptor> list);
+
+  protected void setDownloadStatus(boolean status) {
+    pluginTable.setPaintBusy(status);
+  }
+
+  protected void loadAvailablePlugins() {
+    ArrayList<IdeaPluginDescriptor> list;
+    try {
+      //  If we already have a file with downloaded plugins from the last time,
+      //  then read it, load into the list and start the updating process.
+      //  Otherwise just start the process of loading the list and save it
+      //  into the persistent config file for later reading.
+      File file = new File(PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile);
+      if (file.exists()) {
+        RepositoryContentHandler handler = new RepositoryContentHandler();
+        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+        parser.parse(file, handler);
+        list = handler.getPluginsList();
+        modifyPluginsList(list);
+      }
+    }
+    catch (Exception ex) {
+      //  Nothing to do, just ignore - if nothing can be read from the local
+      //  file just start downloading of plugins' list from the site.
+    }
+    loadPluginsFromHostInBackground();
   }
 
   public static boolean downloadPlugins(final List<PluginNode> plugins, final List<IdeaPluginDescriptor> allPlugins) throws IOException {
@@ -180,7 +267,7 @@ public abstract class PluginManagerMain implements Disposable {
     }
     catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException) {
-        throw(IOException)e.getCause();
+        throw (IOException)e.getCause();
       }
       else {
         throw e;
@@ -224,7 +311,6 @@ public abstract class PluginManagerMain implements Disposable {
 
       if (!pluginDescriptor.isBundled()) {
         description += "<h4>Vendor</h4>";
-        //todo vendor section
         String vendor = pluginDescriptor.getVendor();
         if (!StringUtil.isEmpty(vendor)) {
           description += vendor;
@@ -249,7 +335,7 @@ public abstract class PluginManagerMain implements Disposable {
 
         String version = pluginDescriptor.getVersion();
         if (!StringUtil.isEmpty(version)) {
-          description +="<h4>Version</h4>" + version;
+          description += "<h4>Version</h4>" + version;
         }
 
         String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
@@ -260,7 +346,8 @@ public abstract class PluginManagerMain implements Disposable {
 
 
       setTextValue(description, myDescriptionTextArea);
-    } else {
+    }
+    else {
       setTextValue(null, myDescriptionTextArea);
     }
   }
@@ -297,8 +384,9 @@ public abstract class PluginManagerMain implements Disposable {
         }
         else {
           URL url = e.getURL();
-          if( url != null )
-            BrowserUtil.launchBrowser( url.toString() );
+          if (url != null) {
+            BrowserUtil.launchBrowser(url.toString());
+          }
         }
       }
     }
@@ -390,6 +478,18 @@ public abstract class PluginManagerMain implements Disposable {
       if (pluginsList != null) {
         pluginsModel.modifyData(pluginsModel.view);
       }
+    }
+  }
+
+  protected class RefreshAction extends AnAction {
+    public RefreshAction() {
+      super("Reload list of plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      loadAvailablePlugins();
+      myFilter.setFilter("");
     }
   }
 }

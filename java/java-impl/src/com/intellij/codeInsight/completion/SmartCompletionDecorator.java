@@ -110,7 +110,13 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
   @Override
   public void handleInsert(InsertionContext context) {
+    if (getObject() instanceof PsiVariable && context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
+      context.commitDocument();
+      DefaultInsertHandler.removeEndOfIdentifier(context);
+      context.commitDocument();
+    }
     myPosition = getPosition(context, this);
+    
     super.handleInsert(context);
   }
 

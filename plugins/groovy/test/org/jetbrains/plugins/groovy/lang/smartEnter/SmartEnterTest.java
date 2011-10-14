@@ -36,6 +36,7 @@ public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
 
   public void testListFixer() throws Throwable {doTest();}
   public void testSwitchBraces() throws Throwable {doTest();}
+  public void testCatchClause() throws Throwable {doTest();}
 
   public void doTest() throws Exception {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");

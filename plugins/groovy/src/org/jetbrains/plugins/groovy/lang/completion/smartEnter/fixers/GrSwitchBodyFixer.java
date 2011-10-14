@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 public class GrSwitchBodyFixer implements GrFixer{
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     GrSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(psiElement, GrSwitchStatement.class);
-    if (switchStatement == null) return;
+    if (switchStatement == null || switchStatement.getLBrace() != null) return;
     if (!PsiTreeUtil.isAncestor(switchStatement.getCondition(), psiElement, false)) return;
 
     final Document doc = editor.getDocument();

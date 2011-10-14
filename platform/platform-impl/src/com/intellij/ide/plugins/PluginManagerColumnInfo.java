@@ -98,6 +98,10 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return columnIdx == COLUMN_DATE;
   }
 
+  protected boolean isSortByStatus() {
+    return true;
+  }
+
   public Comparator<IdeaPluginDescriptor> getComparator() {
     if (isSortByName()) {
       return new Comparator<IdeaPluginDescriptor>() {
@@ -133,6 +137,42 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
           }
           else if (date1 > date2) return -1;
           return 0;
+        }
+      };
+    }
+    if (isSortByStatus()) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
+            final int status1 = ((PluginNode)o1).getStatus();
+            final int status2 = ((PluginNode)o2).getStatus();
+            if (status1 == PluginNode.STATUS_DOWNLOADED){
+              if (status2 != PluginNode.STATUS_DOWNLOADED) return -1;
+              return StringUtil.compare(o1.getName(), o2.getName(), true);
+            }
+            if (status2 == PluginNode.STATUS_DOWNLOADED) return 1;
+
+            if (status1 == PluginNode.STATUS_DELETED) {
+              if (status2 != PluginNode.STATUS_DELETED) return -1;
+              return StringUtil.compare(o1.getName(), o2.getName(), true);
+            }
+            if (status2 == PluginNode.STATUS_DELETED) return 1;
+
+            if (status1 == PluginNode.STATUS_INSTALLED) {
+              if (status2 !=PluginNode.STATUS_INSTALLED) return -1;
+              final boolean hasNewerVersion1 = InstalledPluginsTableModel.hasNewerVersion(o1.getPluginId());
+              final boolean hasNewerVersion2 = InstalledPluginsTableModel.hasNewerVersion(o2.getPluginId());
+              if (hasNewerVersion1 != hasNewerVersion2) {
+                if (hasNewerVersion1) return -1;
+                return 1;
+              }
+              return StringUtil.compare(o1.getName(), o2.getName(), true);
+            }
+            if (status2 == PluginNode.STATUS_INSTALLED) {
+              return 1;
+            }
+          }
+          return StringUtil.compare(o1.getName(), o2.getName(), true);
         }
       };
     }

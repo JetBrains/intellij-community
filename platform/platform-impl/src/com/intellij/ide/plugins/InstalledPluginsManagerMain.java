@@ -43,7 +43,8 @@ import java.util.Set;
  */
 public class InstalledPluginsManagerMain extends PluginManagerMain {
 
-  public InstalledPluginsManagerMain() {
+  public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
+    super(uiSettings);
     init();
     final JButton button = new JButton("Browse JetBrains repository");
     button.setMnemonic('b');
@@ -54,6 +55,10 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(button, BorderLayout.NORTH);
+  }
+
+  @Override
+  protected void propagateUpdates(ArrayList<IdeaPluginDescriptor> list) {
   }
 
   private PluginManagerConfigurable createAvailableConfigurable() {
@@ -97,7 +102,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new RefreshAction());
     if (!inToolbar) {
       actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
     }

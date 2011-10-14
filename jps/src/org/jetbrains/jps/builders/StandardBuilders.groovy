@@ -27,8 +27,8 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
   def doBuildModule(ModuleChunk module, ModuleBuildState state, ProjectBuilder projectBuilder) {
     if (state.sourceRoots.isEmpty()) return;
 
-    String sourceLevel = module["sourceLevel"]
-    String targetLevel = module["targetLevel"]
+    String sourceLevel = module.languageLevel
+    String targetLevel = module.languageLevel
     String customArgs = module["javac_args"]; // it seems javac_args property is not set, can we drop it?
     if (projectBuilder.useInProcessJavac) {
       String version = System.getProperty("java.version")

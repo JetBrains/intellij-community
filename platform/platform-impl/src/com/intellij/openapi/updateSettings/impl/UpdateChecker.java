@@ -168,12 +168,14 @@ public final class UpdateChecker {
 
     if (!toUpdate.isEmpty()) {
       try {
+        final UpdateSettings updateSettings = UpdateSettings.getInstance();
         final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(null);
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
           if (installedPlugin != null) {
             if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
+              updateSettings.myOutdatedPlugins.add(idString);
               final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
               if (downloader.prepareToInstall()) {
                 downloaded.add(downloader);

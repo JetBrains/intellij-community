@@ -159,7 +159,6 @@
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <label resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbo.update.options.clean.copy"/>
                   <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.update.options.clean.copy.m"/>
                 </properties>
               </component>

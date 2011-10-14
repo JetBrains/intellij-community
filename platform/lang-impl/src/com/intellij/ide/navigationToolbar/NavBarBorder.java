@@ -16,6 +16,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -33,7 +34,7 @@ class NavBarBorder implements Border {
   }
 
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    if (!myDocked) return;
+    if (!myDocked || UIUtil.isUnderAquaLookAndFeel()) return;
 
     g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
 
@@ -65,7 +66,7 @@ class NavBarBorder implements Border {
   }
 
   public Insets getBorderInsets(final Component c) {
-    return new Insets(3, 4, 3, 4);
+    return new Insets(1, 0, 1, 4);
   }
 
   public boolean isBorderOpaque() {

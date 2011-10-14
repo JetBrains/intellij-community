@@ -74,7 +74,6 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <label resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.create.tag.override.existing"/>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.create.tag.override.existing"/>
             </properties>
           </component>

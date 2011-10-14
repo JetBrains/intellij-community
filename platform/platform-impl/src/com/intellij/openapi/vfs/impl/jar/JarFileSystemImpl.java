@@ -174,24 +174,24 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final String jarRootPath = extractRootPath(entryVFile.getPath());
 
     JarHandler handler;
-    final JarHandler freshHanlder;
+    final JarHandler freshHandler;
 
     synchronized (LOCK) {
       handler = myHandlers.get(jarRootPath);
       if (handler == null) {
-        freshHanlder = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
+        freshHandler = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
         myHandlers.put(jarRootPath, handler);
       }
       else {
-        freshHanlder = null;
+        freshHandler = null;
       }
     }
 
-    if (freshHanlder != null) {
+    if (freshHandler != null) {
       // Refresh must be outside of the lock, since it potentially requires write action.
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          freshHanlder.refreshLocalFileForJar();
+          freshHandler.refreshLocalFileForJar();
         }
       }, ModalityState.defaultModalityState());
     }

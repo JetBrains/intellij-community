@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -27,6 +28,8 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -53,6 +56,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Document;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +73,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI implements Configurable {
+public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonDefaultProjectConfigurable {
 
   private final Project myProject;
   private final CfgInfo[] myInfos;
@@ -82,8 +86,16 @@ public class InjectionsSettingsUI implements Configurable {
   private final ActionToolbar myToolbar;
   private final JLabel myCountLabel;
 
+  private Configurable[] myConfigurables;
+  private Configuration myConfiguration;
+
+  public InjectionsSettingsUI(final Project project) {
+    this(project, Configuration.getProjectInstance(project));
+  }
+
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
+    myConfiguration = configuration;
 
     final CfgInfo currentInfo = new CfgInfo(configuration, "project");
     myInfos = configuration instanceof Configuration.Prj ?
@@ -362,6 +374,45 @@ public class InjectionsSettingsUI implements Configurable {
     return myInfos[0];
   }
 
+  @Override
+  public boolean hasOwnContent() {
+    return true;
+  }
+
+  @Override
+  public boolean isVisible() {
+    return true;
+  }
+
+  @Override
+  public Configurable[] getConfigurables() {
+    if (myConfigurables == null) {
+      final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+        ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
+      }
+      Collections.sort(configurables, new Comparator<Configurable>() {
+        public int compare(final Configurable o1, final Configurable o2) {
+          return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+        }
+      });
+      myConfigurables = configurables.toArray(new Configurable[configurables.size()]);
+    }
+
+    return myConfigurables;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "IntelliLang.Configuration";
+  }
+
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
   private static void sortInjections(final List<BaseInjection> injections) {
     Collections.sort(injections, new Comparator<BaseInjection>() {
       public int compare(final BaseInjection o1, final BaseInjection o2) {
@@ -468,7 +519,7 @@ public class InjectionsSettingsUI implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return "Injections";
+    return "Language Injections";
   }
 
   public Icon getIcon() {

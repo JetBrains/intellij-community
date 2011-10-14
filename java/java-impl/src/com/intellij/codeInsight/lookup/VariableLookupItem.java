@@ -85,10 +85,6 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
     context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), variable.getName());
     context.commitDocument();
-    if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
-      DefaultInsertHandler.removeEndOfIdentifier(context);
-      context.commitDocument();
-    }
 
     if (variable instanceof PsiField) {
       if (willBeImported()) {

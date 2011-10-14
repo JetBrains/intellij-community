@@ -41,10 +41,7 @@ import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.Groovy
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -67,6 +64,29 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor");
 
   private static final List<GrFixer> ourFixers = Arrays.asList(
+    new GrFixer() {
+      @Override
+      public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+        GrCatchClause catchClause = PsiTreeUtil.getParentOfType(psiElement, GrCatchClause.class);
+        if (catchClause == null || catchClause.getBody() != null) return;
+        if (!PsiTreeUtil.isAncestor(catchClause.getParameter(), psiElement, false)) return;
+
+        final Document doc = editor.getDocument();
+
+        PsiElement lBrace = catchClause.getLBrace();
+        if (lBrace != null) return;
+
+        PsiElement eltToInsertAfter = catchClause.getRParenth();
+        String text = "{\n}";
+        if (eltToInsertAfter == null) {
+          eltToInsertAfter = catchClause.getParameter();
+          text = "){\n}";
+        }
+        if (eltToInsertAfter != null) {
+          doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
+        }
+      }
+    },
     new GrMissingIfStatement(),
     new GrIfConditionFixer(),
     new GrLiteralFixer(),

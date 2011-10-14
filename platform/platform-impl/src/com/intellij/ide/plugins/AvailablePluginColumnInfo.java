@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -46,17 +47,22 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
   @Override
   protected boolean isSortByName() {
-    return mySortMode == PluginTableModel.NAME;
+    return mySortMode.equals(PluginTableModel.NAME);
   }
 
   @Override
   protected boolean isSortByDownloads() {
-    return mySortMode == AvailablePluginsTableModel.DOWNLOADS;
+    return mySortMode.equals(AvailablePluginsTableModel.DOWNLOADS);
   }
 
   @Override
   protected boolean isSortByDate() {
-    return mySortMode == AvailablePluginsTableModel.RELEASE_DATE;
+    return mySortMode.equals(AvailablePluginsTableModel.RELEASE_DATE);
+  }
+
+  @Override
+  protected boolean isSortByStatus() {
+    return mySortMode.equals(AvailablePluginsTableModel.STATUS);
   }
 
   public void setSortMode(String sortMode) {
@@ -144,9 +150,12 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
         }
         else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
+          final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginNode.getPluginId());
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_MODIFIED);
-          myStatusLabel.setText("[Installed]");
-          myPanel.setToolTipText(IdeBundle.message("plugin.is.already.installed.status.tooltip"));
+          if (hasNewerVersion) {
+            if (!isSelected) myPanel.setBackground(LightColors.BLUE);
+          }
+          myStatusLabel.setText("[Installed" + (hasNewerVersion ? ": Ready to update" : "") + "]");
         }
       }
       return myPanel;

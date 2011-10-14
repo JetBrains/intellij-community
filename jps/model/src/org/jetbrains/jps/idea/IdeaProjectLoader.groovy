@@ -197,7 +197,7 @@ public class IdeaProjectLoader {
 
     configuration.javacOptions.putAll(loadOptions(getComponent(root, "JavacSettings")))
 
-    def annotationProcessingTag = componentTag.annotationProcessing
+    def annotationProcessingTag = componentTag?.annotationProcessing
     if (annotationProcessingTag != null) {
       configuration.annotationProcessing.enabled = parseBoolean(annotationProcessingTag."@enabled", false)
       configuration.annotationProcessing.obtainProcessorsFromClasspath = parseBoolean(annotationProcessingTag."@useClasspath", true)
@@ -471,9 +471,7 @@ public class IdeaProjectLoader {
           languageLevel = projectLanguageLevel
         }
         if (languageLevel != null) {
-          def ll = convertLanguageLevel(languageLevel)
-          currentModule["sourceLevel"] = ll
-          currentModule["targetLevel"] = ll
+          currentModule.languageLevel = convertLanguageLevel(languageLevel)
         }
 
         if (srcFolderExists) {

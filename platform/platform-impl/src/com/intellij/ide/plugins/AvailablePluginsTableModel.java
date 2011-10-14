@@ -45,7 +45,8 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   protected static final String DOWNLOADS = "Downloads";
   protected static final String RELEASE_DATE = "Updated";
-  public static final String [] SORT_MODES = new String[] {NAME, DOWNLOADS, RELEASE_DATE};
+  protected static final String STATUS = "Status";
+  public static final String [] SORT_MODES = new String[] {NAME, DOWNLOADS, RELEASE_DATE, STATUS};
 
   public AvailablePluginsTableModel() {
     super.columns = new ColumnInfo[] {new AvailablePluginColumnInfo(mySortMode)};
@@ -87,7 +88,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   @Override
   public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
-    if (myCategory == ALL) return true;
+    if (myCategory.equals(ALL)) return true;
     final String category = descriptor.getCategory();
     return category == null || category.equals(myCategory);
   }

@@ -24,6 +24,8 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   Map<String, String> sourceRootPrefixes = [:]
   Map<String, Library> libraries = [:]
 
+  String languageLevel
+
   /*int compareTo(Object o) {
       if (o instanceof Module) {
           ((Module) o).name.compareTo(name);

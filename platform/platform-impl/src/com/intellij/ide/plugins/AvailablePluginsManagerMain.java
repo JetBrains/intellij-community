@@ -15,26 +15,21 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
@@ -43,12 +38,11 @@ import java.util.LinkedHashSet;
  */
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   private PluginManagerMain installed;
-  private PluginManagerUISettings myUISettings;
   private JButton myHttpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
 
   public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings) {
+    super(uiSettings);
     this.installed = installed;
-    myUISettings = uiSettings;
     init();
   }
 
@@ -90,13 +84,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     if (!inToolbar) {
       actionGroup.add(new ActionInstallPlugin(this, installed));
     }
-    actionGroup.add(new AnAction("Reload list of plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png")) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        loadAvailablePlugins();
-        myFilter.setFilter("");
-      }
-    });
+    actionGroup.add(new RefreshAction());
     if (inToolbar) {
       actionGroup.add(new MyFilterCategoryAction());
       actionGroup.add(new SortByNameAction());
@@ -104,76 +92,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     return actionGroup;
   }
 
-  /**
-   * Start a new thread which downloads new list of plugins from the site in
-   * the background and updates a list of plugins in the table.
-   */
-  private void loadPluginsFromHostInBackground() {
-    setDownloadStatus(true);
-
-    new com.intellij.util.concurrency.SwingWorker() {
-      ArrayList<IdeaPluginDescriptor> list = null;
-      Exception error;
-
-      public Object construct() {
-        try {
-          list = RepositoryHelper.process(null);
-        }
-        catch (Exception e) {
-          error = e;
-        }
-        return list;
-      }
-
-      public void finished() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            if (list != null) {
-              modifyPluginsList(list);
-              setDownloadStatus(false);
-              pluginsModel.setSortMode(myUISettings.AVAILABLE_SORT_MODE);
-            }
-            else if (error != null) {
-              LOG.info(error);
-              setDownloadStatus(false);
-              if (0 == Messages.showOkCancelDialog(
-                IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
-                IdeBundle.message("title.plugins"),
-                CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText(), Messages.getErrorIcon())) {
-                loadPluginsFromHostInBackground();
-              }
-            }
-          }
-        });
-      }
-    }.start();
-  }
-
-  private void setDownloadStatus(boolean status) {
-    pluginTable.setPaintBusy(status);
-  }
-
-  private void loadAvailablePlugins() {
-    ArrayList<IdeaPluginDescriptor> list;
-    try {
-      //  If we already have a file with downloaded plugins from the last time,
-      //  then read it, load into the list and start the updating process.
-      //  Otherwise just start the process of loading the list and save it
-      //  into the persistent config file for later reading.
-      File file = new File(PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile);
-      if (file.exists()) {
-        RepositoryContentHandler handler = new RepositoryContentHandler();
-        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-        parser.parse(file, handler);
-        list = handler.getPluginsList();
-        modifyPluginsList(list);
-      }
-    }
-    catch (Exception ex) {
-      //  Nothing to do, just ignore - if nothing can be read from the local
-      //  file just start downloading of plugins' list from the site.
-    }
-    loadPluginsFromHostInBackground();
+  @Override
+  protected void propagateUpdates(ArrayList<IdeaPluginDescriptor> list) {
+    installed.modifyPluginsList(list); //propagate updates
   }
 
   private class MyFilterCategoryAction extends ComboBoxAction {

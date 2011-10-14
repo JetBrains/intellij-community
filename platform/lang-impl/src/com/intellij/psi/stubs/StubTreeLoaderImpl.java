@@ -53,7 +53,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(FileBasedIndex.PROJECT, project);
-      final StubElement element = StubUpdatingIndex.buildStubTree(fc);
+      final StubElement element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
         return new StubTree((PsiFileStub)element);
       }

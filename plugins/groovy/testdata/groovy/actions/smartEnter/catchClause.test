@@ -1,0 +1,7 @@
+try {}
+catch (NumberFormatException e<caret>)
+-----
+try {}
+catch (NumberFormatException e) {
+    <caret>
+}

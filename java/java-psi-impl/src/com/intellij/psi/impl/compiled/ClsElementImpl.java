@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -103,7 +104,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  protected static final String CAN_NOT_MODIFY_MESSAGE = PsiBundle.message("psi.error.attempt.to.edit.class.file");
+  protected static final String CAN_NOT_MODIFY_MESSAGE = JavaCoreBundle.message("psi.error.attempt.to.edit.class.file");
 
   public abstract void appendMirrorText(final int indentLevel, final StringBuilder buffer);
 
