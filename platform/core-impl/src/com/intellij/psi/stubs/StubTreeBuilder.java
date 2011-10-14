@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,7 @@ public class StubTreeBuilder {
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
         assert builder != null;
 
-        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), ((FileContentImpl)inputData).getProject());
+        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
       }
       else {
         final LanguageFileType filetype = (LanguageFileType)fileType;
