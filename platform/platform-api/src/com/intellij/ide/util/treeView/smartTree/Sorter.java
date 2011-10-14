@@ -48,22 +48,9 @@ public interface Sorter extends TreeAction {
     public Comparator getComparator() {
       return new Comparator() {
         public int compare(Object o1, Object o2) {
-          String s1 = toString(o1);
-          String s2 = toString(o2);
+          String s1 = SorterUtil.getStringPresentation(o1);
+          String s2 = SorterUtil.getStringPresentation(o2);
           return s1.compareToIgnoreCase(s2);
-        }
-
-        private String toString(Object object) {
-          String result = null;
-          if (object instanceof SortableTreeElement) {
-            result = ((SortableTreeElement) object).getAlphaSortKey();
-          } else if (object instanceof TreeElement){
-            result =  ((TreeElement)object).getPresentation().getPresentableText();
-          } else if (object instanceof Group){
-            result = ((Group)object).getPresentation().getPresentableText();
-          }
-
-          return result != null ? result : "";
         }
       };
     }
