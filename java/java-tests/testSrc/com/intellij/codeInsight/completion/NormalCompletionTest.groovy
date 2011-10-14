@@ -864,6 +864,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals("fzazzz", list.get(1).getLookupString());
   }
 
+  public void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
   public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
   public void testClassReferenceInFor() throws Throwable { doTest ' ' }
