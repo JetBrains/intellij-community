@@ -15,11 +15,19 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +41,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +50,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
   private static final Icon EMPTY_ICON = EmptyIcon.create(WARNING_ICON);
-  private static final String REMOVE_KEY = "REMOVE_SELECTED";
+  @NonNls private static final String REMOVE_KEY = "REMOVE_SELECTED";
 
   public interface RowHeightProvider {
     int getRowHeight();
@@ -100,11 +107,10 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private JPanel myContentPane;
   private TableView<Item> myTable;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
+  private AnActionButton myRemoveButton;
   private JLabel myMessageLabel;
   private HoverHyperlinkLabel myFixLink;
-  private JButton myExtraButton;
+  private JPanel myTablePanel;
   private final List<String> myWarnings = new ArrayList<String>();
   private Fix myFixRunnable;
 
@@ -184,7 +190,33 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myFixLink = new HoverHyperlinkLabel(null);
   }
 
-  protected ValidatingTableEditor() {
+  protected ValidatingTableEditor(AnActionButton extraButton) {
+    ToolbarDecorator decorator =
+      ToolbarDecorator.createDecorator(myTable).disableRemoveAction().disableUpAction().disableDownAction();
+    decorator.setAddAction(new AnActionButtonRunnable() {
+
+      @Override
+      public void run(AnActionButton anActionButton) {
+        addItem();
+      }
+    });
+
+
+    myRemoveButton = new AnActionButton(ApplicationBundle.message("button.remove"), IconUtil.getRemoveRowIcon()) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        removeSelected();
+      }
+    };
+    myRemoveButton.setShortcut(CustomShortcutSet.fromString("alt DELETE")); //NON-NLS
+    decorator.addExtraAction(myRemoveButton);
+
+    if (extraButton != null) {
+      decorator.addExtraAction(extraButton);
+    }
+
+    myTablePanel.add(decorator.createPanel(), BorderLayout.CENTER);
+
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         updateButtons();
@@ -205,29 +237,13 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
         }
       }
     });
-
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addItem();
-      }
-    });
-
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        removeSelected();
-      }
-    });
-
-    myExtraButton.setVisible(false);
   }
 
-  protected ValidatingTableEditor(final ActionListener actionListener, String buttonText) {
-    this();
-    myExtraButton.setVisible(true);
-    myExtraButton.setText(buttonText);
-    myExtraButton.addActionListener(actionListener);
+  protected ValidatingTableEditor() {
+    this(null);
   }
 
+  @Nullable
   public List<Item> getSelectedItems() {
     return myTable.getSelectedObjects();
   }
