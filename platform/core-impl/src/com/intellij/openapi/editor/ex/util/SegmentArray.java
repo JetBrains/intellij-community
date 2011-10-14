@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 
@@ -28,6 +29,11 @@ import java.lang.reflect.Array;
  */
 public class SegmentArray {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
+  private int[] myStarts;
+  private int[] myEnds;
+
+  protected int mySegmentCount = 0;
+  protected static final int INITIAL_SIZE = 64;
 
   protected SegmentArray() {
     myStarts = new int[INITIAL_SIZE];
@@ -53,12 +59,13 @@ public class SegmentArray {
     myEnds[i] = endOffset;
   }
 
-  public void replace(int startOffset, SegmentArray data, int len) {
+  protected void replace(int startOffset, @NotNull SegmentArray data, int len) {
     System.arraycopy(data.myStarts, 0, myStarts, startOffset, len);
     System.arraycopy(data.myEnds, 0, myEnds, startOffset, len);
   }
 
-  protected static int[] reallocateArray(int[] array, int index) {
+  @NotNull
+  protected static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;
 
     int newArraySize = array.length;
@@ -74,7 +81,8 @@ public class SegmentArray {
   }
 
   @SuppressWarnings({"unchecked"})
-  protected static <T> T[] reallocateArray(T[] array, int index) {
+  @NotNull
+  protected static <T> T[] reallocateArray(@NotNull T[] array, int index) {
     if (index < array.length) return array;
 
     int newArraySize = array.length;
@@ -91,7 +99,8 @@ public class SegmentArray {
     return newArray;
   }
 
-  protected static short[] reallocateArray(short[] array, int index) {
+  @NotNull
+  protected static short[] reallocateArray(@NotNull short[] array, int index) {
     if (index < array.length) return array;
 
     int newArraySize = array.length;
@@ -99,7 +108,7 @@ public class SegmentArray {
       newArraySize = 16;
     }
     while (newArraySize <= index) {
-      newArraySize = newArraySize * 120 / 100;
+      newArraySize = newArraySize * 12 / 10;
     }
     short[] newArray = new short[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
@@ -174,14 +183,16 @@ public class SegmentArray {
     mySegmentCount -= endIndex - startIndex;
   }
 
-  protected int[] remove(int[] array, int startIndex, int endIndex) {
+  @NotNull
+  protected int[] remove(@NotNull int[] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
-  protected <T> T[] remove(T[] array, int startIndex, int endIndex) {
+  @NotNull
+  protected <T> T[] remove(@NotNull T[] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
@@ -189,27 +200,30 @@ public class SegmentArray {
   }
 
 
-  protected short[] remove(short[] array, int startIndex, int endIndex) {
+  @NotNull
+  protected short[] remove(@NotNull short[] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
-  protected long[] remove(long[] array, int startIndex, int endIndex) {
+  @NotNull
+  protected long[] remove(@NotNull long[] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
-  protected void insert(SegmentArray segmentArray, int startIndex) {
+  protected void insert(@NotNull SegmentArray segmentArray, int startIndex) {
     myStarts = insert(myStarts, segmentArray.myStarts, startIndex, segmentArray.getSegmentCount());
     myEnds = insert(myEnds, segmentArray.myEnds, startIndex, segmentArray.getSegmentCount());
     mySegmentCount += segmentArray.getSegmentCount();
   }
 
-  protected int[] insert(int[] array, int[] insertArray, int startIndex, int insertLength) {
+  @NotNull
+  protected int[] insert(@NotNull int[] array, @NotNull int[] insertArray, int startIndex, int insertLength) {
     int[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
@@ -218,7 +232,8 @@ public class SegmentArray {
     return newArray;
   }
 
-  protected <T> T[] insert(T[] array, T[] insertArray, int startIndex, int insertLength) {
+  @NotNull
+  protected <T> T[] insert(@NotNull T[] array, @NotNull T[] insertArray, int startIndex, int insertLength) {
     T[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
@@ -227,7 +242,8 @@ public class SegmentArray {
     return newArray;
   }
 
-  protected short[] insert(short[] array, short[] insertArray, int startIndex, int insertLength) {
+  @NotNull
+  protected short[] insert(@NotNull short[] array, @NotNull short[] insertArray, int startIndex, int insertLength) {
     short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
@@ -254,11 +270,5 @@ public class SegmentArray {
   public int getSegmentCount() {
     return mySegmentCount;
   }
-
-  private int[] myStarts;
-  private int[] myEnds;
-
-  protected int mySegmentCount = 0;
-  protected static final int INITIAL_SIZE = 64;
 }
 

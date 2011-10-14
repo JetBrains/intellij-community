@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -36,6 +35,8 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -45,20 +46,23 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
   private HighlighterClient myEditor;
   private final Lexer myLexer;
-  private final Map<IElementType, TextAttributes> myAttributesMap;
-  private SegmentArrayWithData mySegments;
+  private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<IElementType, TextAttributes>();
+  private final SegmentArrayWithData mySegments;
   private final SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
   private final int myInitialState;
 
-  public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
+  public LexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
     myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
     myInitialState = myLexer.getState();
-    myAttributesMap = new HashMap<IElementType, TextAttributes>();
     myHighlighter = highlighter;
-    mySegments = new SegmentArrayWithData();
+    mySegments = createSegments();
+  }
+
+  protected SegmentArrayWithData createSegments() {
+    return new SegmentArrayWithData();
   }
 
   public boolean isPlain() {
@@ -70,7 +74,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor != null ? myEditor.getDocument() : null;
   }
 
-  public synchronized final boolean checkContentIsEqualTo(CharSequence sequence) {
+  public final synchronized boolean checkContentIsEqualTo(CharSequence sequence) {
     final Document document = getDocument();
     if (document != null) return document.getText().equals(sequence.toString());
     return false;
@@ -78,10 +82,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public EditorColorsScheme getScheme() {
     return myScheme;
-  }
-
-  protected final void setSegmentStorage(SegmentArrayWithData storage) {
-    mySegments = storage;
   }
 
   protected Lexer getLexer() {
@@ -202,7 +202,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int repaintEnd = -1;
     int insertSegmentCount = 0;
     int oldEndIndex = -1;
-    SegmentArrayWithData insertSegments = new SegmentArrayWithData();
+    SegmentArrayWithData insertSegments = createSegments();
 
     while(myLexer.getTokenType() != null) {
       int tokenStart = myLexer.getTokenStart();
@@ -311,14 +311,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     processor.finish();
 
     if(myEditor != null) {
-      Runnable repaint = new DumbAwareRunnable() {
+      UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
         public void run() {
           myEditor.repaint(0, text.length());
         }
-      };
-
-      if (ApplicationManager.getApplication().isDispatchThread()) repaint.run();
-      else ApplicationManager.getApplication().invokeLater(repaint);
+      });
     }
   }
 
@@ -336,11 +333,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
-  protected TextAttributes convertAttributes(TextAttributesKey[] keys) {
-    EditorColorsScheme scheme = myScheme;
-    TextAttributes attrs = scheme.getAttributes(HighlighterColors.TEXT);
+  protected TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
+    TextAttributes attrs = myScheme.getAttributes(HighlighterColors.TEXT);
     for (TextAttributesKey key : keys) {
-      TextAttributes attrs2 = scheme.getAttributes(key);
+      TextAttributes attrs2 = myScheme.getAttributes(key);
       if (attrs2 != null) {
         attrs = TextAttributes.merge(attrs, attrs2);
       }
@@ -390,5 +386,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     public Document getDocument() {
       return LexerEditorHighlighter.this.getDocument();
     }
+  }
+
+  public SegmentArrayWithData getSegments() {
+    return mySegments;
   }
 }

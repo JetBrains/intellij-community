@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Expands {@link SegmentArray} contract in providing ability to attach additional <code>'short'</code> variable to target segment,
  * i.e. holds mappings like {@code 'index <-> (data, (start; end))'}.
@@ -40,7 +42,7 @@ public class SegmentArrayWithData extends SegmentArray {
     super.remove(startIndex, endIndex);
   }
 
-  public void replace(int startIndex, int endIndex, SegmentArrayWithData newData) {
+  public void replace(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
     int oldLen = endIndex - startIndex;
     int newLen = newData.getSegmentCount();
 
@@ -61,12 +63,12 @@ public class SegmentArrayWithData extends SegmentArray {
   }
 
 
-  public void replace(int startOffset, SegmentArrayWithData data, int len) {
+  protected void replace(int startOffset, @NotNull SegmentArrayWithData data, int len) {
     System.arraycopy(data.myData, 0, myData, startOffset, len);
     super.replace(startOffset, data, len);
   }
 
-  public void insert(SegmentArrayWithData segmentArray, int startIndex) {
+  public void insert(@NotNull SegmentArrayWithData segmentArray, int startIndex) {
     myData = insert(myData, segmentArray.myData, startIndex, segmentArray.getSegmentCount());
     super.insert(segmentArray, startIndex);
   }
