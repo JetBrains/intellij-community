@@ -60,6 +60,11 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     return mySortMode == AvailablePluginsTableModel.RELEASE_DATE;
   }
 
+  @Override
+  protected boolean isSortByStatus() {
+    return mySortMode == AvailablePluginsTableModel.STATUS;
+  }
+
   public void setSortMode(String sortMode) {
     mySortMode = sortMode;
   }
