@@ -331,7 +331,7 @@ class ProjectBuilder {
     if (!dryRun) {
       List<String> chunkClasspath = ProjectPaths.getPathsList(getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(tests), files == null))
 
-      List sourceRootsWithDependencies = getProjectPaths().getSourcePathsForModuleWithDependents(chunk, tests)
+      List sourceRootsWithDependencies = ProjectPaths.getPathsList(getProjectPaths().getSourcePathsWithDependents(chunk, tests))
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
       def chunkState = new ModuleBuildState(
               iterated: false,
