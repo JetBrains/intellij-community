@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.*;
 import java.util.Collection;
 
 /**
@@ -77,15 +78,12 @@ public class TodoCheckinHandler extends CheckinHandler {
     final JCheckBox checkBox = new JCheckBox(VcsBundle.message("before.checkin.new.todo.check", ""));
     return new RefreshableOnComponent() {
       public JComponent getComponent() {
-        JPanel panel = new JPanel();
-        final BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.X_AXIS);
-        panel.setLayout(boxLayout);
-        panel.add(checkBox);
+        JPanel panel = new JPanel(new BorderLayout(4, 0));
+        panel.add(checkBox, BorderLayout.WEST);
         setFilterText(myConfiguration.myTodoPanelSettings.getTodoFilterName());
         if (myConfiguration.myTodoPanelSettings.getTodoFilterName() != null) {
           myTodoFilter = TodoConfiguration.getInstance().getTodoFilter(myConfiguration.myTodoPanelSettings.getTodoFilterName());
         }
-
 
         final Consumer<TodoFilter> consumer = new Consumer<TodoFilter>() {
           @Override
@@ -101,12 +99,11 @@ public class TodoCheckinHandler extends CheckinHandler {
           @Override
           public void linkSelected(LinkLabel aSource, Object aLinkData) {
             DefaultActionGroup group = SetTodoFilterAction.createPopupActionGroup(myProject, myConfiguration.myTodoPanelSettings, consumer);
-            ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,
-                                                                                          group);
+            ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR, group);
             popupMenu.getComponent().show(linkLabel, 0, linkLabel.getHeight());
           }
         }, null);
-        panel.add(linkLabel);
+        panel.add(linkLabel, BorderLayout.CENTER);
 
         refreshEnable(checkBox);
         return panel;
