@@ -19,11 +19,9 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.ClassFileViewProviderFactory;
-import com.intellij.psi.FileTypeFileViewProviders;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFinder;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
+import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
@@ -52,6 +50,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
                               JavaPsiFacade.class,
                               javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+    myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
   }
 
   public void addToClasspath(File path) {

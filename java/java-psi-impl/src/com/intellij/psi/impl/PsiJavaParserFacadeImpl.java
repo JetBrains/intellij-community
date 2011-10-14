@@ -43,10 +43,10 @@ import java.util.Map;
  * @author max
  */
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
-  protected final PsiManagerEx myManager;
+  protected final PsiManager myManager;
   private PsiJavaFile myDummyJavaFile;
 
-  public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
+  public PsiJavaParserFacadeImpl(PsiManager manager) {
     myManager = manager;
   }
 

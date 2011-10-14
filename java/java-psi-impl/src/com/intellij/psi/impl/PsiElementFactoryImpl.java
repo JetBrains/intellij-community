@@ -53,7 +53,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   private PsiClass myArrayClass;
   private PsiClass myArrayClass15;
 
-  public PsiElementFactoryImpl(final PsiManagerEx manager) {
+  public PsiElementFactoryImpl(final PsiManager manager) {
     super(manager);
   }
 
