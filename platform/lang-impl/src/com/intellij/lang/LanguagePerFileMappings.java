@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -70,15 +71,28 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       final VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
     }
+    VirtualFile originalFile = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : null;
+    if (originalFile == file) originalFile = null;
+
     if (file != null) {
       final FilePropertyPusher<T> pusher = getFilePropertyPusher();
       final T pushedValue = pusher == null? null : file.getUserData(pusher.getFileDataKey());
       if (pushedValue != null) return pushedValue;
     }
+    if (originalFile != null) {
+      final FilePropertyPusher<T> pusher = getFilePropertyPusher();
+      final T pushedValue = pusher == null? null : originalFile.getUserData(pusher.getFileDataKey());
+      if (pushedValue != null) return pushedValue;
+    }
     synchronized (myMappings) {
       for (VirtualFile cur = file; ; cur = cur.getParent()) {
-        final T dialect = myMappings.get(cur);
+        T dialect = myMappings.get(cur);
         if (dialect != null) return dialect;
+        if (originalFile != null) {
+          dialect = myMappings.get(originalFile);
+          if (dialect != null) return dialect;
+          originalFile = originalFile.getParent();
+        }
         if (cur == null) break;
       }
     }
