@@ -394,6 +394,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         final JPanel panel = new JPanel(new BorderLayout());
         final JTextArea textArea = new JTextArea(stackTrace);
         textArea.setEditable(false);
+        textArea.setRows(40);
+        textArea.setColumns(70);
         panel.add(ScrollPaneFactory.createScrollPane(textArea));
         return panel;
       }
