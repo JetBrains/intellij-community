@@ -42,7 +42,7 @@ import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -539,7 +539,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!(useScope instanceof GlobalSearchScope)) return false;
     GlobalSearchScope scope = (GlobalSearchScope)useScope;
     // some classes may have references from within XML outside dependent modules, e.g. our actions
-    if (member instanceof PsiClass) scope = scope.uniteWith(GlobalSearchScope.projectScope(myProject));
+    if (member instanceof PsiClass) scope = GlobalSearchScope.projectScope(myProject).uniteWith(scope);
 
     PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(myFile.getProject())
         .isCheapEnoughToSearch(name, scope, myFile, progress);
@@ -551,10 +551,26 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (member instanceof PsiEnumConstant) {
         return checkEnumValuesUsages(member, progress);
       }
-      if (!canbeReferencedViaWeirdNames(member)) return true;
+      if (!canBeReferencedViaWeirdNames(member)) return true;
     }
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
-    boolean used = findUsagesManager.isUsed(member, scope);
+    FindUsagesOptions findUsagesOptions;
+    if (member instanceof PsiClass) {
+      findUsagesOptions = new JavaClassFindUsagesOptions(myProject);
+    }
+    else if (member instanceof PsiMethod) {
+      findUsagesOptions = new JavaMethodFindUsagesOptions(myProject);
+    }
+    else if (member instanceof PsiField) {
+      findUsagesOptions = new JavaVariableFindUsagesOptions(myProject);
+    }
+    else {
+      LOG.error("unknown member: " + member);
+      return false;
+    }
+    findUsagesOptions.searchScope = scope;
+
+    boolean used = findUsagesManager.isUsed(member, findUsagesOptions);
 
     if (!used && member instanceof PsiEnumConstant) {
       return checkEnumValuesUsages(member, progress);
@@ -573,7 +589,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private static boolean canbeReferencedViaWeirdNames(PsiMember member) {
+  private static boolean canBeReferencedViaWeirdNames(PsiMember member) {
     if (member instanceof PsiClass) return false;
     PsiFile containingFile = member.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter

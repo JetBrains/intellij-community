@@ -308,12 +308,10 @@ public class FindUsagesManager implements JDOMExternalizable {
     return findUsagesOptions.searchScope;
   }
 
-  public boolean isUsed(@NotNull PsiElement element, @NotNull SearchScope scope) {
+  public boolean isUsed(@NotNull PsiElement element, @NotNull FindUsagesOptions findUsagesOptions) {
     FindUsagesHandler handler = getFindUsagesHandler(element, true);
     if (handler == null) return false;
     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(element);
-    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions().clone();
-    findUsagesOptions.searchScope = scope;
     UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
     final AtomicBoolean used = new AtomicBoolean();
     usageSearcher.generate(new Processor<Usage>() {
