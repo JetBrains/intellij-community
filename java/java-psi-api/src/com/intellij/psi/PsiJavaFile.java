@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.pom.java.LanguageLevel;
 
 /**
- * Represents a Java or JSP file.
+ * Represents a Java, JSP or class file.
  */
 public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
-
   /**
    * Returns the package statement contained in the file.
    *
