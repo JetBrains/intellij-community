@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import java.io.*;
 
 public class VfsUtilCore {
   /**
@@ -129,5 +130,25 @@ public class VfsUtilCore {
     //OutputStream out = newChild.getOutputStream(requestor, -1, file.getActualTimeStamp());
     newChild.setBinaryContent(file.contentsToByteArray());
     return newChild;
+  }
+
+  @NotNull
+  public static InputStream byteStreamSkippingBOM(@NotNull byte[] buf, @NotNull VirtualFile file) throws IOException {
+    BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
+    return inputStreamSkippingBOM(stream, file);
+  }
+
+  @NotNull
+  public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream, @NotNull VirtualFile file) throws IOException {
+    return CharsetToolkit.inputStreamSkippingBOM(stream);
+  }
+
+  @NotNull
+  public static OutputStream outputStreamAddingBOM(@NotNull OutputStream stream, @NotNull VirtualFile file) throws IOException {
+    byte[] bom = file.getBOM();
+    if (bom != null) {
+      stream.write(bom);
+    }
+    return stream;
   }
 }

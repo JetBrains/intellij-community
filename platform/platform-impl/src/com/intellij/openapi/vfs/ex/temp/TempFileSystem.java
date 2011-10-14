@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -200,7 +201,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray(file));
+    return new BufferExposingByteArrayInputStream(contentsToByteArray(file));
   }
 
   @NotNull

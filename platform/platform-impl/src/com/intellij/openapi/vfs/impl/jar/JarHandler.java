@@ -25,11 +25,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -158,8 +156,10 @@ public class JarHandler implements FileSystemInterface {
   }
 
   private EntryInfo getEntryInfo(final VirtualFile file) {
-    String parentPath = getRelativePath(file);
-    return getEntriesMap().get(parentPath);
+    synchronized (lock) {
+      String parentPath = getRelativePath(file);
+      return getEntriesMap().get(parentPath);
+    }
   }
 
   private String getRelativePath(final VirtualFile file) {
@@ -170,7 +170,7 @@ public class JarHandler implements FileSystemInterface {
   public File getMirrorFile(File originalFile) {
     if (!myFileSystem.isMakeCopyOfJar(originalFile) || !originalFile.exists()) return originalFile;
 
-    String folderPath = PathManager.getSystemPath() + File.separatorChar + JARS_FOLDER;
+    String folderPath = getJarsDir();
     if (!new File(folderPath).exists()) {
       if (!new File(folderPath).mkdirs()) {
         return originalFile;
@@ -185,6 +185,11 @@ public class JarHandler implements FileSystemInterface {
     }
 
     return mirror;
+  }
+
+  private static String getJarsDir() {
+    String dir = System.getProperty("jars_dir");
+    return dir == null ? PathManager.getSystemPath() + File.separatorChar + JARS_FOLDER : dir;
   }
 
   private File copyToMirror(final File original, final File mirror) {
@@ -258,7 +263,7 @@ public class JarHandler implements FileSystemInterface {
   @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray(file));
+    return new BufferExposingByteArrayInputStream(contentsToByteArray(file));
   }
 
   @Override

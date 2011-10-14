@@ -636,12 +636,12 @@ public class ArrayUtil {
   }
 
   @Nullable
-  public static <T> T getFirstElement(T[] array) {
+  public static <T> T getFirstElement(@NotNull T[] array) {
     return array.length > 0 ? array[0] : null;
   }
 
   @Nullable
-  public static <T> T getLastElement(T[] array) {
+  public static <T> T getLastElement(@NotNull T[] array) {
     return array.length > 0 ? array[array.length - 1] : null;
   }
 

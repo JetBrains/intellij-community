@@ -375,7 +375,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private static String getLineSeparator(Document document, VirtualFile file) {
-    String lineSeparator = file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY);
+    String lineSeparator = LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
     }
@@ -384,7 +384,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @NotNull
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
-    String lineSeparator = file != null ? file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY) : null;
+    String lineSeparator = file != null ? LoadTextUtil.getDetectedLineSeparator(file) : null;
     if (lineSeparator == null) {
       CodeStyleFacade settingsManager = project == null
                                         ? CodeStyleFacade.getInstance()

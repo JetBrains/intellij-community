@@ -19,16 +19,17 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class ReplicatorInputStream extends InputStream {
-  private final OutputStream myTarget;
+  private final BufferExposingByteArrayOutputStream myTarget;
   private final InputStream mySource;
-  private int myBytesRead = 0;
+  private int markedSize;
 
-  public ReplicatorInputStream(final InputStream source, final OutputStream target) {
+  public ReplicatorInputStream(final InputStream source, final BufferExposingByteArrayOutputStream target) {
     mySource = source;
     myTarget = target;
   }
@@ -37,42 +38,37 @@ public class ReplicatorInputStream extends InputStream {
     final int b = mySource.read();
     if (b == -1) return -1;
     myTarget.write(b);
-    myBytesRead++;
     return b;
   }
 
   public synchronized void mark(final int readlimit) {
-    throw new UnsupportedOperationException();
+    mySource.mark(readlimit);
+    markedSize = myTarget.size();
   }
 
   public boolean markSupported() {
-    return false;
+    return mySource.markSupported();
   }
 
   public synchronized void reset() throws IOException {
-    throw new UnsupportedOperationException();
+    mySource.reset();
+    myTarget.backOff(myTarget.size() - markedSize);
+    markedSize = 0;
   }
 
   public int read(final byte[] b) throws IOException {
-    final int count = mySource.read(b);
-    if (count < 0) return count;
-    myTarget.write(b, 0, count);
-    myBytesRead += count;
-    return count;
+    return read(b, 0, b.length);
   }
 
   public int read(final byte[] b, final int off, final int len) throws IOException {
     final int count = mySource.read(b, off, len);
     if (count < 0) return count;
     myTarget.write(b, off, count);
-    myBytesRead += count;
     return count;
   }
 
-
   public long skip(final long n) throws IOException {
     final int skipped = read(new byte[(int)n]);
-    myBytesRead += skipped;
     return skipped;
   }
 
@@ -86,6 +82,6 @@ public class ReplicatorInputStream extends InputStream {
   }
 
   public int getBytesRead() {
-    return myBytesRead;
+    return myTarget.size();
   }
 }

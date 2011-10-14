@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -497,4 +494,43 @@ public class CharsetToolkit {
 
     return charset;
   }
+
+  @NotNull
+  public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
+    assert stream.markSupported() :stream;
+    stream.mark(3);
+    boolean mustReset = true;
+    try {
+      int ret = stream.read();
+      if (ret == -1) {
+        return stream;
+      }
+      byte b0 = (byte)ret;
+      if (b0 != UTF8_BOM[0] && b0 != UTF16LE_BOM[0] && b0 != UTF16BE_BOM[0]) return stream;
+
+      ret = stream.read();
+      if (ret == -1) {
+        return stream;
+      }
+      byte b1 = (byte)ret;
+      if (b0 == UTF16LE_BOM[0] && b1 == UTF16LE_BOM[1]) { mustReset = false; return stream; }
+      if (b0 == UTF16BE_BOM[0] && b1 == UTF16BE_BOM[1]) { mustReset = false; return stream; }
+      if (b0 != UTF8_BOM[0] || b1 != UTF8_BOM[1]) {
+        return stream;
+      }
+
+      ret = stream.read();
+      if (ret == -1) {
+        return stream;
+      }
+      byte b2 = (byte)ret;
+      if (b2 == UTF8_BOM[2]) { mustReset = false; return stream; }
+
+      return stream;
+    }
+    finally {
+      if (mustReset) stream.reset();
+    }
+  }
+
 }

@@ -498,7 +498,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Gets the <code>OutputStream</code> for this file.
+   * Creates the <code>OutputStream</code> for this file.
+   * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -515,6 +516,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * after closing the stream.<p>
    * <p/>
    * Normally you should not use this method.
+   *
+   * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -623,6 +626,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the <code>InputStream</code> for this file.
+   * Skips BOM if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @return <code>InputStream</code>
    * @throws IOException if an I/O error occurs

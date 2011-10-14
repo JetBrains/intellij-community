@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +106,6 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public InputStream getInputStream() throws IOException {
-    return new FileInputStream(myIoFile);
+    return VfsUtilCore.inputStreamSkippingBOM(new FileInputStream(myIoFile), this);
   }
 }

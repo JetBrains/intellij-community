@@ -56,9 +56,16 @@ public interface FileSystemInterface {
   @NotNull
   byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
 
+  /**
+   * Does NOT strip the BOM from the beginning of the stream, unlike the {@link com.intellij.openapi.vfs.VirtualFile#getInputStream()}
+   */
   @NotNull
   InputStream getInputStream(@NotNull VirtualFile file) throws IOException;
-  @NotNull 
+
+  /**
+   * Does NOT add the BOM to the beginning of the stream, unlike the {@link com.intellij.openapi.vfs.VirtualFile#getOutputStream(Object)}
+   */
+  @NotNull
   OutputStream getOutputStream(@NotNull VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
 
   long getLength(@NotNull VirtualFile file);

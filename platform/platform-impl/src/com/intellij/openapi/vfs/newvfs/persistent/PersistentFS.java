@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -495,7 +496,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         final InputStream nativeStream = delegate.getInputStream(file);
 
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-
         return createReplicator(file, nativeStream, len, delegate.isReadOnly());
       }
       else {
@@ -504,23 +504,37 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private ReplicatorInputStream createReplicator(final VirtualFile file, final InputStream nativeStream, final long len, final boolean readOnly) {
-    final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)len);
+  private InputStream createReplicator(final VirtualFile file, final InputStream nativeStream, final long fileLength, final boolean readOnly)
+    throws IOException {
+    if (nativeStream instanceof BufferExposingByteArrayInputStream) {
+      // optimization
+      BufferExposingByteArrayInputStream  byteStream = (BufferExposingByteArrayInputStream )nativeStream;
+      byte[] bytes = byteStream.getInternalBuffer();
+      storeContentToStorage(fileLength, file, readOnly, bytes, bytes.length);
+      return nativeStream;
+    }
+    final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)fileLength);
     return new ReplicatorInputStream(nativeStream, cache) {
       public void close() throws IOException {
         super.close();
-
-        synchronized (INPUT_LOCK) {
-          if (getBytesRead() == len) {
-            writeContent(file, new ByteSequence(cache.getInternalBuffer(), 0, cache.size()), readOnly);
-            setFlag(file, MUST_RELOAD_CONTENT, false);
-          }
-          else {
-            setFlag(file, MUST_RELOAD_CONTENT, true);
-          }
-        }
+        storeContentToStorage(fileLength, file, readOnly, cache.getInternalBuffer(), cache.size());
       }
     };
+  }
+
+  private void storeContentToStorage(long fileLength,
+                                     VirtualFile file,
+                                     boolean readOnly, byte[] bytes, int bytesLength)
+    throws IOException {
+    synchronized (INPUT_LOCK) {
+      if (bytesLength == fileLength) {
+        writeContent(file, new ByteSequence(bytes, 0, bytesLength), readOnly);
+        setFlag(file, MUST_RELOAD_CONTENT, false);
+      }
+      else {
+        setFlag(file, MUST_RELOAD_CONTENT, true);
+      }
+    }
   }
 
   private static boolean mustReloadContent(final VirtualFile file) {
@@ -537,7 +551,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
     publisher.before(events);
 
-    final ByteArrayOutputStream stream = new ByteArrayOutputStream() {
+    return new ByteArrayOutputStream() {
       public void close() throws IOException {
         super.close();
 
@@ -565,13 +579,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         }
       }
     };
-
-    final byte[] bom = file.getBOM();
-    if (bom != null) {
-      stream.write(bom);
-    }
-
-    return stream;
   }
 
   public int acquireContent(VirtualFile file) {

@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -83,13 +83,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   public InputStream getInputStream() throws IOException {
-    final byte[] buf = contentsToByteArray();
-    //52243 NPE
-    if (buf != null) {
-      return new ByteArrayInputStream(buf);
-    } else {
-      return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
-    }
+    return VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this);
   }
 
   @NotNull

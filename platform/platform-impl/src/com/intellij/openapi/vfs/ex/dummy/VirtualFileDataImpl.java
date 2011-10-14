@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
@@ -43,39 +44,21 @@ class VirtualFileDataImpl extends VirtualFileImpl {
   }
 
   public InputStream getInputStream() throws IOException {
-    return new ByteArrayInputStream(myContents);
+    return VfsUtilCore.byteStreamSkippingBOM(myContents, this);
   }
 
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    return new OutputStream() {
-      public void write(int b) throws IOException {
-        out.write(b);
-      }
-
-      public void write(byte[] b) throws IOException {
-        out.write(b);
-      }
-
-      public void write(byte[] b, int off, int len) throws IOException {
-        out.write(b, off, len);
-      }
-
-      public void flush() throws IOException {
-        out.flush();
-      }
-
-      public void close() throws IOException {
-        out.close();
+    return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
+      public void close() {
         final DummyFileSystem fs = (DummyFileSystem)getFileSystem();
         fs.fireBeforeContentsChange(requestor, VirtualFileDataImpl.this);
         final long oldModStamp = myModificationStamp;
-        myContents = out.toByteArray();
+        myContents = toByteArray();
         myModificationStamp = newModificationStamp >= 0 ? newModificationStamp : LocalTimeCounter.currentTime();
         fs.fireContentsChanged(requestor, VirtualFileDataImpl.this, oldModStamp);
       }
-    };
+    },this);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,15 @@ package com.intellij.openapi.util.io;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
-public class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-  public BufferExposingByteArrayOutputStream() {
-  }
-
-  public BufferExposingByteArrayOutputStream(int size) {
-    super(size);
+public class BufferExposingByteArrayInputStream extends ByteArrayInputStream {
+  public BufferExposingByteArrayInputStream(@NotNull byte[] bytes) {
+    super(bytes);
   }
 
   @NotNull
   public byte[] getInternalBuffer() {
     return buf;
-  }
-
-  // moves back the written bytes pointer by {@link #size}, to "unwrite" last {@link #size} bytes
-  public int backOff(int size) {
-    assert size >= 0 : size;
-    count -= size;
-    assert count >= 0 : count;
-    return count;
   }
 }

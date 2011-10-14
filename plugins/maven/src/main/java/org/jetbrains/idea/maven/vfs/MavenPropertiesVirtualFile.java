@@ -16,11 +16,11 @@
 package org.jetbrains.idea.maven.vfs;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -109,7 +109,7 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
   }
 
   public InputStream getInputStream() throws IOException {
-    return new ByteArrayInputStream(myContent);
+    return VfsUtilCore.byteStreamSkippingBOM(myContent,this);
   }
 
   @NotNull

@@ -928,16 +928,20 @@ public class StringUtil {
     }
   }
 
-  public static boolean isNotEmpty(final String s) {
+  public static boolean isNotEmpty(@Nullable String s) {
     return s != null && s.length() > 0;
   }
 
-  public static boolean isEmpty(final String s) {
+  public static boolean isEmpty(@Nullable String s) {
     return s == null || s.length() == 0;
   }
 
-  public static boolean isEmpty(final CharSequence cs) {
+  public static boolean isEmpty(@Nullable CharSequence cs) {
     return cs == null || cs.length() == 0;
+  }
+
+  public static int length(@Nullable CharSequence cs) {
+    return cs == null ? 0 : cs.length();
   }
 
   @NotNull
@@ -951,7 +955,7 @@ public class StringUtil {
   }
 
   @Nullable
-  public static String nullize(final @Nullable String s) {
+  public static String nullize(@Nullable final String s) {
     if (isEmpty(s)) return null;
     return s;
   }

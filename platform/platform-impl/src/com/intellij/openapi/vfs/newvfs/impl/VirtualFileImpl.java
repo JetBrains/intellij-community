@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -80,7 +81,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public InputStream getInputStream() throws IOException {
-    return ourPersistence.getInputStream(this);
+    return VfsUtilCore.inputStreamSkippingBOM(ourPersistence.getInputStream(this),this);
   }
 
   @NotNull
@@ -96,7 +97,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
-    return ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp);
+    return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp),this);
   }
 
   public NewVirtualFile findChildById(int id) {

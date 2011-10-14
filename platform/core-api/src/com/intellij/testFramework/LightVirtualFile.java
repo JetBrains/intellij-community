@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
@@ -214,17 +215,17 @@ public class LightVirtualFile extends VirtualFile {
   }
 
   public InputStream getInputStream() throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray());
+    return VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this);
   }
 
   @NotNull
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
-    return new ByteArrayOutputStream() {
+    return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
       public void close() {
         myModStamp = newModificationStamp;
         setContent(toString());
       }
-    };
+    },this);
   }
 
   @NotNull

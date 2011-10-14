@@ -425,8 +425,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @NotNull
-  public InputStream getInputStream(@NotNull final VirtualFile file) throws FileNotFoundException {
-    return new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
+  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
+    BufferedInputStream rawStream = new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
+    return rawStream;
   }
 
   @NotNull
@@ -441,7 +442,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @NotNull
-  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     final File ioFile = convertToIOFileAndCheck(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
