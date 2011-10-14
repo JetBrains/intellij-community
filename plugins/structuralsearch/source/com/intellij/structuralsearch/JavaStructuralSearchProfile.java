@@ -170,7 +170,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   protected PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     return factory.createCodeBlockCodeFragment(text, context, true);
   }
 
