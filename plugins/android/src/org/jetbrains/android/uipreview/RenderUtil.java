@@ -147,7 +147,7 @@ class RenderUtil {
       if (missingClasses.size() > 1) {
         warningBuilder.append("Missing classes:\n");
         for (String missingClass : missingClasses) {
-          warningBuilder.append("    ").append(missingClass).append('\n');
+          warningBuilder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(missingClass).append('\n');
         }
       }
       else {
