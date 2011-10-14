@@ -292,7 +292,7 @@ public class EventLog implements Notifications {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (!ShutDownTracker.isShutdownHookRunning()) {
+          if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
             console.doPrintNotification(notification);
           }
         }
