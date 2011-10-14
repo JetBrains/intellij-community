@@ -53,6 +53,8 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myIgnoredBuildNumbers = new JDOMExternalizableStringList();
 
+  public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
+
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
   public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;

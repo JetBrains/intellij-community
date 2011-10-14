@@ -97,7 +97,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   protected PluginManagerMain createPanel() {
-    return new InstalledPluginsManagerMain();
+    return new InstalledPluginsManagerMain(myUISettings);
   }
 
   public void apply() throws ConfigurationException {
