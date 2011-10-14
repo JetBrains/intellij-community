@@ -82,6 +82,7 @@ public enum ComponentType {
   public void process(XmlTag rootTag, Processor processor) {
     final XmlTag[] compGroup = rootTag.findSubTags(myName);
     for (XmlTag tag : compGroup) {
+      if (!tag.isPhysical()) continue; //skip included tags
       final XmlTag[] components = tag.findSubTags("component");
       for (XmlTag component : components) {
         final XmlTag impl = component.findFirstSubTag("implementation-class");
