@@ -23,10 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
@@ -35,7 +33,6 @@ import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -113,7 +110,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final StubElement rootStub = buildStubTree(inputData);
+            final StubElement rootStub = StubTreeBuilder.buildStubTree(inputData);
             if (rootStub == null) return;
 
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
@@ -127,56 +124,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         return result;
       }
     };
-  }
-
-  private static final Key<StubElement> stubElementKey = Key.create("stub.tree.for.file.content");
-
-  @Nullable
-  public static StubElement buildStubTree(final FileContent inputData) {
-    StubElement data = inputData.getUserData(stubElementKey);
-    if (data != null) return data;
-
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (inputData) {
-      data = inputData.getUserData(stubElementKey);
-      if (data != null) return data;
-
-      final FileType fileType = inputData.getFileType();
-
-      if (fileType.isBinary()) {
-        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-        assert builder != null;
-
-        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), ((FileContentImpl)inputData).getProject());
-      }
-      else {
-        final LanguageFileType filetype = (LanguageFileType)fileType;
-        Language l = filetype.getLanguage();
-        final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
-
-        PsiFile psi = inputData.getPsiFile();
-        CharSequence contentAsText = inputData.getContentAsText();
-        psi.putUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY, contentAsText);
-
-        try {
-          if (type instanceof IStubFileElementType) {
-            data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
-          }
-          else if (filetype instanceof SubstitutedFileType) {
-            SubstitutedFileType substituted = (SubstitutedFileType) filetype;
-            LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
-            final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
-            data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
-          }
-        }
-        finally {
-          psi.putUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY, null);
-        }
-      }
-
-      inputData.putUserData(stubElementKey, data);
-      return data;
-    }
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {

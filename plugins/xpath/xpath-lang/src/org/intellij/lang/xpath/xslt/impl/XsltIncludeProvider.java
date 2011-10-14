@@ -27,10 +27,7 @@ import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.CharArrayReader;
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
