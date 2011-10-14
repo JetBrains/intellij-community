@@ -475,7 +475,17 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       final VirtualFile changedFile = event.getFile();
       final VirtualFile parent = changedFile.getParent();
 
-      if (parent != null && ResourceManager.isResourceDirectory(parent, myProject)) {
+      if (parent == null) {
+        return;
+      }
+
+      if (ResourceManager.isResourceDirectory(parent, myProject)) {
+        myToolWindowForm.updateLocales();
+        render();
+      }
+
+      final VirtualFile gp = parent.getParent();
+      if (gp != null && ResourceManager.isResourceDirectory(gp, myProject)) {
         myToolWindowForm.updateLocales();
         render();
       }
