@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="compile-server" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
   <component name="copyright">
     <Base>

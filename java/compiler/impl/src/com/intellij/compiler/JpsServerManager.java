@@ -19,6 +19,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -36,6 +38,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,10 +48,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.server.GlobalLibrary;
-import org.jetbrains.jps.server.SdkLibrary;
-import org.jetbrains.jpsservice.Bootstrap;
-import org.jetbrains.jpsservice.Client;
+import org.jetbrains.jps.api.GlobalLibrary;
+import org.jetbrains.jps.api.SdkLibrary;
+import org.jetbrains.jps.client.Client;
+import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
 import java.util.*;
@@ -102,46 +105,77 @@ public class JpsServerManager implements ApplicationComponent{
     return "com.intellij.compiler.JpsServerManager";
   }
 
-  private volatile boolean myStartupFailed = false;
-
   private boolean ensureServerStarted() {
     if (myProcessHandler != null) {
       return true;
     }
-    if (!myStartupFailed) {
-      try {
-        final int port = NetUtils.findAvailableSocketPort();
-        final Process process = launchServer(port);
-        final OSProcessHandler processHandler = new OSProcessHandler(process, null);
-        processHandler.startNotify();
-        myServerClient = new Client();
-
-        if (myServerClient.connect(NetUtils.getLocalHostString(), port)) {
-
-          final PathMacros pathVars = PathMacros.getInstance();
-          final Map<String, String> data = new HashMap<String, String>();
-          for (String name : pathVars.getAllMacroNames()) {
-            final String path = pathVars.getValue(name);
-            if (path != null) {
-              data.put(name, FileUtil.toSystemIndependentName(path));
-            }
+    try {
+      final int port = NetUtils.findAvailableSocketPort();
+      final Process process = launchServer(port);
+      final OSProcessHandler processHandler = new OSProcessHandler(process, null);
+      processHandler.addProcessListener(new ProcessAdapter() {
+        public void startNotified(ProcessEvent event) {
+          final boolean connected = createClient(port);
+          if (!connected) {
+            shutdownServer(myServerClient, processHandler);
           }
-
-          final List<GlobalLibrary> globals = new ArrayList<GlobalLibrary>();
-
-          fillSdks(globals);
-          fillGlobalLibraries(globals);
-
-          myServerClient.sendSetupRequest(data, globals);
+          else {
+            myProcessHandler = processHandler;
+          }
         }
 
-        myProcessHandler = processHandler;
+        public void processTerminated(ProcessEvent event) {
+          myProcessHandler = null;
+          myServerClient = null;
+        }
+
+        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+          final Client client = myServerClient;
+          if (client != null) {
+            client.disconnect();
+          }
+        }
+
+        public void onTextAvailable(ProcessEvent event, Key outputType) {
+          System.out.println(event.getText());
+          LOG.info(event.getText());
+        }
+      });
+      processHandler.startNotify();
+
+      return true;
+    }
+    catch (Throwable e) {
+      LOG.error(e); // todo
+    }
+    return false;
+  }
+
+  private boolean createClient(int port) {
+    final Client client = new Client();
+    try {
+      if (client.connect(NetUtils.getLocalHostString(), port)) {
+        final PathMacros pathVars = PathMacros.getInstance();
+        final Map<String, String> data = new HashMap<String, String>();
+        for (String name : pathVars.getAllMacroNames()) {
+          final String path = pathVars.getValue(name);
+          if (path != null) {
+            data.put(name, FileUtil.toSystemIndependentName(path));
+          }
+        }
+
+        final List<GlobalLibrary> globals = new ArrayList<GlobalLibrary>();
+
+        fillSdks(globals);
+        fillGlobalLibraries(globals);
+
+        client.sendSetupRequest(data, globals);
+        myServerClient = client;
         return true;
       }
-      catch (Throwable e) {
-        myStartupFailed = true;
-        LOG.error(e); // todo
-      }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
     return false;
   }
@@ -185,14 +219,14 @@ public class JpsServerManager implements ApplicationComponent{
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5007");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
     cmdLine.addParameter("-Xmx256m");
     cmdLine.addParameter("-classpath");
 
-    final List<File> cp = Bootstrap.getApplicationClasspath();
+    final List<File> cp = ClasspathBootstrap.getApplicationClasspath();
     cmdLine.addParameter(classpathToString(cp));
 
-    cmdLine.addParameter("org.jetbrains.jpsservice.Server");
+    cmdLine.addParameter("org.jetbrains.jps.server.Server");
     cmdLine.addParameter(Integer.toString(port));
 
     final File workDirectory = new File(PathManager.getSystemPath(), COMPILE_SERVER_SYSTEM_ROOT);

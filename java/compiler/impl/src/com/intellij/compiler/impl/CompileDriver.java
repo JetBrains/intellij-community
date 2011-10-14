@@ -86,9 +86,9 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jpsservice.Client;
-import org.jetbrains.jpsservice.JpsRemoteProto;
-import org.jetbrains.jpsservice.JpsServerResponseHandlerAdapter;
+import org.jetbrains.jps.api.JpsRemoteProto;
+import org.jetbrains.jps.api.JpsServerResponseHandlerAdapter;
+import org.jetbrains.jps.client.Client;
 
 import java.io.*;
 import java.util.*;

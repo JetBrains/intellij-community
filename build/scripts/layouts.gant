@@ -149,10 +149,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("notNull")
       }
 
-      jar("compile-server.jar") {
-        module("compile-server")
-      }
-
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 
       fileset(dir: "$home/lib/src") {

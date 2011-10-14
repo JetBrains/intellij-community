@@ -1,0 +1,127 @@
+package org.jetbrains.jpsservice;
+
+option java_package = "org.jetbrains.jps.api";
+option optimize_for = LITE_RUNTIME;
+
+message Message {
+
+  message UUID {
+    required sint64 most_sig_bits = 1;
+    required sint64 least_sig_bits = 2;
+  }
+
+  enum Type {
+    REQUEST = 1;
+    RESPONSE = 2;
+    FAILURE = 3;
+  }
+
+  message Failure {
+    optional int32 error_code = 1;
+    optional string description = 2;
+    optional string stacktrace = 3;
+  }
+
+  message Request {
+    enum Type {
+      COMPILE_REQUEST = 1;
+      SHUTDOWN_COMMAND = 2;
+      SETUP_COMMAND = 3;
+      RELOAD_PROJECT_COMMAND = 4;
+    }
+
+    message CompilationRequest {
+      enum Type {
+        REBUILD = 1;
+        MAKE = 2;
+        CLEAN = 3;
+        CANCEL = 4;
+      }
+      required Type command_type = 1;
+      optional string project_id = 2;
+      repeated string module_name = 3;
+    }
+
+    message ShutdownCommand {
+      enum ShutdownPolicy {
+        CANCEL_RUNNING_BUILDS = 1;
+        WAIT_RUNNING_BUILDS = 2;
+      }
+      required ShutdownPolicy shutdownPolicy = 1;
+    }
+
+    message SetupCommand {
+
+      message PathVariable {
+        required string name = 1;
+        required string value = 2;
+      }
+
+      message GlobalLibrary {
+        required string name = 1;
+        optional string homePath = 2;
+        repeated string path = 3;
+      }
+
+      repeated PathVariable path_variable = 1;
+      repeated GlobalLibrary global_library = 2;
+    }
+
+    message ReloadProjectCommand {
+      repeated string project_id = 1;
+    }
+
+    required Type request_type = 1;
+    optional CompilationRequest compile_request = 2;
+    optional ShutdownCommand shutdown_command = 3;
+    optional SetupCommand setup_command = 4;
+    optional ReloadProjectCommand reload_project_command = 5;
+  }
+
+  message Response {
+    enum Type {
+      BUILD_EVENT = 1;
+      COMPILE_MESSAGE = 2;
+    }
+
+    message BuildEvent {
+      enum Type {
+        BUILD_STARTED = 1;
+        BUILD_COMPLETED = 2;
+        BUILD_CANCELED = 3;
+        COMMAND_COMPLETED = 4;
+      }
+      required Type event_type = 1;
+      optional string description = 2;
+    }
+
+    message CompileMessage {
+      enum Kind {
+        ERROR = 1;
+        WARNING = 2;
+        INFO = 3;
+        PROGRESS = 4;
+      }
+      required Kind kind = 1;
+      optional string text = 2;
+      optional string source_file_path = 3;
+      optional uint64 problem_begin_offset = 4;
+      optional uint64 problem_end_offset = 5;
+      optional uint64 problem_location_offset = 6;
+      optional uint64 line = 7;
+      optional uint64 column = 8;
+    }
+
+    required Type response_type = 1;
+    optional BuildEvent build_event = 2;
+    optional CompileMessage compile_message = 3;
+  }
+
+  required UUID session_id = 1;
+  required Type message_type = 2;
+  optional Request request = 3;
+  optional Response response = 4;
+  optional Failure failure = 5;
+}
+
+

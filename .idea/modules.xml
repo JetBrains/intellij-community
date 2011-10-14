@@ -12,6 +12,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/android/android.iml" filepath="$PROJECT_DIR$/plugins/android/android.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/ant.iml" filepath="$PROJECT_DIR$/plugins/ant/ant.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/jps/antLayout/antlayout.iml" filepath="$PROJECT_DIR$/jps/antLayout/antlayout.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/boot.iml" filepath="$PROJECT_DIR$/platform/boot/boot.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" filepath="$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/build/build.iml" filepath="$PROJECT_DIR$/build/build.iml" />
@@ -56,6 +57,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/jira-connector/jira-connector.iml" filepath="$PROJECT_DIR$/plugins/tasks/jira-connector/jira-connector.iml" group="plugins/tasks" />
+      <module fileurl="file://$PROJECT_DIR$/jps/jps.iml" filepath="$PROJECT_DIR$/jps/jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/model/jps-model.iml" filepath="$PROJECT_DIR$/jps/model/jps-model.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" group="java" />
