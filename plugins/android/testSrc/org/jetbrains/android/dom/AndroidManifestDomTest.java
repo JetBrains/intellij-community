@@ -156,7 +156,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testInstrumentationRunner() throws Throwable {
-    doTestHighlighting();
+    doTestHighlighting(getTestName(false) + ".xml");
   }
 
   public void testIntentsCompletion1() throws Throwable {

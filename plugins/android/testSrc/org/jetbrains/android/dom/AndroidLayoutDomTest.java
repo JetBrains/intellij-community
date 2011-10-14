@@ -312,7 +312,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testRelativeIdsCompletion() throws Throwable {
-    doTestCompletionVariants(getTestName(true) + ".xml", "@+id/", "@android:", "@id/idd1", "@id/idd2");
+    doTestCompletionVariants(getTestName(false) + ".xml", "@+id/", "@android:", "@id/idd1", "@id/idd2");
   }
 
   private void copyOnClickClasses() throws IOException {
