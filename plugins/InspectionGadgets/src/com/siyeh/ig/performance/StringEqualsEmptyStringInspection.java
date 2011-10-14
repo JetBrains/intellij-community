@@ -43,8 +43,12 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "string.equals.empty.string.problem.descriptor");
+    final boolean useIsEmpty = ((Boolean)infos[0]).booleanValue();
+    if (useIsEmpty) {
+      return InspectionGadgetsBundle.message("string.equals.empty.string.is.empty.problem.descriptor");
+    } else {
+      return InspectionGadgetsBundle.message("string.equals.empty.string.problem.descriptor");
+    }
   }
 
   @Override
