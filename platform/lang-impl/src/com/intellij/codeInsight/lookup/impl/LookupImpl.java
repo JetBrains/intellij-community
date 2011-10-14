@@ -740,12 +740,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void insertLookupString(LookupElement item, final String prefix) {
-    PrefixMatcher matcher = itemMatcher(item);
-
-    String lookupString = item.getLookupString();
-    if (!item.isCaseSensitive() && matcher.prefixMatches(item) && StringUtil.startsWithIgnoreCase(lookupString, prefix)) {
-      lookupString = handleCaseInsensitiveVariant(prefix, lookupString);
-    }
+    String lookupString = getCaseCorrectedLookupString(item);
 
     if (myEditor.getSelectionModel().hasBlockSelection()) {
       LogicalPosition blockStart = myEditor.getSelectionModel().getBlockStart();
@@ -780,7 +775,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  private static String handleCaseInsensitiveVariant(final String prefix, @NotNull final String lookupString) {
+  private String getCaseCorrectedLookupString(LookupElement item) {
+    String lookupString = item.getLookupString();
+    if (item.isCaseSensitive()) {
+      return lookupString;
+    }
+    
+    final String prefix = itemPattern(item);
     final int length = prefix.length();
     if (length == 0) return lookupString;
     boolean isAllLower = true;
@@ -1086,13 +1087,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final PrefixMatcher firstItemMatcher = itemMatcher(firstItem);
     final String oldPrefix = firstItemMatcher.getPrefix();
     final String presentPrefix = oldPrefix + myAdditionalPrefix;
-    String commonPrefix = handleCaseInsensitiveVariant(itemMatcher(firstItem).getPrefix(), firstItem.getLookupString());
+    String commonPrefix = getCaseCorrectedLookupString(firstItem);
 
     for (int i = 1; i < listModel.getSize(); i++) {
       LookupElement item = (LookupElement)listModel.getElementAt(i);
       if (!oldPrefix.equals(itemMatcher(item).getPrefix())) return false;
 
-      final String lookupString = handleCaseInsensitiveVariant(itemMatcher(item).getPrefix(), item.getLookupString());
+      final String lookupString = getCaseCorrectedLookupString(item);
       final int length = Math.min(commonPrefix.length(), lookupString.length());
       if (length < commonPrefix.length()) {
         commonPrefix = commonPrefix.substring(0, length);
