@@ -20,6 +20,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
+import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.stubs.BinaryFileStubBuilders;
 
 import java.io.File;
 
@@ -34,6 +36,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
+    addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
 
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     myFileManager = new CoreJavaFileManager(myPsiManager, myJarFileSystem);
