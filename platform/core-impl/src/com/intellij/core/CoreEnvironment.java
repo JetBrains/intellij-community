@@ -28,10 +28,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -49,6 +46,9 @@ import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.ProjectScopeBuilder;
+import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.psi.stubs.CoreStubTreeLoader;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -111,8 +111,10 @@ public class CoreEnvironment {
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
+    myApplication.registerService(StubTreeLoader.class, new CoreStubTreeLoader());
 
     registerExtensionPoint(Extensions.getRootArea(), ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
+    registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
@@ -172,6 +174,10 @@ public class CoreEnvironment {
   protected <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
                                             final Class<? extends T> aClass) {
     final String name = extensionPointName.getName();
+    registerExtensionPoint(area, name, aClass);
+  }
+
+  protected <T> void registerExtensionPoint(ExtensionsArea area, String name, Class<? extends T> aClass) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
       area.registerExtensionPoint(name, aClass.getName(), kind);

@@ -20,8 +20,8 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +67,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     if (psi == null) {
       Project project = getProject();
       if (project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
+        project = DefaultProjectFactory.getInstance().getDefaultProject();
       }
       final Language language = ((LanguageFileType)getFileTypeWithoutSubstitution()).getLanguage();
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, getFile(), project);

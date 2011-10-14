@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.project;
 
-/*
- * @author max
+/**
+ * @author yole
  */
-package com.intellij.psi.stubs;
-
-import com.intellij.openapi.fileTypes.FileTypeExtension;
-
-public class BinaryFileStubBuilders extends FileTypeExtension<BinaryFileStubBuilder>{
-  public static final BinaryFileStubBuilders INSTANCE = new BinaryFileStubBuilders();
-  public static final String EP_NAME = "com.intellij.filetype.stubBuilder";
-
-  public BinaryFileStubBuilders() {
-    super(EP_NAME);
+public class DefaultProjectFactoryImpl extends DefaultProjectFactory {
+  @Override
+  public Project getDefaultProject() {
+    return ProjectManager.getInstance().getDefaultProject();
   }
 }

@@ -27,6 +27,9 @@
 
   <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
+                      serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
+
   <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
   <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 
