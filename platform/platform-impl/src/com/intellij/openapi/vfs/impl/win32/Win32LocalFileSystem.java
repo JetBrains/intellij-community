@@ -36,7 +36,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   private static boolean ourIsAvailable;
 
   static {
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && SystemInfo.is32Bit) {
       try {
         System.load(PathManager.getHomePath() + "/community/bin/win/IdeaWin32.dll");
         ourIsAvailable = true;
