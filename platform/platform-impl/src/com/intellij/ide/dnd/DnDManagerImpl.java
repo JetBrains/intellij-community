@@ -109,15 +109,17 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   public void unregisterSource(DnDSource source, JComponent component) {
     component.putClientProperty(SOURCE_KEY, null);
 
-    cleanup();
+    cleanup(source, null, null);
   }
 
-  private void cleanup() {
+  private void cleanup(@Nullable final DnDSource source, @Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
     Runnable cleanup = new Runnable() {
       public void run() {
-        myLastProcessedOverComponent = null;
-        myCurrentDragContext = null;
-        resetEvents("cleanup");
+        if (shouldCancelCurrentDnDOperation(source, target, targetComponent)) {
+          myLastProcessedOverComponent = null;
+          myCurrentDragContext = null;
+          resetEvents("cleanup");
+        }
       }
     };
 
@@ -128,6 +130,29 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     }
   }
 
+  private boolean shouldCancelCurrentDnDOperation(DnDSource source, DnDTarget target, JComponent targetComponent) {
+    final DnDEvent currentDnDEvent = myLastProcessedEvent;
+    if (currentDnDEvent == null) return true;
+    
+    if (source != null && currentDnDEvent.equals(source)) {
+      return true;
+    }
+    
+    if (target != null && targetComponent != null) {
+      Component eachParent = targetComponent;
+      while (eachParent != null) {
+        if (target.equals(getTarget(eachParent))) {
+          return true;
+        }
+
+        eachParent = eachParent.getParent();
+      }
+    }
+    
+    return false;
+    
+  }
+  
   public void registerTarget(DnDTarget target, JComponent component) {
     if (!getApplication().isHeadlessEnvironment()) {
       component.putClientProperty(TARGET_KEY, target);
@@ -138,7 +163,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   public void unregisterTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, null);
 
-    cleanup();
+    cleanup(null, target, component);
   }
 
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, @Nullable DataFlavor[] flavors, @Nullable Transferable transferable) {
@@ -154,7 +179,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
           DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
           if (event == null) {
             DnDNativeTarget.EventInfo info = new DnDNativeTarget.EventInfo(flavors, transferable);
-            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint);
+            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint, null);
             jComp.putClientProperty(DnDNativeTarget.EVENT_KEY, event);
           }
 
@@ -531,7 +556,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
             LOG.debug("Starting dragging for " + action);
             hideCurrentHighlighter();
             final DnDDragStartBean dnDDragStartBean = source.startDragging(action, dge.getDragOrigin());
-            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
+            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint(), source);
             myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
             Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
