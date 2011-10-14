@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -481,7 +482,7 @@ public abstract class PluginManagerMain implements Disposable {
     }
   }
 
-  protected class RefreshAction extends AnAction {
+  protected class RefreshAction extends DumbAwareAction {
     public RefreshAction() {
       super("Reload list of plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png"));
     }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -97,7 +98,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     installed.modifyPluginsList(list); //propagate updates
   }
 
-  private class MyFilterCategoryAction extends ComboBoxAction {
+  private class MyFilterCategoryAction extends ComboBoxAction implements DumbAware{
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
@@ -127,7 +128,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
   }
 
-  private class SortByNameAction extends ComboBoxAction {
+  private class SortByNameAction extends ComboBoxAction implements DumbAware{
 
     @Override
     public void update(AnActionEvent e) {

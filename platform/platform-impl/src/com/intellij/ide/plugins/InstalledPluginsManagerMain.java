@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
@@ -190,7 +191,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return super.canApply();
   }
 
-  private class MyFilterEnabledAction extends ComboBoxAction {
+  private class MyFilterEnabledAction extends ComboBoxAction implements DumbAware {
 
     @Override
     public void update(AnActionEvent e) {
@@ -215,7 +216,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
   }
 
-  private class MyFilterBundleAction extends ComboBoxAction {
+  private class MyFilterBundleAction extends ComboBoxAction implements DumbAware {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
