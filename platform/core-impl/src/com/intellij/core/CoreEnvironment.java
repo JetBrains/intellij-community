@@ -44,6 +44,7 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
@@ -122,6 +123,7 @@ public class CoreEnvironment {
     myProject.registerService(PsiModificationTracker.class, new PsiModificationTrackerImpl(myProject));
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
     myProject.registerService(ResolveScopeManager.class, new MockResolveScopeManager(myProject));
+    myProject.registerService(ResolveCache.class, new ResolveCache(null));
     
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);

@@ -63,7 +63,7 @@ public class ResolveCache {
   public interface Resolver extends AbstractResolver<PsiReference,PsiElement>{
   }
 
-  public ResolveCache(@NotNull MessageBus messageBus) {
+  public ResolveCache(@Nullable MessageBus messageBus) {
     myPolyVariantResolveMaps[0] = createWeakMap();
     myPolyVariantResolveMaps[1] = createWeakMap();
     myResolveMaps[0] = createWeakMap();
@@ -74,16 +74,18 @@ public class ResolveCache {
     myResolveMaps[2] = createWeakMap();
     myResolveMaps[3] = createWeakMap();
 
-    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        clearCache(isPhysical);
-      }
+    if (messageBus != null) {
+      messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+        @Override
+        public void beforePsiChanged(boolean isPhysical) {
+          clearCache(isPhysical);
+        }
 
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
-      }
-    });
+        @Override
+        public void afterPsiChanged(boolean isPhysical) {
+        }
+      });
+    }
   }
 
   private static <K,V> ConcurrentWeakHashMap<K, V> createWeakMap() {
