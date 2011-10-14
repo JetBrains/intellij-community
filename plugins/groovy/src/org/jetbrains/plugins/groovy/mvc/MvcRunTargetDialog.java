@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.util.ModuleCellRenderer;
 import org.jetbrains.plugins.groovy.mvc.util.MvcTargetDialogCompletionUtils;
@@ -148,7 +149,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     myFakePanel = new JPanel(new BorderLayout());
     myFakePanel.add(myTargetField, BorderLayout.CENTER);
 
-    TextFieldCompletionProvider vmOptionCompletionProvider = new TextFieldCompletionProvider() {
+    TextFieldCompletionProvider vmOptionCompletionProvider = new TextFieldCompletionProviderDumbAware() {
       @NotNull
       @Override
       protected String getPrefix(@NotNull String currentTextPrefix) {
@@ -164,7 +165,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     };
     myVmOptionsField = vmOptionCompletionProvider.createEditor(myModule.getProject());
 
-    new TextFieldCompletionProvider() {
+    new TextFieldCompletionProviderDumbAware() {
 
       @NotNull
       @Override

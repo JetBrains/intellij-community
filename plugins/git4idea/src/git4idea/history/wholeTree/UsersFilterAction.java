@@ -35,6 +35,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import git4idea.history.NewGitUsersComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -151,7 +152,7 @@ public class UsersFilterAction extends BasePopupAction {
     myEditorField.setOneLineMode(false);
     panel.add(myEditorField, BorderLayout.CENTER);
 
-    myTextFieldCompletionProvider = new TextFieldCompletionProvider() {
+    myTextFieldCompletionProvider = new TextFieldCompletionProviderDumbAware() {
       @NotNull
       @Override
       protected String getPrefix(@NotNull String currentTextPrefix) {
