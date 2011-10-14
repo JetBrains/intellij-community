@@ -322,4 +322,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
   }
+
+  public boolean isMultiprocessDebug() {
+    return false;
+  }
 }

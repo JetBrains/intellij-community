@@ -74,7 +74,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PyDebugProcess pyDebugProcess =
-            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler());
+            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(), pyState.isMultiprocessDebug());
 
           createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);
 
@@ -86,8 +86,8 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   protected static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
-                                                                @NotNull final ExecutionResult result,
-                                                                @NotNull PyDebugProcess debugProcess) {
+                                                                  @NotNull final ExecutionResult result,
+                                                                  @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();
     ProcessHandler processHandler = result.getProcessHandler();
 
@@ -107,7 +107,8 @@ public class PyDebugRunner extends GenericProgramRunner {
       pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
-      new ConsoleHistoryController("py", "", pythonConsoleView.getConsole(), consoleExecuteActionHandler.getConsoleHistoryModel()).install();
+      new ConsoleHistoryController("py", "", pythonConsoleView.getConsole(), consoleExecuteActionHandler.getConsoleHistoryModel())
+        .install();
       final AnAction execAction = AbstractConsoleRunnerWithHistory
         .createConsoleExecAction(pythonConsoleView.getConsole(), processHandler, consoleExecuteActionHandler);
       execAction.registerCustomShortcutSet(execAction.getShortcutSet(), pythonConsoleView.getComponent());
@@ -133,26 +134,40 @@ public class PyDebugRunner extends GenericProgramRunner {
     return new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
 
-        final String[] debugger_args = new String[]{
-          PythonHelpersLocator.getHelperPath("pydev/pydevd.py"),
-          "--client", "127.0.0.1",
-          "--port", String.valueOf(serverLocalPort),
-          "--file"
-        };
-        // script name is the last parameter; all other params are for python interpreter; insert just before name
-        final ParametersList parameters_list = commandLine.getParametersList();
 
-        ParamsGroup debug_params = parameters_list.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
-        assert debug_params != null;
-        ParamsGroup exe_params = parameters_list.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
-        assert exe_params != null;
+        // script name is the last parameter; all other params are for python interpreter; insert just before name
+        final ParametersList parametersList = commandLine.getParametersList();
+
+        @SuppressWarnings("ConstantConditions") @NotNull
+        ParamsGroup debugParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
+
+        @SuppressWarnings("ConstantConditions") @NotNull
+        ParamsGroup exeParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
 
         final PythonSdkFlavor flavor = pyState.getSdkFlavor();
         if (flavor != null) {
-          for (String option : flavor.getExtraDebugOptions()) exe_params.addParameter(option);
+          for (String option : flavor.getExtraDebugOptions()) {
+            exeParams.addParameter(option);
+          }
         }
-        for (String s : debugger_args) debug_params.addParameter(s);
+
+        fillDebugParameters(debugParams, serverLocalPort, pyState);
       }
     };
+  }
+
+  private static void fillDebugParameters(ParamsGroup debugParams, int serverLocalPort, PythonCommandLineState pyState) {
+    debugParams.addParameter(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"));
+    if (pyState.isMultiprocessDebug()) {
+      debugParams.addParameter("--multiproc");
+    }
+    final String[] debuggerArgs = new String[]{
+      "--client", "127.0.0.1",
+      "--port", String.valueOf(serverLocalPort),
+      "--file"
+    };
+    for (String s : debuggerArgs) {
+      debugParams.addParameter(s);
+    }
   }
 }

@@ -1,9 +1,10 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.google.common.collect.Lists;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PydevXmlUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -47,8 +48,13 @@ public class GetCompletionsCommand extends AbstractFrameCommand {
     payload.add("FRAME").add(myActionToken);
   }
 
-  @Nullable
+  @NotNull
   public List<PydevCompletionVariant> getCompletions() {
-    return myCompletions;
+    if (myCompletions != null) {
+      return myCompletions;
+    }
+    else {
+      return Lists.newArrayList();
+    }
   }
 }

@@ -122,7 +122,7 @@ class PyDBCommandThread(PyDBDaemonThread):
         if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
             #don't run untraced threads if we're in jython 2.2.1 or lower
             #jython bug: if we start a thread and another thread changes the tracing facility
-            #it affects other threads (it's not set only for the thread but globally) 
+            #it affects other threads (it's not set only for the thread but globally)
             #Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
             run_traced = False
 
@@ -177,15 +177,15 @@ def pydev_start_new_thread(function, args, kwargs={}):
 # PyDB
 #=======================================================================================================================
 class PyDB:
-    """ Main debugging class 
+    """ Main debugging class
     Lots of stuff going on here:
-    
+
     PyDB starts two threads on startup that connect to remote debugger (RDB)
     The threads continuously read & write commands to RDB.
     PyDB communicates with these threads through command queues.
        Every RDB command is processed by calling processNetCommand.
        Every PyDB net command is sent to the net by posting NetCommand to WriterThread queue
-       
+
        Some commands need to be executed on the right thread (suspend/resume & friends)
        These are placed on the internal command queue.
     """
@@ -245,7 +245,7 @@ class PyDB:
         self.writer.start()
         self.reader.start()
 
-        time.sleep(0.1) # give threads time to start        
+        time.sleep(0.1) # give threads time to start
 
     def connect(self, host, port):
         if host:
@@ -289,7 +289,7 @@ class PyDB:
 
     def checkOutput(self, out, outCtx):
         '''Checks the output to see if we have to send some buffered output to the debug server
-        
+
         @param out: sys.stdout or sys.stderr
         @param outCtx: the context indicating: 1=stdout and 2=stderr (to know the colors to write it)
         '''
@@ -401,17 +401,17 @@ class PyDB:
 
     def processNetCommand(self, cmd_id, seq, text):
         '''Processes a command received from the Java side
-        
+
         @param cmd_id: the id of the command
         @param seq: the sequence of the command
         @param text: the text received in the command
-        
+
         @note: this method is run as a big switch... after doing some tests, it's not clear whether changing it for
         a dict id --> function call will have better performance result. A simple test with xrange(10000000) showed
         that the gains from having a fast access to what should be executed are lost because of the function call in
         a way that if we had 10 elements in the switch the if..elif are better -- but growing the number of choices
         makes the solution with the dispatch look better -- so, if this gets more than 20-25 choices at some time,
-        it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before 
+        it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
         probably will give better performance).
         '''
 
@@ -555,7 +555,7 @@ class PyDB:
                     if condition.startswith('**FUNC**'):
                         func_name, condition = condition.split('\t', 1)
 
-                        #We must restore new lines and tabs as done in 
+                        #We must restore new lines and tabs as done in
                         #AbstractDebugTarget.breakpointAdded
                         condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').\
                             replace("@_@TAB_CHAR@_@", '\t').strip()
@@ -732,7 +732,7 @@ class PyDB:
 
 
     def doWaitSuspend(self, thread, frame, event, arg): #@UnusedVariable
-        """ busy waits until the thread state changes to RUN 
+        """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
         """
@@ -748,7 +748,7 @@ class PyDB:
             self.processInternalCommands()
             time.sleep(0.01)
 
-        #process any stepping instructions 
+        #process any stepping instructions
         if info.pydev_step_cmd == CMD_STEP_INTO:
             info.pydev_step_stop = None
             info.pydev_smart_step_stop = None
@@ -769,7 +769,7 @@ class PyDB:
             if event == 'line' or event == 'exception':
                 #If we're already in the correct context, we have to stop it now, because we can act only on
                 #line events -- if a return was the next statement it wouldn't work (so, we have this code
-                #repeated at pydevd_frame). 
+                #repeated at pydevd_frame).
                 stop = False
                 curr_func_name = frame.f_code.co_name
 
@@ -814,14 +814,14 @@ class PyDB:
 
 
     def trace_dispatch(self, frame, event, arg):
-        ''' This is the callback used when we enter some context in the debugger. 
-        
+        ''' This is the callback used when we enter some context in the debugger.
+
         We also decorate the thread we are in with info about the debugging.
         The attributes added are:
             pydev_state
             pydev_step_stop
             pydev_step_cmd
-            pydev_notify_kill 
+            pydev_notify_kill
         '''
         try:
             if self._finishDebuggingSession:
@@ -940,7 +940,7 @@ class PyDB:
     def run(self, file, globals=None, locals=None):
 
         if globals is None:
-            #patch provided by: Scott Schlesier - when script is run, it does not 
+            #patch provided by: Scott Schlesier - when script is run, it does not
             #use globals from pydevd:
             #This will prevent the pydevd script from contaminating the namespace for the script to be debugged
 
@@ -964,10 +964,10 @@ class PyDB:
 
         #Predefined (writable) attributes: __name__ is the module's name;
         #__doc__ is the module's documentation string, or None if unavailable;
-        #__file__ is the pathname of the file from which the module was loaded, 
-        #if it was loaded from a file. The __file__ attribute is not present for 
-        #C modules that are statically linked into the interpreter; for extension modules 
-        #loaded dynamically from a shared library, it is the pathname of the shared library file. 
+        #__file__ is the pathname of the file from which the module was loaded,
+        #if it was loaded from a file. The __file__ attribute is not present for
+        #C modules that are statically linked into the interpreter; for extension modules
+        #loaded dynamically from a shared library, it is the pathname of the shared library file.
 
 
         #I think this is an ugly hack, bug it works (seems to) for the bug that says that sys.path should be the same in
@@ -1017,6 +1017,7 @@ def processCommandLine(argv):
     retVal['server'] = False
     retVal['port'] = 0
     retVal['file'] = ''
+    retVal['multiproc'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1042,6 +1043,9 @@ def processCommandLine(argv):
         elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
             del argv[i]
             retVal['DEBUG_RECORD_SOCKET_READS'] = True
+        elif (argv[i] == '--multiproc'):
+            del argv[i]
+            retVal['multiproc'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return retVal
@@ -1076,14 +1080,14 @@ def initStderrRedirect():
 
 def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=False):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
-    
+
     @param host: the user may specify another host, if the debug server is not in the same machine
     @param stdoutToServer: when this is true, the stdout is passed to the debug server
     @param stderrToServer: when this is true, the stderr is passed to the debug server
         so that they are printed in its console and not in this process console.
-    @param port: specifies which port to use for communicating with the server (note that the server must be started 
+    @param port: specifies which port to use for communicating with the server (note that the server must be started
         in the same port). @note: currently it's hard-coded at 5678 in the client
-    @param suspend: whether a breakpoint should be emulated as soon as this function is called. 
+    @param suspend: whether a breakpoint should be emulated as soon as this function is called.
     @param trace_only_current_thread: determines if only the current thread will be traced or all future threads will also have the tracing enabled.
     '''
     _set_trace_lock.acquire()
@@ -1198,21 +1202,45 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
         if suspend:
             debugger.setSuspend(t, CMD_SET_BREAK)
 
+class Dispatcher(object):
+    def __init__(self):
+        self.port = None
+
+    def connect(self, setup):
+        self.setup  = setup
+        self.client = StartClient(setup['client'], setup['port'])
+        self.reader = DispatchReader(self)
+        self.reader.run()
+
+class DispatchReader(ReaderThread):
+    def __init__(self, dispatcher):
+        self.dispatcher = dispatcher
+        ReaderThread.__init__(self, self.dispatcher.client)
+
+    def handleExcept(self):
+        ReaderThread.handleExcept(self)
+
+    def processCommand(self, cmd_id, seq, text):
+        if cmd_id == 99:
+            self.dispatcher.port = int(text)
+            self.killReceived = True
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    sys.stderr.write("pydev debugger: starting\n")
+
     # parse the command line. --file is our last argument that is required
     try:
+        sys.original_argv = sys.argv[:]
         setup = processCommandLine(sys.argv)
     except ValueError:
         traceback.print_exc()
         usage(1)
 
+
     #as to get here all our imports are already resolved, the psyco module can be
-    #changed and we'll still get the speedups in the debugger, as those functions 
+    #changed and we'll still get the speedups in the debugger, as those functions
     #are already compiled at this time.
     try:
         import psyco
@@ -1233,10 +1261,24 @@ if __name__ == '__main__':
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', False)
 
+    port = setup['port']
+    if setup['multiproc']:
+        dispatch = Dispatcher()
+        dispatch.connect(setup)
+        if dispatch.port is not None:
+            port = dispatch.port
+            sys.stderr.write("pydev debugger: debug process is connecting\n")
+            import pydevd_utils
+            pydevd_utils.patch_new_process_functions()
+        else:
+            sys.stderr.write("pydev debugger: couldn't get port for new debug process\n")
+    else:
+        sys.stderr.write("pydev debugger: starting\n")
+
+
     debugger = PyDB()
-    debugger.connect(setup['client'], setup['port'])
+    debugger.connect(setup['client'], port)
 
     connected = True #Mark that we're connected when started from inside eclipse.
 
     debugger.run(setup['file'], None, None)
-

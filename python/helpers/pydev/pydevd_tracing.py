@@ -59,8 +59,9 @@ def _InternalSetTrace(tracing_func):
                     TracingFunctionHolder._warnings_shown[message] = 1
                     sys.stderr.write('%s\n' % (message,))
                     sys.stderr.flush()
-            
-    TracingFunctionHolder._original_tracing(tracing_func)
+
+    if TracingFunctionHolder._original_tracing:
+            TracingFunctionHolder._original_tracing(tracing_func)
 
 def SetTrace(tracing_func):
     TracingFunctionHolder._lock.acquire()

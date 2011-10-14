@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class RemoteDebugger {
+public class RemoteDebugger implements ProcessDebugger {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
 
@@ -57,11 +57,13 @@ public class RemoteDebugger {
     return myDebugProcess;
   }
 
+  @Override
   public boolean isConnected() {
     return myConnected;
   }
 
 
+  @Override
   public void waitForConnect() throws Exception {
     try {
       //noinspection SocketOpenedButNotSafelyClosed
@@ -83,6 +85,7 @@ public class RemoteDebugger {
     myConnected = true;
   }
 
+  @Override
   public void disconnect() {
     myConnected = false;
 
@@ -98,12 +101,14 @@ public class RemoteDebugger {
     cleanUp();
   }
 
+  @Override
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION);
     command.execute();
     return command.getRemoteVersion();
   }
 
+  @Override
   public PyDebugValue evaluate(final String threadId,
                                final String frameId,
                                final String expression, final boolean execute) throws PyDebuggerException {
@@ -111,6 +116,7 @@ public class RemoteDebugger {
   }
 
 
+  @Override
   public PyDebugValue evaluate(final String threadId,
                                final String frameId,
                                final String expression,
@@ -122,12 +128,14 @@ public class RemoteDebugger {
     return command.getValue();
   }
 
+  @Override
   public String consoleExec(String threadId, String frameId, String expression) throws PyDebuggerException {
     final ConsoleExecCommand command = new ConsoleExecCommand(this, threadId, frameId, expression);
     command.execute();
     return command.getValue();
   }
 
+  @Override
   public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
     final GetFrameCommand command = new GetFrameCommand(this, threadId, frameId);
     command.execute();
@@ -135,6 +143,7 @@ public class RemoteDebugger {
   }
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
+  @Override
   public XValueChildrenList loadVariable(final String threadId, final String frameId, final PyDebugValue var) throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
     final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, composeName(var), var);
@@ -142,6 +151,7 @@ public class RemoteDebugger {
     return command.getVariables();
   }
 
+  @Override
   public PyDebugValue changeVariable(final String threadId, final String frameId, final PyDebugValue var, final String value)
     throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
@@ -155,6 +165,7 @@ public class RemoteDebugger {
     return command.getNewValue();
   }
 
+  @Override
   @Nullable
   public String loadSource(String path) {
     LoadSourceCommand command = new LoadSourceCommand(this, path);
@@ -228,6 +239,7 @@ public class RemoteDebugger {
     return new StringBuilder(32).append(TEMP_VAR_PREFIX).append(ourRandom.nextInt(Integer.MAX_VALUE)).toString();
   }
 
+  @Override
   public Collection<PyThreadInfo> getThreads() {
     return Collections.unmodifiableCollection(new ArrayList<PyThreadInfo>(myThreads.values()));
   }
@@ -269,6 +281,7 @@ public class RemoteDebugger {
     return response;
   }
 
+  @Override
   public void execute(@NotNull final AbstractCommand command) {
     if (command instanceof ResumeOrStepCommand) {
       final String threadId = ((ResumeOrStepCommand)command).getThreadId();
@@ -308,6 +321,7 @@ public class RemoteDebugger {
     }
   }
 
+  @Override
   public void suspendAllThreads() {
     for (PyThreadInfo thread : getThreads()) {
       suspendThread(thread.getId());
@@ -315,11 +329,13 @@ public class RemoteDebugger {
   }
 
 
+  @Override
   public void suspendThread(String threadId) {
     final SuspendCommand command = new SuspendCommand(this, threadId);
     execute(command);
   }
 
+  @Override
   public void close() {
     if (!myServerSocket.isClosed()) {
       try {
@@ -333,6 +349,51 @@ public class RemoteDebugger {
     fireCloseEvent();
   }
 
+  @Override
+  public void run() throws PyDebuggerException {
+    new RunCommand(this).execute();
+  }
+
+  @Override
+  public void smartStepInto(String threadId, String functionName) {
+    final SmartStepIntoCommand command = new SmartStepIntoCommand(this, threadId, functionName);
+    execute(command);
+  }
+
+  @Override
+  public void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode) {
+    final ResumeOrStepCommand command = new ResumeOrStepCommand(this, threadId, mode);
+    execute(command);
+  }
+
+  @Override
+  public void setTempBreakpoint(String type, String file, int line) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, type, file, line);
+    execute(command);  // set temp. breakpoint
+  }
+
+  @Override
+  public void removeTempBreakpoint(String file, int line) {
+    final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, "all", file, line);
+    execute(command);  // remove temp. breakpoint
+  }
+
+  @Override
+  public void setBreakpoint(String typeId, String file, int line, String condition, String logExpression) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, typeId, file, line,
+                               condition,
+                               logExpression);
+    execute(command);
+  }
+
+  @Override
+  public void removeBreakpoint(String typeId, String file, int line) {
+    final RemoveBreakpointCommand command =
+      new RemoveBreakpointCommand(this, typeId, file, line);
+    execute(command);
+  }
 
   private class DebuggerReader implements Runnable {
     private final InputStream myInputStream;
