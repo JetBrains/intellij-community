@@ -15,8 +15,13 @@
  */
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 
 import javax.accessibility.Accessible;
@@ -26,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Highlighters implements DnDEvent.DropTargetHighlightingType {
-  private static final List<Accessible> ourHightlighters = new ArrayList<Accessible>();
+  private static final List<DropTargetHighlighter> ourHightlighters = new ArrayList<DropTargetHighlighter>();
 
-  private static final List<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<DropTargetHighlighter>();
+  private static final ArrayList<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<DropTargetHighlighter>();
 
   static {
     ourHightlighters.add(new RectangleHighlighter());
@@ -41,7 +46,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
     List<DropTargetHighlighter> toShow = new ArrayList<DropTargetHighlighter>();
-    for (Accessible ourHightlighter : ourHightlighters) {
+    for (DropTargetHighlighter ourHightlighter : ourHightlighters) {
       DropTargetHighlighter each = (DropTargetHighlighter)ourHightlighter;
       if ((each.getMask() & aType) != 0) {
         toShow.add(each);
@@ -127,65 +132,43 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     protected abstract void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent);
   }
 
-  private abstract static class BaseTextHighlighter extends JWindow implements DropTargetHighlighter {
-    protected JLabel myLabel;
+  public abstract static class BaseTextHighlighter implements DropTargetHighlighter {
 
-    public BaseTextHighlighter() {
-      myLabel = new JLabel("", JLabel.CENTER) {
-        protected void paintComponent(Graphics g) {
-          BaseTextHighlighter.this.paintComponent(g);
-          super.paintComponent(g);
-        }
-      };
-      myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
-      myLabel.setForeground(UIUtil.getToolTipForeground());
+    private Balloon myCurrentBalloon;
+    private MessageType myMessageType;
 
-      setFocusable(false);
-
-      getContentPane().setLayout(new BorderLayout());
-      getContentPane().add(myLabel, BorderLayout.CENTER);
+    public BaseTextHighlighter(MessageType type) {
+      myMessageType = type;
     }
 
     public void show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
-      myLabel.setText(aEvent.getExpectedDropResult());
-      final Dimension prefSize = getPreferredSize();
-      prefSize.width += 10;
-      prefSize.height += 4;
+      if (!Registry.is("ide.dnd.textHints")) return;
 
-      int centerX = aRectangle.x + aRectangle.width / 2;
-      final Rectangle newBounds = new Rectangle(centerX - prefSize.width / 2, aRectangle.y - prefSize.height - 5, prefSize.width, prefSize.height);
-      newBounds.y = newBounds.y < 0 ? 0 : newBounds.y;
-
-      Point location = newBounds.getLocation();
-      SwingUtilities.convertPointToScreen(location, aPane);
-      newBounds.setLocation(location);
-
-      setBounds(newBounds);
-      show();
-      if (SystemInfo.isUnix) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            toFront();
+      final String result = aEvent.getExpectedDropResult();
+      if (result != null && result.length() > 0) {
+        RelativePoint point  = null;
+        for (DropTargetHighlighter each : ourHightlighters) {
+          if (each instanceof AbstractComponentHighlighter) {
+            Rectangle rec = ((AbstractComponentHighlighter)each).getBounds();
+            point = new RelativePoint(aPane, new Point(rec.x + rec.width, rec.y + rec.height / 2));
+            break;
           }
-        });
+        }
+
+        if (point == null) {
+          point = new RelativePoint(aPane, new Point(aRectangle.x + aRectangle.width, aRectangle.y + aRectangle.height / 2));
+        }
+        
+        myCurrentBalloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(result, myMessageType, null).createBalloon();
+        myCurrentBalloon.show(point, Balloon.Position.atRight);
       }
     }
 
     public void vanish() {
-      hide();
-    }
-
-    protected void paintComponent(Graphics g) {
-      Graphics2D g2d = (Graphics2D) g;
-      Object old = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      g.setColor(UIUtil.getToolTipBackground());
-      g.fillRoundRect(0, 0, getSize().width - 1, getSize().height - 1, 6, 6);
-
-      g.setColor(UIUtil.getToolTipForeground());
-      g.drawRoundRect(0, 0, getSize().width - 1, getSize().height - 1, 6, 6);
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+      if (myCurrentBalloon != null) {
+        myCurrentBalloon.hide();
+        myCurrentBalloon = null;
+      }
     }
 
     protected Integer getLayer() {
@@ -194,7 +177,12 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   }
 
-  private static class TextHighlighter extends BaseTextHighlighter {
+  public static class TextHighlighter extends BaseTextHighlighter {
+
+    public TextHighlighter() {
+      super(MessageType.INFO);
+    }
+
     public int getMask() {
       return TEXT;
     }
@@ -202,8 +190,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   private static class ErrorTextHighlighter extends BaseTextHighlighter {
     public ErrorTextHighlighter() {
-      super();
-      myLabel.setIcon(IconLoader.getIcon("/ide/dnd/error.png"));
+      super(MessageType.ERROR);
     }
 
     public int getMask() {
