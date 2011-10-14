@@ -153,7 +153,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public abstract boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor);
 
-  private void sort() {
+  protected void sort() {
     Collections.sort(view, columns[getNameColumn()].getComparator());
     fireTableDataChanged();
   }

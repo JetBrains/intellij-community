@@ -47,22 +47,22 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
   @Override
   protected boolean isSortByName() {
-    return mySortMode == PluginTableModel.NAME;
+    return mySortMode.equals(PluginTableModel.NAME);
   }
 
   @Override
   protected boolean isSortByDownloads() {
-    return mySortMode == AvailablePluginsTableModel.DOWNLOADS;
+    return mySortMode.equals(AvailablePluginsTableModel.DOWNLOADS);
   }
 
   @Override
   protected boolean isSortByDate() {
-    return mySortMode == AvailablePluginsTableModel.RELEASE_DATE;
+    return mySortMode.equals(AvailablePluginsTableModel.RELEASE_DATE);
   }
 
   @Override
   protected boolean isSortByStatus() {
-    return mySortMode == AvailablePluginsTableModel.STATUS;
+    return mySortMode.equals(AvailablePluginsTableModel.STATUS);
   }
 
   public void setSortMode(String sortMode) {

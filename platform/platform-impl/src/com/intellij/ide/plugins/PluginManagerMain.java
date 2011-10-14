@@ -169,6 +169,7 @@ public abstract class PluginManagerMain implements Disposable {
     else {
       pluginsModel.modifyData(list);
     }
+    pluginsModel.sort();
     pluginsList = list;
     if (selected != null) {
       select(selected);
@@ -209,7 +210,6 @@ public abstract class PluginManagerMain implements Disposable {
               modifyPluginsList(list);
               propagateUpdates(list);
               setDownloadStatus(false);
-              pluginsModel.setSortMode(myUISettings.AVAILABLE_SORT_MODE);
             }
             else if (error != null) {
               LOG.info(error);

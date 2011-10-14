@@ -88,7 +88,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   @Override
   public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
-    if (myCategory == ALL) return true;
+    if (myCategory.equals(ALL)) return true;
     final String category = descriptor.getCategory();
     return category == null || category.equals(myCategory);
   }
