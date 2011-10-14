@@ -59,7 +59,6 @@ public class EmbeddedJavac {
         return false;
       }
     }
-    //todo setup file manager to support multiple outputs
 
     final LineOutputWriter out = new LineOutputWriter() {
       protected void lineAvailable(String line) {

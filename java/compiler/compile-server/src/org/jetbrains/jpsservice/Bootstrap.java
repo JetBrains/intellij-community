@@ -16,8 +16,6 @@
 package org.jetbrains.jpsservice;
 
 import com.intellij.openapi.application.PathManager;
-import gnu.trove.TIntHash;
-import org.jetbrains.jps.server.Facade;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,26 +29,12 @@ public class Bootstrap {
 
   public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
 
-  public static List<File> buildServerProcessClasspath() {
+  public static List<File> getApplicationClasspath() {
     final List<File> cp = new ArrayList<File>();
     cp.add(getResourcePath(Server.class));
-    cp.add(getResourcePath(com.google.protobuf.Message.class));
-    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class));
-    cp.add(getResourcePath(TIntHash.class));  // trove
-    //cp.add(getResourcePath(FileUtil.class));  // util module
-    //cp.add(getResourcePath(ClassWriter.class));  // asm
-    //cp.add(getResourcePath(EmptyVisitor.class));  // asm-commons
-    //cp.add(getResourcePath(MacroExpander.class));  // jps-model
-    //cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
-    //cp.add(getResourcePath(PseudoClassLoader.class));  // javac2
-    //cp.add(getResourcePath(GroovyException.class));  // groovy
-    //cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
-    //cp.add(getResourcePath(GridConstraints.class));  // forms-rt
-    //cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
-    //cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
-    //cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    final File jpsFacadeJar = getResourcePath(Facade.class);
-    cp.add(jpsFacadeJar);
+    cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
+    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
+    cp.addAll(org.jetbrains.jps.server.Bootstrap.getApplicationClasspath()); // jps incremental builders and dependencies
 
     //final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
     //final File[] files = jpsRuntime.listFiles();

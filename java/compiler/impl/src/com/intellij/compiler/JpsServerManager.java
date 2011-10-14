@@ -189,7 +189,7 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.addParameter("-Xmx256m");
     cmdLine.addParameter("-classpath");
 
-    final List<File> cp = Bootstrap.buildServerProcessClasspath();
+    final List<File> cp = Bootstrap.getApplicationClasspath();
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter("org.jetbrains.jpsservice.Server");

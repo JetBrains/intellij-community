@@ -120,30 +120,27 @@ public class Client {
     }
   }
 
-  private RequestFuture sendRequest(JpsRemoteProto.Message.Request request, @Nullable JpsServerResponseHandler handler) {
+  private RequestFuture sendRequest(JpsRemoteProto.Message.Request request, @Nullable final JpsServerResponseHandler handler) {
     final UUID sessionUUID = UUID.randomUUID();
     final RequestFuture requestFuture = new RequestFuture(handler);
     myHandlers.put(sessionUUID, requestFuture);
-    boolean writeSuccess = false;
-    try {
-      final ChannelFuture future = Channels.write(myConnectFuture.getChannel(), ProtoUtil.toMessage(sessionUUID, request));
-      future.awaitUninterruptibly();
-      writeSuccess = future.isSuccess();
-      return requestFuture;
-    }
-    finally {
-      if (!writeSuccess) {
-        try {
-          myHandlers.remove(sessionUUID);
-          if (handler != null) {
-            handler.sessionTerminated();
+    final ChannelFuture channelFuture = Channels.write(myConnectFuture.getChannel(), ProtoUtil.toMessage(sessionUUID, request));
+    channelFuture.addListener(new ChannelFutureListener() {
+      public void operationComplete(ChannelFuture future) throws Exception {
+        if (!future.isSuccess()) {
+          try {
+            myHandlers.remove(sessionUUID);
+            if (handler != null) {
+              handler.sessionTerminated();
+            }
+          }
+          finally {
+            requestFuture.setDone();
           }
         }
-        finally {
-          requestFuture.setDone();
-        }
       }
-    }
+    });
+    return requestFuture;
   }
 
   public boolean connect(final String host, final int port) throws Throwable {

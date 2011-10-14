@@ -11,7 +11,7 @@
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="library" exported="" name="JPS-facade" level="project" />
+    <orderEntry type="module" module-name="serverFacade" exported="" />
   </component>
 </module>
 
