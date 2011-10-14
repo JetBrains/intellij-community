@@ -17,10 +17,15 @@ package com.intellij.core;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ClassFileViewProviderFactory;
+import com.intellij.psi.FileTypeFileViewProviders;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 
 import java.io.File;
@@ -39,6 +44,8 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
 
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
+    registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
+
     myFileManager = new CoreJavaFileManager(myPsiManager, myJarFileSystem);
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
     registerComponentInstance(myProject.getPicoContainer(),
