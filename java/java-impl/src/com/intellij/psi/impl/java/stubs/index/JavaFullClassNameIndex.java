@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
+  public static boolean DEBUG = false;
+  
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
   public static JavaFullClassNameIndex getInstance() {
     return ourInstance;
@@ -40,6 +42,10 @@ public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
   }
 
   public Collection<PsiClass> get(final Integer integer, final Project project, @NotNull final GlobalSearchScope scope) {
-    return super.get(integer, project, new JavaSourceFilterScope(scope));
+    Collection<PsiClass> result = super.get(integer, project, new JavaSourceFilterScope(scope));
+    if (DEBUG) {
+      System.out.println("JavaFullClassNameIndex.get: integer = " + integer + ", result = " + result);
+    }
+    return result;
   }
 }
