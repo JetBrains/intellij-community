@@ -31,12 +31,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +49,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
+  private AdditionalCodeStylePanel myAdditionalPanel;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -113,6 +112,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myTabbedPane = new JBTabbedPane();
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane);
+      myAdditionalPanel = new AdditionalCodeStylePanel(this, getSettings());
+      myPanel.add(myAdditionalPanel.getContentPane(), BorderLayout.SOUTH);
       initTabs(getSettings());
     }
     assert !myTabs.isEmpty();

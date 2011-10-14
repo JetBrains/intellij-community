@@ -201,8 +201,6 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
       mySettingsPanel.add(scheme.getName(), panel);
       mySchemesPanel.setCodeStyleSettingsPanel(panel);
       panel.setLanguage(myLangSelector.getLanguage());
-      Language panelLanguage = panel.getSelectedLanguage();
-      mySchemesPanel.setPredefinedEnabled(panelLanguage != null && hasPredefinedStyles(panelLanguage));
     }
 
     return mySettingsPanels.get(name);
@@ -230,16 +228,9 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   public void languageChanged(Language lang) {
     for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
       panel.setLanguage(lang);
-      Language resultingLang = panel.getSelectedLanguage();
-      mySchemesPanel.setPredefinedEnabled(hasPredefinedStyles(resultingLang));
     }
   }
   
-  private static boolean hasPredefinedStyles(Language language) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
-    return provider != null && provider.getPredefinedCodeStyles().length > 0;
-  }
-
   public Set<String> processListOptions() {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);

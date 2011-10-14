@@ -203,4 +203,15 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
       }
     }
   }
+
+  public static void copy(CommonCodeStyleSettings source, CommonCodeStyleSettings target) {
+    CommonCodeStyleSettings.copyPublicFields(source, target);
+    CommonCodeStyleSettings.IndentOptions targetIndentOptions = target.getIndentOptions();
+    if (targetIndentOptions != null) {
+      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
+      if (sourceIndentOptions != null) {
+        CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
+      }
+    }
+  }
 }
