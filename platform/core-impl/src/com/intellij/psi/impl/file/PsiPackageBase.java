@@ -23,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.RowIcon;
@@ -42,16 +41,16 @@ import java.util.Map;
 public abstract class PsiPackageBase extends PsiElementBase implements PsiDirectoryContainer, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageBase");
 
-  final PsiManagerEx myManager;
+  final PsiManager myManager;
   private final String myQualifiedName;
 
   protected abstract Collection<PsiDirectory> getAllDirectories();
 
   protected abstract PsiElement findPackage(String qName);
 
-  protected abstract PsiPackageBase createInstance(PsiManagerEx manager, String qName);
+  protected abstract PsiPackageBase createInstance(PsiManager manager, String qName);
 
-  public PsiPackageBase(PsiManagerEx manager, String qualifiedName) {
+  public PsiPackageBase(PsiManager manager, String qualifiedName) {
     myManager = manager;
     myQualifiedName = qualifiedName;
   }

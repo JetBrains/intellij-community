@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -49,7 +48,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile Set<String> myPublicClassNamesCache;
   private final Object myPublicClassNamesCacheLock = new String("package classnames cache lock");
 
-  public PsiPackageImpl(PsiManagerEx manager, String qualifiedName) {
+  public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
   }
 
@@ -87,7 +86,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
 
   @Override
-  protected PsiPackageImpl createInstance(PsiManagerEx manager, String qName) {
+  protected PsiPackageImpl createInstance(PsiManager manager, String qName) {
     return new PsiPackageImpl(myManager, qName);
   }
 

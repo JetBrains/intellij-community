@@ -18,6 +18,7 @@ package com.intellij.core;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,16 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   @Override
   public PsiPackage findPackage(@NotNull String packageName) {
-    throw new UnsupportedOperationException("TODO");
+    String dirName = packageName.replace(".", "/");
+    for (File file : myClasspath) {
+      if (file.isFile()) {
+        VirtualFile classDir = myJarFileSystem.findFileByPath(file.getPath() + "!/" + dirName);
+        if (classDir != null) {
+          return new PsiPackageImpl(myPsiManager, packageName);
+        }
+      }
+    }
+    return null;
   }
 
   @Override
