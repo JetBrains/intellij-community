@@ -121,6 +121,7 @@ public class CoreEnvironment {
     
     myProject.registerService(PsiModificationTracker.class, new PsiModificationTrackerImpl(myProject));
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
+    myProject.registerService(ResolveScopeManager.class, new MockResolveScopeManager(myProject));
     
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
