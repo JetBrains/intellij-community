@@ -112,17 +112,13 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
     if (BUILT_IN_TYPES.contains(chameleon.getText())) {
       builder.advanceLexer();
     } else {
-      parseBody(builder);
+      ReferenceElement.parse(builder, false, false, false, false, false);
+      while (!builder.eof()) {
+        builder.advanceLexer();
+      }
     }
     rootMarker.done(this);
     return builder.getTreeBuilt().getFirstChildNode();
-  }
-
-  private static void parseBody(PsiBuilder builder) {
-    ReferenceElement.parse(builder, false, false, false, false);
-    while (!builder.eof()) {
-      builder.advanceLexer();
-    }
   }
 
   public static enum TagValueTokenType {

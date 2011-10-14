@@ -31,14 +31,15 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
  */
 public class TypeSpec implements GroovyElementTypes {
   public static ReferenceElementResult parse(PsiBuilder builder) {
-    return parse(builder, false); //allow lower and upper case first letter
+    return parse(builder, false, true); //allow lower and upper case first letter
   }
 
-  public static ReferenceElementResult parse(PsiBuilder builder, boolean isUpper) {
+  public static ReferenceElementResult parse(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       return parseBuiltInType(builder);
-    } else if (builder.getTokenType() == mIDENT) {
-      return parseClassOrInterfaceType(builder, isUpper);
+    }
+    if (builder.getTokenType() == mIDENT) {
+      return parseClassType(builder, isUpper, expressionPossible);
     }
     return fail;
   }
@@ -79,17 +80,11 @@ public class TypeSpec implements GroovyElementTypes {
     }
   }
 
-  /**
-   * Class or interface type
-   *
-   * @param builder
-   */
-
-  private static ReferenceElementResult parseClassOrInterfaceType(PsiBuilder builder, boolean isUpper) {
+  private static ReferenceElementResult parseClassType(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
     PsiBuilder.Marker arrMarker = builder.mark();
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    final ReferenceElementResult result = parseReferenceElement(builder, isUpper);
+    final ReferenceElementResult result = parseReferenceElement(builder, isUpper, expressionPossible);
     if (result == fail) {
       typeElementMarker.drop();
       arrMarker.rollbackTo();

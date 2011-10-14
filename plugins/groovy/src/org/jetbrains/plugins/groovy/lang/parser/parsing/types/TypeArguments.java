@@ -21,12 +21,14 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 28.03.2007
  */
 public class TypeArguments implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder) {
+  public static boolean parseTypeArguments(PsiBuilder builder, boolean expressionPossible) {
     PsiBuilder.Marker marker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLT)) {
@@ -36,7 +38,7 @@ public class TypeArguments implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (!TypeArgument.parse(builder)) {
+    if (!parseArgument(builder)) {
       marker.rollbackTo();
       return false;
     }
@@ -45,7 +47,7 @@ public class TypeArguments implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (!TypeArgument.parse(builder)) {
+      if (!parseArgument(builder)) {
         builder.error("type.argument.expected");
       }
     }
@@ -62,12 +64,38 @@ public class TypeArguments implements GroovyElementTypes {
     }
     else {
       rb.drop();
-      marker.rollbackTo();
-      return false;
+      if (expressionPossible) {
+        marker.rollbackTo();
+        return false;
+      }
     }
 
 
     marker.done(TYPE_ARGUMENTS);
     return true;
+  }
+
+  private static boolean parseArgument(PsiBuilder builder) {
+    if (builder.getTokenType() == mQUESTION) {
+      //wildcard
+      PsiBuilder.Marker taMarker = builder.mark();
+      ParserUtils.getToken(builder, mQUESTION);
+      if (ParserUtils.getToken(builder, kSUPER) || ParserUtils.getToken(builder, kEXTENDS)) {
+        ParserUtils.getToken(builder, mNLS);
+
+        //todo: check for upper case type specification
+        if (TypeSpec.parse(builder, false, false) == fail) {
+          taMarker.rollbackTo();
+          return false;
+        }
+
+        ParserUtils.getToken(builder, mNLS);
+      }
+
+      taMarker.done(TYPE_ARGUMENT);
+      return true;
+    }
+
+    return TypeSpec.parse(builder, false, false) != fail;
   }
 }

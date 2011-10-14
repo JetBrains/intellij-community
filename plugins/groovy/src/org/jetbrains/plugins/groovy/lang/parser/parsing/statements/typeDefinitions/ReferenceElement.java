@@ -72,27 +72,27 @@ public class ReferenceElement implements GroovyElementTypes {
   }
 
   public static ReferenceElementResult parseForImport(PsiBuilder builder) {
-    return parse(builder, false, false, true, false);
+    return parse(builder, false, false, true, false, false);
   }
 
   public static ReferenceElementResult parseForPackage(PsiBuilder builder) {
-    return parse(builder, false, false, false, false);
+    return parse(builder, false, false, false, false, false);
   }
 
   
   //it doesn't important first letter of identifier of ThrowClause, of Annotation, of new Expresion, of implements, extends, superclass clauses
   public static ReferenceElementResult parseReferenceElement(PsiBuilder builder) {
-    return parse(builder, false, true, false, false);
+    return parseReferenceElement(builder, false, true);
   }
 
-  public static ReferenceElementResult parseReferenceElement(PsiBuilder builder, boolean isUpperCase) {
-    return parse(builder, isUpperCase, true, false, false);
+  public static ReferenceElementResult parseReferenceElement(PsiBuilder builder, boolean isUpperCase, final boolean expressionPossible) {
+    return parse(builder, isUpperCase, true, false, false, expressionPossible);
   }
 
   public static ReferenceElementResult parse(PsiBuilder builder,
                                              boolean checkUpperCase,
                                              boolean parseTypeArgs,
-                                             boolean forImport, final boolean allowDiamond) {
+                                             boolean forImport, final boolean allowDiamond, boolean expressionPossible) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
     String lastIdentifier = builder.getTokenText();
@@ -108,7 +108,7 @@ public class ReferenceElement implements GroovyElementTypes {
         builder.advanceLexer();
         hasTypeArguments = true;
       } else {
-        hasTypeArguments = TypeArguments.parse(builder);
+        hasTypeArguments = TypeArguments.parseTypeArguments(builder, expressionPossible);
       }
 
     }
@@ -138,7 +138,7 @@ public class ReferenceElement implements GroovyElementTypes {
         return fail;
       }
 
-      hasTypeArguments = TypeArguments.parse(builder) || hasTypeArguments;
+      hasTypeArguments = TypeArguments.parseTypeArguments(builder, expressionPossible) || hasTypeArguments;
 
       internalTypeMarker.done(REFERENCE_ELEMENT);
       internalTypeMarker = internalTypeMarker.precede();

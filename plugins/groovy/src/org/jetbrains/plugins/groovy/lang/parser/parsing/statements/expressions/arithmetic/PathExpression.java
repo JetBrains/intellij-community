@@ -115,9 +115,9 @@ public class PathExpression implements GroovyElementTypes {
       }
       ParserUtils.getToken(builder, DOTS);
       ParserUtils.getToken(builder, mNLS);
-      TypeArguments.parse(builder);
+      TypeArguments.parseTypeArguments(builder, true);
       if (kNEW.equals(builder.getTokenType())) {
-        res = PrimaryExpression.newExprParse(builder, parser, marker);
+        res = PrimaryExpression.newExprParse(builder, parser);
       }
       else if (kTHIS.equals(builder.getTokenType()) || kSUPER.equals(builder.getTokenType())) {
         res = parseThisSuperExpression(builder, qualifierType);

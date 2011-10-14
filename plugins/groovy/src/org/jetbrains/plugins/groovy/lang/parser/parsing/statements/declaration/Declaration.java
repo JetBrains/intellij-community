@@ -24,11 +24,13 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.mustBeType;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -51,7 +53,7 @@ public class Declaration implements GroovyElementTypes {
     boolean modifiersParsed = Modifiers.parse(builder, parser);
 
     final boolean methodStart = mLT == builder.getTokenType();
-    final IElementType type = parseAfterModifiers(builder, isInClass, isInAnnotation, parser, declMarker, modifiersParsed);
+    final IElementType type = parseAfterModifiers(builder, isInClass, isInAnnotation, parser, modifiersParsed);
     if (type == WRONGWAY) {
       if (modifiersParsed && methodStart) {
         declMarker.error(GroovyBundle.message("method.definitions.expected"));
@@ -76,15 +78,16 @@ public class Declaration implements GroovyElementTypes {
 
   @Nullable
   public static IElementType parseAfterModifiers(PsiBuilder builder,
-                                            boolean isInClass,
-                                            boolean isInAnnotation,
-                                            GroovyParser parser,
-                                            PsiBuilder.Marker declMarker, boolean modifiersParsed) {
+                                                 boolean isInClass,
+                                                 boolean isInAnnotation,
+                                                 GroovyParser parser,
+                                                 boolean modifiersParsed) {
+    boolean expressionPossible = !isInAnnotation && !isInClass;
     if (modifiersParsed && mLT == builder.getTokenType()) {
       TypeParameters.parse(builder);
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (TypeSpec.parse(builder, true) == fail) { //if type wasn't recognized trying parse VariableDeclaration
+      if (TypeSpec.parse(builder, true, expressionPossible) == fail) { //if type wasn't recognized trying parse VariableDeclaration
         checkMarker.rollbackTo();
       } else {
         checkMarker.drop();
@@ -102,7 +105,8 @@ public class Declaration implements GroovyElementTypes {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (TypeSpec.parse(builder, false) == fail) { //if type wasn't recognized trying parse VariableDeclaration
+      ReferenceElement.ReferenceElementResult typeResult = TypeSpec.parse(builder, false, expressionPossible);
+      if (typeResult == fail) { //if type wasn't recognized trying parse VariableDeclaration
         checkMarker.rollbackTo();
 
         if (isInAnnotation) {
@@ -121,6 +125,11 @@ public class Declaration implements GroovyElementTypes {
         IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
+          if (typeResult == mustBeType) {
+            checkMarker.drop();
+            return VARIABLE_DEFINITION_ERROR;
+          }
+          
           checkMarker.rollbackTo();
 
           if (isInAnnotation) {
@@ -128,13 +137,7 @@ public class Declaration implements GroovyElementTypes {
           }
 
           //starts before "type" identifier, here can't be tuple, because next token is identifier (we are in "type recognized" branch)
-          IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
-
-          if (WRONGWAY.equals(varDecl)) {
-            return WRONGWAY;
-          } else {
-            return varDecl;
-          }
+          return VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
         } else {
           checkMarker.drop();
           return varDeclarationTop;
@@ -156,7 +159,7 @@ public class Declaration implements GroovyElementTypes {
 
       boolean typeParsed = false;
       if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
-        typeParsed = TypeSpec.parse(builder, true) != fail;
+        typeParsed = TypeSpec.parse(builder, true, expressionPossible) != fail;
         //type specification starts with upper case letter
         if (!typeParsed) {
           builder.error(GroovyBundle.message("type.specification.expected"));
@@ -167,8 +170,9 @@ public class Declaration implements GroovyElementTypes {
       IElementType varDef = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, false, typeParsed, false, parser);
       if (varDef != WRONGWAY) {
         return varDef;
-      } else if (isInClass && typeParsed) {
-        return typeParsed ? null : WRONGWAY;
+      }
+      if (isInClass && typeParsed) {
+        return null;
       }
 
       return WRONGWAY;

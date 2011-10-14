@@ -428,7 +428,7 @@ public class GroovyParser implements PsiParser {
       }
     }
 
-    final IElementType declType = Declaration.parseAfterModifiers(builder, false, false, this, declMarker, modifiersParsed);
+    final IElementType declType = Declaration.parseAfterModifiers(builder, false, false, this, modifiersParsed);
     if (declType != WRONGWAY) {
       if (declType != null) {
         declMarker.done(declType);

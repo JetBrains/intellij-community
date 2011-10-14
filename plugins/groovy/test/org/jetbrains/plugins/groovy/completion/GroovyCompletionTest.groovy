@@ -893,6 +893,14 @@ class Fopppp {
 
   public void testIfParenthesis() { checkCompletion 'int iff; if<caret>', '(', "int iff; if (<caret>)" }
 
+  public void testEnumPropertyType() {
+    checkSingleItemCompletion 'enum Foo {a,b; static List<StringBui<caret>>', "enum Foo {a,b; static List<StringBuilder<caret>>"
+  }
+
+  public void testEnumPropertyType2() {
+    checkSingleItemCompletion 'enum Foo {a,b; static List<StringBui<caret>', "enum Foo {a,b; static List<StringBuilder<caret>"
+  }
+
   public void testShowAccessor() {
     assertNotNull doContainsTest("getFoo", """
 class MyClass {

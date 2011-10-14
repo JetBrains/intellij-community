@@ -56,7 +56,10 @@ public class PrimaryExpression implements GroovyElementTypes {
       return SUPER_REFERENCE_EXPRESSION;
     }
     if (kNEW == tokenType) {
-      return newExprParse(builder, parser);
+      PsiBuilder.Marker marker = builder.mark();
+      final GroovyElementType type = newExprParse(builder, parser);
+      marker.done(type);
+      return type;
     }
     if (mIDENT == tokenType) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
@@ -110,24 +113,11 @@ public class PrimaryExpression implements GroovyElementTypes {
     return PARENTHESIZED_EXPRESSION;
   }
 
-  /**
-   * Parses 'new' expression
-   *
-   * @param builder
-   * @return
-   */
   public static GroovyElementType newExprParse(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker marker = builder.mark();
-    final GroovyElementType type = newExprParse(builder, parser, marker);
-    marker.done(type);
-    return type;
-  }
-
-  public static GroovyElementType newExprParse(PsiBuilder builder, GroovyParser parser, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, kNEW);
     ParserUtils.getToken(builder, mNLS);
     PsiBuilder.Marker rb = builder.mark();
-    TypeArguments.parse(builder);
+    TypeArguments.parseTypeArguments(builder, false);
     if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) && mIDENT != builder.getTokenType()) {
       rb.rollbackTo();
     }
@@ -142,7 +132,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     }
     else if (mIDENT == builder.getTokenType()) {
       name = builder.getTokenText();
-      ReferenceElement.parse(builder, false, true, false, true);
+      ReferenceElement.parse(builder, false, true, false, true, true);
     }
     else {
       builder.error(GroovyBundle.message("type.specification.expected"));

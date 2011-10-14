@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -67,7 +66,6 @@ public class ConstructorBody implements GroovyElementTypes {
   }
 
   private static boolean parseExplicitConstructor(PsiBuilder builder, GroovyParser parser) {
-    TypeArguments.parse(builder);
     boolean result = false;
     if (ParserUtils.lookAhead(builder, kTHIS, mLPAREN)) {
       final PsiBuilder.Marker marker = builder.mark();
