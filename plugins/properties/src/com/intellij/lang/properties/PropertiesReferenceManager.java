@@ -19,6 +19,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -39,13 +40,15 @@ import java.util.Locale;
  */
 public class PropertiesReferenceManager {
   private final PsiManager myPsiManager;
+  private final DumbService myDumbService;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return ServiceManager.getService(project, PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(PsiManager psiManager) {
+  public PropertiesReferenceManager(PsiManager psiManager, DumbService dumbService) {
     myPsiManager = psiManager;
+    myDumbService = dumbService;
   }
 
   @NotNull
@@ -57,6 +60,8 @@ public class PropertiesReferenceManager {
   public List<PropertiesFile> findPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
                                                   final String bundleName,
                                                   BundleNameEvaluator bundleNameEvaluator) {
+
+
     final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public boolean process(String baseName, PropertiesFile propertiesFile) {
@@ -124,7 +129,7 @@ public class PropertiesReferenceManager {
       }, searchScope);
     if (!result) return false;
 
-    return FileBasedIndex.getInstance()
+    return myDumbService.isDumb() || FileBasedIndex.getInstance()
       .processValues(XmlPropertiesIndex.NAME, XmlPropertiesIndex.MARKER_KEY, null, new FileBasedIndex.ValueProcessor<String>() {
         public boolean process(VirtualFile file, String value) {
           return processFile(file, evaluator, processor);
