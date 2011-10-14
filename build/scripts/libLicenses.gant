@@ -172,6 +172,7 @@ libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "sv
 libraryLicense(name: "Guava", version: "R8", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
 libraryLicense(name: "Gson", libraryName: "gson-1.3.jar", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/")
+libraryLicense(name: "ini4j", libraryName: "ini4j-0.5.2-SNAPSHOT.jar", version: "0.5.2", license: "Apache 2.0", url: "http://ini4j.sourceforge.net/", attachedTo: "git4idea")
 libraryLicense(name: "ISO RELAX", libraryName: "isorelax.jar", license: "MIT License", url: "http://sourceforge.net/projects/iso-relax/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
 libraryLicense(name: "JavaCVS", attachedTo: "javacvs-src", version: "no version number available (with patches by JetBrains)", license: "Sun Public License", url: "http://javacvs.netbeans.org/library/", licenseUrl: "http://www.netbeans.org/about/legal/spl.html")
 libraryLicense(name: "JAXB", libraryName: "JAXB", version: "2.1.10", license: "CDDL 1.1 & GPL 2", url: "http://jaxb.java.net/", licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html")

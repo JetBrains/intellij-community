@@ -20,11 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.testng.Assert.fail;
 
 /**
  * @author Kirill Likhodedov
@@ -109,4 +113,27 @@ public class GitTestUtil {
     return result.get();
   }
 
+  /**
+   * Testng compares by iterating over 2 collections, but it won't work for sets which may have different order.
+   */
+  public static <T> void assertEqualCollections(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+    if (actual.size() != expected.size()) {
+      fail("Collections don't have the same size. " + stringifyActualExpected(actual, expected));
+    }
+    for (T act : actual) {
+      if (!expected.contains(act)) {
+        fail("Unexpected object " + act + stringifyActualExpected(actual, expected));
+      }
+    }
+    // backwards is needed for collections which may contain duplicates, e.g. Lists.
+    for (T exp : expected) {
+      if (!actual.contains(exp)) {
+        fail("Object " + exp + " not found in actual collection." + stringifyActualExpected(actual, expected));
+      }
+    }
+  }
+
+  private static <T> String stringifyActualExpected(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+    return "\nExpected:\n" + expected + "\nActual:\n" + actual;
+  }
 }

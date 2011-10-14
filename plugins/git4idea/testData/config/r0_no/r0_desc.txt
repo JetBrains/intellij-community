@@ -1,0 +1,2 @@
+No remotes
+No remotes defined in .git/config => no remotes returned from GitConfig.getRemotes().

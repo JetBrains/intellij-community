@@ -64,6 +64,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   @Override
   public void after(List<? extends VFileEvent> events) {
     // which files in .git were changed
+    boolean configChanged = false;
     boolean headChanged = false;
     boolean branchFileChanged = false;
     boolean packedRefsChanged = false;
@@ -75,7 +76,9 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
         continue;
       }
       String filePath = GitFileUtils.stripFileProtocolPrefix(file.getPath());
-      if (myRepositoryFiles.isHeadFile(filePath)) {
+      if (myRepositoryFiles.isConfigFile(filePath)) {
+        configChanged = true;
+      } else if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
       } else if (myRepositoryFiles.isBranchFile(filePath) || myRepositoryFiles.isRemoteBranchFile(filePath)) {
         branchFileChanged = true;
@@ -136,6 +139,13 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           myRepository.update(GitRepository.TrackedTopic.BRANCHES);
+        }
+      });
+    }
+    if (configChanged) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          myRepository.updateConfig();
         }
       });
     }

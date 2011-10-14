@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
@@ -29,6 +30,9 @@ import git4idea.branch.GitBranchesCollection;
 import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.Collection;
 
 /**
  * <p>
@@ -70,6 +74,7 @@ public final class GitRepository implements Disposable {
   private volatile String myCurrentRevision;
   private volatile GitBranch myCurrentBranch;
   private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
+  private volatile GitConfig myConfig;
 
   /**
    * Current state of the repository.
@@ -154,6 +159,7 @@ public final class GitRepository implements Disposable {
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
     update(TrackedTopic.ALL);
+    updateConfig();
   }
 
   @Override
@@ -215,6 +221,25 @@ public final class GitRepository implements Disposable {
     return new GitBranchesCollection(myBranches);
   }
 
+  @NotNull
+  public GitConfig getConfig() {
+    return myConfig;
+  }
+
+  /**
+   * Returns remotes defined in this Git repository.
+   * It is different from {@link git4idea.repo.GitConfig#getRemotes()} because remotes may be defined not only in {@code .git/config},
+   * but in {@code .git/remotes/} or even {@code .git/branches} as well.
+   * On the other hand, it is a very old way to define remotes and we are not going to implement this until needed.
+   * See <a href="http://thread.gmane.org/gmane.comp.version-control.git/182960">discussion in the Git mailing list</a> that confirms
+   * that remotes a defined in {@code .git/config} only nowadays.
+   * @return GitRemotes defined for this repository.
+   */
+  @NotNull
+  public Collection<GitRemote> getRemotes() {
+    return myConfig.getRemotes();
+  }
+
   public boolean isMergeInProgress() {
     return getState() == State.MERGING;
   }
@@ -247,6 +272,11 @@ public final class GitRepository implements Disposable {
     for (TrackedTopic topic : topics) {
       topic.update(this);
     }
+  }
+  
+  void updateConfig() {
+    File configFile = new File(VfsUtil.virtualToIoFile(myGitDir), "config");
+    myConfig = GitConfig.read(configFile);
   }
 
   /**

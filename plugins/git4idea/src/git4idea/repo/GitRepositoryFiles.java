@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitRepositoryFiles {
   
+  private final String myConfigFilePath;
   private final String myHeadFilePath;
   private final String myIndexFilePath;
   private final String myMergeHeadPath;
@@ -48,6 +49,7 @@ public class GitRepositoryFiles {
 
     // save paths of the files, that we will watch
     String gitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
+    myConfigFilePath = gitDirPath + "/config";
     myHeadFilePath = gitDirPath + "/HEAD";
     myIndexFilePath = gitDirPath + "/index";
     myMergeHeadPath = gitDirPath + "/MERGE_HEAD";
@@ -56,6 +58,13 @@ public class GitRepositoryFiles {
     myPackedRefsPath = gitDirPath + "/packed-refs";
     myRefsHeadsDirPath = gitDirPath + "/refs/heads";
     myRefsRemotesDirPath = gitDirPath + "/refs/remotes";
+  }
+
+  /**
+   * {@code .git/config}
+   */
+  public boolean isConfigFile(String filePath) {
+    return filePath.equals(myConfigFilePath);
   }
 
   /**
