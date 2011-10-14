@@ -85,4 +85,8 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testVarVarargsAccess() throws Exception {
     doTest();
   }
+
+  public void testSkipNotAccessible() throws Exception {
+    doTest(false);
+  }
 }

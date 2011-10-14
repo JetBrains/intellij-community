@@ -583,7 +583,7 @@ public class DuplicatesFinder {
           }
         }
 
-        if (class2 != null) {
+        if (class2 != null && PsiUtil.isAccessible(method1, class2, null)) {
           final PsiMethod[] methods = class2.getAllMethods();
           if (ArrayUtil.find(methods, method1) != -1) return true;
         }
