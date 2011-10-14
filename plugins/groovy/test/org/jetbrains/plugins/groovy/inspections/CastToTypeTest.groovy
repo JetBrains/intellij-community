@@ -31,12 +31,12 @@ public class CastToTypeTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest(String name) {
-    myFixture.configureByFile(getTestName(false) + '.groovy')
+    myFixture.configureByFile(getTestName(true) + '.groovy')
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
     final IntentionAction quickFix = myFixture.findSingleIntention(name);
     assertNotNull(quickFix)
     myFixture.launchAction(quickFix)
-    myFixture.checkResultByFile(getTestName(false) + '_after.groovy')
+    myFixture.checkResultByFile(getTestName(true) + '_after.groovy')
   }
 
   void testSimple() {doTest('Cast to List<? extends Abc>')}
