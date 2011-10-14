@@ -107,13 +107,16 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     vcs.showErrors(exceptions, actionName);
   }
 
-  protected boolean isRebasing(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    if (files != null) {
-      for (VirtualFile file : files) {
-        if (GitRepositoryManager.getInstance(project).getRepositoryForFile(file).getState() == GitRepository.State.REBASING) {
-          return true;
+  protected static boolean isRebasing(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project != null) {
+      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      if (files != null) {
+        for (VirtualFile file : files) {
+          final GitRepository repositoryForFile = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+          if (repositoryForFile != null && repositoryForFile.getState() == GitRepository.State.REBASING) {
+            return true;
+          }
         }
       }
     }
