@@ -63,7 +63,7 @@ import java.lang.reflect.Modifier;
 public class CoreEnvironment {
   private CoreFileTypeRegistry myFileTypeRegistry;
   private CoreEncodingRegistry myEncodingRegistry;
-  private MockApplication myApplication;
+  protected final MockApplication myApplication;
   protected MockProject myProject;
   private CoreLocalFileSystem myLocalFileSystem;
   protected final CoreJarFileSystem myJarFileSystem;
