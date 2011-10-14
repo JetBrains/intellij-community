@@ -275,21 +275,25 @@ public class GenericPatchApplier {
         //if (pointCanBeUsed(textRangeInOldDocument) && (! mismatchSolver.isAllowMismatch() || fragmentResult.getEnd() - fragmentResult.getStart() > 1)) {
         if (pointCanBeUsed(textRangeInOldDocument)) {
           final int distance = fragmentResult.myDistance;
+          final int commonPart = fragmentResult.getEnd() - fragmentResult.getStart() + 1;
           int contextDistance = 0;
-          if (distance == 0) {
+          if (distance == 0 || commonPart < 2) {
             final int distanceBack = getDistanceBack(fragmentResult.getStart() - 1, splitHunk.getContextBefore());
             final int distanceInContextAfter = getDistance(fragmentResult.getEnd() + 1, splitHunk.getContextAfter());
             contextDistance = distanceBack + distanceInContextAfter;
           }
-          betterPoint.feed(new Point(distance, textRangeInOldDocument, fragmentResult.isContainAlreadyApplied(), contextDistance,
-                                     fragmentResult.getEnd() - fragmentResult.getStart()));
+          betterPoint.feed(new Point(distance, textRangeInOldDocument, fragmentResult.isContainAlreadyApplied(), contextDistance, commonPart));
         }
       }
     }
     final Point pointPoint = betterPoint.getPoint();
     if (pointPoint == null) return false;
-    if (! mismatchSolver.isAllowMismatch() && pointPoint.getDistance() > 0) {
-      return false;
+    if (! mismatchSolver.isAllowMismatch()) {
+      if (pointPoint.getDistance() > 0) return false;
+      if (pointPoint.myCommon < 2) {
+        final int contextCommon = splitHunk.getContextBefore().size() + splitHunk.getContextAfter().size() - pointPoint.myContextDistance;
+        if (contextCommon == 0) return false;
+      }
     }
     putCutIntoTransformations(pointPoint.getInOldDocument(), new MyAppliedData(splitHunk.getAfterAll(), pointPoint.myUsesAlreadyApplied,
         false, pointPoint.getDistance() == 0, ChangeType.REPLACE));
