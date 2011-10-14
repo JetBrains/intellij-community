@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
@@ -606,6 +607,11 @@ public class ControlFlowUtils {
 
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
     if (first == last) return true;
+    if (last instanceof AfterCallInstruction) {
+      visited[last.num()] = true;
+      return visitAllExitPointsInner(((AfterCallInstruction)last).call, first, visited, visitor);
+    }
+    
     if (last instanceof MaybeReturnInstruction) {
       return visitor.visitExitPoint(last, (GrExpression)last.getElement());
     }
@@ -643,6 +649,9 @@ public class ControlFlowUtils {
 
   @Nullable
   public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
+    if (place instanceof GrCodeBlock) {
+      place = place.getParent();
+    }
     while (true) {
       place = place.getParent();
       if (place == null) return null;

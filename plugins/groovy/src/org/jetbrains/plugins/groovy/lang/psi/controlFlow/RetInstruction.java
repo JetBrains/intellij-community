@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,32 +18,37 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
 
 /**
- * @author ven
- */
-public class CallInstruction extends InstructionImpl {
-  private final InstructionImpl myCallee;
-
-  public CallInstruction(int num, InstructionImpl callee) {
+* @author peter
+*/
+public class RetInstruction extends InstructionImpl {
+  public RetInstruction(int num) {
     super(null, num);
-    myCallee = callee;
   }
 
   public String toString() {
-    return super.toString() + " CALL " + myCallee.num();
-  }
-
-  public Iterable<? extends Instruction> succ(CallEnvironment env) {
-    getStack(env, myCallee).push(this);
-    return Collections.singletonList(myCallee);
-  }
-
-  public Iterable<? extends Instruction> allSucc() {
-    return Collections.singletonList(myCallee);
+    return super.toString() + " RETURN";
   }
 
   protected String getElementPresentation() {
     return "";
+  }
+
+  public Iterable<? extends Instruction> succ(CallEnvironment env) {
+    final Stack<CallInstruction> callStack = getStack(env, this);
+    if (callStack.isEmpty()) return Collections.emptyList();     //can be true in case env was not populated (e.g. by DFA)
+
+    final CallInstruction callInstruction = callStack.peek();
+    final List<InstructionImpl> succ = callInstruction.mySucc;
+    final Stack<CallInstruction> copy = (Stack<CallInstruction>)callStack.clone();
+    copy.pop();
+    for (InstructionImpl instruction : succ) {
+      env.update(copy, instruction);
+    }
+
+    return succ;
   }
 }

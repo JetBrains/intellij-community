@@ -69,11 +69,9 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
     }
   }
 
-  public static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final Editor editor, final int offset) {
-    int correctedOffset = GrIntroduceHandlerBase.correctOffset(editor, offset);
-    final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
+  private static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final Editor editor, final int offset) {
+    final PsiElement elementAtCaret = file.findElementAt(GrIntroduceHandlerBase.correctOffset(editor, offset));
     final List<GrControlFlowOwner> result = new ArrayList<GrControlFlowOwner>();
-
 
     for (GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(elementAtCaret);
          owner != null;
@@ -84,7 +82,6 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
   }
 
   private static void passInner(GrControlFlowOwner owner) {
-    final String cf = ControlFlowUtils.dumpControlFlow(owner.getControlFlow());
-    System.out.println(cf);
+    System.out.println(ControlFlowUtils.dumpControlFlow(owner.getControlFlow()));
   }
 }

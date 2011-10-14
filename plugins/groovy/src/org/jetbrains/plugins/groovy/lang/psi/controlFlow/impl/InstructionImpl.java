@@ -30,7 +30,7 @@ import java.util.Stack;
 public class InstructionImpl implements Instruction {
   ArrayList<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
 
-  ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
+  public ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
 
   PsiElement myPsiElement;
   private final int myNumber;

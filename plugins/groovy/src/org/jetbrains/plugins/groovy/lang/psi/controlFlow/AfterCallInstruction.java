@@ -15,8 +15,40 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
+
+import java.util.Collections;
+
 /**
  * @author ven
  */
-public interface AfterCallInstruction extends Instruction {
+public class AfterCallInstruction extends InstructionImpl {
+  public final CallInstruction call;
+  private RetInstruction myReturnInsn;
+
+  public AfterCallInstruction(int num, CallInstruction call) {
+    super(null, num);
+    this.call = call;
+  }
+
+  public String toString() {
+    return super.toString() + "AFTER CALL " + call.num();
+  }
+
+  public Iterable<? extends Instruction> allPred() {
+    return Collections.singletonList(myReturnInsn);
+  }
+
+  public Iterable<? extends Instruction> pred(CallEnvironment env) {
+    getStack(env, myReturnInsn).push(call);
+    return Collections.singletonList(myReturnInsn);
+  }
+
+  protected String getElementPresentation() {
+    return "";
+  }
+
+  public void setReturnInstruction(RetInstruction retInstruction) {
+    myReturnInsn = retInstruction;
+  }
 }
