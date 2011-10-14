@@ -1,6 +1,8 @@
 <idea-plugin version="2">
   <!-- Components and extensions declared in this file work both in PyCharm and Python plugin. -->
 
+  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
@@ -215,7 +217,7 @@
     <testGenerator implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestGenerator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
-    <stubElementTypeHolder class="com.jetbrains.cython.CythonElementTypes"/>
+    <stubElementTypeHolder class="com.jetbrains.cython.psi.elementTypes.CythonElementTypes"/>
 
     <localInspection language="Python" shortName="PyArgumentListInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
@@ -649,10 +651,16 @@
                             implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
     <completion.contributor language="Mako"
                             implementationClass="com.jetbrains.mako.editor.MakoFunctionsCompletionContributor"/>
+    <completion.contributor language="HTML"
+                            implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
+    <completion.contributor language="XML"
+                            implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
 
     <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
                   id="MakoBracesHandler"/>
     <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
+    <editorHighlighterProvider filetype="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoEditorHighlighterProvider"/>
+    <lang.findUsagesProvider language="Mako" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
 
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
@@ -870,8 +878,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <support implementation="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
-    <support implementation="com.jetbrains.python.spellchecker.RestSpellcheckerStrategy"/>
+    <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
+    <support language="ReST" implementationClass="com.jetbrains.python.spellchecker.RestSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
 
