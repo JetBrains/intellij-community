@@ -66,7 +66,10 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   public ClipboardSynchronizer() {
-    if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isMac) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && ApplicationManager.getApplication().isUnitTestMode()) {
+      myClipboardHandler = new HeadlessClipboardHandler();
+    }
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isMac) {
       myClipboardHandler = new MacClipboardHandler();
     }
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isLinux) {
@@ -396,6 +399,31 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
 
       return null;
+    }
+  }
+
+  private static class HeadlessClipboardHandler extends ClipboardHandler {
+    private volatile Transferable myContent = null;
+
+    @Override
+    public boolean isDataFlavorAvailable(@NotNull final DataFlavor dataFlavor) {
+      final Transferable content = myContent;
+      return content != null && content.isDataFlavorSupported(dataFlavor);
+    }
+
+    @Override
+    public Transferable getContents() throws IllegalStateException {
+      return myContent;
+    }
+
+    @Override
+    public void setContent(@NotNull Transferable content, @NotNull ClipboardOwner owner) {
+      myContent = content;
+    }
+
+    @Override
+    public void resetContent() {
+      myContent = null;
     }
   }
 }
