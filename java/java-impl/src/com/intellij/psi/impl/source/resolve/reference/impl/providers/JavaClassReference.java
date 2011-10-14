@@ -231,7 +231,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       final PsiClass aClass = (PsiClass)context;
 
       if (myInStaticImport) {
-        return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields());
+        return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), ArrayUtil.OBJECT_ARRAY_FACTORY);
       }
       else if (isDefinitelyStatic()) {
         final PsiClass[] psiClasses = aClass.getInnerClasses();
