@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
@@ -35,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
@@ -61,6 +63,7 @@ public class CoreEnvironment {
   private MockApplication myApplication;
   protected MockProject myProject;
   private CoreLocalFileSystem myLocalFileSystem;
+  protected final CoreJarFileSystem myJarFileSystem;
   private MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
 
@@ -89,6 +92,7 @@ public class CoreEnvironment {
     }};
     ApplicationComponentLocator.setInstance(myApplication);
     myLocalFileSystem = new CoreLocalFileSystem();
+    myJarFileSystem = new CoreJarFileSystem();
 
     Extensions.registerAreaClass("IDEA_PROJECT", null);
     myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
@@ -104,6 +108,8 @@ public class CoreEnvironment {
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
+
+    registerExtensionPoint(Extensions.getRootArea(), ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();

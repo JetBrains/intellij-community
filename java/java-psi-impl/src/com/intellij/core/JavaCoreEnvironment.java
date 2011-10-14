@@ -20,18 +20,26 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 
+import java.io.File;
+
 /**
  * @author yole
  */
 public class JavaCoreEnvironment extends CoreEnvironment {
+  private final CoreJavaFileManager myFileManager;
+  
   public JavaCoreEnvironment(Disposable parentDisposable) {
     super(parentDisposable);
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, null, null);
+    myFileManager = new CoreJavaFileManager(myPsiManager, myJarFileSystem);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
     registerComponentInstance(myProject.getPicoContainer(),
                               JavaPsiFacade.class,
                               javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+  }
 
+  public void addToClasspath(File path) {
+    myFileManager.addToClasspath(path);
   }
 }

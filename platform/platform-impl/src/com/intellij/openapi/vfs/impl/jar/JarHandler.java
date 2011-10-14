@@ -38,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class JarHandler extends CoreJarHandler implements FileSystemInterface {
+public class JarHandler extends JarHandlerBase implements FileSystemInterface {
   @NonNls private static final String JARS_FOLDER = "jars";
 
   private final JarFileSystemImpl myFileSystem;
