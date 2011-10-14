@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -43,8 +42,7 @@ public class CollectHighlightsUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil");
 
-  private CollectHighlightsUtil() {
-  }
+  private CollectHighlightsUtil() { }
 
   @NotNull
   public static List<PsiElement> getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
@@ -159,10 +157,6 @@ public class CollectHighlightsUtil {
       return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }
     return root.findElementAt(offset);
-  }
-
-  public static boolean isOutsideSourceRootJavaFile(@Nullable PsiFile psiFile) {
-    return psiFile != null && psiFile.getFileType() == StdFileTypes.JAVA && isOutsideSourceRoot(psiFile);
   }
 
   public static boolean isOutsideSourceRoot(@Nullable PsiFile psiFile) {

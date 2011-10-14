@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
+import com.intellij.refactoring.rename.JavaVetoRenameCondition;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -51,6 +52,8 @@ import java.util.Arrays;
 
 public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#" + JavaMoveClassesOrPackagesHandler.class.getName());
+  private static final JavaVetoRenameCondition VETO_RENAME_CONDITION = new JavaVetoRenameCondition();
+
   public static boolean isPackageOrDirectory(final PsiElement element) {
     if (element instanceof PsiPackage) return true;
     return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
@@ -89,8 +92,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       if (((PsiClass)element).getContainingClass() != null) return true;
       parentFile = element.getContainingFile();
     }
-    if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(parentFile)) return true;
-    return false;
+    return parentFile instanceof PsiJavaFile && CollectHighlightsUtil.isOutsideSourceRoot(parentFile);
   }
 
   @Override
@@ -302,7 +304,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        }
        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
        if (aPackage == null) return false;
-       if ("".equals(aPackage.getQualifiedName())) return false;
+       if (aPackage.getQualifiedName().isEmpty()) return false;
        final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(element.getProject()).getFileIndex()
          .getSourceRootForFile(directory.getVirtualFile());
        if (sourceRootForFile == null) return false;
@@ -327,9 +329,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         }
       }
       else if (element instanceof PsiFile) {
-        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) &&
-                   ((PsiJavaFile)element).getClasses().length > 0 && !CollectHighlightsUtil
-          .isOutsideSourceRootJavaFile((PsiJavaFile)element);
+        allJava &= VETO_RENAME_CONDITION.value(element);
       }
       else {
         return true;

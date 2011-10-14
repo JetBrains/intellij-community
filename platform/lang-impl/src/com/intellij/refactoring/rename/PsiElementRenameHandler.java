@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,8 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   static @Nullable String renameabilityStatus(Project project, PsiElement element) {
     if (element == null) return "";
-    if (!(element instanceof PsiFile) && CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return "";
+    if (!(element instanceof PsiFile) &&
+        CollectHighlightsUtil.isOutsideSourceRoot(element.getContainingFile())) return "";
 
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
@@ -119,17 +120,18 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (!PsiManager.getInstance(project).isInProject(element)) {
       if (element.isPhysical()) {
-        return RefactoringBundle
-            .getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
+        final String message = RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element));
+        return RefactoringBundle.getCannotRefactorMessage(message);
       }
 
       if (!element.isWritable()) {
-        return RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
+        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.cannot.be.renamed"));
       }
     }
 
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {
-      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element)));
+      final String message = RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element));
+      return RefactoringBundle.getCannotRefactorMessage(message);
     }
 
     return null;

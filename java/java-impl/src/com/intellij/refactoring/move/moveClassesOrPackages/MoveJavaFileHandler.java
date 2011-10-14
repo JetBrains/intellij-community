@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,12 @@ import java.util.Map;
 
 public class MoveJavaFileHandler extends MoveFileHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaFileHandler");
+
   @Override
   public boolean canProcessElement(PsiFile element) {
-    return element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutsideSourceRootJavaFile(element);
+    return element instanceof PsiJavaFile &&
+           !JspPsiUtil.isInJspFile(element) &&
+           !CollectHighlightsUtil.isOutsideSourceRoot(element);
   }
 
   @Override
