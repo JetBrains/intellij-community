@@ -120,7 +120,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myCoverageNotSupportedLabel.setVisible(!isJre50);
 
     final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
-    final CoverageRunner runner = configuration.getCoverageRunner();
+    CoverageRunner runner = configuration.getCoverageRunner();
     if (runner != null) {
       myCoverageRunnerCb.setSelectedItem(new CoverageRunnerItem(runner));
     } else {
@@ -135,6 +135,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       } else {
         myCoverageRunnerCb.setSelectedIndex(0);
       }
+      runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
     }
     UIUtil.setEnabled(myRunnerPanel, isJre50, true);
 
