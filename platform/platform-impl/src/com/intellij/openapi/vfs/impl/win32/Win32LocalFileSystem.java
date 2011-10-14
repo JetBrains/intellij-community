@@ -52,7 +52,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
             ourIsAvailable = true;
           }
           catch (Throwable t2) {
-            LOG.error("Failed to load native win32 system", t2);
+            LOG.warn("Failed to load native win32 system", t2);
             ourIsAvailable = false;
           }
         }
