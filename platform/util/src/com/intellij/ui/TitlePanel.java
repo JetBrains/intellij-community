@@ -40,8 +40,8 @@ public class TitlePanel extends CaptionPanel {
     myRegular = regular;
     myInactive = inactive;
 
-    myLabel = new JLabel();
-    myLabel.setOpaque(false);
+    myLabel = new EngravedLabel();
+    myLabel.setFont(myLabel.getFont().deriveFont(12f));
     myLabel.setForeground(Color.black);
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
