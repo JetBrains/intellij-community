@@ -165,10 +165,10 @@ public final class UpdateChecker {
         toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
       }
     }
-
+    final UpdateSettings updateSettings = UpdateSettings.getInstance();
+    updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
-        final UpdateSettings updateSettings = UpdateSettings.getInstance();
         final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(null);
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();

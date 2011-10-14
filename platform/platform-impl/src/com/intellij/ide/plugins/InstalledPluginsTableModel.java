@@ -193,9 +193,13 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
     int state = StringUtil.compareVersionNumbers(descr.getVersion(), existing.getVersion());
     final PluginId pluginId = existing.getPluginId();
+    final String idString = pluginId.getIdString();
+    final UpdateSettings updateSettings = UpdateSettings.getInstance();
     if (state > 0 && !PluginManager.isIncompatible(descr) && !updatedPlugins.contains(descr.getPluginId())) {
       NewVersions2Plugins.put(pluginId, 1);
-      UpdateSettings.getInstance().myOutdatedPlugins.add(pluginId.getIdString());
+      if (!updateSettings.myOutdatedPlugins.contains(idString)) {
+        updateSettings.myOutdatedPlugins.add(idString);
+      }
 
       final IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)existing;
       plugin.setDownloadsCount(descr.getDownloads());
@@ -205,7 +209,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       plugin.setUrl(descr.getUrl());
 
     } else {
-      UpdateSettings.getInstance().myOutdatedPlugins.remove(pluginId.getIdString());
+      updateSettings.myOutdatedPlugins.remove(idString);
       if (NewVersions2Plugins.remove(pluginId) != null) {
         updatedPlugins.add(pluginId);
       }
