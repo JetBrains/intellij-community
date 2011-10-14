@@ -1205,7 +1205,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
             if (dominantContentFile != null) {
               dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-              newFc.putUserData(PSI_FILE, dominantContentFile);
+              newFc.putUserData(IndexingDataKeys.PSI_FILE, dominantContentFile);
             }
 
             if (content instanceof AuthenticContent) {
@@ -1213,7 +1213,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
 
             if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
-              newFc.putUserData(PROJECT, project);
+              newFc.putUserData(IndexingDataKeys.PROJECT, project);
               final int inputId = Math.abs(getFileId(vFile));
               getIndex(requestedIndexId).update(inputId, newFc);
             }
@@ -1235,9 +1235,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return true;
   }
 
-  public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
-  public static final Key<Project> PROJECT = new Key<Project>("Context project");
 
   @Nullable
   private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {
@@ -1361,15 +1359,15 @@ public class FileBasedIndex implements ApplicationComponent {
           }
           fc = new FileContentImpl(file, currentBytes);
 
-          psiFile = content.getUserData(PSI_FILE);
+          psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
           if (psiFile != null) {
             psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-            fc.putUserData(PSI_FILE, psiFile);
+            fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
           }
           if (project == null) {
             project = ProjectUtil.guessProjectForFile(file);
           }
-          fc.putUserData(PROJECT, project);
+          fc.putUserData(IndexingDataKeys.PROJECT, project);
         }
 
         try {

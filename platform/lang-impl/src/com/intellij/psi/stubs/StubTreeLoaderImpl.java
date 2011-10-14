@@ -24,10 +24,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.indexing.IndexingStamp;
+import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -52,7 +49,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
-      fc.putUserData(FileBasedIndex.PROJECT, project);
+      fc.putUserData(IndexingDataKeys.PROJECT, project);
       final StubElement element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
         return new StubTree((PsiFileStub)element);

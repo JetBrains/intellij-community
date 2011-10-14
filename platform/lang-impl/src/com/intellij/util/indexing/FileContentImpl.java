@@ -18,7 +18,7 @@ package com.intellij.util.indexing;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -47,7 +47,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   private CharSequence myContentAsText;
 
   public Project getProject() {
-    return getUserData(FileBasedIndex.PROJECT);
+    return getUserData(IndexingDataKeys.PROJECT);
   }
 
   private final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
@@ -58,7 +58,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   @NotNull
   @Override
   public PsiFile getPsiFile() {
-    PsiFile psi = getUserData(FileBasedIndex.PSI_FILE);
+    PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
 
     if (psi == null) {
       psi = getUserData(CACHED_PSI);
@@ -102,7 +102,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     myContentAsText = contentAsText;
     myContent = content;
     myCharset = charset;
-    myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    myFileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
   }

@@ -15,14 +15,18 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 
 /**
  * @author yole
  */
 public class IndexingDataKeys {
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
+  public static final Key<Project> PROJECT = new Key<Project>("Context project");
+  public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
 
   private IndexingDataKeys() {
   }
