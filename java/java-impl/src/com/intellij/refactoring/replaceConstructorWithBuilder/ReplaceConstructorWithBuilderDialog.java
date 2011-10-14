@@ -41,7 +41,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
@@ -250,7 +249,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
           myExistentClassTF.setText(selectedClass.getQualifiedName());
         }
       }
-    }, "", PsiManager.getInstance(myProject), true, RECENT_KEYS);
+    }, "", myProject, true, RECENT_KEYS);
     myExistentClassTF.getChildComponent().getDocument().addDocumentListener(adapter);
   }
 

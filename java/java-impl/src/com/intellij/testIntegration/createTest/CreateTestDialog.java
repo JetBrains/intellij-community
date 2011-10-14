@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
@@ -59,7 +58,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -191,8 +189,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    mySuperClassField = JavaReferenceEditorUtil
-      .createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
+    mySuperClassField = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", myProject, true);
     mySuperClassField.setMinimumSize(mySuperClassField.getPreferredSize());
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";

@@ -44,11 +44,10 @@ public class ClassNameInputDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myEditorTextField1 = new EditorTextField("", myProject, StdFileTypes.JAVA);
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
+    PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
     final PsiCodeFragment fragment = factory.createReferenceCodeFragment("", defaultPackage, true, true);
-    myEditorTextField1.setDocument(PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment));
+    myEditorTextField1.setDocument(PsiDocumentManager.getInstance(myProject).getDocument(fragment));
   }
 
   @Override

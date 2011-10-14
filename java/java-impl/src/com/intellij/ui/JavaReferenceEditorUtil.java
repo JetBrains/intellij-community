@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nullable;
@@ -31,31 +32,31 @@ public class JavaReferenceEditorUtil {
 
   public static ReferenceEditorWithBrowseButton createReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                                                                       final String text,
-                                                                                      final PsiManager manager,
+                                                                                      final Project project,
                                                                                       final boolean toAcceptClasses) {
-    return new ReferenceEditorWithBrowseButton(browseActionListener, manager.getProject(),
+    return new ReferenceEditorWithBrowseButton(browseActionListener, project,
                                                new NullableFunction<String,Document>() {
       public Document fun(final String s) {
-        return createDocument(s, manager, toAcceptClasses);
+        return createDocument(s, project, toAcceptClasses);
       }
     }, text);
   }
 
   @Nullable
-  public static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
-    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final JavaCodeFragment fragment = elementFactory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
+  public static Document createDocument(final String text, Project project, boolean isClassesAccepted) {
+    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
+    final JavaCodeFragment fragment = factory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+    return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
   @Nullable
-  public static Document createTypeDocument(final String text, PsiManager manager) {
-    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final JavaCodeFragment fragment = elementFactory.createTypeCodeFragment(text, defaultPackage, true);
+  public static Document createTypeDocument(final String text, Project project) {
+    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
+    final JavaCodeFragment fragment = factory.createTypeCodeFragment(text, defaultPackage, true);
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+    return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 }

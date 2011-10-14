@@ -12,7 +12,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
     final PsiReference iRef = configure();
 
     PsiElement context = PsiTreeUtil.getParentOfType(iRef.getElement(), PsiCodeBlock.class);
-    JavaCodeFragment codeFragment = JavaPsiFacade.getInstance(myProject).getElementFactory()
+    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject)
       .createExpressionCodeFragment(iRef.getElement().getText(), context, null, true);
     codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
@@ -30,7 +30,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
   }
 
   public void testjavaLangClass() throws Exception {
-    PsiCodeFragment codeFragment = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionCodeFragment(
+    PsiCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
           "Boolean.getBoolean(\"true\")", null, null, true);
 
     PsiElement[] fileContent = codeFragment.getChildren();

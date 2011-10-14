@@ -281,7 +281,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
           existingClassField.setText(selectedClass.getQualifiedName());
         }
       }
-    }, "", PsiManager.getInstance(myProject), true, RECENT_KEYS);
+    }, "", myProject, true, RECENT_KEYS);
     existingClassField.getChildComponent().getDocument().addDocumentListener(adapter);
 
     myDestinationCb = new DestinationFolderComboBox() {

@@ -86,7 +86,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     return PsiClassControl.initReferenceEditorWithBrowseButton(boundedComponent,
                                                                 new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
                                                                   public Document fun(final String s) {
-                                                                    return JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
+                                                                    return JavaReferenceEditorUtil.createTypeDocument(s, project);
                                                                   }
                                                                 }, ""), this);
   }

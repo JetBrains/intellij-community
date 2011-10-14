@@ -306,7 +306,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
           RecentsManager.getInstance(myProject).registerRecentEntry(EXISTING_KEY, className);
         }
       }
-    }, "", PsiManager.getInstance(myProject), true, EXISTING_KEY);
+    }, "", myProject, true, EXISTING_KEY);
 
     existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       @Override

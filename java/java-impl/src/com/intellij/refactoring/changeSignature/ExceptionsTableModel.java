@@ -113,8 +113,8 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
   }
 
   public PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory();
-    return elementFactory.createTypeCodeFragment(typeText, context, true, PsiElementFactory.ALLOW_ELLIPSIS);
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myContext.getProject());
+    return factory.createTypeCodeFragment(typeText, context, true, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
   }
 
   public PsiTypeCodeFragment[] getTypeCodeFragments() {

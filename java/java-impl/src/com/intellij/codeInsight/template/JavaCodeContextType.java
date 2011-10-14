@@ -18,7 +18,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.completion.JavaCompletionData;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -41,7 +41,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
+    if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(offset);
       if (element instanceof PsiWhiteSpace) {
         return false;
@@ -66,7 +66,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       return super.createDocument(text, project);
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final JavaCodeFragment fragment = factory.createCodeBlockCodeFragment((String)text, psiFacade.findPackage(""), true);
     DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(fragment, false);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);

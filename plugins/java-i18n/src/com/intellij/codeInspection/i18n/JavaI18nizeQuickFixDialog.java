@@ -106,8 +106,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     myShowPreview = showPreview;
 
     myResourceBundleSuggester.setLayout(new BorderLayout());
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     PsiClass resourceBundle = myResourceBundleManager.getResourceBundle();
 
     myShowJavaCodeInfo = showJavaCodeInfo && myResourceBundleManager.canShowJavaCodeInfo();
@@ -116,8 +115,9 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       LOG.assertTrue(resourceBundle != null);
       myResourceBundleType = factory.createType(resourceBundle);
       @NonNls String defaultVarName = "resourceBundle";
+      final JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(project);
       PsiExpressionCodeFragment expressionCodeFragment =
-        factory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
+        codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
       myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);

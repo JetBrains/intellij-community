@@ -31,7 +31,6 @@ import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -398,18 +397,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   @Override
-  public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull final String text,
-                                                                      final PsiElement context,
-                                                                      final boolean isPhysical,
-                                                                      final boolean isClassesAccepted) {
-    final PsiJavaCodeReferenceCodeFragmentImpl result =
-      new PsiJavaCodeReferenceCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, isClassesAccepted);
-    result.setContext(context);
-    return result;
-  }
-
-  @NotNull
-  @Override
   public PsiImportStaticStatement createImportStaticStatement(@NotNull final PsiClass aClass,
                                                               @NotNull final String memberName) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
@@ -591,41 +578,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  @NotNull
-  @Override
-  public PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull final String text,
-                                                                final PsiElement context,
-                                                                final PsiType expectedType,
-                                                                final boolean isPhysical) {
-    final PsiExpressionCodeFragmentImpl result =
-      new PsiExpressionCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, expectedType);
-    result.setContext(context);
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public JavaCodeFragment createCodeBlockCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
-    final PsiCodeFragmentImpl result =
-      new PsiCodeFragmentImpl(myManager.getProject(), JavaElementType.STATEMENTS, isPhysical, "fragment.java", text);
-    result.setContext(context);
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
-    return createTypeCodeFragment(text, context, isPhysical, 0);
-  }
-
-  @NotNull
-  @Override
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical, final int flags) {
-    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, flags);
-    result.setContext(context);
-    return result;
   }
 
   @NotNull

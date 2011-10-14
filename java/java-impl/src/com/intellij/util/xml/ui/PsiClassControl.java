@@ -58,8 +58,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     if (boundedComponent == null) {
       boundedComponent = new PsiClassPanel();
     }
-    ReferenceEditorWithBrowseButton editor = JavaReferenceEditorUtil
-        .createReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
+    ReferenceEditorWithBrowseButton editor = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(null, "", project, true);
     Document document = editor.getChildComponent().getDocument();
     PsiCodeFragmentImpl fragment = (PsiCodeFragmentImpl) PsiDocumentManager.getInstance(project).getPsiFile(document);
     assert fragment != null;

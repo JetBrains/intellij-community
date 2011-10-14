@@ -78,9 +78,9 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     if (parameterInfo == null) {
       parameterInfo = new ParameterInfoImpl(-1);
     }
-    PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    JavaCodeFragmentFactory f = JavaCodeFragmentFactory.getInstance(myProject);
     final PsiTypeCodeFragment paramTypeCodeFragment =
-      f.createTypeCodeFragment(parameterInfo.getTypeText(), myTypeContext, true, PsiElementFactory.ALLOW_ELLIPSIS);
+      f.createTypeCodeFragment(parameterInfo.getTypeText(), myTypeContext, true, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     final CanonicalTypes.Type paramType = parameterInfo.getTypeWrapper();
     if (paramType != null) {
       paramType.addImportsTo(paramTypeCodeFragment);

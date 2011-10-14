@@ -72,7 +72,6 @@ public class TypeMigrationDialog extends RefactoringDialog {
     myRoot = root;
     myRules = rules;
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiType migrationRootType = rules != null ? rules.getMigrationRootType() : null;
     final PsiType rootType = getRootType();
     final String text = migrationRootType != null ? migrationRootType.getPresentableText()
@@ -81,13 +80,13 @@ public class TypeMigrationDialog extends RefactoringDialog {
     if (root instanceof PsiParameter) {
       final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
       if (scope instanceof PsiMethod) {
-        flags |= PsiElementFactory.ALLOW_ELLIPSIS;
+        flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
       }
       else if (scope instanceof PsiCatchSection && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
-        flags |= PsiElementFactory.ALLOW_DISJUNCTION;
+        flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
       }
     }
-    myTypeCodeFragment = elementFactory.createTypeCodeFragment(text, root, true, flags);
+    myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(myTypeCodeFragment);

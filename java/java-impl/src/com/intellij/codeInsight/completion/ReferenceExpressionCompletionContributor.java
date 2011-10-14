@@ -384,7 +384,7 @@ public class ReferenceExpressionCompletionContributor {
                                              final Consumer<LookupElement> result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(place.getProject());
     PsiType varType = qualifierType;
     if (varType instanceof PsiEllipsisType) {
       varType = ((PsiEllipsisType)varType).getComponentType();
@@ -394,7 +394,7 @@ public class ReferenceExpressionCompletionContributor {
     }
 
     final String typeText = varType.getCanonicalText();
-    final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
+    final JavaCodeFragment block = factory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
     final PsiElement secondChild = block.getChildren()[1];
     if (!(secondChild instanceof PsiExpressionStatement)) {
       LOG.error(typeText + " of " + varType.getClass());

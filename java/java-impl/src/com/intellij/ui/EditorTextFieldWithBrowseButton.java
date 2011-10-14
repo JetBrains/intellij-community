@@ -32,19 +32,19 @@ public class EditorTextFieldWithBrowseButton extends ComponentWithBrowseButton<E
   public EditorTextFieldWithBrowseButton(Project project,
                                          boolean isClassAccepted,
                                          final JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    super(new EditorTextField(createDocument("", PsiManager.getInstance(project), isClassAccepted,
+    super(new EditorTextField(createDocument("", project, isClassAccepted,
                                              visibilityChecker), project, StdFileTypes.JAVA), null);
   }
 
   private static Document createDocument(final String text,
-                                         PsiManager manager,
+                                         Project project,
                                          boolean isClassesAccepted,
                                          JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    PsiElement defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
-      .createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
+    PsiElement defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
+    final JavaCodeFragment fragment = factory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setVisibilityChecker(visibilityChecker);
-    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+    return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
   @Override

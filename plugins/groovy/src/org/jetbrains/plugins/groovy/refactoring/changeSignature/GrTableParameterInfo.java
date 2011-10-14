@@ -36,14 +36,14 @@ public class GrTableParameterInfo {
     final Project project = parameter.getProject();
     myName = new GroovyCodeFragment(project, parameter.getName());
     final PsiType type = parameter.getDeclaredType();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     if (type != null) {
       String typeText = type.getCanonicalText();
       if (typeText == null) typeText = type.getPresentableText();
-      myType = factory.createTypeCodeFragment(typeText, parameter, true, PsiElementFactory.ALLOW_VOID | PsiElementFactory.ALLOW_ELLIPSIS);
+      myType = factory.createTypeCodeFragment(typeText, parameter, true, JavaCodeFragmentFactory.ALLOW_VOID | JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     }
     else {
-      myType = factory.createTypeCodeFragment("", parameter, true, PsiElementFactory.ALLOW_VOID | PsiElementFactory.ALLOW_ELLIPSIS);
+      myType = factory.createTypeCodeFragment("", parameter, true, JavaCodeFragmentFactory.ALLOW_VOID | JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     }
     final GrExpression defaultInitializer = parameter.getDefaultInitializer();
     if (defaultInitializer != null) {
@@ -59,7 +59,7 @@ public class GrTableParameterInfo {
     this.myPosition = -1;
     myName = new GroovyCodeFragment(project, "");
     myDefaultValue = new GroovyCodeFragment(project, "");
-    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", context, true, PsiElementFactory.ALLOW_VOID);
+    myType = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment("", context, true, JavaCodeFragmentFactory.ALLOW_VOID);
     myDefaultInitializer = new GroovyCodeFragment(project, "");
   }
 
@@ -72,7 +72,7 @@ public class GrTableParameterInfo {
     this.myPosition = -1;
     myName = new GroovyCodeFragment(project, name);
     myDefaultValue = new GroovyCodeFragment(project, defaultValue);
-    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type, context, true, PsiElementFactory.ALLOW_VOID);
+    myType = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(type, context, true, JavaCodeFragmentFactory.ALLOW_VOID);
     myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer);
   }
 

@@ -157,7 +157,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
           }
 
         }
-      }, "", PsiManager.getInstance(myContext.project), true, RECENTS_KEY);
+      }, "", myContext.project, true, RECENTS_KEY);
     myTargetClassPanel.setLayout(new BorderLayout());
     myTargetClassPanel.add(myTargetClassLabel, BorderLayout.NORTH);
     myTargetClassPanel.add(myTargetClassEditor, BorderLayout.CENTER);

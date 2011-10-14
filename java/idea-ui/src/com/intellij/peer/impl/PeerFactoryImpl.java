@@ -186,7 +186,7 @@ public class PeerFactoryImpl extends PeerFactory {
 
     public TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project) {
       final PsiExpressionCodeFragment fragment =
-        JavaPsiFacade.getInstance(project).getElementFactory().createExpressionCodeFragment(text, context, type, true);
+        JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, context, type, true);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
       return new EditorTextField(document, project, StdFileTypes.JAVA);
     }

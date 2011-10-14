@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
@@ -31,10 +32,10 @@ import java.util.List;
 public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
                                               final String text,
-                                              @NotNull final PsiManager manager,
+                                              @NotNull final Project project,
                                               boolean toAcceptClasses, final String recentsKey) {
-    super(new EditorComboBox(createDocument(text, manager, toAcceptClasses), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
-    final List<String> recentEntries = RecentsManager.getInstance(manager.getProject()).getRecentEntries(recentsKey);
+    super(new EditorComboBox(createDocument(text, project, toAcceptClasses), project, StdFileTypes.JAVA), browseActionListener);
+    final List<String> recentEntries = RecentsManager.getInstance(project).getRecentEntries(recentsKey);
     if (recentEntries != null) {
       setHistory(ArrayUtil.toStringArray(recentEntries));
     }
@@ -43,11 +44,11 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     }
   }
 
-  private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
+  private static Document createDocument(final String text, Project project, boolean isClassesAccepted) {
+    PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+    final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+    return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
   public String getText(){

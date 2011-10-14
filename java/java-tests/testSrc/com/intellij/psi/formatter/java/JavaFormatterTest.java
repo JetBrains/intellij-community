@@ -6,10 +6,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -1139,7 +1136,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testFormatCodeFragment() throws Exception {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(getProject());
     final PsiCodeFragment fragment = factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true);
     final PsiElement[] result = new PsiElement[1];
 

@@ -38,25 +38,25 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
   private PsiClass mySelectedClass;
   private String myChooserTitle;
 
-  public ClassNameReferenceEditor(@NotNull final PsiManager manager, @Nullable final PsiClass selectedClass) {
-    this(manager, selectedClass, null);
+  public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass) {
+    this(project, selectedClass, null);
   }
 
-  public ClassNameReferenceEditor(@NotNull final PsiManager manager, @Nullable final PsiClass selectedClass,
+  public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass,
                                   @Nullable final GlobalSearchScope resolveScope) {
-    super(null, manager.getProject(), new Function<String,Document>() {
+    super(null, project, new Function<String,Document>() {
       public Document fun(final String s) {
-        PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-        final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(s, defaultPackage, true, true);
+        PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+        final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
         fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
         if (resolveScope != null) {
           fragment.forceResolveScope(resolveScope);
         }
-        return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+        return PsiDocumentManager.getInstance(project).getDocument(fragment);
       }
     }, selectedClass != null ? selectedClass.getQualifiedName() : "");
 
-    myProject = manager.getProject();
+    myProject = project;
     myChooserTitle = "Choose Class";
     addActionListener(new ChooseClassAction());
   }

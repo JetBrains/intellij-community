@@ -40,10 +40,10 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
                                  final int flags) {
     super(project, JavaElementType.TYPE_TEXT, isPhysical, name, text);
 
-    myAllowEllipsis = BitUtil.isSet(flags, PsiElementFactory.ALLOW_ELLIPSIS);
-    myAllowDisjunction = BitUtil.isSet(flags, PsiElementFactory.ALLOW_DISJUNCTION);
+    myAllowEllipsis = BitUtil.isSet(flags, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
+    myAllowDisjunction = BitUtil.isSet(flags, JavaCodeFragmentFactory.ALLOW_DISJUNCTION);
 
-    if (isSet(flags, PsiElementFactory.ALLOW_VOID)) {
+    if (isSet(flags, JavaCodeFragmentFactory.ALLOW_VOID)) {
       putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);
     }
   }

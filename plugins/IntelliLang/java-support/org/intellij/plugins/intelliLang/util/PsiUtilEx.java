@@ -108,7 +108,7 @@ public class PsiUtilEx {
       return new DocumentImpl(s);
     }
     else {
-      return JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
+      return JavaReferenceEditorUtil.createTypeDocument(s, project);
     }
   }
 

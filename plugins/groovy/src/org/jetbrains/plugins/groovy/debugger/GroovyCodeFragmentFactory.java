@@ -141,7 +141,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     final String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42));
     final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
-    JavaCodeFragment result = factory.createCodeBlockCodeFragment(finalText, null, true);
+    JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
       result.setThisType(factory.createType(contextClass));
     }

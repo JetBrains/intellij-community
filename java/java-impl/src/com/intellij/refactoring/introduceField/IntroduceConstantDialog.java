@@ -194,7 +194,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       }
     }
     myTfTargetClassName =
-      new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true, RECENTS_KEY);
+      new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", myProject, true, RECENTS_KEY);
     myTargetClassNamePanel.setLayout(new BorderLayout());
     myTargetClassNamePanel.add(myTfTargetClassName, BorderLayout.CENTER);
     myTargetClassNameLabel.setLabelFor(myTfTargetClassName);

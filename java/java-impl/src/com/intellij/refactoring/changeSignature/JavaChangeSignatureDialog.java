@@ -458,8 +458,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected PsiCodeFragment createReturnTypeCodeFragment() {
     final String returnTypeText = StringUtil.notNullize(myMethod.getReturnTypeText());
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    return elementFactory.createTypeCodeFragment(returnTypeText, myMethod.getMethod(), true, PsiElementFactory.ALLOW_VOID);
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
+    return factory.createTypeCodeFragment(returnTypeText, myMethod.getMethod(), true, JavaCodeFragmentFactory.ALLOW_VOID);
   }
 
   @Override

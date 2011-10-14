@@ -55,16 +55,16 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
 
     final JavaCodeFragment fragment;
     if (CodeFragmentKind.EXPRESSION == item.getKind()) {
       final String expressionText = StringUtil.endsWithChar(text, ';')? text.substring(0, text.length() - 1) : text;
-      fragment = elementFactory.createExpressionCodeFragment(expressionText, context, null, true);
+      fragment = factory.createExpressionCodeFragment(expressionText, context, null, true);
     }
     else /*if (CodeFragmentKind.CODE_BLOCK == item.getKind())*/ {
-      fragment = elementFactory.createCodeBlockCodeFragment(text, context, true);
+      fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
     if(item.getImports().length() > 0) {

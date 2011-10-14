@@ -130,11 +130,10 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     }
 
     private void setEditorText(final String s) {
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+      final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
+      PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
       final PsiCodeFragment fragment = factory.createReferenceCodeFragment(s, defaultPackage, true, true);
-      myDocument = PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+      myDocument = PsiDocumentManager.getInstance(myProject).getDocument(fragment);
       myEditorTextField.setDocument(myDocument);
     }
 

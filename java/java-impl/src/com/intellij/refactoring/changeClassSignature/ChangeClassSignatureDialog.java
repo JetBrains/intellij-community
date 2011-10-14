@@ -54,7 +54,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private final List<PsiTypeCodeFragment> myTypeCodeFragments;
   private final PsiClass myClass;
   private final PsiTypeParameter[] myOriginalParameters;
-  private final PsiManager myManager;
+  private final Project myProject;
   private final MyTableModel myTableModel;
   private JBTable myTable;
   static final String REFACTORING_NAME = RefactoringBundle.message("changeClassSignature.refactoring.name");
@@ -63,7 +63,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     super(aClass.getProject(), true);
     setTitle(REFACTORING_NAME);
     myClass = aClass;
-    myManager = myClass.getManager();
+    myProject = myClass.getProject();
     myTypeParameterInfos = new ArrayList<TypeParameterInfo>();
     myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>();
     myOriginalParameters = myClass.getTypeParameters();
@@ -76,8 +76,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private PsiTypeCodeFragment createValueCodeFragment() {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
-    return elementFactory.createTypeCodeFragment("", myClass.getLBrace(), true);
+    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
+    return factory.createTypeCodeFragment("", myClass.getLBrace(), true);
   }
 
   protected JComponent createNorthPanel() {
