@@ -15,20 +15,20 @@
  */
 package com.intellij.pom.java;
 
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
  */
 public enum LanguageLevel {
-  JDK_1_3(PsiBundle.message("jdk.1.3.language.level.description")),
-  JDK_1_4(PsiBundle.message("jdk.1.4.language.level.description")),
-  JDK_1_5(PsiBundle.message("jdk.1.5.language.level.description")),
-  JDK_1_6(PsiBundle.message("jdk.1.6.language.level.description")),
-  JDK_1_7(PsiBundle.message("jdk.1.7.language.level.description")),
-  JDK_1_8(PsiBundle.message("jdk.1.8.language.level.description"));
+  JDK_1_3(JavaCoreBundle.message("jdk.1.3.language.level.description")),
+  JDK_1_4(JavaCoreBundle.message("jdk.1.4.language.level.description")),
+  JDK_1_5(JavaCoreBundle.message("jdk.1.5.language.level.description")),
+  JDK_1_6(JavaCoreBundle.message("jdk.1.6.language.level.description")),
+  JDK_1_7(JavaCoreBundle.message("jdk.1.7.language.level.description")),
+  JDK_1_8(JavaCoreBundle.message("jdk.1.8.language.level.description"));
 
   public static final LanguageLevel HIGHEST = JDK_1_8;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
