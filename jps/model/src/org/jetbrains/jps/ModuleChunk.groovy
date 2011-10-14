@@ -69,6 +69,10 @@ class ModuleChunk extends DagNode<Module> {
     return representativeModule().project
   }
 
+  def String getLanguageLevel() {
+    return representativeModule().languageLevel
+  }
+
   public Module representativeModule() {
     return elements.iterator().next()
   }
