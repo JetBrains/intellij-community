@@ -783,7 +783,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     
     final String prefix = itemPattern(item);
     final int length = prefix.length();
-    if (length == 0) return lookupString;
+    if (length == 0 || !StringUtil.startsWithIgnoreCase(lookupString, prefix)) return lookupString;
     boolean isAllLower = true;
     boolean isAllUpper = true;
     boolean sameCase = true;
