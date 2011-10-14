@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.migration;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImpl;

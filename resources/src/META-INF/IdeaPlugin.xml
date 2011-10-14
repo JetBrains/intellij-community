@@ -263,6 +263,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
 
+    <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
+                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
+
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"

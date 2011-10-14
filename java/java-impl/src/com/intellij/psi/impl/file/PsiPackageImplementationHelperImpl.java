@@ -1,0 +1,158 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.psi.impl.file;
+
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.NonClasspathClassFinder;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.PackagePrefixElementFinder;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiModificationTracker;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author yole
+ */
+public class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
+  @Override
+  public GlobalSearchScope adjustAllScope(PsiPackage psiPackage, GlobalSearchScope globalSearchScope) {
+    return NonClasspathClassFinder.addNonClasspathScope(psiPackage.getProject(), globalSearchScope);
+  }
+
+  @Override
+  public VirtualFile[] occursInPackagePrefixes(PsiPackage psiPackage) {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
+
+    for (final Module module : modules) {
+      final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+      for (final ContentEntry contentEntry : contentEntries) {
+        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+        for (final SourceFolder sourceFolder : sourceFolders) {
+          final String packagePrefix = sourceFolder.getPackagePrefix();
+          if (packagePrefix.startsWith(psiPackage.getQualifiedName())) {
+            final VirtualFile file = sourceFolder.getFile();
+            if (file != null) {
+              result.add(file);
+            }
+          }
+        }
+      }
+    }
+
+    return VfsUtil.toVirtualFileArray(result);
+  }
+
+  @Override
+  public void handleQualifiedNameChange(final PsiPackage psiPackage, final String newQualifiedName) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    final String oldQualifedName = psiPackage.getQualifiedName();
+    final boolean anyChanged = changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
+    if (anyChanged) {
+      UndoManager.getInstance(psiPackage.getProject()).undoableActionPerformed(new GlobalUndoableAction() {
+        public void undo() {
+          changePackagePrefixes(psiPackage, newQualifiedName, oldQualifedName);
+        }
+
+        public void redo() {
+          changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
+        }
+      });
+    }
+  }
+
+  private static boolean changePackagePrefixes(PsiPackage psiPackage, final String oldQualifiedName, final String newQualifiedName) {
+    final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
+    List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
+    for (final Module module : modules) {
+      boolean anyChange = false;
+      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      final ContentEntry[] contentEntries = rootModel.getContentEntries();
+      for (final ContentEntry contentEntry : contentEntries) {
+        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+        for (final SourceFolder sourceFolder : sourceFolders) {
+          final String packagePrefix = sourceFolder.getPackagePrefix();
+          if (packagePrefix.startsWith(oldQualifiedName)) {
+            sourceFolder.setPackagePrefix(newQualifiedName + packagePrefix.substring(oldQualifiedName.length()));
+            anyChange = true;
+          }
+        }
+      }
+      if (anyChange) {
+        modelsToCommit.add(rootModel);
+      } else {
+        rootModel.dispose();
+      }
+    }
+
+    if (!modelsToCommit.isEmpty()) {
+      ProjectRootManager.getInstance(psiPackage.getProject()).multiCommit(
+        modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()])
+      );
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public void navigate(final PsiPackage psiPackage, final boolean requestFocus) {
+    final Project project = psiPackage.getProject();
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    window.activate(null);
+    window.getActivation().doWhenDone(new Runnable() {
+      public void run() {
+        final ProjectView projectView = ProjectView.getInstance(project);
+        projectView.changeView(PackageViewPane.ID);
+        final PsiDirectory[] directories = psiPackage.getDirectories();
+        final VirtualFile firstDir = directories[0].getVirtualFile();
+        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, project);
+
+        final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstDir);
+        final PackageElement packageElement = new PackageElement(module, psiPackage, isLibraryRoot);
+        projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
+      }
+    });
+  }
+
+  @Override
+  public boolean packagePrefixExists(PsiPackage psiPackage) {
+    return PackagePrefixElementFinder.getInstance(psiPackage.getProject()).packagePrefixExists(psiPackage.getQualifiedName());
+  }
+
+  @Override
+  public Object[] getDirectoryCachedValueDependencies(PsiPackage psiPackage) {
+    return new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(psiPackage.getProject()) };
+  }
+}

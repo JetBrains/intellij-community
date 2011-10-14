@@ -16,28 +16,13 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.PackageViewPane;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.GlobalUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
-import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
@@ -74,8 +59,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         public Result<Collection<PsiDirectory>> compute() {
           final CommonProcessors.CollectProcessor<PsiDirectory> processor = new CommonProcessors.CollectProcessor<PsiDirectory>();
           getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor);
-          return Result.create(processor.getResults(),
-                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(getProject()));
+          return Result.create(processor.getResults(), PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(
+            PsiPackageImpl.this));
         }
       }, false);
     }
@@ -88,77 +73,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   public void handleQualifiedNameChange(@NotNull final String newQualifiedName) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final String oldQualifedName = getQualifiedName();
-    final boolean anyChanged = changePackagePrefixes(oldQualifedName, newQualifiedName);
-    if (anyChanged) {
-      UndoManager.getInstance(myManager.getProject()).undoableActionPerformed(new GlobalUndoableAction() {
-        public void undo() {
-          changePackagePrefixes(newQualifiedName, oldQualifedName);
-        }
-
-        public void redo() {
-          changePackagePrefixes(oldQualifedName, newQualifiedName);
-        }
-      });
-    }
-  }
-
-  private boolean changePackagePrefixes(final String oldQualifiedName, final String newQualifiedName) {
-    final Module[] modules = ModuleManager.getInstance(myManager.getProject()).getModules();
-    List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
-    for (final Module module : modules) {
-      boolean anyChange = false;
-      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      final ContentEntry[] contentEntries = rootModel.getContentEntries();
-      for (final ContentEntry contentEntry : contentEntries) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (final SourceFolder sourceFolder : sourceFolders) {
-          final String packagePrefix = sourceFolder.getPackagePrefix();
-          if (packagePrefix.startsWith(oldQualifiedName)) {
-            sourceFolder.setPackagePrefix(newQualifiedName + packagePrefix.substring(oldQualifiedName.length()));
-            anyChange = true;
-          }
-        }
-      }
-      if (anyChange) {
-        modelsToCommit.add(rootModel);
-      } else {
-        rootModel.dispose();
-      }
-    }
-
-    if (!modelsToCommit.isEmpty()) {
-      ProjectRootManager.getInstance(myManager.getProject()).multiCommit(
-        modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()])
-      );
-      return true;
-    } else {
-      return false;
-    }
+    PsiPackageImplementationHelper.getInstance().handleQualifiedNameChange(this, newQualifiedName);
   }
 
   public VirtualFile[] occursInPackagePrefixes() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = ModuleManager.getInstance(myManager.getProject()).getModules();
-
-    for (final Module module : modules) {
-      final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-      for (final ContentEntry contentEntry : contentEntries) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (final SourceFolder sourceFolder : sourceFolders) {
-          final String packagePrefix = sourceFolder.getPackagePrefix();
-          if (packagePrefix.startsWith(getQualifiedName())) {
-            final VirtualFile file = sourceFolder.getFile();
-            if (file != null) {
-              result.add(file);
-            }
-          }
-        }
-      }
-    }
-
-    return VfsUtil.toVirtualFileArray(result);
+    return PsiPackageImplementationHelper.getInstance().occursInPackagePrefixes(this);
   }
 
   @Override
@@ -180,7 +99,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public boolean isValid() {
     final CommonProcessors.FindFirstProcessor<PsiDirectory> processor = new CommonProcessors.FindFirstProcessor<PsiDirectory>();
     getFacade().processPackageDirectories(this, allScope(), processor);
-    return processor.getFoundValue() != null || PackagePrefixElementFinder.getInstance(getProject()).packagePrefixExists(getQualifiedName());
+    return processor.getFoundValue() != null || PsiPackageImplementationHelper.getInstance().packagePrefixExists(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -202,7 +121,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   protected GlobalSearchScope allScope() {
-    return NonClasspathClassFinder.addNonClasspathScope(getProject(), GlobalSearchScope.allScope(getProject()));
+    return PsiPackageImplementationHelper.getInstance().adjustAllScope(this, GlobalSearchScope.allScope(getProject()));
   }
 
   @NotNull
@@ -337,21 +256,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   public void navigate(final boolean requestFocus) {
-    ToolWindow window = ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    window.activate(null);
-    window.getActivation().doWhenDone(new Runnable() {
-      public void run() {
-        final ProjectView projectView = ProjectView.getInstance(getProject());
-        projectView.changeView(PackageViewPane.ID);
-        final PsiDirectory[] directories = getDirectories();
-        final VirtualFile firstDir = directories[0].getVirtualFile();
-        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, getProject());
-
-        final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
-        final PackageElement packageElement = new PackageElement(module, PsiPackageImpl.this, isLibraryRoot);
-        projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
-      }
-    });
+    PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
