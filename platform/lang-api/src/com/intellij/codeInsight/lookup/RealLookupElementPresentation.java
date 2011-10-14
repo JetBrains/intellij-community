@@ -13,11 +13,17 @@ public class RealLookupElementPresentation extends LookupElementPresentation {
   private final int myMaximumWidth;
   private final FontMetrics myNormalMetrics;
   private final FontMetrics myBoldMetrics;
+  private final Lookup myLookup;
 
-  public RealLookupElementPresentation(int maximumWidth, FontMetrics normalMetrics, FontMetrics boldMetrics) {
+  public RealLookupElementPresentation(int maximumWidth, FontMetrics normalMetrics, FontMetrics boldMetrics, Lookup lookup) {
     myMaximumWidth = maximumWidth;
     myNormalMetrics = normalMetrics;
     myBoldMetrics = boldMetrics;
+    myLookup = lookup;
+  }
+
+  public boolean isLookupSelectionTouched() {
+    return myLookup.isSelectionTouched();
   }
 
   @Override

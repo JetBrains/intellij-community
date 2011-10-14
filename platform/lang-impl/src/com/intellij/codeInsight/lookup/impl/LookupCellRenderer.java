@@ -120,7 +120,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color background = getItemBackground(list, index, isSelected);
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
-    final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics);
+    final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
     item.renderElement(presentation);
 
     myNameComponent.clear();

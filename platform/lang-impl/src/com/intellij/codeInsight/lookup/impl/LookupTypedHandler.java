@@ -24,6 +24,8 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.AccessToken;
@@ -58,6 +60,10 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     try {
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null){
+        return Result.CONTINUE;
+      }
+
+      if (charTyped == ' ' && ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.SPACE_CHAR)) {
         return Result.CONTINUE;
       }
 

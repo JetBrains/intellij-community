@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -64,6 +65,7 @@ public abstract class ChooseItemAction extends EditorAction {
       if (lookup == null) return false;
       if (!lookup.isShown()) return false;
       if (focusedOnly && !lookup.isFocused()) return false;
+      if (ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR)) return false;
       return true;
     }
   }

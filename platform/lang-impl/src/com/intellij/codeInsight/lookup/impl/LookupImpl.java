@@ -260,6 +260,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     mySelectionTouched = true;
     myPresentableModel.preselectedItem = null;
+    myList.repaint();
   }
 
   @TestOnly

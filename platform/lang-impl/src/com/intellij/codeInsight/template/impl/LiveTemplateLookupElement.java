@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
 import com.intellij.codeInsight.template.TemplateManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,11 +52,13 @@ public class LiveTemplateLookupElement extends LookupElement {
     super.renderElement(presentation);
     if (sudden) {
       presentation.setItemTextBold(true);
-      char shortcutChar = myTemplate.getShortcutChar();
-      if (shortcutChar == TemplateSettings.DEFAULT_CHAR) {
-        shortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
+      if (!presentation.isReal() || !((RealLookupElementPresentation)presentation).isLookupSelectionTouched()) {
+        char shortcutChar = myTemplate.getShortcutChar();
+        if (shortcutChar == TemplateSettings.DEFAULT_CHAR) {
+          shortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
+        }
+        presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcutChar) + "] ");
       }
-      presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcutChar) + "] ");
       presentation.setTailText(" (" + myTemplate.getDescription() + ")", true);
     } else {
       presentation.setTypeText(myTemplate.getDescription());

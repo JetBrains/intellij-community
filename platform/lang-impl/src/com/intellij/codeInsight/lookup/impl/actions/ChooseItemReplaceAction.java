@@ -55,10 +55,7 @@ public class ChooseItemReplaceAction extends EditorAction {
           return false;
         }
 
-        lookup.refreshUi(false); // to bring the list model up to date
-
-        CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-        if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR) && !lookup.isSelectionTouched()) {
+        if (hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
           return false;
         }
 
@@ -72,7 +69,18 @@ public class ChooseItemReplaceAction extends EditorAction {
     }
   }
 
-  static boolean hasTemplatePrefix(LookupImpl lookup, char shortcutChar) {
+  public static boolean hasTemplatePrefix(LookupImpl lookup, char shortcutChar) {
+    lookup.refreshUi(false); // to bring the list model up to date
+
+    CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+    if (completion == null || !completion.isAutopopupCompletion()) {
+      return false;
+    }
+
+    if (lookup.isSelectionTouched()) {
+      return false;
+    }
+    
     final PsiFile file = lookup.getPsiFile();
     if (file == null) return false;
 
