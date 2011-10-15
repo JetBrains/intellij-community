@@ -150,7 +150,9 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     g.setPaint(bg);
     int w = getWidth();
     int h = getHeight();
-    g.fillRect(0, 0, w, h);
+    if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || (isSelected() && myPanel.hasFocus())) {
+      g.fillRect(0, 0, w - (isLastElement() ? 0 : getDecorationOffset()), h);
+    }
     final int offset = isFirstElement() ? getFirstElementLeftOffset() : 0;
     final int iconOffset = myPadding.left + offset;
     icon.paintIcon(this, g, iconOffset, (h - icon.getIconHeight()) / 2);
@@ -162,24 +164,30 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     Path2D.Double path = new Path2D.Double();
     int off = getDecorationOffset();
     if (isFocused()) {
-      if (isSelected() && myPanel.isNodePopupShowing()) {
+      if (isSelected() && !myPanel.isNodePopupShowing() && !isLastElement()) {
+        g.translate(1, 0);
         path.moveTo(0, 0);
         path.lineTo(off, h / 2);              // |\
         path.lineTo(0, h);                    // |/
         path.lineTo(0, 0);
-        g.setPaint(getBackground());
+        g.setPaint(UIUtil.getListSelectionBackground());
         g.fill(path);
+        g.translate(-1, 0);
       }
 
-      if (! isLastElement() && !myPanel.isNodePopupShowing()) {
-        path.moveTo(0, 0);
-        path.lineTo(off, h / 2);                // ___
-        path.lineTo(0, h);                      // \ |
-        path.lineTo(off + 2, h);                // /_|
-        path.lineTo(off + 2, 0);
-        path.lineTo(0, 0);
-        g.setPaint(isNextSelected() ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-        g.fill(path);
+      if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || (isNextSelected() && myPanel.hasFocus())) {
+        if (! isLastElement() && !myPanel.isNodePopupShowing()) {
+          path.moveTo(0, 0);
+          path.lineTo(off, h / 2);                // ___
+          path.lineTo(0, h);                      // \ |
+          path.lineTo(off + 2, h);                // /_|
+          path.lineTo(off + 2, 0);
+          path.lineTo(0, 0);
+          g.setPaint(isNextSelected() ? UIUtil.getListSelectionBackground() : getBackground());
+          if (UIUtil.isUnderAquaLookAndFeel() && isNextSelected() || !UIUtil.isUnderAquaLookAndFeel()) {
+            g.fill(path);
+          }
+        }
       }
     }
     if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {      
@@ -188,7 +196,13 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
       //path.lineTo(off, h / 2);                //   \
       //path.lineTo(0, h);                      //   /
       //g.setPaint(CaptionPanel.getBorderColor(!myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode()));
-      Image img = !myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode() ? SEPARATOR_ACTIVE : SEPARATOR_PASSIVE;
+      Image img;
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        //img = myPanel.isInFloatingMode() ? SEPARATOR_PASSIVE : SEPARATOR_ACTIVE;
+        img = SEPARATOR_PASSIVE;
+      } else {
+        img = !myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode() ? SEPARATOR_ACTIVE : SEPARATOR_PASSIVE;
+      }
       g.drawImage(img, null, null);
       //g.draw(path);
     }
