@@ -23,6 +23,8 @@ import java.util.concurrent.Executors;
 public class Server {
   public static final int DEFAULT_SERVER_PORT = 7777;
   private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
+  public static final String SERVER_SUCCESS_START_MESSAGE = "JPS Server started successfully. Listening on port port: ";
+  public static final String SERVER_ERROR_START_MESSAGE = "Error starting JPS Server: ";
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("jps-server");
   private final ChannelFactory myChannelFactory;
@@ -70,25 +72,33 @@ public class Server {
   }
 
   public static void main(String[] args) {
-    int port = DEFAULT_SERVER_PORT;
+    try {
+      int port = DEFAULT_SERVER_PORT;
 
-    if (args.length > 0) {
-      try {
-        port = Integer.parseInt(args[0]);
+      if (args.length > 0) {
+        try {
+          port = Integer.parseInt(args[0]);
+        }
+        catch (NumberFormatException e) {
+          System.err.println("Error parsing port: " + e.getMessage());
+          System.exit(-1);
+        }
       }
-      catch (NumberFormatException e) {
-        System.out.println("Error parsing port: " + e.getMessage());
-        System.exit(-1);
-      }
+
+      final Server server = new Server();
+      server.start(port);
+      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
+        public void run() {
+          server.stop();
+        }
+      });
+      System.err.println(SERVER_SUCCESS_START_MESSAGE + port);
     }
-
-    final Server server = new Server();
-    server.start(port);
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
-      public void run() {
-        server.stop();
-      }
-    });
+    catch (Throwable e) {
+      System.err.println(SERVER_ERROR_START_MESSAGE + e.getMessage());
+      e.printStackTrace(System.err);
+      System.exit(-1);
+    }
   }
 
   private class ChannelRegistrar extends SimpleChannelUpstreamHandler {

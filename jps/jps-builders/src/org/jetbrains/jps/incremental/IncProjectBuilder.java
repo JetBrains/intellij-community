@@ -94,7 +94,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runBuilders(CompileContext context, ModuleChunk chunk, List<Builder> builders) throws ProjectBuildException {
+  private static void runBuilders(CompileContext context, ModuleChunk chunk, List<Builder> builders) throws ProjectBuildException {
     boolean nextPassRequired;
     do {
       nextPassRequired = false;

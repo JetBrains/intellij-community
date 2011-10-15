@@ -88,7 +88,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.api.JpsServerResponseHandlerAdapter;
-import org.jetbrains.jps.client.Client;
 
 import java.io.*;
 import java.util.*;
@@ -408,12 +407,9 @@ public class CompileDriver {
     }
   }
 
+  @Nullable
   private Future compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback)
     throws Exception {
-    final Client client = JpsServerManager.getInstance().getClient();
-    if (client == null) {
-      return null;
-    }
     List<String> moduleNames = Collections.emptyList();
     if (modules != null && modules.size() > 0) {
       moduleNames = new ArrayList<String>(modules.size());
@@ -422,7 +418,7 @@ public class CompileDriver {
       }
     }
     compileContext.getProgressIndicator().setIndeterminate(true); // todo
-    return client.sendCompileRequest(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
+    return JpsServerManager.getInstance().submitCompilationTask(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
 
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
         final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();

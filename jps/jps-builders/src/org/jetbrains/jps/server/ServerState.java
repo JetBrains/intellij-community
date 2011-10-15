@@ -32,6 +32,7 @@ class ServerState {
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
     synchronized (myConfigurationLock) {
+      myProjects.clear(); // projects should be reloaded against the latest data
       myGlobalLibraries.clear();
       myGlobalLibraries.addAll(libs);
       myPathVariables.clear();

@@ -205,7 +205,7 @@ public class JavaBuilder extends Builder{
         }
       }
 
-      if (compiledOk || diagnosticSink.getErrorCount() > 0) {
+      if (!compiledOk || diagnosticSink.getErrorCount() > 0) {
         throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
       }
 
@@ -457,6 +457,7 @@ public class JavaBuilder extends Builder{
           break;
         case MANDATORY_WARNING:
         case WARNING:
+        case NOTE:
           kind = BuildMessage.Kind.WARNING;
           myWarningCount++;
           break;

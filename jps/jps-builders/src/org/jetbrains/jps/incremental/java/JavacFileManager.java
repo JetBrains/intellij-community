@@ -68,7 +68,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
-    return super.list(location, packageName, kinds, recurse);
+    return super.list(location, packageName, kinds, recurse); // todo: must be optimized!
   }
 
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
