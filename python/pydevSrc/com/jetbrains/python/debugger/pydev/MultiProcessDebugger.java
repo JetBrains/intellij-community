@@ -55,10 +55,24 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public void waitForConnect() throws Exception {
     try {
       //noinspection SocketOpenedButNotSafelyClosed
-      Socket socket = myServerSocket.accept();
+      final Socket socket = myServerSocket.accept();
 
-      sendDebuggerPort(socket, myDebugServerSocket);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
+            sendDebuggerPort(socket, myDebugServerSocket);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+
       myMainDebugger.waitForConnect();
+
+
       final DebuggerProcessAcceptor acceptor = new DebuggerProcessAcceptor(this, myServerSocket);
       ApplicationManager.getApplication().executeOnPooledThread(acceptor);
     }
@@ -174,28 +188,36 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public Collection<PyThreadInfo> getThreads() {
     List<PyThreadInfo> threads = Lists.newArrayList(myMainDebugger.getThreads());
+
     List<PyThreadInfo> result = Lists.newArrayList();
 
-    cleanDebuggers();
+    cleanOtherDebuggers();
 
-    collectAndRegisterThreads(threads);
+    collectAndRegisterOtherDebuggersThreads(threads); //we don't register mainDebugger as it is default if there is no mapping
 
+
+    if (myOtherDebuggers.size() > 0) {
+      //here we add process id to thread name in case there are more then one process
+      threads = addProcessIdToThreadName(threads, result);
+    }
+
+    return Collections.unmodifiableCollection(threads);
+  }
+
+  private static List<PyThreadInfo> addProcessIdToThreadName(List<PyThreadInfo> threads, List<PyThreadInfo> result) {
     for (PyThreadInfo t : threads) {
-      myThreadRegistry.register(t.getId(), myMainDebugger);
-
-      String threadName = myOtherDebuggers.size() > 0 ? ThreadRegistry.threadName(t.getName(), t.getId()) : t.getName();
+      String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
       PyThreadInfo newThread =
         new PyThreadInfo(t.getId(), threadName, t.getFrames(),
                          t.getStopReason(),
                          t.getMessage());
-      threads.add(newThread);
+      result.add(newThread);
     }
-
-
-    return Collections.unmodifiableCollection(result);
+    threads = result;
+    return threads;
   }
 
-  private void cleanDebuggers() {
+  private void cleanOtherDebuggers() {
     boolean allConnected = true;
     for (RemoteDebugger d : myOtherDebuggers) {
       if (!d.isConnected()) {
@@ -214,7 +236,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
   }
 
-  private void collectAndRegisterThreads(List<PyThreadInfo> threads) {
+  private void collectAndRegisterOtherDebuggersThreads(List<PyThreadInfo> threads) {
     for (ProcessDebugger d : myOtherDebuggers) {
       threads.addAll(d.getThreads());
       for (PyThreadInfo t : d.getThreads()) {

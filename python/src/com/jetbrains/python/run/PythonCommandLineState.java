@@ -55,6 +55,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
   private final List<Filter> myFilters;
+  private boolean myMultiprocessDebug = false;
 
   public boolean isDebug() {
     return isDebug(getConfigurationSettings());
@@ -324,6 +325,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public boolean isMultiprocessDebug() {
-    return false;
+    return myMultiprocessDebug;
+  }
+
+  public void setMultiprocessDebug(boolean multiprocessDebug) {
+    myMultiprocessDebug = multiprocessDebug;
   }
 }
