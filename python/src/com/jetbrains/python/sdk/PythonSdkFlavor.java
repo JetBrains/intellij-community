@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -134,7 +135,10 @@ public abstract class PythonSdkFlavor {
 
   @SuppressWarnings({"MethodMayBeStatic"})
   public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
-    final String encoding = EncodingManager.getInstance().getDefaultCharset().name();
-    PythonEnvUtil.setPythonIOEncoding(envs, encoding);
+    Charset defaultCharset = EncodingManager.getInstance().getDefaultCharset();
+    if (defaultCharset != null) {
+      final String encoding = defaultCharset.name();
+      PythonEnvUtil.setPythonIOEncoding(envs, encoding);
+    }
   }
 }
