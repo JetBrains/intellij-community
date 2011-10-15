@@ -430,15 +430,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (isConnected()) {
-      //myDebugger.executeExceptionCommand();
-      //myDebugger.execute(breakpoint.getProperties().createAddCommand(myDebugger));
+      myDebugger.addExceptionBreakpoint(breakpoint.getProperties());
     }
   }
 
   public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
     if (isConnected()) {
-      //myDebugger.execute(breakpoint.getProperties().createRemoveCommand(myDebugger));
+      myDebugger.removeExceptionBreakpoint(breakpoint.getProperties());
     }
   }
 
@@ -498,9 +497,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (isConnected()) {
       dropFrameCaches();
       final PyStackFrame frame = currentFrame();
-      //final GetCompletionsCommand command = new GetCompletionsCommand(myDebugger, frame.getThreadId(), frame.getFrameId(), prefix);
-      //myDebugger.execute(command);
-      //return command.getCompletions();
+      return myDebugger.getCompletions(frame.getThreadId(), frame.getFrameId(), prefix);
     }
     return Lists.newArrayList();
   }

@@ -568,6 +568,16 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getCompletions();
   }
 
+  @Override
+  public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
+    execute(factory.createAddCommand(this));
+  }
+
+  @Override
+  public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
+    execute(factory.createRemoveCommand(this));
+  }
+
   private void fireCloseEvent() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.closed();

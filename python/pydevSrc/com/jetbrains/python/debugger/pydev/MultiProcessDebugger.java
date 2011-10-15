@@ -30,7 +30,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private final int myTimeout;
 
   private RemoteDebugger myMainDebugger;
-  private List<ProcessDebugger> myOtherDebuggers = Lists.newArrayList();
+  private List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
   private ServerSocket myDebugServerSocket;
 
   public MultiProcessDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
@@ -202,7 +202,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
         toDelete.add(d);
       }
     }
-    for (ProcessDebugger d: toDelete) {
+    for (ProcessDebugger d : toDelete) {
       myOtherDebuggers.remove(d);
     }
   }
@@ -341,6 +341,24 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
     return debugger(threadId).getCompletions(threadId, frameId, prefix);
+  }
+
+  @Override
+  public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
+    myMainDebugger.execute(factory.createAddCommand(myMainDebugger));
+
+    for (RemoteDebugger d : myOtherDebuggers) {
+      d.execute(factory.createAddCommand(d));
+    }
+  }
+
+  @Override
+  public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
+    myMainDebugger.execute(factory.createRemoveCommand(myMainDebugger));
+
+    for (RemoteDebugger d : myOtherDebuggers) {
+      d.execute(factory.createRemoveCommand(d));
+    }
   }
 
   public void remoteCloseListener(RemoteDebuggerCloseListener listener) {

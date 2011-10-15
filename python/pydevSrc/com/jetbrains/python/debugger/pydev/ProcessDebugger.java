@@ -74,4 +74,8 @@ public interface ProcessDebugger {
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
 
   List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix);
+
+  void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
+
+  void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 }
