@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
 import com.intellij.openapi.ui.InputException;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * author: lesya
@@ -51,7 +54,22 @@ public class PServerSettingsPanel {
   }
 
   public void saveTo(CvsApplicationLevelConfiguration config) {
-    config.setPathToPasswordFile(myPathToPasswordFile.getText());
+    final String pathToPasswordFile = CvsApplicationLevelConfiguration.convertToIOFilePath(myPathToPasswordFile.getText());
+    final File passwordFile = new File(pathToPasswordFile);
+    if (!passwordFile.exists()) {
+      final int result = Messages.showYesNoDialog(myPanel, CvsBundle.message("message.password.file.does.not.exist", pathToPasswordFile),
+                                             CvsBundle.message("title.password.file.does.not.exist"), Messages.getQuestionIcon());
+      if (result == 1) {
+        throw new InputException(myPathToPasswordFile);
+      }
+      try {
+        passwordFile.createNewFile();
+      }
+      catch (IOException e) {
+        throw new InputException(e.getMessage(), myPathToPasswordFile);
+      }
+    }
+    config.setPathToPasswordFile(pathToPasswordFile);
     try {
       int timeout = Integer.parseInt(myTimeout.getText());
       if (timeout < 0) throwInvalidTimeoutException();
