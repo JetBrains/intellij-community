@@ -51,7 +51,6 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
-import git4idea.update.GitComplexProcess;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -59,6 +58,7 @@ import git4idea.stash.GitChangesSaver;
 import git4idea.stash.GitShelveChangesSaver;
 import git4idea.stash.GitStashChangesSaver;
 import git4idea.ui.GitUIUtil;
+import git4idea.update.GitComplexProcess;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.UpdatePolicyUtils;
 import org.jetbrains.annotations.NotNull;
@@ -1019,7 +1019,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
     @Override
     protected void render(ColoredTreeCellRenderer renderer) {
-      renderer.append(revision.asString().substring(0, HASH_PREFIX_SIZE), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      final String shortRevision = revision.asString().substring(0, HASH_PREFIX_SIZE);
+      renderer.append(shortRevision, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderer.appendAlign(renderer.getFontMetrics(renderer.getFont()).stringWidth(StringUtil.repeat("8", HASH_PREFIX_SIZE)));
       renderer.append(": ");
       renderer.append(message);
       if (isMerge) {
