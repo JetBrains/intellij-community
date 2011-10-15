@@ -65,6 +65,7 @@ import pydevd_tracing
 import pydevd_io
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 import time
+import os
 
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
@@ -1229,7 +1230,6 @@ class DispatchReader(ReaderThread):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-
     # parse the command line. --file is our last argument that is required
     try:
         sys.original_argv = sys.argv[:]
@@ -1263,17 +1263,19 @@ if __name__ == '__main__':
 
     port = setup['port']
     if setup['multiproc']:
-        dispatch = Dispatcher()
-        dispatch.connect(setup)
-        if dispatch.port is not None:
-            port = dispatch.port
-            sys.stderr.write("pydev debugger: debug process is connecting\n")
+        dispatcher = Dispatcher()
+        dispatcher.connect(setup)
+        if dispatcher.port is not None:
+            port = dispatcher.port
+            sys.stderr.write("pydev debugger: process %d is connecting\n"% os.getpid())
             import pydevd_utils
             pydevd_utils.patch_new_process_functions()
         else:
             sys.stderr.write("pydev debugger: couldn't get port for new debug process\n")
     else:
         sys.stderr.write("pydev debugger: starting\n")
+
+
 
 
     debugger = PyDB()

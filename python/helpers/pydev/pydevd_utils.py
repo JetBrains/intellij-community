@@ -94,6 +94,15 @@ def quote_smart(s, safe='/'):
         return quote(s, safe)
 
 
+def is_python(path):
+    if path.endswith("'") or path.endswith('"'):
+        path = path[1:len(path)-1]
+    for name in ['python', 'jython', 'pypy']:
+        for ext in ['', '.exe', '.bat']:
+            if path.endswith(name + ext):
+                return True
+    return False
+
 def patch_args(args):
     import sys
     new_args = []
@@ -101,11 +110,10 @@ def patch_args(args):
     if len(args) == 0:
         return args
 
-    new_args.append(args[0])
-    #if args[0] == sys.executable:
-    #
-    #else:
-    #    return args
+    if is_python(args[0]):
+        new_args.append(args[0])
+    else:
+        return args
 
     i = 1
     while i < len(args):
@@ -116,7 +124,11 @@ def patch_args(args):
         i+=1
 
     for x in sys.original_argv:
-        new_args.append(x)
+        if sys.platform == "win32" and not x.endswith('"'):
+            arg = '"%s"'%x
+        else:
+            arg = x
+        new_args.append(arg)
         if x == '--file':
             break
 
