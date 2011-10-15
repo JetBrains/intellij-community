@@ -31,8 +31,15 @@ public class InputException extends RuntimeException{
     myComponent = component;
   }
 
+  public InputException(JComponent component) {
+    myMessage = null;
+    myComponent = component;
+  }
+
   public void show(){
-    Messages.showMessageDialog(myMessage, UIBundle.message("invalid.user.input.dialog.title"), Messages.getErrorIcon());
+    if (myMessage !=  null) {
+      Messages.showMessageDialog(myMessage, UIBundle.message("invalid.user.input.dialog.title"), Messages.getErrorIcon());
+    }
     myComponent.requestFocus();
   }
 }
