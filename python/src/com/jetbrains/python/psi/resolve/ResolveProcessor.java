@@ -63,19 +63,19 @@ public class ResolveProcessor implements PsiScopeProcessor {
         }
       }
     }
-    else if (element instanceof PsiNamedElement) {
+    if (element instanceof PsiNamedElement) {
       if (myName.equals(((PsiNamedElement)element).getName())) {
         return setResult(element, null);
       }
     }
-    else if (element instanceof PyReferenceExpression) {
+    if (element instanceof PyReferenceExpression) {
       PyReferenceExpression expr = (PyReferenceExpression)element;
       String referencedName = expr.getReferencedName();
       if (referencedName != null && referencedName.equals(myName)) {
         return setResult(element, null);
       }
     }
-    else if (element instanceof NameDefiner) {
+    if (element instanceof NameDefiner) {
       final NameDefiner definer = (NameDefiner)element;
       PsiElement by_name = definer.getElementNamed(myName);
       if (by_name != null) {
@@ -122,7 +122,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
         }
       }
     }
-    else if (element instanceof PyFromImportStatement && PyNames.INIT_DOT_PY.equals(element.getContainingFile().getName())) {
+    if (element instanceof PyFromImportStatement && PyNames.INIT_DOT_PY.equals(element.getContainingFile().getName())) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
       final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
       if (qName != null && qName.endsWith(myName)) {
