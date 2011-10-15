@@ -196,14 +196,21 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private void cleanDebuggers() {
-    List<ProcessDebugger> toDelete = Lists.newArrayList();
-    for (ProcessDebugger d : myOtherDebuggers) {
+    boolean allConnected = true;
+    for (RemoteDebugger d : myOtherDebuggers) {
       if (!d.isConnected()) {
-        toDelete.add(d);
+        allConnected = false;
       }
     }
-    for (ProcessDebugger d : toDelete) {
-      myOtherDebuggers.remove(d);
+    if (!allConnected) {
+      List<RemoteDebugger> newList = Lists.newArrayList();
+      for (RemoteDebugger d : myOtherDebuggers) {
+        if (d.isConnected()) {
+          newList.add(d);
+        }
+      }
+
+      myOtherDebuggers = newList;
     }
   }
 
