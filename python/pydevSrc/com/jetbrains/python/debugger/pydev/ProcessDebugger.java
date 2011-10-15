@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyThreadInfo;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author traff
@@ -70,4 +72,6 @@ public interface ProcessDebugger {
   void removeBreakpoint(String typeId, String file, int line);
 
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
+
+  List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix);
 }

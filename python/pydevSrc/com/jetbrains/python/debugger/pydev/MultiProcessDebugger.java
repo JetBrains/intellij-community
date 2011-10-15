@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
@@ -335,6 +336,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   public void addCloseListener(RemoteDebuggerCloseListener listener) {
     myMainDebugger.addCloseListener(listener);
+  }
+
+  @Override
+  public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
+    return debugger(threadId).getCompletions(threadId, frameId, prefix);
   }
 
   public void remoteCloseListener(RemoteDebuggerCloseListener listener) {

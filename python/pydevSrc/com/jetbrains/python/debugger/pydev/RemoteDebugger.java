@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -558,6 +559,13 @@ public class RemoteDebugger implements ProcessDebugger {
 
   public void remoteCloseListener(RemoteDebuggerCloseListener listener) {
     myCloseListeners.remove(listener);
+  }
+
+  @Override
+  public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
+    final GetCompletionsCommand command = new GetCompletionsCommand(this, threadId, frameId, prefix);
+    execute(command);
+    return command.getCompletions();
   }
 
   private void fireCloseEvent() {
