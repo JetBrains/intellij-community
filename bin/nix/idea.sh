@@ -23,7 +23,7 @@ if [ -z "$JDK" ]; then
     JAVA_BIN_PATH=`which java`
     if [ -n "$JAVA_BIN_PATH" ]; then
       if [ "$OS_TYPE" = "MAC" ]; then
-        if [ -h "$JAVA_BIN_PATH" ] ; then
+        if [ -h "$JAVA_BIN_PATH" ]; then
           JAVA_LOCATION=`readlink "$JAVA_BIN_PATH" | xargs dirname | xargs dirname | xargs dirname`
           if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
             JDK="$JAVA_LOCATION/CurrentJDK/Home"
@@ -50,10 +50,10 @@ if [ -z "$JDK" ]; then
   fi
 
   if [ -z "$JDK" ]; then
-    echo ERROR: cannot start IntelliJ IDEA.
-    echo No JDK found. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation.
+    echo "ERROR: cannot start IntelliJ IDEA."
+    echo "No JDK found. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
     echo
-    echo Press Enter to continue.
+    echo "Press Enter to continue."
     read IGNORE
     exit 1
   fi
@@ -67,14 +67,15 @@ grep '64-Bit' $VERSION_LOG
 BITS=$?
 rm $VERSION_LOG
 if [ $OPEN_JDK -eq 0 ]; then
-  echo WARNING: You are launching IDE using OpenJDK Java runtime.
+  echo "WARNING: You are launching IDE using OpenJDK Java runtime."
   echo
-  echo          THIS IS STRICTLY UNSUPPORTED DUE TO KNOWN PERFORMANCE AND GRAPHICS PROBLEMS!
+  echo "         THIS IS STRICTLY UNSUPPORTED DUE TO KNOWN PERFORMANCE AND GRAPHICS PROBLEMS!"
   echo
-  echo NOTE:    If you have both Sun JDK and OpenJDK installed
-  echo          please validate either IDEA_JDK, JDK_HOME, or JAVA_HOME environment variable points to valid Sun JDK installation.
+  echo "NOTE:    If you have both Oracle (Sun) JDK and OpenJDK installed"
+  echo "         please validate either IDEA_JDK, JDK_HOME, or JAVA_HOME environment variable points to valid Oracle (Sun) JDK installation."
+  echo "         See http://ow.ly/6TuKQ for more info on switching default JDK"
   echo
-  echo Press Enter to continue.
+  echo "Press Enter to continue."
   read IGNORE
 fi
 if [ $BITS -eq 0 ]; then
