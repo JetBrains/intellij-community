@@ -13,7 +13,7 @@ abstract public class ExceptionBreakpointHandler<T extends ExceptionBreakpointPr
 
   private final PyDebugProcess myDebugProcess;
 
-  public ExceptionBreakpointHandler(@NotNull final PyDebugProcess debugProcess, @NotNull Class<? extends XBreakpointType<XBreakpoint<T>, ?>> breakpointTypeClass) {
+  public ExceptionBreakpointHandler(@NotNull final PyDebugProcess debugProcess, @NotNull Class<? extends XBreakpointType<XBreakpoint<T>, T>> breakpointTypeClass) {
     super(breakpointTypeClass);
     myDebugProcess = debugProcess;
   }
