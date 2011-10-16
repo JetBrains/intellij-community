@@ -151,60 +151,57 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     int w = getWidth();
     int h = getHeight();
     if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || (isSelected() && myPanel.hasFocus())) {
-      g.fillRect(0, 0, w - (isLastElement() ? 0 : getDecorationOffset()), h);
+      g.fillRect(0, 0, w - (isLastElement() || !UIUtil.isUnderAquaLookAndFeel() ? 0 : getDecorationOffset()), h);
     }
     final int offset = isFirstElement() ? getFirstElementLeftOffset() : 0;
     final int iconOffset = myPadding.left + offset;
     icon.paintIcon(this, g, iconOffset, (h - icon.getIconHeight()) / 2);
-    final int textOffset = icon.getIconWidth() + myPadding.width() + offset;
+    final int textOffset = icon.getIconWidth() + myPadding.width() + offset;    
     int x = doPaintText(g, textOffset, false);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     
     g.translate(x, 0);
-    Path2D.Double path = new Path2D.Double();
+    Path2D.Double path;
     int off = getDecorationOffset();
     if (isFocused()) {
-      if (isSelected() && !myPanel.isNodePopupShowing() && !isLastElement()) {
+      if (isSelected() && !isLastElement()) {
+        path = new Path2D.Double();
         g.translate(1, 0);
         path.moveTo(0, 0);
         path.lineTo(off, h / 2);              // |\
         path.lineTo(0, h);                    // |/
         path.lineTo(0, 0);
-        g.setPaint(UIUtil.getListSelectionBackground());
+        g.setColor(UIUtil.getListSelectionBackground());
         g.fill(path);
+        g.drawLine(0, h/2, off, h /2);
         g.translate(-1, 0);
       }
 
-      if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || (isNextSelected() && myPanel.hasFocus())) {
-        if (! isLastElement() && !myPanel.isNodePopupShowing()) {
+      if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || isNextSelected()) {
+        if (! isLastElement()) {
+          path = new Path2D.Double();
           path.moveTo(0, 0);
           path.lineTo(off, h / 2);                // ___
           path.lineTo(0, h);                      // \ |
           path.lineTo(off + 2, h);                // /_|
           path.lineTo(off + 2, 0);
           path.lineTo(0, 0);
-          g.setPaint(isNextSelected() ? UIUtil.getListSelectionBackground() : getBackground());
-          if (UIUtil.isUnderAquaLookAndFeel() && isNextSelected() || !UIUtil.isUnderAquaLookAndFeel()) {
+          g.setColor(isNextSelected() ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+          //if (UIUtil.isUnderAquaLookAndFeel() && isNextSelected() || !UIUtil.isUnderAquaLookAndFeel()) {
             g.fill(path);
-          }
+          //}
         }
       }
     }
-    if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {      
-      //path = new Path2D.Double();
-      //path.moveTo(0, 0);
-      //path.lineTo(off, h / 2);                //   \
-      //path.lineTo(0, h);                      //   /
-      //g.setPaint(CaptionPanel.getBorderColor(!myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode()));
+    if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {
       Image img;
       if (UIUtil.isUnderAquaLookAndFeel()) {
         //img = myPanel.isInFloatingMode() ? SEPARATOR_PASSIVE : SEPARATOR_ACTIVE;
         img = SEPARATOR_PASSIVE;
       } else {
-        img = !myPanel.isNodePopupShowing() || !myPanel.isInFloatingMode() ? SEPARATOR_ACTIVE : SEPARATOR_PASSIVE;
+        img = myPanel.isInFloatingMode() && isFocused() ? SEPARATOR_ACTIVE : SEPARATOR_PASSIVE;
       }
       g.drawImage(img, null, null);
-      //g.draw(path);
     }
   }
   
