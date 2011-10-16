@@ -58,6 +58,11 @@ public class ConfigureCvsGlobalSettingsDialog extends DialogWrapper {
   }
 
   @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myGlobalCvsSettingsPanel.getPreferredFocusedComponent();
+  }
+
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

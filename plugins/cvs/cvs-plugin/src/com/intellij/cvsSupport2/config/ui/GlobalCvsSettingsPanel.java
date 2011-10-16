@@ -73,4 +73,8 @@ public class GlobalCvsSettingsPanel {
   public JComponent getPanel() {
     return myPanel;
   }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myCharset;
+  }
 }

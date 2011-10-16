@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ui.CvsRootFieldByFieldConfigurationPanel;
 import com.intellij.cvsSupport2.connections.CvsRootDataBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -27,34 +28,38 @@ import javax.swing.*;
  */
 public class EditCvsConfigurationFieldByFieldDialog extends DialogWrapper {
   private String myConfiguration;
-  CvsRootFieldByFieldConfigurationPanel myCvsRootFieldByFieldConfigurationPanel
-    = new CvsRootFieldByFieldConfigurationPanel();
+  CvsRootFieldByFieldConfigurationPanel myCvsRootFieldByFieldConfigurationPanel = new CvsRootFieldByFieldConfigurationPanel();
 
   public EditCvsConfigurationFieldByFieldDialog(String config) {
     super(true);
     myConfiguration = config;
     myCvsRootFieldByFieldConfigurationPanel.updateFrom(CvsRootDataBuilder.createSettingsOn(myConfiguration, false));
-    setTitle(com.intellij.CvsBundle.message("dialog.title.configure.cvs.root.field.by.field"));
+    setTitle(CvsBundle.message("dialog.title.configure.cvs.root.field.by.field"));
     init();
   }
 
+  @Override
   protected void doOKAction() {
     try {
-      String settings = myCvsRootFieldByFieldConfigurationPanel.getSettings();
-      myConfiguration = settings;
+      myConfiguration = myCvsRootFieldByFieldConfigurationPanel.getSettings();
       super.doOKAction();
     }
     catch (InputException ex) {
       ex.show();
     }
-
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myCvsRootFieldByFieldConfigurationPanel.getPanel();
   }
 
   public String getConfiguration() {
     return myConfiguration;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myCvsRootFieldByFieldConfigurationPanel.getPreferredFocusedComponent();
   }
 }
