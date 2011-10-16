@@ -11,7 +11,7 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="antlayout" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/gant-1.9.5_groovy-1.7.10.jar!/" />
@@ -25,7 +25,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="javac2" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/junit-addons-1.4.jar!/" />
