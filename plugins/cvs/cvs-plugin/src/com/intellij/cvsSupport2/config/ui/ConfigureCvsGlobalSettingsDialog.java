@@ -36,25 +36,28 @@ public class ConfigureCvsGlobalSettingsDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myGlobalCvsSettingsPanel.getPanel();
   }
 
+  @Override
   protected void doOKAction() {
     try {
       myGlobalCvsSettingsPanel.saveTo(CvsApplicationLevelConfiguration.getInstance());
+      super.doOKAction();
     }
     catch (InputException ex) {
       ex.show();
-      return;
     }
-    super.doOKAction();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("dialogs.globalCvsSettings");
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
