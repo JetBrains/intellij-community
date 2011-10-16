@@ -161,7 +161,7 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
   protected ConsoleView attachConsole(AndroidRunningState state, Executor executor) throws ExecutionException {
     TestConsoleProperties properties = new AndroidTestConsoleProperties(this, executor);
     BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil
-      .attachRunner("Android", state.getProcessHandler(), properties, state.getRunnerSettings(), state.getConfigurationSettings()
+      .createAndAttachConsole("Android", state.getProcessHandler(), properties, state.getRunnerSettings(), state.getConfigurationSettings()
       );
     Disposer.register(state.getAndroidFacet().getModule().getProject(), consoleView);
     return consoleView;

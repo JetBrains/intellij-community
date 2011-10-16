@@ -71,11 +71,11 @@ public class SMTestRunnerConnectionUtil {
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be caught and shown in error message box
    */
-  public static BaseTestsOutputConsoleView attachRunner(@NotNull final String testFrameworkName,
-                                                        @NotNull final ProcessHandler processHandler,
-                                                        @NotNull final TestConsoleProperties consoleProperties,
-                                                        final RunnerSettings runnerSettings,
-                                                        final ConfigurationPerRunnerSettings configurationSettings
+  public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull final String testFrameworkName,
+                                                                  @NotNull final ProcessHandler processHandler,
+                                                                  @NotNull final TestConsoleProperties consoleProperties,
+                                                                  final RunnerSettings runnerSettings,
+                                                                  final ConfigurationPerRunnerSettings configurationSettings
   ) throws ExecutionException {
     BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, runnerSettings, configurationSettings);
     console.attachToProcess(processHandler);
@@ -158,17 +158,31 @@ public class SMTestRunnerConnectionUtil {
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be caught and shown in error message box
    */
-  public static ConsoleView attachRunner(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
-                                         @NotNull final CommandLineState commandLineState,
-                                         @NotNull final RuntimeConfiguration config,
-                                         @NotNull final Executor executor
+  public static ConsoleView createAndAttachConsole(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
+                                                   @NotNull final CommandLineState commandLineState,
+                                                   @NotNull final RuntimeConfiguration config,
+                                                   @NotNull final Executor executor
   ) throws ExecutionException {
     // final String testFrameworkName
     final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
 
-    return attachRunner(testFrameworkName, processHandler, consoleProperties,
-                        commandLineState.getRunnerSettings(),
-                        commandLineState.getConfigurationSettings());
+    return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties,
+                                  commandLineState.getRunnerSettings(),
+                                  commandLineState.getConfigurationSettings());
+  }
+
+  public static ConsoleView createConsole(@NotNull final String testFrameworkName,
+                                          @NotNull final CommandLineState commandLineState,
+                                          @NotNull final RuntimeConfiguration config,
+                                          @NotNull final Executor executor
+  ) throws ExecutionException {
+    // final String testFrameworkName
+    final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
+
+    return createConsole(testFrameworkName,
+                         consoleProperties,
+                         commandLineState.getRunnerSettings(),
+                         commandLineState.getConfigurationSettings());
   }
 
   /**

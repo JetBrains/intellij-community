@@ -65,7 +65,11 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
-    super(name, new JavaRunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
+    this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
+  }
+
+  protected ApplicationConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
+    super(name, new JavaRunConfigurationModule(project, true), factory);
   }
 
   public void setMainClass(final PsiClass psiClass) {
@@ -76,7 +80,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new MyJavaCommandLineState(env);
+    final JavaCommandLineState state = new JavaApplicationCommandLineState(this, env);
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
   }
@@ -243,20 +247,31 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
-  private class MyJavaCommandLineState extends JavaCommandLineState {
-    public MyJavaCommandLineState(final ExecutionEnvironment environment) {
+  public static class JavaApplicationCommandLineState extends JavaCommandLineState {
+
+    private final ApplicationConfiguration myConfiguration;
+
+    public JavaApplicationCommandLineState(@NotNull final ApplicationConfiguration configuration,
+                                           final ExecutionEnvironment environment) {
       super(environment);
+      myConfiguration = configuration;
     }
 
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
-      JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
-      JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
+      final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
+      
+      final int classPathType = JavaParametersUtil.getClasspathType(module,
+                                                                    myConfiguration.MAIN_CLASS_NAME, 
+                                                                    false);
+      final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH 
+                                                                          : null;
+      JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+      JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
-      params.setMainClass(MAIN_CLASS_NAME);
+      params.setMainClass(myConfiguration.MAIN_CLASS_NAME);
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.updateJavaParameters(ApplicationConfiguration.this, params, getRunnerSettings());
+        ext.updateJavaParameters(myConfiguration, params, getRunnerSettings());
       }
 
       return params;
@@ -267,8 +282,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
       RunnerSettings runnerSettings = getRunnerSettings();
-      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(ApplicationConfiguration.this, handler, runnerSettings);
+      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
       return handler;
+    }
+
+    protected ApplicationConfiguration getConfiguration() {
+      return myConfiguration;
     }
   }
 }

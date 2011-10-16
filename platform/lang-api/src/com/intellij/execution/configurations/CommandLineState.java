@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CommandLineState implements RunnableState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
@@ -50,14 +51,21 @@ public abstract class CommandLineState implements RunnableState {
     return myEnvironment.getConfigurationSettings();
   }
 
-  public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
-    final TextConsoleBuilder builder = getConsoleBuilder();
-    final ConsoleView console = builder != null ? builder.getConsole() : null;
+    final ConsoleView console = createConsole(executor);
     if (console != null) {
       console.attachToProcess(processHandler);
     }
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
+  }
+
+  @Nullable
+  protected ConsoleView createConsole(@NotNull final Executor executor) throws ExecutionException {
+    final TextConsoleBuilder builder = getConsoleBuilder();
+    
+    return builder != null ? builder.getConsole() 
+                           : null;
   }
 
   @NotNull
