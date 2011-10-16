@@ -41,11 +41,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     throws ExecutionException {
 
     final PythonTRunnerConsoleProperties consoleProperties = new PythonTRunnerConsoleProperties(myConfiguration, executor);
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
-                                                                            processHandler,
-                                                                            consoleProperties,
-                                                                            getRunnerSettings(),
-                                                                            getConfigurationSettings());
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
+                                                                                      processHandler,
+                                                                                      consoleProperties,
+                                                                                      getRunnerSettings(),
+                                                                                      getConfigurationSettings());
 
     consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
     return consoleView;
