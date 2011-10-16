@@ -7,10 +7,10 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
       PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = modifierList.hasModifierProperty(PsiModifier.FINAL);
-        final boolean isNonNull = PsiAnnotationUtil.isAnnotatedWith(psiField, TransformationsUtil.NON_NULL_PATTERN);
+        final boolean isNonNull = PsiAnnotationUtil.isAnnotatedWith(psiField, LombokConstants.NON_NULL_PATTERN);
         // accept initialized final or nonnull fields
         addField = (isFinal || isNonNull) && null == psiField.getInitializer();
       }

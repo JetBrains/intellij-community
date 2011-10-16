@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
   <artifactId>parent</artifactId>
@@ -139,6 +140,7 @@
     <plugin.vendor>${project.organization.name}</plugin.vendor>
     <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
     <plugin.vendor.email>michail@plushnikov.de</plugin.vendor.email>
+    <lombok.version>0.10.1</lombok.version>
   </properties>
 
   <prerequisites>
@@ -153,13 +155,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>0.10</version>
-        <scope>provided</scope>
-      </dependency>
-
       <!-- === IntelliJ IDEA === -->
       <dependency>
         <groupId>com.intellij.idea</groupId>
@@ -270,6 +265,11 @@
           </configuration>
         </plugin>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.3</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>2.8</version>
         </plugin>
@@ -284,6 +284,11 @@
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>1.4</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.7</version>
         </plugin>
         <plugin>
           <groupId>org.projectlombok</groupId>

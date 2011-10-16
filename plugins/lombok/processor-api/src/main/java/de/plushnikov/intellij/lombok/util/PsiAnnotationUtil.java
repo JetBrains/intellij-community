@@ -17,7 +17,7 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import lombok.handlers.TransformationsUtil;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +193,7 @@ public class PsiAnnotationUtil {
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
         final String annotationName = getSimpleNameOf(psiAnnotation);
-        if (TransformationsUtil.NON_NULL_PATTERN.matcher(annotationName).matches()) {
+        if (LombokConstants.NON_NULL_PATTERN.matcher(annotationName).matches()) {
           annotationsToCopy.add(psiAnnotation.getQualifiedName());
         }
       }
