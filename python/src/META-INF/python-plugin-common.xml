@@ -599,7 +599,7 @@
     <quoteHandler fileType="Locale" className="com.jetbrains.django.localization.editor.LocaleQuoteHandler"/>
     <problemFileHighlightFilter implementation="com.jetbrains.django.localization.LocaleProblemFileHighlightFilter"/>
     <!--<fileEditorProvider implementation="com.jetbrains.django.localization.editor.LocaleFileEditorProvider"/>-->
-
+    <psi.referenceContributor implementation="com.jetbrains.django.lang.template.ref.DjangoLocaleReferenceContributor"/>
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <!-- ReST files -->
