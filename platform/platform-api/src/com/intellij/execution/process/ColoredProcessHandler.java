@@ -16,6 +16,8 @@
 
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -44,6 +46,10 @@ public class ColoredProcessHandler extends OSProcessHandler {
   // Registering
   // TODO use new Maia API in ConsoleViewContentType to apply ANSI color changes without
   // restarting RM / Idea + Ruby Plugin
+
+  public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
+    this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+  }
 
   public ColoredProcessHandler(Process process, String commandLine) {
     this(process, commandLine, null);

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
@@ -30,7 +31,15 @@ public class JavaCommandLineStateUtil {
 
   @NotNull
   public static OSProcessHandler startProcess(@NotNull final GeneralCommandLine commandLine) throws ExecutionException {
-    final DefaultJavaProcessHandler processHandler = new DefaultJavaProcessHandler(commandLine);
+    return startProcess(commandLine, false);
+  }
+  
+  @NotNull
+  public static OSProcessHandler startProcess(@NotNull final GeneralCommandLine commandLine,
+                                              final boolean ansiColoring) throws ExecutionException {
+
+    final OSProcessHandler processHandler = ansiColoring ? new ColoredProcessHandler(commandLine)
+                                                         : new DefaultJavaProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
