@@ -16,13 +16,20 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UnknownFileType implements FileType {
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
+  private static final NotNullLazyValue<Icon> ICON = new NotNullLazyValue<Icon>() {
+    @NotNull
+    @Override
+    protected Icon compute() {
+      return IconLoader.getIcon("/fileTypes/unknown.png");
+    }
+  };
   public static final FileType INSTANCE = new UnknownFileType();
 
   private UnknownFileType() {}
@@ -43,7 +50,7 @@ public class UnknownFileType implements FileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return ICON.getValue();
   }
 
   public boolean isBinary() {
