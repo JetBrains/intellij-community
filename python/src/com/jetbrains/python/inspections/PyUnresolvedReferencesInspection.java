@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.cython.CythonNames;
 import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -308,6 +309,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (element instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)element;
         if (myIgnoredIdentifiers.contains(refname) || PyNames.COMPARISON_OPERATORS.contains(refname)) {
+          return;
+        }
+        if (CythonLanguageDialect.isInsideCythonFile(element) && CythonNames.BUILTINS.contains(text)) {
           return;
         }
         if (refex.getQualifier() != null) {
