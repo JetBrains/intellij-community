@@ -94,7 +94,7 @@ public class DateOrRevisionOrTagSettings {
     myBranch.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String tagName = TagsHelper.chooseBranch(myTagsProvider, myProject);
+        final String tagName = TagsHelper.chooseBranch(myTagsProvider, myProject);
         if (tagName != null) myBranch.setText(tagName);
       }
     });
@@ -137,16 +137,10 @@ public class DateOrRevisionOrTagSettings {
   }
 
   private void refreshEnabling() {
-
-    boolean useBranch = myUseBranch.isSelected();
-    boolean useDate = myUseDate.isSelected();
-
+    final boolean useBranch = myUseBranch.isSelected();
     myBranch.setEnabled(useBranch);
     myBranch.setEditable(useBranch);
-
-    myDatePicker.setEnabled(useDate);
-
-    myBranch.getButton().setEnabled(useBranch);
+    myDatePicker.setEnabled(myUseDate.isSelected());
   }
 
   private void updateDate(String dateString) {
@@ -166,12 +160,11 @@ public class DateOrRevisionOrTagSettings {
     }
   }
 
-  public JComponent getPanel() {
+  public JPanel getPanel() {
     return myPanel;
   }
 
   public void setHeadCaption(String text){
     myUseHead.setText(text);
   }
-
 }

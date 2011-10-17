@@ -21,54 +21,54 @@ import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationPanel;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * author: lesya
  */
 public class SelectCVSConfigurationStep extends WizardStep{
   private final SelectCvsConfigurationPanel mySelectCvsConfigurationPanel;
-  private final Observer myObserver;
-
+  private final ListSelectionListener myListSelectionListener;
 
   public SelectCVSConfigurationStep(Project project, CvsWizard wizard) {
     super(CvsBundle.message("dialog.title.select.cvs.configuration"), wizard);
     mySelectCvsConfigurationPanel = new SelectCvsConfigurationPanel(project);
-    myObserver = new Observer() {
-          public void update(Observable o, Object arg) {
-            getWizard().updateStep();
-          }
-        };
-    mySelectCvsConfigurationPanel.getObservable().addObserver(myObserver);
+    myListSelectionListener = new ListSelectionListener() {
+      @Override public void valueChanged(ListSelectionEvent e) {
+        getWizard().updateStep();
+      }
+    };
+    mySelectCvsConfigurationPanel.addListSelectionListener(myListSelectionListener);
     init();
   }
 
+  @Override
   protected void dispose() {
-    mySelectCvsConfigurationPanel.getObservable().deleteObserver(myObserver);
+    mySelectCvsConfigurationPanel.removeListSelectionListener(myListSelectionListener);
   }
 
+  @Override
   public boolean nextIsEnabled() {
     return mySelectCvsConfigurationPanel.getSelectedConfiguration() != null;
   }
 
+  @Override
   public boolean setActive() {
     return true;
   }
 
+  @Override
   protected JComponent createComponent() {
-    JPanel result = new JPanel(new BorderLayout());
-    result.add(mySelectCvsConfigurationPanel, BorderLayout.CENTER);
-    JPanel buttonPanel = new JPanel(new BorderLayout());
-    result.add(buttonPanel, BorderLayout.SOUTH);
-    return result;
+    return mySelectCvsConfigurationPanel;
   }
 
   public CvsRootConfiguration getSelectedConfiguration() {
     return mySelectCvsConfigurationPanel.getSelectedConfiguration();
   }
 
+  @Override
   public Component getPreferredFocusedComponent() {
     return mySelectCvsConfigurationPanel.getJList();
   }

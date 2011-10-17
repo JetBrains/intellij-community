@@ -21,34 +21,44 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
-import java.util.Observable;
-import java.util.Observer;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * author: lesya
  */
 public class SelectCvsConfigurationDialog extends DialogWrapper {
   private final SelectCvsConfigurationPanel myPanel;
+  private final ListSelectionListener myListener;
 
   public SelectCvsConfigurationDialog(Project project) {
     super(true);
     myPanel = new SelectCvsConfigurationPanel(project);
     setOKActionEnabled(myPanel.getSelectedConfiguration() != null);
 
-    myPanel.getObservable().addObserver(new Observer() {
-      public void update(Observable o, Object arg) {
+    myListener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
         setOKActionEnabled(myPanel.getSelectedConfiguration() != null);
       }
-    });
+    };
+    myPanel.addListSelectionListener(myListener);
     setTitle(CvsBundle.message("dialog.title.select.cvs.root.configuration"));
-
     init();
   }
 
+  @Override
+  protected void dispose() {
+    myPanel.removeListSelectionListener(myListener);
+    super.dispose();
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return (JComponent)myPanel.getJList();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

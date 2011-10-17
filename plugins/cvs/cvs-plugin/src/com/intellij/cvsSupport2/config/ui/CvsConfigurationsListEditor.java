@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.config.ui;
 
 import com.intellij.CvsBundle;
-import com.intellij.cvsSupport2.CvsActionPlaces;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
@@ -26,7 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -45,19 +46,20 @@ import java.util.List;
  * author: lesya
  */
 public class CvsConfigurationsListEditor extends DialogWrapper implements DataProvider{
-  private final BorderLayout myCenterPanelLayout = new BorderLayout();
-  private final JPanel myCenterPanel = new JPanel(myCenterPanelLayout);
   private final JList myList = new JBList();
   private final DefaultListModel myModel = new DefaultListModel();
   private CvsRootConfiguration mySelection;
 
   private final Cvs2SettingsEditPanel myCvs2SettingsEditPanel;
   @NonNls private static final String SAMPLE_CVSROOT = ":pserver:user@host/server/home/user/cvs";
-  private boolean myIsReadOnly = false;
 
   public CvsConfigurationsListEditor(List<CvsRootConfiguration> configs, Project project) {
+    this(configs, project, false);
+  }
+
+  public CvsConfigurationsListEditor(List<CvsRootConfiguration> configs, Project project, boolean readOnly) {
     super(true);
-    myCvs2SettingsEditPanel = new Cvs2SettingsEditPanel(project);
+    myCvs2SettingsEditPanel = new Cvs2SettingsEditPanel(project, readOnly);
     setTitle(CvsBundle.message("operation.name.edit.configurations"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     selectNone();
@@ -77,18 +79,19 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     if (!configs.isEmpty()) {
       myList.setSelectedIndex(0);
     }
+    if (readOnly) {
+      myList.setEnabled(false);
+    }
     init();
-
   }
 
   @Nullable
   public static CvsRootConfiguration reconfigureCvsRoot(String root, Project project){
-    CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
-    CvsRootConfiguration selectedConfig = configuration.getConfigurationForCvsRoot(root);
-    ArrayList<CvsRootConfiguration> modifiableList = new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS);
-    CvsConfigurationsListEditor editor = new CvsConfigurationsListEditor(modifiableList, project);
+    final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
+    final CvsRootConfiguration selectedConfig = configuration.getConfigurationForCvsRoot(root);
+    final ArrayList<CvsRootConfiguration> modifiableList = new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS);
+    final CvsConfigurationsListEditor editor = new CvsConfigurationsListEditor(modifiableList, project, true);
     editor.select(selectedConfig);
-    editor.setReadOnly();
     editor.show();
     if (editor.isOK()){
       configuration.CONFIGURATIONS = modifiableList;
@@ -98,15 +101,9 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     }
   }
 
-  private void setReadOnly() {
-    myIsReadOnly = true;
-    myList.setEnabled(false);
-    myCvs2SettingsEditPanel.setReadOnly();
-  }
-
   @Override
   protected Action[] createLeftSideActions() {
-    AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
+    final AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         new ConfigureCvsGlobalSettingsDialog().show();
@@ -122,7 +119,6 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     }
   }
 
-
   private void fillModel(List<CvsRootConfiguration> configurations) {
     for (final CvsRootConfiguration configuration : configurations) {
       myModel.addElement(configuration.getMyCopy());
@@ -130,47 +126,51 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   }
 
   private JComponent createListPanel() {
-    return ScrollPaneFactory.createScrollPane(myList);
-  }
+    final AnActionButton duplicateButton =
+      new AnActionButton(CvsBundle.message("action.name.copy"), IconLoader.getIcon("/general/copy.png")) {
 
-  private JPanel createActionsPanel() {
-    DefaultActionGroup commonActionGroup = new DefaultActionGroup();
-    commonActionGroup.add(new MyAddAction());
-    commonActionGroup.add(new MyRemoveAction());
-    commonActionGroup.add(new MyCopyAction());
+        @Override
+        public void updateButton(AnActionEvent e) {
+          e.getPresentation().setEnabled(getSelectedConfiguration() != null);
+        }
 
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(
-      CvsActionPlaces.CVS_CONFIGURATIONS_TOOLBAR,
-      commonActionGroup, true);
-
-    JPanel actionPanel = new JPanel(new BorderLayout());
-    actionPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
-    return actionPanel;
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          copySelectedConfiguration();
+        }
+      };
+    duplicateButton.setShortcut(new CustomShortcutSet(
+      KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)));
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList).setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton anActionButton) {
+        createNewConfiguration();
+      }
+    }).addExtraAction(duplicateButton);
+    return decorator.createPanel();
   }
 
   @Override
   protected JComponent createCenterPanel() {
     myList.setCellRenderer(new CvsListCellRenderer());
+    final BorderLayout layout = new BorderLayout();
+    layout.setHgap(6);
 
-    myCenterPanelLayout.setHgap(6);
-
-    myCenterPanel.add(createActionsPanel(), BorderLayout.NORTH);
-    JComponent listPanel = createListPanel();
-
-    myCenterPanel.add(listPanel, BorderLayout.CENTER);
-    myCenterPanel.add(createCvsConfigurationPanel(), BorderLayout.EAST);
-    myCenterPanel.add(new JSeparator(JSeparator.HORIZONTAL), BorderLayout.SOUTH);
+    final JPanel centerPanel = new JPanel(layout);
+    final JComponent listPanel = createListPanel();
+    centerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+    centerPanel.add(listPanel, BorderLayout.CENTER);
+    centerPanel.add(createCvsConfigurationPanel(), BorderLayout.EAST);
 
     myList.setModel(myModel);
-
     addSelectionListener();
 
 
-    int minWidth = myList.getFontMetrics(myList.getFont()).stringWidth(SAMPLE_CVSROOT) + 40;
-    Dimension minSize = new Dimension(minWidth, myList.getMaximumSize().height);
+    final int minWidth = myList.getFontMetrics(myList.getFont()).stringWidth(SAMPLE_CVSROOT) + 40;
+    final Dimension minSize = new Dimension(minWidth, myList.getMaximumSize().height);
     listPanel.setMinimumSize(minSize);
     listPanel.setPreferredSize(minSize);
-    return myCenterPanel;
+    return centerPanel;
   }
 
   private JComponent createCvsConfigurationPanel() {
@@ -184,9 +184,9 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private void copySelectedConfiguration() {
     if (!saveSelectedConfiguration()) return;
-    CvsRootConfiguration newConfig = mySelection.getMyCopy();
+    final CvsRootConfiguration newConfig = mySelection.getMyCopy();
     myModel.addElement(newConfig);
-    myList.setSelectedValue(newConfig, true);
+    myList.setSelectedIndex(myModel.getSize() - 1);
   }
 
   private void editSelectedConfiguration() {
@@ -194,20 +194,11 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     myList.repaint();
   }
 
-  private void removeSelectedConfiguration() {
-    int oldSelection = myList.getSelectedIndex();
-    myModel.removeElement(mySelection);
-    int size = myList.getModel().getSize();
-    int newSelection = oldSelection < size ? oldSelection : size - 1;
-    if (newSelection >= 0 && newSelection < size) {
-      myList.setSelectedIndex(newSelection);
-    }
-  }
-
   private void createNewConfiguration() {
     if (!saveSelectedConfiguration()) return;
     myList.setSelectedValue(null, false);
-    CvsRootConfiguration newConfig = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
+    final CvsRootConfiguration newConfig =
+      CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
     myModel.addElement(newConfig);
     myList.setSelectedValue(newConfig, true);
   }
@@ -220,12 +211,12 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        int selectedIndex = myList.getSelectedIndex();
+        final int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex < 0 || selectedIndex >= myModel.getSize()) {
           selectNone();
         }
         else {
-          CvsRootConfiguration newSelection = (CvsRootConfiguration)myModel.getElementAt(selectedIndex);
+          final CvsRootConfiguration newSelection = (CvsRootConfiguration)myModel.getElementAt(selectedIndex);
           if (newSelection == mySelection) return;
           if (!select(newSelection)) {
             myList.setSelectedValue(mySelection, true);
@@ -236,24 +227,20 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   }
 
   private boolean select(CvsRootConfiguration cvs2Configuration) {
-    if (mySelection != null) {
-      if (!myCvs2SettingsEditPanel.saveTo(mySelection)) {
-        return false;
-      }
-    }
+    if (mySelection != null && !myCvs2SettingsEditPanel.saveTo(mySelection)) return false;
     mySelection = cvs2Configuration;
     editSelectedConfiguration();
     return true;
   }
 
   private void selectNone() {
-    myCvs2SettingsEditPanel.disable();
     mySelection = null;
+    myCvs2SettingsEditPanel.disable();
   }
 
-  public ArrayList<CvsRootConfiguration> getConfigurations() {
-    ArrayList<CvsRootConfiguration> result = new ArrayList<CvsRootConfiguration>();
-    Enumeration each = myModel.elements();
+  public List<CvsRootConfiguration> getConfigurations() {
+    final ArrayList<CvsRootConfiguration> result = new ArrayList<CvsRootConfiguration>();
+    final Enumeration each = myModel.elements();
     while (each.hasMoreElements()) result.add((CvsRootConfiguration)each.nextElement());
     return result;
   }
@@ -264,60 +251,6 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   public void selectConfiguration(CvsRootConfiguration selectedConfiguration) {
     myList.setSelectedValue(selectedConfiguration, true);
-  }
-
-  private class MyAddAction extends AnAction {
-    public MyAddAction() {
-      super(CvsBundle.message("action.name.add"), null, IconLoader.getIcon("/general/add.png"));
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myList);
-
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(!myIsReadOnly);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      createNewConfiguration();
-    }
-  }
-
-  private class MyRemoveAction extends AnAction {
-    public MyRemoveAction() {
-      super(CvsBundle.message("action.name.remove"), null, IconLoader.getIcon("/general/remove.png"));
-      registerCustomShortcutSet(CommonShortcuts.DELETE, myList);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelectedConfiguration() != null && !myIsReadOnly);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      removeSelectedConfiguration();
-    }
-  }
-
-  private class MyCopyAction extends AnAction {
-    public MyCopyAction() {
-      super(CvsBundle.message("action.name.copy"), null, IconLoader.getIcon("/general/copy.png"));
-      registerCustomShortcutSet(new CustomShortcutSet(
-        KeyStroke.getKeyStroke(KeyEvent.VK_C, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
-                                myList);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelectedConfiguration() != null && !myIsReadOnly);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      copySelectedConfiguration();
-    }
   }
 
   @Override

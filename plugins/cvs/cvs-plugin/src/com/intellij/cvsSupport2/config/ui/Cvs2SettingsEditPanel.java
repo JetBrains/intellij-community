@@ -39,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.BooleanValueHolder;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,9 +54,8 @@ import java.awt.event.ActionListener;
 public class Cvs2SettingsEditPanel {
 
   private JPanel myPanel;
-  private final BooleanValueHolder myIsInUpdating = new BooleanValueHolder(false);
-  private final CvsRootAsStringConfigurationPanel myCvsRootConfigurationPanelView
-    = new CvsRootAsStringConfigurationPanel(myIsInUpdating);
+  private final Ref<Boolean> myIsUpdating = new Ref<Boolean>();
+  private final CvsRootAsStringConfigurationPanel myCvsRootConfigurationPanelView;
   private JPanel myCvsRootConfigurationPanel;
 
   private final DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
@@ -76,7 +74,7 @@ public class Cvs2SettingsEditPanel {
   @NonNls private static final String NON_EMPTY_PROXY_SETTINGS = "NON-EMPTY-PROXY-SETTINGS";
   private final Project myProject;
 
-  public Cvs2SettingsEditPanel(Project project) {
+  public Cvs2SettingsEditPanel(Project project, boolean readOnly) {
     myProject = project;
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
       @Override
@@ -87,6 +85,7 @@ public class Cvs2SettingsEditPanel {
     }, project);
     myPanel.setSize(myPanel.getPreferredSize());
     myCvsRootConfigurationPanel.setLayout(new BorderLayout());
+    myCvsRootConfigurationPanelView = new CvsRootAsStringConfigurationPanel(readOnly, myIsUpdating);
     myCvsRootConfigurationPanel.add(myCvsRootConfigurationPanelView.getPanel(), BorderLayout.CENTER);
 
     myConnectionSettingsPanel.setLayout(new CardLayout());
@@ -97,7 +96,6 @@ public class Cvs2SettingsEditPanel {
     myConnectionSettingsPanel.add(new JPanel(), CvsMethod.PSERVER_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(mySshConnectionSettingsEditor.getPanel(), CvsMethod.SSH_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(myLocalConnectionSettingsPanel.getPanel(), CvsMethod.LOCAL_METHOD.getDisplayName());
-
     myConnectionSettingsPanel.add(new JPanel(), EMPTY);
 
     myDateOrRevisionOrTagSettingsPanel.setLayout(new BorderLayout(4, 2));
@@ -119,11 +117,11 @@ public class Cvs2SettingsEditPanel {
     });
 
     myProxySettingsPanel.setLayout(new CardLayout());
-
     myProxySettingsNonEmptyPanel = new ProxySettingsPanel();
-
     myProxySettingsPanel.add(myProxySettingsNonEmptyPanel.getPanel(), NON_EMPTY_PROXY_SETTINGS);
     myProxySettingsPanel.add(new JPanel(), EMPTY);
+
+    if (readOnly) setEnabled(myDateOrRevisionOrTagSettingsPanel, false);
   }
 
   public void addCvsRootChangeListener(CvsRootChangeListener cvsRootChangeListener) {
@@ -132,7 +130,7 @@ public class Cvs2SettingsEditPanel {
 
   public void updateFrom(final CvsRootConfiguration configuration) {
     setEnabled(true);
-    myIsInUpdating.setValue(true);
+    myIsUpdating.set(Boolean.TRUE);
     try {
       myCvsRootConfigurationPanelView.updateFrom(configuration);
       myExtConnectionSettingsEditor.updateFrom(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION);
@@ -142,7 +140,7 @@ public class Cvs2SettingsEditPanel {
       myProxySettingsNonEmptyPanel.updateFrom(configuration.PROXY_SETTINGS);
     }
     finally {
-      myIsInUpdating.setValue(false);
+      myIsUpdating.set(null);
     }
     setExtPanelEnabling();
   }
@@ -150,7 +148,7 @@ public class Cvs2SettingsEditPanel {
   public boolean saveTo(CvsRootConfiguration configuration) {
     try {
       myCvsRootConfigurationPanelView.saveTo(configuration);
-      CvsApplicationLevelConfiguration globalCvsSettings = CvsApplicationLevelConfiguration.getInstance();
+      final CvsApplicationLevelConfiguration globalCvsSettings = CvsApplicationLevelConfiguration.getInstance();
 
       if (!myExtConnectionSettingsEditor.equalsTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION)) {
         myExtConnectionSettingsEditor.saveTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION);
@@ -181,7 +179,7 @@ public class Cvs2SettingsEditPanel {
   }
 
   private void testConfiguration() {
-    CvsRootConfiguration newConfiguration = createConfigurationWithCurrentSettings();
+    final CvsRootConfiguration newConfiguration = createConfigurationWithCurrentSettings();
     if (newConfiguration == null) return;
     testConnection(newConfiguration, myPanel, myProject);
     updateFrom(newConfiguration);
@@ -189,7 +187,7 @@ public class Cvs2SettingsEditPanel {
 
   @Nullable
   private CvsRootConfiguration createConfigurationWithCurrentSettings() {
-    CvsRootConfiguration newConfiguration =
+    final CvsRootConfiguration newConfiguration =
       CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
     if (!saveTo(newConfiguration)) return null;
     return newConfiguration;
@@ -204,10 +202,10 @@ public class Cvs2SettingsEditPanel {
         indicator.setText2(CvsBundle.message("message.current.global.timeout.setting",
                                              CvsApplicationLevelConfiguration.getInstance().TIMEOUT));
         try {
-          final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, true);
-          if (ThreeState.NO.equals(checkResult)) {
+          final ThreeState result = LoginPerformer.checkLoginWorker(loginWorker, true);
+          if (ThreeState.NO == result) {
             showConnectionFailedMessage(component, CvsBundle.message("test.connection.login.failed.text"));
-          } else if (ThreeState.UNSURE.equals(checkResult)) {
+          } else if (ThreeState.UNSURE == result) {
             showConnectionFailedMessage(component, CvsBundle.message("error.message.authentication.canceled"));
           } else {
             success.set(Boolean.TRUE);
@@ -260,12 +258,10 @@ public class Cvs2SettingsEditPanel {
 
   private void setExtPanelEnabling() {
     try {
-      CvsRootData currentRootData = CvsRootDataBuilder.createSettingsOn(myCvsRootConfigurationPanelView.getCvsRoot(), true);
-      String settingsPanelName = getSettingsPanelName(currentRootData);
+      final CvsRootData currentRootData = CvsRootDataBuilder.createSettingsOn(myCvsRootConfigurationPanelView.getCvsRoot(), true);
+      final String settingsPanelName = getSettingsPanelName(currentRootData);
       ((CardLayout)myConnectionSettingsPanel.getLayout()).show(myConnectionSettingsPanel, settingsPanelName);
-
       ((CardLayout)myProxySettingsPanel.getLayout()).show(myProxySettingsPanel, getProxyPanelName(currentRootData));
-
 
       if (currentRootData.CONTAINS_PROXY_INFO) {
         myProxySettingsNonEmptyPanel.updateFrom(currentRootData);
@@ -274,11 +270,9 @@ public class Cvs2SettingsEditPanel {
       else {
         myProxySettingsNonEmptyPanel.enablePanel();
       }
-
     }
     catch (Throwable ignored) {
       ((CardLayout)myConnectionSettingsPanel.getLayout()).show(myConnectionSettingsPanel, EMPTY);
-
       ((CardLayout)myProxySettingsPanel.getLayout()).show(myProxySettingsPanel, EMPTY);
 
     }
@@ -292,7 +286,7 @@ public class Cvs2SettingsEditPanel {
   }
 
   private static String getSettingsPanelName(CvsRootData cvsRootData) {
-    CvsMethod method = cvsRootData.METHOD;
+    final CvsMethod method = cvsRootData.METHOD;
     if (method == null) {
       return EMPTY;
     }
@@ -305,7 +299,7 @@ public class Cvs2SettingsEditPanel {
     component.setEnabled(enabled);
 
     if (component instanceof Container) {
-      Container container = (Container)component;
+      final Container container = (Container)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
         setEnabled(container.getComponent(i), enabled);
       }
@@ -313,12 +307,8 @@ public class Cvs2SettingsEditPanel {
   }
 
   public void disable() {
-    clearAllTextFields();
-    setEnabled(false);
-  }
-
-  private void clearAllTextFields() {
     clearAllTextFieldsIn(myPanel);
+    setEnabled(false);
   }
 
   private static void clearAllTextFieldsIn(Component component) {
@@ -327,7 +317,7 @@ public class Cvs2SettingsEditPanel {
       return;
     }
     if (component instanceof Container) {
-      Container container = (Container)component;
+      final Container container = (Container)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
         clearAllTextFieldsIn(container.getComponent(i));
       }
@@ -336,10 +326,5 @@ public class Cvs2SettingsEditPanel {
 
   public JComponent getPreferredFocusedComponent() {
     return myCvsRootConfigurationPanelView.getPreferredFocusedComponent();
-  }
-
-  public void setReadOnly() {
-    myCvsRootConfigurationPanelView.setReadOnly();
-    setEnabled(myDateOrRevisionOrTagSettingsPanel, false);
   }
 }

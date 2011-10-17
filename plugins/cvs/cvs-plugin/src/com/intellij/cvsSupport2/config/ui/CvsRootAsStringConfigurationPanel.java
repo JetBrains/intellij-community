@@ -19,8 +19,8 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditCvsConfigurationFieldByFieldDialog;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.BooleanValueHolder;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -35,14 +35,12 @@ import java.util.Collection;
 public class CvsRootAsStringConfigurationPanel {
   private JTextField myCvsRoot;
   private JButton myEditFieldByFieldButton;
-  private JLabel myRootLabel;
-  private final BooleanValueHolder myIsInUpdating;
+  private final Ref<Boolean> myIsUpdating;
   private final Collection<CvsRootChangeListener> myCvsRootListeners = new ArrayList<CvsRootChangeListener>();
   private JPanel myPanel;
 
-  public CvsRootAsStringConfigurationPanel(BooleanValueHolder isInUpdating) {
-    myIsInUpdating = isInUpdating;
-    myRootLabel.setLabelFor(myCvsRoot);
+  public CvsRootAsStringConfigurationPanel(boolean readOnly, Ref<Boolean> isUpdating) {
+    myIsUpdating = isUpdating;
     myCvsRoot.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void textChanged(DocumentEvent event) {
@@ -53,20 +51,24 @@ public class CvsRootAsStringConfigurationPanel {
     myEditFieldByFieldButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        CvsRootConfiguration cvsRootConfiguration = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
+        final CvsRootConfiguration cvsRootConfiguration =
+          CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
         saveTo(cvsRootConfiguration);
-        EditCvsConfigurationFieldByFieldDialog dialog
-          = new EditCvsConfigurationFieldByFieldDialog(myCvsRoot.getText());
+        final EditCvsConfigurationFieldByFieldDialog dialog = new EditCvsConfigurationFieldByFieldDialog(myCvsRoot.getText());
         dialog.show();
-        if (dialog.isOK()){
+        if (dialog.isOK()) {
           myCvsRoot.setText(dialog.getConfiguration());
         }
       }
     });
+    if (readOnly) {
+      myCvsRoot.setEditable(false);
+      myEditFieldByFieldButton.setEnabled(false);
+    }
   }
 
   protected void notifyListeners() {
-    if (myIsInUpdating.getValue()) return;
+    if (!myIsUpdating.isNull()) return;
     for (CvsRootChangeListener cvsRootChangeListener : myCvsRootListeners) {
       cvsRootChangeListener.onCvsRootChanged();
     }
@@ -83,7 +85,6 @@ public class CvsRootAsStringConfigurationPanel {
   public void updateFrom(CvsRootConfiguration config) {
     myCvsRoot.setText(config.CVS_ROOT);
     myCvsRoot.selectAll();
-    myCvsRoot.requestFocus();
   }
 
   public void saveTo(CvsRootConfiguration config) {
@@ -97,10 +98,4 @@ public class CvsRootAsStringConfigurationPanel {
   public JComponent getPreferredFocusedComponent() {
     return myCvsRoot;
   }
-
-  public void setReadOnly() {
-    myCvsRoot.setEditable(false);
-    myEditFieldByFieldButton.setEnabled(false);
-  }
-
 }

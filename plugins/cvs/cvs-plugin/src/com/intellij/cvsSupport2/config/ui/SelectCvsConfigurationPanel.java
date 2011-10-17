@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -30,7 +31,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
 
 /**
  * author: lesya
@@ -38,74 +38,79 @@ import java.util.Observable;
 public class SelectCvsConfigurationPanel extends JPanel {
   private final DefaultListModel myModel = new DefaultListModel();
   private final JList myList = new JBList(myModel);
-  private CvsRootConfiguration mySelection;
+  private CvsRootConfiguration mySelection = null;
   private final Project myProject;
-  private final MyObservable myObservable;
 
   public SelectCvsConfigurationPanel(Project project) {
     super(new BorderLayout(2, 4));
     myProject = project;
-    add(createListPanel(), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     add(createButtonPanel(), BorderLayout.EAST);
-    myObservable = new MyObservable();
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         mySelection = (CvsRootConfiguration)myList.getSelectedValue();
-        myObservable.setChanged();
-        myObservable.notifyObservers(mySelection);
+        fireSelectionValueChanged(e.getFirstIndex(), e.getLastIndex(), e.getValueIsAdjusting());
       }
     });
-
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
     fillModel(null);
   }
 
+  public void addListSelectionListener(ListSelectionListener listener) {
+    listenerList.add(ListSelectionListener.class, listener);
+  }
+
+  public void removeListSelectionListener(ListSelectionListener listener) {
+    listenerList.remove(ListSelectionListener.class, listener);
+  }
+
+  private void fireSelectionValueChanged(int firstIndex, int lastIndex, boolean isAdjusting) {
+    final ListSelectionListener[] listeners = getListeners(ListSelectionListener.class);
+    if( listeners.length == 0) return;
+    final ListSelectionEvent event = new ListSelectionEvent(this, firstIndex, lastIndex, isAdjusting);
+    for (ListSelectionListener listener : listeners) {
+      listener.valueChanged(event);
+    }
+  }
+
   private Component createButtonPanel() {
-    JPanel result = new JPanel(new BorderLayout());
-    JButton jButton = new JButton(CvsBundle.message("button.text.configure.cvs.roots"));
-    jButton.addActionListener(new ActionListener() {
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JButton button = new JButton(CvsBundle.message("button.text.configure.cvs.roots"));
+    button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         editConfigurations();
       }
     });
-    result.add(jButton, BorderLayout.NORTH);
-    return result;
-  }
-
-  private JPanel createListPanel() {
-    JPanel result = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
-    result.add(scrollPane, BorderLayout.CENTER);
-    scrollPane.setFocusable(false);
-    return result;
+    panel.add(button, BorderLayout.NORTH);
+    return panel;
   }
 
   public void editConfigurations() {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
-    CvsConfigurationsListEditor cvsConfigurationsListEditor =
+    final CvsConfigurationsListEditor cvsConfigurationsListEditor =
       new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS), myProject);
-    CvsRootConfiguration selectedConfiguration = getSelectedConfiguration();
+    final CvsRootConfiguration selectedConfiguration = getSelectedConfiguration();
     if (selectedConfiguration != null) {
       cvsConfigurationsListEditor.selectConfiguration(selectedConfiguration);
     }
     cvsConfigurationsListEditor.show();
     if (cvsConfigurationsListEditor.isOK()) {
-      configuration.CONFIGURATIONS =
-        new ArrayList<CvsRootConfiguration>(cvsConfigurationsListEditor.getConfigurations());
+      configuration.CONFIGURATIONS = cvsConfigurationsListEditor.getConfigurations();
       fillModel(cvsConfigurationsListEditor.getSelectedConfiguration());
     }
   }
 
-  private void fillModel(Object selectedConfiguration) {
-    Object selection = selectedConfiguration == null ? myList.getSelectedValue() : selectedConfiguration;
+  private void fillModel(@Nullable CvsRootConfiguration configurationToSelect) {
+    final CvsRootConfiguration selection = configurationToSelect == null ? mySelection : configurationToSelect;
     myModel.removeAllElements();
-    List<CvsRootConfiguration> configurations = CvsApplicationLevelConfiguration.getInstance().CONFIGURATIONS;
+    final List<CvsRootConfiguration> configurations = CvsApplicationLevelConfiguration.getInstance().CONFIGURATIONS;
     for (CvsRootConfiguration configuration : configurations) {
+      if (configuration.CVS_ROOT.isEmpty()) continue;
       myModel.addElement(configuration);
     }
-    myList.setSelectedValue(selection, true);
-
+    if (selection != null) myList.setSelectedValue(selection, true);
     if (myList.getSelectedIndex() < 0 && myList.getModel().getSize() > 0) {
       myList.setSelectedIndex(0);
     }
@@ -115,18 +120,7 @@ public class SelectCvsConfigurationPanel extends JPanel {
     return mySelection;
   }
 
-  public Observable getObservable() {
-    return myObservable;
-  }
-
   public Component getJList() {
     return myList;
   }
-
-  private static class MyObservable extends Observable {
-    public synchronized void setChanged() {
-      super.setChanged();
-    }
-  }
-
 }
