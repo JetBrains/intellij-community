@@ -192,12 +192,12 @@ public class MergeRequestImpl extends MergeRequest {
     myHelpId = helpId;
   }
 
-  private static class MergeContent extends DiffContent {
+  public static class MergeContent extends DiffContent {
     private final MergeVersion myTarget;
     private final Document myWorkingDocument;
     private final Project myProject;
 
-    private MergeContent(MergeVersion target, Project project) {
+    public MergeContent(MergeVersion target, Project project) {
       myTarget = target;
       myProject = project;
       myWorkingDocument = myTarget.createWorkingDocument(project);
