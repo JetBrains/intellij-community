@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -582,8 +583,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return element != null && element.isValid() ? element : null;
     }
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final PsiElement element = getSelectedElement(PsiElement.class);
-      return element != null && element.isValid() ? new PsiElement[]{element} : null;
+      final List<PsiElement> elements = getSelectedElements(PsiElement.class);
+      if (elements == null || elements.isEmpty()) return null;
+      List<PsiElement> result = new ArrayList<PsiElement>();
+      for (PsiElement element : elements) {
+        if (element != null && element.isValid()) {
+          result.add(element);
+        }
+      }
+      return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
 
     if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
@@ -591,11 +599,22 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       if (psiElements == null) return null;
       Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
       for (PsiElement element : psiElements) {
-        if (element instanceof PsiFileSystemItem) {
+        PsiFile file = element.getContainingFile();
+        if (file != null) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            files.add(virtualFile);
+          }
+        } else if (element instanceof PsiFileSystemItem) {
           files.add(((PsiFileSystemItem)element).getVirtualFile());
         }
       }
       return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
+    }
+    
+    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      final List<Navigatable> elements = getSelectedElements(Navigatable.class);
+      return elements == null || elements.isEmpty() ? null : elements.toArray(new Navigatable[elements.size()]);
     }
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
@@ -637,6 +656,28 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     return value != null && klass.isAssignableFrom(value.getClass()) ? (T)value : null;
   }
+
+  @Nullable
+  @SuppressWarnings({"unchecked"})
+  <T> List<T> getSelectedElements(Class<T> klass) {
+    Object[] values = null;
+    if (myNodePopup != null) {
+      values = myNodePopup.getSelectedValues();
+    }
+    if (values == null) {
+      final T selectedElement = getSelectedElement(klass);
+      return selectedElement == null ? null : Arrays.asList(selectedElement);
+    } else {
+      List<T> result = new ArrayList<T>();
+      for (Object value : values) {
+        if (value != null && klass.isAssignableFrom(value.getClass())) {
+          result.add((T)value);
+        }
+      }
+      return result;
+    }
+  }
+
 
   public Point getBestPopupPosition() {
     int index = myModel.getSelectedIndex();

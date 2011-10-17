@@ -175,6 +175,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   public Object getSelectedValue() {
     return getList().getSelectedValue();
   }
+  
+  public Object[] getSelectedValues() {
+    return getList().getSelectedValues();
+  }
 
   public JBList getList() {
     return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
