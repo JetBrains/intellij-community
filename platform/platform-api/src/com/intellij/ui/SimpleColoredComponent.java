@@ -529,7 +529,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       final Integer fixedWidth = myAligns.get(i);
       if (fixedWidth != null && fragmentWidth < fixedWidth.intValue()) {
         //if (fixedWidth != null) {
-        offset += fixedWidth.intValue();
+        offset = fixedWidth.intValue();
       } else {
         offset += fragmentWidth;
       }

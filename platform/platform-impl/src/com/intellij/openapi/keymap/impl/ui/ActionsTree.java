@@ -86,7 +86,8 @@ public class ActionsTree {
           ((BasicTreeUI)treeUI).setLeftChildIndent(((BasicTreeUI)treeUI).getLeftChildIndent());
         }
         lastViewRect = currentViewRect;
-        return super.getPreferredSize();
+
+        return new Dimension(30, super.getPreferredSize().height);
       }
     };
     myTree.setRootVisible(false);
