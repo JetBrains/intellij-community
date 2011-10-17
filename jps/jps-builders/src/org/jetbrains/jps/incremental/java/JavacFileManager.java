@@ -21,7 +21,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   private final Context myContext;
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
 
-  static interface Context {
+  interface Context {
     StandardJavaFileManager getStandardFileManager();
 
     void consumeOutputFile(OutputFileObject obj);
@@ -35,8 +35,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     super(context.getStandardFileManager());
     myContext = context;
   }
-
-// todo: check if reading source files can be optimized
 
   public boolean setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) {
     for (File outputDir : outputDirToSrcRoots.keySet()) {

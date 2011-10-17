@@ -85,7 +85,7 @@ public class ClasspathBootstrap {
     return new ArrayList<File>(cp);
   }
 
-  private static File getResourcePath(Class aClass) {
+  public static File getResourcePath(Class aClass) {
     return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
   }
 

@@ -1,6 +1,8 @@
 package org.jetbrains.jps.incremental.java;
 
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import javax.tools.*;
 import java.io.File;
@@ -20,15 +22,15 @@ public class EmbeddedJavac {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
 
-  public static interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
+  public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
     void outputLineAvailable(String line);
   }
 
-  public static interface OutputFileConsumer {
+  public interface OutputFileConsumer {
     void save(OutputFileObject fileObject);
   }
 
-  public static interface ClassPostProcessor {
+  public interface ClassPostProcessor {
     void process(CompileContext context, OutputFileObject out);
   }
 
@@ -114,7 +116,19 @@ public class EmbeddedJavac {
           throw new RuntimeException("Output sink for compiler was not specified");
         }
       };
-      myStdManager = myCompiler.getStandardFileManager(outConsumer, Locale.US, null);
+      StandardJavaFileManager stdManager = null;
+      try {
+        stdManager = (StandardJavaFileManager)Class.forName("org.jetbrains.jps.incremental.java.OptimizedFileManager").newInstance();
+      }
+      catch (Throwable e) {
+        compileContext.processMessage(new CompilerMessage("Javac", BuildMessage.Kind.INFO, "Failed to load JPS optimized file manager for javac: " + e.getMessage()));
+      }
+      if (stdManager != null) {
+        myStdManager = stdManager;
+      }
+      else {
+        myStdManager = myCompiler.getStandardFileManager(outConsumer, Locale.US, null);
+      }
     }
 
     public StandardJavaFileManager getStandardFileManager() {

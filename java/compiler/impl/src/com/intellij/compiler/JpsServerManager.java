@@ -56,6 +56,7 @@ import org.jetbrains.jps.client.Client;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -71,7 +72,7 @@ public class JpsServerManager implements ApplicationComponent{
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private volatile OSProcessHandler myProcessHandler;
 
-  private final Client myClient = new Client();
+  private volatile Client myClient = new Client();
   private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
     public void submit(Runnable runnable) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
@@ -98,9 +99,14 @@ public class JpsServerManager implements ApplicationComponent{
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {
         try {
-          ensureServerRunningAndClientConnected();
-          final RequestFuture requestFuture = myClient.sendCompileRequest(projectId, modules, rebuild, handler);
-          futureRef.set(requestFuture);
+          final Client client = ensureServerRunningAndClientConnected(true);
+          if (client != null) {
+            final RequestFuture requestFuture = client.sendCompileRequest(projectId, modules, rebuild, handler);
+            futureRef.set(requestFuture);
+          }
+          else {
+            handler.sessionTerminated();
+          }
         }
         catch (Throwable e) {
           try {
@@ -137,11 +143,22 @@ public class JpsServerManager implements ApplicationComponent{
   }
 
   // executed in one thread at a time
-  private void ensureServerRunningAndClientConnected() throws Throwable {
+  @Nullable
+  private Client ensureServerRunningAndClientConnected(boolean forceRestart) throws Throwable {
     final OSProcessHandler ph = myProcessHandler;
-    if (ph == null || ph.isProcessTerminated() || ph.isProcessTerminating() || !myClient.isConnected()) {
-      shutdownServer(myClient, ph); // to ensure the process is not running
+    final Client cl = myClient;
+    final boolean processNotRunning = ph == null || ph.isProcessTerminated() || ph.isProcessTerminating();
+    final boolean clientNotConnected = cl == null || !cl.isConnected();
+
+    if (processNotRunning || clientNotConnected) {
+      // cleanup; ensure the process is not running
+      shutdownServer(cl, ph);
       myProcessHandler = null;
+      myClient = null;
+
+      if (!forceRestart) {
+        return null;
+      }
 
       final int port = NetUtils.findAvailableSocketPort();
       final Process process = launchServer(port);
@@ -185,19 +202,27 @@ public class JpsServerManager implements ApplicationComponent{
         throw new Exception("Server startup failed: " + startupMsg);
       }
 
-      final boolean connected = myClient.connect(NetUtils.getLocalHostString(), port);
-      if (connected) {
-        final RequestFuture setupFuture = sendSetupRequest();
-        setupFuture.get();
-        myProcessHandler = processHandler;
+      Client client = new Client();
+      boolean connected = false;
+      try {
+        connected = client.connect(NetUtils.getLocalHostString(), port);
+        if (connected) {
+          final RequestFuture setupFuture = sendSetupRequest(client);
+          setupFuture.get();
+          myProcessHandler = processHandler;
+          myClient = client;
+        }
       }
-      else {
-        shutdownServer(myClient, processHandler);
+      finally {
+        if (!connected) {
+          shutdownServer(cl, processHandler);
+        }
       }
     }
+    return myClient;
   }
 
-  private RequestFuture sendSetupRequest() throws Exception {
+  private static RequestFuture sendSetupRequest(final @NotNull Client client) throws Exception {
     final PathMacros pathVars = PathMacros.getInstance();
     final Map<String, String> data = new HashMap<String, String>();
     for (String name : pathVars.getAllMacroNames()) {
@@ -212,7 +237,7 @@ public class JpsServerManager implements ApplicationComponent{
     fillSdks(globals);
     fillGlobalLibraries(globals);
 
-    return myClient.sendSetupRequest(data, globals);
+    return client.sendSetupRequest(data, globals);
   }
 
   private static void fillSdks(List<GlobalLibrary> globals) {
@@ -254,12 +279,23 @@ public class JpsServerManager implements ApplicationComponent{
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
-    //cmdLine.addParameter("-Dagentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=JPSServer");
-    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5007");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
     cmdLine.addParameter("-Xmx256m"); // todo: get this value from settings
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getApplicationClasspath();
+
+    // append tools.jar
+    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+    if (systemCompiler == null) {
+      throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+    }
+    try {
+      cp.add(ClasspathBootstrap.getResourcePath(systemCompiler.getClass()));  // tools.jar
+    }
+    catch (Throwable ignored) {
+    }
+
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter(org.jetbrains.jps.server.Server.class.getName());
@@ -274,7 +310,7 @@ public class JpsServerManager implements ApplicationComponent{
 
   private static void shutdownServer(final Client client, final OSProcessHandler processHandler) {
     try {
-      if (client != null) {
+      if (client != null && client.isConnected()) {
         final Future future = client.sendShutdownRequest();
         future.get(500, TimeUnit.MILLISECONDS);
         client.disconnect();
@@ -309,24 +345,31 @@ public class JpsServerManager implements ApplicationComponent{
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         public void beforeRootsChange(final ModuleRootEvent event) {
-          sendReloadRequest(project);
+          sendReloadRequest(project, false);
         }
 
         public void rootsChanged(final ModuleRootEvent event) {
-          try {
-            // this will reload sdks and global libraries
-            sendSetupRequest();
-          }
-          catch (Exception e) {
-            LOG.info(e);
-          }
+          myTaskExecutor.submit(new Runnable() {
+            public void run() {
+              try {
+                // this will reload sdks and global libraries
+                final Client client = ensureServerRunningAndClientConnected(false);
+                if (client != null) {
+                  sendSetupRequest(client);
+                }
+              }
+              catch (Throwable e) {
+                LOG.info(e);
+              }
+            }
+          });
         }
       });
 
     }
 
     public void projectClosing(Project project) {
-      sendReloadRequest(project);
+      sendReloadRequest(project, false);
     }
 
     public void projectClosed(Project project) {
@@ -336,16 +379,21 @@ public class JpsServerManager implements ApplicationComponent{
       }
     }
 
-    private void sendReloadRequest(Project project) {
-      final Client client = myClient;
-      if (client != null) {
-        try {
-          client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+    private void sendReloadRequest(final Project project, final boolean forceRestart) {
+      myTaskExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            final Client client = ensureServerRunningAndClientConnected(forceRestart);
+            if (client != null) {
+              client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+            }
+          }
+          catch (Throwable e) {
+            LOG.info(e);
+          }
         }
-        catch (Exception e) {
-          LOG.info(e);
-        }
-      }
+      });
     }
   }
 }

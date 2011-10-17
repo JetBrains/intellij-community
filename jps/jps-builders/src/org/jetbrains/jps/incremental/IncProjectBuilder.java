@@ -68,7 +68,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
+  private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
     for (BuildTask task : tasks) {
       task.build(context);
     }
