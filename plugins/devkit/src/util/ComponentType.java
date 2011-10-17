@@ -56,7 +56,7 @@ public enum ComponentType {
     final XmlTag rootTag = pluginXml.getDocument().getRootTag();
     if (rootTag != null && "idea-plugin".equals(rootTag.getName())) {
       XmlTag components = rootTag.findFirstSubTag(myName);
-      if (components == null) {
+      if (components == null || !components.isPhysical()) {
         components = (XmlTag)rootTag.add(rootTag.createChildTag(myName, rootTag.getNamespace(), null, false));
       }
 

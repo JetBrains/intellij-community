@@ -53,6 +53,7 @@ public enum ActionType {
   public void process(XmlTag rootTag, Processor processor) {
     final XmlTag[] actions = rootTag.findSubTags("actions");
     for (XmlTag tag : actions) {
+      if (!tag.isPhysical()) continue;
       final XmlTag[] components = tag.getSubTags();
       for (XmlTag actionOrGroup : components) {
         if (myName.equals(actionOrGroup.getName())) {
@@ -75,7 +76,7 @@ public enum ActionType {
     final XmlTag rootTag = pluginXml.getDocument().getRootTag();
     if (rootTag != null && "idea-plugin".equals(rootTag.getName())) {
       XmlTag actions = rootTag.findFirstSubTag("actions");
-      if (actions == null) {
+      if (actions == null || !actions.isPhysical()) {
         actions = (XmlTag)rootTag.add(rootTag.createChildTag("actions", rootTag.getNamespace(), null, false));
       }
 
