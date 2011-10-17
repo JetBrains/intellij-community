@@ -68,12 +68,8 @@ public class SymLinkUtil {
   private SymLinkUtil() { }
 
   public static boolean isSymLink(@NotNull final File file) {
-    return isSymLink(file.getAbsolutePath());
-  }
-
-  public static boolean isSymLink(@NotNull final String path) {
     try {
-      return ourMediator != null && ourMediator.isSymLink(path);
+      return file.exists() && ourMediator != null && ourMediator.isSymLink(file.getAbsolutePath());
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -81,16 +77,15 @@ public class SymLinkUtil {
     }
   }
 
-  @Nullable
-  public static String resolveSymLink(@NotNull final File file) {
-    return resolveSymLink(file.getAbsolutePath());
+  public static boolean isSymLink(@NotNull final String path) {
+    return isSymLink(new File(path));
   }
 
   @Nullable
-  public static String resolveSymLink(@NotNull final String path) {
-    if (ourMediator != null) {
+  public static String resolveSymLink(@NotNull final File file) {
+    if (file.exists() && ourMediator != null) {
       try {
-        final String realPath = ourMediator.resolveSymLink(path);
+        final String realPath = ourMediator.resolveSymLink(file.getAbsolutePath());
         if (realPath != null && new File(realPath).exists()) {
           return realPath;
         }
@@ -100,6 +95,11 @@ public class SymLinkUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static String resolveSymLink(@NotNull final String path) {
+    return resolveSymLink(new File(path));
   }
 
   private interface Mediator {
