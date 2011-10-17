@@ -467,7 +467,9 @@ def layout_core(String home, String target) {
     fileset(dir: "$home/lib") {
       include(name: "guava-r09.jar")
       include(name: "picocontainer.jar")
-
+      include(name: "trove4j.jar")
+      include(name: "asm.jar")
+      include(name: "asm-commons.jar")
     }
   }
 }
