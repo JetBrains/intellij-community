@@ -347,9 +347,10 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public PsiDocComment getDocComment(){
     CompositeElement treeElement = getNode();
     if (getTypeElement() != null) {
-      return (PsiDocComment)treeElement.findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
+      PsiElement element = treeElement.findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
+      return element instanceof PsiDocComment ? (PsiDocComment)element : null;
     }
-    else{
+    else {
       ASTNode prevField = treeElement.getTreePrev();
       while(prevField.getElementType() != JavaElementType.FIELD){
         prevField = prevField.getTreePrev();
