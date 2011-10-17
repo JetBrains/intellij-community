@@ -78,6 +78,10 @@ public class Mappings {
   private class Util {
     final Mappings delta;
 
+    private Util() {
+      this.delta = null;
+    }
+
     private Util(Mappings delta) {
       this.delta = delta;
     }
@@ -201,10 +205,12 @@ public class Mappings {
     }
 
     ClassRepr reprByName(final StringCache.S name) {
-      final ClassRepr r = delta.getReprByName(name);
+      if (delta != null) {
+        final ClassRepr r = delta.getReprByName(name);
 
-      if (r != null) {
-        return r;
+        if (r != null) {
+          return r;
+        }
       }
 
       return getReprByName(name);
@@ -370,6 +376,7 @@ public class Mappings {
                                final Set<StringCache.S> safeFiles) {
 
     final Util u = new Util(delta);
+    final Util o = new Util();
 
     if (removed != null) {
       for (StringCache.S file : removed) {
@@ -624,7 +631,7 @@ public class Mappings {
             final boolean ffPLocal = !ffPrivate && !ffProtected && !ffPublic;
 
             if (!ffPrivate) {
-              final Collection<StringCache.S> propagated = u.propagateFieldAccess(ff.name, cc.name);
+              final Collection<StringCache.S> propagated = o.propagateFieldAccess(ff.name, cc.name);
               final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
               u.affectFieldUsages(ff, propagated, ff.createUsage(cc.name), localUsages, dependants);
