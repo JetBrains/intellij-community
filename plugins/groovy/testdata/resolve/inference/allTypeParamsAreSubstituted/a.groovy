@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-Map<Integer, Double> map3
-map3 = [].collectEntries {}
-int map4 = <warning descr="Cannot assign 'Map' to 'int'">[].collectEntries {}</warning>
+List<String> l = ['a', 'b', 'c']
+def aa = l.collectEntries { [it, it]}
+
+print a<ref>a
