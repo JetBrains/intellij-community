@@ -27,6 +27,8 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -79,9 +81,10 @@ public class DefaultPatchBaseVersionProvider {
       final Matcher matcher = myRevisionPattern.matcher(myVersionId);
       if (matcher.find()) {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
+        final VcsRevisionNumber finalRevision = revision;
+        final Boolean[] loadedExactRevision = new Boolean[1];
+
         if (historyProvider instanceof VcsBaseRevisionAdviser) {
-          final VcsRevisionNumber finalRevision = revision;
-          final Boolean[] loadedExactRevision = new Boolean[1];
           final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
             public void run() throws VcsException {
               loadedExactRevision[0] = ((VcsBaseRevisionAdviser)historyProvider).getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
@@ -89,8 +92,22 @@ public class DefaultPatchBaseVersionProvider {
           }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
           // was cancelled
           if (! success) return;
-          if (Boolean.TRUE.equals(loadedExactRevision[0])) return;
+        } else {
+          // use diff provider
+          final DiffProvider diffProvider = myVcs.getDiffProvider();
+          if (diffProvider != null && filePath.getVirtualFile() != null) {
+            final ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
+
+            final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
+              public void run() throws VcsException {
+                loadedExactRevision[0] = ! processor.process(fileContent.getContent());
+              }
+            }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
+            // was cancelled
+            if (! success) return;
+          }
         }
+        if (Boolean.TRUE.equals(loadedExactRevision[0])) return;
       }
     }
 

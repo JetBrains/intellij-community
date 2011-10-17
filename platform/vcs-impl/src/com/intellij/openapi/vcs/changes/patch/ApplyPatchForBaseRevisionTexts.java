@@ -44,7 +44,7 @@ public class ApplyPatchForBaseRevisionTexts {
   @NotNull
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
                                                        final TextFilePatch patch, final Getter<CharSequence> baseContents) {
-    assert ! patch.isNewFile(); // todo check
+    assert ! patch.isNewFile();
     final String beforeVersionId = patch.getBeforeVersionId();
     DefaultPatchBaseVersionProvider provider = null;
     if (beforeVersionId != null) {
@@ -81,7 +81,7 @@ public class ApplyPatchForBaseRevisionTexts {
               return true;
             }
             myBase = text;
-            myPatched = applier.getAfter();
+            setPatched(applier.getAfter());
             return false;
           }
         }, myWarnings);
@@ -102,7 +102,7 @@ public class ApplyPatchForBaseRevisionTexts {
       if (! applier.execute()) {
         applier.trySolveSomehow();
       }
-      myPatched = applier.getAfter();
+      setPatched(applier.getAfter());
       return;
     }
 
@@ -110,7 +110,7 @@ public class ApplyPatchForBaseRevisionTexts {
     if (! applier.execute()) {
       applier.trySolveSomehow();
     }
-    myPatched = applier.getAfter();
+    setPatched(applier.getAfter());
   }
 
   public CharSequence getLocal() {
@@ -119,6 +119,10 @@ public class ApplyPatchForBaseRevisionTexts {
 
   public CharSequence getBase() {
     return myBase;
+  }
+  
+  private void setPatched(final String text) {
+    myPatched = StringUtil.convertLineSeparators(text);
   }
 
   public String getPatched() {
