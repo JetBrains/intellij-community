@@ -218,7 +218,7 @@ public class ReferenceExpressionCompletionContributor {
       final PsiElement qualifier = JavaCompletionUtil.getQualifier(reference.getElement());
       final PsiType expectedType = parameters.getExpectedType();
       if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
-        if (!itemType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        if (parameters.getParameters().getInvocationCount() >= 3 || !itemType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           addChainedCallVariants(element, baseItem, result, itemType, expectedType, parameters);
         }
       }
@@ -405,7 +405,7 @@ public class ReferenceExpressionCompletionContributor {
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
       if (shoudChain(place, varType, expectedType, item)) {
-        result.consume(JavaChainLookupElement.chainElements(qualifierItem, item));
+        result.consume(new JavaChainLookupElement(qualifierItem, item));
       }
     }
   }

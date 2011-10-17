@@ -117,6 +117,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testDontChainStringMethodsOnString() throws Throwable { doTest(); }
+  public void testStringMethodsWhenNothingFound() throws Throwable { doTest(); }
 
   public void testDontSuggestTooGenericMethods() throws Throwable {
     configure();

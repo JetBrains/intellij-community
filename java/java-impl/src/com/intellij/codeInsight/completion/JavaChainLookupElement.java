@@ -34,7 +34,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);
   private final LookupElement myQualifier;
 
-  private JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
+  public JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
     super(main);
     myQualifier = qualifier;
   }
@@ -148,9 +148,5 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       return JavaCompletionUtil.getQualifiedMemberReferenceType(JavaCompletionUtil.getLookupElementType(myQualifier), (PsiMember)object);
     }
     return ((PsiVariable) object).getType();
-  }
-
-  public static LookupElement chainElements(LookupElement qualifier, LookupElement main) {
-    return new JavaChainLookupElement(qualifier, main);
   }
 }
