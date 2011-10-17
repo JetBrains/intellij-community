@@ -78,6 +78,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
       setIpad(new Insets(0,0,0,0));
       setMyBorder(null);
       setBorder(null);
+      setPaintFocusBorder(false);
     }
     update();
     myPadding = new JBInsets(3, 3, 3, 3);
@@ -144,7 +145,6 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   }
 
   private void doPaintDecorated(Graphics2D g) {
-    setPaintFocusBorder(false);
     Icon icon = myIcon;
     final Color bg = getBackground();
     g.setPaint(bg);
