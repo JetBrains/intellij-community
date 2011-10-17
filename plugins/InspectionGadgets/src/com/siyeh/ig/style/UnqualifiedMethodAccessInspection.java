@@ -23,23 +23,23 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddThisQualifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UnqualifiedFieldAccessInspection extends BaseInspection {
+public class UnqualifiedMethodAccessInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unqualified.field.access.display.name");
+    return InspectionGadgetsBundle.message("unqualified.method.access.display.name");
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UnqualifiedFieldAccessVisitor();
+    return new UnqualifiedMethodAccessVisitor();
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("unqualified.field.access.problem.descriptor");
+    return InspectionGadgetsBundle.message("unqualified.method.access.problem.descriptor");
   }
 
   @Override
@@ -47,7 +47,7 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
     return new AddThisQualifierFix();
   }
 
-  private static class UnqualifiedFieldAccessVisitor extends BaseInspectionVisitor {
+  private static class UnqualifiedMethodAccessVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -60,17 +60,12 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
       if (parameterList == null) {
         return;
       }
-      if (parameterList.getTypeArguments().length > 0) {
-        // optimization: reference with type arguments are
-        // definitely not references to fields.
-        return;
-      }
       final PsiElement element = expression.resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiMethod)) {
         return;
       }
-      final PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiMethod method = (PsiMethod)element;
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       registerError(expression);
