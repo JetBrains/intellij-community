@@ -55,6 +55,11 @@ public class FragmentSeparatorsPositionConsumer {
     return myRight;
   }
 
+  public void clear() {
+    myLeft.clear();
+    myRight.clear();
+  }
+
   public static class TornSeparator {
     private final int myLeftLine;
     private final int myRightLine;
