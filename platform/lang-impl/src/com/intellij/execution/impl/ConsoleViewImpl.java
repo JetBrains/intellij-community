@@ -591,7 +591,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
               document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
             }
           }
-          document.insertString(document.getTextLength(), strings[strings.length - 1]);
+          if (strings.length > 0) {
+            document.insertString(document.getTextLength(), strings[strings.length - 1]);
+          }
         }
         finally {
           if (preserveCurrentVisualArea) {
