@@ -139,8 +139,8 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     }
     VcsDescriptor[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
 
-    if (vcses.length > 0) {
-      result.add(createVcsComposeConfigurable(vcses));
+    for (VcsDescriptor vcs : vcses) {
+      result.add(createVcsConfigurableWrapper(vcs));
     }
 
     return result.toArray(new Configurable[result.size()]);
@@ -153,36 +153,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
         myGeneralPanel.updateAvailableOptions(activeVcses);
       }
     });
-  }
-
-  private Configurable createVcsComposeConfigurable(final VcsDescriptor[] vcses) {
-    return new SearchableConfigurable.Parent.Abstract(){
-      protected Configurable[] buildConfigurables() {
-        List<Configurable> result = new ArrayList<Configurable>();
-        for (VcsDescriptor vcs : vcses) {
-          result.add(createVcsConfigurableWrapper(vcs));
-        }
-        return result.toArray(new Configurable[result.size()]);
-      }
-
-      @NotNull
-      public String getId() {
-        return "project.propVCSSupport.vcses";
-      }
-
-      @Nls
-      public String getDisplayName() {
-        return "VCSs";
-      }
-
-      public Icon getIcon() {
-        return null;
-      }
-
-      public String getHelpTopic() {
-        return "project.propVCSSupport.VCSs";
-      }
-    };
   }
 
   private Configurable createVcsConfigurableWrapper(final VcsDescriptor vcs) {
