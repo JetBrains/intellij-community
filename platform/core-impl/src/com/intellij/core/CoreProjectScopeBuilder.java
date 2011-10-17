@@ -15,12 +15,15 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -28,15 +31,17 @@ import com.intellij.psi.search.ProjectScopeImpl;
 public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
   private final Project myProject;
   private final FileIndexFacade myFileIndexFacade;
+  private final CoreProjectScopeBuilder.CoreLibrariesScope myLibrariesScope;
 
   public CoreProjectScopeBuilder(Project project, FileIndexFacade fileIndexFacade) {
     myFileIndexFacade = fileIndexFacade;
     myProject = project;
+    myLibrariesScope = new CoreLibrariesScope();
   }
 
   @Override
   public GlobalSearchScope buildLibrariesScope() {
-    throw new UnsupportedOperationException();
+    return myLibrariesScope;
   }
 
   @Override
@@ -47,5 +52,27 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
   @Override
   public GlobalSearchScope buildProjectScope() {
     return new ProjectScopeImpl(myProject, myFileIndexFacade);
+  }
+
+  private class CoreLibrariesScope extends GlobalSearchScope {
+    @Override
+    public boolean contains(VirtualFile file) {
+      return myFileIndexFacade.isInLibraryClasses(file) || myFileIndexFacade.isInLibrarySource(file);
+    }
+
+    @Override
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return 0;
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return false;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return true;
+    }
   }
 }
