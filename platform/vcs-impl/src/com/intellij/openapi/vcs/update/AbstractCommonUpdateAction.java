@@ -461,7 +461,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private void appendGroup(final StringBuffer text, final FileGroup group) {
       final int s = group.getFiles().size();
       if (s > 0) {
-        if (text.length() > 0) text.append("\n");
+        text.append("\n");
         text.append(s + " Files " + group.getUpdateName());
       }
 
