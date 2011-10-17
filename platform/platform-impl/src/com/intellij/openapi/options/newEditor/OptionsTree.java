@@ -298,7 +298,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
-      myHandle = new JLabel("", JLabel.CENTER);
+      myHandle = new JLabel("", SwingConstants.CENTER);
       if (!SystemInfo.isMac) {
         myHandle.setBorder(new EmptyBorder(0, 2, 0, 2));
       }
@@ -322,7 +322,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
       final Base base = extractNode(value);
       if (base instanceof EditorNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
 
         final EditorNode editor = (EditorNode)base;
         ConfigurableGroup group = null;
@@ -342,7 +341,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           }
         }
 
-        int forcedWidth = 2000;
         TreePath path = tree.getPathForRow(row);
         if (path == null) {
           if (value instanceof DefaultMutableTreeNode) {
@@ -352,6 +350,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
         final boolean toStretch = tree.isVisible() && path != null;
 
+        int forcedWidth = 2000;
         if (toStretch) {
           final Rectangle visibleRect = tree.getVisibleRect();
 
@@ -367,7 +366,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent : forcedWidth;
         }
 
-        result = configureComponent(base.getText(), base.getText(), null, null, row == -1 ? true : selected, group != null,
+        result = configureComponent(base.getText(), base.getText(), null, null, row == -1 || selected, group != null,
                                     group != null ? group.getDisplayName() : null, forcedWidth - 4);
 
 
@@ -424,7 +423,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return null;
   }
 
-  abstract class Base extends CachingSimpleNode {
+  abstract static class Base extends CachingSimpleNode {
 
     protected Base(final SimpleNode aParent) {
       super(aParent);
@@ -582,6 +581,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   public void dispose() {
+    myQueuedConfigurable = null;
   }
 
   public ActionCallback onSelected(final Configurable configurable, final Configurable oldConfigurable) {
@@ -749,7 +749,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(OptionsTree.this.myProject, OptionsTree.this.myTree, OptionsTree.this.myContext.getFilter(), structure, new WeightBasedComparator(false));
+      super(myProject, OptionsTree.this.myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
