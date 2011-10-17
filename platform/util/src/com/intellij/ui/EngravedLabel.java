@@ -19,9 +19,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -40,18 +37,6 @@ public class EngravedLabel extends JLabel {
 
   @Override
   protected void paintComponent(Graphics g) {
-    UIUtil.applyRenderingHints(g);
-    final Color foreground = getForeground();
-    final Icon icon = getIcon();
-
-    if (icon != null) setIcon(new EmptyIcon(icon.getIconWidth(), icon.getIconHeight()));
-    setForeground(new Color(245, 245, 245));
-    g.translate(0, 1);
-    super.paintComponent(g);
-
-    setForeground(foreground);
-    if (icon != null) setIcon(icon);
-    g.translate(0, -1);
-    super.paintComponent(g);
+    super.paintComponent(new EngravedTextGraphics((Graphics2D)g));
   }
 }
