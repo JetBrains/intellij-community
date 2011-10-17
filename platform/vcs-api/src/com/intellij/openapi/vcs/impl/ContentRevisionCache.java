@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
@@ -138,7 +139,14 @@ public class ContentRevisionCache {
     if (path.getVirtualFile() != null) {
       charset = path.getVirtualFile().getCharset();
     }
-    return charset == null ? CharsetToolkit.bytesToString(bytes) : charset.decode(ByteBuffer.wrap(bytes)).toString();
+
+    if (charset != null) {
+      int bomLength = CharsetToolkit.getBOMLength(bytes, charset);
+      final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
+      return charBuffer.toString();
+    }
+
+    return CharsetToolkit.bytesToString(bytes);
   }
 
   @Nullable
