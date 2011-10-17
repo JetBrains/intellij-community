@@ -833,6 +833,13 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  public static PsiElement nextVisibleLeaf(@NotNull final PsiElement element) {
+    PsiElement nextLeaf = nextLeaf(element, true);
+    while (nextLeaf != null && StringUtil.isEmptyOrSpaces(nextLeaf.getText())) nextLeaf = nextLeaf(nextLeaf, true);
+    return nextLeaf;
+  }
+
+  @Nullable
   public static PsiElement nextLeaf(final PsiElement element, final boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);

@@ -113,6 +113,9 @@ public class GroovyStatementMover extends StatementUpDownMover {
         element = owner;
       }
     }
+    if (element instanceof PsiComment) {
+      element = PsiTreeUtil.nextVisibleLeaf(element);
+    }
 
     return (GroovyPsiElement)PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
       @Override
