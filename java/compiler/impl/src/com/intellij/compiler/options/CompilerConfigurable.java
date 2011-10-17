@@ -21,6 +21,7 @@ import com.intellij.compiler.CompilerSettingsFactory;
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
@@ -41,6 +42,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CompilerConfigurable implements SearchableConfigurable.Parent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
+  
   private final Project myProject;
   private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
   private final CompilerUIConfigurable myCompilerUIConfigurable;
@@ -123,7 +126,15 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
       final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, myProject);
       if (factories.length > 0) {
         for (CompilerSettingsFactory factory : factories) {
-          additional.add(factory.create(myProject));
+          final Configurable configurable;
+          try {
+            configurable = factory.create(myProject);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            continue;
+          }
+          additional.add(configurable);
         }
         Collections.sort(additional, new Comparator<Configurable>() {
           public int compare(final Configurable o1, final Configurable o2) {
