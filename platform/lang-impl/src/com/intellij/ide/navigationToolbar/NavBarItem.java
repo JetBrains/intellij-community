@@ -173,7 +173,6 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
         path.lineTo(0, 0);
         g.setColor(UIUtil.getListSelectionBackground());
         g.fill(path);
-        g.drawLine(0, h/2, off, h /2);
         g.translate(-1, 0);
       }
 
