@@ -32,15 +32,16 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-class AddRemoveUpDownPanel extends JPanel {
+class CommonActionsPanel extends JPanel {
   public static enum Buttons {
-    ADD, REMOVE, UP, DOWN;
+    ADD, EDIT, REMOVE, UP, DOWN;
 
-    public static Buttons[] ALL = {ADD, REMOVE, UP, DOWN};
+    public static Buttons[] ALL = {ADD, EDIT, REMOVE, UP, DOWN};
 
     Icon getIcon() {
       switch (this) {
         case ADD:    return IconUtil.getAddRowIcon();
+        case EDIT:    return IconUtil.getEditIcon();
         case REMOVE: return IconUtil.getRemoveRowIcon();
         case UP:     return IconUtil.getMoveRowUpIcon();
         case DOWN:   return IconUtil.getMoveRowDownIcon();
@@ -58,18 +59,11 @@ class AddRemoveUpDownPanel extends JPanel {
 
     public void performAction(Listener listener) {
       switch (this) {
-        case ADD:
-          listener.doAdd();
-          break;
-        case REMOVE:
-          listener.doRemove();
-          break;
-        case UP:
-          listener.doUp();
-          break;
-        case DOWN:
-          listener.doDown();
-          break;
+        case ADD: listener.doAdd(); break;
+        case EDIT: listener.doEdit(); break;
+        case REMOVE: listener.doRemove(); break;
+        case UP: listener.doUp(); break;
+        case DOWN: listener.doDown(); break;
       }
     }
   }
@@ -77,23 +71,25 @@ class AddRemoveUpDownPanel extends JPanel {
     void doAdd();
     void doRemove();
     void doUp();
-    void doDown();    
+    void doDown();
+    void doEdit();
 
     class Adapter implements Listener {
       public void doAdd() {}
       public void doRemove() {}
       public void doUp() {}
       public void doDown() {}
+      public void doEdit() {}
     }
   }
 
   private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
   private final AnActionButton[] myActions;
 
-  AddRemoveUpDownPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
-                       @Nullable AnActionButton[] additionalActions,
-                       String addName, String removeName, String moveUpName,String moveDownName,
-                       Buttons... buttons) {
+  CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
+                     @Nullable AnActionButton[] additionalActions,
+                     String addName, String removeName, String moveUpName, String moveDownName, String editName,
+                     Buttons... buttons) {
     super(new BorderLayout());
     final Listener listener = factory.createListener(this);
     AnActionButton[] actions = new AnActionButton[buttons.length];
@@ -101,7 +97,8 @@ class AddRemoveUpDownPanel extends JPanel {
       Buttons button = buttons[i];
       String name = null;
       switch (button) {
-        case ADD:    name = addName;      break;
+        case ADD:    name = addName;      break;        
+        case EDIT:   name = editName;     break;
         case REMOVE: name = removeName;   break;
         case UP:     name = moveUpName;   break;
         case DOWN:   name = moveDownName; break;
@@ -197,6 +194,7 @@ class AddRemoveUpDownPanel extends JPanel {
     public ShortcutSet getShortcut() {
       switch (myButton) {
         case ADD: return CommonShortcuts.getNewForDialogs();
+        case EDIT: return CustomShortcutSet.fromString("ENTER");
         case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
         case UP: return CustomShortcutSet.fromString("alt UP");
         case DOWN: return CustomShortcutSet.fromString("alt DOWN");
@@ -214,12 +212,14 @@ class AddRemoveUpDownPanel extends JPanel {
                                              : ((JList)c).getModel().getSize();
         final int min = model.getMinSelectionIndex();
         final int max = model.getMaxSelectionIndex();
-        
+
         if ((myButton == Buttons.UP && min < 1)
-          || (myButton == Buttons.DOWN && max == size - 1)
-          || (myButton != Buttons.ADD && size == 0)) {
+            || (myButton == Buttons.DOWN && max == size - 1)
+            || (myButton != Buttons.ADD && size == 0)
+            || (myButton == Buttons.EDIT && (min != max || min == -1))) {
           e.getPresentation().setEnabled(false);
-        } else {
+        }
+        else {
           e.getPresentation().setEnabled(isEnabled());
         }
       }
@@ -244,6 +244,6 @@ class AddRemoveUpDownPanel extends JPanel {
   }
 
   interface ListenerFactory {
-    Listener createListener(AddRemoveUpDownPanel panel);
+    Listener createListener(CommonActionsPanel panel);
   }
 }

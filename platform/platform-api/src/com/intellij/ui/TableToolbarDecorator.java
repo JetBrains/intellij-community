@@ -66,7 +66,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
   }
 
   protected void updateButtons() {
-    final AddRemoveUpDownPanel p = getPanel();
+    final CommonActionsPanel p = getPanel();
     if (p != null) {
       if (myTable.isEnabled()) {
         final int index = myTable.getSelectedRow();
@@ -74,22 +74,25 @@ class TableToolbarDecorator extends ToolbarDecorator {
         if (0 <= index && index < size) {
           final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
           final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
+          p.setEnabled(CommonActionsPanel.Buttons.EDIT, true);
+          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
+          p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
+          p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);
         }
         else {
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
-          p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
+          p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
+          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
+          p.setEnabled(CommonActionsPanel.Buttons.UP, false);
+          p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
         }
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, myProducer == null || myProducer.canCreateElement());
+        p.setEnabled(CommonActionsPanel.Buttons.ADD, myProducer == null || myProducer.canCreateElement());
       }
       else {
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, false);
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
+        p.setEnabled(CommonActionsPanel.Buttons.ADD, false);
+        p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
+        p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
+        p.setEnabled(CommonActionsPanel.Buttons.UP, false);
+        p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
       }
     }
   }

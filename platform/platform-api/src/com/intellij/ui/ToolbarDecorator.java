@@ -38,7 +38,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
-public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.ListenerFactory {
+public abstract class ToolbarDecorator implements DataProvider, CommonActionsPanel.ListenerFactory {
   private static final Comparator<AnAction> ACTION_BUTTONS_SORTER = new Comparator<AnAction>() {
     @Override
     public int compare(AnAction a1, AnAction a2) {
@@ -53,6 +53,7 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
 
   protected Border myToolbarBorder;
   protected boolean myAddActionEnabled;
+  protected boolean myEditActionEnabled;
   protected boolean myRemoveActionEnabled;
   protected boolean myUpActionEnabled;
   protected boolean myDownActionEnabled;
@@ -60,21 +61,23 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
   private List<AnActionButton> myExtraActions = new ArrayList<AnActionButton>();
   private ActionToolbarPosition myToolbarPosition;
   protected AnActionButtonRunnable myAddAction;
+  protected AnActionButtonRunnable myEditAction;
   protected AnActionButtonRunnable myRemoveAction;
   protected AnActionButtonRunnable myUpAction;
   protected AnActionButtonRunnable myDownAction;
   private String myAddName;
+  private String myEditName;
   private String myRemoveName;
   private String myMoveUpName;
   private String myMoveDownName;
   private Dimension myPreferredSize;
-  private AddRemoveUpDownPanel myPanel;
+  private CommonActionsPanel myPanel;
 
   protected abstract JComponent getComponent();
 
   protected abstract void updateButtons();
 
-  final AddRemoveUpDownPanel getPanel() {
+  final CommonActionsPanel getPanel() {
     return myPanel;
   }
 
@@ -155,6 +158,12 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
     return this;
   }
 
+  public ToolbarDecorator setEditAction(AnActionButtonRunnable action) {
+    myEditActionEnabled = action != null;
+    myEditAction = action;
+    return this;
+  }
+
   public ToolbarDecorator setRemoveAction(AnActionButtonRunnable action) {
     myRemoveActionEnabled = action != null;
     myRemoveAction = action;
@@ -175,6 +184,11 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
 
   public ToolbarDecorator setAddActionName(String name) {
     myAddName = name;
+    return this;
+  }
+
+  public ToolbarDecorator setEditActionName(String name) {
+    myEditName = name;
     return this;
   }
 
@@ -199,12 +213,12 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
   }
 
   public JPanel createPanel() {
-    final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
+    final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();
-    myPanel = new AddRemoveUpDownPanel(this, contextComponent,
+    myPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
-                             myAddName, myRemoveName, myMoveUpName, myMoveDownName,
+                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              buttons);
     myPanel.setBorder(myBorder);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent);
@@ -250,50 +264,60 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
     return BorderLayout.SOUTH;
   }
 
-  private AddRemoveUpDownPanel.Buttons[] getButtons() {
-    final ArrayList<AddRemoveUpDownPanel.Buttons> buttons = new ArrayList<AddRemoveUpDownPanel.Buttons>();
+  private CommonActionsPanel.Buttons[] getButtons() {
+    final ArrayList<CommonActionsPanel.Buttons> buttons = new ArrayList<CommonActionsPanel.Buttons>();
     if (myAddActionEnabled && myAddAction != null) {
-      buttons.add(AddRemoveUpDownPanel.Buttons.ADD);
+      buttons.add(CommonActionsPanel.Buttons.ADD);
+    }
+    if (myEditActionEnabled && myEditAction != null) {
+      buttons.add(CommonActionsPanel.Buttons.EDIT);
     }
     if (myRemoveActionEnabled && myRemoveAction != null) {
-      buttons.add(AddRemoveUpDownPanel.Buttons.REMOVE);
+      buttons.add(CommonActionsPanel.Buttons.REMOVE);
     }
     if (myUpActionEnabled && myUpAction != null) {
-      buttons.add(AddRemoveUpDownPanel.Buttons.UP);
+      buttons.add(CommonActionsPanel.Buttons.UP);
     }
     if (myDownActionEnabled && myDownAction != null) {
-      buttons.add(AddRemoveUpDownPanel.Buttons.DOWN);
+      buttons.add(CommonActionsPanel.Buttons.DOWN);
     }
-    return buttons.toArray(new AddRemoveUpDownPanel.Buttons[buttons.size()]);
+    return buttons.toArray(new CommonActionsPanel.Buttons[buttons.size()]);
   }
 
-  public AddRemoveUpDownPanel.Listener createListener(final AddRemoveUpDownPanel panel) {
-    return new AddRemoveUpDownPanel.Listener() {
+  public CommonActionsPanel.Listener createListener(final CommonActionsPanel panel) {
+    return new CommonActionsPanel.Listener() {
       @Override
       public void doAdd() {
         if (myAddAction != null) {
-          myAddAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.ADD));
+          myAddAction.run(panel.getAnActionButton(CommonActionsPanel.Buttons.ADD));
+        }
+      }
+
+      @Override
+      public void doEdit() {
+        if (myEditAction != null) {
+          myEditAction.run(panel.getAnActionButton(CommonActionsPanel.Buttons.EDIT));
         }
       }
 
       @Override
       public void doRemove() {
         if (myRemoveAction != null) {
-          myRemoveAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.REMOVE));
+          myRemoveAction.run(panel.getAnActionButton(CommonActionsPanel.Buttons.REMOVE));
         }
       }
 
       @Override
       public void doUp() {
         if (myUpAction != null) {
-          myUpAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.UP));
+          myUpAction.run(panel.getAnActionButton(CommonActionsPanel.Buttons.UP));
         }
       }
 
       @Override
       public void doDown() {
         if (myDownAction != null) {
-          myDownAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.DOWN));
+          myDownAction.run(panel.getAnActionButton(CommonActionsPanel.Buttons.DOWN));
         }
       }
     };
@@ -301,27 +325,32 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
   
   @Nullable
   public static AnActionButton findAddButton(@NotNull JComponent container) {
-    return findButton(container, AddRemoveUpDownPanel.Buttons.ADD);
+    return findButton(container, CommonActionsPanel.Buttons.ADD);
+  }
+
+  @Nullable
+  public static AnActionButton findEditButton(@NotNull JComponent container) {
+    return findButton(container, CommonActionsPanel.Buttons.EDIT);
   }
 
   @Nullable
   public static AnActionButton findRemoveButton(@NotNull JComponent container) {
-    return findButton(container, AddRemoveUpDownPanel.Buttons.REMOVE);
+    return findButton(container, CommonActionsPanel.Buttons.REMOVE);
   }
 
   @Nullable
   public static AnActionButton findUpButton(@NotNull JComponent container) {
-    return findButton(container, AddRemoveUpDownPanel.Buttons.UP);
+    return findButton(container, CommonActionsPanel.Buttons.UP);
   }
 
   @Nullable
   public static AnActionButton findDownButton(@NotNull JComponent container) {
-    return findButton(container, AddRemoveUpDownPanel.Buttons.DOWN);
+    return findButton(container, CommonActionsPanel.Buttons.DOWN);
   }
 
   @Nullable
-  private static AnActionButton findButton(JComponent comp, AddRemoveUpDownPanel.Buttons type) {
-    final AddRemoveUpDownPanel panel = UIUtil.findComponentOfType(comp, AddRemoveUpDownPanel.class);
+  private static AnActionButton findButton(JComponent comp, CommonActionsPanel.Buttons type) {
+    final CommonActionsPanel panel = UIUtil.findComponentOfType(comp, CommonActionsPanel.class);
     if (panel != null) {
       return panel.getAnActionButton(type);
     }

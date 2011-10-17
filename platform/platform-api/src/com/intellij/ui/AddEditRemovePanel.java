@@ -15,12 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nullable;
@@ -88,20 +83,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
           doRemove();
         }
       })
-      .addExtraAction(new AnActionButton(CommonBundle.message("button.edit"), null, IconUtil.getEditIcon()) {
+      .setEditAction(new AnActionButtonRunnable() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void run(AnActionButton button) {
           doEdit();
-        }
-
-        @Override
-        public void updateButton(AnActionEvent e) {
-          e.getPresentation().setEnabled(myTable.getSelectedRow() != -1);
-        }
-
-        @Override
-        public ShortcutSet getShortcut() {
-          return CustomShortcutSet.fromString("alt E");
         }
       })
       .disableUpAction()

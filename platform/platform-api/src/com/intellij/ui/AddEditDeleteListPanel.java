@@ -15,9 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseAdapter;
@@ -42,15 +39,10 @@ public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
 
   @Override
   protected void customizeDecorator(ToolbarDecorator decorator) {
-    decorator.addExtraAction(new AnActionButton(CommonBundle.message("button.edit"), null, IconUtil.getEditIcon()) {
+    decorator.setEditAction(new AnActionButtonRunnable() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void run(AnActionButton anActionButton) {
         editSelectedItem();
-      }
-
-      @Override
-      public void updateButton(AnActionEvent e) {
-        e.getPresentation().setEnabled(myList.getSelectedIndex() != -1);
       }
     });
   }
