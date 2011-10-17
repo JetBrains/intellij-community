@@ -62,7 +62,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     for (File file : myClasspath) {
       final PsiClass psiClass = findClassInClasspathEntry(qName, file);
       if (psiClass != null) {
-        return null;
+        return psiClass;
       }
     }
     return null;

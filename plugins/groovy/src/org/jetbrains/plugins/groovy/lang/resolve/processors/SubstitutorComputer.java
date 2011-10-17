@@ -192,6 +192,9 @@ public abstract class SubstitutorComputer {
     for (PsiTypeParameter typeParameter : typeParameters) {
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
         substitutor = inferFromContext(typeParameter, PsiUtil.getSmartReturnType(method), substitutor, helper);
+        if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
+          substitutor = substitutor.put(typeParameter, null);
+        }
       }
     }
 

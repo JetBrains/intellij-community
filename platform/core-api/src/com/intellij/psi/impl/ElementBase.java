@@ -25,10 +25,7 @@ import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -42,6 +39,7 @@ import com.intellij.util.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.update.ComparableObject;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,8 +60,21 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   };
   private static final Key<TIntObjectHashMap<Icon>> BASE_ICONS = Key.create("BASE_ICONS");
 
-  private static final Icon VISIBILITY_ICON_PLACEHOLDER = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
-  public static final Icon ICON_PLACEHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
+  private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = new NotNullLazyValue<Icon>() {
+    @NotNull
+    @Override
+    protected Icon compute() {
+      return EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
+    }
+  };
+
+  public static final NotNullLazyValue<Icon> ICON_PLACEHOLDER = new NotNullLazyValue<Icon>() {
+    @NotNull
+    @Override
+    protected Icon compute() {
+      return IconLoader.getIcon("/nodes/nodePlaceholder.png");
+    }
+  };
 
   @Nullable
   public Icon getIcon(int flags) {
@@ -133,7 +144,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         }
       }
     }
-    return ICON_PLACEHOLDER;
+    return ICON_PLACEHOLDER.getValue();
   }
 
   public static boolean isNativeFileType(FileType fileType) {
@@ -145,7 +156,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if ((flags & ICON_FLAG_VISIBILITY) > 0) {
       RowIcon rowIcon = new RowIcon(2);
       rowIcon.setIcon(icon, 0);
-      rowIcon.setIcon(VISIBILITY_ICON_PLACEHOLDER, 1);
+      rowIcon.setIcon(VISIBILITY_ICON_PLACEHOLDER.getValue(), 1);
       result = rowIcon;
     }
 
@@ -230,7 +241,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static RowIcon createLayeredIcon(Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<Icon>();
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
-      final Icon layerIcon = provider.getLayerIcon(instance);
+      final Icon layerIcon = provider.getLayerIcon(instance, (flags & FLAGS_LOCKED) != 0);
       if (layerIcon != null) {
         layersFromProviders.add(layerIcon);
       }
@@ -280,9 +291,5 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (iconLayer.flagMask == flagMask) return;
     }
     ourIconLayers.add(new IconLayer(flagMask, icon));
-  }
-
-  static {
-    registerIconLayer(FLAGS_LOCKED, PlatformIcons.LOCKED_ICON);
   }
 }

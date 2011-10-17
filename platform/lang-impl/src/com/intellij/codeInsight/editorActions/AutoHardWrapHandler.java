@@ -175,7 +175,7 @@ public class AutoHardWrapHandler {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
-        if (event.getNewLength() <= 0) {
+        if (event.getNewLength() <= event.getOldLength()) {
           // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
           return;
         }

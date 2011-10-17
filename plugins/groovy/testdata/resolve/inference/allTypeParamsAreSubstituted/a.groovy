@@ -13,24 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+List<String> l = ['a', 'b', 'c']
+def aa = l.collectEntries { [it, it]}
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Iconable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-
-/**
- * @author yole
- */
-public interface IconLayerProvider {
-  ExtensionPointName<IconLayerProvider> EP_NAME = ExtensionPointName.create("com.intellij.iconLayerProvider");
-
-  @Nullable
-  Icon getLayerIcon(@NotNull Iconable element, boolean isLocked);
-
-  @Nullable
-  String getLayerDescription();
-}
+print a<ref>a

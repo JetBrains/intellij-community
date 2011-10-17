@@ -223,6 +223,7 @@ public class GitHistoryUtils {
         }
         @Override
         public void startFailed(Throwable exception) {
+          semaphore.up();
         }
       });
       semaphore.down();
@@ -356,18 +357,24 @@ public class GitHistoryUtils {
         @Override
         public void startFailed(Throwable exception) {
           //noinspection ThrowableInstanceNeverThrown
-          exceptionConsumer.consume(new VcsException(exception));
-          semaphore.up();
+          try {
+            exceptionConsumer.consume(new VcsException(exception));
+          } finally {
+            semaphore.up();
+          }
         }
 
         @Override
         public void processTerminated(int exitCode) {
-          super.processTerminated(exitCode);
-          final GitLogRecord record = accumulator.processLast();
-          if (record != null) {
-            resultAdapter.consume(record);
+          try {
+            super.processTerminated(exitCode);
+            final GitLogRecord record = accumulator.processLast();
+            if (record != null) {
+              resultAdapter.consume(record);
+            }
+          } finally {
+            semaphore.up();
           }
-          semaphore.up();
         }
       });
       semaphore.down();
@@ -607,6 +614,7 @@ public class GitHistoryUtils {
       }
       @Override
       public void startFailed(Throwable exception) {
+        semaphore.up();
       }
     });
     semaphore.down();
@@ -821,7 +829,7 @@ public class GitHistoryUtils {
 
       @Override
       public void startFailed(Throwable exception) {
-        // todo
+        semaphore.up();
       }
     });
     semaphore.down();

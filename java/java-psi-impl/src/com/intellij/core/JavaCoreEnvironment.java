@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
@@ -52,6 +53,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
                               javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
+    myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
   }

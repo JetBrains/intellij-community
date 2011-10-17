@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,11 +152,16 @@ public class PrimaryExpression implements GroovyElementTypes {
     }
     else if (builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker forArray = builder.mark();
+      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, mLBRACK);
+      if (!AssignmentExpression.parse(builder, parser)) {
+        builder.error(GroovyBundle.message("expression.expected"));
+      }
+      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       while (ParserUtils.getToken(builder, mLBRACK)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!AssignmentExpression.parse(builder, parser)) {
-          builder.error(GroovyBundle.message("expression.expected"));
-        }
+        AssignmentExpression.parse(builder, parser);
         ParserUtils.getToken(builder, mNLS);
         ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       }

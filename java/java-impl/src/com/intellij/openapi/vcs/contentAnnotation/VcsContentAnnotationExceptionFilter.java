@@ -55,11 +55,13 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilter");
   private final GlobalSearchScope myScope;
   private final VcsContentAnnotationSettings mySettings;
+  private Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
 
   public VcsContentAnnotationExceptionFilter(GlobalSearchScope scope) {
     myScope = scope;
     myProject = scope.getProject();
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
+    myRevNumbersCache = new HashMap<VirtualFile, VcsRevisionNumber>();
   }
 
   private static class MyAdditionalHighlight extends AdditionalHighlight {
@@ -111,7 +113,20 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       });
       if (worker.getResult() != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
-        final VcsRevisionNumber recentChangeRevision = vcsContentAnnotation.fileRecentlyChanged(vf);
+        if (vf.getFileSystem().isReadOnly()) continue;
+
+        VcsRevisionNumber recentChangeRevision = myRevNumbersCache.get(vf);
+        if (recentChangeRevision == null) {
+          recentChangeRevision = vcsContentAnnotation.fileRecentlyChanged(vf);
+          if (recentChangeRevision == null) {
+            myRevNumbersCache.put(vf, VcsRevisionNumber.NULL);
+          } else {
+            myRevNumbersCache.put(vf, recentChangeRevision);
+          }
+        }
+        if (VcsRevisionNumber.NULL.equals(recentChangeRevision)) {
+          recentChangeRevision = null;
+        }
         if (localChangesCorrector.isFileAlreadyIdentifiedAsChanged(vf) || ChangeListManager.isFileChanged(myProject, vf) ||
             recentChangeRevision != null) {
           final Document document = getDocumentForFile(worker);

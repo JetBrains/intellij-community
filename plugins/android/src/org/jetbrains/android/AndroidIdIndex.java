@@ -30,6 +30,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +53,8 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
         if (parent == null || !parent.isDirectory()) {
           return false;
         }
-        if (!canContainIdDeclaration(parent.getName())) {
+        final String resourceType = ResourceManager.getResourceTypeByDirName(parent.getName());
+        if (resourceType == null || !canContainIdDeclaration(resourceType)) {
           return false;
         }
         parent = parent.getParent();
@@ -119,6 +121,6 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 }

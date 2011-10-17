@@ -185,9 +185,19 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     validateCallContext();
     moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset), locateBeforeSoftWrap);
     if (!ignoreWrongMoves && !myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
+      StringBuilder documentInfo = new StringBuilder();
+      Document document = myEditor.getDocument();
+      for (int line = 0; line < document.getLineCount(); line++) {
+        documentInfo.append(line).append(": ").append(document.getLineStartOffset(line)).append("-")
+          .append(document.getLineEndOffset(line)).append(", ");
+      }
+      if (documentInfo.length() > 0) {
+        documentInfo.setLength(documentInfo.length() - 1);
+      } 
       LOG.error(
         "caret moved to wrong offset. Requested:" + offset + " but actual:" + myOffset 
-        + ". Soft wraps data: " + myEditor.getSoftWrapModel() + ", folding data: " + myEditor.getFoldingModel());
+        + ". Soft wraps data: " + myEditor.getSoftWrapModel() + ", folding data: " + myEditor.getFoldingModel() + ", "
+        + "document info: " + documentInfo);
     }
   }
 

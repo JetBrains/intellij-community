@@ -18,6 +18,7 @@ package com.intellij.ide.highlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,13 @@ public class JavaClassFileType implements FileType {
 
   public static JavaClassFileType INSTANCE = new JavaClassFileType();
 
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/javaClass.png");
+  private static final NotNullLazyValue<Icon> ICON = new NotNullLazyValue<Icon>() {
+    @NotNull
+    @Override
+    protected Icon compute() {
+      return IconLoader.getIcon("/fileTypes/javaClass.png");
+    }
+  };
 
   private JavaClassFileType() {
   }
@@ -48,7 +55,7 @@ public class JavaClassFileType implements FileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return ICON.getValue();
   }
 
   public boolean isBinary() {

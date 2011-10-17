@@ -16,7 +16,6 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -108,8 +107,6 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   static @Nullable String renameabilityStatus(Project project, PsiElement element) {
     if (element == null) return "";
-    if (!(element instanceof PsiFile) &&
-        CollectHighlightsUtil.isOutsideSourceRoot(element.getContainingFile())) return "";
 
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
