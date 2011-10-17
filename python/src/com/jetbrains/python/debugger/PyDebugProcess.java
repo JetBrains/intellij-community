@@ -2,6 +2,8 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -17,6 +19,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -38,6 +41,7 @@ import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static javax.swing.SwingUtilities.invokeLater;
@@ -74,10 +78,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super(session);
     session.setPauseActionSupported(true);
     if (multiProcess) {
-      myDebugger = new MultiProcessDebugger(this, serverSocket, 10);
+      myDebugger = createMultiprocessDebugger(serverSocket);
     }
     else {
-      myDebugger = new RemoteDebugger(this, serverSocket, 10);
+      myDebugger = new RemoteDebugger(this, serverSocket, 10000);
     }
     myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this),
       new DjangoLineBreakpointHandler(this), new DjangoExceptionBreakpointHandler(this)};
@@ -100,6 +104,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         handleCommunicationError();
       }
     });
+  }
+
+  private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
+    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, 10000);
+    debugger.setOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
+      @Override
+      public void threadsClosed(Set<String> threadIds) {
+        for (PyThreadInfo t : mySuspendedThreads) {
+          if (threadIds.contains(t.getId())) {
+            if (getSession().isSuspended()) {
+              getSession().resume();
+              break;
+            }
+          }
+        }
+      }
+    });
+    return debugger;
   }
 
   protected void handleCommunicationError() {

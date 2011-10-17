@@ -51,7 +51,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
     myDebugProcess = debugProcess;
     myServerSocket = serverSocket;
-    myTimeout = timeout * 1000;  // to milliseconds
+    myTimeout = timeout;
   }
 
   public IPyDebugProcess getDebugProcess() {
@@ -96,7 +96,6 @@ public class RemoteDebugger implements ProcessDebugger {
       }
       catch (IOException ignore) {
       }
-      mySocket = null;
     }
 
     cleanUp();
@@ -275,7 +274,7 @@ public class RemoteDebugger implements ProcessDebugger {
         }
         response = myResponseQueue.get(sequence);
       }
-      while (response == null && System.currentTimeMillis() < until);
+      while (response == null && isConnected() && System.currentTimeMillis() < until);
       myResponseQueue.remove(sequence);
     }
 
@@ -557,7 +556,7 @@ public class RemoteDebugger implements ProcessDebugger {
     myCloseListeners.add(listener);
   }
 
-  public void remoteCloseListener(RemoteDebuggerCloseListener listener) {
+  public void removeCloseListener(RemoteDebuggerCloseListener listener) {
     myCloseListeners.remove(listener);
   }
 

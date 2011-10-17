@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -16,10 +17,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author traff
@@ -27,23 +25,27 @@ import java.util.Map;
 public class MultiProcessDebugger implements ProcessDebugger {
   private final IPyDebugProcess myDebugProcess;
   private final ServerSocket myServerSocket;
-  private final int myTimeout;
+  private final int myTimeoutInMillis;
 
   private RemoteDebugger myMainDebugger;
   private List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
   private ServerSocket myDebugServerSocket;
+  private DebuggerProcessAcceptor myDebugProcessAcceptor;
+  private DebuggerProcessListener myOtherDebuggerCloseListener;
 
-  public MultiProcessDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
+  private ThreadRegistry myThreadRegistry = new ThreadRegistry();
+
+  public MultiProcessDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeoutInMillis) {
     myDebugProcess = debugProcess;
     myServerSocket = serverSocket;
-    myTimeout = timeout * 1000;  // to milliseconds
+    myTimeoutInMillis = timeoutInMillis;
 
     try {
       myDebugServerSocket = createServerSocket();
     }
     catch (ExecutionException e) {
     }
-    myMainDebugger = new RemoteDebugger(myDebugProcess, myDebugServerSocket, myTimeout);
+    myMainDebugger = new RemoteDebugger(myDebugProcess, myDebugServerSocket, myTimeoutInMillis);
   }
 
   @Override
@@ -73,8 +75,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
       myMainDebugger.waitForConnect();
 
 
-      final DebuggerProcessAcceptor acceptor = new DebuggerProcessAcceptor(this, myServerSocket);
-      ApplicationManager.getApplication().executeOnPooledThread(acceptor);
+      myDebugProcessAcceptor = new DebuggerProcessAcceptor(this, myServerSocket);
+      ApplicationManager.getApplication().executeOnPooledThread(myDebugProcessAcceptor);
     }
     finally {
 
@@ -107,6 +109,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     for (ProcessDebugger d : myOtherDebuggers) {
       d.disconnect();
     }
+    myDebugProcessAcceptor.disconnect();
   }
 
   @Override
@@ -163,13 +166,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
 
   private static class ThreadRegistry {
-    private Map<String, ProcessDebugger> myThreadIdToDebugger = Maps.newHashMap();
+    private Map<String, RemoteDebugger> myThreadIdToDebugger = Maps.newHashMap();
 
-    public void register(String id, ProcessDebugger debugger) {
+    public void register(String id, RemoteDebugger debugger) {
       myThreadIdToDebugger.put(id, debugger);
     }
 
-    public ProcessDebugger getDebugger(String threadId) {
+    public RemoteDebugger getDebugger(String threadId) {
       return myThreadIdToDebugger.get(threadId);
     }
 
@@ -182,8 +185,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
       return name + "(" + id + ")";
     }
   }
-
-  private ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
   @Override
   public Collection<PyThreadInfo> getThreads() {
@@ -237,7 +238,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private void collectAndRegisterOtherDebuggersThreads(List<PyThreadInfo> threads) {
-    for (ProcessDebugger d : myOtherDebuggers) {
+    for (RemoteDebugger d : myOtherDebuggers) {
       threads.addAll(d.getThreads());
       for (PyThreadInfo t : d.getThreads()) {
         myThreadRegistry.register(t.getId(), d);
@@ -327,7 +328,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     private MultiProcessDebugger myMultiProcessDebugger;
     private ServerSocket myServerSocket;
 
-    public DebuggerProcessAcceptor(MultiProcessDebugger multiProcessDebugger, ServerSocket serverSocket) {
+    public DebuggerProcessAcceptor(@NotNull MultiProcessDebugger multiProcessDebugger, @NotNull ServerSocket serverSocket) {
       myMultiProcessDebugger = multiProcessDebugger;
       myServerSocket = serverSocket;
     }
@@ -339,8 +340,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
           Socket socket = myServerSocket.accept();
 
           final ServerSocket serverSocket = createServerSocket();
-          RemoteDebugger debugger =
-            new RemoteDebugger(myMultiProcessDebugger.myDebugProcess, serverSocket, myMultiProcessDebugger.myTimeout);
+          final RemoteDebugger debugger =
+            new RemoteDebugger(myMultiProcessDebugger.myDebugProcess, serverSocket, myMultiProcessDebugger.myTimeoutInMillis);
+          addCloseListener(debugger);
           sendDebuggerPort(socket, serverSocket);
           socket.close();
           debugger.waitForConnect();
@@ -350,11 +352,47 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
           debugger.run();
         }
-        catch (Exception e) {
+        catch (Exception ignore) {
         }
-        finally {
+      }
+    }
 
+    private void addCloseListener(final RemoteDebugger debugger) {
+      debugger.addCloseListener(new RemoteDebuggerCloseListener() {
+        @Override
+        public void closed() {
+          notifyThreadsClosed(debugger);
         }
+
+        @Override
+        public void communicationError() {
+          notifyThreadsClosed(debugger);
+        }
+      });
+    }
+
+    private void notifyThreadsClosed(RemoteDebugger debugger) {
+      myMultiProcessDebugger.myOtherDebuggerCloseListener.threadsClosed(collectThreads(debugger));
+    }
+
+    private Set<String> collectThreads(RemoteDebugger debugger) {
+      Set<String> result = Sets.newHashSet();
+      for (Map.Entry<String, RemoteDebugger> entry : myMultiProcessDebugger.myThreadRegistry.myThreadIdToDebugger.entrySet()) {
+        if (entry.getValue() == debugger) {
+          result.add(entry.getKey());
+        }
+      }
+      return result;
+    }
+
+    public void disconnect() {
+      if (myServerSocket != null && !myServerSocket.isClosed()) {
+        try {
+          myServerSocket.close();
+        }
+        catch (IOException ignore) {
+        }
+        myServerSocket = null;
       }
     }
   }
@@ -390,7 +428,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
   }
 
-  public void remoteCloseListener(RemoteDebuggerCloseListener listener) {
-    myMainDebugger.remoteCloseListener(listener);
+  public void removeCloseListener(RemoteDebuggerCloseListener listener) {
+    myMainDebugger.removeCloseListener(listener);
+  }
+
+  public void setOtherDebuggerCloseListener(DebuggerProcessListener otherDebuggerCloseListener) {
+    this.myOtherDebuggerCloseListener = otherDebuggerCloseListener;
+  }
+
+  public interface DebuggerProcessListener {
+    void threadsClosed(Set<String> threadIds);
   }
 }
