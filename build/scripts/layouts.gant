@@ -224,7 +224,13 @@ public def layoutCommunityPlugins(String home) {
     }
     
     layoutPlugin("git4idea") {
-      fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
+      fileset(dir: "$home/plugins/git4idea/lib") {
+        include(name: "trilead-ssh2.jar")
+      }
+      fileset(dir: "$home/plugins/git4idea/lib/ini4j") {
+        include(name: "ini4j*.jar")
+        exclude(name: "ini4j*sources.jar")
+      }
     }
 
     layoutPlugin("svn4idea") {
