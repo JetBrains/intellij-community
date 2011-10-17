@@ -37,7 +37,8 @@ public class SshConnectionSettingsPanel {
     myPathToPrivateKeyFile.addBrowseFolderListener(CvsBundle.message("dialog.title.path.to.private.key.file"),
                                                    CvsBundle.message("dialog.description.path.to.private.key.file"),
                                                    null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    ActionListener actionListener = new ActionListener() {
+    final ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         setPathToPPKEnabled();
       }
@@ -61,6 +62,8 @@ public class SshConnectionSettingsPanel {
     }
     else {
       myPathToPrivateKeyFile.setEnabled(true);
+      myPathToPrivateKeyFile.getTextField().selectAll();
+      myPathToPrivateKeyFile.getTextField().requestFocus();
     }
   }
 
