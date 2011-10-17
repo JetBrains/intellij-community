@@ -107,8 +107,10 @@ public abstract class PluginManagerMain implements Disposable {
 
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(true), true);
-    myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
-    myToolbarPanel.add(myFilter, BorderLayout.EAST);
+    final JComponent component = myActionToolbar.getComponent();
+    component.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+    myToolbarPanel.add(component, BorderLayout.WEST);
+    myToolbarPanel.add(myFilter, BorderLayout.CENTER);
   }
 
   protected abstract JScrollPane createTable();
@@ -476,9 +478,6 @@ public abstract class PluginManagerMain implements Disposable {
 
     public void filter() {
       pluginsModel.filter(getFilter().toLowerCase());
-      if (pluginsList != null) {
-        pluginsModel.modifyData(pluginsModel.view);
-      }
     }
   }
 

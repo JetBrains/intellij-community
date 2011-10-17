@@ -63,7 +63,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <grid id="64745" binding="myToolbarPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                  <grid id="64745" binding="myToolbarPanel" layout-manager="GridBagLayout">
                     <constraints border-constraint="North"/>
                     <properties/>
                     <border type="none"/>

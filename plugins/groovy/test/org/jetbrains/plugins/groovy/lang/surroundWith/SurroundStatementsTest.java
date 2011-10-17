@@ -28,5 +28,6 @@ public class SurroundStatementsTest extends SurroundTestCase {
   public void testWhile1() throws Exception { doTest(new WhileSurrounder()); }
   public void testWith2() throws Exception { doTest(new WithStatementsSurrounder()); }
   public void testFor1() throws Exception { doTest(new ForSurrounder()); }
+  public void testIfComments() throws Exception { doTest(new IfSurrounder()); }
 
 }

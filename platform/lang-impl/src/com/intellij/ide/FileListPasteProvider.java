@@ -48,6 +48,7 @@ public class FileListPasteProvider implements PasteProvider {
     if (project == null || ideView == null) return;
 
     final Transferable contents = CopyPasteManager.getInstance().getContents();
+    if (contents == null) return;
     final List<File> fileList = FileCopyPasteUtil.getFileList(contents);
     if (fileList == null) return;
 

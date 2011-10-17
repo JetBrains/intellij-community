@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -72,16 +73,16 @@ public class CompareValueWithClipboardAction extends BaseValueAction {
       return DebuggerBundle.message("diff.clipboard.vs.value.dialog.title");
     }
 
+    @Nullable
     private static DiffContent createClipboardContent() {
       Transferable content = CopyPasteManager.getInstance().getContents();
-      String text = "";
-      try {
-        text = (String) (content.getTransferData(DataFlavor.stringFlavor));
+      if (content != null) {
+        try {
+          String text = (String) (content.getTransferData(DataFlavor.stringFlavor));
+          return text != null ? new SimpleContent(text) : null;
+        } catch (Exception ignored) { }
       }
-      catch (Exception e) {
-        LOG.info(e);
-      }
-      return new SimpleContent(text);
+      return null;
     }
   }
 }

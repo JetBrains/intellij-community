@@ -39,6 +39,7 @@ public class KillRegionActionTest extends AbstractRegionToKillRingTest {
     killRegion();
     if (parseResult.first != null) {
       Transferable contents = CopyPasteManager.getInstance().getContents();
+      assertNotNull(contents);
       assertEquals(parseResult.first, contents.getTransferData(DataFlavor.stringFlavor));
     }
     

@@ -60,16 +60,6 @@ public class SymLinkUtil {
             mediator = null;
           }
         }
-        /*else if (SystemInfo.isWindows) {
-          try {
-            mediator = new JnaWindowsMediatorImpl();
-            mediator.isSymLink("/");  // quick test
-          }
-          catch (Throwable t) {
-            LOG.error(t);
-            mediator = null;
-          }
-        }*/
       }
     }
     ourMediator = mediator;
@@ -78,12 +68,8 @@ public class SymLinkUtil {
   private SymLinkUtil() { }
 
   public static boolean isSymLink(@NotNull final File file) {
-    return isSymLink(file.getAbsolutePath());
-  }
-
-  public static boolean isSymLink(@NotNull final String path) {
     try {
-      return ourMediator != null && ourMediator.isSymLink(path);
+      return file.exists() && ourMediator != null && ourMediator.isSymLink(file.getAbsolutePath());
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -91,16 +77,15 @@ public class SymLinkUtil {
     }
   }
 
-  @Nullable
-  public static String resolveSymLink(@NotNull final File file) {
-    return resolveSymLink(file.getAbsolutePath());
+  public static boolean isSymLink(@NotNull final String path) {
+    return isSymLink(new File(path));
   }
 
   @Nullable
-  public static String resolveSymLink(@NotNull final String path) {
-    if (ourMediator != null) {
+  public static String resolveSymLink(@NotNull final File file) {
+    if (file.exists() && ourMediator != null) {
       try {
-        final String realPath = ourMediator.resolveSymLink(path);
+        final String realPath = ourMediator.resolveSymLink(file.getAbsolutePath());
         if (realPath != null && new File(realPath).exists()) {
           return realPath;
         }
@@ -110,6 +95,11 @@ public class SymLinkUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static String resolveSymLink(@NotNull final String path) {
+    return resolveSymLink(new File(path));
   }
 
   private interface Mediator {
@@ -193,128 +183,4 @@ public class SymLinkUtil {
       return new File(path).getCanonicalPath();
     }
   }
-
-  /*private static class JnaWindowsMediatorImpl implements Mediator {
-    private interface Kernel32 extends StdCallLibrary {
-      int IO_REPARSE_TAG_SYMLINK = 0xA000000C;
-      int FILE_ACCESS_FLAGS = 0x0080;
-      int FILE_SHARE_FLAGS = 0x00000001 | 0x00000002 | 0x00000004;
-      int OPEN_EXISTING = 3;
-      int FILE_OPEN_FLAGS = 0x02000000 | 0x00200000;
-      int FSCTL_GET_REPARSE_POINT = 0x000900A8;
-      int SYMLINK_FLAG_RELATIVE = 0x00000001;
-
-      @SuppressWarnings({"UnusedDeclaration", "MultipleVariablesInDeclaration"})
-      class Win32FindData extends Structure implements Structure.ByReference {
-        public int dwFileAttributes;
-        public int ftCreationTimeL, ftCreationTimeH;
-        public int ftLastAccessTimeL, ftLastAccessTimeH;
-        public int ftLastWriteTimeL, ftLastWriteTimeH;
-        public int lFileSizeH, lFileSizeL;
-        public int dwReserved0;
-        public int dwReserved1;
-        public char[] cFileName = new char[260];
-        public char[] cAlternateFileName = new char[14];
-      }
-
-      int MAX_SUPPORTED_TARGET_LENGTH = 4 * 1024;
-      @SuppressWarnings({"UnusedDeclaration", "MultipleVariablesInDeclaration"})
-      class ReparseDataBuffer extends Structure implements Structure.ByReference {
-        public NativeLong ReparseTag;
-        public short ReparseDataLength;
-        public short Reserved;
-        public short SubstituteNameOffset, SubstituteNameLength;
-        public short PrintNameOffset, PrintNameLength;
-        public NativeLong Flags;
-        public char[] PathBuffer = new char[MAX_SUPPORTED_TARGET_LENGTH];
-      }
-
-      Pointer INVALID_HANDLE = Pointer.createConstant(-1);
-
-      Pointer FindFirstFile(String lpFileName, Win32FindData lpFindFileData);
-
-      boolean FindClose(Pointer hFindFile);
-
-      Pointer CreateFile(String lpFileName,
-                         int dwDesiredAccess,
-                         int dwShareMode,
-                         @Nullable Pointer lpSecurityAttributes,
-                         int dwCreationDisposition,
-                         int dwFlagsAndAttributes,
-                         @Nullable Pointer hTemplateFile);
-
-      boolean CloseHandle(Pointer hObject);
-
-      boolean DeviceIoControl(Pointer hDevice,
-                              int dwIoControlCode,
-                              @Nullable Structure.ByReference lpInBuffer,
-                              int nInBufferSize,
-                              @Nullable Structure.ByReference lpOutBuffer,
-                              int nOutBufferSize,
-                              IntByReference lpBytesReturned,
-                              @Nullable Pointer lpOverlapped);
-    }
-
-    private final Kernel32 myKernel32;
-    private final Kernel32.Win32FindData myFindData;
-    private final Kernel32.ReparseDataBuffer myReparseData;
-
-    private JnaWindowsMediatorImpl() throws Exception {
-      myKernel32 = (Kernel32) Native.loadLibrary("kernel32", Kernel32.class, W32APIOptions.UNICODE_OPTIONS);
-      myFindData = new Kernel32.Win32FindData();
-      myReparseData = new Kernel32.ReparseDataBuffer();
-    }
-
-    @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-    @Override
-    public synchronized boolean isSymLink(@NotNull final String path) throws Exception {
-      synchronized (myFindData) {
-        myFindData.dwReserved0 = 0;
-        final Pointer handle = myKernel32.FindFirstFile(path, myFindData);
-        if (Kernel32.INVALID_HANDLE.equals(handle)) {
-          LOG.debug("FindFirstFile(" + path + "): " + handle);
-          return false;
-        }
-        myKernel32.FindClose(handle);
-        return (myFindData.dwReserved0 & Kernel32.IO_REPARSE_TAG_SYMLINK) == Kernel32.IO_REPARSE_TAG_SYMLINK;
-      }
-    }
-
-    @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-    @Override
-    public String resolveSymLink(@NotNull final String path) throws Exception {
-      final Pointer handle = myKernel32.CreateFile(path, Kernel32.FILE_ACCESS_FLAGS, Kernel32.FILE_SHARE_FLAGS, null,
-                                                   Kernel32.OPEN_EXISTING, Kernel32.FILE_OPEN_FLAGS, null);
-      if (Kernel32.INVALID_HANDLE.equals(handle)) {
-        LOG.debug("CreateFile(" + path + "): " + handle);
-        return null;
-      }
-      synchronized (myReparseData) {
-        try {
-          myReparseData.ReparseTag.setValue(0);
-          myReparseData.SubstituteNameOffset = myReparseData.SubstituteNameLength = 0;
-          myReparseData.Flags.setValue(0);
-          final boolean result = myKernel32.DeviceIoControl(handle, Kernel32.FSCTL_GET_REPARSE_POINT, null, 0,
-                                                            myReparseData, myReparseData.size(), new IntByReference(), null);
-          if (!result || myReparseData.ReparseTag.intValue() != Kernel32.IO_REPARSE_TAG_SYMLINK) {
-            LOG.debug("DeviceIoControl(" + path + "): " + result + "," + myReparseData.ReparseTag);
-            return null;
-          }
-          String target = new String(myReparseData.PathBuffer, myReparseData.SubstituteNameOffset / 2, myReparseData.SubstituteNameLength / 2);
-          if ((myReparseData.Flags.intValue() & Kernel32.SYMLINK_FLAG_RELATIVE) == Kernel32.SYMLINK_FLAG_RELATIVE) {
-            return new File(new File(path).getParent(), target).getCanonicalPath();
-          }
-          else {
-            if (target.startsWith("\\??\\") || target.startsWith("\\\\?\\")) {
-              target = target.substring(4);
-            }
-            return new File(target).getCanonicalPath();
-          }
-        }
-        finally {
-          myKernel32.CloseHandle(handle);
-        }
-      }
-    }
-  }*/
 }

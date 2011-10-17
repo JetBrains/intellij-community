@@ -401,16 +401,21 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
                                @NotNull HighlightManager highlightManager) {
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    final int variableNameLength = getVariable().getName().length();
-    if (isReplaceAllOccurrences()) {
-      for (RangeMarker marker : getOccurrenceMarkers()) {
-        final int startOffset = marker.getStartOffset();
+    final V variable = getVariable();
+    if (variable != null) {
+      final String name = variable.getName();
+      LOG.assertTrue(name != null, variable);
+      final int variableNameLength = name.length();
+      if (isReplaceAllOccurrences()) {
+        for (RangeMarker marker : getOccurrenceMarkers()) {
+          final int startOffset = marker.getStartOffset();
+          highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
+        }
+      }
+      else if (getExpr() != null) {
+        final int startOffset = getExprMarker().getStartOffset();
         highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
       }
-    }
-    else if (getExpr() != null) {
-      final int startOffset = getExprMarker().getStartOffset();
-      highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
     }
   }
 

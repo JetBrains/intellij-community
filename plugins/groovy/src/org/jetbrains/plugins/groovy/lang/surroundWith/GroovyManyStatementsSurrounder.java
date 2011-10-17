@@ -79,10 +79,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
   }
 
   protected static void addStatements(GrCodeBlock block, PsiElement[] elements) throws IncorrectOperationException {
-    for (PsiElement element : elements) {
-      final GrStatement statement = (GrStatement)element;
-      block.addStatementBefore(statement, null);
-    }
+    block.addRangeBefore(elements[0], elements[elements.length - 1], block.getRBrace());
   }
 
   protected abstract GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException;

@@ -257,13 +257,11 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         asyncResult.doWhenDone(new AsyncResult.Handler<DataContext>() {
           @Override
           public void run(DataContext dataContext) {
-            final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-            assert editor != null; //available for on the fly mode only
             new PopupChooserBuilder(list).
               setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
               setItemChoosenCallback(runnable).
               createPopup().
-              showInBestPositionFor(editor);
+              showInBestPositionFor(dataContext);
           }
         });
       }

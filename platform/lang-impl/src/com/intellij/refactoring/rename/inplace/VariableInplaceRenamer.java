@@ -465,8 +465,10 @@ public class VariableInplaceRenamer {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     if (myElementToRename instanceof PsiNameIdentifierOwner) {
       PsiElement nameId = ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier();
-      LOG.assertTrue(nameId != null);
-      TextRange range = InjectedLanguageManager.getInstance(myProject).injectedToHost(nameId, nameId.getTextRange());
+      LOG.assertTrue(nameId != null, myElementToRename);
+      final TextRange textRange = nameId.getTextRange();
+      LOG.assertTrue(textRange != null, nameId);
+      TextRange range = InjectedLanguageManager.getInstance(myProject).injectedToHost(nameId, textRange);
       rangesToHighlight.put(range, colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
     }
 

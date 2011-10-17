@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -120,7 +121,8 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     final Project project = method.getProject();
     final PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(project).getResolveHelper()
       .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
-                          argList.getExpressions(), PsiSubstitutor.EMPTY, callExpression, false);
+                          argList.getExpressions(), PsiSubstitutor.EMPTY, callExpression,
+                          DefaultParameterTypeInferencePolicy.INSTANCE);
     RefactoringUtil.replaceMovedMemberTypeParameters(initializer, PsiUtil.typeParametersIterable(method), psiSubstitutor,
                                                      JavaPsiFacade.getElementFactory(project));
   }

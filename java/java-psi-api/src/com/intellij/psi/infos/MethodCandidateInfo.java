@@ -17,6 +17,8 @@ package com.intellij.psi.infos;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +86,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        myCalcedSubstitutor = inferTypeArguments(false);
+        myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
@@ -114,13 +116,13 @@ public class MethodCandidateInfo extends CandidateInfo{
     return (PsiMethod)super.getElement();
   }
 
-  public PsiSubstitutor inferTypeArguments(final boolean forCompletion) {
-    return inferTypeArguments(forCompletion, myArgumentList instanceof PsiExpressionList
+  public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy) {
+    return inferTypeArguments(policy, myArgumentList instanceof PsiExpressionList
                                              ? ((PsiExpressionList)myArgumentList).getExpressions()
                                              : PsiExpression.EMPTY_ARRAY);
   }
 
-  public PsiSubstitutor inferTypeArguments(final boolean forCompletion, final PsiExpression[] arguments) {
+  public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
     PsiMethod method = getElement();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -133,7 +135,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     return javaPsiFacade.getResolveHelper().inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor,
-                                     myArgumentList.getParent(), forCompletion);
+                                     myArgumentList.getParent(), policy);
   }
 
   public boolean isInferencePossible() {
