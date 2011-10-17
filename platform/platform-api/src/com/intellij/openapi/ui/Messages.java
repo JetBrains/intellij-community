@@ -126,7 +126,7 @@ public class Messages {
     return dialog.getExitCode();
   }
 
-  private static boolean canShowMacSheetPanel() {
+  public static boolean canShowMacSheetPanel() {
     return SystemInfo.isMac && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 

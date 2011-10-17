@@ -76,13 +76,13 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         message = messageCommonStart + " <br/> has an <b>unfinished rebase</b> process. <br/>" +
                   "You probably want to <b>continue rebase</b> instead of committing. <br/>" +
                   "Committing during rebase may lead to the commit loss. <br/>" +
-                  "<a href='http://www.kernel.org/pub/software/scm/git/docs/git-rebase.html'>Read more about Git rebase</a>.";
+                  readMore("http://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
       } else {
         title = "Commit in detached HEAD may be dangerous";
         message = messageCommonStart + " is in the <b>detached HEAD</b> state. <br/>" +
                   "You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work. <br/>" +
                   "Otherwise you risk losing your changes. <br/>" +
-                  "<a href='http://sitaramc.github.com/concepts/detached-head.html'>Read more about detached HEAD</a>.";
+                  readMore("http://sitaramc.github.com/concepts/detached-head.html", "Read more about detached HEAD");
       }
 
       final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), "<html>" + message + "</html>", title,
@@ -91,6 +91,15 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       } else {
         return ReturnResult.CLOSE_WINDOW;
+      }
+    }
+
+    private String readMore(String link, String message) {
+      if (Messages.canShowMacSheetPanel()) {
+        return message + ":\n" + link;
+      }
+      else {
+        return String.format("<a href='%s'>%s</a>.", link, message);
       }
     }
 
