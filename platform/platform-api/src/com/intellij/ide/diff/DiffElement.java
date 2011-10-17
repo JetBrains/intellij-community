@@ -251,6 +251,6 @@ public abstract class DiffElement<T> implements Disposable {
     return false;
   }
 
-  public void refresh() {
+  public void refresh(boolean userInitiated) throws IOException{
   }
 }

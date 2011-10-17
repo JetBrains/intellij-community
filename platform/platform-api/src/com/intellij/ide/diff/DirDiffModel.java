@@ -19,7 +19,7 @@ package com.intellij.ide.diff;
  * @author Konstantin Bulenkov
  */
 public interface DirDiffModel {
-  void reloadModel();
+  void reloadModel(boolean userForcedRefresh);
   void applySettings();
   DiffElement getSourceDir();
   DiffElement getTargetDir();

@@ -189,7 +189,7 @@ public class DirDiffPanel implements Disposable {
       @Override
       public void componentShown(ComponentEvent e) {
         myTable.removeComponentListener(this);
-        myModel.reloadModel();
+        myModel.reloadModel(false);
       }
     });
     myRootPanel.removeAll();
@@ -416,7 +416,7 @@ public class DirDiffPanel implements Disposable {
         super.paintChildren(g);
         if (callUpdate.get()) {
           callUpdate.set(false);
-          myModel.reloadModel();
+          myModel.reloadModel(false);
         }
       }
     };

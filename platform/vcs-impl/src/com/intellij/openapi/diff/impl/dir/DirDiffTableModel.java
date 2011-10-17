@@ -22,17 +22,28 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -40,6 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Konstantin Bulenkov
  */
 public class DirDiffTableModel extends AbstractTableModel implements DirDiffModel, Disposable {
+  private static final Logger LOG = Logger.getInstance("#"+DirDiffTableModel.class.getName());
   public static final String COLUMN_NAME = "Name";
   public static final String COLUMN_SIZE = "Size";
   public static final String COLUMN_DATE = "Date";
@@ -181,7 +193,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myListeners.add(listener);
   }
 
-  public void reloadModel() {
+  public void reloadModel(final boolean userForcedRefresh) {
     myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
@@ -191,8 +203,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           updater = new Updater(loadingPanel, 100);
           updater.start();
           myTree = new DTree(null, "", true);
-          mySrc.refresh();
-          myTrg.refresh();
+          mySrc.refresh(userForcedRefresh);
+          myTrg.refresh(userForcedRefresh);
           scan(mySrc, myTree, true);
           scan(myTrg, myTree, false);
 
@@ -201,10 +213,38 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           myTree.update(mySettings);
           applySettings();
         }
-        catch (Exception e) {//
+        catch (final IOException e) {
+          LOG.warn(e);
+          if (loadingPanel.isLoading()) {
+            loadingPanel.stopLoading();
+          }
+          reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
         }
       }
     });
+  }
+
+  private void reportException(final String htmlContent) {
+    Runnable balloonShower = new Runnable() {
+      @Override
+      public void run() {
+        Balloon balloon = PopupFactoryImpl.getInstance().createHtmlTextBalloonBuilder(htmlContent, MessageType.WARNING, null).
+          setShowCallout(false).setHideOnClickOutside(true).setHideOnAction(true).setHideOnFrameResize(true).setHideOnKeyOutside(true).
+          createBalloon();
+        final Rectangle rect = myPanel.getPanel().getBounds();
+        final Point p = new Point(rect.x + rect.width - 100, rect.y + 50);
+        final RelativePoint point = new RelativePoint(myPanel.getPanel(), p);
+        balloon.show(point, Balloon.Position.below);
+        Disposer.register(myProject != null ? myProject : ApplicationManager.getApplication(), balloon);
+      }
+    };
+    ApplicationManager.getApplication().invokeLater(balloonShower, new Condition() {
+      @Override
+      public boolean value(Object o) {
+        return !(myProject == null || myProject.isDefault()) && ((!myProject.isOpen()) || myProject.isDisposed());
+      }
+    }
+    );
   }
 
   private JBLoadingPanel getLoadingPanel() {
@@ -297,17 +337,13 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void scan(DiffElement element, DTree root, boolean source) {
+  private void scan(DiffElement element, DTree root, boolean source) throws IOException {
     if (!myUpdating.get()) return;
     if (element.isContainer()) {
-      try {
-        text.set(prepareText(element.getPath()));
-        for (DiffElement child : element.getChildren()) {
-          if (!myUpdating.get()) return;
-          scan(child, root.addChild(child, source), source);
-        }
-      }
-      catch (IOException e) {//
+      text.set(prepareText(element.getPath()));
+      for (DiffElement child : element.getChildren()) {
+        if (!myUpdating.get()) return;
+        scan(child, root.addChild(child, source), source);
       }
     }
   }

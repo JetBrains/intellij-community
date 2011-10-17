@@ -212,7 +212,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  public void refresh() {
+  public void refresh(boolean userInitiated) {
     myFile.refresh(false, true);
   }
 }
