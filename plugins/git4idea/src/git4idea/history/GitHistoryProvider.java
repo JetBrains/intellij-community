@@ -171,33 +171,12 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
     }
 
-    /*final GitRevisionNumber mergeBase = GitHistoryUtils.getMergeBase(myProject, root, "HEAD", shaHash.getValue());
-    if (mergeBase == null) {
-      throw new VcsException("Can not apply patch to " + filePath.getPath() +
-                             ".\nBase revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)," +
-                             "\nand there is no merge base between '" + beforeVersionId + "' and HEAD.");
-    }*/
     final ContentRevision content = GitVcs.getInstance(myProject).getDiffProvider()
       .createFileContent(new GitRevisionNumber(shaHash.getValue()), filePath.getVirtualFile());
     if (content == null) {
       throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + shaHash.getValue() + "'");
     }
     return ! processor.process(content.getContent());
-    /*if (shaHash.getValue().startsWith(mergeBase.getRev())) {
-      // ok
-      return matched;
-    } else {
-      if (matched) {
-        warnings.add("Base revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)." +
-                     "\nMerge base '" + mergeBase.getRev() +"' between '" + beforeVersionId + "' and HEAD was used.");
-        return true;
-      } else {
-        throw new VcsException("Can not apply patch to " + filePath.getPath() +
-                               ".\nBase revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)," +
-                               "\nand found merge base '" + mergeBase.getRev() + "' between '" + beforeVersionId +
-                               "' and HEAD doesn't match the context.");
-      }
-    }*/
   }
 
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {

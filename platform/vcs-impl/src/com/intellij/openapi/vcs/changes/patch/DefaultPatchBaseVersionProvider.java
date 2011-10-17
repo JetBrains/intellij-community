@@ -66,8 +66,8 @@ public class DefaultPatchBaseVersionProvider {
   }
 
   public void getBaseVersionContent(final FilePath filePath,
-                                    Processor<CharSequence> processor,
-                                    List<String> warnings) throws VcsException {
+                                    final Processor<CharSequence> processor,
+                                    final List<String> warnings) throws VcsException {
     if (myVcs == null) {
       return;
     }
@@ -80,7 +80,16 @@ public class DefaultPatchBaseVersionProvider {
       if (matcher.find()) {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
         if (historyProvider instanceof VcsBaseRevisionAdviser) {
-          if (((VcsBaseRevisionAdviser) historyProvider).getBaseVersionContent(filePath, processor, revision.asString(), warnings)) return;
+          final VcsRevisionNumber finalRevision = revision;
+          final Boolean[] loadedExactRevision = new Boolean[1];
+          final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
+            public void run() throws VcsException {
+              loadedExactRevision[0] = ((VcsBaseRevisionAdviser)historyProvider).getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
+            }
+          }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
+          // was cancelled
+          if (! success) return;
+          if (Boolean.TRUE.equals(loadedExactRevision[0])) return;
         }
       }
     }
