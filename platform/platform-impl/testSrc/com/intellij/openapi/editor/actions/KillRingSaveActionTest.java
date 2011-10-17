@@ -43,6 +43,7 @@ public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
     }
 
     Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
     assertEquals(parseResult.first, contents.getTransferData(DataFlavor.stringFlavor));
     assertEquals(textBefore, myEditor.getDocument().getText());
   }

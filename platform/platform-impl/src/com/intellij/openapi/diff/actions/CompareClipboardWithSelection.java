@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,11 +75,11 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       SelectionModel selectionModel = myEditor.getSelectionModel();
       if (selectionModel.hasSelection()) {
         TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-        myContents[1] = new FragmentContent(DocumentContent.fromDocument(getProject(), getDocument()),
+        myContents[1] = new FragmentContent(DiffContent.fromDocument(getProject(), getDocument()),
                                             range, getProject(), getDocumentFile(getDocument()));
       }
       else {
-        myContents [1] = DocumentContent.fromDocument(getProject(), getDocument());
+        myContents [1] = DiffContent.fromDocument(getProject(), getDocument());
       }
       return myContents;
     }
@@ -96,15 +96,16 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       }
     }
 
+    @Nullable
     private static DiffContent createClipboardContent() {
       Transferable content = CopyPasteManager.getInstance().getContents();
-      String text;
-      try {
-        text = (String) (content.getTransferData(DataFlavor.stringFlavor));
-      } catch (Exception e) {
-        return null;
+      if (content != null) {
+        try {
+          String text = (String) (content.getTransferData(DataFlavor.stringFlavor));
+          return text != null ? new SimpleContent(text) : null;
+        } catch (Exception ignored) { }
       }
-      return text != null ? new SimpleContent(text) : null;
+      return null;
     }
   }
 }

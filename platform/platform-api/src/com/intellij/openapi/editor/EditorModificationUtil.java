@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class EditorModificationUtil {
 
   @Nullable
   public static TextRange pasteFromClipboard(Editor editor) {
-    return pasteFromTransferrable(getClipboardContent(editor), editor);
+    return pasteFromTransferrable(CopyPasteManager.getInstance().getContents(), editor);
   }
 
   @Nullable
@@ -165,19 +165,15 @@ public class EditorModificationUtil {
     return s;
   }
 
-  private static Transferable getClipboardContent(Editor editor) {
-    return CopyPasteManager.getInstance().getContents();
-  }
-
   public static void pasteFromClipboardAsBlock(Editor editor) {
     pasteTransferableAsBlock(editor, null);
   }
 
   public static void pasteTransferableAsBlock(Editor editor, @Nullable Transferable content) {
     if (content == null) {
-      content = getClipboardContent(editor);
+      content = CopyPasteManager.getInstance().getContents();
     }
-    
+
     if (content != null) {
       try {
         int caretLine = editor.getCaretModel().getLogicalPosition().line;
