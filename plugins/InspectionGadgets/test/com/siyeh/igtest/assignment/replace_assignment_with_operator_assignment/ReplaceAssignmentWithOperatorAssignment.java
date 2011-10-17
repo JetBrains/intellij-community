@@ -22,5 +22,7 @@ public class ReplaceAssignmentWithOperatorAssignment
         boolean b = true;
         b = b != false;
 
+      x = x / 2 / 4;
+      x = x >> 1 >> 1;
     }
 }

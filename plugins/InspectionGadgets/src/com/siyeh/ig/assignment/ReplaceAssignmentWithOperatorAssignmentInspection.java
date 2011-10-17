@@ -27,13 +27,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
-public class ReplaceAssignmentWithOperatorAssignmentInspection
-  extends BaseInspection {
+public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -62,8 +62,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiExpression lhs = (PsiExpression)infos[0];
-    final PsiPolyadicExpression polyadicExpression =
-      (PsiPolyadicExpression)infos[1];
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[1];
     return InspectionGadgetsBundle.message(
       "assignment.replaceable.with.operator.assignment.problem.descriptor",
       calculateReplacementExpression(lhs, polyadicExpression));
@@ -72,8 +71,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
       "assignment.replaceable.with.operator.assignment.ignore.conditional.operators.option"),
                              "ignoreLazyOperators");
@@ -83,12 +81,9 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     return optionsPanel;
   }
 
-  static String calculateReplacementExpression(
-    PsiExpression lhs,
-    PsiPolyadicExpression polyadicExpression) {
+  static String calculateReplacementExpression(PsiExpression lhs, PsiPolyadicExpression polyadicExpression) {
     final PsiExpression[] operands = polyadicExpression.getOperands();
-    final PsiJavaToken sign =
-      polyadicExpression.getTokenBeforeOperand(operands[1]);
+    final PsiJavaToken sign = polyadicExpression.getTokenBeforeOperand(operands[1]);
     String signText = sign.getText();
     if ("&&".equals(signText)) {
       signText = "&";
@@ -104,8 +99,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     for (int i = 1; i < operands.length; i++) {
       final PsiExpression operand = operands[i];
       if (addToken) {
-        final PsiJavaToken token =
-          polyadicExpression.getTokenBeforeOperand(operand);
+        final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
         text.append(' ');
         if (token != null) {
           text.append(token.getText());
@@ -122,19 +116,15 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new ReplaceAssignmentWithOperatorAssignmentFix(
-      (PsiPolyadicExpression)infos[1]);
+    return new ReplaceAssignmentWithOperatorAssignmentFix((PsiPolyadicExpression)infos[1]);
   }
 
-  private static class ReplaceAssignmentWithOperatorAssignmentFix
-    extends InspectionGadgetsFix {
+  private static class ReplaceAssignmentWithOperatorAssignmentFix extends InspectionGadgetsFix {
 
     private final String m_name;
 
-    private ReplaceAssignmentWithOperatorAssignmentFix(
-      PsiPolyadicExpression expression) {
-      final PsiJavaToken sign =
-        expression.getTokenBeforeOperand(expression.getOperands()[1]);
+    private ReplaceAssignmentWithOperatorAssignmentFix(PsiPolyadicExpression expression) {
+      final PsiJavaToken sign = expression.getTokenBeforeOperand(expression.getOperands()[1]);
       String signText = sign.getText();
       if ("&&".equals(signText)) {
         signText = "&";
@@ -153,25 +143,20 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project,
-                      ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiAssignmentExpression)) {
         return;
       }
-      final PsiAssignmentExpression expression =
-        (PsiAssignmentExpression)element;
+      final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
       final PsiExpression lhs = expression.getLExpression();
       final PsiExpression rhs = expression.getRExpression();
       if (!(rhs instanceof PsiPolyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression =
-        (PsiPolyadicExpression)rhs;
-      final String newExpression =
-        calculateReplacementExpression(lhs,
-                                       polyadicExpression);
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)rhs;
+      final String newExpression = calculateReplacementExpression(lhs, polyadicExpression);
       replaceExpression(expression, newExpression);
     }
   }
@@ -181,28 +166,26 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     return new ReplaceAssignmentWithOperatorAssignmentVisitor();
   }
 
-  private class ReplaceAssignmentWithOperatorAssignmentVisitor
-    extends BaseInspectionVisitor {
+  private class ReplaceAssignmentWithOperatorAssignmentVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(@NotNull
-                                          PsiAssignmentExpression assignment) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
-      final IElementType assignmentTokenType =
-        assignment.getOperationTokenType();
+      final IElementType assignmentTokenType = assignment.getOperationTokenType();
       if (!assignmentTokenType.equals(JavaTokenType.EQ)) {
         return;
       }
       final PsiExpression lhs = assignment.getLExpression();
-      final PsiExpression rhs = PsiUtil.deparenthesizeExpression(
-        assignment.getRExpression());
+      final PsiExpression rhs = PsiUtil.deparenthesizeExpression(assignment.getRExpression());
       if (!(rhs instanceof PsiPolyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression =
-        (PsiPolyadicExpression)rhs;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)rhs;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (operands.length < 2) {
+        return;
+      }
+      if (operands.length > 2 && !ParenthesesUtils.isCommutativeBinaryOperator(polyadicExpression.getOperationTokenType())) {
         return;
       }
       for (PsiExpression operand : operands) {
@@ -210,21 +193,17 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
           return;
         }
       }
-      final IElementType expressionTokenType =
-        polyadicExpression.getOperationTokenType();
-      if (JavaTokenType.EQEQ.equals(expressionTokenType) ||
-          JavaTokenType.NE.equals(expressionTokenType)) {
+      final IElementType expressionTokenType = polyadicExpression.getOperationTokenType();
+      if (JavaTokenType.EQEQ.equals(expressionTokenType) || JavaTokenType.NE.equals(expressionTokenType)) {
         return;
       }
       if (ignoreLazyOperators) {
-        if (JavaTokenType.ANDAND.equals(expressionTokenType) ||
-            JavaTokenType.OROR.equals(expressionTokenType)) {
+        if (JavaTokenType.ANDAND.equals(expressionTokenType) || JavaTokenType.OROR.equals(expressionTokenType)) {
           return;
         }
       }
       if (ignoreObscureOperators) {
-        if (JavaTokenType.XOR.equals(expressionTokenType) ||
-            JavaTokenType.PERC.equals(expressionTokenType)) {
+        if (JavaTokenType.XOR.equals(expressionTokenType) || JavaTokenType.PERC.equals(expressionTokenType)) {
           return;
         }
       }
