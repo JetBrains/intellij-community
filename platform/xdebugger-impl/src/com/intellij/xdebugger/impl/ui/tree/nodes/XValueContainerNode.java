@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
@@ -37,6 +38,7 @@ import java.util.List;
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
+  private List<MessageTreeNode> myTemporaryMessageChildren;
   private List<TreeNode> myCachedAllChildren;
   protected final ValueContainer myValueContainer;
   private volatile boolean myObsolete;
@@ -48,13 +50,13 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   private void loadChildren() {
-    if (myValueChildren != null || myMessageChildren != null) return;
+    if (myValueChildren != null || myMessageChildren != null || myTemporaryMessageChildren != null) return;
     startComputingChildren();
   }
 
   public void startComputingChildren() {
     myCachedAllChildren = null;
-    setMessageNode(createLoadingMessageNode());
+    setTemporaryMessageNode(createLoadingMessageNode());
     myValueContainer.computeChildren(this);
   }
 
@@ -83,10 +85,10 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         myCachedAllChildren = null;
         fireNodesInserted(newChildren);
         if (last) {
-          final int[] ints = getNodesIndices(myMessageChildren);
+          final int[] ints = getNodesIndices(myTemporaryMessageChildren);
           final TreeNode[] removed = getChildNodes(ints);
           myCachedAllChildren = null;
-          myMessageChildren = null;
+          myTemporaryMessageChildren = null;
           fireNodesRemoved(ints, removed);
         }
         myTree.childrenLoaded(XValueContainerNode.this, newChildren, last);
@@ -105,7 +107,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   public void tooManyChildren(final int remaining) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        setMessageNode(MessageTreeNode.createEllipsisNode(myTree, XValueContainerNode.this, remaining));
+        setTemporaryMessageNode(MessageTreeNode.createEllipsisNode(myTree, XValueContainerNode.this, remaining));
       }
     });
   }
@@ -117,6 +119,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   public void clearChildren() {
     myCachedAllChildren = null;
     myMessageChildren = null;
+    myTemporaryMessageChildren = null;
     myValueChildren = null;
     fireNodeChildrenChanged();
   }
@@ -137,24 +140,32 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       public void run() {
         setMessageNodes(MessageTreeNode.createMessages(myTree, XValueContainerNode.this, message, link,
                                                        icon,
-                                                       attributes));
+                                                       attributes), false);
       }
     });
   }
 
-  protected void setMessageNode(final MessageTreeNode messageNode) {
-    setMessageNodes(Collections.singletonList(messageNode));
+  private void setTemporaryMessageNode(final MessageTreeNode messageNode) {
+    setMessageNodes(Collections.singletonList(messageNode), true);
   }
 
-  private void setMessageNodes(final List<MessageTreeNode> messages) {
+  private void setMessageNodes(final List<MessageTreeNode> messages, boolean temporary) {
     myCachedAllChildren = null;
-    final int[] indices = getNodesIndices(myMessageChildren);
+    List<MessageTreeNode> allMessageChildren = ContainerUtil.concat(myMessageChildren != null ? myMessageChildren : Collections.<MessageTreeNode>emptyList(),
+                                                                    myTemporaryMessageChildren != null ? myTemporaryMessageChildren : Collections.<MessageTreeNode>emptyList());
+    final int[] indices = getNodesIndices(allMessageChildren);
     final TreeNode[] nodes = getChildNodes(indices);
-    myMessageChildren = Collections.emptyList();
+    myMessageChildren = null;
+    myTemporaryMessageChildren = null;
     fireNodesRemoved(indices, nodes);
-    myMessageChildren = messages;
+    if (!temporary) {
+      myMessageChildren = messages;
+    }
+    else {
+      myTemporaryMessageChildren = messages;
+    }
     myCachedAllChildren = null;
-    fireNodesInserted(myMessageChildren);
+    fireNodesInserted(messages);
   }
 
   protected List<? extends TreeNode> getChildren() {
@@ -162,11 +173,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
     if (myCachedAllChildren == null) {
       myCachedAllChildren = new ArrayList<TreeNode>();
+      if (myMessageChildren != null) {
+        myCachedAllChildren.addAll(myMessageChildren);
+      }
       if (myValueChildren != null) {
         myCachedAllChildren.addAll(myValueChildren);
       }
-      if (myMessageChildren != null) {
-        myCachedAllChildren.addAll(myMessageChildren);
+      if (myTemporaryMessageChildren != null) {
+        myCachedAllChildren.addAll(myTemporaryMessageChildren);
       }
     }
     return myCachedAllChildren;
