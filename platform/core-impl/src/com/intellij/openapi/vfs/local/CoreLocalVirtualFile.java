@@ -108,4 +108,9 @@ public class CoreLocalVirtualFile extends VirtualFile {
   public InputStream getInputStream() throws IOException {
     return VfsUtilCore.inputStreamSkippingBOM(new FileInputStream(myIoFile), this);
   }
+
+  @Override
+  public long getModificationStamp() {
+    return 0;
+  }
 }
