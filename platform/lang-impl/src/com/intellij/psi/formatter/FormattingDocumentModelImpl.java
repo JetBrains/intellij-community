@@ -95,6 +95,13 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   @Override
   public CharSequence getText(final TextRange textRange) {
+    if (textRange.getStartOffset() < 0 || textRange.getEndOffset() > myDocument.getTextLength()) {
+      LOG.error(String.format(
+        "Please submit a ticket to the tracker and attach current source file to it!%nInvalid processing detected: given text "
+        + "range (%s) targets non-existing regions (the boundaries are [0; %d)). File's language: %s",
+        textRange, myDocument.getTextLength(), myFile.getLanguage()
+      ));
+    }
     return myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
   }
 

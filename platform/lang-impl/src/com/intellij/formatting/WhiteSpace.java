@@ -84,7 +84,7 @@ class WhiteSpace {
   }
 
   /**
-   * Applies new end offset to the current {@link WhiteSpace} object.
+   * Applies new end offset to the current object.
    * <p/>
    * Namely, performs the following:
    * <ol>
