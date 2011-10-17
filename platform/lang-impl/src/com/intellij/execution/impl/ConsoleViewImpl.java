@@ -406,21 +406,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
       requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
-
-
-      myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
-        public void documentChanged(DocumentEvent e) {
-          if (e.getNewLength() == 0) {
-            // string has been removed, adjust token ranges
-            synchronized (LOCK) {
-              ConsoleUtil.updateTokensOnTextRemoval(myTokens, e.getOffset(), e.getOffset() + e.getOldLength());
-              int toRemoveLen = e.getOldLength();
-              myContentSize -= Math.min(myContentSize, toRemoveLen);
-            }
-          }
-        }
-      });
-      
       myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
         @Override
         public void visibleAreaChanged(VisibleAreaEvent e) {
@@ -732,6 +717,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
 
       public void documentChanged(DocumentEvent event) {
+        if (event.getNewLength() == 0) {
+          // string has been removed, adjust token ranges
+          synchronized (LOCK) {
+            ConsoleUtil.updateTokensOnTextRemoval(myTokens, event.getOffset(), event.getOffset() + event.getOldLength());
+            int toRemoveLen = event.getOldLength();
+            myContentSize -= Math.min(myContentSize, toRemoveLen);
+          }
+        }
         if (myFileType != null) {
           highlightUserTokens();
         }
