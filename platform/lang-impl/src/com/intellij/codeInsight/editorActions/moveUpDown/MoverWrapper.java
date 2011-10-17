@@ -205,6 +205,9 @@ class MoverWrapper {
   }
 
   private static boolean lineContainsNonSpaces(final Document document, final int line) {
+    if (line >= document.getLineCount()) {
+      return false;
+    }
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
