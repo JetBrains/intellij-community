@@ -45,12 +45,6 @@ public final class IconLoader {
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
 
-  /**
-   * To get disabled icon with paint it into the image. Some icons require
-   * not null component to paint.
-   */
-  private static final JComponent ourFakeComponent = new JLabel();
-
   private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
     public String toString() {
@@ -154,7 +148,7 @@ public final class IconLoader {
 
   @Nullable
   private static Icon checkIcon(final Image image, URL url) {
-    if (image == null || image.getHeight(ourFakeComponent) < 1) { // image wasn't loaded or broken
+    if (image == null || image.getHeight(LabelHolder.ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
 
@@ -192,7 +186,7 @@ public final class IconLoader {
 
       graphics.setColor(UIUtil.TRANSPARENT_COLOR);
       graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
-      icon.paintIcon(ourFakeComponent, graphics, 0, 0);
+      icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
 
       graphics.dispose();
 
@@ -341,5 +335,13 @@ public final class IconLoader {
     public String toString() {
       return "icon path=" + myPath + " class=" + myCallerClass;
     }
+  }
+
+  private static class LabelHolder {
+    /**
+     * To get disabled icon with paint it into the image. Some icons require
+     * not null component to paint.
+     */
+    private static final JComponent ourFakeComponent = new JLabel();
   }
 }
