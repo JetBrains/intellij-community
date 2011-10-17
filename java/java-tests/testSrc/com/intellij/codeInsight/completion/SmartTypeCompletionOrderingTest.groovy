@@ -26,21 +26,21 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   
   public void testJComponentAddNew() throws Throwable {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
+    checkPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
   }
 
   public void testJComponentAddNewWithStats() throws Throwable {
     //there's no PopupMenu in mock jdk
     final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
-    incUseCount(lookup, 3); //Container
+    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    incUseCount(lookup, 4); //Container
     assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
     imitateItemSelection(lookup, 3); //FooBean3
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
       imitateItemSelection(lookup, 2); //Container
     }
     refreshSorting(lookup);
-    assertPreferredItems(0, "Container", "FooBean3", "JComponent", "Frame", "Window");
+    assertPreferredItems(0, "Container", "FooBean3", "JComponent");
 
     int component = lookup.items.findIndexOf { it.lookupString == 'Component' }
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
@@ -52,13 +52,13 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   
   public void testNoStatsOnUnsuccessfulAttempt() {
     final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
-    lookup.currentItem = lookup.items[3] //Container
+    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    lookup.currentItem = lookup.items[4] //Container
     myFixture.type('\n\b')
     CompletionLookupArranger.applyLastCompletionStatisticsUpdate()
     FileDocumentManager.instance.saveAllDocuments()
     invokeCompletion("/JComponentAddNew.java")
-    assertPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
+    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
   }
 
   public void testMethodStats() throws Throwable {
@@ -73,7 +73,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testNewComponent() throws Throwable {
-    checkPreferredItems(1, "Component", "Foo", "Container", "JComponent");
+    checkPreferredItems(1, "Component", "Foo", "JComponent", "Container");
   }
   
   public void testClassLiteral() throws Throwable {
@@ -102,12 +102,12 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferImportedClasses() throws Throwable {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "Container");
+    checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "JComponent");
   }
   
   public void testPreferNestedClasses() throws Throwable {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "Container");
+    checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "JComponent");
   }
 
   public void testSmartCollections() throws Throwable {
@@ -286,6 +286,8 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }");
     checkPreferredItems(0, "boo", "bar")
   }
+
+
 
   @Override
   protected String getBasePath() {

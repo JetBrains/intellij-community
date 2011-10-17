@@ -46,11 +46,13 @@ public class KnownElementWeigher extends ProximityWeigher {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {
         String pkg = StringUtil.getPackageName(qname);
-        if (pkg.equals("java.lang")) return 6;
-        if (pkg.equals("java.util")) return 5;
+        if (pkg.equals("java.lang")) return 7;
+        if (pkg.equals("java.util")) return 6;
 
-        if (qname.startsWith("java.lang")) return 4;
-        if (qname.startsWith("java.util")) return 3;
+        if (qname.startsWith("java.lang")) return 5;
+        if (qname.startsWith("java.util")) return 4;
+
+        if (pkg.equals("javax.swing")) return 3;
         if (qname.startsWith("java.")) return 2;
         if (qname.startsWith("javax.")) return 1;
         if (qname.startsWith("com.")) return -1;
