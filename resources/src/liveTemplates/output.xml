@@ -29,7 +29,7 @@
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="false" />
-      <option name="GROOVY_STATEMENT" value="true" />
+      <option name="GROOVY_STATEMENT" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
@@ -40,7 +40,7 @@
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="false" />
-      <option name="GROOVY_STATEMENT" value="true" />
+      <option name="GROOVY_STATEMENT" value="false" />
     </context>
   </template>
 </templateSet>

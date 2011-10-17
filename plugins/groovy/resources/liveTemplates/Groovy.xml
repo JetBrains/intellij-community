@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="Groovy">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
+            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;)">
+    <context>
+      <option name="GROOVY_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
+            name="sout" toReformat="true" toShortenFQNames="true" value="println $END$">
+    <context>
+      <option name="GROOVY_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.souf"
+            name="souf" toReformat="true" toShortenFQNames="true" value="printf &quot;$END$&quot;">
+    <context>
+      <option name="GROOVY_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
+            name="soutm" toReformat="true" toShortenFQNames="true" value=" println &quot;$CLASS_NAME$.$METHOD_NAME$&quot;">
+    <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
+    <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
+    <context>
+      <option name="GROOVY_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
+            name="soutv" toReformat="true" toShortenFQNames="true" value="println &quot;$EXPR_COPY$ = $DOLLAR$$EXPR$&quot;">
+    <variable alwaysStopAt="false" defaultValue="&quot;$&quot;" expression="" name="DOLLAR" />
+    <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
+    <variable alwaysStopAt="false" defaultValue="" expression="EXPR" name="EXPR_COPY" />
+    <context>
+      <option name="GROOVY_STATEMENT" value="true" />
+    </context>
+  </template>
+</templateSet>

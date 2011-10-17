@@ -34,6 +34,18 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
+  public void testSout() {
+    myFixture.configureByText("a.groovy", "sout<caret>");
+    expandTemplate(myFixture.getEditor());
+    myFixture.checkResult("println <caret>");
+  }
+
+  public void testSoutv() {
+    myFixture.configureByText("a.groovy", "def x = 2\nsoutv<caret>");
+    expandTemplate(myFixture.getEditor());
+    myFixture.checkResult("def x = 2\nprintln \"x = $x\"");
+  }
+
   public static void expandTemplate(final Editor editor) {
     new WriteCommandAction(editor.getProject()) {
       @Override

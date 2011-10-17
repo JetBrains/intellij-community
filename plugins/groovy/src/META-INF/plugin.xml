@@ -196,6 +196,8 @@
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
 
+    <defaultLiveTemplatesProvider implementation="org.jetbrains.plugins.groovy.template.GroovyTemplatesProvider"/>
+
     <liveTemplateOptionalProcessor implementation="org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor"/>
     <variableTypeCalculator implementation="org.jetbrains.plugins.groovy.template.GroovyVariableTypeCalculator"/>
 
