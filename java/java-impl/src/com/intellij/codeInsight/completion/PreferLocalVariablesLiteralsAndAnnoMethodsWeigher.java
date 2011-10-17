@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -40,6 +41,8 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     annoMethod,
     probableKeyword,
     localOrParameter,
+    qualifiedWithField,
+    qualifiedWithGetter,
     superMethodParameters,
     normal,
     nonInitialized,
@@ -67,6 +70,21 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
       if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
         return MyResult.superMethodParameters;
       }
+      
+      final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
+      if (chain != null) {
+        Object qualifier = chain.getQualifier().getObject();
+        if (qualifier instanceof PsiLocalVariable || qualifier instanceof PsiParameter) {
+          return MyResult.localOrParameter;
+        }
+        if (qualifier instanceof PsiField) {
+          return MyResult.qualifiedWithField;
+        }
+        if (qualifier instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)qualifier)) {
+          return MyResult.qualifiedWithGetter;
+        }
+      }
+      
       return MyResult.normal;
     }
 
