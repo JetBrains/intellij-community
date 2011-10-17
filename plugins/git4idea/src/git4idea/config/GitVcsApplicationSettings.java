@@ -21,6 +21,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -31,22 +32,10 @@ import java.io.File;
   name = "Git.Application.Settings",
   storages = {@Storage(file = "$APP_CONFIG$/vcs.xml")})
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
-  /**
-   * the default executable
-   */
-  @NonNls static final String[] DEFAULT_WINDOWS_PATHS =
-    {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin", "C:\\Program Files (x86)\\Git\\bin"};
-  /**
-   * Windows executable name
-   */
-  @NonNls static final String DEFAULT_WINDOWS_GIT = "git.exe";
-  /**
-   * Default UNIX paths
-   */
+
+  @NonNls static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin", "C:\\Program Files (x86)\\Git\\bin"};
   @NonNls static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin", "/usr/local/git/bin"};
-  /**
-   * UNIX executable name
-   */
+  @NonNls static final String DEFAULT_WINDOWS_GIT = "git.exe";
   @NonNls static final String DEFAULT_UNIX_GIT = "git";
   /**
    * The last used path to git
@@ -97,28 +86,16 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     myPathToGit = state.PATH_TO_GIT == null ? defaultGit() : state.PATH_TO_GIT;
   }
 
-  /**
-   * @return get last set path to git or null
-   */
+  @Nullable
   public String getPathToGit() {
     return myPathToGit == null ? defaultGit() : myPathToGit;
   }
 
-  /**
-   * Change last set path to git (called on project settings save)
-   * @param pathToGit the path to git
-   */
   public void setPathToGit(String pathToGit) {
     myPathToGit = pathToGit;
   }
 
-  /**
-   * The settings state
-   */
   public static class State {
-    /**
-     * The last saved path to git
-     */
     public String PATH_TO_GIT;
   }
 }
