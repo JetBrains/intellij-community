@@ -99,6 +99,7 @@ public class ConcurrencyUtil {
                                     new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         final Thread thread = new Thread(r, threadFactoryName);
+        thread.setDaemon(true);
         thread.setPriority(threadPriority);
         return thread;
       }
@@ -115,6 +116,7 @@ public class ConcurrencyUtil {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         final Thread thread = new Thread(r, threadFactoryName);
+        thread.setDaemon(true);
         thread.setPriority(threadPriority);
         return thread;
       }
