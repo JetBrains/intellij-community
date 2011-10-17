@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +32,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private final JComponent myComponent;
   private final Function<DnDActionInfo, DnDDragStartBean> myBeanProvider;
   private final Function<DnDActionInfo, DnDImage> myImageProvider;
-  private final DnDDropHandler myHandler;
-  private final DnDTargetChecker myChecker;
+  private final @Nullable DnDDropHandler myHandler;
+  private final @Nullable DnDTargetChecker myChecker;
   private final Runnable myDropEndedCallback;
   private final DnDDropActionHandler myDropActionHandler;
   private final Runnable myCleanUpCallback;
@@ -121,7 +122,9 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
 
   @Override
   public void drop(DnDEvent aEvent) {
-    myHandler.drop(aEvent);
+    if (myHandler != null) {
+      myHandler.drop(aEvent);
+    }
   }
 
   @Override
