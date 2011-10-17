@@ -201,7 +201,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       BrowserUtil.launchBrowser(url);
     }
     else {
-      getInstance().doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY);
+      getInstance().doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY, false);
     }
   }
 
@@ -214,10 +214,19 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   }
 
   public static void launchBrowser(final @NotNull BrowserFamily family, @NotNull final String url, String... parameters) {
-    getInstance().doLaunchBrowser(family, url, parameters);
+    launchBrowser(family, url, false, parameters);
   }
 
-  private void doLaunchBrowser(final BrowserFamily family, @NotNull String url, @NotNull String[] additionalParameters) {
+  public static void launchBrowser(final @NotNull BrowserFamily family,
+                                   @NotNull final String url,
+                                   final boolean forceOpenNewInstanceOnMac,
+                                   String... parameters) {
+    getInstance().doLaunchBrowser(family, url, parameters, forceOpenNewInstanceOnMac);
+  }
+
+  private void doLaunchBrowser(final BrowserFamily family,
+                               @NotNull String url,
+                               @NotNull String[] additionalParameters, final boolean forceOpenNewInstanceOnMac) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     final String path = settings.getPath();
     if (path != null && path.length() > 0) {
@@ -226,7 +235,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
         final String[] browserParameters = specificSettings != null ? specificSettings.getAdditionalParameters() : ArrayUtil.EMPTY_STRING_ARRAY;
         String[] parameters = ArrayUtil.mergeArrays(browserParameters, additionalParameters);
-        launchBrowser(path, url, parameters);
+        launchBrowser(path, url, forceOpenNewInstanceOnMac, parameters);
       }
       catch (IOException e) {
         Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
@@ -242,26 +251,31 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
    * @deprecated use {@link #launchBrowser(com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily, String)} instead
    */
   public static void launchBrowser(@NonNls @NotNull String browserPath, @NonNls String... parameters) throws IOException {
-    launchBrowser(browserPath, parameters[parameters.length - 1], Arrays.copyOf(parameters, parameters.length-1));
+    launchBrowser(browserPath, parameters[parameters.length - 1], false, Arrays.copyOf(parameters, parameters.length-1));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void launchBrowser(@NonNls @NotNull String browserPath, String url, @NonNls String... browserArgs) throws IOException {
+  private static void launchBrowser(@NonNls @NotNull String browserPath,
+                                    String url, final boolean forceOpenNewInstanceOnMac,
+                                    @NonNls String... browserArgs) throws IOException {
     final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath);
-    String[] args = {url};
-    if (browserArgs.length > 0) {
-      if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command[0])) {
+    String[] args = ArrayUtil.append(browserArgs, url);
+
+    if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command[0])) {
+      if (browserArgs.length > 0) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {
           args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs);
         }
         else {
+          args = new String[]{url};
           LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(args));
         }
       }
-      else {
-        args = ArrayUtil.append(browserArgs, url);
+      if (forceOpenNewInstanceOnMac) {
+        args = ArrayUtil.mergeArrays(new String[]{"-n"}, args);
       }
     }
+
     final String[] commandLine = ArrayUtil.mergeArrays(command, args);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Launching browser: " + Arrays.toString(commandLine));
