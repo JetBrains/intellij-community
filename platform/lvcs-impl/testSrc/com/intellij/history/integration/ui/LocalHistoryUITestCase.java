@@ -18,12 +18,10 @@ package com.intellij.history.integration.ui;
 
 import com.intellij.history.integration.IntegrationTestCase;
 
-import java.awt.*;
-
 public abstract class LocalHistoryUITestCase extends IntegrationTestCase {
   @Override
   protected void runTest() throws Throwable {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (isInHeadlessEnvironment()) {
       System.out.println("Test '" + getClass().getName() + "." + getName() + "' is skipped because it requires working UI environment");
       return;
     }

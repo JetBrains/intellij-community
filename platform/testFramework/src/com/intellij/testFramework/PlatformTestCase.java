@@ -76,6 +76,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -200,6 +201,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
     runStartupActivities();
+  }
+
+  protected static boolean isInHeadlessEnvironment() {
+    return GraphicsEnvironment.isHeadless();
   }
 
   @NotNull
