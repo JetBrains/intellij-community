@@ -22,4 +22,6 @@ public interface IPyDebugProcess {
   PyDebugValue evaluate(String expression, boolean exec, boolean doTrunc) throws PyDebuggerException;
 
   void printToConsole(String text, ConsoleViewContentType contentType);
+
+  void init();
 }

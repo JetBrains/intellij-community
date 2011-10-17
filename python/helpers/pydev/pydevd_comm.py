@@ -254,7 +254,7 @@ class ReaderThread(PyDBDaemonThread):
                 try:
                     r = self.sock.recv(1024)
                 except:
-                    GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
+                    self.handleExcept()
                     break #Finished communication.
                 if IS_PY3K:
                     r = r.decode('utf-8')
@@ -264,14 +264,14 @@ class ReaderThread(PyDBDaemonThread):
                     sys.stdout.write('received >>%s<<\n' % (buffer,))
                     
                 if len(buffer) == 0:
-                    GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
+                    self.handleExcept()
                     break
                 while buffer.find('\n') != -1:
                     command, buffer = buffer.split('\n', 1)
                     PydevdLog(1, "received command ", command)
                     args = command.split('\t', 2)
                     try:
-                        GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
+                        self.processCommand(int(args[0]), int(args[1]), args[2])
                     except:
                         traceback.print_exc()
                         sys.stderr.write("Can't process net command: %s\n" % command)
@@ -279,7 +279,14 @@ class ReaderThread(PyDBDaemonThread):
 
         except:
             traceback.print_exc()
-            GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
+            self.handleExcept()
+
+
+    def handleExcept(self):
+        GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
+
+    def processCommand(self, cmd_id, seq, text):
+        GlobalDebuggerHolder.globalDbg.processNetCommand(cmd_id, seq, text)
 
 
 #----------------------------------------------------------------------------------- SOCKET UTILITIES - WRITER

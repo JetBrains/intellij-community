@@ -2,13 +2,12 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommand;
-import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommandFactory;
 
 /**
  * @author traff
  */
-public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProperties<T> {
+public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProperties<T> implements ExceptionBreakpointCommandFactory{
   @Attribute("exception")
   public String myException;
 
@@ -16,7 +15,4 @@ public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProper
     return myException;
   }
 
-  abstract public ExceptionBreakpointCommand createAddCommand(RemoteDebugger debugger);
-
-  abstract public ExceptionBreakpointCommand createRemoveCommand(RemoteDebugger debugger);
 }
