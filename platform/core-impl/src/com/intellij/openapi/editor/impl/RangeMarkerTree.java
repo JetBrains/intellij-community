@@ -148,7 +148,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   @Override
   protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
-    ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
+    ((RangeMarkerImpl)key).myNode = (RangeMarkerTree.RMNode)intervalNode;
   }
 
   public class RMNode extends IntervalTreeImpl.IntervalNode<T> {
@@ -183,7 +183,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
       modCount++;
       List<IntervalNode<T>> affected = new SmartList<IntervalNode<T>>();
-      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
+      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected, new NodeCachedOffsets());
       checkMax(false);
 
       if (!affected.isEmpty()) {
@@ -250,9 +250,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   // returns true if all deltas involved are still 0
-  private boolean collectAffectedMarkersAndShiftSubtrees(IntervalNode<T> root, @NotNull DocumentEvent e, @NotNull List<IntervalNode<T>> affected) {
+  private boolean collectAffectedMarkersAndShiftSubtrees(IntervalNode<T> root,
+                                                         @NotNull DocumentEvent e,
+                                                         @NotNull List<IntervalNode<T>> affected, NodeCachedOffsets cached) {
     if (root == null) return true;
-    boolean norm = pushDelta(root);
+    boolean norm = pushDelta(root, cached);
 
     int maxEnd = root.maxEnd;
     assert root.isValid();
@@ -277,8 +279,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         int newL = left.changeDelta(-lengthDelta);
         norm &= newL == 0;
       }
-      norm &= pushDelta(root);
-      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, affected);
+      norm &= pushDelta(root, cached);
+      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, affected, cached);
       correctMax(root, 0);
     }
     else {
@@ -288,8 +290,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         root.setValid(false);  //make invisible
       }
 
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, affected);
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, affected, cached);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, affected, cached);
       correctMax(root,0);
     }
     return norm;

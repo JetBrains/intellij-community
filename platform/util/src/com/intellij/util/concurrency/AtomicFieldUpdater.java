@@ -60,6 +60,10 @@ public class AtomicFieldUpdater<T,V> {
   public static <T,V> AtomicFieldUpdater<T,V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
     return new AtomicFieldUpdater<T,V>(ownerClass, fieldType);
   }
+  @NotNull
+  public static <T> AtomicFieldUpdater<T,Long> forLongField(@NotNull Class<T> ownerClass) {
+    return new AtomicFieldUpdater<T,Long>(ownerClass, long.class);
+  }
 
   private AtomicFieldUpdater(Class<T> ownerClass, Class<V> fieldType) {
     Field[] declaredFields = ownerClass.getDeclaredFields();
@@ -82,12 +86,15 @@ public class AtomicFieldUpdater<T,V> {
       throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be volatile");
     }
     if ((found.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0) {
-      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must non-final instance");
+      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be non-final non-static");
     }
     offset = unsafe.objectFieldOffset(found);
   }
 
   public boolean compareAndSet(@NotNull T owner, V expected, V newValue) {
     return unsafe.compareAndSwapObject(owner, offset, expected, newValue);
+  }
+  public boolean compareAndSetLong(@NotNull T owner, long expected, long newValue) {
+    return unsafe.compareAndSwapLong(owner, offset, expected, newValue);
   }
 }

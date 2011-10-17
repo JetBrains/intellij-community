@@ -87,7 +87,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   public int getLayer() {
-    RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)myNode;
+    RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
     return node == null ? -1 : node.myLayer;
   }
 

@@ -29,7 +29,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected final DocumentEx myDocument;
-  protected RangeMarkerTree.RMNode myNode;
+  protected RangeMarkerTree<RangeMarkerEx>.RMNode myNode;
 
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
@@ -41,10 +41,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (start < 0) {
       throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
     }
-    else if (end > document.getTextLength()) {
+    if (end > document.getTextLength()) {
       throw new IllegalArgumentException("Wrong end: " + end+ "; document length="+document.getTextLength()+"; start="+start);
     }
-    else if (start > end){
+    if (start > end){
       throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
     }
 
