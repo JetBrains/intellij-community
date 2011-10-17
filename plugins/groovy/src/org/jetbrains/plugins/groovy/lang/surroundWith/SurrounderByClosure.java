@@ -46,7 +46,7 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
     }
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    final GrMethodCallExpression call = (GrMethodCallExpression) factory.createExpressionFromText("{ -> }.call()", context);
+    final GrMethodCallExpression call = (GrMethodCallExpression) factory.createExpressionFromText("{ -> \n}.call()", context);
     final GrClosableBlock closure = (GrClosableBlock) ((GrReferenceExpression) call.getInvokedExpression()).getQualifierExpression();
     addStatements(closure, elements);
     return call;
