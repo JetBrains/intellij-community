@@ -68,10 +68,13 @@ public abstract class GitTextHandler extends GitHandler {
 
       public void processTerminated(final ProcessEvent event) {
         final int exitCode = event.getExitCode();
-        setExitCode(exitCode);
-        cleanupEnv();
-        GitTextHandler.this.processTerminated(exitCode);
-        listeners().processTerminated(exitCode);
+        try {
+          setExitCode(exitCode);
+          cleanupEnv();
+          GitTextHandler.this.processTerminated(exitCode);
+        } finally {
+          listeners().processTerminated(exitCode);
+        }
       }
 
       public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
