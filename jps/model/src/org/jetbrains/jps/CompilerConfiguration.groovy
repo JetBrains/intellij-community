@@ -11,6 +11,7 @@ class CompilerConfiguration {
   boolean clearOutputDirectoryOnRebuild = true
   boolean addNotNullAssertions = true
   AnnotationProcessingConfiguration annotationProcessing = new AnnotationProcessingConfiguration()
+  CompilerExcludes excludes = new CompilerExcludes()
 }
 
 class AnnotationProcessingConfiguration {

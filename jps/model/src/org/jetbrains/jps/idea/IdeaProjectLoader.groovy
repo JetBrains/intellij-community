@@ -176,6 +176,7 @@ public class IdeaProjectLoader {
     def includePatterns = []
     def excludePatterns = []
     def componentTag = getComponent(root, "CompilerConfiguration")
+
     componentTag?.wildcardResourcePatterns?.getAt(0)?.entry?.each {Node entryTag ->
       String pattern = entryTag."@name"
       rawPatterns << pattern;
@@ -193,6 +194,16 @@ public class IdeaProjectLoader {
     }
     if (!rawPatterns.isEmpty()) {
       configuration.resourcePatterns = rawPatterns;
+    }
+
+    def excludesTag = componentTag?.excludeFromCompile?.getAt(0)
+    if (excludesTag != null) {
+      excludesTag.file?.each {
+        configuration.excludes.addExcludedFile(getFileByUrl(it."@url"))
+      }
+      excludesTag.directory?.each {
+        configuration.excludes.addExcludedDirectory(getFileByUrl(it."@url"), Boolean.parseBoolean(it."@includeSubdirectories"))
+      }
     }
 
     configuration.javacOptions.putAll(loadOptions(getComponent(root, "JavacSettings")))
@@ -213,6 +224,10 @@ public class IdeaProjectLoader {
         configuration.annotationProcessing.processModule[it."@name"] = it."@generatedDirName"
       }
     }
+  }
+
+  private File getFileByUrl(final String url) {
+    return new File(FileUtil.toSystemDependentName(projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))))
   }
 
   private static boolean parseBoolean(Object value, boolean defaultValue) {

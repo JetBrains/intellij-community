@@ -66,7 +66,7 @@ abstract class JpsBuildTestCase extends TestCase {
     binding.includeTool << Jps
     def project = new GantBasedProject(binding)
     initGlobal(project)
-    IdeaProjectLoader.loadFromPath(project, "../community/jps/$projectPath", pathVariables, null, new AntErrorReporter(binding))
+    IdeaProjectLoader.loadFromPath(project, "$projectPath", pathVariables, null, new AntErrorReporter(binding))
     return project
   }
 

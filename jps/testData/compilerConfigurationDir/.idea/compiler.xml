@@ -3,7 +3,9 @@
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
     <excludeFromCompile>
-      <directory url="file://$PROJECT_DIR$/src" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/src/nonrec" includeSubdirectories="false" />
+      <directory url="file://$PROJECT_DIR$/src/rec" includeSubdirectories="true" />
+      <file url="file://$PROJECT_DIR$/src/A.java" />
     </excludeFromCompile>
     <resourceExtensions />
     <wildcardResourcePatterns>

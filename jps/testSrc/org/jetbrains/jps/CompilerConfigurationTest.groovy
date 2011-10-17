@@ -30,12 +30,19 @@ class CompilerConfigurationTest extends JpsBuildTestCase {
   private def doTest(final String path) {
     Project project = loadProject(path, [:])
     CompilerConfiguration configuration = project.compilerConfiguration
+    String basePath = project.modules["compilerConfiguration"].basePath
     assertFalse(configuration.clearOutputDirectoryOnRebuild)
     assertFalse(configuration.addNotNullAssertions)
     assertTrue(configuration.annotationProcessing.enabled)
     assertFalse(configuration.annotationProcessing.obtainProcessorsFromClasspath)
-    assertTrue(configuration.annotationProcessing.processorsPath.endsWith("/src"))
+    assertEquals("$basePath/src", configuration.annotationProcessing.processorsPath)
     assertEquals("a=b c=d", configuration.annotationProcessing.processorsOptions["my.proc"])
     assertEquals("gen", configuration.annotationProcessing.processModule["compilerConfiguration"])
+    assertFalse(configuration.excludes.isExcluded(new File("$basePath/src/nonrec/x/Y.java")))
+    assertTrue(configuration.excludes.isExcluded(new File("$basePath/src/nonrec/Y.java")))
+    assertTrue(configuration.excludes.isExcluded(new File("$basePath/src/rec/x/Y.java")))
+    assertTrue(configuration.excludes.isExcluded(new File("$basePath/src/rec/Y.java")))
+    assertTrue(configuration.excludes.isExcluded(new File("$basePath/src/A.java")))
+    assertFalse(configuration.excludes.isExcluded(new File("$basePath/src/B.java")))
   }
 }
