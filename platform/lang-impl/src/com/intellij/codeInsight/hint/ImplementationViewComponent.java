@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -79,7 +80,7 @@ public class ImplementationViewComponent extends JPanel {
   private final JLabel myCountLabel;
   private final CardLayout myBinarySwitch;
   private final JPanel myBinaryPanel;
-  private JComboBox myFileChooser;
+  private ComboBox myFileChooser;
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private JBPopup myHint;
@@ -165,11 +166,12 @@ public class ImplementationViewComponent extends JPanel {
     myLocationLabel = new JLabel();
     myCountLabel = new JLabel();
 
-    final JPanel header = new JPanel(new BorderLayout());
+    final JPanel header = new JPanel(new BorderLayout(2, 0));
     header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                                         IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
-    final JPanel toolbarPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
-    toolbarPanel.add(myToolbar.getComponent());
+    final JPanel toolbarPanel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0);
+    toolbarPanel.add(myToolbar.getComponent(), gc);
 
     setPreferredSize(new Dimension(600, 400));
     
@@ -194,7 +196,7 @@ public class ImplementationViewComponent extends JPanel {
         ((EditorEx)myEditor).setHighlighter(highlighter);
 
         if (myElements.length > 1) {
-          myFileChooser = new JComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]));
+          myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
           updateRenderer(project);
 
           myFileChooser.addActionListener(new ActionListener() {
@@ -207,12 +209,11 @@ public class ImplementationViewComponent extends JPanel {
             }
           });
 
-          
           myLabel = new JLabel();
           myLabel.setVisible(false);
         }
         else {
-          myFileChooser = new JComboBox();
+          myFileChooser = new ComboBox();
           myFileChooser.setVisible(false);
           myCountLabel.setVisible(false);
 
@@ -227,11 +228,15 @@ public class ImplementationViewComponent extends JPanel {
           
         }
 
-        toolbarPanel.add(myFileChooser);
-        toolbarPanel.add(myCountLabel);
-        toolbarPanel.add(myLabel);
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.weightx = 1;
+        toolbarPanel.add(myFileChooser, gc);
+        gc.fill = GridBagConstraints.NONE;
+        gc.weightx = 0;
+        toolbarPanel.add(myCountLabel, gc);
+        toolbarPanel.add(myLabel, gc);
 
-        header.add(toolbarPanel, BorderLayout.WEST);
+        header.add(toolbarPanel, BorderLayout.CENTER);
         header.add(myLocationLabel, BorderLayout.EAST);
 
         add(header, BorderLayout.NORTH);
