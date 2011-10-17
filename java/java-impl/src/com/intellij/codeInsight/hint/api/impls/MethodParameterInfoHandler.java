@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
@@ -125,7 +126,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
       PsiMethod method = (PsiMethod)candidate.getElement();
-      PsiSubstitutor substitutor = candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible() ? ((MethodCandidateInfo)candidate).inferTypeArguments(true) : candidate.getSubstitutor();
+      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(candidate);
       assert substitutor != null;
 
       if (!method.isValid() || !substitutor.isValid()) {
@@ -191,6 +192,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.setHighlightedParameter(candidate);
       }
     }
+  }
+
+  private static PsiSubstitutor getCandidateInfoSubstitutor(CandidateInfo candidate) {
+    return candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
+                                 ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE)
+                                 : candidate.getSubstitutor();
   }
 
   private static boolean isAssignableParametersBeforeGivenIndex(final PsiParameter[] parms,
@@ -408,7 +415,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void updateUI(final Object p, final ParameterInfoUIContext context) {
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
-      updateMethodPresentation((PsiMethod)info.getElement(), info instanceof MethodCandidateInfo && ((MethodCandidateInfo)info).isInferencePossible() ? ((MethodCandidateInfo)info).inferTypeArguments(true) : info.getSubstitutor(), context);
+      updateMethodPresentation((PsiMethod)info.getElement(), getCandidateInfoSubstitutor(info), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

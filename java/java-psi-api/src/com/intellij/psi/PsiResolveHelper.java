@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +123,7 @@ public interface PsiResolveHelper {
                                           @NotNull PsiExpression[] arguments,
                                           @NotNull PsiSubstitutor partialSubstitutor,
                                           @Nullable PsiElement parent,
-                                          final boolean forCompletion);
+                                          final ParameterTypeInferencePolicy policy);
 
   @NotNull
   PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
@@ -130,7 +131,7 @@ public interface PsiResolveHelper {
                                     @NotNull PsiExpression[] arguments,
                                     @NotNull PsiSubstitutor partialSubstitutor,
                                     @NotNull PsiElement parent,
-                                    final boolean forCompletion);
+                                    final ParameterTypeInferencePolicy policy);
 
   @NotNull  
   PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,

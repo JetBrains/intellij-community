@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -243,7 +244,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression[] expressions = argumentList.getExpressions();
     return resolveHelper
-      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, parent, false);
+      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, parent, DefaultParameterTypeInferencePolicy.INSTANCE);
   }
 
   public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {

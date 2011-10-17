@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.*;
@@ -390,7 +391,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiExpression[] args = parent.getArgumentList().getExpressions();
       final PsiSubstitutor psiSubstitutor =
         JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().inferTypeArguments(psiMethod.getTypeParameters(), parameters,
-                                                                                             args, PsiSubstitutor.EMPTY, parent, false);
+                                                                                             args, PsiSubstitutor.EMPTY, parent,
+                                                                                             DefaultParameterTypeInferencePolicy.INSTANCE);
 
       if (startOffset < args[parameters.length - 1].getTextOffset()) return null;
 

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -102,11 +103,12 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
             for (int i = 0; i < typeParameters.length; i++) {
               PsiTypeParameter typeParameter = typeParameters[i];
-              final PsiType inferedType = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, parameters,
+              final PsiType inferredType = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, parameters,
                                                                                         argumentList.getExpressions(),
-                                                                                        resolveResult.getSubstitutor(), expression, false);
-              if (!typeArguments[i].equals(inferedType)) return;
-              if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferedType) != null) return;
+                                                                                        resolveResult.getSubstitutor(), expression,
+                                                                                        DefaultParameterTypeInferencePolicy.INSTANCE);
+              if (!typeArguments[i].equals(inferredType)) return;
+              if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) return;
             }
 
             final PsiCallExpression copy = (PsiCallExpression)expression.copy(); //see IDEADEV-8174

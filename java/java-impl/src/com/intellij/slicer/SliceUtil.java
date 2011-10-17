@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -309,7 +310,8 @@ public class SliceUtil {
             PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(new PsiTypeParameter[0]);
 
             PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-            substitutor = resolveHelper.inferTypeArguments(typeParameters, actualParameters, expressions, parentSubstitutor, argumentList, false);
+            substitutor = resolveHelper.inferTypeArguments(typeParameters, actualParameters, expressions, parentSubstitutor, argumentList,
+                                                           DefaultParameterTypeInferencePolicy.INSTANCE);
           }
 
           substitutor = removeRawMappingsLeftFromResolve(substitutor);

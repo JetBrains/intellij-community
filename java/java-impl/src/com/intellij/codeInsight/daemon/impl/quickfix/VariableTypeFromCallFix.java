@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
@@ -104,7 +105,8 @@ public class VariableTypeFromCallFix implements IntentionAction {
         if (varClass != null) {
           final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
                                                                        parameters,
-                                                                       expressions, PsiSubstitutor.EMPTY, resolved, false);
+                                                                       expressions, PsiSubstitutor.EMPTY, resolved,
+                                                                       DefaultParameterTypeInferencePolicy.INSTANCE);
           final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
           if (!varType.equals(appropriateVarType)) {
             QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));

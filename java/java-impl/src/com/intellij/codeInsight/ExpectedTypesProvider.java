@@ -22,6 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.jsp.jspJava.JspMethodCall;
+import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -915,13 +918,15 @@ public class ExpectedTypesProvider {
         leftArgs = null;
       }
 
+      ParameterTypeInferencePolicy policy = forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE;
+      
       Set<ExpectedTypeInfo> array = new LinkedHashSet<ExpectedTypeInfo>();
       for (CandidateInfo candidateInfo : methodCandidates) {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
-          substitutor = info.inferTypeArguments(forCompletion);
+          substitutor = info.inferTypeArguments(policy);
           if (!info.isStaticsScopeCorrect() && method != null && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {
@@ -930,7 +935,7 @@ public class ExpectedTypesProvider {
         inferMethodCallArgumentTypes(argument, forCompletion, args, index, method, substitutor, array);
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
-          substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(forCompletion, leftArgs);
+          substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(policy, leftArgs);
           inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
         }
       }
