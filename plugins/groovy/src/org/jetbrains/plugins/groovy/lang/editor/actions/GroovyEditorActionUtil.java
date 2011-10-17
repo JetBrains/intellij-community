@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
@@ -37,11 +38,7 @@ public class GroovyEditorActionUtil {
 
   public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
     int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < indentSize; i++) {
-      buffer.append(" ");
-    }
-    EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
+    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
   }
 
   public static boolean isPlainStringLiteral(ASTNode node) {

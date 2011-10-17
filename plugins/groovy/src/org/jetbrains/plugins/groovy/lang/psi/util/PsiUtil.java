@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -688,7 +688,8 @@ public class PsiUtil {
     if (element == null) return false;
     ASTNode node = element.getNode();
     if (node == null) return false;
-    return node.getElementType() == GroovyTokenTypes.mNLS;
+    IElementType elementType = node.getElementType();
+    return elementType == GroovyTokenTypes.mNLS || elementType == TokenType.WHITE_SPACE && element.getText().contains("\n");
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package org.jetbrains.plugins.groovy.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -59,8 +62,8 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
 
   /**
    * Standard {@link PsiBasedFormattingModel} extension that handles the fact that groovy uses not single white space token type
-   * ({@link TokenType#WHITE_SPACE}) but two additional token types as well: {@link GroovyTokenTypes#mWS} and
-   * {@link GroovyTokenTypes#mNLS}. So, it allows to adjust white space token type to use for calling existing common formatting stuff.
+   * ({@link TokenType#WHITE_SPACE}) but one additional token type as well: {@link GroovyTokenTypes#mNLS}. So, it allows to adjust
+   * white space token type to use for calling existing common formatting stuff.
    */
   private static class GroovyFormattingModel extends PsiBasedFormattingModel {
 
