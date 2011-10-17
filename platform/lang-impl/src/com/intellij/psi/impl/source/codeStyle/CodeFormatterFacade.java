@@ -251,7 +251,7 @@ public class CodeFormatterFacade {
   private void wrapLongLinesIfNecessary(@NotNull final PsiFile file, @Nullable final Document document, final int startOffset,
                                         final int endOffset)
   {
-    if (!mySettings.WRAP_LONG_LINES ||
+    if (!mySettings.getCommonSettings(file.getLanguage()).WRAP_LONG_LINES ||
         PostprocessReformattingAspect.getInstance(file.getProject()).isViewProviderLocked(file.getViewProvider()) ||
         document == null) {
       return;

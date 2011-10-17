@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
@@ -25,7 +26,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testRightMargin() throws Exception {
-    getSettings().getRootSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 35;//      |
     doTextTest(
       "/** Here is one-line java-doc comment */" +

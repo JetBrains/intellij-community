@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
   
   public void testCaretPositionOnLongLineWrapping() throws IOException {
     // Inspired by IDEA-70242
-    getCurrentCodeStyleSettings().WRAP_LONG_LINES = true;
+    getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
     getCurrentCodeStyleSettings().RIGHT_MARGIN = 40;
     doTest(
       "import static java.util.concurrent.atomic.AtomicInteger.*;\n" +

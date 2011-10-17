@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
@@ -154,7 +155,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testWrapLongLine() {
     // Inspired by IDEA-55782
     getSettings().getRootSettings().RIGHT_MARGIN = 50;
-    getSettings().getRootSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
 
     doTextTest(
       "class TestClass {\n" +
@@ -183,7 +184,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testWrapLongLineWithTabs() {
     // Inspired by IDEA-55782
     getSettings().getRootSettings().RIGHT_MARGIN = 20;
-    getSettings().getRootSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
     getIndentOptions().USE_TAB_CHARACTER = true;
     getIndentOptions().TAB_SIZE = 4;
 
@@ -201,7 +202,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testWrapLongLineWithSelection() {
     // Inspired by IDEA-55782
     getSettings().getRootSettings().RIGHT_MARGIN = 20;
-    getSettings().getRootSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
 
     String initial =
       "class TestClass {\n" +
