@@ -230,7 +230,8 @@ public class GenerateMembersUtil {
         newMethod.getNameIdentifier().replace(factory.createIdentifier(method.getName()));
       }
       else {
-        newMethod = factory.createMethod(method.getName(), substituteType(substitutor, returnType));
+        final PsiType substitutedReturnType = substituteType(substitutor, returnType);
+        newMethod = factory.createMethod(method.getName(), substitutedReturnType instanceof PsiWildcardType ? TypeConversionUtil.erasure(substitutedReturnType): substitutedReturnType);
       }
 
       VisibilityUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
