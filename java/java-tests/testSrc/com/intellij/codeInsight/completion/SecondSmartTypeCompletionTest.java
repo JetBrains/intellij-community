@@ -75,6 +75,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testNoObjectMethodsAsFirstPart() throws Throwable { doTest(); }
   public void testGetClassLoader() throws Throwable { doTest(); }
+  public void testNewStaticProblem() throws Throwable { doTest(); }
 
   public void testChainingPerformance() throws Throwable {
     long time = System.currentTimeMillis();
