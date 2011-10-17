@@ -41,7 +41,7 @@ public abstract class RenameWithOptionalReferencesDialog extends RenameDialog {
 
   @Override
   protected void createCheckboxes(JPanel panel, GridBagConstraints gbConstraints) {
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(0, 0, 4, 0);
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.weighty = 0;
