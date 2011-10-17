@@ -95,7 +95,6 @@ public class Splitter extends JPanel {
     myDivider = createDivider();
     setProportion(proportion);
     myDividerWidth = 7;
-    setOpaque(true);
     super.add(myDivider);
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(this);
@@ -104,17 +103,6 @@ public class Splitter extends JPanel {
   public void setShowDividerControls(boolean showDividerControls) {
     myShowDividerControls = showDividerControls;
     setOrientation(myVerticalSplit);
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension first = myFirstComponent.getPreferredSize();
-    Dimension second = mySecondComponent.getPreferredSize();
-    if (myVerticalSplit) {
-      return new Dimension(Math.max(first.width, second.width), first.height + second.height + myDividerWidth);
-    }
-
-    return new Dimension(first.width + second.width + myDividerWidth, Math.max(first.height, second.height));
   }
 
   public boolean isHonorMinimumSize() {
@@ -180,6 +168,28 @@ public class Splitter extends JPanel {
     }
 
     return super.getMinimumSize();
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final int dividerWidth = getDividerWidth();
+    if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
+      final Dimension firstPrefSize = myFirstComponent.getPreferredSize();
+      final Dimension secondPrefSize = mySecondComponent.getPreferredSize();
+      return getOrientation()
+             ? new Dimension(Math.max(firstPrefSize.width, secondPrefSize.width), firstPrefSize.height + dividerWidth + secondPrefSize.height)
+             : new Dimension(firstPrefSize.width + dividerWidth + secondPrefSize.width, Math.max(firstPrefSize.height, secondPrefSize.height));
+    }
+
+    if (myFirstComponent != null && myFirstComponent.isVisible()) { // only first component is visible
+      return myFirstComponent.getPreferredSize();
+    }
+
+    if (mySecondComponent != null && mySecondComponent.isVisible()) { // only second component is visible
+      return mySecondComponent.getPreferredSize();
+    }
+
+    return super.getPreferredSize();
   }
 
   public void doLayout() {
