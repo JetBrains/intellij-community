@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -292,6 +293,7 @@ public class EditorModificationUtil {
       boolean atLineStart = caretOffset >= doc.getTextLength() || doc.getLineStartOffset(doc.getLineNumber(caretOffset)) == caretOffset;
       if (atLineStart && project != null) {
         int offset = editor.getCaretModel().getOffset();
+        PsiDocumentManager.getInstance(project).commitDocument(doc); // Sync document and PSI before formatting.
         String properIndent = offset >= doc.getTextLength() ? "" : CodeStyleFacade.getInstance(project).getLineIndent(doc, offset);
         if (properIndent != null) {
           int tabSize = editor.getSettings().getTabSize(project);
