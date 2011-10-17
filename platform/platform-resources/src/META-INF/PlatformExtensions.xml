@@ -254,4 +254,5 @@
   <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
   <patch.extension implementation="com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP"/>
 
+  <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 </extensions>

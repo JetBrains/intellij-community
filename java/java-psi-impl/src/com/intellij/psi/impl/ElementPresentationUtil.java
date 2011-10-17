@@ -211,7 +211,7 @@ public class ElementPresentationUtil implements PlatformIcons {
     int flags = getFlags(aClass, false);
     String adj = "";
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
-      if (provider.getLayerIcon(aClass) != null) {
+      if (provider.getLayerIcon(aClass, false) != null) {
         adj += " " + provider.getLayerDescription();
       }
     }

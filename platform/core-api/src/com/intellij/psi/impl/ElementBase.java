@@ -241,7 +241,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static RowIcon createLayeredIcon(Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<Icon>();
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
-      final Icon layerIcon = provider.getLayerIcon(instance);
+      final Icon layerIcon = provider.getLayerIcon(instance, (flags & FLAGS_LOCKED) != 0);
       if (layerIcon != null) {
         layersFromProviders.add(layerIcon);
       }
@@ -291,9 +291,5 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (iconLayer.flagMask == flagMask) return;
     }
     ourIconLayers.add(new IconLayer(flagMask, icon));
-  }
-
-  static {
-    registerIconLayer(FLAGS_LOCKED, PlatformIcons.LOCKED_ICON);
   }
 }

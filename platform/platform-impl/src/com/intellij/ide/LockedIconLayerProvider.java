@@ -15,22 +15,23 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author yole
  */
-public interface IconLayerProvider {
-  ExtensionPointName<IconLayerProvider> EP_NAME = ExtensionPointName.create("com.intellij.iconLayerProvider");
+public class LockedIconLayerProvider implements IconLayerProvider {
+  @Override
+  public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
+    return isLocked ? PlatformIcons.LOCKED_ICON : null;
+  }
 
-  @Nullable
-  Icon getLayerIcon(@NotNull Iconable element, boolean isLocked);
-
-  @Nullable
-  String getLayerDescription();
+  @Override
+  public String getLayerDescription() {
+    return "Read-only";
+  }
 }
