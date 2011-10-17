@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,8 +38,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -225,6 +224,12 @@ public final class UpdateChecker {
   }
 
   public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
+    return checkPluginsHost(host, downloaded, true);
+  }
+
+  public static boolean checkPluginsHost(final String host,
+                                         final List<PluginDownloader> downloaded,
+                                         final boolean collectToUpdate) throws Exception {
     final Document document = loadVersionInfo(host);
     if (document == null) return false;
 
@@ -234,6 +239,19 @@ public final class UpdateChecker {
       final String pluginId = pluginElement.getAttributeValue("id");
       final String pluginUrl = pluginElement.getAttributeValue("url");
       final String pluginVersion = pluginElement.getAttributeValue("version");
+      final Element descriptionElement = pluginElement.getChild("description");
+      final String description;
+      if (descriptionElement != null) {
+        description = descriptionElement.getText();
+      } else {
+        description = null;
+      }
+      
+      final List<PluginId> dependsPlugins = new ArrayList<PluginId>();
+      final List depends = pluginElement.getChildren("depends");
+      for (Object depend : depends) {
+        dependsPlugins.add(PluginId.getId(((Element)depend).getText()));
+      }
 
       if (pluginId == null) {
         LOG.info("plugin id should not be null");
@@ -247,79 +265,42 @@ public final class UpdateChecker {
         continue;
       }
 
-      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-      VirtualFile pluginFile = fileManager.findFileByUrl(pluginUrl);
-      if (pluginFile == null) {
-        final VirtualFile hostFile = fileManager.findFileByUrl(host);
-        if (hostFile == null) {
-          LOG.error("can't find file by url '" + host + "'");
-          success = false;
-          break;
-        }
-        pluginFile = findPluginByRelativePath(hostFile.getParent(), pluginUrl, hostFile.getFileSystem());
-        if (pluginFile == null) {
-          LOG.error("can't find '" + pluginUrl + "' relative to '" + host + "'");
-          success = false;
-          continue;
-        }
-      }
+      final VirtualFile pluginFile = PluginDownloader.findPluginFile(pluginUrl, host);
+      if (pluginFile == null) continue;
 
-      final String finalPluginUrl = pluginFile.getUrl();
-      final Runnable updatePluginRunnable = new Runnable() {
-        public void run() {
-          try {
-            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            if (progressIndicator != null) {
-              progressIndicator.setText(finalPluginUrl);
+      if (collectToUpdate) {
+        final String finalPluginUrl = pluginFile.getUrl();
+        final Runnable updatePluginRunnable = new Runnable() {
+          public void run() {
+            try {
+              final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+              if (progressIndicator != null) {
+                progressIndicator.setText(finalPluginUrl);
+              }
+              final PluginDownloader uploader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
+              if (uploader.prepareToInstall()) {
+                downloaded.add(uploader);
+              }
             }
-            final PluginDownloader uploader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
-            if (uploader.prepareToInstall()) {
-              downloaded.add(uploader);
+            catch (IOException e) {
+              LOG.info(e);
             }
           }
-          catch (IOException e) {
-            LOG.info(e);
-          }
+        };
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(updatePluginRunnable, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
         }
-      };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(updatePluginRunnable, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
-      }
-      else {
-        updatePluginRunnable.run();
+        else {
+          updatePluginRunnable.run();
+        }
+      } else {
+        final PluginDownloader downloader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
+        downloader.setDescription(description);
+        downloader.setDepends(dependsPlugins);
+        downloaded.add(downloader);
       }
     }
     return success;
-  }
-
-  @Nullable
-  public static VirtualFile findPluginByRelativePath(@NotNull final VirtualFile hostFile,
-                                                     @NotNull @NonNls final String relPath,
-                                                     @NotNull final VirtualFileSystem fileSystem) {
-    if (relPath.length() == 0) return hostFile;
-    int index = relPath.indexOf('/');
-    if (index < 0) index = relPath.length();
-    String name = relPath.substring(0, index);
-
-    VirtualFile child;
-    if (name.equals(".")) {
-      child = hostFile;
-    }
-    else if (name.equals("..")) {
-      child = hostFile.getParent();
-    }
-    else {
-      child = fileSystem.findFileByPath(hostFile.getPath() + "/" + name);
-    }
-
-    if (child == null) return null;
-
-    if (index < relPath.length()) {
-      return findPluginByRelativePath(child, relPath.substring(index + 1), fileSystem);
-    }
-    else {
-      return child;
-    }
   }
 
   @NotNull

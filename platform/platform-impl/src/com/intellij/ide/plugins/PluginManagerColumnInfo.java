@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -102,6 +103,10 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return true;
   }
 
+  protected boolean isSortByRepository() {
+    return true;
+  }
+
   public Comparator<IdeaPluginDescriptor> getComparator() {
     if (isSortByName()) {
       return new Comparator<IdeaPluginDescriptor>() {
@@ -170,6 +175,21 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
             }
             if (status2 == PluginNode.STATUS_INSTALLED) {
               return 1;
+            }
+          }
+          return StringUtil.compare(o1.getName(), o2.getName(), true);
+        }
+      };
+    }
+    if (isSortByRepository()) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        @Override
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
+            final String repositoryName1 = ((PluginNode)o1).getRepositoryName();
+            final String repositoryName2 = ((PluginNode)o2).getRepositoryName();
+            if (!Comparing.strEqual(repositoryName1, repositoryName2)) {
+              return StringUtil.compare(repositoryName1, repositoryName2, true);
             }
           }
           return StringUtil.compare(o1.getName(), o2.getName(), true);

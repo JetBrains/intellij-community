@@ -65,6 +65,11 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     return mySortMode.equals(AvailablePluginsTableModel.STATUS);
   }
 
+  @Override
+  protected boolean isSortByRepository() {
+    return mySortMode.equals(AvailablePluginsTableModel.REPOSITORY);
+  }
+
   public void setSortMode(String sortMode) {
     mySortMode = sortMode;
   }
@@ -73,6 +78,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     private static final int LEFT_MARGIN = new JLabel().getFontMetrics(UIUtil.getLabelFont()).stringWidth("  ");
     private final JLabel myNameLabel = new JLabel();
     private final JLabel myStatusLabel = new JLabel();
+    private final JLabel myRepositoryLabel = new JLabel();
     private final JLabel myCategoryLabel = new JLabel();
     private final JLabel myDateLabel = new JLabel();
     private final JLabel myDownloadsLabel = new JLabel();
@@ -88,6 +94,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       final Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
       myStatusLabel.setFont(smallFont);
       myCategoryLabel.setFont(smallFont);
+      myRepositoryLabel.setFont(smallFont);
       myDateLabel.setFont(smallFont);
       myDownloadsLabel.setFont(smallFont);
 
@@ -110,6 +117,9 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       gc.fill = GridBagConstraints.NONE;
       gc.gridwidth = 1;
       gc.gridy = 1;
+      if (((PluginNode)myPluginDescriptor).getRepositoryName() != null) {
+        myPanel.add(myRepositoryLabel, gc);
+      }
       myPanel.add(myCategoryLabel, gc);
       myPanel.add(myDateLabel, gc);
       myPanel.add(myDownloadsLabel, gc);
@@ -123,16 +133,23 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (myPluginDescriptor != null) {
+        final PluginNode pluginNode = (PluginNode)myPluginDescriptor;
         myNameLabel.setText(myPluginDescriptor.getName());
-        myCategoryLabel.setText("Category: " + myPluginDescriptor.getCategory());
-        long date = ((PluginNode)myPluginDescriptor).getDate();
-        myDateLabel.setText("Updated: " + (date != 0 ? DateFormatUtil.formatDate(date) : "n/a"));
-        myDownloadsLabel.setText("Downloads: " + myPluginDescriptor.getDownloads());
+        final String repositoryName = pluginNode.getRepositoryName();
+        if (repositoryName != null) {
+          myRepositoryLabel.setText("Repository: " + repositoryName);
+        } else {
+          myCategoryLabel.setText("Category: " + myPluginDescriptor.getCategory());
+          long date = ((PluginNode)myPluginDescriptor).getDate();
+          myDateLabel.setText("Updated: " + (date != 0 ? DateFormatUtil.formatDate(date) : "n/a"));
+          myDownloadsLabel.setText("Downloads: " + myPluginDescriptor.getDownloads());
+        }
 
         final Color fg = orig.getForeground();
         final Color bg = orig.getBackground();
         final Color grayedFg = isSelected ? fg : Color.GRAY;
         myNameLabel.setForeground(fg);
+        myRepositoryLabel.setForeground(grayedFg);
         myCategoryLabel.setForeground(grayedFg);
         myStatusLabel.setForeground(grayedFg);
         myDateLabel.setForeground(grayedFg);
@@ -143,7 +160,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         myDateLabel.setBackground(bg);
         myDownloadsLabel.setBackground(bg);
 
-        final PluginNode pluginNode = (PluginNode)myPluginDescriptor;
+        
         if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
           myStatusLabel.setText("[Downloaded]");

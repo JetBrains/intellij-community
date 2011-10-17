@@ -23,6 +23,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColumnInfo;
 
@@ -46,7 +47,10 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   protected static final String DOWNLOADS = "Downloads";
   protected static final String RELEASE_DATE = "Updated";
   protected static final String STATUS = "Status";
+  protected static final String REPOSITORY = "Repository";
   public static final String [] SORT_MODES = new String[] {NAME, DOWNLOADS, RELEASE_DATE, STATUS};
+  public static final String JETBRAINS_REPO = "JetBrains";
+  private String myRepository = ALL;
 
   public AvailablePluginsTableModel() {
     super.columns = new ColumnInfo[] {new AvailablePluginColumnInfo(mySortMode)};
@@ -73,6 +77,9 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   @Override
   public void setSortMode(String sortMode) {
+    if (REPOSITORY.equals(sortMode) && UpdateSettings.getInstance().myPluginHosts.isEmpty()) {
+      sortMode = NAME;
+    }
     ((AvailablePluginColumnInfo)columns[getNameColumn()]).setSortMode(sortMode);
     super.setSortMode(sortMode);
   }
@@ -86,15 +93,33 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     filter(filter);
   }
 
+  public void setRepository(String repository, String filter) {
+    myRepository = repository;
+    filter(filter);
+  }
+
   @Override
   public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
-    if (myCategory.equals(ALL)) return true;
     final String category = descriptor.getCategory();
-    return category == null || category.equals(myCategory);
+    if (category != null){
+      if (!ALL.equals(myCategory) && !category.equals(myCategory)) return false;
+    }
+
+    final String repositoryName = ((PluginNode)descriptor).getRepositoryName();
+    if (repositoryName != null) {
+      if (!ALL.equals(myRepository) && !repositoryName.equals(myRepository)) return false;
+    } else {
+      return ALL.equals(myRepository) || JETBRAINS_REPO.equals(myRepository);
+    }
+    return true;
   }
 
   public LinkedHashSet<String> getAvailableCategories() {
     return myAvailableCategories;
+  }
+
+  public String getRepository() {
+    return myRepository;
   }
 
   private static void updateStatus(final IdeaPluginDescriptor descr) {

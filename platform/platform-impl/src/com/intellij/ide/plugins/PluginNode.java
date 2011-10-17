@@ -61,6 +61,9 @@ public class PluginNode implements IdeaPluginDescriptor {
   private int status = STATUS_UNKNOWN;
   private boolean loaded = false;
 
+  private String myDownloadUrl;
+  private String myRepositoryName;
+
   public PluginNode() {
   }
 
@@ -326,5 +329,21 @@ public class PluginNode implements IdeaPluginDescriptor {
       default:
         return null;
     }
+  }
+
+  public void setDownloadUrl(String host) {
+    myDownloadUrl = host;
+  }
+
+  public String getDownloadUrl() {
+    return myDownloadUrl;
+  }
+
+  public String getRepositoryName() {
+    return myRepositoryName;
+  }
+
+  public void setRepositoryName(String repositoryName) {
+    myRepositoryName = repositoryName;
   }
 }

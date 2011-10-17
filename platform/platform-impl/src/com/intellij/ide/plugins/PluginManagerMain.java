@@ -21,18 +21,26 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -51,8 +59,10 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -192,13 +202,31 @@ public abstract class PluginManagerMain implements Disposable {
   protected void loadPluginsFromHostInBackground() {
     setDownloadStatus(true);
 
-    new com.intellij.util.concurrency.SwingWorker() {
+    new SwingWorker() {
       ArrayList<IdeaPluginDescriptor> list = null;
       Exception error;
 
       public Object construct() {
         try {
           list = RepositoryHelper.process(null);
+          for (String host : UpdateSettings.getInstance().myPluginHosts) {
+            final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
+            UpdateChecker.checkPluginsHost(host, downloaded, false);
+            for (PluginDownloader downloader : downloaded) {
+              final PluginNode node = new PluginNode();
+              final VirtualFile pluginFile = PluginDownloader.findPluginFile(downloader.getFileName(), host);
+              if (pluginFile != null) {
+                node.setId(downloader.getPluginId());
+                node.setName(downloader.getPluginName());
+                node.setVersion(downloader.getPluginVersion());
+                node.setRepositoryName(host);
+                node.setDownloadUrl(pluginFile.getUrl());
+                node.setDepends(downloader.getDepends(), null);
+                node.setDescription(downloader.getDescription());
+                list.add(node);
+              }
+            }
+          }
         }
         catch (Exception e) {
           error = e;

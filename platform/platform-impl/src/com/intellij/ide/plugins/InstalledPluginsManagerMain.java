@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +48,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
     super(uiSettings);
     init();
-    final JButton button = new JButton("Browse JetBrains repository");
+    myActionsPanel.setLayout(new BorderLayout(5, 0));
+    final JButton button = new JButton("Browse repositories");
     button.setMnemonic('b');
     button.addActionListener(new ActionListener() {
       @Override
@@ -60,7 +62,16 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         }.show();
       }
     });
-    myActionsPanel.add(button, BorderLayout.NORTH);
+    myActionsPanel.add(button, BorderLayout.WEST);
+    final JButton manageRepositoriesBtn = new JButton("Manage repositories");
+    manageRepositoriesBtn.setMnemonic('m');
+    manageRepositoriesBtn.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable());
+      }
+    });
+    myActionsPanel.add(manageRepositoriesBtn, BorderLayout.EAST);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -87,6 +88,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
     actionGroup.add(new RefreshAction());
     if (inToolbar) {
+      actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
       actionGroup.add(new SortByNameAction());
     }
@@ -128,6 +130,44 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
   }
 
+  private class MyFilterRepositoryAction extends ComboBoxAction implements DumbAware {
+
+    private static final int LENGTH = 15;
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(!UpdateSettings.getInstance().myPluginHosts.isEmpty());
+      String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
+      if (repository.length() > LENGTH) {
+        repository = repository.substring(0, LENGTH) + "...";
+      }
+      e.getPresentation().setText("Repository: " + repository);
+    }
+
+    @NotNull
+    @Override
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      final DefaultActionGroup gr = new DefaultActionGroup();
+      gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.ALL));
+      gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.JETBRAINS_REPO));
+      for (final String host : UpdateSettings.getInstance().myPluginHosts) {
+        gr.add(createFilterByRepositoryAction(host));
+      }
+      return gr;
+    }
+
+    private AnAction createFilterByRepositoryAction(final String host) {
+      return new AnAction(host) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          final String filter = myFilter.getFilter().toLowerCase();
+          ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
+        }
+      };
+    }
+  }
+
   private class SortByNameAction extends ComboBoxAction implements DumbAware{
 
     @Override
@@ -141,14 +181,21 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       final DefaultActionGroup gr = new DefaultActionGroup();
       for (final String sortMode : AvailablePluginsTableModel.SORT_MODES) {
-        gr.add(new AnAction(sortMode) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            pluginsModel.setSortMode(sortMode);
-          }
-        });
+        gr.add(createSortByAction(sortMode));
+      }
+      if (!UpdateSettings.getInstance().myPluginHosts.isEmpty()) {
+        gr.add(createSortByAction(AvailablePluginsTableModel.REPOSITORY));
       }
       return gr;
+    }
+
+    private AnAction createSortByAction(final String sortMode) {
+      return new AnAction(sortMode) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          pluginsModel.setSortMode(sortMode);
+        }
+      };
     }
   }
 }

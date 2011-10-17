@@ -16,10 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,16 +29,22 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.List;
 
 /**
  * @author anna
@@ -61,6 +64,10 @@ public class PluginDownloader {
 
   private File myFile;
   private File myOldFile;
+
+  //additional settings
+  private String myDescription;
+  private List<PluginId> myDepends;
 
   public PluginDownloader(final String pluginId, final String pluginUrl, final String pluginVersion) {
     myPluginId = pluginId;
@@ -315,11 +322,79 @@ public class PluginDownloader {
     return myPluginVersion;
   }
 
+  public void setDescription(String description) {
+    myDescription = description;
+  }
+
+  public String getDescription() {
+    return myDescription;
+  }
+
+  public void setDepends(List<PluginId> depends) {
+    myDepends = depends;
+  }
+
+  public List<PluginId> getDepends() {
+    return myDepends;
+  }
+
   public static PluginDownloader createDownloader(IdeaPluginDescriptor pluginDescriptor) throws UnsupportedEncodingException {
     final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
-    final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
-                       URLEncoder.encode(pluginDescriptor.getPluginId().getIdString(), "UTF8") +
-                       "&build=" + buildNumber.asString();
+    @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
+                         URLEncoder.encode(pluginDescriptor.getPluginId().getIdString(), "UTF8") +
+                         "&build=" + buildNumber.asString();
+    if (pluginDescriptor instanceof PluginNode && ((PluginNode)pluginDescriptor).getDownloadUrl() != null){
+      url = ((PluginNode)pluginDescriptor).getDownloadUrl();
+    }
     return new PluginDownloader(pluginDescriptor.getPluginId().getIdString(), url, null, null, pluginDescriptor.getName());
+  }
+
+  @Nullable
+  public static VirtualFile findPluginFile(String pluginUrl, String host) {
+    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
+    VirtualFile pluginFile = fileManager.findFileByUrl(pluginUrl);
+    if (pluginFile == null) {
+      final VirtualFile hostFile = fileManager.findFileByUrl(host);
+      if (hostFile == null) {
+        LOG.error("can't find file by url '" + host + "'");
+        return null;
+      }
+      pluginFile = findPluginByRelativePath(hostFile.getParent(), pluginUrl, hostFile.getFileSystem());
+    }
+    if (pluginFile == null) {
+      LOG.error("can't find '" + pluginUrl + "' relative to '" + host + "'");
+      return null;
+    }
+    return pluginFile;
+  }
+
+  @Nullable
+  private static VirtualFile findPluginByRelativePath(@NotNull final VirtualFile hostFile,
+                                                     @NotNull @NonNls final String relPath,
+                                                     @NotNull final VirtualFileSystem fileSystem) {
+    if (relPath.length() == 0) return hostFile;
+    int index = relPath.indexOf('/');
+    if (index < 0) index = relPath.length();
+    String name = relPath.substring(0, index);
+
+    VirtualFile child;
+    if (name.equals(".")) {
+      child = hostFile;
+    }
+    else if (name.equals("..")) {
+      child = hostFile.getParent();
+    }
+    else {
+      child = fileSystem.findFileByPath(hostFile.getPath() + "/" + name);
+    }
+
+    if (child == null) return null;
+
+    if (index < relPath.length()) {
+      return findPluginByRelativePath(child, relPath.substring(index + 1), fileSystem);
+    }
+    else {
+      return child;
+    }
   }
 }
