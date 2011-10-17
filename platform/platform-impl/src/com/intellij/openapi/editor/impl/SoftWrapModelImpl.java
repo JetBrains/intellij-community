@@ -262,6 +262,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return Collections.emptyList();
     }
     Document document = myEditor.getDocument();
+    if (documentLine >= document.getLineCount()) {
+      return Collections.emptyList();
+    } 
     int start = document.getLineStartOffset(documentLine);
     int end = document.getLineEndOffset(documentLine);
     return getSoftWrapsForRange(start, end + 1/* it's theoretically possible that soft wrap is registered just before the line feed,
