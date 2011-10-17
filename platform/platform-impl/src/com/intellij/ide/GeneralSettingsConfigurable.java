@@ -101,6 +101,10 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
   public JComponent createComponent() {
 //    optionGroup.add(getDiffOptions().getPanel());
+    if (myComponent == null) {
+      myComponent = new MyComponent();
+    }
+
     myComponent.myChkAutoSaveIfInactive.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
