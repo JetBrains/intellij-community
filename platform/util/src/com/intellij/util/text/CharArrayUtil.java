@@ -113,7 +113,7 @@ public class CharArrayUtil {
 
     if (seq instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)seq;
-      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
+      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0 && buffer.position() == 0) {
         return buffer.array();
       }
     }

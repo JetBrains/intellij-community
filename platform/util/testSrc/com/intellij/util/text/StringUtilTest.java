@@ -18,6 +18,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
+import java.nio.CharBuffer;
 import java.util.*;
 
 /**
@@ -92,5 +93,18 @@ public class StringUtilTest extends TestCase {
   
   public void testFormatLinks() {
     assertEquals("<a href=\"http://a-b+c\">http://a-b+c</a>", StringUtil.formatLinks("http://a-b+c"));
+  }
+  
+  public void testCopyHeapCharBuffer() {
+    String s = "abcde";
+    CharBuffer buffer = CharBuffer.allocate(s.length());
+    buffer.append(s);
+    buffer.rewind();
+
+    assertNotNull(CharArrayUtil.fromSequenceWithoutCopying(buffer));
+    assertNotNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(0, 5)));
+    //assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(0, 4))); // end index is not checked
+    assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(1, 5)));
+    assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(1, 2)));
   }
 }
