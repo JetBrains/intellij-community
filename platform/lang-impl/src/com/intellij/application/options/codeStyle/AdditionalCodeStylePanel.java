@@ -38,33 +38,40 @@ public class AdditionalCodeStylePanel {
   private TabbedLanguageCodeStylePanel myParent;
   private PredefinedCodeStyle[] myPredefinedCodeStyles;
   private CodeStyleSettings mySettings;
-  private final PopupMenu myLangMenu;
+  private PopupMenu myLangMenu;
 
   public AdditionalCodeStylePanel(TabbedLanguageCodeStylePanel parent, CodeStyleSettings settings) {
     myParent = parent;
     mySettings = settings;
     myPredefinedCodeStyles = getPredefinedStyles();
-    myLangMenu = new PopupMenu();
-    if (myPredefinedCodeStyles.length > 0) {
-      Menu langs = new Menu("Language"); //TODO<rv>: Move to resource bundle
-      myLangMenu.add(langs);
-      fillLanguages(langs);
-      Menu predefined = new Menu("Predefined Style"); //TODO<rv>: Move to resource bundle
-      myLangMenu.add(predefined);
-      fillPredefined(predefined);
-    }
-    else {
-      fillLanguages(myLangMenu);
-    }
+
     myLanguageButton.setPreferredSize(new Dimension(20, 20));
-    myLanguageButton.add(myLangMenu);
     myLanguageButton.setMnemonic(KeyEvent.VK_C);
     myLanguageButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myLangMenu.show(myLanguageButton, 0, 0);
+        showMenu();
       }
     });
+  }
+
+  private void showMenu() {
+    if (myLangMenu == null) {
+      myLangMenu = new PopupMenu();
+      if (myPredefinedCodeStyles.length > 0) {
+        Menu langs = new Menu("Language"); //TODO<rv>: Move to resource bundle
+        myLangMenu.add(langs);
+        fillLanguages(langs);
+        Menu predefined = new Menu("Predefined Style"); //TODO<rv>: Move to resource bundle
+        myLangMenu.add(predefined);
+        fillPredefined(predefined);
+      }
+      else {
+        fillLanguages(myLangMenu);
+      }
+      myLanguageButton.add(myLangMenu);
+    }
+    myLangMenu.show(myLanguageButton, 0, 0);
   }
 
   public JPanel getContentPane() {
