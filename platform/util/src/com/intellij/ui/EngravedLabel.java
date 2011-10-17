@@ -46,12 +46,12 @@ public class EngravedLabel extends JLabel {
 
     if (icon != null) setIcon(new EmptyIcon(icon.getIconWidth(), icon.getIconHeight()));
     setForeground(new Color(245, 245, 245));
-    g.translate(1, 1);
+    g.translate(0, 1);
     super.paintComponent(g);
 
     setForeground(foreground);
     if (icon != null) setIcon(icon);
-    g.translate(-1, -1);
+    g.translate(0, -1);
     super.paintComponent(g);
   }
 }
