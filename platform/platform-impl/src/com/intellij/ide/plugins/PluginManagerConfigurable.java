@@ -163,6 +163,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public Runnable enableSearch(final String option) {
     return new Runnable(){
       public void run() {
+        if (myPluginManagerMain == null) return;
         myPluginManagerMain.filter(option);
       }
     };
