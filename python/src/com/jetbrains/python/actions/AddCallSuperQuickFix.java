@@ -85,7 +85,9 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunction.append(",").append(p.getText());
     }
 
-    parameters = superInit.getParameterList().getParameters();
+    PyParameterList paramList = superInit.getParameterList();
+    if (paramList == null) return;
+    parameters = paramList.getParameters();
     boolean addDouble = false;
     boolean addStar = false;
     for (int i = 1; i != parameters.length; i++) {
