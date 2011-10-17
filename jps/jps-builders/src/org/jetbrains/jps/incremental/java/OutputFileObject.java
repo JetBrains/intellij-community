@@ -13,7 +13,7 @@ import java.util.Arrays;
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-public class OutputFileObject extends SimpleJavaFileObject {
+class OutputFileObject extends SimpleJavaFileObject {
 
   private final JavacFileManager.Context myContext;
   private final File myFile;

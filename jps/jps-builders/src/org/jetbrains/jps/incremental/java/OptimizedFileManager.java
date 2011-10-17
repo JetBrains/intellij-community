@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author nik
  * @noinspection UnusedDeclaration
  */
-public class OptimizedFileManager extends DefaultFileManager {
+class OptimizedFileManager extends DefaultFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
   private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();

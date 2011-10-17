@@ -7,7 +7,7 @@ import java.util.Locale;
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-public class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
+class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
 
   private final Kind myKind;
   private final String myMessage;

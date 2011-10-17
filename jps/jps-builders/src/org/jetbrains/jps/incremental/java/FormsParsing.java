@@ -14,7 +14,7 @@ import java.util.Properties;
  * @author Eugene Zhuravlev
  *         Date: 10/12/11
  */
-public class FormsParsing {
+class FormsParsing {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.FormsParsing");
   private static final String FORM_TAG = "form";
 
