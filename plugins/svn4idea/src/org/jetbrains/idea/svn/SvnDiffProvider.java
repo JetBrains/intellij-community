@@ -66,7 +66,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
   private VcsRevisionDescription getCurrentRevisionDescription(File path) {
     final SVNWCClient client = myVcs.createWCClient();
     try {
-      final SVNInfo svnInfo = client.doInfo(path, SVNRevision.COMMITTED);
+      final SVNInfo svnInfo = client.doInfo(path, SVNRevision.BASE);
       
       if (svnInfo.getCommittedRevision().equals(SVNRevision.UNDEFINED) && ! svnInfo.getCopyFromRevision().equals(SVNRevision.UNDEFINED) &&
         svnInfo.getCopyFromURL() != null) {
@@ -88,7 +88,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
 
   private String getProperties(SVNWCClient client, File path) throws SVNException {
     final String[] message = new String[1];
-    client.doGetRevisionProperty(path, null, SVNRevision.COMMITTED, new ISVNPropertyHandler() {
+    client.doGetRevisionProperty(path, null, SVNRevision.BASE, new ISVNPropertyHandler() {
       @Override
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         handle(property);
