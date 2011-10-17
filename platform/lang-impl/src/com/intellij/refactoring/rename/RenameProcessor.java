@@ -86,7 +86,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super(project);
     myPrimaryElement = element;
 
-    LOG.assertTrue(!(element instanceof PsiCompiledElement));
+    assertNonCompileElement(element);
 
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
@@ -168,6 +168,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         }
       }
       if (!renames.isEmpty()) {
+        for (PsiElement element : renames.keySet()) {
+          assertNonCompileElement(element);
+        }
         myAllRenames.putAll(renames);
         final Runnable runnable = new Runnable() {
           public void run() {
@@ -197,6 +200,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  private static void assertNonCompileElement(PsiElement element) {
+    LOG.assertTrue(!(element instanceof PsiCompiledElement));
+  }
+
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
     for (final AutomaticRenamer automaticVariableRenamer : myRenamers) {
       if (!automaticVariableRenamer.hasAnythingToRename()) continue;
@@ -222,6 +229,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void addElement(@NotNull PsiElement element, @NotNull String newName) {
+    assertNonCompileElement(element);
     myAllRenames.put(element, newName);
   }
 
