@@ -37,20 +37,31 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   @NonNls static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin", "/usr/local/git/bin"};
   @NonNls static final String DEFAULT_WINDOWS_GIT = "git.exe";
   @NonNls static final String DEFAULT_UNIX_GIT = "git";
-  /**
-   * The last used path to git
-   */
-  private String myPathToGit;
+  
+  private State myState = new State();
+
+  public static class State {
+    public String myPathToGit = null;
+  }
 
   public static GitVcsApplicationSettings getInstance() {
     return ServiceManager.getService(GitVcsApplicationSettings.class);
+  }
+
+  @Override
+  public State getState() {
+    return myState;
+  }
+
+  public void loadState(State state) {
+    myState = state;
   }
 
   /**
    * @return the default executable name depending on the platform
    */
   public String defaultGit() {
-    if (myPathToGit == null) {
+    if (myState.myPathToGit == null) {
       String[] paths;
       String program;
       if (SystemInfo.isWindows) {
@@ -64,38 +75,24 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
       for (String p : paths) {
         File f = new File(p, program);
         if (f.exists()) {
-          myPathToGit = f.getAbsolutePath();
+          myState.myPathToGit = f.getAbsolutePath();
           break;
         }
       }
-      if (myPathToGit == null) {
-        // otherwise, hope it's in $PATH
-        myPathToGit = program;
+      if (myState.myPathToGit == null) { // otherwise, hope it's in $PATH
+        myState.myPathToGit = program;
       }
     }
-    return myPathToGit;
-  }
-
-  public State getState() {
-    State s = new State();
-    s.PATH_TO_GIT = myPathToGit;
-    return s;
-  }
-
-  public void loadState(State state) {
-    myPathToGit = state.PATH_TO_GIT == null ? defaultGit() : state.PATH_TO_GIT;
+    return myState.myPathToGit;
   }
 
   @Nullable
   public String getPathToGit() {
-    return myPathToGit == null ? defaultGit() : myPathToGit;
+    return myState.myPathToGit == null ? defaultGit() : myState.myPathToGit;
   }
 
   public void setPathToGit(String pathToGit) {
-    myPathToGit = pathToGit;
+    myState.myPathToGit = pathToGit;
   }
 
-  public static class State {
-    public String PATH_TO_GIT;
-  }
 }
