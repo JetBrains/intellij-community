@@ -92,6 +92,7 @@ public class FragmentedDiffPanelState extends DiffPanelState {
 
   public LineBlocks updateEditors() throws FilesTooBigForDiffException {
     resetMarkup();
+    mySeparatorsPositionConsumer.clear();
     if (myAppender1.getEditor() == null || myAppender2.getEditor() == null) {
       return LineBlocks.EMPTY;
     }

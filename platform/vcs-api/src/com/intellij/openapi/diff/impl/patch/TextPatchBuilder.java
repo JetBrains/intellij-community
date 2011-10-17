@@ -179,11 +179,30 @@ public class TextPatchBuilder {
             }
           }
         }
+
+        checkPathEndLine(patch, c.getAfter());
       } else if (! beforeRevision.getPath().equals(afterRevision.getPath())) {
-        result.add(buildMovedFile(myBasePath, beforeRevision, afterRevision, beforeLines));
+        final TextFilePatch movedPatch = buildMovedFile(myBasePath, beforeRevision, afterRevision, beforeLines);
+        checkPathEndLine(movedPatch, c.getAfter());
+        result.add(movedPatch);
       }
     }
     return result;
+  }
+
+  private void checkPathEndLine(TextFilePatch filePatch, final AirContentRevision cr) throws VcsException {
+    if (cr == null) return;
+    if (filePatch.isDeletedFile() || filePatch.getAfterName() == null) return;
+    final List<PatchHunk> hunks = filePatch.getHunks();
+    if (hunks.isEmpty()) return;
+    final PatchHunk hunk = hunks.get(hunks.size() - 1);
+    final List<PatchLine> lines = hunk.getLines();
+    if (lines.isEmpty()) return;
+    final String contentAsString = cr.getContentAsString();
+    if (contentAsString == null) return;
+    if (! contentAsString.endsWith("\n")) {
+      lines.get(lines.size() - 1).setSuppressNewLine(true);
+    }
   }
 
   private static String[] tokenize(String text) {
