@@ -897,27 +897,48 @@ class FormatProcessor {
     }
 
     ChildAttributesInfo info = getChildAttributesInfo(block, index, parent);
+    if (info == null) {
+      return new IndentInfo(0, 0, 0);
+    } 
 
     return adjustLineIndent(info.parent, info.attributes, info.index);
   }
-
-  private static ChildAttributesInfo getChildAttributesInfo(final Block block, final int index, AbstractBlockWrapper parent) {
+  
+  @Nullable
+  private static ChildAttributesInfo getChildAttributesInfo(@NotNull final Block block,
+                                                            final int index,
+                                                            @Nullable AbstractBlockWrapper parent) {
+    if (parent == null) {
+      return null;
+    }
     ChildAttributes childAttributes = block.getChildAttributes(index);
 
     if (childAttributes == ChildAttributes.DELEGATE_TO_PREV_CHILD) {
       final Block newBlock = block.getSubBlocks().get(index - 1);
-      return getChildAttributesInfo(newBlock, newBlock.getSubBlocks().size(), ((CompositeBlockWrapper)parent).getChildren().get(index - 1));
-
+      AbstractBlockWrapper prevWrappedBlock;
+      if (parent instanceof CompositeBlockWrapper) {
+        prevWrappedBlock = ((CompositeBlockWrapper)parent).getChildren().get(index - 1);
+      }
+      else {
+        prevWrappedBlock = parent.getPreviousBlock();
+      }
+      return getChildAttributesInfo(newBlock, newBlock.getSubBlocks().size(), prevWrappedBlock);
     }
 
     else if (childAttributes == ChildAttributes.DELEGATE_TO_NEXT_CHILD) {
-      return getChildAttributesInfo(block.getSubBlocks().get(index), 0, ((CompositeBlockWrapper)parent).getChildren().get(index));
+      AbstractBlockWrapper nextWrappedBlock;
+      if (parent instanceof CompositeBlockWrapper) {
+        nextWrappedBlock = ((CompositeBlockWrapper)parent).getChildren().get(index);
+      }
+      else {
+        nextWrappedBlock = ((LeafBlockWrapper)parent).getNextBlock();
+      }
+      return getChildAttributesInfo(block.getSubBlocks().get(index), 0, nextWrappedBlock);
     }
 
     else {
       return new ChildAttributesInfo(parent, childAttributes, index);
     }
-
   }
 
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
