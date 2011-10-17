@@ -41,6 +41,9 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
   
   private MyComponent myComponent;
 
+  public GeneralSettingsConfigurable() {
+    myComponent = new MyComponent();
+  }
 
   public void apply() throws ConfigurationException {
     super.apply();
@@ -98,8 +101,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
   public JComponent createComponent() {
 //    optionGroup.add(getDiffOptions().getPanel());
-    myComponent = new MyComponent();
-
     myComponent.myChkAutoSaveIfInactive.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
