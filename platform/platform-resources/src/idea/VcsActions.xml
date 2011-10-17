@@ -100,7 +100,9 @@
       <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
               icon="/actions/cancel.png"/>
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
-              icon="/vcs/addToVcs.png"/>
+              icon="/vcs/addToVcs.png">
+        <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
+      </action>
       <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
               icon="/actions/exclude.png"/>
