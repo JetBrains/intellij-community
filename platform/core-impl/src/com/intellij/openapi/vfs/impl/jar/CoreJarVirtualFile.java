@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -87,7 +89,13 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    throw new UnsupportedOperationException("TODO");
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final String[] children = myHandler.list(this);
+    for (String child : children) {
+      final VirtualFile childFile = myHandler.findFileByPath(myPathInJar + "/" + child);
+      result.add(childFile);
+    }
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   @NotNull
