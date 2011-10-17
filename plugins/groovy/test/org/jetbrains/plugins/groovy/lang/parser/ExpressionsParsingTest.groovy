@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testgstring$ugly_lexer() throws Throwable { doTest(); }
   public void testmapLiteral() throws Throwable { doTest(); }
   public void testnew$arr_decl() throws Throwable { doTest(); }
-//  public void testnew$new1() throws Throwable { doTest(); }  
+//  public void testnew$new1() throws Throwable { doTest(); }
   public void testanonymous$anonymous() throws Throwable { doTest(); }
   public void testnumbers() throws Throwable { doTest(); }
   public void testparenthed$exprInParenth() throws Throwable { doTest(); }
