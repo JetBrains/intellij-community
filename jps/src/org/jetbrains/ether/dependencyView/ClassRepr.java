@@ -289,8 +289,13 @@ public class ClassRepr extends Proto {
     return null;
   }
 
-  public boolean isNested() {
-    // Unsafe?
-    return name.value.indexOf('$') != -1;
+  public MethodRepr findMethod(final MethodRepr m) {
+    for (MethodRepr mm : methods) {
+      if (mm.equals(m)) {
+        return mm;
+      }
+    }
+
+    return null;
   }
 }

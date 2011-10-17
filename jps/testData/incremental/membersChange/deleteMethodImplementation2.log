@@ -1,0 +1,18 @@
+Request to make modules:
+module DeleteMethodImplementation2
+End of request
+digraph X {
+  DeleteMethodImplementation2[label="DeleteMethodImplementation2"];
+}
+digraph X {
+  DeleteMethodImplementation2[label="DeleteMethodImplementation2"];
+}
+Propagated modules:
+module DeleteMethodImplementation2
+End of propagated
+Cleaning output files:
+out/production/DeleteMethodImplementation2/BaseImpl.class
+End of files
+Compiling files:
+src/BaseImpl.java
+End of files

@@ -61,90 +61,7 @@ public class Mappings {
     }
   }
 
-  private void propagateMemberAccessRec(final Collection<StringCache.S> acc,
-                                        final boolean isField,
-                                        final boolean root,
-                                        final StringCache.S name,
-                                        final StringCache.S reflcass) {
-    final ClassRepr repr = reprByName(reflcass);
-
-    if (repr != null) {
-      if (!root) {
-        final Collection members = isField ? repr.fields : repr.methods;
-
-        for (Object o : members) {
-          final ProtoMember m = (ProtoMember)o;
-
-          if (m.name.equals(name)) {
-            return;
-          }
-        }
-
-        acc.add(reflcass);
-      }
-
-      final Collection<StringCache.S> subclasses = classToSubclasses.foxyGet(reflcass);
-
-      if (subclasses != null) {
-        for (StringCache.S subclass : subclasses) {
-          propagateMemberAccessRec(acc, isField, false, name, subclass);
-        }
-      }
-    }
-  }
-
-  private Collection<StringCache.S> propagateMemberAccess(final boolean isField, final StringCache.S name, final StringCache.S className) {
-    final Set<StringCache.S> acc = new HashSet<StringCache.S>();
-
-    propagateMemberAccessRec(acc, isField, true, name, className);
-
-    return acc;
-  }
-
-  private Collection<StringCache.S> propagateFieldAccess(final StringCache.S name, final StringCache.S className) {
-    return propagateMemberAccess(true, name, className);
-  }
-
-  private Collection<StringCache.S> propagateMethodAccess(final StringCache.S name, final StringCache.S className) {
-    return propagateMemberAccess(false, name, className);
-  }
-
-  private Collection<Pair<FieldRepr, ClassRepr>> findOverridenFields(final FieldRepr f, final ClassRepr c) {
-    final Set<Pair<FieldRepr, ClassRepr>> result = new HashSet<Pair<FieldRepr, ClassRepr>>();
-
-    new Object() {
-      public void run(final ClassRepr c) {
-        final StringCache.S[] supers = c.getSupers();
-
-        for (StringCache.S succName : supers) {
-          final ClassRepr r = reprByName(succName);
-
-          if (r != null) {
-            boolean cont = true;
-
-            if (r.fields.contains(f)) {
-              final FieldRepr ff = r.findField(f.name);
-
-              if (ff != null) {
-                if ((ff.access & Opcodes.ACC_PRIVATE) == 0) {
-                  result.add(new Pair<FieldRepr, ClassRepr>(ff, r));
-                  cont = false;
-                }
-              }
-            }
-
-            if (cont) {
-              run(r);
-            }
-          }
-        }
-      }
-    }.run(c);
-
-    return result;
-  }
-
-  private ClassRepr reprByName(final StringCache.S name) {
+  private ClassRepr getReprByName(final StringCache.S name) {
     final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(classToSourceFile.get(name));
 
     if (reprs != null) {
@@ -158,155 +75,291 @@ public class Mappings {
     return null;
   }
 
-  private boolean isInheritorOf(final StringCache.S who, final StringCache.S whom) {
-    if (who.equals(whom)) {
-      return true;
+  private class Util {
+    final Mappings delta;
+
+    private Util(Mappings delta) {
+      this.delta = delta;
     }
 
-    final ClassRepr repr = reprByName(who);
+    void propagateMemberAccessRec(final Collection<StringCache.S> acc,
+                                  final boolean isField,
+                                  final boolean root,
+                                  final StringCache.S name,
+                                  final StringCache.S reflcass) {
+      final ClassRepr repr = reprByName(reflcass);
 
-    if (repr != null) {
-      for (StringCache.S s : repr.getSupers()) {
-        if (isInheritorOf(s, whom)) {
-          return true;
+      if (repr != null) {
+        if (!root) {
+          final Collection members = isField ? repr.fields : repr.methods;
+
+          for (Object o : members) {
+            final ProtoMember m = (ProtoMember)o;
+
+            if (m.name.equals(name)) {
+              return;
+            }
+          }
+
+          acc.add(reflcass);
+        }
+
+        final Collection<StringCache.S> subclasses = classToSubclasses.foxyGet(reflcass);
+
+        if (subclasses != null) {
+          for (StringCache.S subclass : subclasses) {
+            propagateMemberAccessRec(acc, isField, false, name, subclass);
+          }
         }
       }
     }
 
-    return false;
-  }
+    Collection<StringCache.S> propagateMemberAccess(final boolean isField, final StringCache.S name, final StringCache.S className) {
+      final Set<StringCache.S> acc = new HashSet<StringCache.S>();
 
-  private boolean fieldVisible(final StringCache.S className, final FieldRepr field) {
-    final ClassRepr r = reprByName(className);
+      propagateMemberAccessRec(acc, isField, true, name, className);
 
-    if (r != null) {
-      if (r.fields.contains(field)) {
+      return acc;
+    }
+
+    Collection<StringCache.S> propagateFieldAccess(final StringCache.S name, final StringCache.S className) {
+      return propagateMemberAccess(true, name, className);
+    }
+
+    Collection<StringCache.S> propagateMethodAccess(final StringCache.S name, final StringCache.S className) {
+      return propagateMemberAccess(false, name, className);
+    }
+
+    Collection<Pair<MethodRepr, ClassRepr>> findOverridenMethods(final MethodRepr m, final ClassRepr c) {
+      final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
+
+      new Object() {
+        public void run(final ClassRepr c) {
+          final StringCache.S[] supers = c.getSupers();
+
+          for (StringCache.S succName : supers) {
+            final ClassRepr r = reprByName(succName);
+
+            if (r != null) {
+              boolean cont = true;
+
+              if (r.methods.contains(m)) {
+                final MethodRepr mm = r.findMethod(m);
+
+                if (mm != null) {
+                  if ((mm.access & Opcodes.ACC_PRIVATE) == 0) {
+                    result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
+                    cont = false;
+                  }
+                }
+              }
+
+              if (cont) {
+                run(r);
+              }
+            }
+          }
+        }
+      }.run(c);
+
+      return result;
+    }
+
+    Collection<Pair<FieldRepr, ClassRepr>> findOverridenFields(final FieldRepr f, final ClassRepr c) {
+      final Set<Pair<FieldRepr, ClassRepr>> result = new HashSet<Pair<FieldRepr, ClassRepr>>();
+
+      new Object() {
+        public void run(final ClassRepr c) {
+          final StringCache.S[] supers = c.getSupers();
+
+          for (StringCache.S succName : supers) {
+            final ClassRepr r = reprByName(succName);
+
+            if (r != null) {
+              boolean cont = true;
+
+              if (r.fields.contains(f)) {
+                final FieldRepr ff = r.findField(f.name);
+
+                if (ff != null) {
+                  if ((ff.access & Opcodes.ACC_PRIVATE) == 0) {
+                    result.add(new Pair<FieldRepr, ClassRepr>(ff, r));
+                    cont = false;
+                  }
+                }
+              }
+
+              if (cont) {
+                run(r);
+              }
+            }
+          }
+        }
+      }.run(c);
+
+      return result;
+    }
+
+    ClassRepr reprByName(final StringCache.S name) {
+      final ClassRepr r = delta.getReprByName(name);
+
+      if (r != null) {
+        return r;
+      }
+
+      return getReprByName(name);
+    }
+
+    boolean isInheritorOf(final StringCache.S who, final StringCache.S whom) {
+      if (who.equals(whom)) {
         return true;
       }
 
-      return findOverridenFields(field, r).size() > 0;
+      final ClassRepr repr = reprByName(who);
+
+      if (repr != null) {
+        for (StringCache.S s : repr.getSupers()) {
+          if (isInheritorOf(s, whom)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
 
-    return false;
-  }
+    boolean fieldVisible(final StringCache.S className, final FieldRepr field) {
+      final ClassRepr r = reprByName(className);
 
-  private void affectSubclasses(final StringCache.S className,
-                                final Set<StringCache.S> affectedFiles,
-                                final Set<UsageRepr.Usage> affectedUsages,
-                                final Set<StringCache.S> dependants,
-                                final boolean usages) {
-    final StringCache.S fileName = classToSourceFile.get(className);
+      if (r != null) {
+        if (r.fields.contains(field)) {
+          return true;
+        }
 
-    if (usages) {
-      affectedUsages.add(reprByName(className).createUsage());
+        return findOverridenFields(field, r).size() > 0;
+      }
+
+      return false;
     }
 
-    final Collection<StringCache.S> depFiles = fileToFileDependency.foxyGet(fileName);
+    void affectSubclasses(final StringCache.S className,
+                          final Set<StringCache.S> affectedFiles,
+                          final Set<UsageRepr.Usage> affectedUsages,
+                          final Set<StringCache.S> dependants,
+                          final boolean usages) {
+      final StringCache.S fileName = classToSourceFile.get(className);
 
-    if (depFiles != null) {
-      dependants.addAll(depFiles);
-    }
+      if (usages) {
+        affectedUsages.add(reprByName(className).createUsage());
+      }
 
-    affectedFiles.add(fileName);
+      final Collection<StringCache.S> depFiles = fileToFileDependency.foxyGet(fileName);
 
-    final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
+      if (depFiles != null) {
+        dependants.addAll(depFiles);
+      }
 
-    if (directSubclasses != null) {
-      for (StringCache.S subClass : directSubclasses) {
-        affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
+      affectedFiles.add(fileName);
+
+      final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
+
+      if (directSubclasses != null) {
+        for (StringCache.S subClass : directSubclasses) {
+          affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
+        }
       }
     }
-  }
 
-  private void affectFieldUsages(final FieldRepr field,
-                                 final Collection<StringCache.S> subclasses,
-                                 final UsageRepr.Usage rootUsage,
-                                 final Set<UsageRepr.Usage> affectedUsages,
-                                 final Set<StringCache.S> dependents) {
-    affectedUsages.add(rootUsage);
+    void affectFieldUsages(final FieldRepr field,
+                           final Collection<StringCache.S> subclasses,
+                           final UsageRepr.Usage rootUsage,
+                           final Set<UsageRepr.Usage> affectedUsages,
+                           final Set<StringCache.S> dependents) {
+      affectedUsages.add(rootUsage);
 
-    for (StringCache.S p : subclasses) {
-      dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
-      affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(p) : field.createUsage(p));
-    }
-  }
-
-  private void affectMethodUsages(final MethodRepr method,
-                                  final Collection<StringCache.S> subclasses,
-                                  final UsageRepr.Usage rootUsage,
-                                  final Set<UsageRepr.Usage> affectedUsages,
-                                  final Set<StringCache.S> dependents) {
-    affectedUsages.add(rootUsage);
-
-    for (StringCache.S p : subclasses) {
-      dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
-      affectedUsages.add(method.createUsage(p));
-    }
-  }
-
-  private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
-    final Set<StringCache.S> dependants = (Set<StringCache.S>)fileToFileDependency.foxyGet(fileName);
-
-    if (dependants != null) {
-      affectedFiles.addAll(dependants);
-    }
-  }
-
-  private abstract class UsageConstraint {
-    public abstract boolean checkResidence(final StringCache.S residence);
-  }
-
-  private class PackageConstraint extends UsageConstraint {
-    public final String packageName;
-
-    public PackageConstraint(final String packageName) {
-      this.packageName = packageName;
+      for (StringCache.S p : subclasses) {
+        dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
+        affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(p) : field.createUsage(p));
+      }
     }
 
-    @Override
-    public boolean checkResidence(final StringCache.S residence) {
-      return !ClassRepr.getPackageName(residence).equals(packageName);
-    }
-  }
+    void affectMethodUsages(final MethodRepr method,
+                            final Collection<StringCache.S> subclasses,
+                            final UsageRepr.Usage rootUsage,
+                            final Set<UsageRepr.Usage> affectedUsages,
+                            final Set<StringCache.S> dependents) {
+      affectedUsages.add(rootUsage);
 
-  private class InheritanceConstraint extends UsageConstraint {
-    public final StringCache.S rootClass;
-
-    public InheritanceConstraint(final StringCache.S rootClass) {
-      this.rootClass = rootClass;
-    }
-
-    @Override
-    public boolean checkResidence(final StringCache.S residence) {
-      return !isInheritorOf(residence, rootClass);
-    }
-  }
-
-  private class NegationConstraint extends UsageConstraint {
-    final UsageConstraint x;
-
-    public NegationConstraint(UsageConstraint x) {
-      this.x = x;
+      for (StringCache.S p : subclasses) {
+        dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
+        affectedUsages.add(method.createUsage(p));
+      }
     }
 
-    @Override
-    public boolean checkResidence(final StringCache.S residence) {
-      return !x.checkResidence(residence);
-    }
-  }
+    void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
+      final Set<StringCache.S> dependants = (Set<StringCache.S>)fileToFileDependency.foxyGet(fileName);
 
-  private class IntersectionConstraint extends UsageConstraint {
-    final UsageConstraint x;
-    final UsageConstraint y;
-
-    public IntersectionConstraint(final UsageConstraint x, final UsageConstraint y) {
-      this.x = x;
-      this.y = y;
+      if (dependants != null) {
+        affectedFiles.addAll(dependants);
+      }
     }
 
-    @Override
-    public boolean checkResidence(final StringCache.S residence) {
-      return x.checkResidence(residence) && y.checkResidence(residence);
+    public abstract class UsageConstraint {
+      public abstract boolean checkResidence(final StringCache.S residence);
+    }
+
+    public class PackageConstraint extends UsageConstraint {
+      public final String packageName;
+
+      public PackageConstraint(final String packageName) {
+        this.packageName = packageName;
+      }
+
+      @Override
+      public boolean checkResidence(final StringCache.S residence) {
+        return !ClassRepr.getPackageName(residence).equals(packageName);
+      }
+    }
+
+    public class InheritanceConstraint extends UsageConstraint {
+      public final StringCache.S rootClass;
+
+      public InheritanceConstraint(final StringCache.S rootClass) {
+        this.rootClass = rootClass;
+      }
+
+      @Override
+      public boolean checkResidence(final StringCache.S residence) {
+        return !isInheritorOf(residence, rootClass);
+      }
+    }
+
+    public class NegationConstraint extends UsageConstraint {
+      final UsageConstraint x;
+
+      public NegationConstraint(UsageConstraint x) {
+        this.x = x;
+      }
+
+      @Override
+      public boolean checkResidence(final StringCache.S residence) {
+        return !x.checkResidence(residence);
+      }
+    }
+
+    public class IntersectionConstraint extends UsageConstraint {
+      final UsageConstraint x;
+      final UsageConstraint y;
+
+      public IntersectionConstraint(final UsageConstraint x, final UsageConstraint y) {
+        this.x = x;
+        this.y = y;
+      }
+
+      @Override
+      public boolean checkResidence(final StringCache.S residence) {
+        return x.checkResidence(residence) && y.checkResidence(residence);
+      }
     }
   }
 
@@ -315,9 +368,12 @@ public class Mappings {
                                final Set<StringCache.S> compiledFiles,
                                final Set<StringCache.S> affectedFiles,
                                final Set<StringCache.S> safeFiles) {
+
+    final Util u = new Util(delta);
+
     if (removed != null) {
       for (StringCache.S file : removed) {
-        affectAll(file, affectedFiles);
+        u.affectAll(file, affectedFiles);
       }
     }
 
@@ -331,7 +387,7 @@ public class Mappings {
       final Set<StringCache.S> dependants = (Set<StringCache.S>)fileToFileDependency.foxyGet(fileName);
       final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
       final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
-      final Map<UsageRepr.Usage, UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, UsageConstraint>();
+      final Map<UsageRepr.Usage, Util.UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, Util.UsageConstraint>();
 
       final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
@@ -350,7 +406,7 @@ public class Mappings {
           final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
           final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
-          affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved || signatureChanged);
+          u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved || signatureChanged);
         }
 
         if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
@@ -365,14 +421,14 @@ public class Mappings {
           final UsageRepr.Usage usage = it.createUsage();
 
           affectedUsages.add(usage);
-          usageConstraints.put(usage, new InheritanceConstraint(it.name));
+          usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
         }
 
         if (diff.packageLocalOn()) {
           final UsageRepr.Usage usage = it.createUsage();
 
           affectedUsages.add(usage);
-          usageConstraints.put(usage, new PackageConstraint(it.getPackageName()));
+          usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
         }
 
         if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
@@ -415,14 +471,49 @@ public class Mappings {
 
         for (MethodRepr m : diff.methods().added()) {
           if ((it.access & Opcodes.ACC_INTERFACE) > 0 || (m.access & Opcodes.ACC_ABSTRACT) > 0) {
-            affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+            u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
           }
         }
 
         for (MethodRepr m : diff.methods().removed()) {
-          final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
-          affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
-          affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+          final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = u.findOverridenMethods(m, it);
+          final Collection<StringCache.S> propagated = u.propagateMethodAccess(m.name, it.name);
+
+          if (overridenMethods.size() == 0) {
+            u.affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+          }
+
+          if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
+            for (StringCache.S p : propagated) {
+              final ClassRepr s = u.reprByName(p);
+
+              if (s != null) {
+                final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = u.findOverridenMethods(m, s);
+
+                overridenInS.addAll(overridenMethods);
+
+                boolean allAbstract = true;
+                boolean visited = false;
+
+                for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
+                  if (pp.snd.name.equals(it.name)) {
+                    continue;
+                  }
+
+                  visited = true;
+                  allAbstract = ((pp.fst.access & Opcodes.ACC_ABSTRACT) > 0) || ((pp.snd.access & Opcodes.ACC_INTERFACE) > 0);
+
+                  if (!allAbstract) {
+                    break;
+                  }
+                }
+
+                if (allAbstract && visited) {
+                  affectedFiles.add(classToSourceFile.get(p));
+                }
+              }
+            }
+          }
         }
 
         for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
@@ -442,37 +533,37 @@ public class Mappings {
               final UsageRepr.Usage usage = m.createUsage(it.name);
 
               affectedUsages.add(usage);
-              usageConstraints.put(usage, new PackageConstraint(it.getPackageName()));
+              usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
             }
 
-            final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
+            final Collection<StringCache.S> propagated = u.propagateMethodAccess(m.name, it.name);
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
-              affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+              u.affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
-                affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+                u.affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
 
                 if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
-                  affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+                  u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
               }
               else {
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0 ||
                     (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
                     (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
-                  affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+                  u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
-                  affectMethodUsages(m, propagated, m.createUsage(it.name), usages, dependants);
+                  u.affectMethodUsages(m, propagated, m.createUsage(it.name), usages, dependants);
 
-                  for (UsageRepr.Usage u : usages) {
-                    usageConstraints.put(u, new InheritanceConstraint(it.name));
+                  for (UsageRepr.Usage usage : usages) {
+                    usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
                   }
 
                   affectedUsages.addAll(usages);
@@ -495,7 +586,7 @@ public class Mappings {
 
             if (subClasses != null) {
               for (StringCache.S subClass : subClasses) {
-                final ClassRepr r = reprByName(subClass);
+                final ClassRepr r = u.reprByName(subClass);
 
                 if (r != null) {
                   final StringCache.S sourceFileName = classToSourceFile.get(subClass);
@@ -507,21 +598,21 @@ public class Mappings {
                     final StringCache.S outerClass = r.outerClassName;
 
                     if (outerClass.value != null) {
-                      if (fieldVisible(outerClass, f)) {
+                      if (u.fieldVisible(outerClass, f)) {
                         affectedFiles.add(sourceFileName);
                       }
                     }
                   }
                 }
 
-                final Collection<StringCache.S> propagated = propagateFieldAccess(f.name, subClass);
-                affectFieldUsages(f, propagated, f.createUsage(subClass), affectedUsages, dependants);
+                final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, subClass);
+                u.affectFieldUsages(f, propagated, f.createUsage(subClass), affectedUsages, dependants);
                 dependants.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(subClass)));
               }
             }
           }
 
-          final Collection<Pair<FieldRepr, ClassRepr>> overriden = findOverridenFields(f, it);
+          final Collection<Pair<FieldRepr, ClassRepr>> overriden = u.findOverridenFields(f, it);
 
           for (Pair<FieldRepr, ClassRepr> p : overriden) {
             final FieldRepr ff = p.fst;
@@ -533,30 +624,30 @@ public class Mappings {
             final boolean ffPLocal = !ffPrivate && !ffProtected && !ffPublic;
 
             if (!ffPrivate) {
-              final Collection<StringCache.S> propagated = propagateFieldAccess(ff.name, cc.name);
+              final Collection<StringCache.S> propagated = u.propagateFieldAccess(ff.name, cc.name);
               final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
-              affectFieldUsages(ff, propagated, ff.createUsage(cc.name), localUsages, dependants);
+              u.affectFieldUsages(ff, propagated, ff.createUsage(cc.name), localUsages, dependants);
 
               if (fPrivate || (fPublic && (ffPublic || ffPLocal)) || (fProtected && ffProtected) || (fPLocal && ffPLocal)) {
 
               }
               else {
-                UsageConstraint constaint;
+                Util.UsageConstraint constaint;
 
                 if ((ffProtected && fPublic) || (fProtected && ffPublic) || (ffPLocal && fProtected)) {
-                  constaint = new NegationConstraint(new InheritanceConstraint(cc.name));
+                  constaint = u.new NegationConstraint(u.new InheritanceConstraint(cc.name));
                 }
                 else if (ffPublic && ffPLocal) {
-                  constaint = new NegationConstraint(new PackageConstraint(cc.getPackageName()));
+                  constaint = u.new NegationConstraint(u.new PackageConstraint(cc.getPackageName()));
                 }
                 else {
-                  constaint = new IntersectionConstraint(new NegationConstraint(new InheritanceConstraint(cc.name)),
-                                                         new NegationConstraint(new PackageConstraint(cc.getPackageName())));
+                  constaint = u.new IntersectionConstraint(u.new NegationConstraint(u.new InheritanceConstraint(cc.name)),
+                                                           u.new NegationConstraint(u.new PackageConstraint(cc.getPackageName())));
                 }
 
-                for (UsageRepr.Usage u : localUsages) {
-                  usageConstraints.put(u, constaint);
+                for (UsageRepr.Usage usage : localUsages) {
+                  usageConstraints.put(usage, constaint);
                 }
               }
 
@@ -571,8 +662,8 @@ public class Mappings {
             return false;
           }
 
-          final Collection<StringCache.S> propagated = propagateFieldAccess(f.name, it.name);
-          affectFieldUsages(f, propagated, f.createUsage(it.name), affectedUsages, dependants);
+          final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, it.name);
+          u.affectFieldUsages(f, propagated, f.createUsage(it.name), affectedUsages, dependants);
         }
 
         for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
@@ -586,29 +677,29 @@ public class Mappings {
           }
 
           if (d.base() != Difference.NONE) {
-            final Collection<StringCache.S> propagated = propagateFieldAccess(field.name, it.name);
+            final Collection<StringCache.S> propagated = u.propagateFieldAccess(field.name, it.name);
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
-              affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
+              u.affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
-                affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
+                u.affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
               }
               else {
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
-                  affectFieldUsages(field, propagated, field.createAssignUsage(it.name), affectedUsages, dependants);
+                  u.affectFieldUsages(field, propagated, field.createAssignUsage(it.name), affectedUsages, dependants);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && (d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
-                  affectFieldUsages(field, propagated, field.createUsage(it.name), usages, dependants);
+                  u.affectFieldUsages(field, propagated, field.createUsage(it.name), usages, dependants);
 
-                  for (UsageRepr.Usage u : usages) {
-                    usageConstraints.put(u, new InheritanceConstraint(it.name));
+                  for (UsageRepr.Usage usage : usages) {
+                    usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
                   }
 
                   affectedUsages.addAll(usages);
@@ -642,7 +733,7 @@ public class Mappings {
 
             if (!usages.isEmpty()) {
               for (UsageRepr.Usage usage : usages) {
-                final UsageConstraint constraint = usageConstraints.get(usage);
+                final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                 if (constraint == null) {
                   affectedFiles.add(depFile);
