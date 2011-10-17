@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 
@@ -201,7 +204,13 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${xx<caret>x}abc");
-    assertResolved(f, MavenDomUtil.findProperty(myProject, filter, "xxx").getPsiElement());
+    assertResolved(f, findPropertyPsiElement(filter, "xxx"));
+  }
+
+  @Nullable
+  private PsiElement findPropertyPsiElement(final VirtualFile filter, final String propName) {
+    final IProperty property = MavenDomUtil.findProperty(myProject, filter, propName);
+    return property != null ? property.getPsiElement() : null;
   }
 
   public void testCompletionFromFilters() throws Exception {
@@ -230,7 +239,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   }
 
   public void testSearchingFromFilters() throws Exception {
-    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
+    createProjectSubFile("filters/filter.properties", "xxx=1");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -250,7 +259,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=${xxx}");
-    filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1");
+    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1");
 
     assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"));
   }
@@ -415,15 +424,11 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${x<caret>xx}abc");
-    assertResolved(f, MavenDomUtil.findProperty(myProject, filter, "xxx").getPsiElement());
+    assertResolved(f, findPropertyPsiElement(filter, "xxx"));
 
     doRename(f, "bar");
 
     assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
     assertEquals("bar=1", findPsiFile(filter).getText());
-  }
-
-  public void testFilteredPropertiesUsages() throws Exception {
-
   }
 }
