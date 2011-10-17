@@ -26,6 +26,7 @@ import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
+import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 
 import java.io.File;
@@ -54,6 +55,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
+    myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
   }
