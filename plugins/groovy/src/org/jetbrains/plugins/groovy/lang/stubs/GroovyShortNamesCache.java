@@ -132,8 +132,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     final Collection<? extends PsiMethod> methods = StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
     final Collection<? extends PsiMethod> annMethods = StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
     if (methods.isEmpty() && annMethods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
-    return ArrayUtil
-        .mergeArrays(annMethods.toArray(new PsiMethod[annMethods.size()]), methods.toArray(new PsiMethod[methods.size()]), PsiMethod.ARRAY_FACTORY);
+    return ArrayUtil.mergeCollections(annMethods, methods, PsiMethod.ARRAY_FACTORY);
   }
 
   @NotNull

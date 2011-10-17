@@ -666,6 +666,14 @@ public class ContainerUtil {
     return c != null ? c.toArray(factory.create(c.size())) : factory.create(0);
   }
 
+  public static <T> T[] toArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
+    return ArrayUtil.mergeCollections(c1, c2, factory);
+  }
+
+  public static <T> T[] mergeCollectionsToArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
+    return ArrayUtil.mergeCollections(c1, c2, factory);
+  }
+  
   @NotNull
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     final int length = array.length;

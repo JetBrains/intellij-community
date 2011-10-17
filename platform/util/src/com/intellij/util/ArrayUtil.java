@@ -188,6 +188,23 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static <T> T[] mergeCollections(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
+    T[] res = factory.create(c1.size() + c2.size());
+
+    int i = 0;
+
+    for (T t : c1) {
+      res[i++] = t;
+    }
+
+    for (T t : c2) {
+      res[i++] = t;
+    }
+
+    return res;
+  }
+
+  @NotNull
   public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull ArrayFactory<T> factory) {
     if (a1.length == 0) {
       return a2;
