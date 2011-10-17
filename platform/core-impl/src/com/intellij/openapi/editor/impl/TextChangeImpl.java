@@ -36,7 +36,7 @@ public class TextChangeImpl implements TextChange {
   private int    myEnd;
 
   /**
-   * Shorthand for creating {@link TextChangeImpl} with the given arguments where <code>'end index'</code> has the same value as
+   * Shorthand for creating change object with the given arguments where <code>'end index'</code> has the same value as
    * <code>'start index'</code>.
    *
    * @param text      text affected by the current change
@@ -137,9 +137,7 @@ public class TextChangeImpl implements TextChange {
   /**
    * Applies given offset applied to the {@link #getStart() start} and {@link #getEnd() end} properties of current text change object.
    *
-   * @param offset    offset to apply to the current change object
-   * @return          text change that is built on the basis of the current object that with {@link #getStart() start}
-   *                  and {@link #getEnd() end} positions shifted to the given offset
+   * @param offset                      offset to apply to the current change object
    * @throws IllegalArgumentException   if start index becomes zero after given offset appliance (it is not applied then)
    */
   public void advance(int offset) throws IllegalArgumentException {
