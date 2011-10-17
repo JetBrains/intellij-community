@@ -90,9 +90,9 @@ public class ExceptionWorker {
       myClass = psiFacade.findClass(className, mySearchScope);
       if (myClass == null) {
         myClass = psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-        if (myClass == null) {//try to find class according to all dollars in package name
+        /*if (myClass == null) {//try to find class according to all dollars in package name
           myClass = psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-        }
+        }*/
         if (myClass == null) return;
       }
       myFile = (PsiFile) myClass.getContainingFile().getNavigationElement();
