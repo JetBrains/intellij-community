@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -41,6 +43,14 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  */
 public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLanguageInjectionHost {
 
+  private static final Function<GrLiteralImpl,PsiType> TYPE_CALCULATOR = new Function<GrLiteralImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrLiteralImpl grLiteral) {
+      IElementType elemType = grLiteral.getFirstChild().getNode().getElementType();
+      return TypesUtil.getPsiType(grLiteral, elemType);
+    }
+  };
+
   public GrLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -50,8 +60,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
   }
 
   public PsiType getType() {
-    IElementType elemType = getFirstChild().getNode().getElementType();
-    return TypesUtil.getPsiType(this, elemType);
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
   }
 
   public void accept(GroovyElementVisitor visitor) {

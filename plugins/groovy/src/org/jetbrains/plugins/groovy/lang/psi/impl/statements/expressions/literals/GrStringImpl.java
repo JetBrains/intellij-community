@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -30,6 +32,17 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author ilyas
  */
 public class GrStringImpl extends GrExpressionImpl implements GrString {
+  private static final Function<GrStringImpl,PsiType> TYPE_CALCULATOR = new Function<GrStringImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrStringImpl grString) {
+      if (grString.findChildByClass(GrStringInjection.class) != null) {
+        return grString.getTypeByFQName(GroovyCommonClassNames.GROOVY_LANG_GSTRING);
+      }
+      else {
+        return grString.getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
+      }
+    }
+  };
 
   public GrStringImpl(@NotNull ASTNode node) {
     super(node);
@@ -40,12 +53,7 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   }
 
   public PsiType getType() {
-    if (findChildByClass(GrStringInjection.class) != null) {
-      return getTypeByFQName(GroovyCommonClassNames.GROOVY_LANG_GSTRING);
-    }
-    else {
-      return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-    }
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
   }
 
   public boolean isPlainString() {

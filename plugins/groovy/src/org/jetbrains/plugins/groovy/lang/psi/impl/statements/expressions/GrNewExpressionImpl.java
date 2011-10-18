@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -36,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -48,6 +51,34 @@ import java.util.List;
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
+
+  private static final Function<GrNewExpressionImpl,PsiType> MY_TYPE_CALCULATOR = new NullableFunction<GrNewExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrNewExpressionImpl newExpression) {
+      final GrAnonymousClassDefinition anonymous = newExpression.getAnonymousClassDefinition();
+      if (anonymous != null) {
+        return anonymous.getBaseClassType();
+      }
+      PsiType type = null;
+      GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+      if (refElement != null) {
+        type = new GrClassReferenceType(refElement);
+      }
+      else {
+        GrBuiltInTypeElement builtin = newExpression.findChildByClass(GrBuiltInTypeElement.class);
+        if (builtin != null) type = builtin.getType();
+      }
+
+      if (type != null) {
+        for (int i = 0; i < newExpression.getArrayCount(); i++) {
+          type = type.createArrayType();
+        }
+        return type;
+      }
+
+      return null;
+    }
+  };
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -62,27 +93,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   public PsiType getType() {
-    final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
-    if (anonymous != null) {
-      return anonymous.getBaseClassType();
-    }
-    PsiType type = null;
-    GrCodeReferenceElement refElement = getReferenceElement();
-    if (refElement != null) {
-      type = new GrClassReferenceType(refElement);
-    } else {
-      GrBuiltInTypeElement builtin = findChildByClass(GrBuiltInTypeElement.class);
-      if (builtin != null) type = builtin.getType();
-    }
-
-    if (type != null) {
-      for (int i = 0; i < getArrayCount(); i++) {
-        type = type.createArrayType();
-      }
-      return type;
-    }
-
-    return null;
+    return GroovyPsiManager.getInstance(getProject()).getType(this, MY_TYPE_CALCULATOR);
   }
 
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {

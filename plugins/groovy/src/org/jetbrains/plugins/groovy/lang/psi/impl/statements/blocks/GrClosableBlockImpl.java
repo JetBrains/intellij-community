@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,13 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
  * @author ilyas
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
-  private GrParameter[] mySyntheticItParameter;
+  private static final Function<GrClosableBlockImpl,PsiType> MY_TYPE_CALCULATOR = new Function<GrClosableBlockImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrClosableBlockImpl closableBlock) {
+      return GrClosureType.create(closableBlock, true);
+    }
+  };
+  private volatile GrParameter[] mySyntheticItParameter;
 
   public GrClosableBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -176,7 +182,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public PsiType getType() {
-    return GrClosureType.create(this, true);
+    return GroovyPsiManager.getInstance(getProject()).getType(this, MY_TYPE_CALCULATOR);
   }
 
   @Nullable
