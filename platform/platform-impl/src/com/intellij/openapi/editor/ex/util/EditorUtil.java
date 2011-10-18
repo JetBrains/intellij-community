@@ -17,10 +17,12 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.Pair;
@@ -34,6 +36,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class EditorUtil {
+  
+  private static final Logger LOG = Logger.getInstance("#" + EditorUtil.class.getName());
+  
   private EditorUtil() { }
 
   public static int getLastVisualLineColumnNumber(Editor editor, final int line) {
@@ -374,9 +379,11 @@ public class EditorUtil {
 
       for (int i = start; i < offset; i++) {
         char c = text.charAt(i);
-        assert c != '\n' && c != '\r' :
-          String.format("Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d, document info: %s%ntext: '%s'",
-                        c, i, start, offset, tabSize, editor == null ? null : editor.getDocument(), text);
+        if (c == '\n' || c == '\r') {
+          String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
+          LOG.error(String.format("Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d%s",
+                                  c, i, start, offset, tabSize, editorInfo));
+        }
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;
         }
@@ -559,6 +566,8 @@ public class EditorUtil {
    * Calculates the closest non-soft-wrapped logical positions for current caret position.
    *
    * @param editor    target editor to use
+   * @param start     target start coordinate
+   * @param end       target end coordinate
    * @return          pair of non-soft-wrapped logical positions closest to the caret position of the given editor
    */
   public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor, VisualPosition start, VisualPosition end) {
