@@ -207,18 +207,16 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           myTrg.refresh(userForcedRefresh);
           scan(mySrc, myTree, true);
           scan(myTrg, myTree, false);
-
+        }
+        catch (final IOException e) {
+          LOG.warn(e);
+          reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
+        }
+        finally {
           myTree.setSource(mySrc);
           myTree.setTarget(myTrg);
           myTree.update(mySettings);
           applySettings();
-        }
-        catch (final IOException e) {
-          LOG.warn(e);
-          if (loadingPanel.isLoading()) {
-            loadingPanel.stopLoading();
-          }
-          reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
         }
       }
     });
@@ -413,7 +411,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
     return "";
   }
-  
+
   public List<DirDiffElement> getSelectedElements() {
     final int[] rows = myTable.getSelectedRows();
     final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
@@ -555,8 +553,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final DTree parentNode = element.getParentNode();
       parentNode.remove(node);
       myElements.remove(row);
-      int start = row;      
-      
+      int start = row;
+
       if (row == myElements.size() && myElements.get(row - 1).isSeparator()) {
         final DirDiffElement el = myElements.get(row - 1);
         el.getParentNode().remove(el.getNode());
@@ -674,19 +672,19 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void rememberSelection() {
     mySelectionConfig = new TableSelectionConfig();
   }
-  
+
   public class TableSelectionConfig {
     private final int selectedRow;
-    private final int rowCount; 
+    private final int rowCount;
     TableSelectionConfig() {
       selectedRow = myTable.getSelectedRow();
       rowCount = myTable.getRowCount();
     }
-    
+
     void restore() {
       final int newRowCount = myTable.getRowCount();
       if (newRowCount == 0) return;
-      
+
       int row = Math.min(newRowCount < rowCount ? selectedRow : selectedRow + 1, newRowCount - 1);
       final DirDiffElement element = getElementAt(row);
       if (element != null && element.isSeparator()) {
@@ -698,7 +696,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       }
       final DirDiffElement el = getElementAt(row);
       row = el == null || el.isSeparator() ? 0 : row;
-      myTable.getSelectionModel().setSelectionInterval(row, row);        
+      myTable.getSelectionModel().setSelectionInterval(row, row);
       TableUtil.scrollSelectionToVisible(myTable);
     }
   }
