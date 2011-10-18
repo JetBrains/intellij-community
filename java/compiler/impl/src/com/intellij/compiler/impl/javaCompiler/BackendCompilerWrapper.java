@@ -347,7 +347,7 @@ public class BackendCompilerWrapper {
     }
 
     ModuleType moduleType = ModuleType.get(chunk.getModules()[0]);
-    if (!(chunk.getJdk().getSdkType() instanceof JavaSdkType) &&
+    if ((chunk.getJdk() == null || !(chunk.getJdk().getSdkType() instanceof JavaSdkType)) &&
         !(moduleType instanceof JavaModuleType || moduleType.createModuleBuilder() instanceof JavaModuleBuilder)) {
       // TODO
       // don't try to compile non-java type module
