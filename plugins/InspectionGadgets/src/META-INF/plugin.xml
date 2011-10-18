@@ -1074,6 +1074,10 @@
                      key="time.tostring.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.internationalization.TimeToStringInspection"/>
+    <localInspection language="JAVA" shortName="AbsoluteAlignmentInUserInterface" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="absolute.alignment.in.user.interface.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.internationalization.AbsoluteAlignmentInUserInterfaceInspection"/>
 
     <localInspection language="JAVA" shortName="AbstractClassWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="abstract.class.with.only.one.direct.inheritor.display.name" groupBundle="messages.InspectionsBundle"
