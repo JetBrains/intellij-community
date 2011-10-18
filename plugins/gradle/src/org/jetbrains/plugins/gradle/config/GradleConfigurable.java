@@ -57,7 +57,6 @@ public class GradleConfigurable implements SearchableConfigurable {
   public GradleConfigurable(@Nullable Project project) {
     myProject = project;
     doCreateComponent();
-    deduceGradleHomeIfPossible();
   }
 
   @NotNull
@@ -179,6 +178,7 @@ public class GradleConfigurable implements SearchableConfigurable {
     if (myGradleHomeComponent != null) {
       myGradleHomeComponent.setPath(gradleHome.getPath());
       myGradleHomeComponent.getPathComponent().setForeground(UIManager.getColor("TextField.inactiveForeground"));
+      myPathManuallyModified = false;
     }
   }
 
