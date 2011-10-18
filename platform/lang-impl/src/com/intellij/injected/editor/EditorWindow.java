@@ -474,6 +474,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myDelegate.setBorder(border);
   }
 
+  @Override
+  public Insets getInsets() {
+    return myDelegate.getInsets();
+  }
+
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
     int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
     return calcOffset(pos.column, pos.line, lineStartOffset);

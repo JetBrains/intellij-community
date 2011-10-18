@@ -85,6 +85,11 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   public void setBorder(@Nullable Border border) {
   }
 
+  @Override
+  public Insets getInsets() {
+    return new Insets(0,0,0,0);
+  }
+
   @NotNull
   public SelectionModel getSelectionModel() {
     return mySelectionModel;

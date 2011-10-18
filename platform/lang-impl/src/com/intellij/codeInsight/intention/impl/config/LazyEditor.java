@@ -65,6 +65,11 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     getEditor().setBorder(border);
   }
 
+  @Override
+  public Insets getInsets() {
+    return getEditor().getInsets();
+  }
+
   @NotNull
   public SelectionModel getSelectionModel() {
     return getEditor().getSelectionModel();

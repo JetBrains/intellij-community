@@ -73,6 +73,8 @@ public interface Editor extends UserDataHolder {
 
   void setBorder(@Nullable Border border);
 
+  Insets getInsets();
+
   /**
    * Returns the selection model for the editor, which can be used to select ranges of text in
    * the document and retrieve information about the selection.

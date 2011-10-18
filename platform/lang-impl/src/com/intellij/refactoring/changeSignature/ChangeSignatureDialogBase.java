@@ -494,6 +494,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setPreferredSize(new Dimension(-1, 130));
+    mySignatureArea.setMinimumSize(new Dimension(-1, 130));
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {

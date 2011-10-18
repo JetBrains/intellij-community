@@ -2449,7 +2449,7 @@ public class UIUtil {
     return false;
   }
 
-  public static void mergeComponentsWithAnchor(PanelWithAnchor c1,PanelWithAnchor c2) {
+  public static void mergeComponentsWithAnchor(PanelWithAnchor c1, PanelWithAnchor c2) {
     if (c1 == null || c2 == null) return;
 
     if (c1.getAnchor() == null) {
@@ -2466,8 +2466,7 @@ public class UIUtil {
     }
   }
   
-  public static void setNotOpaqueRecursively(Component component) {
-    if (component == null) return;
+  public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
     if (component.getBackground().equals(getPanelBackground()) || component instanceof JScrollPane || component instanceof JViewport) {
@@ -2482,13 +2481,24 @@ public class UIUtil {
     }
   }
 
-  public static void addInsets(JComponent component, Insets insets) {
+  public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
     }
     else {
       component.setBorder(new EmptyBorder(insets));
     }
+  }
+  
+  public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
+
+    Dimension ans = new Dimension(dimension);
+    ans.width += insets.left;
+    ans.width += insets.right;
+    ans.height += insets.top;
+    ans.height += insets.bottom;
+
+    return ans;
   }
 }
 

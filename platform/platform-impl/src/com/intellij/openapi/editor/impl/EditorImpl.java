@@ -3075,6 +3075,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.setBorder(border);
   }
 
+  @Override
+  public Insets getInsets() {
+    return myScrollPane.getInsets();
+  }
+
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     assertIsDispatchThread();
     if (myDocument.getLineCount() == 0) return 0;
