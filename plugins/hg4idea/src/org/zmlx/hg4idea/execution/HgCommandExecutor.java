@@ -97,7 +97,7 @@ public final class HgCommandExecutor {
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, final String operation, final List<String> arguments) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     if (myProject == null || myProject.isDisposed() || myVcs == null) {
       return null;
     }
