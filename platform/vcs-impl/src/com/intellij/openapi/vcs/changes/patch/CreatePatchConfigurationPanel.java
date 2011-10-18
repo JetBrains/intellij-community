@@ -40,11 +40,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
-import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -122,7 +120,7 @@ public class CreatePatchConfigurationPanel {
     });
     myErrorLabel.setForeground(Color.RED);
     checkName();
-    new AdjustComponentWhenShown() {
+    /*new AdjustComponentWhenShown() {
       @Override
       protected boolean init() {
         if (myPanel.isVisible()) {
@@ -138,14 +136,11 @@ public class CreatePatchConfigurationPanel {
               dialog.setSize(dialogSize.width, dialogSize.height - 1);
             }
             dialog.repaint();
-            /*if (myIncludeBaseRevisionTextCheckBox.isVisible() && VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT) {
-              mySplitterWithSecondHideable.on();
-            }*/
           }
         }
         return false;
       }
-    }.install(myPanel);
+    }.install(myPanel);*/
     initEncodingCombo();
   }
 
@@ -241,7 +236,8 @@ public class CreatePatchConfigurationPanel {
         VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
         final JDialog dialog = getParentDialog();
         final Dimension dialogSize = dialog.getSize();
-        dialog.setSize(dialogSize.width, dialogSize.height + integer);
+        int width = dialogSize.width < 550 ? 550 : dialogSize.width;
+        dialog.setSize(width, dialogSize.height + integer);
         dialog.repaint();
       }
 
@@ -261,7 +257,7 @@ public class CreatePatchConfigurationPanel {
 
       @Override
       protected float getSplitterInitialProportion() {
-        return 0.4f;
+        return 0.3f;
       }
     };
   }
