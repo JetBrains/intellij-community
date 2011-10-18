@@ -165,6 +165,10 @@ public abstract class LightElement extends PsiElementBase {
   }
 
   public void setNavigationElement(@NotNull PsiElement navigationElement) {
+    PsiElement nnElement = navigationElement.getNavigationElement();
+    if (nnElement != navigationElement && nnElement != null) {
+      navigationElement = nnElement;
+    }
     myNavigationElement = navigationElement;
   }
 }
