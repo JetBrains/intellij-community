@@ -2,12 +2,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.actions.OptimizeImportsAction;
 import com.intellij.ide.DataManager;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyOptimizeImportsTest extends PyLightFixtureTestCase {
+public class PyOptimizeImportsTest extends PyTestCase {
   public void testSimple() {
     doTest();
   }

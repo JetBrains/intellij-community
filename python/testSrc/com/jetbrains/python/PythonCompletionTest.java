@@ -3,14 +3,14 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class PythonCompletionTest extends PyLightFixtureTestCase {
+public class PythonCompletionTest extends PyTestCase {
 
   private void doTest() {
     final String testName = "completion/" + getTestName(true);

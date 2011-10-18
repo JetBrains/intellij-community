@@ -1,11 +1,11 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyUnusedImportTest extends PyLightFixtureTestCase {
+public class PyUnusedImportTest extends PyTestCase {
   public void _testModuleAndSubmodule() {  // PY-3626
     myFixture.copyDirectoryToProject("inspections/unusedImport/moduleAndSubmodule", "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

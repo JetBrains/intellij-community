@@ -3,12 +3,12 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.SystemInfo;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyCopyPasteTest extends PyLightFixtureTestCase {
+public class PyCopyPasteTest extends PyTestCase {
   private boolean myOldEnabled;
 
   @Override

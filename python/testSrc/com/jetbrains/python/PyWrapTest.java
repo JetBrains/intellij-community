@@ -2,12 +2,12 @@ package com.jetbrains.python;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyWrapTest extends PyLightFixtureTestCase {
+public class PyWrapTest extends PyTestCase {
   private boolean myOldWrap;
   private int myOldMargin;
 

@@ -1,14 +1,14 @@
 package com.jetbrains.python;
 
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.*;
 
 /**
  * @author yole
  */
-public class PyFindUsagesTest extends PyLightFixtureTestCase {
+public class PyFindUsagesTest extends PyTestCase {
   public void testInitUsages() {   // PY-292
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/InitUsages.py");
     assertEquals(1, usages.size());

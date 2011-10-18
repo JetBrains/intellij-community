@@ -1,7 +1,7 @@
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -12,7 +12,7 @@ import java.util.Collection;
 /**
  * @author Dennis.Ushakov
  */
-public abstract class PyClassRefactoringTest extends PyLightFixtureTestCase {
+public abstract class PyClassRefactoringTest extends PyTestCase {
   protected PyElement findMember(String className, String memberName) {
     if (!memberName.contains(".")) return findClass(memberName);
     return findMethod(className, memberName.substring(1));

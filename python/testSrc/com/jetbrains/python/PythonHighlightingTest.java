@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
@@ -16,7 +16,7 @@ import java.awt.*;
  *
  * @author yole
  */
-public class PythonHighlightingTest extends PyLightFixtureTestCase {
+public class PythonHighlightingTest extends PyTestCase {
   private static final String TEST_PATH = "/highlighting/";
 
   public void testBuiltins() {

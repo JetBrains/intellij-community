@@ -1,7 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
@@ -9,7 +9,7 @@ import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 /**
  * @author yole
  */
-public class PySuppressInspectionsTest extends PyLightFixtureTestCase {
+public class PySuppressInspectionsTest extends PyTestCase {
   public void testSuppressedForStatement() {
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
   }

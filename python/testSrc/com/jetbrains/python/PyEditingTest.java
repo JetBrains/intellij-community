@@ -10,12 +10,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyEditingTest extends PyLightFixtureTestCase {
+public class PyEditingTest extends PyTestCase {
   public void testNoPairedParenthesesBeforeIdentifier() {       // PY-290
     assertEquals("(abc", doTestTyping("abc", 0, '('));
   }

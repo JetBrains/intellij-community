@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -14,7 +14,7 @@ import java.util.EnumSet;
  * User: dcheryasov
  * Date: Aug 21, 2008
  */
-public class PyResolveCalleeTest extends PyLightFixtureTestCase {
+public class PyResolveCalleeTest extends PyTestCase {
 
   private PyCallExpression.PyMarkedCallee resolveCallee() {
     PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/callee/" + getTestName(false) + ".py");

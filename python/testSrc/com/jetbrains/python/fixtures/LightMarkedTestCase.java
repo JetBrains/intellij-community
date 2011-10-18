@@ -1,6 +1,5 @@
 package com.jetbrains.python.fixtures;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -22,7 +21,7 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: Mar 14, 2009 11:57:52 PM
  */
-public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
+public abstract class LightMarkedTestCase extends PyTestCase {
   protected PsiFile myFile;
 
   /**

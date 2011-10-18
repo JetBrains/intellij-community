@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -15,7 +15,7 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class PyOverrideTest extends PyLightFixtureTestCase {
+public class PyOverrideTest extends PyTestCase {
   private void doTest() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
     PyFunction toOverride = getTopLevelClass(0).getMethods() [0];

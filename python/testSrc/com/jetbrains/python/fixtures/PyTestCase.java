@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/../testData/")
-public abstract class PyLightFixtureTestCase extends UsefulTestCase {
+public abstract class PyTestCase extends UsefulTestCase {
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor("2.5");
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor("3.1");
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
@@ -129,7 +129,7 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
       ourPlatformPrefixInitialized = true;
       boolean isIDEA = true;
       try {
-        PyLightFixtureTestCase.class.getClassLoader().loadClass(IDEA_MARKER_CLASS);
+        PyTestCase.class.getClassLoader().loadClass(IDEA_MARKER_CLASS);
       }
       catch (ClassNotFoundException e) {
         isIDEA = false;

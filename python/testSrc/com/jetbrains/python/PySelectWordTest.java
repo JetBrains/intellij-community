@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler;
 import com.intellij.ide.DataManager;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -10,7 +10,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class PySelectWordTest extends PyLightFixtureTestCase {
+public class PySelectWordTest extends PyTestCase {
   public void testWord() {
     doTest();
   }

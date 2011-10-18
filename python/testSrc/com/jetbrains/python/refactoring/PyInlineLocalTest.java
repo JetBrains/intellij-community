@@ -3,13 +3,13 @@ package com.jetbrains.python.refactoring;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
 
 /**
  * @author Dennis.Ushakov
  */
-public class PyInlineLocalTest extends PyLightFixtureTestCase {
+public class PyInlineLocalTest extends PyTestCase {
   private void doTest() {
     doTest(null);
   }

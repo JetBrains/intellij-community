@@ -1,11 +1,11 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase {
+public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection/";
 
   public void testSelfReference() {

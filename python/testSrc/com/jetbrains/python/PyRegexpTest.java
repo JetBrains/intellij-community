@@ -4,12 +4,12 @@ import com.intellij.lexer.Lexer;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyRegexpTest extends PyLightFixtureTestCase {
+public class PyRegexpTest extends PyTestCase {
   public void testNestedCharacterClasses() {  // PY-2908
     doTestHighlighting();
   }

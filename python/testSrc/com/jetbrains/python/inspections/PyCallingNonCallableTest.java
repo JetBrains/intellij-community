@@ -1,12 +1,12 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author yole
  */
-public class PyCallingNonCallableTest extends PyLightFixtureTestCase {
+public class PyCallingNonCallableTest extends PyTestCase {
   public void testTupleNonCallable() {
     doTest();
   }

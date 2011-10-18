@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.Consumer;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -18,7 +18,7 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
+public abstract class PyIntroduceTestCase extends PyTestCase {
   protected void doTestSuggestions(Class<? extends PyExpression> parentClass, String... expectedNames) {
     final Collection<String> names = buildSuggestions(parentClass);
     for (String expectedName : expectedNames) {
