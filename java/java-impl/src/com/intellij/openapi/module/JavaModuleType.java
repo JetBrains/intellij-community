@@ -36,8 +36,10 @@ import java.util.ArrayList;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
+  public static final String ID = "JAVA_MODULE";
+
   public JavaModuleType() {
-    this("JAVA_MODULE");
+    this(ID);
   }
 
   protected JavaModuleType(@NonNls String id) {
