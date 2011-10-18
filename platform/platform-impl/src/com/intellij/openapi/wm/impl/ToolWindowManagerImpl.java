@@ -114,10 +114,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
-
   private final Set<String> myRestoredToolWindowIds = new HashSet<String>();
   private final FileEditorManager myFileEditorManager;
-
+  private final LafManager myLafManager;
   private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
 
   private KeyState myCurrentState = KeyState.waiting;
@@ -147,12 +146,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * invoked by reflection
    */
   public ToolWindowManagerImpl(final Project project,
-                               WindowManagerEx windowManagerEx,
+                               final WindowManagerEx windowManagerEx,
                                final FileEditorManager fem,
-                               ActionManager actionManager) {
+                               final ActionManager actionManager,
+                               final LafManager lafManager) {
     myProject = project;
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
+    myLafManager = lafManager;
     myListenerList = new EventListenerList();
 
     if (!project.isDefault()) {
@@ -365,12 +366,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final MyLafManagerListener myLafManagerListener = new MyLafManagerListener();
 
     UIManager.addPropertyChangeListener(myUIManagerPropertyChangeListener);
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+    myLafManager.addLafManagerListener(myLafManagerListener);
 
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
         UIManager.removePropertyChangeListener(myUIManagerPropertyChangeListener);
-        LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+        myLafManager.removeLafManagerListener(myLafManagerListener);
       }
     });
     myFrame = myWindowManager.allocateFrame(myProject);
