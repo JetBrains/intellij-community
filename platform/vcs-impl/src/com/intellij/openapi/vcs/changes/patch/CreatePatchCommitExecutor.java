@@ -198,7 +198,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         REVERSE_PATCH = myPanel.isReversePatch();
         
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
-        PatchWriter.writePatches(myProject, fileName, patches, myCommitContext);
+        PatchWriter.writePatches(myProject, fileName, patches, myCommitContext, myPanel.getEncoding());
         final String message;
         if (binaryCount == 0) {
           message = VcsBundle.message("create.patch.success.confirmation", file.getPath());

@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class ApplyBinaryFilePatch extends ApplyFilePatchBase<BinaryFilePatch> {
     super(patch);
   }
 
-  protected void applyCreate(final VirtualFile newFile) throws IOException {
+  protected void applyCreate(final VirtualFile newFile, CommitContext commitContext) throws IOException {
     newFile.setBinaryContent(myPatch.getAfterContent());
   }
 

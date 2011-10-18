@@ -132,7 +132,7 @@ public class ApplyPatchAction extends DumbAwareAction {
             public CharSequence get() {
               return getBaseContents((TextFilePatch)patchBase, commitContext, project);
             }
-          });
+          }, commitContext);
         }
         catch (IOException e) {
           LOG.error(e);

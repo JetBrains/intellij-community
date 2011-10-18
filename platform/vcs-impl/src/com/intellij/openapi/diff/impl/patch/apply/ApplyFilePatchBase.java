@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,10 +51,10 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                       final ApplyPatchContext context,
                       final Project project,
                       FilePath pathBeforeRename,
-                      Getter<CharSequence> baseContents) throws IOException {
+                      Getter<CharSequence> baseContents, CommitContext commitContext) throws IOException {
     context.addAffectedFile(getTarget(fileToPatch));
     if (myPatch.isNewFile()) {
-      applyCreate(fileToPatch);
+      applyCreate(fileToPatch, commitContext);
     } else if (myPatch.isDeletedFile()) {
       FileEditorManagerImpl.getInstance(project).closeFile(fileToPatch);
       fileToPatch.delete(this);
@@ -64,7 +65,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return SUCCESS;
   }
 
-  protected abstract void applyCreate(VirtualFile newFile) throws IOException;
+  protected abstract void applyCreate(VirtualFile newFile, CommitContext commitContext) throws IOException;
   protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException;
 
   @Nullable

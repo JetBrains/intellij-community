@@ -29,6 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -128,6 +129,11 @@ public class IdeaTextPatchBuilder {
         public PathDescription getPath() {
           return description;
         }
+
+        @Override
+        public Charset getCharset() {
+          return null;
+        }
       };
     } else {
       return new AirContentRevision() {
@@ -146,6 +152,11 @@ public class IdeaTextPatchBuilder {
         @NotNull
         public PathDescription getPath() {
           return description;
+        }
+
+        @Override
+        public Charset getCharset() {
+          return fp.getCharset();
         }
       };
     }

@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -36,8 +37,12 @@ public class PatchWriter {
   private PatchWriter() {
   }
 
-  public static void writePatches(final Project project, String fileName, List<FilePatch> patches, CommitContext commitContext) throws IOException {
-    Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
+  public static void writePatches(final Project project,
+                                  String fileName,
+                                  List<FilePatch> patches,
+                                  CommitContext commitContext,
+                                  Charset charset) throws IOException {
+    Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset);
     try {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
       UnifiedDiffWriter.write(project, patches, writer, lineSeparator, commitContext);

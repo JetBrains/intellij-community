@@ -20,6 +20,7 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -33,7 +34,12 @@ public interface ApplyFilePatch {
     }
   };
 
-  Result apply(VirtualFile fileToPatch, ApplyPatchContext context, Project project, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException;
+  Result apply(VirtualFile fileToPatch,
+               ApplyPatchContext context,
+               Project project,
+               FilePath pathBeforeRename,
+               Getter<CharSequence> baseContents,
+               CommitContext commitContext) throws IOException;
 
   abstract class Result {
     private final ApplyPatchStatus myStatus;

@@ -313,7 +313,7 @@ public class TextPatchBuilder {
   }
 
   private TextFilePatch buildPatchHeading(final String basePath, final AirContentRevision beforeRevision, final AirContentRevision afterRevision) {
-    TextFilePatch result = new TextFilePatch();
+    TextFilePatch result = new TextFilePatch(afterRevision == null ? null : afterRevision.getCharset());
     setPatchHeading(result, basePath, beforeRevision, afterRevision);
     return result;
   }

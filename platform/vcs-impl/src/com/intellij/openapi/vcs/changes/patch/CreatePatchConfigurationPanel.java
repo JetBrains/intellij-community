@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -29,32 +30,40 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.ui.AdjustComponentWhenShown;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class CreatePatchConfigurationPanel {
+  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
+
   public static final String ALL = "(All)";
   private JPanel myPanel;
   private TextFieldWithBrowseButton myFileNameField;
   private JCheckBox myReversePatchCheckbox;
+  private JComboBox myEncoding;
   private JLabel myErrorLabel;
   private JCheckBox myIncludeBaseRevisionTextCheckBox;
   private Consumer<Boolean> myOkEnabledListener;
@@ -137,6 +146,30 @@ public class CreatePatchConfigurationPanel {
         return false;
       }
     }.install(myPanel);
+    initEncodingCombo();
+  }
+
+  private void initEncodingCombo() {
+    final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
+    encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
+    myEncoding.setModel(encodingsModel);
+
+    final String name = EncodingManager.getInstance().getDefaultCharsetName();
+    if (StringUtil.isEmpty(name)) {
+      myEncoding.setSelectedItem(SYSTEM_DEFAULT);
+    }
+    else {
+      myEncoding.setSelectedItem(EncodingManager.getInstance().getDefaultCharset());
+    }
+  }
+
+  @Nullable
+  public Charset getEncoding() {
+    final Object selectedItem = myEncoding.getSelectedItem();
+    if (SYSTEM_DEFAULT.equals(selectedItem)) {
+      return EncodingManager.getInstance().getDefaultCharset();
+    }
+    return (Charset) selectedItem;
   }
 
   private void initUi() {
@@ -164,7 +197,16 @@ public class CreatePatchConfigurationPanel {
     myPanel.add(myReversePatchCheckbox, gb);
     ++ gb.gridy;
     gb.gridwidth = 2;
-    
+
+    gb.anchor = GridBagConstraints.WEST;
+    myPanel.add(new JLabel("Encoding:"), gb);
+    ++ gb.gridx;
+    gb.anchor = GridBagConstraints.NORTHWEST;
+    myEncoding = new JComboBox();
+    myPanel.add(myEncoding, gb);
+    ++ gb.gridy;
+
+    gb.gridx = 0;
     myIncludeBaseRevisionTextCheckBox = new JCheckBox("Include base revision text(s) into patch file");
     myPanel.add(myIncludeBaseRevisionTextCheckBox, gb);
     ++ gb.gridy;

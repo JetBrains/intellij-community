@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -511,7 +512,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                          CommitContext commitContext) {
     OutputStreamWriter writer;
     try {
-      writer = new OutputStreamWriter(new FileOutputStream(path));
+      writer = new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8_CHARSET);
       try {
         UnifiedDiffWriter.write(project, remainingPatches, writer, "\n", commitContext);
       }

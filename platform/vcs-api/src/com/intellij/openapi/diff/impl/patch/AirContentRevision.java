@@ -19,6 +19,8 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
+
 public interface AirContentRevision {
   boolean isBinary();
   @Nullable
@@ -31,4 +33,6 @@ public interface AirContentRevision {
 
   @NotNull
   PathDescription getPath();
+
+  Charset getCharset();
 }

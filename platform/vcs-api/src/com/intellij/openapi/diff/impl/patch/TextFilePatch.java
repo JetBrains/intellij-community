@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.List;
  * @author yole
  */
 public class TextFilePatch extends FilePatch {
+  private Charset myCharset;
   private final List<PatchHunk> myHunks;
 
   public void addHunk(final PatchHunk hunk) {
@@ -33,11 +35,13 @@ public class TextFilePatch extends FilePatch {
     return Collections.unmodifiableList(myHunks);
   }
 
-  public TextFilePatch() {
+  public TextFilePatch(Charset charset) {
+    myCharset = charset;
     myHunks = new ArrayList<PatchHunk>();
   }
 
   private TextFilePatch(final TextFilePatch patch) {
+    myCharset = patch.myCharset;
     setBeforeVersionId(patch.getBeforeVersionId());
     setAfterVersionId(patch.getAfterVersionId());
     setBeforeName(patch.getBeforeName());
@@ -59,5 +63,13 @@ public class TextFilePatch extends FilePatch {
 
   public boolean isDeletedFile() {
     return myHunks.size() == 1 && myHunks.get(0).isDeletedContent();
+  }
+
+  public Charset getCharset() {
+    return myCharset;
+  }
+
+  public void setCharset(Charset charset) {
+    myCharset = charset;
   }
 }

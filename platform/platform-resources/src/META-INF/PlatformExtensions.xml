@@ -253,6 +253,7 @@
   <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
   <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
   <patch.extension implementation="com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP"/>
+  <patch.extension implementation="com.intellij.openapi.diff.impl.patch.CharsetEP"/>
 
   <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 </extensions>

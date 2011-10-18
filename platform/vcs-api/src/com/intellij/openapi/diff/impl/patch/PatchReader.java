@@ -276,7 +276,7 @@ public class PatchReader {
     }
 
     private TextFilePatch readPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
-      final TextFilePatch curPatch = new TextFilePatch();
+      final TextFilePatch curPatch = new TextFilePatch(null);
       extractFileName(curLine, curPatch, true);
 
       if (! iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");

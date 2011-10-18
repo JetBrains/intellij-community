@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.*;
@@ -208,7 +209,7 @@ public class CompoundShelfFileProcessor {
 
   public void savePathFile(ContentProvider contentProvider, final File patchPath, CommitContext commitContext) throws IOException {
 
-    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchPath));
+    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchPath), CharsetToolkit.UTF8_CHARSET);
     try {
       contentProvider.writeContentTo(writer, commitContext);
     }
