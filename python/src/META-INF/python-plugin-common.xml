@@ -534,6 +534,11 @@
     <lang.braceMatcher language="DjangoTemplate"
                        implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateBraceMatcher"/>
 
+    <intentionAction>
+      <className>com.jetbrains.django.localization.ref.WrapTransTagIntention</className>
+      <category>Django</category>
+    </intentionAction>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
@@ -599,7 +604,7 @@
     <quoteHandler fileType="Locale" className="com.jetbrains.django.localization.editor.LocaleQuoteHandler"/>
     <problemFileHighlightFilter implementation="com.jetbrains.django.localization.LocaleProblemFileHighlightFilter"/>
     <!--<fileEditorProvider implementation="com.jetbrains.django.localization.editor.LocaleFileEditorProvider"/>-->
-
+    <psi.referenceContributor implementation="com.jetbrains.django.lang.template.ref.DjangoLocaleReferenceContributor"/>
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <!-- ReST files -->

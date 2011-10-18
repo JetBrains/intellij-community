@@ -18,6 +18,7 @@ import com.intellij.util.containers.SortedList;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonResolveUtil;
 import com.jetbrains.cython.psi.CythonIncludeStatement;
+import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.django.util.PythonDataflowUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -348,7 +349,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
         final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
         final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
-        if (element instanceof PyParameter || element instanceof PyTargetExpression) {
+        // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
+        if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
           // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
           PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
           PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);

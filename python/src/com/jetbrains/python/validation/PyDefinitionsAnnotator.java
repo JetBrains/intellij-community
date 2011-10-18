@@ -20,14 +20,11 @@ import com.jetbrains.python.psi.PyFunction;
 public class PyDefinitionsAnnotator extends PyAnnotator {
 
   @Override
-  public void visitPyClass(PyClass class_node) {
-    final ASTNode astNode = class_node.getNode();
-    if (astNode != null) {
-      ASTNode name_node = astNode.findChildByType(PyTokenTypes.IDENTIFIER);
-      if (name_node != null) {
-        Annotation ann = getHolder().createInfoAnnotation(name_node, null);
-        ann.setTextAttributes(PyHighlighter.PY_CLASS_DEFINITION);
-      }
+  public void visitPyClass(PyClass node) {
+    final ASTNode name_node = node.getNameNode();
+    if (name_node != null) {
+      Annotation ann = getHolder().createInfoAnnotation(name_node, null);
+      ann.setTextAttributes(PyHighlighter.PY_CLASS_DEFINITION);
     }
   }
 
