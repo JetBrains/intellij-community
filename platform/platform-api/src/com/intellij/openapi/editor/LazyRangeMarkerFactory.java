@@ -36,7 +36,7 @@ import java.util.List;
 public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   private final WeakList<LazyMarker> myMarkers = new WeakList<LazyMarker>();
 
-  public LazyRangeMarkerFactory(Project project, final FileDocumentManager fileDocumentManager) {
+  public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
     super(project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       public void beforeDocumentChange(DocumentEvent e) {
@@ -58,8 +58,8 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return project.getComponent(LazyRangeMarkerFactory.class);
   }
 
-  public RangeMarker createRangeMarker(VirtualFile file, int offset) {
-
+  @NotNull
+  public RangeMarker createRangeMarker(@NotNull VirtualFile file, int offset) {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
     final Document document = fdm.getCachedDocument(file);
     if (document != null) {
@@ -72,7 +72,8 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return marker;
   }
 
-  public RangeMarker createRangeMarker(VirtualFile file, int line, int column, boolean persistent) {
+  @NotNull
+  public RangeMarker createRangeMarker(@NotNull VirtualFile file, int line, int column, boolean persistent) {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
     final Document document = fdm.getCachedDocument(file);
     if (document != null) {
@@ -90,23 +91,27 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     private final VirtualFile myFile;
     protected final int myInitialOffset;
 
-    private LazyMarker(VirtualFile file, int offset) {
+    private LazyMarker(@NotNull VirtualFile file, int offset) {
       myFile = file;
       myInitialOffset = offset;
     }
 
+    @NotNull
     public VirtualFile getFile() {
       return myFile;
     }
 
+    @NotNull
     public final RangeMarker ensureDelegate() {
       if (myDelegate == null) {
-        myDelegate = createDelegate(myFile, FileDocumentManager.getInstance().getDocument(myFile));
+        Document document = FileDocumentManager.getInstance().getDocument(myFile);
+        myDelegate = createDelegate(myFile, document);
       }
       return myDelegate;
     }
 
-    protected abstract RangeMarker createDelegate(VirtualFile file, final Document document);
+    @NotNull
+    protected abstract RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull Document document);
 
     @NotNull
     public Document getDocument() {
@@ -149,12 +154,12 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   }
 
   private static class OffsetLazyMarker extends LazyMarker {
-
-    private OffsetLazyMarker(VirtualFile file, int offset) {
+    private OffsetLazyMarker(@NotNull VirtualFile file, int offset) {
       super(file, offset);
     }
 
-    public RangeMarker createDelegate(VirtualFile file, final Document document) {
+    @NotNull
+    public RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull final Document document) {
       final int offset = Math.min(myInitialOffset, document.getTextLength());
       return document.createRangeMarker(offset, offset);
     }
@@ -164,20 +169,21 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     private final int myLine;
     private final int myColumn;
 
-    private LineColumnLazyMarker(VirtualFile file, int line, int column) {
+    private LineColumnLazyMarker(@NotNull VirtualFile file, int line, int column) {
       super(file, -1);
       myLine = line;
       myColumn = column;
     }
 
-    public RangeMarker createDelegate(VirtualFile file, final Document document) {
+    @NotNull
+    public RangeMarker createDelegate(@NotNull VirtualFile file, @NotNull final Document document) {
       int offset = calculateOffset(myProject, file, document, myLine, myColumn);
 
       return document.createRangeMarker(offset, offset);
     }
   }
 
-  private static int calculateOffset(final Project project, VirtualFile file, Document document, final int line, final int column) {
+  private static int calculateOffset(@NotNull Project project, @NotNull VirtualFile file, @NotNull Document document, final int line, final int column) {
     int offset;
     if (line < document.getLineCount()) {
       final int lineStart = document.getLineStartOffset(line);

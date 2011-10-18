@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +126,6 @@ public class OpenFileDescriptor implements Navigatable {
     }
 
     return navigateInRequestedEditor() || navigateInAnyFileEditor(project, focusEditor);
-
   }
 
   private boolean navigateInRequestedEditor() {
@@ -140,6 +140,12 @@ public class OpenFileDescriptor implements Navigatable {
 
   private boolean navigateInAnyFileEditor(Project project, boolean focusEditor) {
     List<FileEditor> editors = FileEditorManager.getInstance(project).openEditor(this, focusEditor);
+    for (FileEditor editor : editors) {
+      if (editor instanceof TextEditor) {
+        Editor e = ((TextEditor)editor).getEditor();
+        unfoldCurrentLine(e);
+      }
+    }
     return !editors.isEmpty();
   }
 
@@ -174,7 +180,7 @@ public class OpenFileDescriptor implements Navigatable {
     }
   }
 
-  public void navigateIn(Editor e) {
+  public void navigateIn(@NotNull Editor e) {
     if (getOffset() >= 0) {
       e.getCaretModel().moveToOffset(Math.min(getOffset(), e.getDocument().getTextLength()));
     }
@@ -188,9 +194,28 @@ public class OpenFileDescriptor implements Navigatable {
 
     e.getSelectionModel().removeSelection();
     scrollToCaret(e);
+    unfoldCurrentLine(e);
   }
 
-  private static void scrollToCaret(final Editor e) {
+  private static void unfoldCurrentLine(@NotNull final Editor editor) {
+    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+    final int offset = editor.getCaretModel().getOffset();
+    int line = editor.getDocument().getLineNumber(offset);
+    int start = editor.getDocument().getLineStartOffset(line);
+    int end = editor.getDocument().getLineEndOffset(line);
+    final TextRange range = new TextRange(start, end);
+    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      public void run() {
+        for (FoldRegion region : allRegions) {
+          if (!region.isExpanded() && range.intersects(TextRange.create(region))) /*region.getStartOffset() <= offset && offset <= region.getEndOffset()*/ {
+            region.setExpanded(true);
+          }
+        }
+      }
+    });
+  }
+
+  private static void scrollToCaret(@NotNull Editor e) {
     e.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 

@@ -44,7 +44,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +92,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
       else if (navElement != null) {
         int navOffset = navElement.getTextOffset();
-        VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navElement);
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navElement);
         if (virtualFile != null) {
           new OpenFileDescriptor(project, virtualFile, navOffset).navigate(true);
         }
@@ -134,7 +134,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     if (elements == null || elements.length == 0) {
       final Collection<PsiElement> candidates = suggestCandidates(reference);
-      elements = PsiUtilBase.toPsiElementArray(candidates);
+      elements = PsiUtilCore.toPsiElementArray(candidates);
     }
 
     if (elements.length == 1) {
