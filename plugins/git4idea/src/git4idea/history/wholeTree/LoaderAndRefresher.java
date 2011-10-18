@@ -12,6 +12,8 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.vfs.VirtualFile;
+
 /**
  * @author irengrig
  */
@@ -20,4 +22,5 @@ public interface LoaderAndRefresher<T> {
   StepType flushIntoUI();
   void interrupt();
   boolean isInterrupted();
+  VirtualFile getRoot();
 }

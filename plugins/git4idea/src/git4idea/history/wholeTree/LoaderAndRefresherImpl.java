@@ -129,6 +129,11 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   }
 
   @Override
+  public VirtualFile getRoot() {
+    return myRootHolder.getRoot();
+  }
+
+  @Override
   public StepType flushIntoUI() {
     myBufferConsumer.flush();
     if (StepType.FINISHED.equals(myStepType)) {
