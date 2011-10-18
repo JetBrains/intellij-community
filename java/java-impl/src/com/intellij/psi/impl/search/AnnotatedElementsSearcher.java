@@ -35,7 +35,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     final String annotationFQN = annClass.getQualifiedName();
     assert annotationFQN != null;
 
-    PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
+    final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
 
     final SearchScope useScope = p.getScope();
     Class<? extends PsiModifierListOwner>[] types = p.getTypes();
@@ -65,12 +65,14 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
         throw new PsiInvalidElementAccessException(candidate);
       }
 
-      if (!psiManager.areElementsEquivalent(ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
-        public PsiElement compute() {
-          return ref.resolve();
+        public Boolean compute() {
+          return psiManager.areElementsEquivalent(ref.resolve(), annClass);
         }
-      }), annClass)) continue;
+      })) {
+        continue;
+      }
       if (useScope instanceof GlobalSearchScope &&
           !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
         continue;
