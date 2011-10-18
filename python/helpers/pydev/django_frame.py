@@ -79,7 +79,7 @@ class DjangoTemplateFrame:
         self.f_lineno = get_template_line(frame)
         self.f_back = frame
         self.f_globals = {}
-        self.f_locals = self.collect_context(context)
+        self.f_locals = self.collect_context(self.back_context)
         self.f_trace = None
 
     def collect_context(self, context):
