@@ -59,6 +59,7 @@ public class MethodSignatureComponent extends EditorTextField {
     if (fileName != null) {
       editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(getProject(), fileName));
     }
+    editor.getSettings().setWhitespacesShown(false);
     return editor;
   }
 

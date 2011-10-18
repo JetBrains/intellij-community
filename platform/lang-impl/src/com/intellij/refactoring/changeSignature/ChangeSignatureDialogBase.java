@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -414,7 +415,16 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         @Override
         protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
           final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
-          return getRowPresentation(items.get(row), selected, focused);
+          final JComponent component = getRowPresentation(items.get(row), selected, focused);
+          for (EditorTextField editorTextField : UIUtil.findComponentsOfType(component, EditorTextField.class)) {
+            editorTextField.addSettingsProvider(new EditorSettingsProvider() {
+              @Override
+              public void customizeSettings(EditorEx editor) {
+                editor.getSettings().setWhitespacesShown(false);
+              }
+            });
+          }
+          return component;
         }
 
         @Override

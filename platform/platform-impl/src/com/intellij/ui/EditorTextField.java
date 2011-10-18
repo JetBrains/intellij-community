@@ -43,7 +43,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.JBListTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +82,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Color myRendererBg;
   private Color myRendererFg;
   private int myPreferredWidth = -1;
+  private ArrayList<EditorSettingsProvider> mySettingsProviders = new ArrayList<EditorSettingsProvider>();
 
   public EditorTextField() {
     this("");
@@ -519,6 +519,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       editor.setBackgroundColor(myRendererBg);
     }
 
+    for (EditorSettingsProvider provider : mySettingsProviders) {
+      provider.customizeSettings(editor);
+    }
+
     return editor;
   }
 
@@ -730,6 +734,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     myIsRendererWithSelection = true;
     myRendererBg = backgroundColor;
     myRendererFg = foregroundColor;
+  }
+  
+  public void addSettingsProvider(EditorSettingsProvider provider) {
+    mySettingsProviders.add(provider);
+  }
+
+  public boolean removeSettingsProvider(EditorSettingsProvider provider) {
+    return mySettingsProviders.remove(provider);
   }
 
   private static class DelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
