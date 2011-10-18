@@ -105,6 +105,7 @@ public class CreatePatchConfigurationPanel {
       public void caretPositionChanged(final InputMethodEvent event) {
       }
     });
+    myFileNameField.setTextFieldPreferredWidth(70);
     myFileNameField.getTextField().addKeyListener(new KeyListener() {
       public void keyTyped(final KeyEvent e) {
         checkName();
