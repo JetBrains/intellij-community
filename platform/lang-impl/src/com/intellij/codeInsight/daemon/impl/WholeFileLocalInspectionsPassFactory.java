@@ -21,7 +21,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -120,11 +119,10 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
 
       @Override
       void inspectInjectedPsi(@NotNull List<PsiElement> elements,
-                              @NotNull List<LocalInspectionTool> tools,
                               boolean onTheFly,
                               @NotNull ProgressIndicator indicator,
                               @NotNull InspectionManagerEx iManager,
-                              boolean inVisibleRange) {
+                              boolean inVisibleRange, boolean checkDumbAwareness, List<LocalInspectionToolWrapper> wrappers) {
         // already inspected in LIP
       }
     };
