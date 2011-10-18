@@ -33,7 +33,7 @@ import java.util.Set;
  * @author nik
  */
 @State(
-    name = "InvalidFacetManager",
+    name = InvalidFacetManagerImpl.COMPONENT_NAME,
     storages = {
         @Storage(
             file = "$WORKSPACE_FILE$"
@@ -41,6 +41,7 @@ import java.util.Set;
     }
 )
 public class InvalidFacetManagerImpl extends InvalidFacetManager implements PersistentStateComponent<InvalidFacetManagerImpl.InvalidFacetManagerState> {
+  public static final String COMPONENT_NAME = "InvalidFacetManager";
   private InvalidFacetManagerState myState = new InvalidFacetManagerState();
   private final Project myProject;
 
