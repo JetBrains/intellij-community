@@ -1152,8 +1152,7 @@
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode" id="CreateFromScratchMode" order="first"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode" id="CreateFromSourcesMode" order="after CreateFromScratchMode"/>
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportMode" order="before ImportImlMode"/>
-    
+
   </extensions>
 
   <actions>
