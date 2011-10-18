@@ -715,7 +715,6 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
-    <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
     <runConfigurationExtension implementation="com.jetbrains.python.coverage.PythonCoverageRunConfigurationExtension"/>
 
@@ -742,6 +741,10 @@
 
     <!-- Jinja2 -->
     <templateLanguageCoreTags language="Jinja2" implementationClass="com.jetbrains.jinja2.tags.Jinja2CoreTags"/>
+
+    <!-- Cython -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
+    <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
   </extensions>
 
   <project-components>

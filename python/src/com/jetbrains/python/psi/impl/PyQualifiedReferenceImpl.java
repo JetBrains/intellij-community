@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.jetbrains.cython.types.CythonStructType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -172,6 +173,10 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
           if (target != null && PyBuiltinCache.getInstance(qualifier).hasInBuiltins(target)) return false; // super() of unresolved type
         }
       }
+    }
+    // TODO: Cython-specific code without CythonLanguageDialect.isInsideCythonFile() check
+    if (qualType instanceof CythonStructType) {
+      return false;
     }
     return true;
   }
