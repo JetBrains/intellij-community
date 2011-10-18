@@ -498,6 +498,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   public void runBare() throws Throwable {
+    if (!shouldRunTest()) return;
+
     try {
       runBareImpl();
     }

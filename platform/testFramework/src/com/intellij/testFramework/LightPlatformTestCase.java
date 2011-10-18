@@ -563,6 +563,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   public final void runBare() throws Throwable {
+    if (!shouldRunTest()) {
+      return;
+    }
+
     final Throwable[] throwables = new Throwable[1];
 
     SwingUtilities.invokeAndWait(new Runnable() {

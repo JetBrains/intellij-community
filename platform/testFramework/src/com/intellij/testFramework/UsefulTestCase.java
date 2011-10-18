@@ -209,17 +209,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void runTest() throws Throwable {
-    if (isInHeadlessEnvironment()) {
-      Class<?> aClass = getClass();
-      while (aClass != null) {
-        if (aClass.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
-          System.out.println("Test '" + getClass().getName() + "." + getName() + "' is skipped because it requires working UI environment");
-          return;
-        }
-        aClass = aClass.getSuperclass();
-      }
-    }
-
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = new Runnable() {
@@ -249,6 +238,20 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  protected boolean shouldRunTest() {
+    if (isInHeadlessEnvironment()) {
+      Class<?> aClass = getClass();
+      while (aClass != null) {
+        if (aClass.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+          System.out.println("Test '" + getClass().getName() + "." + getName() + "' is skipped because it requires working UI environment");
+          return false;
+        }
+        aClass = aClass.getSuperclass();
+      }
+    }
+    return true;
+  }
+
   public static void edt(Runnable r) {
     UIUtil.invokeAndWaitIfNeeded(r);
   }
@@ -263,6 +266,8 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public void runBare() throws Throwable {
+    if (!shouldRunTest()) return;
+
     if (runInDispatchThread()) {
       final Throwable[] exception = {null};
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
