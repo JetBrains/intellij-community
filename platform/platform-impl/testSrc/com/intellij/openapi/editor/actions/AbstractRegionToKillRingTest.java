@@ -18,12 +18,14 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
  * @since 4/19/11 6:32 PM
  */
+@SkipInHeadlessEnvironment
 public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsightTestCase {
 
   public void testNoSelection() throws Exception {

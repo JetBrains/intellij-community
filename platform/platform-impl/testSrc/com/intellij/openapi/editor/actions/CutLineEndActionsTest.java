@@ -16,15 +16,16 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.IOException;
 
 /**
  * @author Denis Zhdanov
  * @since 4/18/11 2:47 PM
  */
+@SkipInHeadlessEnvironment
 public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   
   public void testNonEmptyLineEnd() throws IOException {
@@ -79,10 +80,6 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   }
   
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
-    if (GraphicsEnvironment.isHeadless()) {
-      // Don't perform actions that may try to access system clipboard in headless environment.
-      return;
-    }
     configureFromFileText(getTestName(false) + ".java", before);
     cutToLineEnd();
     checkResultByText(after);
