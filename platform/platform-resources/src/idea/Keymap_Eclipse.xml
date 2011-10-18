@@ -289,7 +289,6 @@
     </action>
     <action id="ShowPopupMenu">
       <keyboard-shortcut first-keystroke="control N" />
-      <mouse-shortcut keystroke="button3" />
       <keyboard-shortcut first-keystroke="shift alt S" />
       <keyboard-shortcut first-keystroke="control F10" />
       <keyboard-shortcut first-keystroke="shift alt T" />
