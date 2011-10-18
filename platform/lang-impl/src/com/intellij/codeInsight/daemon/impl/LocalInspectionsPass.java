@@ -219,6 +219,24 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
                                    HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT,true);
 
+    List<LocalInspectionTool> tools = getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
+
+    setProgressLimit(1L * tools.size() * 2);
+    final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
+
+    List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
+    visitPriorityElementsAndInit(tools, iManager, isOnTheFly, indicator, inside, session, init, toolWrappers, checkDumbAwareness);
+    visitRestElementsAndCleanup(iManager, isOnTheFly, indicator, outside, session, init, toolWrappers, checkDumbAwareness);
+
+    indicator.checkCanceled();
+
+    myInfos = new ArrayList<HighlightInfo>();
+    addHighlightsFromResults(myInfos, indicator);
+  }
+
+  private static List<LocalInspectionTool> getToolsForElements(List<LocalInspectionToolWrapper> toolWrappers,
+                                                               boolean checkDumbAwareness,
+                                                               List<PsiElement> inside, List<PsiElement> outside) {
     Set<Language> languages = new HashSet<Language>();
     for (PsiElement element : inside) {
       languages.add(element.getLanguage());
@@ -231,7 +249,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       langIds.add(language.getID());
       for (Language dialect : language.getDialects()) {
         langIds.add(dialect.getID());
-      }        
+      }
     }
     List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
     for (LocalInspectionToolWrapper wrapper : toolWrappers) {
@@ -242,18 +260,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       }
     }
-
-    setProgressLimit(1L * tools.size() * 2);
-    final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
-
-    List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
-    visitPriorityElementsAndInit(tools, iManager, isOnTheFly, indicator, inside, session, init);
-    visitRestElementsAndCleanup(tools, iManager, isOnTheFly, indicator, outside, session, init);
-
-    indicator.checkCanceled();
-
-    myInfos = new ArrayList<HighlightInfo>();
-    addHighlightsFromResults(myInfos, indicator);
+    return tools;
   }
 
   private void visitPriorityElementsAndInit(@NotNull List<LocalInspectionTool> tools,
@@ -262,7 +269,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                             @NotNull final ProgressIndicator indicator,
                                             @NotNull final List<PsiElement> elements,
                                             @NotNull final LocalInspectionToolSession session,
-                                            @NotNull final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
+                                            @NotNull final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init,
+                                            List<LocalInspectionToolWrapper> wrappers, boolean checkDumbAwareness) {
     boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, indicator, myFailFastOnAcquireReadAction, new Processor<LocalInspectionTool>() {
       @Override
       public boolean process(final LocalInspectionTool tool) {
@@ -295,7 +303,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     });
     if (!result) throw new ProcessCanceledException();
-    inspectInjectedPsi(elements, tools, isOnTheFly, indicator, iManager, true);
+    inspectInjectedPsi(elements, isOnTheFly, indicator, iManager, true, checkDumbAwareness, wrappers);
   }
 
   private static PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
@@ -316,13 +324,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return visitor;
   }
 
-  private void visitRestElementsAndCleanup(@NotNull List<LocalInspectionTool> tools,
-                                           @NotNull final InspectionManagerEx iManager,
+  private void visitRestElementsAndCleanup(@NotNull final InspectionManagerEx iManager,
                                            final boolean isOnTheFly,
                                            @NotNull final ProgressIndicator indicator,
                                            @NotNull final List<PsiElement> elements,
                                            @NotNull final LocalInspectionToolSession session,
-                                           @NotNull List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
+                                           @NotNull List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init,
+                                           List<LocalInspectionToolWrapper> wrappers, boolean checkDumbAwareness) {
     Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> processor =
       new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
         @Override
@@ -350,7 +358,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!result) {
       throw new ProcessCanceledException();
     }
-    inspectInjectedPsi(elements, tools, isOnTheFly, indicator, iManager, false);
+    inspectInjectedPsi(elements, isOnTheFly, indicator, iManager, false, checkDumbAwareness, wrappers);
   }
 
   private static void acceptElements(@NotNull List<PsiElement> elements,
@@ -364,11 +372,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   void inspectInjectedPsi(@NotNull final List<PsiElement> elements,
-                                  @NotNull final List<LocalInspectionTool> tools,
-                                  final boolean onTheFly,
-                                  @NotNull final ProgressIndicator indicator,
-                                  @NotNull final InspectionManagerEx iManager,
-                                  final boolean inVisibleRange) {
+                          final boolean onTheFly,
+                          @NotNull final ProgressIndicator indicator,
+                          @NotNull final InspectionManagerEx iManager,
+                          final boolean inVisibleRange, final boolean checkDumbAwareness, final List<LocalInspectionToolWrapper> wrappers) {
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -382,7 +389,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile injectedPsi) {
-        doInspectInjectedPsi(injectedPsi, tools, onTheFly, indicator, iManager, inVisibleRange);
+        doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers, checkDumbAwareness);
         return true;
       }
     })) throw new ProcessCanceledException();
@@ -674,17 +681,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void doInspectInjectedPsi(@NotNull PsiFile injectedPsi,
-                                    @NotNull List<LocalInspectionTool> tools,
                                     final boolean isOnTheFly,
                                     @NotNull final ProgressIndicator indicator,
                                     @NotNull InspectionManagerEx iManager,
-                                    final boolean inVisibleRange) {
+                                    final boolean inVisibleRange, List<LocalInspectionToolWrapper> wrappers, boolean checkDumbAwareness) {
     final PsiElement host = injectedPsi.getContext();
 
     final List<PsiElement> elements = getElementsFrom(injectedPsi);
     if (elements.isEmpty()) {
       return;
     }
+    List<LocalInspectionTool> tools =
+      getToolsForElements(wrappers, checkDumbAwareness, elements, Collections.<PsiElement>emptyList());
     for (final LocalInspectionTool tool : tools) {
       indicator.checkCanceled();
       if (host != null && myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {

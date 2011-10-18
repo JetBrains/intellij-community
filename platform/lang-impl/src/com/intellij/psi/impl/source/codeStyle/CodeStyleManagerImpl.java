@@ -476,6 +476,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       // Map injected element offset to the real file offset.
       rangeShift = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element, elementStart) - elementStart;
       elementStart += rangeShift;
+    }
+
+    if (elementStart > offset) {
+      return null;
     } 
     
     // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).

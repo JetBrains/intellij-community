@@ -75,7 +75,7 @@ public class SplitLineAction extends EditorAction {
           DataManager.getInstance().saveInDataContext(dataContext, SPLIT_LINE_KEY, null);
         }
 
-        editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+        editor.getCaretModel().moveToOffset(Math.min(document.getTextLength(), rangeMarker.getStartOffset()));
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
 
