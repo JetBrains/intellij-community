@@ -17,6 +17,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,8 +67,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
         array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
-    for (PsiElement anonymous : getAnonymousClasses(aClass)) {
-      array.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)anonymous, false));
+    if (Registry.is("show.anonymous.in.structure.view")) {
+      for (PsiElement anonymous : getAnonymousClasses(aClass)) {
+        array.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)anonymous, false));
+      }
     }
     return array;
   }
