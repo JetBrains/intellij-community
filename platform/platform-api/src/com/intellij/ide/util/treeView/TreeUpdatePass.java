@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TreeUpdatePass {
 
@@ -37,6 +39,7 @@ public class TreeUpdatePass {
 
   private boolean myUpdateChildren = true;
   private boolean myUpdateStructure = true;
+  private Set<NodeDescriptor> myUpdatedDescriptors = new HashSet<NodeDescriptor>();
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
     myNode = node;
@@ -104,5 +107,13 @@ public class TreeUpdatePass {
 
   public boolean isUpdateStructure() {
     return myUpdateStructure;
+  }
+
+  public void addToUpdated(NodeDescriptor nodeDescriptor) {
+    myUpdatedDescriptors.add(nodeDescriptor);
+  }
+
+  public boolean isUpdated(NodeDescriptor descriptor) {
+    return myUpdatedDescriptors.contains(descriptor);
   }
 }

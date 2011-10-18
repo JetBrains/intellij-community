@@ -170,6 +170,36 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
 
+  public void testRenameCollpasedParentAlwaysShowsPlus() throws Exception {
+    buildStructure(myRoot);
+    myAlwaysShowPlus.add(myCom.getElement());
+
+    buildNode("com", false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +intellij\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    collapsePath(getPath("com"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    myCom.getElement().setPresentableName("com1");
+    updateFrom(myCom.getElement());
+
+    assertTree("-/\n" +
+               " +com1\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+  }
+  
   public void testReadyCallbackWhenReleased() throws Exception {
     buildStructure(myRoot);
 
@@ -2535,11 +2565,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public YieldingUpdate() {
       super(true, false);
     }
-
-    @Override
-    public void testExpandEqualElements() throws Exception {
-      super.testExpandEqualElements();
-    }
   }
 
   public static class BgLoadingSyncUpdate extends TreeUiTest {
@@ -2574,6 +2599,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, true);
     }
 
+
+    @Override
+    public void testQueryStructure() throws Exception {
+      super.testQueryStructure();
+    }
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {
