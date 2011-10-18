@@ -24,5 +24,8 @@ public class ReplaceAssignmentWithOperatorAssignment
 
       x = x / 2 / 4;
       x = x >> 1 >> 1;
+      x = x * 2 * 2;
+      float f = 1;
+      f = f * 2 * 2;
     }
 }
