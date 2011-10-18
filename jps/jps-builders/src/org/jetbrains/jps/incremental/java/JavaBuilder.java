@@ -285,13 +285,9 @@ public class JavaBuilder extends Builder{
           success = true;
         }
         catch (Throwable e) {
-          final JavaFileObject source = fileObject.getSource();
-          File sourceFile = null;
-          if (source != null) {
-            sourceFile = new File(source.toUri());
-          }
           final StringBuilder msg = new StringBuilder();
           msg.append("@NotNull instrumentation failed ");
+          final File sourceFile = fileObject.getSourceFile();
           if (sourceFile != null) {
             msg.append(" for ").append(sourceFile.getName());
           }
@@ -555,19 +551,16 @@ public class JavaBuilder extends Builder{
 
       myContext.processMessage(new ProgressMessage("Compiled " + fileObject.getFile().getPath()));
 
-      final JavaFileObject source = fileObject.getSource();
-      if (source != null) {
-        final File file = new File(source.toUri());
-        if (!myProblematic.contains(file)) {
-          mySuccessfullyCompiled.add(file);
-        }
+      final File source = fileObject.getSourceFile();
+      if (source != null && !myProblematic.contains(source)) {
+        mySuccessfullyCompiled.add(source);
       }
     }
 
     public void markError(OutputFileObject outputClassFile) {
-      final JavaFileObject source = outputClassFile.getSource();
+      final File source = outputClassFile.getSourceFile();
       if (source != null) {
-        myProblematic.add(new File(source.toUri()));
+        myProblematic.add(source);
       }
     }
   }

@@ -19,15 +19,16 @@ class OutputFileObject extends SimpleJavaFileObject {
   private final File myFile;
   @Nullable
   private final String myClassName;
-  private final JavaFileObject mySource;
   private volatile Content myContent;
+  private final File mySourceFile;
 
   public OutputFileObject(JavacFileManager.Context context, File file, Kind kind, @Nullable String className, JavaFileObject source) {
     super(fastToURI(file), kind);
     myContext = context;
     myFile = file;
     myClassName = className;
-    mySource = source;
+
+    mySourceFile = source != null? new File(source.toUri()) : null;
   }
 
   private static URI fastToURI(File f) {
@@ -55,8 +56,9 @@ class OutputFileObject extends SimpleJavaFileObject {
     return myClassName;
   }
 
-  public JavaFileObject getSource() {
-    return mySource;
+  @Nullable
+  public File getSourceFile() {
+    return mySourceFile;
   }
 
   @Override

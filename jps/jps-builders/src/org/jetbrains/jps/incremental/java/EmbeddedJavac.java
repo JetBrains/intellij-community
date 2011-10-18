@@ -50,6 +50,10 @@ public class EmbeddedJavac {
       outputDir.mkdirs();
     }
     final JavacFileManager fileManager = new JavacFileManager(context);
+
+    fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
+    fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
+
     fileManager.setOutputDirectories(outputDirToRoots);
     if (!classpath.isEmpty()) {
       if (!fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)) {
