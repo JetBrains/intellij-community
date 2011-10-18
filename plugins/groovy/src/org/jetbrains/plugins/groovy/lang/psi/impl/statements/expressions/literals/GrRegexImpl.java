@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
+public class GrRegexImpl extends GrStringImpl implements GrRegex {
 
   public GrRegexImpl(@NotNull ASTNode node) {
     super(node);
@@ -37,25 +34,13 @@ public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
     return "Compound regular expression";
   }
 
-  public PsiType getType() {
-    return null;
-  }
-
   public boolean isPlainString() {
-    return true;
-  }
-
-  @Override
-  public GrStringInjection[] getInjections() {
-    return GrStringInjection.EMPTY_ARRAY;
+    return false;
   }
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitRegexExpression(this);
   }
 
-  public Object getValue() {
-    return null;
-  }
 }
 
