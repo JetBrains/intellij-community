@@ -53,6 +53,9 @@ public interface ModuleSettings extends ComponentManagerSettings {
   String expandPath(@NotNull String path);
 
   @NotNull
+  String collapsePath(@NotNull String path);
+
+  @NotNull
   Collection<File> getSourceRoots(boolean includeTests);
 
   @NotNull

@@ -92,6 +92,12 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   @NotNull
+  @Override
+  public String collapsePath(@NotNull String path) {
+    return myContext.collapsePath(path, this);
+  }
+
+  @NotNull
   public Collection<File> getSourceRoots(boolean includeTests) {
     final List<File> result = new ArrayList<File>();
     for (Element contentRoot : getContentRootElements()) {
