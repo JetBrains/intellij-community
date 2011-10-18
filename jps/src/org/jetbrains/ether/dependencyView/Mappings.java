@@ -51,7 +51,7 @@ public class Mappings {
   private Map<StringCache.S, StringCache.S> formToClass = new HashMap<StringCache.S, StringCache.S>();
   private Map<StringCache.S, StringCache.S> classToForm = new HashMap<StringCache.S, StringCache.S>();
 
-  public void compensateRemovedContent(final Collection<StringCache.S> compiled) {
+  private void compensateRemovedContent(final Collection<StringCache.S> compiled) {
     for (StringCache.S name : compiled) {
       final Collection<ClassRepr> classes = sourceFileToClasses.foxyGet(name);
 
@@ -369,11 +369,40 @@ public class Mappings {
     }
   }
 
+  private Set<StringCache.S> cache (final Collection<String> x) {
+    final Set<StringCache.S> y = new HashSet<StringCache.S>();
+
+    for (String s : x) {
+      y.add(StringCache.get(s));
+    }
+
+    return y;
+  }
+
+  public boolean differentiate(final Mappings delta,
+                                 final Collection<String> removed,
+                                 final Collection<String> filesToCompile,
+                                 final Collection<String> compiledFiles,
+                                 final Collection<String> affectedFiles,
+                                 final Collection<String> safeFiles) {
+    final Set<StringCache.S> affectedCache = cache(affectedFiles);
+
+    final boolean result =  differentiate(delta, cache(removed), cache(filesToCompile), cache(compiledFiles), affectedCache, cache(safeFiles));
+
+    for (StringCache.S a : affectedCache) {
+      affectedFiles.add(a.value);
+    }
+
+    return result;
+  }
+
   public boolean differentiate(final Mappings delta,
                                final Set<StringCache.S> removed,
+                               final Collection<StringCache.S> filesToCompile,
                                final Set<StringCache.S> compiledFiles,
                                final Set<StringCache.S> affectedFiles,
                                final Set<StringCache.S> safeFiles) {
+    delta.compensateRemovedContent(filesToCompile);
 
     final Util u = new Util(delta);
     final Util o = new Util();
@@ -777,6 +806,10 @@ public class Mappings {
     }
 
     return true;
+  }
+
+  public void integrate (final Mappings delta, final Collection<String> removed) {
+    integrate(delta, cache(removed));
   }
 
   public void integrate(final Mappings delta, final Set<StringCache.S> removed) {
