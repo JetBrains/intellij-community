@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,40 +20,26 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class InstanceOfUtils {
 
-  private InstanceOfUtils() {
-  }
+  private InstanceOfUtils() {}
 
-  @Nullable
-  public static PsiInstanceOfExpression getConflictingInstanceof(@NotNull PsiTypeCastExpression expression) {
-    final PsiType castType = expression.getType();
+  public static PsiInstanceOfExpression getConflictingInstanceof(PsiType castType, PsiReferenceExpression operand, PsiElement context) {
     if (!(castType instanceof PsiClassType)) {
       return null;
     }
     final PsiClassType classType = (PsiClassType)castType;
     final PsiClassType rawType = classType.rawType();
-    final PsiExpression operand = expression.getOperand();
-    if (!(operand instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)operand;
-    final InstanceofChecker checker = new InstanceofChecker(
-      referenceExpression, rawType, false);
-    PsiElement parent = PsiTreeUtil.getParentOfType(expression,
-                                                    PsiIfStatement.class,
-                                                    PsiConditionalExpression.class,
-                                                    PsiPolyadicExpression.class);
+    final InstanceofChecker checker = new InstanceofChecker(operand, rawType, false);
+    PsiElement parent = PsiTreeUtil.getParentOfType(context, PsiIfStatement.class, PsiConditionalExpression.class,
+                                                     PsiPolyadicExpression.class);
     while (parent != null) {
       parent.accept(checker);
       if (checker.hasAgreeingInstanceof()) {
         return null;
       }
-      parent = PsiTreeUtil.getParentOfType(parent,
-                                           PsiPolyadicExpression.class, PsiIfStatement.class,
+      parent = PsiTreeUtil.getParentOfType(parent, PsiPolyadicExpression.class, PsiIfStatement.class,
                                            PsiConditionalExpression.class);
     }
     if (checker.hasAgreeingInstanceof()) {

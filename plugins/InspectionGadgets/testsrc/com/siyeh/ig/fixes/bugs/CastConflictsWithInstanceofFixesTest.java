@@ -30,11 +30,11 @@ public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
   }
 
   public void testReplaceCastInDeclaration() {
-    doTest("replaceCastInDeclaration", "Replace cast");
+    doTest("replaceCastInDeclaration", "Replace 'Integer' with 'String' in cast");
   }
 
   public void testReplaceInstanceOf() {
-    doTest("replaceInstanceOf", "Replace instanceof");
+    doTest("replaceInstanceOf", "Replace 'String' with 'Integer' in instanceof");
   }
 
   @Override

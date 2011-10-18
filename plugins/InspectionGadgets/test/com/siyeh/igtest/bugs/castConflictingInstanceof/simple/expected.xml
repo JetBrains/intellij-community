@@ -3,6 +3,6 @@
   <problem>
     <file>ElseElse.java</file>
     <line>26</line>
-    <description>Cast to &lt;code&gt;(B)o&lt;/code&gt; conflicts with surrounding 'instanceof' check #loc</description>
+    <description>Cast &lt;code&gt;(B)o&lt;/code&gt; conflicts with surrounding 'instanceof' check #loc</description>
   </problem>
 </problems>
