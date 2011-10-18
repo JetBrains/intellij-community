@@ -19,6 +19,8 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -26,7 +28,7 @@ public class DupOutputStream extends OutputStream {
   private final OutputStream myStream1;
   private final OutputStream myStream2;
 
-  public DupOutputStream(final OutputStream stream1, final OutputStream stream2) {
+  public DupOutputStream(@NotNull OutputStream stream1, @NotNull OutputStream stream2) {
     myStream1 = stream1;
     myStream2 = stream2;
   }

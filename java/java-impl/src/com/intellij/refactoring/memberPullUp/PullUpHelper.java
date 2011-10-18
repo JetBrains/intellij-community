@@ -29,7 +29,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -117,28 +119,44 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         }
       }
     }
-    processMethodsDuplicates();
+    final Runnable replaceMethodDuplicatesRunnable = new Runnable() {
+      @Override
+      public void run() {
+        processMethodsDuplicates();
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      replaceMethodDuplicatesRunnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(replaceMethodDuplicatesRunnable);
+    }
   }
 
   private void processMethodsDuplicates() {
-    final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
-    final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
-    for (PsiClass aClass : search) {
-      final PsiFile containingFile = aClass.getContainingFile();
-      if (containingFile != null) {
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
-        if (virtualFile != null) {
-          hierarchyFiles.add(virtualFile);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
+        final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
+        for (PsiClass aClass : search) {
+          final PsiFile containingFile = aClass.getContainingFile();
+          if (containingFile != null) {
+            final VirtualFile virtualFile = containingFile.getVirtualFile();
+            if (virtualFile != null) {
+              hierarchyFiles.add(virtualFile);
+            }
+          }
         }
+        final Set<PsiMethod> methodsToSearchDuplicates = new HashSet<PsiMethod>();
+        for (PsiMember psiMember : myMembersAfterMove) {
+          if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).getBody() != null) {
+            methodsToSearchDuplicates.add((PsiMethod)psiMember);
+          }
+        }
+
+        MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
       }
-    }
-    final Set<PsiMethod> methodsToSearchDuplicates = new HashSet<PsiMethod>();
-    for (PsiMember psiMember : myMembersAfterMove) {
-      if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).getBody() != null) {
-        methodsToSearchDuplicates.add((PsiMethod)psiMember);
-      }
-    }
-    MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+    }, MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
   }
 
   protected String getCommandName() {

@@ -173,11 +173,20 @@ public abstract class LanguageCodeStyleSettingsProvider {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getFileExt() : null;
   }
-  
+
+  /**
+   * Returns a language name to be shown in UI. Used to overwrite language's display name by another name to
+   * be shown in UI.
+   *
+   * @param lang The language whose display name must be return.
+   * @return Alternative UI name defined by provider.getLanguageName() method or (if the method returns null)
+   *         language's own display name.
+   */
   @Nullable
   public static String getLanguageName(Language lang) {
-    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
-    return provider != null ? provider.getLanguageName() : null;
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);    
+    String providerLangName = provider != null ? provider.getLanguageName() : null;
+    return providerLangName != null ? providerLangName : lang.getDisplayName();
   }
 
   @Nullable

@@ -293,7 +293,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         } else {
           final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
           if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
-            qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), psiClass));
+            qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), null));
           } else {
             qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
           }

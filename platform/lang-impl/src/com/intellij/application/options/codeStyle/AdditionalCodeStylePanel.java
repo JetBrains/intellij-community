@@ -20,13 +20,15 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.ui.components.JBRadioButton;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Contains additional settings used in TabbedLanguageCodeStylePanel.
@@ -79,17 +81,30 @@ public class AdditionalCodeStylePanel {
   }
   
   private void fillLanguages(Menu parentMenu) {
-    for (final Language lang : LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings()) {
+    Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    @SuppressWarnings("UnnecessaryFullyQualifiedName")
+    java.util.List<MenuItem> langItems = new ArrayList<MenuItem>();
+    for (final Language lang : languages) {
       if (!lang.equals(myParent.getDefaultLanguage())) {
-        MenuItem langItem = new MenuItem(lang.getDisplayName());
-        parentMenu.add(langItem);
+        final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
+        MenuItem langItem = new MenuItem(langName);
         langItem.addActionListener(new ActionListener(){
           @Override
           public void actionPerformed(ActionEvent e) {
-            applyLanguageSettings(lang.getDisplayName());
+            applyLanguageSettings(lang);
           }
         });
+        langItems.add(langItem);
       }
+    }
+    Collections.sort(langItems, new Comparator<MenuItem>(){
+      @Override
+      public int compare(MenuItem item1, MenuItem item2) {
+        return item1.getLabel().compareToIgnoreCase(item2.getLabel());
+      }
+    });
+    for (MenuItem langItem : langItems) {
+      parentMenu.add(langItem);
     }
   }
 
@@ -113,10 +128,10 @@ public class AdditionalCodeStylePanel {
   } 
 
 
-  private void applyLanguageSettings(String langName) {
+  private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(myParent.getPanel());
     CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
-    CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(langName);
+    CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(lang);
     CommonCodeStyleSettings targetSettings = mySettings.getCommonSettings(myParent.getDefaultLanguage());
     if (sourceSettings == null || targetSettings == null) return;
     CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);

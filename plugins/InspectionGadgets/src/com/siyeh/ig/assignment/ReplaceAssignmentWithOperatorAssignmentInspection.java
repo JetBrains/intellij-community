@@ -185,7 +185,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
       if (operands.length < 2) {
         return;
       }
-      if (operands.length > 2 && !ParenthesesUtils.isCommutativeBinaryOperator(polyadicExpression.getOperationTokenType())) {
+      if (operands.length > 2 && !ParenthesesUtils.isAssociativeOperation(polyadicExpression)) {
         return;
       }
       for (PsiExpression operand : operands) {

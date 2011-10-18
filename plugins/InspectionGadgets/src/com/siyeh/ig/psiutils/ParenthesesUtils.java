@@ -96,6 +96,32 @@ public class ParenthesesUtils {
              token.equals(JavaTokenType.GTGTGT));
   }
 
+  public static boolean isAssociativeOperation(PsiPolyadicExpression expression) {
+    final IElementType tokenType = expression.getOperationTokenType();
+    final PsiType type = expression.getType();
+    final PsiPrimitiveType primitiveType;
+    if (type instanceof PsiClassType) {
+      primitiveType = PsiPrimitiveType.getUnboxedType(type);
+      if (primitiveType == null) {
+        return false;
+      }
+    } else if (type instanceof PsiPrimitiveType) {
+      primitiveType = (PsiPrimitiveType)type;
+    } else {
+      return false;
+    }
+    if (JavaTokenType.PLUS == tokenType || JavaTokenType.ASTERISK == tokenType) {
+      return primitiveType != PsiType.FLOAT && primitiveType != PsiType.DOUBLE;
+    } else if (JavaTokenType.EQEQ == tokenType || JavaTokenType.NE == tokenType) {
+      return primitiveType == PsiType.BOOLEAN;
+    } else if (JavaTokenType.AND == tokenType || JavaTokenType.OR == tokenType || JavaTokenType.XOR == tokenType) {
+      return true;
+    } else if (JavaTokenType.OROR == tokenType || JavaTokenType.ANDAND == tokenType) {
+      return true;
+    }
+    return false;
+  }
+
   public static int getPrecedence(PsiExpression expression) {
     if (expression instanceof PsiThisExpression ||
         expression instanceof PsiLiteralExpression ||
