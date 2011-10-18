@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,6 +43,10 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
         myNoDefaultComponentRequestor = null;
       }
     }
+  }
+
+  public boolean isNoDefaultComponent() {
+    return myNoDefaultComponent || Registry.is("actionSystem.noDefaultComponent");
   }
 
   @Nullable
@@ -84,7 +89,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
 
 // Made non-final for Fabrique
   public Component getDefaultComponent(final Container focusCycleRoot) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -97,7 +102,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getFirstComponent(final Container focusCycleRoot) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -110,7 +115,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getLastComponent(final Container focusCycleRoot) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -123,7 +128,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getComponentAfter(final Container focusCycleRoot, final Component aComponent) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -136,7 +141,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getComponentBefore(final Container focusCycleRoot, final Component aComponent) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
@@ -146,14 +151,14 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
 
   @Override
   public Component getInitialComponent(JInternalFrame frame) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     return super.getInitialComponent(frame);
   }
 
   @Override
   public Component getInitialComponent(Window window) {
-    if (myNoDefaultComponent) return null;
+    if (isNoDefaultComponent()) return null;
 
     return super.getInitialComponent(window);
   }
