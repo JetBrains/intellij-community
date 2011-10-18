@@ -116,15 +116,15 @@ public class OpenFileDescriptor implements Navigatable {
     navigateInProjectView();
   }
 
-  private boolean navigateInEditor(Project project, boolean focusEditor) {
+  private boolean navigateInEditor(Project project, boolean requestFocus) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
     if (type == null || !myFile.isValid()) return false;
 
-    if (type instanceof INativeFileType) {
+    if (type instanceof INativeFileType && requestFocus) {
       return ((INativeFileType) type).openFileInAssociatedApplication(project, myFile);
     }
 
-    return navigateInRequestedEditor() || navigateInAnyFileEditor(project, focusEditor);
+    return navigateInRequestedEditor() || navigateInAnyFileEditor(project, requestFocus);
 
   }
 
