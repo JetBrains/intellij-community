@@ -28,10 +28,10 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
   @Override
   public ItemPresentation getPresentation(final PsiDirectory directory) {
     final VirtualFile vFile = directory.getVirtualFile();
+    final Project project = directory.getProject();
     final String locationString = vFile.getPath();
 
-    final Project project = directory.getProject();
-    if (vFile.equals(project.getBaseDir())) {
+    if (ProjectRootsUtil.isProjectHome(directory)) {
       return new PresentationData(project.getName(), locationString,
                                   PlatformIcons.PROJECT_ICON, PlatformIcons.PROJECT_ICON, null);
     }

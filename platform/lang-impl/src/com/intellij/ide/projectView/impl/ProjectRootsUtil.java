@@ -87,4 +87,8 @@ public class ProjectRootsUtil {
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
     return directoryFile.equals(contentRootForFile);
   }
+
+  public static boolean isProjectHome(final PsiDirectory psiDirectory) {
+    return psiDirectory.getVirtualFile().equals(psiDirectory.getProject().getBaseDir());
+  }
 }
