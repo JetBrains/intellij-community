@@ -131,13 +131,20 @@ public class EditorUtil {
       result += calcColumnNumber(editor, softWrap.getText(), softWrapStartOffset, softWrapEndOffset);
       return result;
     }
-
-    assert false : String.format(
+    
+    CharSequence editorInfo;
+    if (editor instanceof EditorImpl) {
+      editorInfo = ((EditorImpl)editor).dumpState();
+    }
+    else {
+      editorInfo = "all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()) 
+      + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
+    }
+    LOG.error(String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
-      + "the target logical line: %s, all soft wraps: %s, fold regions: %s",
-      line, resultLogLine, resVisStart, resVisEnd, softWraps, editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()),
-      Arrays.toString(editor.getFoldingModel().getAllFoldRegions())
-    );
+      + "the target logical line: %s. Editor info: %s", line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
+    ));
+    
     return resVisEnd.column;
   }
 
