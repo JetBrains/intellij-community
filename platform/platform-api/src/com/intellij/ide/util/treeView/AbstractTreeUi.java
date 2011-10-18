@@ -691,6 +691,7 @@ public class AbstractTreeUi {
         rootDescriptor.set(getTreeStructure().createDescriptor(rootElement, null));
         getRootNode().setUserObject(rootDescriptor.get());
         update(rootDescriptor.get(), true);
+        pass.addToUpdated(rootDescriptor.get());
       }
     };
 
@@ -1130,6 +1131,7 @@ public class AbstractTreeUi {
     execute(new Runnable() {
       public void run() {
         try {
+
           AbstractTreeStructure treeStructure = getTreeStructure();
           if (treeStructure.hasSomethingToCommit()) treeStructure.commit();
 
@@ -1139,6 +1141,8 @@ public class AbstractTreeUi {
             removeLoading(node, true);
             return;
           }
+
+          boolean descriptorIsReady = descriptorIsUpToDate || pass.isUpdated(descriptor);
 
           final boolean wasExpanded = myTree.isExpanded(new TreePath(node.getPath())) || isAutoExpand(node);
           final boolean wasLeaf = node.getChildCount() == 0;
@@ -1161,21 +1165,25 @@ public class AbstractTreeUi {
           }
 
           final Ref<LoadedChildren> preloaded = new Ref<LoadedChildren>(loadedChildren);
-          boolean descriptorWasUpdated = descriptorIsUpToDate;
 
           if (notRequiredToUpdateChildren) {
             if (myUnbuiltNodes.contains(node) && node.getChildCount() == 0) {
               insertLoadingNode(node, true);
             }
+
+            if (!descriptorIsReady) {
+              update(descriptor, false);
+            }
+
             return;
           }
 
           if (!forcedNow) {
             if (!bgBuild) {
               if (myUnbuiltNodes.contains(node)) {
-                if (!descriptorWasUpdated) {
+                if (!descriptorIsReady) {
                   update(descriptor, true);
-                  descriptorWasUpdated = true;
+                  descriptorIsReady = true;
                 }
 
                 if (processAlwaysLeaf(node) || !updateChildren) return;
@@ -1194,12 +1202,12 @@ public class AbstractTreeUi {
           if (!forcedNow && isToBuildInBackground(descriptor)) {
             boolean alwaysLeaf = processAlwaysLeaf(node);
             queueBackgroundUpdate(
-              new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate, descriptorWasUpdated,
+              new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate, descriptorIsReady,
                              !alwaysLeaf && updateChildren), node);
             return;
           }
           else {
-            if (!descriptorWasUpdated) {
+            if (!descriptorIsReady) {
               update(descriptor, false).doWhenDone(new Runnable() {
                 public void run() {
                   if (processAlwaysLeaf(node) || !updateChildren) return;

@@ -502,6 +502,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     String myName;
     private NodeElement myForcedParent;
+    private String myPresentableName;
 
     public NodeElement(String name) {
       super(name);
@@ -509,7 +510,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
 
     public String toString() {
-      return myName;
+      return myPresentableName != null ? myPresentableName : myName;
     }
 
     @Override
@@ -527,6 +528,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     public void setName(String name) {
       myName = name;
+    }
+
+    public void setPresentableName(String name) {
+      myPresentableName = name;
     }
   }
 
