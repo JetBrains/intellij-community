@@ -1,21 +1,22 @@
 package com.intellij.tasks.config;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -37,20 +38,19 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
+@SuppressWarnings("unchecked")
 public class TaskRepositoriesConfigurable extends BaseConfigurable {
 
   private JPanel myPanel;
-  private JBList myRepositoriesList;
+  private JPanel myServersPanel;
+  private final JBList myRepositoriesList;
   @SuppressWarnings({"UnusedDeclaration"})
   private JPanel myToolbarPanel;
-  private Splitter mySplitter;
   private JPanel myRepositoryEditor;
-
-  private static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
+  private JBLabel myServersLabel;
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final Project myProject;
-  private DefaultActionGroup myActionGroup;
 
   private final Consumer<TaskRepository> myChangeListener;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
@@ -63,14 +63,20 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
     }
   };
   private final TaskManagerImpl myManager;
-  private ActionToolbar myToolbar;
 
   public TaskRepositoriesConfigurable(final Project project) {
 
+    myProject = project;
     myManager = (TaskManagerImpl)TaskManager.getManager(project);
-    TaskRepositoryType[] groups = TaskManagerImpl.ourRepositoryTypes;
 
-    List<AnAction> createActions = ContainerUtil.map2List(groups, new Function<TaskRepositoryType, AnAction>() {
+    myRepositoriesList = new JBList();
+    myRepositoriesList.getEmptyText().setText("No servers");
+
+    myServersLabel.setLabelFor(myRepositoriesList);
+
+    TaskRepositoryType[] groups = TaskManager.ourRepositoryTypes;
+
+    final List<AnAction> createActions = ContainerUtil.map2List(groups, new Function<TaskRepositoryType, AnAction>() {
       public AnAction fun(final TaskRepositoryType group) {
         String description = "New " + group.getName() + " server";
         return new IconWithTextAction(group.getName(), description, group.getIcon()) {
@@ -83,13 +89,39 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
       }
     });
 
-    MultipleAddAction addAction = new MultipleAddAction(null, "Add server", createActions);
-    addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myRepositoriesList);
-    myActionGroup.add(addAction);
-    IconWithTextAction removeAction = new IconWithTextAction(null, "Remove server", IconLoader.getIcon("/general/remove.png")) {
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myRepositoriesList).disableUpDownActions();
 
+    toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void run(AnActionButton anActionButton) {
+        DefaultActionGroup group = new DefaultActionGroup();
+        for (AnAction aMyAdditional : createActions) {
+          group.add(aMyAdditional);
+        }
+        Set<TaskRepository> repositories = RecentTaskRepositories.getInstance().getRepositories();
+        repositories.removeAll(myRepositories);
+        if (!repositories.isEmpty()) {
+          group.add(Separator.getInstance());
+          for (final TaskRepository repository : repositories) {
+            group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getRepositoryType().getIcon()) {
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                addRepository(repository);
+              }
+            });
+          }
+        }
+
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup("Add server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
+                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).show(
+          anActionButton.getPreferredPopupPoint());
+      }
+    });
+
+    toolbarDecorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton anActionButton) {
         TaskRepository repository = getSelectedRepository();
         if (repository != null) {
 
@@ -106,17 +138,9 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
           }
         }
       }
+    });
 
-      @Override
-      public void update(AnActionEvent e) {
-        TaskRepository repository = getSelectedRepository();
-        e.getPresentation().setEnabled(repository != null);
-      }
-    };
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myRepositoriesList);
-    myActionGroup.add(removeAction);
-
-    myProject = project;
+    myServersPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
 
     myRepositoriesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -125,8 +149,6 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
           String name = myRepoNames.get(repository);
           assert name != null;
           ((CardLayout)myRepositoryEditor.getLayout()).show(myRepositoryEditor, name);
-          mySplitter.doLayout();
-          mySplitter.repaint();
         }
       }
     });
@@ -139,6 +161,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
         append(repository.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     });
+
     myChangeListener = new Consumer<TaskRepository>() {
       public void consume(TaskRepository repository) {
         ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
@@ -184,11 +207,6 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
   }
 
   public JComponent createComponent() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myToolbar.updateActionsImmediately();
-      }
-    });
     return myPanel;
   }
 
@@ -242,55 +260,4 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
 
   public void disposeUIResources() {
   }
-
-  private void createUIComponents() {
-    myActionGroup = new DefaultActionGroup();
-    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myActionGroup, true);
-    myToolbarPanel = (JPanel)myToolbar.getComponent();
-
-    myRepositoriesList = new JBList();
-    myRepositoryEditor = new JPanel(new CardLayout());
-    mySplitter = new Splitter(false);
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myRepositoriesList));
-    mySplitter.setSecondComponent(myRepositoryEditor);
-    mySplitter.setHonorComponentsMinimumSize(true);
-    mySplitter.setShowDividerControls(true);
-
-    myRepositoriesList.getEmptyText().setText("No servers");
-  }
-
-  private class MultipleAddAction extends IconWithTextAction {
-    private final List<AnAction> myAdditional;
-
-    public MultipleAddAction(String text, String description, List<AnAction> additional) {
-      super(text, description, ADD_ICON);
-      myAdditional = additional;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      DefaultActionGroup group = new DefaultActionGroup();
-      for (AnAction aMyAdditional : myAdditional) {
-        group.add(aMyAdditional);
-      }
-      Set<TaskRepository> repositories = RecentTaskRepositories.getInstance().getRepositories();
-      repositories.removeAll(myRepositories);
-      if (!repositories.isEmpty()) {
-        group.add(Separator.getInstance());
-        for (final TaskRepository repository : repositories) {
-          group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getRepositoryType().getIcon()) {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              addRepository(repository);
-            }
-          });
-        }
-      }
-
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR, group);
-
-      popupMenu.getComponent().show(createCustomComponent(getTemplatePresentation()), 10, 10);
-    }
-  }
-
-
 }
