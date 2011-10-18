@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
@@ -175,6 +176,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
             progress.start();
           }
           process.run();
+          maybeSleep();
         }
         finally {
           if (progress != null && progress.isRunning()) {
@@ -507,6 +509,18 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static void maybeSleep() {
+    final int debugProgressTime = Registry.intValue("ide.debug.minProgressTime");
+    if (debugProgressTime > 0) {
+      try {
+        Thread.currentThread().sleep(debugProgressTime);
+      }
+      catch (InterruptedException e) {
+        //ignore
+      }
     }
   }
 }
