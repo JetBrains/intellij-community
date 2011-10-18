@@ -76,10 +76,17 @@ public class GradleLibraryManager {
    * 
    * @return    file handle that points to the gradle installation home (if any)
    */
+  @Nullable
   public File getGradleHome() {
     ProjectManager projectManager = ProjectManager.getInstance();
     Project[] openProjects = projectManager.getOpenProjects();
-    return openProjects.length == 1 ? getGradleHome(openProjects[0]) : getGradleHome(projectManager.getDefaultProject());
+    if (openProjects.length == 1) {
+      File result = getGradleHome(openProjects[0]);
+      if (result != null) {
+        return result;
+      } 
+    } 
+    return getGradleHome(projectManager.getDefaultProject());
   }
   
   /**

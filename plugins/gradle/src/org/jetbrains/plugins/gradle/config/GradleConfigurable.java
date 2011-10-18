@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -44,6 +46,17 @@ public class GradleConfigurable implements SearchableConfigurable {
 
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 
+  /**
+   * There is a possible case that end-user defines gradle home while particular project is open. We want to use that gradle
+   * home for the default project as well until that is manually changed for the default project.
+   * <p/>
+   * Current constant holds key of the value that defines if gradle home for default project should be tracked from
+   * the non-default one.
+   * <p/>
+   * This property has a form of 'not-propagate' in order to default to 'propagate'.
+   */
+  @NonNls private static final String NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT = "gradle.not.propagate.home.to.default.project";
+  
   private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
   private final Alarm                myAlarm          = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Project myProject;
@@ -135,7 +148,23 @@ public class GradleConfigurable implements SearchableConfigurable {
   @Override
   public void apply() {
     useNormalColorForPath();
-    GradleSettings.getInstance(myProject).GRADLE_HOME = myGradleHomeComponent.getPath();
+    String path = myGradleHomeComponent.getPath();
+    GradleSettings.getInstance(myProject).GRADLE_HOME = path;
+    
+    // There is a possible case that user defines gradle home for particular open project. We want to apply that value
+    // to the default project as well if it's still non-defined.
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    if (defaultProject == myProject) {
+      PropertiesComponent.getInstance().setValue(NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT, Boolean.TRUE.toString());
+      return;
+    }
+    
+    
+    if (!StringUtil.isEmpty(path)
+        && !Boolean.parseBoolean(PropertiesComponent.getInstance().getValue(NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT)))
+    {
+      GradleSettings.getInstance(defaultProject).GRADLE_HOME = path;
+    } 
   }
 
   @Override
@@ -143,6 +172,9 @@ public class GradleConfigurable implements SearchableConfigurable {
     useNormalColorForPath();
     myPathManuallyModified = false;
     String valueToUse = GradleSettings.getInstance(myProject).GRADLE_HOME;
+    if (StringUtil.isEmpty(valueToUse)) {
+      valueToUse = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).GRADLE_HOME;
+    } 
     if (!StringUtil.isEmpty(valueToUse)) {
       myGradleHomeSettingType = myLibraryManager.isGradleSdkHome(new File(valueToUse)) ?
                                 GradleHomeSettingType.EXPLICIT_CORRECT :
