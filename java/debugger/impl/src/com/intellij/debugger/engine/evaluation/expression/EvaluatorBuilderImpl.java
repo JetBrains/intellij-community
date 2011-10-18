@@ -1194,11 +1194,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
       PsiExpression[] initializers = expression.getInitializers();
       Evaluator[] evaluators = new Evaluator[initializers.length];
+      final PsiType type = expression.getType();
+      boolean primitive = type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType() instanceof PsiPrimitiveType;
       for (int idx = 0; idx < initializers.length; idx++) {
         PsiExpression initializer = initializers[idx];
         initializer.accept(this);
         if (myResult != null) {
-          evaluators[idx] = new DisableGC(handleUnaryNumericPromotion(initializer.getType(), myResult));
+          final Evaluator coerced =
+            primitive ? handleUnaryNumericPromotion(initializer.getType(), myResult) : new BoxingEvaluator(myResult);
+          evaluators[idx] = new DisableGC(coerced);
         }
         else {
           throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", initializer.getText()));
