@@ -96,6 +96,14 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     return result;
   }
 
+  @Override
+  protected JTextField createExtractedSuperNameField() {
+    final JTextField superNameField = super.createExtractedSuperNameField();
+    superNameField.setText(mySourceClass.getName());
+    superNameField.selectAll();
+    return superNameField;
+  }
+
   private PsiDirectory getDirUnderSameSourceRoot(final PsiDirectory[] directories) {
     final VirtualFile sourceFile = mySourceClass.getContainingFile().getVirtualFile();
     if (sourceFile != null) {

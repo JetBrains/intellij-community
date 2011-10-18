@@ -28,7 +28,6 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -112,13 +111,17 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     myPackageNameField = createPackageNameField();
     myDestinationRootPanel = createDestinationRootPanel();
     mySourceClassField = createSourceClassField();
-    myExtractedSuperNameField = new JTextField();
+    myExtractedSuperNameField = createExtractedSuperNameField();
 
     myDocCommentPanel = new DocCommentPanel(getDocCommentPanelName());
     myDocCommentPanel.setPolicy(getDocCommentPolicySetting());
 
     super.init();
     updateDialog();
+  }
+
+  protected JTextField createExtractedSuperNameField() {
+    return new JTextField();
   }
 
   protected JComponent createActionComponent() {
