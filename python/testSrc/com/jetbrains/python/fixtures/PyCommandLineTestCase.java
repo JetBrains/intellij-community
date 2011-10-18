@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public abstract class PyCommandLineTestCase extends PyLightFixtureTestCase {
+public abstract class PyCommandLineTestCase extends PyTestCase {
   private static final int PORT = 123;
 
   protected static int verifyPyDevDParameters(List<String> params) {

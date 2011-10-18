@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.testing.JythonUnitTestUtil;
 
 import java.io.File;
@@ -21,7 +21,7 @@ import java.util.List;
 public class PyTestRunnerTest extends LightPlatformTestCase {
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   public PyTestRunnerTest() {
-    PyLightFixtureTestCase.initPlatformPrefix();
+    PyTestCase.initPlatformPrefix();
   }
 
   public void testEmptySuite() throws ExecutionException {

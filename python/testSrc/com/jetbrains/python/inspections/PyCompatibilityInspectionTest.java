@@ -1,12 +1,12 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * User : catherine
  */
-public class PyCompatibilityInspectionTest extends PyLightFixtureTestCase {
+public class PyCompatibilityInspectionTest extends PyTestCase {
 
   public void testDictCompExpression() {
     setLanguageLevel(LanguageLevel.PYTHON27);

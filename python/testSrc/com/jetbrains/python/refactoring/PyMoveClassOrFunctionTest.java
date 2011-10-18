@@ -7,7 +7,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -22,7 +22,7 @@ import java.util.Collection;
 /**
  * @author vlan
  */
-public class PyMoveClassOrFunctionTest extends PyLightFixtureTestCase {
+public class PyMoveClassOrFunctionTest extends PyTestCase {
   public void testFunction() {
     doTest("f", "b.py");
   }

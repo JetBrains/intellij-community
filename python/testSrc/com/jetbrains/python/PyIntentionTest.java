@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Alexey.Ivanov
  */
-public class PyIntentionTest extends PyLightFixtureTestCase {
+public class PyIntentionTest extends PyTestCase {
 
   private void doTest(String hint) {
     myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");

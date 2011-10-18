@@ -3,12 +3,12 @@ package com.jetbrains.python.refactoring;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyRenameTest extends PyLightFixtureTestCase {
+public class PyRenameTest extends PyTestCase {
   public void testRenameField() {  // PY-457
     doTest("qu");
   }

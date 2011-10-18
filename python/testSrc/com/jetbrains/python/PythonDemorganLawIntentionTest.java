@@ -5,9 +5,9 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
-public class PythonDemorganLawIntentionTest extends PyLightFixtureTestCase {
+public class PythonDemorganLawIntentionTest extends PyTestCase {
   public void test1() throws Exception {
     doTest();
   }

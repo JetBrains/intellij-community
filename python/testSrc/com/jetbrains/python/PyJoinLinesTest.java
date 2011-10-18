@@ -6,7 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.jetbrains.python.editor.PyJoinLinesHandler;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * Tests the "Join lines" handler.
@@ -14,7 +14,7 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  * User: dcheryasov
  * Date: 1/29/11 2:33 AM
  */
-public class PyJoinLinesTest extends PyLightFixtureTestCase {
+public class PyJoinLinesTest extends PyTestCase {
   private void doTest() {
     final String path = "joinLines/";
     myFixture.configureByFile(path + getTestName(false) + ".py");

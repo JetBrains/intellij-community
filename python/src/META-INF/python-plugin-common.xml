@@ -876,7 +876,8 @@
     </action>
 
     <group id="PyCoverageMenu">
-      <action id="SwitchPyCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Show Code Co_verage Data"/>
+      <action id="SwitchPyCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Show Code Co_verage Data"
+          use-shortcut-of="SwitchCoverage"/>
       <action id="GeneratePyCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
               text="_Generate Coverage Report"/>
       <separator/>

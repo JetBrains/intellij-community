@@ -5,14 +5,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * Checks auto-unindenting of 'else' and friends.
  * User: dcheryasov
  * Date: Mar 5, 2010 2:49:38 PM
  */
-public class PyAutoUnindentTest extends PyLightFixtureTestCase {
+public class PyAutoUnindentTest extends PyTestCase {
 
   public void testSingleElse() throws Exception{
     doTypingTest();

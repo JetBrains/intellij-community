@@ -2,7 +2,7 @@ package com.jetbrains.python.buildout;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class BuildoutScriptParserTest extends PyLightFixtureTestCase  {
+public class BuildoutScriptParserTest extends PyTestCase {
   public void testParseOldStyleScript() throws IOException {
     File scriptFile = new File(myFixture.getTestDataPath(), "buildout/django-script.py");
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(scriptFile);

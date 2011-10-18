@@ -1,7 +1,7 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.types.*;
 /**
  * @author yole
  */
-public class PyTypeTest extends PyLightFixtureTestCase {
+public class PyTypeTest extends PyTestCase {
   public void testTupleType() {
     doTest("str",
            "t = ('a', 2)\n" +

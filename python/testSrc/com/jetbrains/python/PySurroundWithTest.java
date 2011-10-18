@@ -3,7 +3,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithIfSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTryExceptSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithWhileSurrounder;
@@ -11,7 +11,7 @@ import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithWh
 /**
  * @author yole
  */
-public class PySurroundWithTest extends PyLightFixtureTestCase {
+public class PySurroundWithTest extends PyTestCase {
   public void testSurroundWithIf() throws Exception {
     doTest(new PyWithIfSurrounder());
   }

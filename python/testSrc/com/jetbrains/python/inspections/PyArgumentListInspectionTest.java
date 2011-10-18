@@ -1,13 +1,13 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
  */
-public class PyArgumentListInspectionTest extends PyLightFixtureTestCase {
+public class PyArgumentListInspectionTest extends PyTestCase {
   public void testBadarglist() {
     doTest();
   }
