@@ -3172,7 +3172,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    LOG.assertTrue(line >= 0, dumpState());
+    if (line < 0) LOG.error(dumpState());
 
     VisualPosition softWrapUnawarePosition = new VisualPosition(line, Math.max(0, column));
     if (softWrapAware) {
