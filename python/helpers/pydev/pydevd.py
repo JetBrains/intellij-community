@@ -281,7 +281,7 @@ class PyDB:
         global bufferStdErrToServer
 
         if bufferStdOutToServer:
-                initStdoutRedierct()
+                initStdoutRedirect()
                 self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
 
         if bufferStdErrToServer:
@@ -1069,7 +1069,7 @@ def SetTraceForParents(frame, dispatch_func):
 def exit_hook():
     GetGlobalDebugger().checkOutputRedirect()
 
-def initStdoutRedierct():
+def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
         sys.stdoutBuf = pydevd_io.IOBuf()
         sys.stdout = pydevd_io.IORedirector(sys.stdout, sys.stdoutBuf) #@UndefinedVariable
@@ -1096,8 +1096,6 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
         _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_only_current_thread)
     finally:
         _set_trace_lock.release()
-
-
 
 _set_trace_lock = threading.Lock()
 
@@ -1129,7 +1127,7 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
         debugger.writer.addCommand(net)
 
         if bufferStdOutToServer:
-            initStdoutRedierct()
+            initStdoutRedirect()
 
         if bufferStdErrToServer:
             initStderrRedirect()
