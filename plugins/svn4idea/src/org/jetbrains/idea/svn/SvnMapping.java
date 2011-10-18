@@ -93,6 +93,7 @@ public class SvnMapping {
   @Nullable
   public String getRootForPath(final String path) {
     String floor = myFile2UrlMap.floorKey(path);
+    if (floor == null) return null;
     NavigableMap<String, RootUrlInfo> head = myFile2UrlMap.headMap(floor, true);
     for (String root : head.descendingKeySet()) {
       if (startsWithForPaths(root, path)) return root;
