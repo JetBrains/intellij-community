@@ -187,7 +187,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   private void checkSignificantTokens() {
     IElementType tokenType = getBaseTokenType();
-    if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != PyTokenTypes.END_OF_LINE_COMMENT) {
+    if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType()) {
       myLineHasSignificantTokens = true;
     }
   }
@@ -196,7 +196,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     int tokenStart = getBaseTokenStart();
     if (isBaseAt(PyTokenTypes.LINE_BREAK)) {
       processLineBreak(tokenStart);
-      while (isBaseAt(PyTokenTypes.END_OF_LINE_COMMENT)) {
+      while (isBaseAt(getCommentTokenType())) {
         // comment at start of line; maybe we need to generate dedent before the comments
         myTokenQueue.add(new PendingCommentToken(getBaseTokenType(), getBaseTokenStart(), getBaseTokenEnd(), myLastNewLineIndent));
         advanceBase();
@@ -286,7 +286,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     int indent = getNextLineIndent();
     myLastNewLineIndent = indent;
     // don't generate indent/dedent tokens if a line contains only end-of-line comment and whitespace
-    if (getBaseTokenType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+    if (getBaseTokenType() == getCommentTokenType()) {
       indent = lastIndent;
     }
     int whiteSpaceEnd = (getBaseTokenType() == null) ? super.getBufferEnd() : getBaseTokenStart();
@@ -365,4 +365,8 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     myTokenQueue.add(new PendingToken(getBaseTokenType(), getBaseTokenStart(), getBaseTokenEnd()));
   }
 
+
+  protected IElementType getCommentTokenType() {
+    return PyTokenTypes.END_OF_LINE_COMMENT;
+  }
 }

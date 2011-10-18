@@ -108,7 +108,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
-      if (CythonLanguageDialect._isDisabledFor(node)) {
+      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
         return;
       }
       checkSlots(node);
@@ -133,7 +133,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
-      if (CythonLanguageDialect._isDisabledFor(node)) {
+      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
         return;
       }
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
@@ -145,7 +145,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyStarImportElement(PyStarImportElement node) {
       super.visitPyStarImportElement(node);
-      if (CythonLanguageDialect._isDisabledFor(node)) {
+      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
         return;
       }
       myAllImports.add(node);
