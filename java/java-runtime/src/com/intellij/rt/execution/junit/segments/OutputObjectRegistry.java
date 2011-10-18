@@ -15,6 +15,9 @@
  */
 package com.intellij.rt.execution.junit.segments;
 
+import org.junit.runner.Description;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 
@@ -29,20 +32,34 @@ public abstract class OutputObjectRegistry  {
   }
 
   public String referenceTo(Object test) {
-    if (myKnownKeys.containsKey(test))
-      return (String) myKnownKeys.get(test);
+    if (containsKey(test)) return getKey(test);
     return sendObject(test);
   }
 
   public String referenceTo(Object test, Collection packets) {
-    if (myKnownKeys.containsKey(test))
-      return (String) myKnownKeys.get(test);
+    if (containsKey(test)) return getKey(test);
     return sendObject(test, packets);
   }
 
+  private boolean containsKey(Object test) {
+    return myKnownKeys.containsKey(new ObjectWrapper(test));
+  }
+
+  private String getKey(Object test) {
+    return (String)myKnownKeys.get(new ObjectWrapper(test));
+  }
+
+  private void putKey(Object test, String key) {
+    myKnownKeys.put(new ObjectWrapper(test), key);
+  }
+
+  public void forget(Object test) {
+    myKnownKeys.remove(new ObjectWrapper(test));
+  }
+
   private String sendObject(Object test, Collection packets) {
-    String key = String.valueOf(myLastIndex++);
-    myKnownKeys.put(test, key);
+    final String key = String.valueOf(myLastIndex++);
+    putKey(test, key);
     final Packet packet = createPacket();
     packet.addString(PoolOfDelimiters.OBJECT_PREFIX).addReference(key);
     addStringRepresentation(test, packet);
@@ -57,8 +74,8 @@ public abstract class OutputObjectRegistry  {
   }
 
   private String sendObject(Object test) {
-    String key = String.valueOf(myLastIndex++);
-    myKnownKeys.put(test, key);
+    final String key = String.valueOf(myLastIndex++);
+    putKey(test, key);
     Packet packet = createPacket().addString(PoolOfDelimiters.OBJECT_PREFIX).addReference(key);
     addStringRepresentation(test, packet);
     packet.addLong(getTestCont(test));
@@ -95,15 +112,48 @@ public abstract class OutputObjectRegistry  {
         addLimitedString(className);
   }
 
-  public void forget(Object test) {
-    myKnownKeys.remove(test);
-  }
-
   public int getKnownObject(Object description) {
-    final Object o = myKnownKeys.get(description);
+    final Object o = getKey(description);
     if (o instanceof String) {
       return Integer.parseInt((String)o);
     }
     return 0;
+  }
+
+  private static class ObjectWrapper {
+    private Object myObject;
+
+    private ObjectWrapper(Object object) {
+      myObject = object;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ObjectWrapper that = (ObjectWrapper)o;
+      if (!myObject.equals(that.myObject)) return false;
+      if (myObject instanceof Description && that.myObject instanceof Description) {
+        final ArrayList children = ((Description)myObject).getChildren();
+        final ArrayList thatChildren = ((Description)that.myObject).getChildren();
+        if (children.size() != thatChildren.size()) return false;
+        for (int i = 0, childrenSize = children.size(); i < childrenSize; i++) {
+          if (!children.get(i).equals(thatChildren.get(i))) return false;
+        }
+      }
+
+      return true;
+    }
+
+    public int hashCode() {
+      int hash = myObject.hashCode();
+      if (myObject instanceof Description) {
+        final ArrayList children = ((Description)myObject).getChildren();
+        for (int i = 0, childrenSize = children.size(); i < childrenSize; i++) {
+          hash = 31 * hash + children.get(i).hashCode();
+        }
+      }
+      return hash;
+    }
   }
 }
