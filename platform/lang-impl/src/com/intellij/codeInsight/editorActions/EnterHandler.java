@@ -313,6 +313,7 @@ public class EnterHandler extends BaseEnterHandler {
         CodeDocumentationUtil.CommentContext commentContext 
           = CodeDocumentationUtil.tryParseCommentContext(myFile, chars, myOffset, lineStart);
 
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
           PsiElement element = myFile.findElementAt(commentContext.lineStart);
           final String text = element.getText();
@@ -371,6 +372,7 @@ public class EnterHandler extends BaseEnterHandler {
                 myDocument.insertString(currentEndOfLine, " " + commentContext.commenter.getBlockCommentSuffix());
                 int lstart = CharArrayUtil.shiftBackwardUntil(chars, myOffset, "\n");
                 myDocument.insertString(currentEndOfLine, chars.subSequence(lstart, myOffset));
+                psiDocumentManager.commitDocument(myDocument);
               }
             }
           }
@@ -397,7 +399,7 @@ public class EnterHandler extends BaseEnterHandler {
         {
           final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
           myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+          psiDocumentManager.commitAllDocuments();
           
           if (!StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
