@@ -21,9 +21,12 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
@@ -68,6 +71,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public static final String[] BUNDLED_VALUES = new String[] {BUNDLED_NONBUNDLED, BUNDLED, NON_BUNDLED};
   private String myBundledFilter = BUNDLED_NONBUNDLED;
   private boolean myBundledEnabled = false;
+  private final Map<String, String> myPlugin2host = new HashMap<String, String>();
 
 
   public InstalledPluginsTableModel() {
@@ -105,6 +109,24 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     updatePluginDependencies();
+
+    updateRepositoryPlugins();
+  }
+
+  public void updateRepositoryPlugins() {
+    myPlugin2host.clear();
+    final JDOMExternalizableStringList pluginHosts = UpdateSettings.getInstance().myPluginHosts;
+    for (String host : pluginHosts) {
+      try {
+        final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
+        UpdateChecker.checkPluginsHost(host, downloaded, false);
+        for (PluginDownloader downloader : downloaded) {
+          myPlugin2host.put(downloader.getPluginId(), host);
+        }
+      }
+      catch (Exception ignored) {
+      }
+    }
   }
 
   private void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor) {
@@ -194,7 +216,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     int state = StringUtil.compareVersionNumbers(descr.getVersion(), existing.getVersion());
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
-    final UpdateSettings updateSettings = UpdateSettings.getInstance();
+    final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();
     if (state > 0 && !PluginManager.isIncompatible(descr) && !updatedPlugins.contains(descr.getPluginId())) {
       NewVersions2Plugins.put(pluginId, 1);
       if (!updateSettings.myOutdatedPlugins.contains(idString)) {
@@ -346,6 +368,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
         }
       }
+      if (!value && ENABLED.equals(myEnabledFilter)) {
+        view.remove(ideaPluginDescriptor);
+        filtered.add(ideaPluginDescriptor);
+        fireTableDataChanged();
+      }
     }
 
     public Comparator<IdeaPluginDescriptorImpl> getComparator() {
@@ -404,13 +431,27 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (myPluginDescriptor != null) {
         myNameLabel.setText(myPluginDescriptor.getName());
-        myBundledLabel.setText("Bundled: " + (myPluginDescriptor.isBundled() ? "Yes" : "No"));
+        final String idString = myPluginDescriptor.getPluginId().getIdString();
+        if (myPluginDescriptor.isBundled()) {
+          myBundledLabel.setText("Bundled");
+        } else {
+          final String host = myPlugin2host.get(idString);
+          if (host != null) {
+            myBundledLabel.setText("From: " + host);
+          } else {
+            if (PluginManagerUISettings.getInstance().myInstalledPlugins.contains(idString)) {
+              myBundledLabel.setText("From repository");
+            } else {
+              myBundledLabel.setText("Custom");
+            }
+          }
+        }
         final IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)myPluginDescriptor;
         if (descriptor.isDeleted()) {
           myNameLabel.setIcon(IconLoader.getIcon("/actions/clean.png"));
         }
         else if (hasNewerVersion(myPluginDescriptor.getPluginId()) || 
-                 UpdateSettings.getInstance().myOutdatedPlugins.contains(myPluginDescriptor.getPluginId().getIdString())) {
+                 PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(idString)) {
           myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
         }
         else {
@@ -485,5 +526,26 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     protected boolean isSortByDate() {
       return false;
     }
+
+    /*@Override
+    public Comparator<IdeaPluginDescriptor> getComparator() {
+      final Comparator<IdeaPluginDescriptor> comparator = super.getComparator();
+        return new Comparator<IdeaPluginDescriptor>() {
+          @Override
+          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+            if (o1.isBundled() && o2.isBundled()) return comparator.compare(o1, o2);
+            if (o1.isBundled()) return -1;
+            if (o2.isBundled()) return 1;
+            final String host1 = myPlugin2host.get(o1.getPluginId().getIdString());
+            final String host2 = myPlugin2host.get(o2.getPluginId().getIdString());
+            if (host1 == null && host2 == null) return comparator.compare(o1, o2);
+            if (host1 == null) return 1;
+            if (host2 == null) return -1;
+            if (host1.equals(host2)) return comparator.compare(o1, o2);
+            return host1.compareToIgnoreCase(host2);
+          }
+        };
+
+    }*/
   }
 }

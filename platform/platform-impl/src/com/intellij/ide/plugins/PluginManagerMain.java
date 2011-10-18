@@ -183,6 +183,7 @@ public abstract class PluginManagerMain implements Disposable {
       pluginsModel.modifyData(list);
     }
     pluginsModel.sort();
+    pluginsModel.filter(myFilter.getFilter().toLowerCase());
     pluginsList = list;
     if (selected != null) {
       select(selected);

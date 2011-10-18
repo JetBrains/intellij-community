@@ -164,7 +164,7 @@ public final class UpdateChecker {
         toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
       }
     }
-    final UpdateSettings updateSettings = UpdateSettings.getInstance();
+    final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {

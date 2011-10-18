@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +43,8 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
   
   public String AVAILABLE_SORT_MODE = PluginTableModel.NAME;
+  public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
+  public JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
 
   @NonNls private static final String AVAILABLE_PROPORTIONS = "available-proportions";
 

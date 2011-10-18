@@ -104,6 +104,7 @@ public class ActionUninstallPlugin extends AnAction implements DumbAware {
 
     try {
       PluginInstaller.prepareToUninstall(pluginId);
+      PluginManagerUISettings.getInstance().myInstalledPlugins.remove(pluginId.getIdString());
       host.setRequireShutdown(descriptor.isEnabled());
       pluginTable.updateUI();
     }
