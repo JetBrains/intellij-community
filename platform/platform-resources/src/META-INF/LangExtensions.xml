@@ -702,4 +702,7 @@
 
   <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
                   serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
+
+  <itemPresentationProvider forClass="com.intellij.psi.PsiDirectory"
+                            implementationClass="com.intellij.navigation.DirectoryPresentationProvider"/>
 </extensions>

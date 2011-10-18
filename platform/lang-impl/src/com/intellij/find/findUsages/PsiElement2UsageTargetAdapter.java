@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,13 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.find.FindManager;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -195,7 +194,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
         final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
         myIconOpen = presentation != null ? ComputableIcon.create(presentation, true) : null;
         myIconClosed = presentation != null ? ComputableIcon.create(presentation, false) : null;
-        myPresentableText = UsageViewUtil.createNodeText(element);
+        myPresentableText = presentation != null ? presentation.getPresentableText() : UsageViewUtil.createNodeText(element);
         if (myIconOpen == null || myIconClosed == null) {
           if (element instanceof PsiMetaOwner) {
             final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;

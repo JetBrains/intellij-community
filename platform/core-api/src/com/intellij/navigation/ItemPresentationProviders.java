@@ -17,6 +17,7 @@ package com.intellij.navigation;
 
 import com.intellij.openapi.util.ClassExtension;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -28,11 +29,15 @@ public class ItemPresentationProviders extends ClassExtension<ItemPresentationPr
     super("com.intellij.itemPresentationProvider");
   }
 
+  @Nullable
   public static <T extends NavigationItem> ItemPresentationProvider<T> getItemPresentationProvider(@NotNull T element) {
-    return INSTANCE.forClass(element.getClass());
+    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final ItemPresentationProvider<T> provider = INSTANCE.forClass(element.getClass());
+    return provider;
   }
 
+  @Nullable
   public static ItemPresentation getItemPresentation(NavigationItem element) {
-    return getItemPresentationProvider(element).getPresentation(element);
+    final ItemPresentationProvider<NavigationItem> provider = getItemPresentationProvider(element);
+    return provider != null ? provider.getPresentation(element) : null;
   }
 }

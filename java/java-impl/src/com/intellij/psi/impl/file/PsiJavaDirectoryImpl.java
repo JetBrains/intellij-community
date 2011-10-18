@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package com.intellij.psi.impl.file;
 
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +33,13 @@ import org.jetbrains.annotations.NotNull;
 public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiJavaDirectoryImpl");
 
-  public PsiJavaDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
+  public PsiJavaDirectoryImpl(final PsiManagerImpl manager, final VirtualFile file) {
     super(manager, file);
   }
 
+  @Override
   public void checkCreateFile(@NotNull final String name) throws IncorrectOperationException {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType type = fileTypeManager.getFileTypeByFileName(name);
+    final FileType type = FileTypeManager.getInstance().getFileTypeByFileName(name);
     if (type == StdFileTypes.CLASS) {
       throw new IncorrectOperationException("Cannot create class-file");
     }
@@ -44,6 +47,7 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
     super.checkCreateFile(name);
   }
 
+  @Override
   public PsiElement add(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiClass) {
       final String name = ((PsiClass)element).getName();
@@ -61,6 +65,7 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
     }
   }
 
+  @Override
   public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiClass) {
       if (((PsiClass)element).getContainingClass() == null) {
@@ -73,5 +78,11 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
     else {
       super.checkAdd(element);
     }
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(this);
+    return aPackage != null && !StringUtil.isEmpty(aPackage.getName()) ? aPackage.getPresentation() : super.getPresentation();
   }
 }

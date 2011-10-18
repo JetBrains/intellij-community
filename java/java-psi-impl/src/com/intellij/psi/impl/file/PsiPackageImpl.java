@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.psi.impl.file;
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,12 +43,10 @@ import java.util.List;
 import java.util.Set;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
-
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
-
   private volatile Set<String> myPublicClassNamesCache;
-  private final Object myPublicClassNamesCacheLock = new String("package classnames cache lock");
+  private final Object myPublicClassNamesCacheLock = new String("package class names cache lock");
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
@@ -254,6 +254,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return isValid();
   }
 
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
+  }
+
   public void navigate(final boolean requestFocus) {
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
   }
@@ -297,5 +302,4 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public PsiQualifiedNamedElement getContainer() {
     return getParentPackage();
   }
-
 }

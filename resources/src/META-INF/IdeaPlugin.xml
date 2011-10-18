@@ -1126,6 +1126,8 @@
 
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
 
+    <itemPresentationProvider forClass="com.intellij.psi.PsiPackage"
+                              implementationClass="com.intellij.psi.presentation.java.PackagePresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
                               implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"

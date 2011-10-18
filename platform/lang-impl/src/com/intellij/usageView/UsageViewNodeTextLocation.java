@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.usageView;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.ElementDescriptionLocation;
@@ -31,8 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
-  private UsageViewNodeTextLocation() {
-  }
+  private UsageViewNodeTextLocation() { }
 
   public static final UsageViewNodeTextLocation INSTANCE = new UsageViewNodeTextLocation();
 
@@ -52,9 +52,12 @@ public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
       }
 
       if (element instanceof PsiFile) {
-        return ((PsiFile) element).getName();
+        return ((PsiFile)element).getName();
       }
-      FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
+
+      Language language = element.getLanguage();
+      FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(language);
+      assert provider != null : "Element: " + element + ", language: " + language;
       return provider.getNodeText(element, true);
     }
   };
