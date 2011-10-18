@@ -241,7 +241,12 @@ public class ConsoleBuffer {
   }
 
   public void removeUserText(int startOffset, int endOffset) {
-    myDeferredUserInput.delete(startOffset, endOffset);
+    if (startOffset >= myDeferredUserInput.length()) {
+      return;
+    }
+    int startToUse = Math.max(0, startOffset);
+    int endToUse = Math.min(myDeferredUserInput.length(), endOffset);
+    myDeferredUserInput.delete(startToUse, endToUse);
   }
 
   public void replaceUserText(int startOffset, int endOffset, String text) {

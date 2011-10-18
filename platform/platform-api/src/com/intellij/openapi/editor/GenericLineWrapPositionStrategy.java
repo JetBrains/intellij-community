@@ -272,7 +272,11 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
     public void store(int key, double value) {
       int index = key - anchor;
       if (index >= data.length) {
-        double[] newData = new double[data.length << 1];
+        int newLength = data.length << 1;
+        while (newLength <= index && newLength > 0) {
+          newLength <<= 1;
+        }
+        double[] newData = new double[newLength];
         System.arraycopy(data, 0, newData, 0, end);
         data = newData;
       }

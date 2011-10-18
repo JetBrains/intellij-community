@@ -312,7 +312,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void insertString(int offset, @NotNull CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset +"; documentLength: "+getTextLength()+ "; " + s.subSequence(Math.max(0, getTextLength() - 20), getTextLength()));
+      throw new IndexOutOfBoundsException(
+        "Wrong offset: " + offset + "; documentLength: " + getTextLength()+ "; " + s.subSequence(Math.max(0, s.length() - 20), s.length())
+      );
     }
     assertWriteAccess();
     assertValidSeparators(s);

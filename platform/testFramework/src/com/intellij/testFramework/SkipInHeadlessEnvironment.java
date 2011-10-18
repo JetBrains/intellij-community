@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.testFramework;
 
-package com.intellij.history.integration.ui;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import com.intellij.history.integration.IntegrationTestCase;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
-
-@SkipInHeadlessEnvironment
-public abstract class LocalHistoryUITestCase extends IntegrationTestCase {
+/**
+ * Mark {@link UsefulTestCase} implementations using this annotation if they require UI environment to run
+ *
+ * @author nik
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface SkipInHeadlessEnvironment {
 }

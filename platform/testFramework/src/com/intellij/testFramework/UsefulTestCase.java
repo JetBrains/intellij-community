@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -58,6 +59,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author peter
@@ -207,6 +209,17 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void runTest() throws Throwable {
+    if (isInHeadlessEnvironment()) {
+      Class<?> aClass = getClass();
+      while (aClass != null) {
+        if (aClass.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+          System.out.println("Test '" + getClass().getName() + "." + getName() + "' is skipped because it requires working UI environment");
+          return;
+        }
+        aClass = aClass.getSuperclass();
+      }
+    }
+
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = new Runnable() {
@@ -731,5 +744,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected String getHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
+  }
+
+  protected static boolean isInHeadlessEnvironment() {
+    return GraphicsEnvironment.isHeadless();
   }
 }

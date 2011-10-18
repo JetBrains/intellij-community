@@ -16,15 +16,16 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.IOException;
 
 /**
  * @author Denis Zhdanov
  * @since 4/19/11 4:21 PM
  */
+@SkipInHeadlessEnvironment
 public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testAfterWordEnd() throws IOException {
@@ -86,10 +87,6 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
   }
   
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
-    if (GraphicsEnvironment.isHeadless()) {
-      // Don't perform actions that may try to access system clipboard in headless environment.
-      return;
-    }
     configureFromFileText(getTestName(false) + ".java", before);
     killToWordStart();
     checkResultByText(after);

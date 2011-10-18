@@ -2407,6 +2407,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPaintSelection = paintSelection;
   }
 
+  public CharSequence dumpState() {
+    StringBuilder documentInfo = new StringBuilder();
+    for (int line = 0; line < myDocument.getLineCount(); line++) {
+      documentInfo.append(line).append(": ").append(myDocument.getLineStartOffset(line)).append("-")
+        .append(myDocument.getLineEndOffset(line)).append(", ");
+    }
+    if (documentInfo.length() > 0) {
+      documentInfo.setLength(documentInfo.length() - 1);
+    }
+    return "soft wraps data: " + getSoftWrapModel() + ", folding data: " + getFoldingModel() + ", document info: " + documentInfo;
+  }
+  
   private class CachedFontContent {
     final char[][] data = new char[CACHED_CHARS_BUFFER_SIZE][];
     final int[] starts = new int[CACHED_CHARS_BUFFER_SIZE];
@@ -3160,7 +3172,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    LOG.assertTrue(line >= 0);
+    LOG.assertTrue(line >= 0, dumpState());
 
     VisualPosition softWrapUnawarePosition = new VisualPosition(line, Math.max(0, column));
     if (softWrapAware) {
