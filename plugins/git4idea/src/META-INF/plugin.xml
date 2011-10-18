@@ -19,9 +19,7 @@
     </action>
 
     <group id="GitFileActions">
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png">
-        <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
-      </action>
+      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png" use-shortcut-of="ChangesView.AddUnversioned" />
       <separator/>
       <reference ref="CheckinFiles"/>
       <reference ref="Annotate"/>
