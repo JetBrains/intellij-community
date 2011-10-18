@@ -2,14 +2,14 @@ package com.jetbrains.python;
 
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.util.Consumer;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 
 /**
  * @author vlan
  */
-public class PyStructureViewTest extends PyLightFixtureTestCase {
+public class PyStructureViewTest extends PyTestCase {
   private static String TEST_DIRECTORY = "structureView/";
 
   public void testBaseClassNames() {

@@ -18,7 +18,7 @@ import java.io.IOException;
 /**
  * @author yole
  */
-public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
+public abstract class PyResolveTestCase extends PyTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
 

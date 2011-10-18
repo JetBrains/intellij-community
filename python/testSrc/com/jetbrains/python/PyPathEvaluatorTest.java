@@ -1,7 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.impl.PyPathEvaluator;
 /**
  * @author yole
  */
-public class PyPathEvaluatorTest extends PyLightFixtureTestCase {
+public class PyPathEvaluatorTest extends PyTestCase {
   public void testDirName() {
     assertEquals("/foo/bar", doEvaluate("os.path.dirname(__file__)", "/foo/bar/baz.py"));
   }

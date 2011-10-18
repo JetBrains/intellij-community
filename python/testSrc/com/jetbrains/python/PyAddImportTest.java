@@ -3,12 +3,12 @@ package com.jetbrains.python;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyAddImportTest extends PyLightFixtureTestCase {
+public class PyAddImportTest extends PyTestCase {
   public void testAddBuiltin() {
     myFixture.configureByFile("addImport/addBuiltin.py");
     new WriteCommandAction(myFixture.getProject(), myFixture.getFile()) {

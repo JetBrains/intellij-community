@@ -11,7 +11,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -28,7 +28,7 @@ import java.util.List;
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
-public class PyStubsTest extends PyLightFixtureTestCase {
+public class PyStubsTest extends PyTestCase {
 
   @Override
   protected String getTestDataPath() {

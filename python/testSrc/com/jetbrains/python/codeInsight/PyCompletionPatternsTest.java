@@ -3,12 +3,12 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
  */
-public class PyCompletionPatternsTest extends PyLightFixtureTestCase {
+public class PyCompletionPatternsTest extends PyTestCase {
   public void testInFromImportAfterRef() {
     String text = "from . im";
     myFixture.configureByText(PythonFileType.INSTANCE, text);

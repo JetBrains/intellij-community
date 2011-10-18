@@ -3,10 +3,8 @@ package com.jetbrains.python;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
-import com.jetbrains.python.fixtures.PyResolveTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -24,7 +22,7 @@ public class PyPropertyTestSuite {
     return new TestSuite(PyClassicPropertyTest.class, PyDecoratedPropertyTest.class);
   }
 
-  abstract static class PyPropertyTest  extends PyLightFixtureTestCase {
+  abstract static class PyPropertyTest  extends PyTestCase {
     protected PyClass myClass;
     protected LanguageLevel myLanguageLevel = LanguageLevel.PYTHON26;
 

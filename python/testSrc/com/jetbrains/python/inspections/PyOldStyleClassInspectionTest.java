@@ -1,12 +1,12 @@
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * User : catherine
  */
-public class PyOldStyleClassInspectionTest extends PyLightFixtureTestCase {
+public class PyOldStyleClassInspectionTest extends PyTestCase {
 
   public void testSlot() {
     doTest(getTestName(false));

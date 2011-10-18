@@ -28,7 +28,8 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
           text.startsWith("b") || text.startsWith("B")) {
         String stringValue = element.getStringValue();
         List<TextRange> valueTextRanges = element.getStringValueTextRanges();
-        consumer.consumeToken(element, stringValue, valueTextRanges.get(0).getStartOffset(), splitter);
+        final int startOffset = valueTextRanges.get(0).getStartOffset();
+        consumer.consumeToken(element, stringValue, false, startOffset, valueTextRanges.get(0).shiftRight(-startOffset), splitter);
       }
       else {
         consumer.consumeToken(element, splitter);

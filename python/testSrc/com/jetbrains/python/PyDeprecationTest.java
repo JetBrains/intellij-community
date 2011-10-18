@@ -1,6 +1,6 @@
 package com.jetbrains.python;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.PyFunction;
 /**
  * @author yole
  */
-public class PyDeprecationTest extends PyLightFixtureTestCase {
+public class PyDeprecationTest extends PyTestCase {
   public void testFunction() {
     myFixture.configureByText(PythonFileType.INSTANCE,
                               "def getstatus(file):\n" +

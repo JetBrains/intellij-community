@@ -2,9 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.stubs.StubIndex;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -14,7 +12,7 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class PyInheritorsSearchTest extends PyLightFixtureTestCase {
+public class PyInheritorsSearchTest extends PyTestCase {
   public void testSimple() throws Exception {
     setupProject();
     final PyClass pyClass = findClass("A");

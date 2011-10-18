@@ -6,13 +6,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 /**
  * @author yole
  */
-public class PyStringLiteralTest extends PyLightFixtureTestCase {
+public class PyStringLiteralTest extends PyTestCase {
   public void testLiteralEscaper() {
     PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'");
     assertNotNull(expr);

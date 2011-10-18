@@ -2,14 +2,14 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.editorActions.EmacsStyleIndentAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author Denis Zhdanov
  * @since 4/13/11 5:18 PM
  */
-public class PyEmacsTabTest extends PyLightFixtureTestCase {
+public class PyEmacsTabTest extends PyTestCase {
   
   public void testIndentToRightAfterCompositeStatementStart() {
     doTest(

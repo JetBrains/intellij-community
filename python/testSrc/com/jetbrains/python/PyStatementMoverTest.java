@@ -2,12 +2,12 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author Alexey.Ivanov
  */
-public class PyStatementMoverTest extends PyLightFixtureTestCase {
+public class PyStatementMoverTest extends PyTestCase {
   private void doTest() {
     final String testName = getTestName(true);
     myFixture.configureByFile("mover/" + testName + ".py");
