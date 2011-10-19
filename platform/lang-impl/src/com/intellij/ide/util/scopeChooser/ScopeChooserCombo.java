@@ -42,6 +42,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -234,12 +235,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                   final List<PsiElement> elements = new ArrayList<PsiElement>();
                   final PsiElement[] children = parent.getChildren();
                   for (PsiElement child : children) {
-                    if (!(child instanceof PsiWhiteSpace)) {
+                    if (!(child instanceof PsiWhiteSpace) && child.getContainingFile() != null) {
                       elements.add(child);
                     }
                   }
                   if (!elements.isEmpty()) {
-                    SearchScope local = new LocalSearchScope(PsiUtilBase.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
+                    SearchScope local = new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
                     result.add(local);
                   }
                 }
