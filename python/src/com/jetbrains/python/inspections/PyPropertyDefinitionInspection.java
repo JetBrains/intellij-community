@@ -113,31 +113,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             for (Map.Entry<PyExpression, PyNamedParameter> entry: analysis.getPlainMappedParams().entrySet()) {
               final String param_name = entry.getValue().getName();
               PyExpression argument = PyUtil.peelArgument(entry.getKey());
-              assert argument != null : "Parameter mapped to null argument";
-              Callable callable = null;
-              if (argument instanceof PyReferenceExpression) {
-                PsiElement resolved = ((PyReferenceExpression)argument).getReference().resolve();
-                if (resolved instanceof PyFunction) callable = (PyFunction)resolved;
-                else if (resolved instanceof PyLambdaExpression) callable = (PyLambdaExpression)resolved;
-                else {
-                  reportNonCallableArg(resolved, argument);
-                  continue;
-                }
-              }
-              else if (argument instanceof PyLambdaExpression) callable = (PyLambdaExpression)argument;
-              else if (! "doc".equals(param_name)) {
-                reportNonCallableArg(argument, argument);
-                continue;
-              }
-              if ("fget".equals(param_name)) checkGetter(callable, argument);
-              else if ("fset".equals(param_name)) checkSetter(callable, argument);
-              else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
-              else if ("doc".equals(param_name)) {
-                PyType type = myTypeEvalContext.getType(argument);
-                if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
-                  registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
-                }
-              }
+              checkPropertyCallArgument(param_name, argument, node.getContainingFile());
             }
           }
           else {
@@ -150,6 +126,37 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         }
 
       }, false);
+    }
+
+    private void checkPropertyCallArgument(String param_name, PyExpression argument, PsiFile containingFile) {
+      assert argument != null : "Parameter mapped to null argument";
+      Callable callable = null;
+      if (argument instanceof PyReferenceExpression) {
+        PsiElement resolved = ((PyReferenceExpression)argument).getReference().resolve();
+        if (resolved instanceof PyFunction) callable = (PyFunction)resolved;
+        else if (resolved instanceof PyLambdaExpression) callable = (PyLambdaExpression)resolved;
+        else {
+          reportNonCallableArg(resolved, argument);
+          return;
+        }
+      }
+      else if (argument instanceof PyLambdaExpression) callable = (PyLambdaExpression)argument;
+      else if (! "doc".equals(param_name)) {
+        reportNonCallableArg(argument, argument);
+        return;
+      }
+      if (callable != null && callable.getContainingFile() != containingFile) {
+        return;
+      }
+      if ("fget".equals(param_name)) checkGetter(callable, argument);
+      else if ("fset".equals(param_name)) checkSetter(callable, argument);
+      else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
+      else if ("doc".equals(param_name)) {
+        PyType type = myTypeEvalContext.getType(argument);
+        if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
+          registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
+        }
+      }
     }
 
     private void reportNonCallableArg(PsiElement resolved, PsiElement being_checked) {
