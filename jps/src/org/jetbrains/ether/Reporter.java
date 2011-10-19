@@ -2,7 +2,9 @@ package org.jetbrains.ether;
 
 import org.jetbrains.jps.Module;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,91 +14,88 @@ import java.io.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Reporter {
-    public static final String myOkFlag = ".jps.ok";
-    public static final String myFailFlag = ".jps.fail";
+  public static final String myOkFlag = ".jps.ok";
+  public static final String myFailFlag = ".jps.fail";
 
-    private static String getSafePath (final String path) {
-        final File f = new File(path);
+  private static String getSafePath(final String path) {
+    final File f = new File(path);
 
-        if (! f.exists()) {
-            f.mkdir();
-        }
-
-        return path;
+    if (!f.exists()) {
+      f.mkdir();
     }
 
-    private static String getOkFlag(final Module m) {
-        final String outputPath = m.getOutputPath();
+    return path;
+  }
 
-        if (outputPath == null)
-            return null;
+  private static String getOkFlag(final Module m) {
+    final String outputPath = m.getOutputPath();
 
-        return getSafePath (outputPath) + File.separator + myOkFlag;
+    if (outputPath == null) return null;
+
+    return getSafePath(outputPath) + File.separator + myOkFlag;
+  }
+
+  private static String getFailFlag(final Module m) {
+    final String outputPath = m.getOutputPath();
+
+    if (outputPath == null) return null;
+
+    return getSafePath(outputPath) + File.separator + myFailFlag;
+  }
+
+  private static String getOkTestFlag(final Module m) {
+    final String testOutputPath = m.getTestOutputPath();
+
+    if (testOutputPath == null) return null;
+
+    return getSafePath(testOutputPath) + File.separator + myOkFlag;
+  }
+
+  private static String getFailTestFlag(final Module m) {
+    final String testOutputPath = m.getTestOutputPath();
+
+    if (testOutputPath == null) {
+      return null;
     }
 
-    private static String getFailFlag(final Module m) {
-        final String outputPath = m.getOutputPath();
+    return getSafePath(testOutputPath) + File.separator + myFailFlag;
+  }
 
-        if (outputPath == null)
-            return null;
+  private static void write(final String name, final String contents) {
+    if (name == null) return;
 
-        return getSafePath (outputPath) + File.separator + myFailFlag;
+    try {
+      final File file = new File(name);
+      final String path = file.getParent();
+
+      new File(path).mkdirs();
+
+      final FileWriter writer = new FileWriter(name);
+
+      writer.write(contents);
+      writer.close();
+
     }
-
-    private static String getOkTestFlag(final Module m) {
-        final String testOutputPath = m.getTestOutputPath();
-
-        if (testOutputPath == null)
-            return null;
-
-        return getSafePath (testOutputPath) + File.separator + myOkFlag;
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    private static String getFailTestFlag(final Module m) {
-        final String testOutputPath = m.getTestOutputPath();
-
-        if (testOutputPath == null) {
-            return null;
-        }
-
-        return getSafePath(testOutputPath) + File.separator + myFailFlag;
+  public static void reportBuildSuccess(final Module m, final boolean tests) {
+    if (tests) {
+      write(getOkTestFlag(m), "dummy");
     }
-
-    private static void write(final String name, final String contents) {
-        if (name == null)
-            return;
-
-        try {
-            final File file = new File (name);
-            final String path = file.getParent();
-
-            new File (path).mkdirs();
-
-            final FileWriter writer = new FileWriter(name);
-
-            writer.write(contents);
-            writer.close();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    else {
+      write(getOkFlag(m), "dummy");
     }
+  }
 
-    public static void reportBuildSuccess(final Module m, final boolean tests) {
-        if (tests) {
-            write(getOkTestFlag(m), "dummy");
-        }
-        else {
-            write(getOkFlag(m), "dummy");
-        }
+  public static void reportBuildFailure(final Module m, final boolean tests, final String reason) {
+    if (tests) {
+      write(getFailTestFlag(m), reason);
     }
-
-    public static void reportBuildFailure(final Module m, final boolean tests, final String reason) {
-        if (tests) {
-            write(getFailTestFlag(m), reason);
-        }
-        else {
-            write(getFailFlag(m), reason);
-        }
+    else {
+      write(getFailFlag(m), reason);
     }
+  }
 }

@@ -14,22 +14,27 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class Callbacks {
-    public interface SourceFileNameLookup {
-        String get(String sourceAttribute);
-    }
+  public interface SourceFileNameLookup {
+    String get(String sourceAttribute);
+  }
 
-    public static SourceFileNameLookup getDefaultLookup(final String name) {
-        return new SourceFileNameLookup() {
-            public String get(final String sourceAttribute) {
-                return name;
-            }
-        };
-    }
+  public static SourceFileNameLookup getDefaultLookup(final String name) {
+    return new SourceFileNameLookup() {
+      public String get(final String sourceAttribute) {
+        return name;
+      }
+    };
+  }
 
-    public interface Backend {
-        Collection<StringCache.S> getClassFiles();
-        void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-        void associate(Set<Pair<ClassRepr,Set<StringCache.S>>> classes, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>> usages, String sourceFileName);
-        void associateForm(StringCache.S formName, StringCache.S className);
-    }
+  public interface Backend {
+    Collection<StringCache.S> getClassFiles();
+
+    void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
+
+    void associate(Set<Pair<ClassRepr, Set<StringCache.S>>> classes,
+                   Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>> usages,
+                   String sourceFileName);
+
+    void associateForm(StringCache.S formName, StringCache.S className);
+  }
 }

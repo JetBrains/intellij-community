@@ -6,9 +6,6 @@ import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
@@ -896,15 +893,14 @@ public class Mappings {
       }
 
       public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
-        final StringCache.S classFileNameS = StringCache.get(project != null? project.getRelativePath(classFileName) : classFileName);
+        final StringCache.S classFileNameS = StringCache.get(project != null ? project.getRelativePath(classFileName) : classFileName);
         final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
         final ClassRepr repr = result.fst;
         final UsageRepr.Cluster localUsages = result.snd.fst;
         final Set<UsageRepr.Usage> localAnnotationUsages = result.snd.snd;
 
         final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().value);
-        final StringCache.S sourceFileNameS =
-          StringCache.get(project != null? project.getRelativePath(srcFileName) : srcFileName);
+        final StringCache.S sourceFileNameS = StringCache.get(project != null ? project.getRelativePath(srcFileName) : srcFileName);
 
         for (UsageRepr.Usage u : localUsages.getUsages()) {
           updateDependency(sourceFileNameS, u.getOwner());
@@ -1018,35 +1014,5 @@ public class Mappings {
     }
 
     return null;
-  }
-
-  public void print() {
-    try {
-      final BufferedWriter w = new BufferedWriter(new FileWriter("dep.txt"));
-      for (StringCache.S key : fileToFileDependency.keySet()) {
-        final Set<StringCache.S> value = (Set<StringCache.S>)fileToFileDependency.foxyGet(key);
-
-        w.write(key.value + " -->");
-        w.newLine();
-
-        if (value != null) {
-          for (StringCache.S s : value) {
-            if (s == null) {
-              w.write("  <null>");
-            }
-            else {
-              w.write("  " + s.value);
-            }
-
-            w.newLine();
-          }
-        }
-      }
-
-      w.close();
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 }

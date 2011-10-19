@@ -11,122 +11,129 @@ import java.util.*;
  */
 public class FoxyMap<K, V> implements Map<K, Object> {
 
-    public interface CollectionConstructor<X> {
-        public Collection<X> create();
+  public interface CollectionConstructor<X> {
+    public Collection<X> create();
+  }
+
+  private final Map<K, Object> map = new HashMap<K, Object>();
+
+  private final CollectionConstructor<V> constr;
+
+  public FoxyMap(final CollectionConstructor<V> c) {
+    constr = c;
+  }
+
+  public int size() {
+    return map.size();
+  }
+
+  public boolean isEmpty() {
+    return map.isEmpty();
+  }
+
+  public boolean containsKey(final Object key) {
+    return map.containsKey(key);
+  }
+
+  public boolean containsValue(final Object value) {
+    return map.containsValue(value);
+  }
+
+  public Object get(final Object key) {
+    return map.get(key);
+  }
+
+  public Collection<V> foxyGet(final K key) {
+    final Object c = get(key);
+
+    if (c == null) {
+      return null;
     }
 
-    private final Map<K, Object> map = new HashMap<K, Object>();
-
-    private final CollectionConstructor<V> constr;
-
-    public FoxyMap(final CollectionConstructor<V> c) {
-        constr = c;
+    if (c instanceof Collection) {
+      return (Collection)c;
     }
 
-    public int size() {
-        return map.size();
+    final Collection<V> l = constr.create();
+
+    l.add((V)c);
+
+    return l;
+  }
+
+  public Object put(final K key, final Object value) {
+    final Object c = get(key);
+
+    if (c == null) {
+      map.put(key, value);
     }
+    else {
+      if (c instanceof Collection) {
+        if (value instanceof Collection) {
+          ((Collection)c).addAll((Collection)value);
+        }
+        else {
+          ((Collection)c).add(value);
+        }
+      }
+      else {
+        final Collection d = constr.create();
 
-    public boolean isEmpty() {
-        return map.isEmpty();
-    }
+        d.add(c);
 
-    public boolean containsKey(final Object key) {
-        return map.containsKey(key);
-    }
-
-    public boolean containsValue(final Object value) {
-        return map.containsValue(value);
-    }
-
-    public Object get(final Object key) {
-        return map.get(key);
-    }
-
-    public Collection<V> foxyGet(final K key) {
-        final Object c = get(key);
-
-        if (c == null) {
-            return null;
+        if (value instanceof Collection) {
+          d.addAll((Collection)value);
+        }
+        else {
+          d.add(value);
         }
 
-        if (c instanceof Collection) {
-            return (Collection) c;
-        }
-
-        final Collection<V> l = constr.create();
-
-        l.add((V) c);
-
-        return l;
+        map.put(key, d);
+      }
     }
 
-    public Object put(final K key, final Object value) {
-        final Object c = get(key);
+    return c;
+  }
 
-        if (c == null) {
-            map.put(key, value);
-        } else {
-            if (c instanceof Collection) {
-                if (value instanceof Collection)
-                    ((Collection) c).addAll((Collection) value);
-                else
-                    ((Collection) c).add(value);
-            } else {
-                final Collection d = constr.create();
+  public Object remove(final Object key) {
+    return map.remove(key);
+  }
 
-                d.add(c);
+  public void putAll(Map<? extends K, ? extends Object> m) {
+    for (Entry<? extends K, ? extends Object> e : m.entrySet()) {
+      remove(e.getKey());
+      put(e.getKey(), e.getValue());
+    }
+  }
 
-                if (value instanceof Collection)
-                    d.addAll((Collection) value);
-                else
-                    d.add(value);
+  public void clear() {
+    map.clear();
+  }
 
-                map.put(key, d);
-            }
-        }
+  public Set<K> keySet() {
+    return map.keySet();
+  }
 
-        return c;
+  public Collection<Object> values() {
+    final List l = new LinkedList();
+
+    for (Object value : map.values()) {
+      if (value instanceof Collection) {
+        l.addAll((Collection)value);
+      }
+      else {
+        l.add(value);
+      }
     }
 
-    public Object remove(final Object key) {
-        return map.remove(key);
-    }
+    return l;
+  }
 
-    public void putAll(Map<? extends K, ? extends Object> m) {
-        for (Entry<? extends K, ? extends Object> e : m.entrySet()) {
-            remove(e.getKey());
-            put(e.getKey(), e.getValue());
-        }
-    }
+  public Collection<V> foxyValues() {
+    return (Collection<V>)values();
+  }
 
-    public void clear() {
-        map.clear();
-    }
-
-    public Set<K> keySet() {
-        return map.keySet();
-    }
-
-    public Collection<Object> values() {
-        final List l = new LinkedList();
-
-        for (Object value : map.values()) {
-            if (value instanceof Collection) {
-                l.addAll((Collection) value);
-            } else {
-                l.add(value);
-            }
-        }
-
-        return l;
-    }
-
-    public Collection<V> foxyValues() {
-        return (Collection<V>) values();
-    }
-
-    public Set<Entry<K, Object>> entrySet() {
-        return map.entrySet();
-    }
+  public Set<Entry<K, Object>> entrySet() {
+    return map.entrySet();
+  }
 }

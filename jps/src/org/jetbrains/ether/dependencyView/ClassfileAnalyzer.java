@@ -1,6 +1,5 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
 import org.jetbrains.ether.Pair;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;

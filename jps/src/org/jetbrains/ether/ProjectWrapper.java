@@ -1186,7 +1186,8 @@ public class ProjectWrapper {
           compiledFiles.addAll(filesToCompile);
           affectedFiles.removeAll(filesToCompile);
 
-          final boolean incremental = dependencyMapping.differentiate(delta, removed, filesToCompile, compiledFiles, affectedFiles, safeFiles);
+          final boolean incremental =
+            dependencyMapping.differentiate(delta, removed, filesToCompile, compiledFiles, affectedFiles, safeFiles);
 
           dependencyMapping.integrate(delta, removed);
 
