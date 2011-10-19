@@ -306,8 +306,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       Set<String> names = null;
       for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
         for (PsiFile file : dir.getFiles()) {
-          FileViewProvider viewProvider = file.getViewProvider();
-          if (file instanceof PsiClassOwner && file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
+          if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
             Set<String> inFile = file instanceof PsiClassOwnerEx ? ((PsiClassOwnerEx)file).getClassNames() : getClassNames(((PsiClassOwner)file).getClasses());
 
             if (inFile.isEmpty()) continue;
