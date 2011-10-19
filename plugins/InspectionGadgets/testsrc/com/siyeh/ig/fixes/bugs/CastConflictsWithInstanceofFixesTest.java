@@ -37,6 +37,14 @@ public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
     doTest("replaceInstanceOf", "Replace 'String' with 'Integer' in instanceof");
   }
 
+  public void testReplaceCastMethodInDeclaration() {
+    doTest("replaceCastMethodInDeclaration", "Replace 'Integer' with 'String' in cast");
+  }
+
+  public void testReplaceInstanceofMethod() {
+    doTest("replaceInstanceofMethod", "Replace 'String' with 'Integer' in instanceof");
+  }
+
   @Override
   protected String getRelativePath() {
     return "bugs/castConflicts";
