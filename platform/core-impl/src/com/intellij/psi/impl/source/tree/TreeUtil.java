@@ -309,24 +309,32 @@ public class TreeUtil {
                                                  final IElementType searchedType,
                                                  final CommonParentState commonParent,
                                                  final boolean expandChameleons) {
-    final TreeElement[] result = {null};
-    element.acceptTree(new RecursiveTreeElementWalkingVisitor(expandChameleons) {
+    class MyVisitor extends RecursiveTreeElementWalkingVisitor {
+      TreeElement result;
+
+      MyVisitor(boolean doTransform) {
+        super(doTransform);
+      }
+
       @Override
       protected void visitNode(TreeElement node) {
-        if (result[0] != null) return;
+        if (result != null) return;
 
         if (commonParent != null) {
           initStrongWhitespaceHolder(commonParent, node, false);
         }
         if (!expandChameleons && isCollapsedChameleon(node) || node instanceof LeafElement || node.getElementType() == searchedType) {
-          result[0] = node;
+          result = node;
           return;
         }
 
         super.visitNode(node);
       }
-    });
-    return result[0];
+    }
+
+    MyVisitor visitor = new MyVisitor(expandChameleons);
+    element.acceptTree(visitor);
+    return visitor.result;
   }
 
   @Nullable
