@@ -57,7 +57,7 @@ public abstract class Proto implements RW.Writable {
 
       @Override
       public boolean no() {
-        return base == Difference.NONE;
+        return base == NONE;
       }
 
       @Override

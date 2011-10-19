@@ -125,7 +125,7 @@ public abstract class ProtoMember extends Proto {
 
       @Override
       public boolean no() {
-        return newBase == Difference.NONE && diff.no();
+        return newBase == NONE && diff.no();
       }
 
       @Override
