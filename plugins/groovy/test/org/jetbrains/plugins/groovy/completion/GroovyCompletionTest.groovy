@@ -898,6 +898,29 @@ class Fopppp {
   public void testWordCompletionInLiterals() {
     checkSingleItemCompletion('def foo = "fo<caret>"', 'def foo = "foo<caret>"')
   }
+  public void testWordCompletionInLiterals2() {
+    checkSingleItemCompletion('''
+println "abcd"
+"a<caret>"
+''', '''
+println "abcd"
+"abcd<caret>"
+''')
+  }
+
+  public void testWordCompletionInComments() {
+    checkSingleItemCompletion('''
+println "abcd"
+// a<caret>"
+''', '''
+println "abcd"
+// abcd<caret>"
+''')
+  }
+
+  public void testNoModifiersAfterDef() throws Exception {
+    checkSingleItemCompletion 'def priv<caret>', 'def priv<caret>'
+  }
 
   public void testIfSpace() { checkCompletion 'int iff; if<caret>', ' ', "int iff; if <caret>" }
 
