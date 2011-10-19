@@ -19,10 +19,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 
 public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements AccessLevelProvider,
@@ -44,7 +41,11 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
   }
 
   public int getAccessLevel() {
-    return PsiUtil.getAccessLevel(((PsiModifierListOwner)getElement()).getModifierList());
+    final PsiModifierList modifierList = ((PsiModifierListOwner)getElement()).getModifierList();
+    if (modifierList == null) {
+      return PsiUtil.ACCESS_LEVEL_PUBLIC;
+    }
+    return PsiUtil.getAccessLevel(modifierList);
   }
 
   public int getSubLevel() {
