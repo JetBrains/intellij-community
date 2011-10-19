@@ -24,9 +24,11 @@ import com.jgoodies.forms.layout.CellConstraints;
 import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.MacroExpander;
 import org.objectweb.asm.ClassWriter;
 
+import javax.tools.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -38,10 +40,28 @@ import java.util.Set;
  *         Date: 9/12/11
  */
 public class ClasspathBootstrap {
-  private ClasspathBootstrap() {
+  public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
+
+  private static class OptimizedFileManagerClassHolder {
+    static final String CLASS_NAME = "org.jetbrains.jps.incremental.java.OptimizedFileManager";
+    static final Class<StandardJavaFileManager> managerClass;
+    static {
+      Class<StandardJavaFileManager> aClass = null;
+      try {
+        aClass = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+      }
+      catch (Throwable e) {
+        aClass = null;
+      }
+      managerClass = aClass;
+    }
+
+    private OptimizedFileManagerClassHolder() {
+    }
   }
 
-  public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
+  private ClasspathBootstrap() {
+  }
 
   public static List<File> getApplicationClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
@@ -60,6 +80,13 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
+
+    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
+    if (optimizedFileManagerClass != null) {
+      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+    }
+
+    //cp.add(getResourcePath(Mappings.class));  // todo: temporary
 
     //final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
     //final File[] files = jpsRuntime.listFiles();
@@ -83,6 +110,11 @@ public class ClasspathBootstrap {
     //  }
     //}
     return new ArrayList<File>(cp);
+  }
+
+  @Nullable
+  public static Class<StandardJavaFileManager> getOptimizedFileManagerClass() {
+    return OptimizedFileManagerClassHolder.managerClass;
   }
 
   public static File getResourcePath(Class aClass) {

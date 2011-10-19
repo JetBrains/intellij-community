@@ -1,8 +1,10 @@
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import javax.tools.*;
 import java.io.File;
@@ -66,6 +68,7 @@ public class EmbeddedJavac {
       }
     }
 
+    //noinspection IOResourceOpenedButNotSafelyClosed
     final LineOutputWriter out = new LineOutputWriter() {
       protected void lineAvailable(String line) {
         outConsumer.outputLineAvailable(line);
@@ -121,11 +124,16 @@ public class EmbeddedJavac {
         }
       };
       StandardJavaFileManager stdManager = null;
-      try {
-        stdManager = (StandardJavaFileManager)Class.forName("org.jetbrains.jps.incremental.java.OptimizedFileManager").newInstance();
-      }
-      catch (Throwable e) {
-        compileContext.processMessage(new CompilerMessage("Javac", BuildMessage.Kind.INFO, "Failed to load JPS optimized file manager for javac: " + e.getMessage()));
+      final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
+      if (optimizedManagerClass != null) {
+        try {
+          stdManager = optimizedManagerClass.newInstance();
+        }
+        catch (Throwable e) {
+          if (SystemInfo.isWindows) {
+            compileContext.processMessage(new CompilerMessage("Javac", BuildMessage.Kind.INFO, "Failed to load JPS optimized file manager for javac: " + e.getMessage()));
+          }
+        }
       }
       if (stdManager != null) {
         myStdManager = stdManager;

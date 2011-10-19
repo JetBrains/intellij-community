@@ -1,6 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import org.codehaus.groovy.transform.DelegateASTTransformation;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.Pair;
 import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
@@ -895,14 +895,15 @@ public class Mappings {
       }
 
       public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
-        final StringCache.S classFileNameS = StringCache.get(project.getRelativePath(classFileName));
+        final StringCache.S classFileNameS = StringCache.get(project != null? project.getRelativePath(classFileName) : classFileName);
         final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
         final ClassRepr repr = result.fst;
         final UsageRepr.Cluster localUsages = result.snd.fst;
         final Set<UsageRepr.Usage> localAnnotationUsages = result.snd.snd;
 
+        final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().value);
         final StringCache.S sourceFileNameS =
-          StringCache.get(project.getRelativePath(sourceFileName.get(repr == null ? null : repr.getSourceFileName().value)));
+          StringCache.get(project != null? project.getRelativePath(srcFileName) : srcFileName);
 
         for (UsageRepr.Usage u : localUsages.getUsages()) {
           updateDependency(sourceFileNameS, u.getOwner());
@@ -957,9 +958,10 @@ public class Mappings {
     };
   }
 
+  @Nullable
   private final ProjectWrapper project;
 
-  public Mappings(final ProjectWrapper p) {
+  public Mappings(@Nullable final ProjectWrapper p) {
     project = p;
   }
 

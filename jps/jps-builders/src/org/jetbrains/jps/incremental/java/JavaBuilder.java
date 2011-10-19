@@ -54,6 +54,8 @@ public class JavaBuilder extends Builder{
     }
   };
 
+  //private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
+
   private final EmbeddedJavac myJavacCompiler;
 
   public JavaBuilder(ExecutorService tasksExecutor) {
@@ -61,6 +63,21 @@ public class JavaBuilder extends Builder{
     //add here class processors in the sequence they should be executed
     //myJavacCompiler.addClassProcessor(new EmbeddedJavac.ClassPostProcessor() {
     //  public void process(CompileContext context, OutputFileObject out) {
+    //    final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
+    //    if (callback != null) {
+    //      final String className = out.getClassName();
+    //      final OutputFileObject.Content content = out.getContent();
+    //      final File srcFile = out.getSourceFile();
+    //      if (srcFile != null && content != null) {
+    //        // todo: the callback is not thread-safe?
+    //        final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+    //        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    //        synchronized (callback) {
+    //          // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
+    //          callback.associate(className, Callbacks.getDefaultLookup(srcFile.getPath()), reader);
+    //        }
+    //      }
+    //    }
     //  }
     //});
   }
@@ -164,6 +181,10 @@ public class JavaBuilder extends Builder{
       ProjectPaths.KEY.set(context, paths = new ProjectPaths(context.getProject()));
     }
 
+    //final Mappings delta = new Mappings(null); // todo
+    //final Callbacks.Backend callback = delta.getCallback();
+    //DELTA_MAPPINGS_CALLBACK_KEY.set(context, callback);
+
     // todo: consider corresponding setting in CompilerWorkspaceConfiguration
     final boolean addNotNullAssertions = true;
 
@@ -212,9 +233,14 @@ public class JavaBuilder extends Builder{
       return ExitCode.OK;
     }
     finally {
+      //DELTA_MAPPINGS_CALLBACK_KEY.set(context, callback);
+
       outputSink.writePendingData();
 
-      for (File file : outputSink.getSuccessfullyCompiled()) {
+      final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
+      //delta.compensateRemovedContent(successfullyCompiled);
+      //globalMappings.integrate(mappings, );  //todo
+      for (File file : successfullyCompiled) {
         tsStorage.saveStamp(file);
       }
       for (File file : successfulForms) {

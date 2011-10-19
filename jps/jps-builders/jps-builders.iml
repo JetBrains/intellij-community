@@ -18,6 +18,15 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" exported="" name="protobuf" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/optimizedFileManager.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 
