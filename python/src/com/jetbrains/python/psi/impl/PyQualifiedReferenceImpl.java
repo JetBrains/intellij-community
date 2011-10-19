@@ -47,7 +47,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (referencedName == null) return ret;
 
     final PyExpression qualifier = myElement.getQualifier();
-    assert qualifier != null;
+    assert qualifier != null: myElement.getText();
 
     // regular attributes
     PyType qualifierType = myContext.getTypeEvalContext().getType(qualifier);
