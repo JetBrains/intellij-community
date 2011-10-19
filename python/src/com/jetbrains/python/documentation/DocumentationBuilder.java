@@ -87,11 +87,11 @@ class DocumentationBuilder {
                   final AccessDirection dir = AccessDirection.of((PyElement)outer);
                   Maybe<PyFunction> accessor = property.getByDirection(dir);
                   myProlog
-                    .add("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
-                    .add(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true))
+                    .addItem("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
+                    .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true))
                   ;
                   if (accessor.isDefined() && property.getDoc() != null) {
-                    myBody.add(": ").add(property.getDoc()).add(BR);
+                    myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
                   }
                   else {
                     final PyFunction getter = property.getGetter().valueOrNull();
@@ -100,19 +100,19 @@ class DocumentationBuilder {
                       PyStringLiteralExpression docstring = getter.getDocStringExpression();
                       if (docstring != null) {
                         myProlog
-                          .add(BR).addWith(TagItalic, $("Copied from getter:")).add(BR)
-                          .add(docstring.getStringValue())
+                          .addItem(BR).addWith(TagItalic, $("Copied from getter:")).addItem(BR)
+                          .addItem(docstring.getStringValue())
                         ;
                       }
                     }
-                    myBody.add(BR);
+                    myBody.addItem(BR);
                   }
-                  myBody.add(BR);
+                  myBody.addItem(BR);
                   if (accessor.isDefined() && accessor.value() == null) followed = null;
                   if (dir == AccessDirection.READ) accessor_kind = "Getter";
                   else if (dir == AccessDirection.WRITE) accessor_kind = "Setter";
                   else accessor_kind = "Deleter";
-                  if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).add(BR);
+                  if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).addItem(BR);
                 }
               }
             }
@@ -141,7 +141,7 @@ class DocumentationBuilder {
         if (!is_property) {
           cls = fun.getContainingClass();
           if (cls != null) {
-            myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(cls, TagCode, true, true)).add(BR).add(BR);
+            myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(cls, TagCode, true, true)).addItem(BR).addItem(BR);
           }
         }
         else cls = null;
@@ -156,7 +156,7 @@ class DocumentationBuilder {
         addModulePath((PyFile) followed);
       }
       if (docString != null) {
-        myBody.add(BR);
+        myBody.addItem(BR);
         addFormattedDocString(myElement, docString, myBody, myEpilog);
       }
     }
@@ -165,20 +165,20 @@ class DocumentationBuilder {
       String accessor_message;
       if (followed != null) accessor_message = "Declaration: ";
       else accessor_message = accessor_kind + " is not defined.";
-      myBody.addWith(TagItalic, $(accessor_message)).add(BR);
-      if (followed != null) myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
+      myBody.addWith(TagItalic, $(accessor_message)).addItem(BR);
+      if (followed != null) myBody.addItem(combUp(PyUtil.getReadableRepr(followed, false)));
     }
     else if (isAttribute()) {
       addAttributeDoc();
     }
     else if (followed instanceof PyNamedParameter) {
-      myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
+      myBody.addItem(combUp(PyUtil.getReadableRepr(followed, false)));
       addParameterDoc((PyNamedParameter) followed);
     }
     else if (followed != null && outer instanceof PyReferenceExpression) {
       myBody
-        .add(BR)
-        .add(combUp(PythonDocumentationProvider.describeExpressionType((PyReferenceExpression)outer)));
+        .addItem(BR)
+        .addItem(combUp(PythonDocumentationProvider.describeExpressionType((PyReferenceExpression)outer)));
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) return null; // got nothing substantial to say!
     else return myResult.toString();
@@ -196,12 +196,12 @@ class DocumentationBuilder {
     if (myElement instanceof PyTargetExpression) {
       final String target_name = myElement.getText();
       //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
-      prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", target_name)).add(BR));
+      prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", target_name)).addItem(BR));
       return ((PyTargetExpression)myElement).findAssignedValue();
     }
     if (myElement instanceof PyReferenceExpression) {
       //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
-      prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).add(BR));
+      prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).addItem(BR));
       final QualifiedResolveResult resolveResult = ((PyReferenceExpression)myElement).followAssignmentsChain(PyResolveContext.noImplicits());
       return resolveResult.isImplicit() ? null : resolveResult.getElement();
     }
@@ -213,7 +213,7 @@ class DocumentationBuilder {
         String wrapper_name = wrap_info.getFirst();
         PyFunction wrapped_func = wrap_info.getSecond();
         //prolog_cat.addWith(TagSmall, $("Wrapped in ").addWith(TagCode, $(wrapper_name)).add(BR));
-        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapper_name)).add(BR));
+        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapper_name)).addItem(BR));
         return wrapped_func;
       }
     }
@@ -244,15 +244,15 @@ class DocumentationBuilder {
         if (doc_elt != null) {
           String inherited_doc = doc_elt.getStringValue();
           if (inherited_doc.length() > 1) {
-            myEpilog.add(BR).add(BR);
+            myEpilog.addItem(BR).addItem(BR);
             String ancestor_name = ancestor.getName();
             String marker = (cls == ancestor)? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
             final String ancestor_link = $().addWith(new DocumentationBuilderKit.LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
-            if (is_from_class) myEpilog.add(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
+            if (is_from_class) myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
             else {
-              myEpilog.add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, meth_name));
+              myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, meth_name));
             }
-            myEpilog.add(BR).add(BR);
+            myEpilog.addItem(BR).addItem(BR);
             ChainIterable<String> formatted = new ChainIterable<String>();
             ChainIterable<String> unformatted = new ChainIterable<String>();
             addFormattedDocString(fun, inherited_doc, formatted, unformatted);
@@ -285,7 +285,7 @@ class DocumentationBuilder {
           String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
           if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
             addFormattedDocString(fun, predefined_doc, myBody, myBody);
-            myEpilog.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
+            myEpilog.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
           }
         }
       }
@@ -357,11 +357,11 @@ class DocumentationBuilder {
         final String name = followed.getName();
         final String type = structuredDocString.getParamType(name);
         if (type != null) {
-          myBody.add(": ").add(type);
+          myBody.addItem(": ").addItem(type);
         }
         final String desc = structuredDocString.getParamDescription(name);
         if (desc != null) {
-          myEpilog.add(BR).add(desc);
+          myEpilog.addItem(BR).addItem(desc);
         }
       }
     }
@@ -372,8 +372,8 @@ class DocumentationBuilder {
     assert cls != null;
     String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
     myProlog
-      .add(type).addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
-      .add(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).add(BR)
+      .addItem(type).addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
+      .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR)
     ;
 
     final String docString = PyUtil.strValue(PyUtil.getAttributeDocString((PyTargetExpression)myElement));

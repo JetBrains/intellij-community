@@ -44,7 +44,7 @@ public class DocumentationBuilderKit {
   }
 
   static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
-    return new ChainIterable<String>("<" + tag + ">").add(content).add("</" + tag + ">");
+    return new ChainIterable<String>("<" + tag + ">").add(content).addItem("</" + tag + ">");
   }
 
   @NonNls
@@ -90,8 +90,8 @@ public class DocumentationBuilderKit {
 
     public Iterable<String> apply(Iterable<String> contents) {
       return new ChainIterable<String>()
-        .add("<a href=\"").add(DocumentationManager.PSI_ELEMENT_PROTOCOL).add(myLink).add("\">")
-        .add(contents).add("</a>")
+        .addItem("<a href=\"").addItem(DocumentationManager.PSI_ELEMENT_PROTOCOL).addItem(myLink).addItem("\">")
+        .add(contents).addItem("</a>")
       ;
     }
   }

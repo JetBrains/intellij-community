@@ -43,7 +43,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
   /**
    * Convenience: add an item wrapping it into a SingleIterable behind the scenes.
    */
-  public ChainIterable<T> add(@NotNull T item) {
+  public ChainIterable<T> addItem(@NotNull T item) {
     return (ChainIterable<T>)super.add(Collections.<T>singleton(item));
   }
 
