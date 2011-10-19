@@ -19,8 +19,8 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Pass;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.CenteredIcon;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +64,7 @@ public class InplaceButton extends JComponent implements ActiveComponent {
   public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me, TimedDeadzone.Length mouseDeadzone) {
     myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
       protected void execute(final MouseEvent e) {
-        listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "execute"));
+        listener.actionPerformed(new ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute"));
       }
 
       @Override

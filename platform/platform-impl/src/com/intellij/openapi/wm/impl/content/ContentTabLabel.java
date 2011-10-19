@@ -39,7 +39,7 @@ class ContentTabLabel extends BaseLabel {
 
     myBehavior = new BaseButtonBehavior(this) {
       protected void execute(final MouseEvent e) {
-        final ContentManager mgr = myUi.myWindow.getContentManager();
+        final ContentManager mgr = contentManager();
         if (mgr.getIndexOfContent(myContent) >= 0) {
           mgr.setSelectedContent(myContent, true);
         }
@@ -61,21 +61,37 @@ class ContentTabLabel extends BaseLabel {
     updateTextAndIcon(myContent, isSelected());
   }
 
+  @Override
+  protected boolean allowEngravement() {
+    return contentManager().getContentCount() <= 1;
+  }
+
+  @Override
+  protected Color getActiveFg(boolean selected) {
+    if (contentManager().getContentCount() > 1) {
+      return selected ? Color.white : super.getActiveFg(selected);
+    }
+    return super.getActiveFg(selected);
+  }
+
+  @Override
+  protected Color getPassiveFg(boolean selected) {
+    if (contentManager().getContentCount() > 1) {
+      return selected ? Color.white : super.getPassiveFg(selected);
+    }
+    return super.getPassiveFg(selected);
+  }
 
   protected void paintComponent(final Graphics g) {
-    if (!isSelected() && myLayout.isToDrawTabs()) {
-      g.translate(0, TAB_SHIFT);
-    }
-
     super.paintComponent(g);
-
-    if (!isSelected() && myLayout.isToDrawTabs()) {
-      g.translate(0, -TAB_SHIFT);
-    }
   }
 
   public boolean isSelected() {
-    return myUi.myWindow.getContentManager().isSelected(myContent);
+    return contentManager().isSelected(myContent);
+  }
+
+  private ContentManager contentManager() {
+    return myUi.myWindow.getContentManager();
   }
 
   @Override
