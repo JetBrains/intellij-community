@@ -557,7 +557,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   public void navigate(boolean requestFocus) {
-    PsiNavigationSupport.getInstance().navigateToDirectory(this, false);
+    PsiNavigationSupport.getInstance().navigateToDirectory(this, requestFocus);
   }
 
   protected Icon getElementIcon(final int flags) {
