@@ -33,6 +33,8 @@ import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -49,27 +51,41 @@ class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyLi
     final JTree tree = myModel.getTree();
     final MouseAdapter userSelectionListener = new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
-        final TreePath treePath = tree.getPathForLocation(e.getX(), e.getY());
-        if (treePath != null) {
-          final Object component = treePath.getLastPathComponent();
-          if (component instanceof DefaultMutableTreeNode) {
-            final Object userObject = ((DefaultMutableTreeNode)component).getUserObject();
-            if (userObject instanceof NodeDescriptor) {
-              myLastSelected = (TestProxy)((NodeDescriptor)userObject).getElement();
-            }
-          }
-        }
+      public void mouseClicked(MouseEvent e) {
+        setUserSelection(tree.getPathForLocation(e.getX(), e.getY()));
       }
     };
     tree.addMouseListener(userSelectionListener);
+    final KeyAdapter keyAdapter = new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        final int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_RIGHT) {
+          setUserSelection(tree.getSelectionPath());
+        }
+      }
+    };
+    tree.addKeyListener(keyAdapter);
     Disposer.register(myModel, new Disposable() {
       @Override
       public void dispose() {
         tree.removeMouseListener(userSelectionListener);
+        tree.removeKeyListener(keyAdapter);
       }
     });
     choosePolicy();
+  }
+
+  private void setUserSelection(TreePath treePath) {
+    if (treePath != null) {
+      final Object component = treePath.getLastPathComponent();
+      if (component instanceof DefaultMutableTreeNode) {
+        final Object userObject = ((DefaultMutableTreeNode)component).getUserObject();
+        if (userObject instanceof NodeDescriptor) {
+          myLastSelected = (TestProxy)((NodeDescriptor)userObject).getElement();
+        }
+      }
+    }
   }
 
   public void onChanged(final Boolean value) {
