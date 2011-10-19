@@ -69,11 +69,7 @@ public class SmartEnterAction extends EditorAction {
 
       final int caretOffset = editor.getCaretModel().getOffset();
       if (isInPreceedingBlanks(editor)) {
-        final int caretLine = doc.getLineNumber(caretOffset);
-        if (caretLine > 0) {
-          int prevLineEnd = doc.getLineEndOffset(caretLine - 1);
-          editor.getCaretModel().moveToOffset(prevLineEnd);
-        }
+        editor.getCaretModel().moveToOffset(doc.getLineEndOffset(doc.getLineNumber(caretOffset)));
         EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
         enterHandler.execute(editor, dataContext);
         return;

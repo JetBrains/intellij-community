@@ -1,6 +1,6 @@
 public class Foo {
     {
-        <caret>
         x = 3;
+        <caret>
     }
 }
