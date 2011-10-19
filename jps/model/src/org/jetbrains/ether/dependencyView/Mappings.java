@@ -2,7 +2,6 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
@@ -641,12 +640,11 @@ public class Mappings {
             final Collection<StringCache.S> subClasses = getSubClasses(it.name);
 
             if (subClasses != null) {
-              for (final StringCache.S subClass : subClasses) {
+              for (StringCache.S subClass : subClasses) {
                 final ClassRepr r = u.reprByName(subClass);
-                final StringCache.S sourceFileName = classToSourceFile.get(subClass);
-                assert sourceFileName != null;
 
                 if (r != null) {
+                  final StringCache.S sourceFileName = classToSourceFile.get(subClass);
 
                   if (r.isLocal) {
                     affectedFiles.add(sourceFileName);
@@ -665,7 +663,7 @@ public class Mappings {
                 final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, subClass);
                 u.affectFieldUsages(f, propagated, f.createUsage(subClass), affectedUsages, dependants);
 
-                final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(sourceFileName);
+                final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(subClass));
 
                 if (deps != null) {
                   dependants.addAll(deps);
@@ -919,7 +917,7 @@ public class Mappings {
     }
   }
 
-  private void updateClassToSource(@NotNull final StringCache.S className, @NotNull final StringCache.S sourceName) {
+  private void updateClassToSource(final StringCache.S className, final StringCache.S sourceName) {
     classToSourceFile.put(className, sourceName);
 
     final Set<StringCache.S> waiting = (Set<StringCache.S>)waitingForResolve.foxyGet(className);
@@ -1040,9 +1038,6 @@ public class Mappings {
 
   public StringCache.S getJavaByForm(final StringCache.S formFileName) {
     final StringCache.S classFileName = formToClass.get(formFileName);
-
-    assert classFileName != null;
-
     return classToSourceFile.get(classFileName);
   }
 

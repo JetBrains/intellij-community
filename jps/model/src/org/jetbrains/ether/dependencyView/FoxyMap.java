@@ -1,6 +1,11 @@
 package org.jetbrains.ether.dependencyView;
 
+import org.jetbrains.ether.RW;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,8 +16,45 @@ import java.util.*;
  */
 public class FoxyMap<K, V> implements Map<K, Object> {
 
+  public static <X extends RW.Writable, Y extends RW.Writable> void write (final BufferedWriter w, final FoxyMap<X, Y> m){
+    RW.writeln(w, Integer.toString(m.size()));
+
+    for (Entry<X, Object> e : m.entrySet()) {
+      e.getKey().write(w);
+
+      final Object value = e.getValue();
+
+      if (value instanceof Collection) {
+        RW.writeln(w, "many");
+        RW.writeln(w, (Collection<Y>) value);
+      } else {
+        RW.writeln(w, "single");
+        ((Y) value).write(w);
+      }
+    }
+  }
+
+  public static <X, Y> FoxyMap<X,Y> read (final BufferedReader r, final RW.Reader<X> xr, final RW.Reader<Y> yr, final CollectionConstructor<Y> cc){
+    final FoxyMap<X, Y> result = new FoxyMap<X,Y>(cc);
+
+    final int size = RW.readInt(r);
+
+    for (int i=0; i<size; i++) {
+      final X key = xr.read(r);
+      final String tag = RW.readString(r);
+
+      if (tag.equals("many")) {
+        result.put(key, RW.readMany(r, yr, cc.create()));
+      } else {
+        result.put(key, yr.read(r));
+      }
+    }
+
+    return result;
+  }
+
   public interface CollectionConstructor<X> {
-    public Collection<X> create();
+    Collection<X> create();
   }
 
   private final Map<K, Object> map = new HashMap<K, Object>();

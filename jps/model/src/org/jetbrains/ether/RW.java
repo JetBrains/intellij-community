@@ -1,9 +1,12 @@
 package org.jetbrains.ether;
 
+import com.intellij.util.xmlb.XmlSerializationException;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -96,6 +99,17 @@ public class RW {
     }
     catch (IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  public static <X extends Writable, Y extends Writable> void writeMap (final BufferedWriter w, final Map<X, Y> m) {
+    final int size = m.size();
+
+    writeln(w, Integer.toString(size));
+
+    for (Map.Entry<X, Y> e : m.entrySet()) {
+      e.getKey().write(w);
+      e.getValue().write(w);
     }
   }
 
@@ -227,5 +241,18 @@ public class RW {
       e.printStackTrace();
       return null;
     }
+  }
+
+  public static <X, Y> Map<X, Y> readMap (final BufferedReader r, final Reader<X> xr, final Reader<Y> yr, final Map<X, Y> acc) {
+    final int size = RW.readInt(r);
+
+    for (int i = 0; i<size; i++) {
+      final X key = xr.read(r);
+      final Y value = yr.read(r);
+
+      acc.put(key, value);
+    }
+
+    return acc;
   }
 }

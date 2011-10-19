@@ -512,4 +512,11 @@ public class UsageRepr {
       }
     }
   };
+
+  public static RW.Reader<Cluster> clusterReader = new RW.Reader<Cluster>() {
+    @Override
+    public Cluster read(BufferedReader r) {
+      return new Cluster(r);
+    }
+  };
 }
