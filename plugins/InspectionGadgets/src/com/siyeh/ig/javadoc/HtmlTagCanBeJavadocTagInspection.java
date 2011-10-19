@@ -160,14 +160,14 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
         if (startIndex < 0) {
           return;
         }
-        registerError(token, startIndex, 6, Boolean.TRUE,
-                      Integer.valueOf(startIndex));
+        registerErrorAtOffset(token, startIndex, 6, Boolean.TRUE,
+                              Integer.valueOf(startIndex));
         final int endIndex = text.indexOf("</code>", startIndex);
         if (endIndex < 0) {
           return;
         }
-        registerError(token, endIndex, 7, Boolean.FALSE,
-                      Integer.valueOf(startIndex));
+        registerErrorAtOffset(token, endIndex, 7, Boolean.FALSE,
+                              Integer.valueOf(startIndex));
         startIndex++;
       }
     }

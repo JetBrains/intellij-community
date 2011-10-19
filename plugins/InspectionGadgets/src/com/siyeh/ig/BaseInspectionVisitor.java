@@ -181,8 +181,8 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     holder.registerProblem(location, description, fixes);
   }
 
-  protected final void registerError(@NotNull PsiElement location,
-                                     int offset, int length, Object... infos) {
+  protected final void registerErrorAtOffset(@NotNull PsiElement location,
+                                             int offset, int length, Object... infos) {
     if (location.getTextLength() == 0 || length == 0) {
       return;
     }

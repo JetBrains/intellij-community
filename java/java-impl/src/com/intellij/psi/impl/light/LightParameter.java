@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class LightParameter extends LightVariableBuilder implements PsiParameter {
+public class LightParameter extends LightVariableBuilder<LightVariableBuilder> implements PsiParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
   private final String myName;
   private final PsiElement myDeclarationScope;

@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -25,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
  * @author Dmitry.Krasilschikov
  * @date 11.04.2007
  */
-public class GrVariableImpl extends GrVariableBaseImpl implements GrVariable {
+public class GrVariableImpl extends GrVariableBaseImpl<StubElement> implements GrVariable {
 
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);

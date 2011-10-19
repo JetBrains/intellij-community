@@ -102,7 +102,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
             if (parameterValues == null || (parameterValues.size() == 1 && parameterValues.get(0) instanceof PsiReferenceExpression)) {
               PsiJavaToken rParenth = otherSection.getRParenth();
               if (rParenth != null) {
-                registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
+                registerErrorAtOffset(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
               }
               duplicates[i] = true;
               duplicates[j] = true;
