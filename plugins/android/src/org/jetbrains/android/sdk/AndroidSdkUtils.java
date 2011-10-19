@@ -40,14 +40,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Jun 26, 2009
- * Time: 8:01:13 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class AndroidSdkUtils {
   public static final String DEFAULT_PLATFORM_NAME_PROPERTY = "AndroidPlatformName";
@@ -58,21 +55,14 @@ public class AndroidSdkUtils {
 
   public static boolean isAndroidSdk(@NotNull String path) {
     path = FileUtil.toSystemDependentName(path);
+
+    final File f = new File(path);
+    if (!f.exists() && !f.isDirectory()) {
+      return false;
+    }
+
     SdkManager manager = SdkManager.createManager(path, new EmptySdkLog());
     return manager != null;
-  }
-
-  public static boolean isAndroidPlatform(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    if (parent == null) {
-      return false;
-    }
-    VirtualFile sdkDir = parent.getParent();
-    if (sdkDir == null) {
-      return false;
-    }
-    AndroidSdk sdk = AndroidSdk.parse(sdkDir.getPath(), new EmptySdkLog());
-    return sdk != null && sdk.findTargetByLocation(file.getPath()) != null;
   }
 
   @Nullable
