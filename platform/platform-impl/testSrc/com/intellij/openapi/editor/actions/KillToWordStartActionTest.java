@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import java.io.IOException;
  * @author Denis Zhdanov
  * @since 4/19/11 4:21 PM
  */
-@SkipInHeadlessEnvironment
 public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testAfterWordEnd() throws IOException {

@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import java.io.IOException;
  * @author Denis Zhdanov
  * @since 4/18/11 2:47 PM
  */
-@SkipInHeadlessEnvironment
 public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   
   public void testNonEmptyLineEnd() throws IOException {
