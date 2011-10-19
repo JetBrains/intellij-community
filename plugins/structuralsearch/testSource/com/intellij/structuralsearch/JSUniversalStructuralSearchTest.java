@@ -272,10 +272,10 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testInMxml() throws IOException {
-    doTestByFile("script.mxml", "var $i$ = $val$", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTestByFile("script.mxml", "for (var i = 0; i < n; i++)", 1, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTestByFile("script.mxml", "for (var $i$ = 0; $i$ < n; $i$++)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
-    doTestByFile("script.mxml", "$func$();", 1, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("Script.mxml", "var $i$ = $val$", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("Script.mxml", "for (var i = 0; i < n; i++)", 1, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("Script.mxml", "for (var $i$ = 0; $i$ < n; $i$++)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("Script.mxml", "$func$();", 1, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
 
     // todo: test AS in XML attribute values
   }
