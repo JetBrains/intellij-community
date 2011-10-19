@@ -147,24 +147,15 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     protected final void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
       final PsiTypeElement castTypeElement;
-      final PsiTypeElement instanceofTypeElement;
+      final PsiReferenceExpression reference;
       if (element instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)element;
+        castTypeElement = typeCastExpression.getCastType();
         final PsiExpression operand = typeCastExpression.getOperand();
         if (!(operand instanceof PsiReferenceExpression)) {
           return;
         }
-        castTypeElement = typeCastExpression.getCastType();
-        if (castTypeElement == null) {
-          return;
-        }
-        final PsiInstanceOfExpression conflictingInstanceof =
-          InstanceOfUtils.getConflictingInstanceof(castTypeElement.getType(), (PsiReferenceExpression)operand, element);
-        instanceofTypeElement = conflictingInstanceof.getCheckType();
-        if (instanceofTypeElement == null) {
-          return;
-        }
-        castTypeElement.replace(instanceofTypeElement);
+        reference = (PsiReferenceExpression)operand;
       } else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -183,13 +174,17 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         if (!(argument instanceof PsiReferenceExpression)) {
           return;
         }
-        final PsiInstanceOfExpression conflictingInstanceof =
-          InstanceOfUtils.getConflictingInstanceof(castTypeElement.getType(), (PsiReferenceExpression)argument, element);
-        instanceofTypeElement = conflictingInstanceof.getCheckType();
-        if (instanceofTypeElement == null) {
-          return;
-        }
+        reference = (PsiReferenceExpression)argument;
       } else {
+        return;
+      }
+      if (castTypeElement == null) {
+        return;
+      }
+      final PsiInstanceOfExpression conflictingInstanceof =
+        InstanceOfUtils.getConflictingInstanceof(castTypeElement.getType(), reference, element);
+      final PsiTypeElement instanceofTypeElement = conflictingInstanceof.getCheckType();
+      if (instanceofTypeElement == null) {
         return;
       }
       final PsiElement newElement = replace(castTypeElement, instanceofTypeElement);
