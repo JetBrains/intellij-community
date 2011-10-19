@@ -369,7 +369,7 @@ public class Mappings {
     }
   }
 
-  private Set<StringCache.S> cache (final Collection<String> x) {
+  private Set<StringCache.S> cache(final Collection<String> x) {
     final Set<StringCache.S> y = new HashSet<StringCache.S>();
 
     for (String s : x) {
@@ -380,14 +380,15 @@ public class Mappings {
   }
 
   public boolean differentiate(final Mappings delta,
-                                 final Collection<String> removed,
-                                 final Collection<String> filesToCompile,
-                                 final Collection<String> compiledFiles,
-                                 final Collection<String> affectedFiles,
-                                 final Collection<String> safeFiles) {
+                               final Collection<String> removed,
+                               final Collection<String> filesToCompile,
+                               final Collection<String> compiledFiles,
+                               final Collection<String> affectedFiles,
+                               final Collection<String> safeFiles) {
     final Set<StringCache.S> affectedCache = cache(affectedFiles);
 
-    final boolean result =  differentiate(delta, cache(removed), cache(filesToCompile), cache(compiledFiles), affectedCache, cache(safeFiles));
+    final boolean result =
+      differentiate(delta, cache(removed), cache(filesToCompile), cache(compiledFiles), affectedCache, cache(safeFiles));
 
     for (StringCache.S a : affectedCache) {
       affectedFiles.add(a.value);
@@ -808,7 +809,7 @@ public class Mappings {
     return true;
   }
 
-  public void integrate (final Mappings delta, final Collection<String> removed) {
+  public void integrate(final Mappings delta, final Collection<String> removed) {
     integrate(delta, cache(removed));
   }
 
