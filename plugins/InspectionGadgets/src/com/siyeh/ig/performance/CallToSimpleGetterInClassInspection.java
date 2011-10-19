@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -35,10 +35,11 @@ import javax.swing.*;
 
 public class CallToSimpleGetterInClassInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreGetterCallsOnOtherObjects = false;
+
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean onlyReportPrivateGetter = false;
 
   @Override
   @NotNull
@@ -49,23 +50,24 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "call.to.simple.getter.in.class.display.name");
+    return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "call.to.simple.getter.in.class.problem.descriptor");
+    return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.problem.descriptor");
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "call.to.simple.getter.in.class.display.name.ignore.option"),
-                                          this, "ignoreGetterCallsOnOtherObjects");
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.simple.getter.in.class.ignore.option"),
+                             "ignoreGetterCallsOnOtherObjects");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.private.simple.getter.in.class.option"),
+                             "onlyReportPrivateGetter");
+    return optionsPanel;
   }
 
   @Override
@@ -77,21 +79,17 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "call.to.simple.getter.in.class.inline.quickfix");
+      return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.inline.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodIdentifier = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)methodIdentifier.getParent();
+      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodIdentifier.getParent();
       if (methodExpression == null) {
         return;
       }
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)methodExpression.getParent();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)methodExpression.getParent();
       if (call == null) {
         return;
       }
@@ -104,15 +102,12 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
         return;
       }
       final PsiStatement[] statements = body.getStatements();
-      final PsiReturnStatement returnStatement =
-        (PsiReturnStatement)statements[0];
-      final PsiExpression returnValue =
-        returnStatement.getReturnValue();
+      final PsiReturnStatement returnStatement = (PsiReturnStatement)statements[0];
+      final PsiExpression returnValue = returnStatement.getReturnValue();
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)returnValue;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)returnValue;
       final PsiField field = (PsiField)referenceExpression.resolve();
       if (field == null) {
         return;
@@ -121,14 +116,11 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
       if (fieldName == null) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(call.getProject());
         final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-        final PsiVariable variable =
-          resolveHelper.resolveReferencedVariable(fieldName,
-                                                  call);
+        final PsiVariable variable = resolveHelper.resolveReferencedVariable(fieldName, call);
         if (variable == null) {
           return;
         }
@@ -150,15 +142,12 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
     return new CallToSimpleGetterInClassVisitor();
   }
 
-  private class CallToSimpleGetterInClassVisitor
-    extends BaseInspectionVisitor {
+  private class CallToSimpleGetterInClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(call);
+      final PsiClass containingClass = ClassUtils.getContainingClass(call);
       if (containingClass == null) {
         return;
       }
@@ -169,12 +158,9 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
       if (!containingClass.equals(method.getContainingClass())) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (qualifier != null &&
-          !(qualifier instanceof PsiThisExpression)) {
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
         if (ignoreGetterCallsOnOtherObjects) {
           return;
         }
@@ -189,6 +175,9 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
         }
       }
       if (!PropertyUtils.isSimpleGetter(method)) {
+        return;
+      }
+      if (onlyReportPrivateGetter && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
       final Query<PsiMethod> query = OverridingMethodsSearch.search(method, true);
