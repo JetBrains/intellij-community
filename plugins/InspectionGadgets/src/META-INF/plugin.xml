@@ -809,9 +809,6 @@
                      key="bad.exception.thrown.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.BadExceptionThrownInspection"/>
-    <localInspection language="JAVA" shortName="CatchGenericClass" bundle="com.siyeh.InspectionGadgetsBundle" key="catch.generic.class.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.CatchGenericClassInspection"/>
     <localInspection language="JAVA" shortName="CaughtExceptionImmediatelyRethrown" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="caught.exception.immediately.rethrown.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
