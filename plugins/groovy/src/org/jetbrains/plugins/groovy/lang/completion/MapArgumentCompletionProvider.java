@@ -19,12 +19,11 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
@@ -35,13 +34,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyElementPattern;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.namedArgument;
 
 /**
  * @author peter
@@ -55,29 +55,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     MapArgumentCompletionProvider instance = new MapArgumentCompletionProvider();
 
     ElementPattern<PsiElement> inArgumentListOfCall = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(
-      StandardPatterns.or(
-        psiElement(GrArgumentList.class).withParent(GrCall.class),
-        new GroovyElementPattern.Capture<GrListOrMap>(new InitialPatternCondition<GrListOrMap>(GrListOrMap.class) {
-          @Override
-          public boolean accepts(@Nullable Object o, ProcessingContext context) {
-            if (!(o instanceof GrListOrMap)) return false;
-            PsiElement parent = ((GrListOrMap)o).getParent();
-            if (!(parent instanceof GrArgumentList)) return false;
+      StandardPatterns.or(psiElement(GrArgumentList.class), psiElement(GrListOrMap.class)))
+    );
 
-            GrArgumentList argumentList = (GrArgumentList)parent;
-            if (argumentList.getNamedArguments().length > 0) return false;
-            if (argumentList.getExpressionArgumentIndex((GrListOrMap)o) > 0) return false;
-
-            if (!(argumentList.getParent() instanceof GrCall)) return false;
-
-            return true;
-          }
-        })
-      )
-    ));
-
-    ElementPattern<PsiElement> inLabel = psiElement(GroovyTokenTypes.mIDENT).withParent(psiElement(GrArgumentLabel.class).withParent(
-      namedArgument().isParameterOfMethodCall(null)));
+    ElementPattern<PsiElement> inLabel = psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
 
     contributor.extend(CompletionType.BASIC, inArgumentListOfCall, instance);
     contributor.extend(CompletionType.BASIC, inLabel, instance);
@@ -101,14 +82,18 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       mapOrArgumentList = parent.getParent().getParent();
     }
 
-    PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
+    if (mapOrArgumentList instanceof GrListOrMap) {
+      if (((GrListOrMap)mapOrArgumentList).getNamedArguments().length > 0) {
+        result.stopHere();
+      }
+    }
 
-    final GrCall call = (GrCall)argumentList.getParent();
-
-    Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map =
-      GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, true);
-
-    for (GrNamedArgument argument : PsiUtil.getFirstMapNamedArguments(call)) {
+    Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
+    if (map.isEmpty()) {
+      map = findOtherNamedArgumentsInFile(mapOrArgumentList);
+    }
+    
+    for (GrNamedArgument argument : getSiblingNamedArguments(mapOrArgumentList)) {
       map.remove(argument.getLabelName());
     }
 
@@ -120,5 +105,55 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
       result.addElement(lookup);
     }
+
+  }
+
+  private static Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
+    final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = new HashMap<String, GroovyNamedArgumentProvider.ArgumentDescriptor>();
+    mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof GrArgumentLabel) {
+          final String name = ((GrArgumentLabel)element).getName();
+          if (GroovyNamesUtil.isIdentifier(name)) {
+            map.put(name, new GroovyNamedArgumentProvider.ArgumentDescriptor());
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return map;
+  }
+
+  private static GrNamedArgument[] getSiblingNamedArguments(PsiElement mapOrArgumentList) {
+    if (mapOrArgumentList instanceof GrListOrMap) {
+      return ((GrListOrMap)mapOrArgumentList).getNamedArguments();
+    }
+
+    PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
+    if (argumentList instanceof GrArgumentList) {
+      if (argumentList.getParent() instanceof GrCall) {
+        return PsiUtil.getFirstMapNamedArguments((GrCall)argumentList.getParent());
+      }
+    }
+
+    return GrNamedArgument.EMPTY_ARRAY;
+  }
+
+  private static Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> calcNamedArgumentsForCall(PsiElement mapOrArgumentList) {
+    PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
+    if (argumentList instanceof GrArgumentList) {
+      if (mapOrArgumentList instanceof GrListOrMap) {
+        if (((GrArgumentList)argumentList).getNamedArguments().length > 0 ||
+            ((GrArgumentList)argumentList).getExpressionArgumentIndex((GrListOrMap)mapOrArgumentList) > 0) {
+          return Collections.emptyMap();
+        }
+      }
+
+      if (argumentList.getParent() instanceof GrCall) {
+        return GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders((GrCall)argumentList.getParent(), null, true);
+      }
+    }
+    return Collections.emptyMap();
   }
 }

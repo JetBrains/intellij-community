@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -142,14 +142,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   public String getName() {
     final PsiElement element = getNameElement();
     if (element instanceof GrLiteral) {
-      final Object value = ((GrLiteral)element).getValue();
-      if (value instanceof String) {
-        return (String)value;
-      }
-
-      if (value instanceof Number) {
-        return value.toString();
-      }
+      return convertToString(((GrLiteral)element).getValue());
     }
     if (element instanceof GrExpression) {
       final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
@@ -163,10 +156,17 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       return element.getText();
     }
 
-    if (CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getBoxedTypeName(elemType))) {
-      return GrStringUtil.removeQuotes(element.getText());
+    return convertToString(GrLiteralImpl.getLiteralValue(element));
+  }
+
+  private static String convertToString(Object value) {
+    if (value instanceof String) {
+      return (String)value;
     }
 
+    if (value instanceof Number) {
+      return value.toString();
+    }
     return null;
   }
 
