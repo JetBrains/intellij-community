@@ -2,12 +2,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ColoredProcessHandler;
-import com.intellij.execution.process.OSProcessManager;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.execution.process.KillableColoredProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +11,7 @@ import java.nio.charset.Charset;
 /**
  * @author traff
  */
-public class PythonProcessHandler extends ColoredProcessHandler {
+public class PythonProcessHandler extends KillableColoredProcessHandler {
   protected PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString());
   }
@@ -26,47 +21,8 @@ public class PythonProcessHandler extends ColoredProcessHandler {
   }
 
   @Override
-  protected void destroyProcessImpl() {
-    super.destroyProcessImpl();
-    if (SystemInfo.isUnix) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          long millis = System.currentTimeMillis();
-          while (true) {
-            try {
-              getProcess().exitValue();
-              return;
-            }
-            catch (IllegalThreadStateException e) {
-              if (System.currentTimeMillis() - millis > 5000L) {
-
-                if (Messages.showYesNoDialog("Do you want to terminate the process?", "Process is not responding", null) == 0) {
-                  UnixProcessManager.sendSigKillToProcessTree(getProcess());
-                  return;
-                }
-                else {
-                  return;
-                }
-              }
-            }
-            try {
-              synchronized (this) {
-                wait(2000L);
-              }
-            }
-            catch (InterruptedException ignore) {
-            }
-          }
-        }
-      }
-      );
-    }
-  }
-
-  public void killProcess() {
-    if (!killProcessTree(getProcess())) {
-      closeStreamsAndDestroyProcess();
-    }
+  protected boolean shouldDestroyProcessRecursively() {
+    return true;
   }
 
   public static PythonProcessHandler createProcessHandler(GeneralCommandLine commandLine)
@@ -75,9 +31,5 @@ public class PythonProcessHandler extends ColoredProcessHandler {
     Process p = commandLine.createProcess();
 
     return new PythonProcessHandler(p, commandLine);
-  }
-
-  private static boolean killProcessTree(final Process process) {
-    return OSProcessManager.getInstance().killProcessTree(process);
   }
 }
