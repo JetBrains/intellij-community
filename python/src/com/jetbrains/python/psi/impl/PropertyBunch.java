@@ -127,12 +127,14 @@ public abstract class PropertyBunch<MType> {
             position++;
           }
 
-          arg = PyUtil.peelArgument(arg);
-          if (index < 3) {
-            accessors [index] = arg;
-          }
-          else if (index == 3 && arg instanceof PyStringLiteralExpression) {
-            doc = ((PyStringLiteralExpression)arg).getStringValue();
+          if (index >= 0) {
+            arg = PyUtil.peelArgument(arg);
+            if (index < 3) {
+              accessors [index] = arg;
+            }
+            else if (index == 3 && arg instanceof PyStringLiteralExpression) {
+              doc = ((PyStringLiteralExpression)arg).getStringValue();
+            }
           }
         }
         target.myGetter = translateIfSet(target, accessors [0]);
