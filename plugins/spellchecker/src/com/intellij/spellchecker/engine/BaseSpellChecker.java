@@ -304,7 +304,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     int bestMetrics = suggestions.get(0).getMetrics();
     for (int i = 0; i < threshold; i++) {
 
-      if (suggestions.size() < i || bestMetrics - suggestions.get(i).getMetrics() > quality) {
+      if (suggestions.size() <= i || bestMetrics - suggestions.get(i).getMetrics() > quality) {
         break;
       }
       result.add(i, suggestions.get(i).getWord());
