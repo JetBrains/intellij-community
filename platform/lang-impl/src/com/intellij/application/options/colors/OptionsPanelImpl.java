@@ -136,14 +136,15 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   public Runnable showOption(final String option) {
-
+    final String lowerCaseOption = option.toLowerCase();
     DefaultListModel model = (DefaultListModel)myOptionsList.getModel();
 
     for (int i = 0; i < model.size(); i++) {
       Object o = model.get(i);
       if (o instanceof EditorSchemeAttributeDescriptor) {
         String type = ((EditorSchemeAttributeDescriptor)o).getType();
-        if (type.toLowerCase().contains(option.toLowerCase())) {
+        if (type.toLowerCase().contains(lowerCaseOption) ||
+            o.toString().toLowerCase().contains(lowerCaseOption)) {
           final int i1 = i;
           return new Runnable() {
             public void run() {
