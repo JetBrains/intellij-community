@@ -97,7 +97,7 @@ public class JavaBuilder extends Builder{
       final Set<File> filesToCompile = new LinkedHashSet<File>();
       final Set<String> removedPaths = new HashSet<String>(); // only collect them in make mode
       final List<File> formsToCompile = new ArrayList<File>();
-      final List<File> upToDatForms = new ArrayList<File>();
+      final List<File> upToDateForms = new ArrayList<File>();
       final Set<String> srcRoots = new HashSet<String>();
 
       context.processFiles(chunk, new FileProcessor() {
@@ -113,7 +113,7 @@ public class JavaBuilder extends Builder{
               formsToCompile.add(file);
             }
             else {
-              upToDatForms.add(file);
+              upToDateForms.add(file);
             }
           }
           return true;
@@ -133,7 +133,7 @@ public class JavaBuilder extends Builder{
       }
 
       // form should be considered dirty if the class it is bound to is also dirty!
-      for (File form : upToDatForms) {
+      for (File form : upToDateForms) {
         for (String root : srcRoots) {
           final File boundSource = getBoundSource(root, form);
           if (boundSource != null && filesToCompile.contains(boundSource)) {
@@ -142,7 +142,7 @@ public class JavaBuilder extends Builder{
           }
         }
       }
-      upToDatForms.clear();
+      upToDateForms.clear();
 
       // todo: collect removed stuff
 
@@ -155,6 +155,7 @@ public class JavaBuilder extends Builder{
         e.printStackTrace(new PrintStream(out));
         message = "Internal error: \n" + out.toString();
       }
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new ProjectBuildException(message, e);
     }
   }

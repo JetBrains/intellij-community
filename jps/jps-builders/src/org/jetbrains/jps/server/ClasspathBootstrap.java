@@ -25,7 +25,6 @@ import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.MacroExpander;
 import org.objectweb.asm.ClassWriter;
 
@@ -86,8 +85,6 @@ public class ClasspathBootstrap {
     if (optimizedFileManagerClass != null) {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
-
-    cp.add(getResourcePath(Mappings.class));  // todo: temporary
 
     //final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
     //final File[] files = jpsRuntime.listFiles();

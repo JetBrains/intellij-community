@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 import org.codehaus.groovy.runtime.MethodClosure;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
@@ -26,6 +27,8 @@ class ServerState {
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
 
   private final Map<String, Project> myProjects = new HashMap<String, Project>();
+  private final Map<String, Mappings> myProjectMappings = new HashMap<String, Mappings>();
+
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
@@ -43,17 +46,24 @@ class ServerState {
   public void clearProjectCache(Collection<String> projectPaths) {
     synchronized (myConfigurationLock) {
       myProjects.keySet().removeAll(projectPaths);
+      myProjectMappings.keySet().removeAll(projectPaths);
     }
   }
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
     Project project;
+    Mappings mappings;
 
     synchronized (myConfigurationLock) {
       project = myProjects.get(projectPath);
       if (project == null) {
         project = loadProject(projectPath, params);
         myProjects.put(projectPath, project);
+      }
+      mappings = myProjectMappings.get(projectPath);
+      if (mappings == null) {
+        mappings = new Mappings();
+        myProjectMappings.put(projectPath, mappings);
       }
     }
 
@@ -75,7 +85,7 @@ class ServerState {
       }
     };
 
-    final IncProjectBuilder builder = new IncProjectBuilder(project, getProjectName(projectPath), BuilderRegistry.getInstance());
+    final IncProjectBuilder builder = new IncProjectBuilder(project, getProjectName(projectPath), mappings, BuilderRegistry.getInstance());
     if (msgHandler != null) {
       builder.addMessageHandler(msgHandler);
     }

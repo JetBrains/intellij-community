@@ -35,13 +35,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   };
 
-  public CompileContext(CompileScope scope, String projectName, boolean isMake, MessageHandler delegateMessageHandler) {
+  public CompileContext(CompileScope scope, String projectName, boolean isMake, final Mappings mappings, MessageHandler delegateMessageHandler) {
     myScope = scope;
     myIsMake = isMake;
     myDelegateMessageHandler = delegateMessageHandler;
     final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
     myDataManager = new BuildDataManager(buildDataRoot);
-    myMappings = new Mappings();
+    myMappings = mappings;
   }
 
   public Project getProject() {
