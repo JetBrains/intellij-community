@@ -103,7 +103,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     for (PyElement e : getElementChildren(myElement)) {
       children.add(new PyStructureViewElement(e, getElementVisibility(e), false, elementIsField(e)));
     }
-    if (myElement instanceof PyClass) {
+    if (myElement instanceof PyClass && myElement.isValid()) {
       for (PyClass c : ((PyClass)myElement).iterateAncestorClasses()) {
         for (PyElement e: getElementChildren(c)) {
           final PyStructureViewElement inherited = new PyStructureViewElement(e, getElementVisibility(e), true, elementIsField(e));
