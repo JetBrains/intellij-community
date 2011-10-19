@@ -250,6 +250,8 @@ public class Mappings {
                           final boolean usages) {
       final StringCache.S fileName = classToSourceFile.get(className);
 
+      assert (fileName != null);
+
       if (usages) {
         affectedUsages.add(reprByName(className).createUsage());
       }
@@ -279,7 +281,12 @@ public class Mappings {
       affectedUsages.add(rootUsage);
 
       for (StringCache.S p : subclasses) {
-        dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
+        final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(p));
+
+        if (deps != null) {
+          dependents.addAll(deps);
+        }
+
         affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(p) : field.createUsage(p));
       }
     }
@@ -292,7 +299,12 @@ public class Mappings {
       affectedUsages.add(rootUsage);
 
       for (StringCache.S p : subclasses) {
-        dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
+        final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(p));
+
+        if (deps != null) {
+          dependents.addAll(deps);
+        }
+
         affectedUsages.add(method.createUsage(p));
       }
     }
