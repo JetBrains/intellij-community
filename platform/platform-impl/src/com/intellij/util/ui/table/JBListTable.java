@@ -181,13 +181,13 @@ public abstract class JBListTable extends JPanel {
                       super.addNotify();
                       final int height = (int)getPreferredSize().getHeight();
                       if (height > table.getRowHeight(row)) {
-                        new RowResizeAnimator(table, row, height).start();
+                        new RowResizeAnimator(table, row, height, editor).start();
                       }
                     }
 
                     public void removeNotify() {
                       super.removeNotify();
-                      new RowResizeAnimator(table, row, table.getRowHeight()).start();
+                      new RowResizeAnimator(table, row, table.getRowHeight(), null).start();
                     }
                   };
                   p.add(editor, BorderLayout.CENTER);
@@ -239,14 +239,16 @@ public abstract class JBListTable extends JPanel {
     private final JTable myTable;
     private final int myRow;
     private int neededHeight;
+    private final JBTableRowEditor myEditor;
     private int step = 5;
     private int currentHeight;
 
-    private RowResizeAnimator(JTable table, int row, int height) {
+    private RowResizeAnimator(JTable table, int row, int height, JBTableRowEditor editor) {
       super("Row Animator");
       myTable = table;
       myRow = row;
       neededHeight = height;
+      myEditor = editor;
       currentHeight = myTable.getRowHeight(myRow);
     }
 
@@ -267,6 +269,12 @@ public abstract class JBListTable extends JPanel {
             }
           });
           sleep(15);
+        }
+        if (myEditor != null) {
+          final JComponent focus = myEditor.getPreferredFocusedComponent();
+          if (focus != null) {
+            focus.requestFocus();
+          }
         }
       }
       catch (InterruptedException e) {        
