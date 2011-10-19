@@ -18,7 +18,7 @@ import java.util.*;
 public class PyUnionType implements PyType {
   private final List<PyType> myMembers;
 
-  public PyUnionType(Collection<PyType> members) {
+  private PyUnionType(Collection<PyType> members) {
     myMembers = new ArrayList<PyType>(members);
   }
 
@@ -105,18 +105,19 @@ public class PyUnionType implements PyType {
   }
 
   @Nullable
-  public static PyType union(List<PyType> members) {
+  public static PyType union(Collection<PyType> members) {
     final int n = members.size();
     if (n == 0) {
       return null;
     }
     else if (n == 1) {
-      return members.get(0);
+      return members.iterator().next();
     }
     else {
-      PyType res = unit(members.get(0));
-      for (int i = 1; i < n; i++) {
-        res = union(res, members.get(i));
+      final Iterator<PyType> it = members.iterator();
+      PyType res = unit(it.next());
+      while(it.hasNext()) {
+        res = union(res, it.next());
       }
       return res;
     }

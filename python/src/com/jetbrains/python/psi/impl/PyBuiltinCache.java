@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -281,10 +280,7 @@ public class PyBuiltinCache {
     }
     else {
       if (STRING_TYPE_PY2 == null) {
-        final List<PyType> types = new ArrayList<PyType>();
-        types.add(getObjectType("str"));
-        types.add(getObjectType("unicode"));
-        STRING_TYPE_PY2 = new PyUnionType(types);
+        STRING_TYPE_PY2 = PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
       }
       return STRING_TYPE_PY2;
     }

@@ -206,7 +206,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       for (PyClass aSuper : supers) {
         superTypes.add(new PyClassType(aSuper, false));
       }
-      return new PyUnionType(superTypes);
+      return PyUnionType.union(superTypes);
     }
     return null;
   }
