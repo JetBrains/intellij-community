@@ -157,9 +157,9 @@ public class RunnerMediator {
     }
 
     @Override
-    protected void destroyProcessImpl() {
+    protected void doDestroyProcess() {
       if (!RunnerMediator.destroyProcess(getProcess())) {
-        super.destroyProcessImpl();
+        super.doDestroyProcess();
       }
     }
   }

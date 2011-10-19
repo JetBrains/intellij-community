@@ -187,15 +187,28 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   protected void destroyProcessImpl() {
-    closeStreamsAndDestroyProcess();
-  }
-
-  protected void closeStreamsAndDestroyProcess() {
     try {
       closeStreams();
     }
     finally {
-      myProcess.destroy();
+      doDestroyProcess();
+    }
+  }
+
+  protected boolean shouldDestroyProcessRecursively(){
+    // Override this method if you want to kill process recursively (whole process try) by default
+    // such behaviour is better than default java one, which doesn't kill children processes
+    return false;
+  }
+
+  protected void doDestroyProcess() {
+    // Override this method if you want to customize default destroy behaviour, e.g.
+    // if you want use some soft-kill.
+    final Process process = getProcess();
+    if (shouldDestroyProcessRecursively()) {
+      killProcessTree(process);
+    } else {
+      process.destroy();
     }
   }
 
@@ -212,7 +225,7 @@ public class OSProcessHandler extends ProcessHandler {
     executeOnPooledThread(runnable);
   }
 
-  private void closeStreams() {
+  protected void closeStreams() {
     try {
       myProcess.getOutputStream().close();
     }
@@ -328,4 +341,21 @@ public class OSProcessHandler extends ProcessHandler {
 
     protected abstract void textAvailable(final String s);
   }
+
+  /**
+   * Kill whole process tree.
+   * @param process Process
+   * @param forceKill If failed to kill process tree - try to kill it using Java API
+   * @return True if process tree has been successfully killed.
+   */
+  protected boolean killProcessTree(final Process process) {
+    LOG.debug("killing process tree");
+    final boolean destroyed = OSProcessManager.getInstance().killProcessTree(process);
+    if (!destroyed) {
+      LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + myCommandLine);
+      process.destroy();
+    }
+    return destroyed;
+  }
+
 }
