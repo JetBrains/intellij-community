@@ -1,7 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.ether.Pair;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
@@ -50,9 +50,7 @@ public class Mappings {
 
   private void compensateRemovedContent(final Collection<StringCache.S> compiled) {
     for (StringCache.S name : compiled) {
-      final Collection<ClassRepr> classes = sourceFileToClasses.foxyGet(name);
-
-      if (classes == null) {
+      if (!sourceFileToClasses.containsKey(name)) {
         sourceFileToClasses.put(name, new HashSet<ClassRepr>());
       }
     }
@@ -424,7 +422,7 @@ public class Mappings {
       final Set<ClassRepr> pastClasses = (Set<ClassRepr>)sourceFileToClasses.foxyGet(fileName);
       final Set<StringCache.S> dependants = new HashSet<StringCache.S>();
 
-      final Collection<StringCache.S> dep = (Set<StringCache.S>)fileToFileDependency.foxyGet(fileName);
+      final Collection<StringCache.S> dep = fileToFileDependency.foxyGet(fileName);
 
       if (dep != null) {
         dependants.addAll(dep);
@@ -437,8 +435,8 @@ public class Mappings {
       final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
       for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
-        final ClassRepr it = changed.fst;
-        final ClassRepr.Diff diff = (ClassRepr.Diff)changed.snd;
+        final ClassRepr it = changed.first;
+        final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
         final int addedModifiers = diff.addedModifiers();
         final int removedModifiers = diff.removedModifiers();
@@ -541,12 +539,12 @@ public class Mappings {
                 boolean visited = false;
 
                 for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
-                  if (pp.snd.name.equals(it.name)) {
+                  if (pp.second.name.equals(it.name)) {
                     continue;
                   }
 
                   visited = true;
-                  allAbstract = ((pp.fst.access & Opcodes.ACC_ABSTRACT) > 0) || ((pp.snd.access & Opcodes.ACC_INTERFACE) > 0);
+                  allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((pp.second.access & Opcodes.ACC_INTERFACE) > 0);
 
                   if (!allAbstract) {
                     break;
@@ -562,8 +560,8 @@ public class Mappings {
         }
 
         for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
-          final MethodRepr m = mr.fst;
-          final MethodRepr.Diff d = (MethodRepr.Diff)mr.snd;
+          final MethodRepr m = mr.first;
+          final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
           final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
 
           if (it.isAnnotation()) {
@@ -652,7 +650,12 @@ public class Mappings {
 
                 final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, subClass);
                 u.affectFieldUsages(f, propagated, f.createUsage(subClass), affectedUsages, dependants);
-                dependants.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(subClass)));
+
+                final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(subClass));
+
+                if (deps != null) {
+                  dependants.addAll(deps);
+                }
               }
             }
           }
@@ -660,8 +663,8 @@ public class Mappings {
           final Collection<Pair<FieldRepr, ClassRepr>> overriden = u.findOverridenFields(f, it);
 
           for (Pair<FieldRepr, ClassRepr> p : overriden) {
-            final FieldRepr ff = p.fst;
-            final ClassRepr cc = p.snd;
+            final FieldRepr ff = p.first;
+            final ClassRepr cc = p.second;
 
             final boolean ffPrivate = (ff.access & Opcodes.ACC_PRIVATE) > 0;
             final boolean ffProtected = (ff.access & Opcodes.ACC_PROTECTED) > 0;
@@ -712,8 +715,8 @@ public class Mappings {
         }
 
         for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
-          final Difference d = f.snd;
-          final FieldRepr field = f.fst;
+          final Difference d = f.second;
+          final FieldRepr field = f.first;
 
           if ((field.access & mask) == mask) {
             if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
@@ -854,7 +857,6 @@ public class Mappings {
         fileToFileDependency.put(file, now);
       }
       else {
-        final Collection<StringCache.S> addSet = now;
         final Collection<StringCache.S> removeSet = new HashSet<StringCache.S>(compiled);
 
         removeSet.removeAll(now);
@@ -926,9 +928,9 @@ public class Mappings {
       public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
         final StringCache.S classFileNameS = StringCache.get(classFileName);
         final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
-        final ClassRepr repr = result.fst;
-        final UsageRepr.Cluster localUsages = result.snd.fst;
-        final Set<UsageRepr.Usage> localAnnotationUsages = result.snd.snd;
+        final ClassRepr repr = result.first;
+        final UsageRepr.Cluster localUsages = result.second.first;
+        final Set<UsageRepr.Usage> localAnnotationUsages = result.second.second;
 
         final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().value);
         final StringCache.S sourceFileNameS = StringCache.get(srcFileName);
@@ -960,22 +962,22 @@ public class Mappings {
                             final String sourceFileName) {
         final StringCache.S sourceFileNameS = StringCache.get(sourceFileName);
 
-        updateSourceToUsages(sourceFileNameS, usages.fst);
-        sourceFileToAnnotationUsages.put(sourceFileNameS, usages.snd);
+        updateSourceToUsages(sourceFileNameS, usages.first);
+        sourceFileToAnnotationUsages.put(sourceFileNameS, usages.second);
 
         for (Pair<ClassRepr, Set<StringCache.S>> c : classes) {
-          final ClassRepr r = c.fst;
-          final Set<StringCache.S> s = c.snd;
+          final ClassRepr r = c.first;
+          final Set<StringCache.S> s = c.second;
           updateClassToSource(r.name, sourceFileNameS);
           classToSubclasses.put(r.name, s);
           sourceFileToClasses.put(sourceFileNameS, r);
         }
 
-        for (UsageRepr.Usage u : usages.fst.getUsages()) {
+        for (UsageRepr.Usage u : usages.first.getUsages()) {
           updateDependency(sourceFileNameS, u.getOwner());
         }
 
-        for (UsageRepr.Usage u : usages.snd) {
+        for (UsageRepr.Usage u : usages.second) {
           updateDependency(sourceFileNameS, u.getOwner());
         }
       }

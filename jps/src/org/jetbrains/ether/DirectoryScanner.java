@@ -166,7 +166,7 @@ public class DirectoryScanner {
     final Crawler cw = new Crawler(createFilter(excludes), pw);
 
     for (String root : roots) {
-      cw.run(new File(pw.getAbsolutePath(root)));
+      cw.run(new File(root));
     }
 
     return cw.getResult();

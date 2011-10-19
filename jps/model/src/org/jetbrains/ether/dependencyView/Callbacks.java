@@ -1,6 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import org.jetbrains.ether.Pair;
+import com.intellij.openapi.util.Pair;
 import org.objectweb.asm.ClassReader;
 
 import java.util.Collection;
