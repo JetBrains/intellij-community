@@ -132,4 +132,5 @@ public abstract class PlaybackContext  {
 
   public abstract boolean isDisposed();
 
+  public abstract void storeRegistryValue(String key);
 }

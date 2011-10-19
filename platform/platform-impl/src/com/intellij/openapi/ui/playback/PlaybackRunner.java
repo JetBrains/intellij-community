@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class PlaybackRunner {
 
@@ -64,6 +63,8 @@ public class PlaybackRunner {
   private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
 
   private long myContextTimestamp;
+
+  private Map<String, String> myRegistryValues = new HashMap<String, String>();
 
   private Disposable myOnStop = new Disposable() {
     @Override
@@ -95,6 +96,7 @@ public class PlaybackRunner {
   public ActionCallback run() {
     myStopRequested = false;
 
+    myRegistryValues.clear();
     UiActivityMonitor.getInstance().clear();
     myCurrentStageDepth.clear();
     myPassedStages.clear();
@@ -108,6 +110,13 @@ public class PlaybackRunner {
         @Override
         public void run() {
           stop();
+
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              restoreRegistryValues();
+            }
+          });
         }
       });
 
@@ -136,6 +145,13 @@ public class PlaybackRunner {
     }
 
     return myActionCallback;
+  }
+
+  private void restoreRegistryValues() {
+    final Set<String> storedKeys = myRegistryValues.keySet();
+    for (String each : storedKeys) {
+      Registry.get(each).setValue(myRegistryValues.get(each));
+    }
   }
 
   private void executeFrom(final int cmdIndex, File baseDir) {
@@ -175,6 +191,13 @@ public class PlaybackRunner {
           @Override
           public boolean isDisposed() {
             return myTimeStamp != myContextTimestamp;
+          }
+
+          @Override
+          public void storeRegistryValue(String key) {
+            if (!myRegistryValues.containsKey(key)) {
+              myRegistryValues.put(key, Registry.stringValue(key));
+            }
           }
         };
       final ActionCallback cmdCallback = cmd.execute(context);
@@ -252,7 +275,9 @@ public class PlaybackRunner {
     AbstractCommand cmd;
     String actualString = string;
 
-    if (actualString.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
+    if (actualString.startsWith(RegistryValueCommand.PREFIX)) {
+      cmd = new RegistryValueCommand(string, line);
+    } else if (actualString.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
       cmd = new EmptyCommand(line);
     }
     else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
