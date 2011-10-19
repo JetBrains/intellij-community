@@ -160,7 +160,7 @@ public class MediatorImpl implements Mediator {
   }
 
   @NonNls public static final String GIT_LOG_PAGE_SIZE = "git.log.page.size";
-  public final static int ourManyLoadedStep = (! pageSizeOk(Integer.getInteger(GIT_LOG_PAGE_SIZE))) ? 3000 : Integer.getInteger(
+  public final static int ourManyLoadedStep = (! pageSizeOk(Integer.getInteger(GIT_LOG_PAGE_SIZE))) ? 1000 : Integer.getInteger(
     GIT_LOG_PAGE_SIZE);
 
   private static class SequenceSupportBuffer {
