@@ -640,11 +640,12 @@ public class Mappings {
             final Collection<StringCache.S> subClasses = getSubClasses(it.name);
 
             if (subClasses != null) {
-              for (StringCache.S subClass : subClasses) {
+              for (final StringCache.S subClass : subClasses) {
                 final ClassRepr r = u.reprByName(subClass);
+                final StringCache.S sourceFileName = classToSourceFile.get(subClass);
+                assert sourceFileName != null;
 
                 if (r != null) {
-                  final StringCache.S sourceFileName = classToSourceFile.get(subClass);
 
                   if (r.isLocal) {
                     affectedFiles.add(sourceFileName);
@@ -663,7 +664,7 @@ public class Mappings {
                 final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, subClass);
                 u.affectFieldUsages(f, propagated, f.createUsage(subClass), affectedUsages, dependants);
 
-                final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(subClass));
+                final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(sourceFileName);
 
                 if (deps != null) {
                   dependants.addAll(deps);
