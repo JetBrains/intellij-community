@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2010 JetBrains s.r.o.
  *
@@ -33,6 +32,7 @@ import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
@@ -40,6 +40,8 @@ import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import git4idea.merge.GitConflictResolver;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,35 +105,35 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, maxCnt, null, refs);
   }
 
+  // uses cached version
   public SymbolicRefs getRefs() throws VcsException {
     final SymbolicRefs refs = new SymbolicRefs();
-    loadAllTags(refs.getTags());
-    final List<GitBranch> allBranches = new ArrayList<GitBranch>();
-    final GitBranch current = GitBranch.list(myProject, myRoot, true, true, allBranches, null);
-    for (GitBranch branch : allBranches) {
-      if (branch.isRemote()) {
-        String name = branch.getName();
+    final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myRoot);
+    if (repositoryForRoot != null) {
+      final GitBranchesCollection branches = repositoryForRoot.getBranches();
+      final Set<GitBranch> localBranches = branches.getLocalBranches();
+      for (GitBranch localBranch : localBranches) {
+        refs.addLocal(localBranch.getName());
+      }
+      final Set<GitBranch> remoteBranches = branches.getRemoteBranches();
+      for (GitBranch remoteBranch : remoteBranches) {
+        String name = remoteBranch.getName();
         name = name.startsWith("remotes/") ? name.substring("remotes/".length()) : name;
         refs.addRemote(name);
-      } else {
-        refs.addLocal(branch.getName());
-      }
-    }
-    refs.setCurrent(current);
-    if (current != null) {
-      GitBranch tracked = current.tracked(myProject, myRoot);
-      String fullName = tracked == null ? null : tracked.getFullName();
-      fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
-      refs.setTrackedRemote(fullName);
-    }
-    refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
-    // todo
-    /*GitStashUtils.loadStashStack(myProject, myRoot, new Consumer<StashInfo>() {
-      @Override
-      public void consume(StashInfo stashInfo) {
 
+        final GitBranch current = branches.getCurrentBranch();
+        refs.setCurrent(current);
+        if (current != null) {
+          GitBranch tracked = current.tracked(myProject, myRoot);
+          String fullName = tracked == null ? null : tracked.getFullName();
+          fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
+          refs.setTrackedRemote(fullName);
+        }
+        refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
       }
-    });*/
+    } else {
+      LOG.info("Can not load cached branches information");
+    }
     return refs;
   }
 

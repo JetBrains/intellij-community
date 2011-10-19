@@ -23,14 +23,12 @@ import java.util.TreeSet;
  */
 public class SymbolicRefs {
   private GitBranch myCurrent;
-  private final TreeSet<String> myTags;
   private final TreeSet<String> myLocalBranches;
   private final TreeSet<String> myRemoteBranches;
   private String myTrackedRemoteName;
   private String myUsername;
 
   public SymbolicRefs() {
-    myTags = new TreeSet<String>();
     myLocalBranches = new TreeSet<String>();
     myRemoteBranches = new TreeSet<String>();
   }
@@ -41,10 +39,6 @@ public class SymbolicRefs {
 
   public void addLocal(final String branch) {
     myLocalBranches.add(branch);
-  }
-
-  public void addTags(final Collection<String> value) {
-    myTags.addAll(value);
   }
 
   public void addLocals(final Collection<String> value) {
@@ -61,10 +55,6 @@ public class SymbolicRefs {
 
   public TreeSet<String> getRemoteBranches() {
     return myRemoteBranches;
-  }
-
-  public TreeSet<String> getTags() {
-    return myTags;
   }
 
   @Nullable
@@ -89,7 +79,6 @@ public class SymbolicRefs {
   public void clear() {
     myLocalBranches.clear();
     myRemoteBranches.clear();
-    myTags.clear();
   }
 
   public void setTrackedRemote(String trackedRemoteName) {

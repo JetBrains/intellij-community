@@ -73,8 +73,6 @@ public class ByRootLoader extends TaskDescriptor {
   @Override
   public void run(ContinuationContext context) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-    progress(pi, "Load branches and tags");
-    initSymbRefs();
     progress(pi, "Load stashed");
     loadStash();
     progress(pi, "Try to load by reference");
@@ -201,7 +199,7 @@ public class ByRootLoader extends TaskDescriptor {
     return commitObj;
   }
 
-  private void initSymbRefs() {
+  public SymbolicRefs initSymbRefs() {
     if (mySymbolicRefs == null) {
       try {
         mySymbolicRefs = myLowLevelAccess.getRefs();
@@ -211,6 +209,7 @@ public class ByRootLoader extends TaskDescriptor {
         myMediator.acceptException(e);
       }
     }
+    return mySymbolicRefs;
   }
 
   public SymbolicRefs getSymbolicRefs() {

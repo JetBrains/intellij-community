@@ -31,6 +31,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
+import git4idea.history.browser.SymbolicRefs;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
@@ -111,7 +112,7 @@ public class LoadController implements Loader {
     continuation.add(Arrays.<TaskDescriptor>asList(new RepositoriesSorter(list, shortLoaders, continuation)));
     continuation.resume();
   }
-  
+
   private class RepositoriesSorter extends TaskDescriptor {
     private final List<LoaderAndRefresher<CommitHashPlusParents>> mySimpleLoaders;
     private final List<ByRootLoader> myShortLoaders;
@@ -127,8 +128,12 @@ public class LoadController implements Loader {
 
     @Override
     public void run(ContinuationContext context) {
+      final Map<VirtualFile, SymbolicRefs> map = new HashMap<VirtualFile, SymbolicRefs>();
       for (ByRootLoader shortLoader : myShortLoaders) {
         final VirtualFile root = shortLoader.getRootHolder().getRoot();
+        final SymbolicRefs refs = shortLoader.initSymbRefs();
+        map.put(root, refs);
+
         try {
           final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
           if (repositoryForRoot == null) continue;
@@ -149,6 +154,11 @@ public class LoadController implements Loader {
           LOG.info(e);
         }
       }
+
+      for (LoaderAndRefresher<CommitHashPlusParents> simpleLoader : mySimpleLoaders) {
+        simpleLoader.setSymbolicRefs(map.get(simpleLoader.getRoot()));
+      }
+
       Collections.sort(myShortLoaders, new Comparator<ByRootLoader>() {
         @Override
         public int compare(ByRootLoader rl1, ByRootLoader rl2) {

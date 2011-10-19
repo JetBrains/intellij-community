@@ -220,7 +220,6 @@ public class GitLogUI implements Disposable {
         for (SymbolicRefs refs : myRefs.values()) {
           myRecalculatedCommon.addLocals(refs.getLocalBranches());
           myRecalculatedCommon.addRemotes(refs.getRemoteBranches());
-          myRecalculatedCommon.addTags(refs.getTags());
           final String currentFromRefs = refs.getCurrent() == null ? null : refs.getCurrent().getFullName();
           currentBranch.iterate(currentFromRefs);
           currentUser.iterate(refs.getUsername());

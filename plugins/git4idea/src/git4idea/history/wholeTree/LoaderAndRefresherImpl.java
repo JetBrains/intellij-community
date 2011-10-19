@@ -23,7 +23,6 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Ticket;
 import com.intellij.util.containers.Convertor;
-import git4idea.GitBranch;
 import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.LowLevelAccessImpl;
@@ -64,7 +63,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private static boolean parameterCheck(final Integer i) {
     return i != null && i > 0;
   }
-
+  
   public LoaderAndRefresherImpl(final Ticket ticket,
                                 Collection<ChangesFilter.Filter> filters,
                                 Mediator mediator,
@@ -145,10 +144,9 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   @Override
   public LoadAlgorithm.Result<CommitHashPlusParents> load(final LoadAlgorithm.LoadType loadType, long continuation) {
     if (isInterrupted()) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
-    initSymbRefs();
-    if (! myStartingPoints.isEmpty()) {
+    /*if (! myStartingPoints.isEmpty()) {
       if (! checkStartingPoints()) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
-    }
+    }*/
 
     myRepeatingLoadConsumer.reset();
     int count = MediatorImpl.ourManyLoadedStep;
@@ -199,7 +197,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     }
   }
 
-  private boolean checkStartingPoints() {
+  /*private boolean checkStartingPoints() {
     for (String point : myStartingPoints) {
       if (point.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
         if (mySymbolicRefs.getRemoteBranches().contains(point.substring(GitBranch.REFS_REMOTES_PREFIX.length()))) {
@@ -213,9 +211,9 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       }
     }
     return false;
-  }
+  }*/
 
-  private void initSymbRefs() {
+  /*private void initSymbRefs() {
     if (mySymbolicRefs == null) {
       try {
         mySymbolicRefs = myLowLevelAccess.getRefs();
@@ -225,6 +223,10 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
         myMediator.acceptException(e);
       }
     }
+  }*/
+
+  public void setSymbolicRefs(SymbolicRefs symbolicRefs) {
+    mySymbolicRefs = symbolicRefs;
   }
 
   // true - load is complete //if (gitCommit.getParentsHashes().isEmpty())
