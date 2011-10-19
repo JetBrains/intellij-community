@@ -7,6 +7,12 @@
     <keyboard-shortcut first-keystroke="control F7" />
     <keyboard-shortcut first-keystroke="control F" second-keystroke="L" />
   </action>
+  <action id="Generate">
+    <keyboard-shortcut first-keystroke="shift alt N" />
+  </action>
+  <action id="NewElement">
+    <keyboard-shortcut first-keystroke="shift alt N" />
+  </action>
   <action id="SwitchApply">
     <keyboard-shortcut first-keystroke="control alt ENTER" />
   </action>
