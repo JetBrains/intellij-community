@@ -186,7 +186,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         exprStatement.rollbackTo();
         exprStatement = builder.mark();
         getExpressionParser().parseExpression(false, true);
-        LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ);
+        LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ, builder.getTokenType());
         builder.advanceLexer();
 
         while (true) {
