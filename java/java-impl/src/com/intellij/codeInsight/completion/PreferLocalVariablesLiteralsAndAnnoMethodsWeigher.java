@@ -44,6 +44,7 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     qualifiedWithField,
     qualifiedWithGetter,
     superMethodParameters,
+    collectionFactory,
     normal,
     nonInitialized,
     classLiteral,
@@ -69,6 +70,10 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     if (myCompletionType == CompletionType.SMART) {
       if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
         return MyResult.superMethodParameters;
+      }
+
+      if (item.getUserData(CollectionsUtilityMethodsProvider.COLLECTION_FACTORY) != null) {
+        return MyResult.collectionFactory;
       }
       
       final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);

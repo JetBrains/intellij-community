@@ -542,7 +542,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         !(position.getParent() instanceof PsiLiteralExpression) &&
         !(position.getParent().getParent() instanceof PsiSwitchLabelStatement)) {
       for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-        new JavaMembersGetter(info.getDefaultType()).addMembers(position, parameters.getInvocationCount() > 0, new Consumer<LookupElement>() {
+        new JavaMembersGetter(info.getDefaultType()).addMembers(position, parameters.getInvocationCount() > 1, new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement element) {
             result.addElement(element);
