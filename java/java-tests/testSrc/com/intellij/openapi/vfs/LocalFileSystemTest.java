@@ -249,6 +249,11 @@ public class LocalFileSystemTest extends IdeaTestCase{
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath("wrong_path");
     assertNull(file);
 
+    if (SystemInfo.isWindows) {
+      assertNotNull(LocalFileSystem.getInstance().findFileByPath("\\\\unit-133"));
+      assertNotNull(LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133")));
+    }
+
     if (SystemInfo.isWindows && new File("c:").exists()) {
       VirtualFile root = LocalFileSystem.getInstance().findFileByPath("c:");
       assertNotNull(root);

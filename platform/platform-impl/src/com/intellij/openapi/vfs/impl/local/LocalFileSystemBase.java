@@ -141,7 +141,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
-    if (StringUtil.isEmpty(fileOrDirectory.getPath())) return true; // fake top dir for Windows
+    String path = fileOrDirectory.getPath();
+    if (fileOrDirectory.getParent() == null && path.startsWith("//")) return true; // Windows UNC root like //unit-333
+    if (StringUtil.isEmpty(path)) return true; // fake top dir for Windows
     return convertToIOFile(fileOrDirectory).exists();
   }
 
