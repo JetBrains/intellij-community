@@ -34,7 +34,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     super(process, commandLine, charset);
   }
 
-  public KillableColoredProcessHandler(Process process, String commandLine) {
+  public KillableColoredProcessHandler(final Process process, final String commandLine) {
     super(process, commandLine);
   }
 
