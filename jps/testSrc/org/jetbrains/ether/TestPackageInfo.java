@@ -8,19 +8,19 @@ package org.jetbrains.ether;
  * To change this template use File | Settings | File Templates.
  */
 public class TestPackageInfo extends IncrementalTestCase {
-    public TestPackageInfo() throws Exception {
-        super("packageInfo");
-    }
+  public TestPackageInfo() throws Exception {
+    super("packageInfo");
+  }
 
-    public void testPackageInfoNoRecompile() throws Exception{
-        doTest();
-    }
+  public void testPackageInfoNoRecompile() throws Exception {
+    doTest();
+  }
 
-    public void testPackageInfoNoRecompile2() throws Exception{
-        doTest();
-    }
+  public void testPackageInfoNoRecompile2() throws Exception {
+    doTest();
+  }
 
-    public void testPackageInfoRecompileOnConstantChange() throws Exception{
-        doTest();
-    }
+  public void testPackageInfoRecompileOnConstantChange() throws Exception {
+    doTest();
+  }
 }

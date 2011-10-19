@@ -1,0 +1,26 @@
+Request to make modules:
+module DependencyUpdate
+End of request
+digraph X {
+  DependencyUpdate[label="DependencyUpdate"];
+}
+digraph X {
+  DependencyUpdate[label="DependencyUpdate"];
+}
+Propagated modules:
+module DependencyUpdate
+End of propagated
+Cleaning output files:
+out/production/DependencyUpdate/A.class
+out/production/DependencyUpdate/E.class
+End of files
+Compiling files:
+src/A.java
+src/E.java
+End of files
+Cleaning output files:
+out/production/DependencyUpdate/B.class
+End of files
+Compiling files:
+src/B.java
+End of files

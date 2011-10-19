@@ -418,7 +418,14 @@ public class Mappings {
 
       final Set<ClassRepr> classes = (Set<ClassRepr>)delta.sourceFileToClasses.foxyGet(fileName);
       final Set<ClassRepr> pastClasses = (Set<ClassRepr>)sourceFileToClasses.foxyGet(fileName);
-      final Set<StringCache.S> dependants = (Set<StringCache.S>)fileToFileDependency.foxyGet(fileName);
+      final Set<StringCache.S> dependants = new HashSet<StringCache.S>();
+
+      final Collection<StringCache.S> dep = (Set<StringCache.S>)fileToFileDependency.foxyGet(fileName);
+
+      if (dep != null) {
+        dependants.addAll(dep);
+      }
+
       final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
       final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
       final Map<UsageRepr.Usage, Util.UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, Util.UsageConstraint>();
@@ -806,11 +813,11 @@ public class Mappings {
     return true;
   }
 
-  public void integrate(final Mappings delta, final Collection<String> removed) {
-    integrate(delta, cache(removed));
+  public void integrate(final Mappings delta, final Collection<String> compiled, final Collection<String> removed) {
+    integrate(delta, cache(compiled), cache(removed));
   }
 
-  public void integrate(final Mappings delta, final Set<StringCache.S> removed) {
+  public void integrate(final Mappings delta, final Collection<StringCache.S> compiled, final Set<StringCache.S> removed) {
     if (removed != null) {
       for (StringCache.S file : removed) {
         final Set<ClassRepr> classes = (Set<ClassRepr>)sourceFileToClasses.foxyGet(file);
@@ -834,7 +841,27 @@ public class Mappings {
     sourceFileToUsages.putAll(delta.sourceFileToUsages);
     sourceFileToAnnotationUsages.putAll(delta.sourceFileToAnnotationUsages);
     classToSourceFile.putAll(delta.classToSourceFile);
-    fileToFileDependency.putAll(delta.fileToFileDependency);
+
+    for (StringCache.S file : delta.fileToFileDependency.keySet()) {
+      final Collection<StringCache.S> now = delta.fileToFileDependency.foxyGet(file);
+      final Collection<StringCache.S> past = fileToFileDependency.foxyGet(file);
+
+      if (past == null) {
+        fileToFileDependency.put(file, now);
+      }
+      else {
+        final Collection<StringCache.S> addSet = now;
+        final Collection<StringCache.S> removeSet = new HashSet<StringCache.S>(compiled);
+
+        removeSet.removeAll(now);
+
+        past.addAll(now);
+        past.removeAll(removeSet);
+
+        fileToFileDependency.remove(file);
+        fileToFileDependency.put(file, past);
+      }
+    }
   }
 
   private void updateFormToClass(final StringCache.S formName, final StringCache.S className) {

@@ -1189,7 +1189,7 @@ public class ProjectWrapper {
           final boolean incremental =
             dependencyMapping.differentiate(delta, removed, filesToCompile, compiledFiles, affectedFiles, safeFiles);
 
-          dependencyMapping.integrate(delta, removed);
+          dependencyMapping.integrate(delta, filesToCompile, removed);
 
           if (!incremental) {
             affectedFiles.addAll(sources);
@@ -1286,12 +1286,15 @@ public class ProjectWrapper {
               return BuildStatus.FAILURE;
             }
 
+            final Set<StringCache.S> allFiles = new HashSet<StringCache.S>();
+
             for (Module m : c.getElements()) {
               final ModuleWrapper module = getModule(m.getName());
               affectedFiles.removeAll(module.getSources(flags.tests()));
+              allFiles.addAll(module.getSources(flags.tests()));
             }
 
-            dependencyMapping.integrate(delta, removedSources);
+            dependencyMapping.integrate(delta, allFiles, removedSources);
 
             for (Module m : chunkModules) {
               Reporter.reportBuildSuccess(m, flags.tests());
