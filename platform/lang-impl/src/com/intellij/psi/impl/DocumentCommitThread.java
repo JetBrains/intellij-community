@@ -175,6 +175,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       indicator.start();
       documentsToCommit.addLast(new CommitTask(document, project, indicator, reason));
       log("Queued", document, false, reason);
+      wakeUpQueue();
       return true;
     }
   }
@@ -183,7 +184,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
   void log(@NonNls String msg, Document document, boolean synchronously, @NonNls Object... args) {
     if (debug()) {
       @NonNls
-      String s = (SwingUtilities.isEventDispatchThread() ? "    " : "") +
+      String s = (SwingUtilities.isEventDispatchThread() ? "-    " : "-") +
         msg + (synchronously ? " (sync)" : "") +
                  (document == null ? "" : "; Document: " + System.identityHashCode(document) +
                                           "; stage: " + getCommitStage(document))
@@ -192,7 +193,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       for (Object arg : args) {
         s += "; "+arg;
       }
-      //System.out.println(s);
+      System.out.println(s);
       synchronized (log) {
         log.append(s).append("\n");
         if (log.length() > 1000000) {
@@ -207,8 +208,8 @@ public class DocumentCommitThread implements Runnable, Disposable {
   }
 
   @TestOnly
-  public void printLog() {
-    System.err.println(log);
+  public String getLog() {
+    return log.toString();
   }
   private void clearLog() {
     log.setLength(0);
@@ -221,6 +222,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
     clearLog();
     disable("end of test");
+    wakeUpQueue();
   }
 
   private static class CommitTask {

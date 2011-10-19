@@ -798,6 +798,7 @@ class Foo {
     int actions = 5
 
     for (a1 in 0..actions) {
+      println "a1 = $a1"
       for (a2 in 0..actions) {
         myFixture.configureByText("$a1 $a2 .java", src)
         myFixture.type 'i'

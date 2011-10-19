@@ -57,6 +57,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -693,7 +694,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               ApplicationManager.getApplication().invokeLater(this, myProject.getDisposed());
             }
             if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
-              PsiDocumentManager.getInstance(myProject).cancelAndRunWhenAllCommitted("restart daemon when all committed", this);
+              ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
+                "restart daemon when all committed", this);
               return;
             }
 
@@ -716,7 +718,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           runnable.run();
         }
         else {
-          PsiDocumentManager.getInstance(myProject).cancelAndRunWhenAllCommitted("start daemon when all committed", runnable);
+          ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
+            "start daemon when all committed", runnable);
         }
       }
     };

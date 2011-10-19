@@ -244,11 +244,17 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<Object, Runnable>(); //accessed from EDT only
-  private static final Object PERFORM_ALWAYS_KEY = new Object();
+  private static final Object PERFORM_ALWAYS_KEY = new Object(){
+    @Override
+    public String toString() {
+      return "PERFORM_ALWAYS";
+    }
+  };
 
   /** Schedules action to be executed when all documents are committed.
    *  @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
+  @Override
   public boolean performWhenAllCommitted(@NotNull final Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myUncommittedDocuments.isEmpty()) {
@@ -278,7 +284,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
    *  @param key the (unique) name of the action. This action will overwrite any action which was registered under this key earlier.
    *  @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
-  @Override
   public boolean cancelAndRunWhenAllCommitted(@NotNull Object key, @NotNull final Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) {
@@ -398,6 +403,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private void runAfterCommitActions(@NotNull Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Runnable> list;
     synchronized (ACTION_AFTER_COMMIT) {
       list = document.getUserData(ACTION_AFTER_COMMIT);

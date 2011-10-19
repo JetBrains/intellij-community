@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * @author peter
@@ -87,21 +88,39 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     fail("Too long completion")
   }
 
-  protected def joinCommit(Closure cl = {}) {
+  final static AtomicInteger cnt = new AtomicInteger()
+  protected def joinCommit(Closure c1={}) {
     final AtomicBoolean committed = new AtomicBoolean()
-    edt {
-      PsiDocumentManager.getInstance(project).cancelAndRunWhenAllCommitted("wait for all comm") {
+    boolean executed=true;
+    def closureSeq = cnt.getAndIncrement()
+    Runnable r = new Runnable() {
+      @Override
+      public void run() {
         ApplicationManager.application.invokeLater {
-          cl()
-          committed.set(true) 
-        }
+          c1();
+          committed.set(true)
+        };
       }
+
+      @Override
+      public String toString() {
+        return "Closure "+closureSeq;
+      }
+    };
+    edt {
+      executed = PsiDocumentManager.getInstance(project).performWhenAllCommitted(r);
     }
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed()
+    assert !ApplicationManager.getApplication().isReadAccessAllowed()
+    assert !ApplicationManager.getApplication().isDispatchThread()
     def start = System.currentTimeMillis()
     while (!committed.get()) {
-      if (System.currentTimeMillis() - start >= 10000) {
+      if ((System.currentTimeMillis() - start) % 1000 == 0) {
+      //  println("waiting..." + ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).printStat())
+      }
+      if (System.currentTimeMillis() - start >= 20000) {
+        fail("too long waiting for a document to be committed. executed: $executed ;")
         printThreadDump()
-        fail('too long waiting for a document to be committed')
       }
       UIUtil.pump();
     }

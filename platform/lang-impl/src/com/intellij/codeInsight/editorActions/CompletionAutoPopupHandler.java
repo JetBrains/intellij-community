@@ -33,7 +33,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -124,23 +123,23 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
                                            @NotNull final Document document,
                                            @NotNull final Runnable runnable) {
     final long beforeStamp = document.getModificationStamp();
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).performWhenAllCommitted(new Runnable() {
-        @Override
-        public void run() {
-          // later because we may end up in write action here if there was a synchronous commit
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (beforeStamp != document.getModificationStamp()) {
-                // no luck, will try later
-                runLaterWithCommitted(project, document, runnable);
-              }
-              else {
-                runnable.run();
-              }
+    PsiDocumentManager.getInstance(project).performWhenAllCommitted(new Runnable() {
+      @Override
+      public void run() {
+        // later because we may end up in write action here if there was a synchronous commit
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (beforeStamp != document.getModificationStamp()) {
+              // no luck, will try later
+              runLaterWithCommitted(project, document, runnable);
             }
-          }, project.getDisposed());
-        }
-      });
+            else {
+              runnable.run();
+            }
+          }
+        }, project.getDisposed());
+      }
+    });
   }
 }

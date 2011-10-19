@@ -107,7 +107,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public boolean cancelAndRunWhenAllCommitted(@NotNull Object key, @NotNull Runnable action) {
+  public boolean performWhenAllCommitted(@NotNull Runnable action) {
     throw new UnsupportedOperationException();
   }
 }
