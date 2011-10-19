@@ -32,7 +32,7 @@ public abstract class PsiDirectoryFactory {
     return ServiceManager.getService(project, PsiDirectoryFactory.class);
   }
 
-  public abstract PsiDirectory createDirectory(VirtualFile file);
+  public abstract PsiDirectory createDirectory(@NotNull VirtualFile file);
 
   @NotNull
   public abstract String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
