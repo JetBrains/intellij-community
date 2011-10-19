@@ -60,6 +60,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
   }
 
   public PsiType getType() {
+    if (getFirstChild().getNode().getElementType() == kNULL) return PsiType.NULL;
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
   }
 
