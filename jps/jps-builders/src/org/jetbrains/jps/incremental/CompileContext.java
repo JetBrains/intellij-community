@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
@@ -25,6 +26,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
+  private final Mappings myMappings;
 
   private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
     @NotNull
@@ -39,6 +41,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myDelegateMessageHandler = delegateMessageHandler;
     final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
     myDataManager = new BuildDataManager(buildDataRoot);
+    myMappings = new Mappings();
   }
 
   public Project getProject() {
@@ -47,6 +50,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public boolean isMake() {
     return myIsMake;
+  }
+
+  public Mappings getMappings() {
+    return myMappings;
   }
 
   public boolean isCompilingTests() {

@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.*;
@@ -9,6 +10,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -54,32 +57,34 @@ public class JavaBuilder extends Builder{
     }
   };
 
-  //private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
+  private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
+  private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
+  private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
 
   private final EmbeddedJavac myJavacCompiler;
 
   public JavaBuilder(ExecutorService tasksExecutor) {
     myJavacCompiler = new EmbeddedJavac(tasksExecutor);
     //add here class processors in the sequence they should be executed
-    //myJavacCompiler.addClassProcessor(new EmbeddedJavac.ClassPostProcessor() {
-    //  public void process(CompileContext context, OutputFileObject out) {
-    //    final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
-    //    if (callback != null) {
-    //      final String className = out.getClassName();
-    //      final OutputFileObject.Content content = out.getContent();
-    //      final File srcFile = out.getSourceFile();
-    //      if (srcFile != null && content != null) {
-    //        // todo: the callback is not thread-safe?
-    //        final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-    //        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    //        synchronized (callback) {
-    //          // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
-    //          callback.associate(className, Callbacks.getDefaultLookup(srcFile.getPath()), reader);
-    //        }
-    //      }
-    //    }
-    //  }
-    //});
+    myJavacCompiler.addClassProcessor(new EmbeddedJavac.ClassPostProcessor() {
+      public void process(CompileContext context, OutputFileObject out) {
+        final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
+        if (callback != null) {
+          final String className = out.getClassName();
+          final OutputFileObject.Content content = out.getContent();
+          final File srcFile = out.getSourceFile();
+          if (srcFile != null && content != null) {
+            // todo: the callback is not thread-safe?
+            final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (callback) {
+              // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
+              callback.associate(className, Callbacks.getDefaultLookup(srcFile.getPath()), reader);
+            }
+          }
+        }
+      }
+    });
   }
 
   public String getDescription() {
@@ -89,7 +94,8 @@ public class JavaBuilder extends Builder{
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
-      final Set<File> filesToCompile = new HashSet<File>();
+      final Set<File> filesToCompile = new LinkedHashSet<File>();
+      final Set<String> removedPaths = new HashSet<String>(); // only collect them in make mode
       final List<File> formsToCompile = new ArrayList<File>();
       final List<File> upToDatForms = new ArrayList<File>();
       final Set<String> srcRoots = new HashSet<String>();
@@ -138,7 +144,9 @@ public class JavaBuilder extends Builder{
       }
       upToDatForms.clear();
 
-      return compile(context, chunk, filesToCompile, formsToCompile);
+      // todo: collect removed stuff
+
+      return compile(context, chunk, filesToCompile, formsToCompile, removedPaths);
     }
     catch (Exception e) {
       String message = e.getMessage();
@@ -171,9 +179,11 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms) throws Exception {
+  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms, Set<String> removedSources) throws Exception {
+    ExitCode exitCode = ExitCode.OK;
+
     if (files.isEmpty() && forms.isEmpty()) {
-      return ExitCode.OK;
+      return exitCode;
     }
 
     ProjectPaths paths = ProjectPaths.KEY.get(context);
@@ -181,9 +191,8 @@ public class JavaBuilder extends Builder{
       ProjectPaths.KEY.set(context, paths = new ProjectPaths(context.getProject()));
     }
 
-    //final Mappings delta = new Mappings(null); // todo
-    //final Callbacks.Backend callback = delta.getCallback();
-    //DELTA_MAPPINGS_CALLBACK_KEY.set(context, callback);
+    final Mappings delta = new Mappings();
+    DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
 
     // todo: consider corresponding setting in CompilerWorkspaceConfiguration
     final boolean addNotNullAssertions = true;
@@ -195,10 +204,21 @@ public class JavaBuilder extends Builder{
 
     final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
 
+    Set<File> allCompiledFiles = ALL_COMPILED_FILES_KEY.get(context);
+    if (allCompiledFiles == null) {
+      allCompiledFiles = new HashSet<File>();
+      ALL_COMPILED_FILES_KEY.set(context, allCompiledFiles);
+    }
 
+    Set<File> allAffectedFiles = ALL_AFFECTED_FILES_KEY.get(context);
+    if (allAffectedFiles == null) {
+      allAffectedFiles = new HashSet<File>();
+      ALL_AFFECTED_FILES_KEY.set(context, allAffectedFiles);
+    }
+
+    // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
     final OutputFilesSink outputSink = new OutputFilesSink(context);
-
     Collection<File> successfulForms = Collections.emptyList();
     try {
       boolean compiledOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, diagnosticSink, outputSink);
@@ -229,17 +249,46 @@ public class JavaBuilder extends Builder{
       if (!compiledOk || diagnosticSink.getErrorCount() > 0) {
         throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
       }
-
-      return ExitCode.OK;
     }
     finally {
-      //DELTA_MAPPINGS_CALLBACK_KEY.set(context, callback);
 
       outputSink.writePendingData();
 
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
-      //delta.compensateRemovedContent(successfullyCompiled);
-      //globalMappings.integrate(mappings, );  //todo
+      final Mappings globalMappings = context.getMappings();
+
+      if (context.isMake()) {
+        DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
+
+        // mark as affected all files that were dirty before compilation
+        allAffectedFiles.addAll(files);
+        // accumulate all successfully compiled in this round
+        allCompiledFiles.addAll(successfullyCompiled);
+        // unmark as affected all successfully compiled
+        allAffectedFiles.removeAll(successfullyCompiled);
+
+        final boolean incremental = globalMappings.differentiate(
+          delta, removedSources, successfullyCompiled, allCompiledFiles, allAffectedFiles
+        );
+
+        if (incremental) {
+          final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+          newlyAffectedFiles.removeAll(allCompiledFiles);
+          for (File file : newlyAffectedFiles) {
+            tsStorage.markDirty(file);
+          }
+          if (chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles)) {
+            exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
+          }
+        }
+        else {
+          // todo
+          // switching into non-incremental module for this module and all those that depend on this module recursively
+        }
+      }
+
+      globalMappings.integrate(delta, successfullyCompiled, removedSources);
+
       for (File file : successfullyCompiled) {
         tsStorage.saveStamp(file);
       }
@@ -247,6 +296,22 @@ public class JavaBuilder extends Builder{
         tsStorage.saveStamp(file);
       }
     }
+
+    return exitCode;
+  }
+
+  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
+    final Ref<Boolean> result = new Ref<Boolean>(false);
+    context.processFiles(chunk, new FileProcessor() {
+      public boolean apply(Module module, File file, String sourceRoot) throws Exception {
+        if (affected.contains(file)) {
+          result.set(true);
+          return false;
+        }
+        return true;
+      }
+    });
+    return result.get();
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Collection<File> chunkSourcePath, OutputFilesSink outputSink)

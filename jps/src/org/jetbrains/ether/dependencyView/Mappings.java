@@ -1,11 +1,11 @@
 package org.jetbrains.ether.dependencyView;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.Pair;
-import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
+import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
@@ -366,29 +366,33 @@ public class Mappings {
     }
   }
 
-  private Set<StringCache.S> cache(final Collection<String> x) {
+  private static Set<StringCache.S> cachePaths(final Collection<String> x) {
     final Set<StringCache.S> y = new HashSet<StringCache.S>();
-
     for (String s : x) {
-      y.add(StringCache.get(s));
+      y.add(StringCache.get(FileUtil.toSystemIndependentName(s)));
     }
+    return y;
+  }
 
+  private static Set<StringCache.S> cacheFiles(final Collection<File> x) {
+    final Set<StringCache.S> y = new HashSet<StringCache.S>();
+    for (File s : x) {
+      y.add(StringCache.get(FileUtil.toSystemIndependentName(s.getAbsolutePath())));
+    }
     return y;
   }
 
   public boolean differentiate(final Mappings delta,
-                               final Collection<String> removed,
-                               final Collection<String> filesToCompile,
-                               final Collection<String> compiledFiles,
-                               final Collection<String> affectedFiles,
-                               final Collection<String> safeFiles) {
-    final Set<StringCache.S> affectedCache = cache(affectedFiles);
+                                 final Collection<String> removed,
+                                 final Collection<File> successfullyCompiled,
+                                 final Collection<File> allCompiledFiles,
+                                 final Collection<File> allAffectedFiles) {
+    final Set<StringCache.S> affectedCache = cacheFiles(allAffectedFiles);
 
-    final boolean result =
-      differentiate(delta, cache(removed), cache(filesToCompile), cache(compiledFiles), affectedCache, cache(safeFiles));
+    final boolean result =  differentiate(delta, cachePaths(removed), cacheFiles(successfullyCompiled), cacheFiles(allCompiledFiles), affectedCache, Collections.<StringCache.S>emptySet());
 
     for (StringCache.S a : affectedCache) {
-      affectedFiles.add(a.value);
+      allAffectedFiles.add(new File(a.value));
     }
 
     return result;
@@ -813,8 +817,8 @@ public class Mappings {
     return true;
   }
 
-  public void integrate(final Mappings delta, final Collection<String> compiled, final Collection<String> removed) {
-    integrate(delta, cache(compiled), cache(removed));
+  public void integrate(final Mappings delta, final Collection<File> compiled, final Collection<String> removed) {
+    integrate(delta, cacheFiles(compiled), cachePaths(removed));
   }
 
   public void integrate(final Mappings delta, final Collection<StringCache.S> compiled, final Set<StringCache.S> removed) {
@@ -920,14 +924,14 @@ public class Mappings {
       }
 
       public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
-        final StringCache.S classFileNameS = StringCache.get(project != null ? project.getRelativePath(classFileName) : classFileName);
+        final StringCache.S classFileNameS = StringCache.get(classFileName);
         final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
         final ClassRepr repr = result.fst;
         final UsageRepr.Cluster localUsages = result.snd.fst;
         final Set<UsageRepr.Usage> localAnnotationUsages = result.snd.snd;
 
         final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().value);
-        final StringCache.S sourceFileNameS = StringCache.get(project != null ? project.getRelativePath(srcFileName) : srcFileName);
+        final StringCache.S sourceFileNameS = StringCache.get(srcFileName);
 
         for (UsageRepr.Usage u : localUsages.getUsages()) {
           updateDependency(sourceFileNameS, u.getOwner());
@@ -982,11 +986,7 @@ public class Mappings {
     };
   }
 
-  @Nullable
-  private final ProjectWrapper project;
-
-  public Mappings(@Nullable final ProjectWrapper p) {
-    project = p;
+  public Mappings() {
   }
 
   public Set<ClassRepr> getClasses(final StringCache.S sourceFileName) {

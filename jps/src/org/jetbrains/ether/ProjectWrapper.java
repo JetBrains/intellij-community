@@ -865,7 +865,7 @@ public class ProjectWrapper {
                          final String setupScript,
                          final Map<String, String> pathVariables,
                          final boolean loadHistory) {
-    dependencyMapping = new Mappings(this);
+    dependencyMapping = new Mappings();
     backendCallback = dependencyMapping.getCallback();
     affectedFiles = new HashSet<StringCache.S>();
 
@@ -1160,7 +1160,7 @@ public class ProjectWrapper {
           builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
         }
 
-        final Mappings delta = new Mappings(ProjectWrapper.this);
+        final Mappings delta = new Mappings();
         final Callbacks.Backend deltaBackend = delta.getCallback();
 
         new Logger(flags) {
@@ -1275,7 +1275,7 @@ public class ProjectWrapper {
               cleared.addAll(toClean);
             }
 
-            final Mappings delta = new Mappings(ProjectWrapper.this);
+            final Mappings delta = new Mappings();
             final Callbacks.Backend deltaCallback = delta.getCallback();
 
             try {
