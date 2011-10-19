@@ -294,7 +294,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return true;
   }
 
-  protected Configurable[] buildConfigurables() {
+  public Configurable[] buildConfigurables() {
     myDisposeCompleted = false;    
     initAll();
 
