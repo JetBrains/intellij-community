@@ -214,11 +214,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       cat.addItem("(");
       boolean is_not_first = false;
       for (PyExpression parent : ancestors) {
+        final String parentName = parent.getName();
+        if (parentName == null) {
+          continue;
+        }
         if (is_not_first) cat.addItem(", ");
         else is_not_first = true;
-        final String parent_name = parent.getName();
-        if (allow_html) cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
-        else cat.addItem(parent_name);
+        if (allow_html) cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
+        else cat.addItem(parentName);
       }
       cat.addItem(")");
     }
