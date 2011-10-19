@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -549,7 +549,7 @@ public abstract class BaseRefactoringProcessor {
     return showConflicts(conflicts, null);
   }
 
-  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) {
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new ConflictsInTestsException(conflicts.values());
     }
@@ -567,7 +567,7 @@ public abstract class BaseRefactoringProcessor {
     return true;
   }
 
-  protected ConflictsDialog prepareConflictsDialog(MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) {
+  protected ConflictsDialog prepareConflictsDialog(MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
       public void run() {
         execute(usages);
