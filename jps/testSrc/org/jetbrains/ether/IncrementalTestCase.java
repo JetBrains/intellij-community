@@ -2,6 +2,7 @@ package org.jetbrains.ether;
 
 import junit.framework.TestCase;
 import junitx.framework.FileAssert;
+import org.jetbrains.ether.dependencyView.Mappings;
 
 import java.io.*;
 
