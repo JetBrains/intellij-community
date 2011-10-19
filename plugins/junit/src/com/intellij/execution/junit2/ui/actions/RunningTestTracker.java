@@ -22,19 +22,15 @@ import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
+import com.intellij.execution.testframework.TrackRunningTestUtil;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pass;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyListener<Boolean> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.TrackRunningTestAction");
@@ -47,26 +43,10 @@ class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyLi
   private RunningTestTracker(final JUnitRunningModel model) {
     myModel = model;
     final JTree tree = myModel.getTree();
-    final MouseAdapter userSelectionListener = new MouseAdapter() {
+    TrackRunningTestUtil.installStopListeners(tree, myModel, new Pass<AbstractTestProxy>() {
       @Override
-      public void mousePressed(MouseEvent e) {
-        final TreePath treePath = tree.getPathForLocation(e.getX(), e.getY());
-        if (treePath != null) {
-          final Object component = treePath.getLastPathComponent();
-          if (component instanceof DefaultMutableTreeNode) {
-            final Object userObject = ((DefaultMutableTreeNode)component).getUserObject();
-            if (userObject instanceof NodeDescriptor) {
-              myLastSelected = (TestProxy)((NodeDescriptor)userObject).getElement();
-            }
-          }
-        }
-      }
-    };
-    tree.addMouseListener(userSelectionListener);
-    Disposer.register(myModel, new Disposable() {
-      @Override
-      public void dispose() {
-        tree.removeMouseListener(userSelectionListener);
+      public void pass(AbstractTestProxy testProxy) {
+        myLastSelected = (TestProxy)testProxy;
       }
     });
     choosePolicy();
