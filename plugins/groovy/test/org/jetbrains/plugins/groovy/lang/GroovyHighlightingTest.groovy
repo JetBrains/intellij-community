@@ -512,4 +512,8 @@ class Bar {{
 }}'''
     myFixture.checkHighlighting(false, false, false)
   }
+
+  public void testMemberShipOperatorCheck() {
+    doTest(new GroovyInArgumentCheckInspection());
+  }
 }
