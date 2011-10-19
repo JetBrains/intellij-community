@@ -88,9 +88,8 @@ public interface EditorSettings {
   boolean isWheelFontChangeEnabled();
   void setWheelFontChangeEnabled(boolean val);
 
-  boolean isMouseClickSelectionHonorsCamelWords();
-  void setMouseClickSelectionHonorsCamelWords(boolean val);
-
+  boolean isMouseClickSelectionHonorsCamelWords(int clicksCount);
+  void setMouseClickSelectionHonorsCamelWords(int clicksCount, boolean val);
 
   boolean isVariableInplaceRenameEnabled();
   void setVariableInplaceRenameEnabled(boolean val);
