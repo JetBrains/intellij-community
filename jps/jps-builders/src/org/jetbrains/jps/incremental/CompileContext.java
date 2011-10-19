@@ -27,6 +27,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
   private final Mappings myMappings;
+  private final Set<Module> myDirtyModules = new HashSet<Module>();
 
   private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
     @NotNull
@@ -50,6 +51,25 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public boolean isMake() {
     return myIsMake;
+  }
+
+  public boolean isDirty(ModuleChunk chunk) {
+    for (Module module : chunk.getModules()) {
+      if (myDirtyModules.contains(module)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void setDirty(ModuleChunk chunk, boolean isDirty) {
+    final Set<Module> modules = chunk.getModules();
+    if (isDirty) {
+      myDirtyModules.addAll(modules);
+    }
+    else {
+      myDirtyModules.removeAll(modules);
+    }
   }
 
   public Mappings getMappings() {

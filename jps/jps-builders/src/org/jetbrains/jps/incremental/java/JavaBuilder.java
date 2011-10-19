@@ -100,16 +100,18 @@ public class JavaBuilder extends Builder{
       final List<File> upToDateForms = new ArrayList<File>();
       final Set<String> srcRoots = new HashSet<String>();
 
+      final boolean wholeModuleRebuildRequired = context.isDirty(chunk);
+
       context.processFiles(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             srcRoots.add(sourceRoot);
-            if (isFileDirty(file, context, tsStorage)) {
+            if (wholeModuleRebuildRequired || isFileDirty(file, context, tsStorage)) {
               filesToCompile.add(file);
             }
           }
           else if (FORM_SOURCES_FILTER.accept(file)){
-            if (isFileDirty(file, context, tsStorage)) {
+            if (wholeModuleRebuildRequired || isFileDirty(file, context, tsStorage)) {
               formsToCompile.add(file);
             }
             else {
@@ -252,6 +254,7 @@ public class JavaBuilder extends Builder{
       }
     }
     finally {
+      context.setDirty(chunk, false); // no matter what result was, we should clear this flag
 
       outputSink.writePendingData();
 
@@ -283,8 +286,9 @@ public class JavaBuilder extends Builder{
           }
         }
         else {
-          // todo
-          // switching into non-incremental module for this module and all those that depend on this module recursively
+          exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
+          // todo: mark as dirty also all those that depend on this module recursively
+          context.setDirty(chunk, true);
         }
       }
 
