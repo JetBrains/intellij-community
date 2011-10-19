@@ -101,7 +101,12 @@ public class ActionCommand extends TypeCommand {
             });
             am.addAnActionListener(listener.get());
 
-            type(context.getRobot(), finalStroke);
+            context.runPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                type(context.getRobot(), finalStroke);
+              }
+            });
           }
         });
 

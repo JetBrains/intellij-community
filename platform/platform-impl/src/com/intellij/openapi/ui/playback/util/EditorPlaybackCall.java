@@ -37,7 +37,11 @@ public class EditorPlaybackCall {
     WindowSystemPlaybackCall.getUiReady(context).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+        Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+        if (editor == null) {
+          editor = PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+        }
+
         if (editor == null) {
           result.setRejected("Cannot find editor");
           return;
