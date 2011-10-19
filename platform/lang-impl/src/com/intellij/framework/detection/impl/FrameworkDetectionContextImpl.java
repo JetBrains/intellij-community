@@ -22,6 +22,7 @@ import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -61,7 +62,7 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
     final FacetsProvider provider = DefaultFacetsProvider.INSTANCE;
     for (Module module : filesByModule.keySet()) {
       final Collection<F> facets = provider.getFacetsByType(module, facetType.getId());
-      if (facetType.isOnlyOneFacetAllowed() && !facets.isEmpty()) {
+      if (!facetType.isSuitableModuleType(ModuleType.get(module)) || facetType.isOnlyOneFacetAllowed() && !facets.isEmpty()) {
         continue;
       }
       List<C> existentConfigurations = new ArrayList<C>();
