@@ -1,8 +1,0 @@
-namespace root
-
-namespace a {
-
-}
-
-val x = <error>a</error>
-val y2 = <error>namespace</error>

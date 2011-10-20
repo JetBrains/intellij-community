@@ -1,6 +1,0 @@
-trait A<T> {}
-trait B<T> {}
-trait C<T> {}
-trait D<T> {}
-
-trait Test : A<<error>in</error> Int>, B<<error>out</error> Int>, C<<error>*</error>><error>?</error><error>?</error><error>?</error>, D<Int> {}
