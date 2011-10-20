@@ -29,14 +29,14 @@ public class PushedTabBackground {
   private static final Icon ourLeftRound = IconLoader.getIcon("/general/tab_grey_left.png");
   private static final Icon ourRightRound = IconLoader.getIcon("/general/tab_grey_right.png");
 
-  private static final Icon ourLeftWhiteRound = IconLoader.getIcon("/general/tab_white_left.png");
-  private static final Icon ourRightWhiteRound = IconLoader.getIcon("/general/tab_white_right.png");
+  private static final Icon ourLeftWhiteRound = IconLoader.getIcon("/general/tab-white-left.png");
+  private static final Icon ourRightWhiteRound = IconLoader.getIcon("/general/tab-white-right.png");
 
   private static final Icon ourRightStraight = IconLoader.getIcon("/general/tab_grey_right_inner.png");
   private static final Icon ourLeftStraight = IconLoader.getIcon("/general/tab_grey_left_inner.png");
   
   private static final Icon ourMiddle = IconLoader.getIcon("/general/tab_grey_bckgrnd.png");
-  private static final Icon ourMiddleWhite = IconLoader.getIcon("/general/tab_white_bckgrnd.png");
+  private static final Icon ourMiddleWhite = IconLoader.getIcon("/general/tab-white-center.png");
 
 
 
