@@ -27,7 +27,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public class TitlePanel extends JPanel {
-  private static final Color CNT_COLOR = new SameColor(184);
+  private static final Color CNT_COLOR = new SameColor(194);
   private static final Color BND_COLOR = CNT_COLOR;
 
   public static final Color CNT_ACTIVE_COLOR = new SameColor(148);
