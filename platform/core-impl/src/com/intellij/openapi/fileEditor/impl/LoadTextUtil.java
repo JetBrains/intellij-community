@@ -201,6 +201,11 @@ public final class LoadTextUtil {
       }
       setDetectedFromBytesFlagBack(virtualFile, charset, text);
     }
+
+    byte[] bom = virtualFile.getBOM();
+    Charset fromBom = bom == null ? null : CharsetToolkit.guessFromBOM(bom);
+    if (fromBom != null) charset = fromBom;
+
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
   }
