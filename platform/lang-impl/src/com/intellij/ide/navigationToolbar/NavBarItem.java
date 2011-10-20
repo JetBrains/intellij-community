@@ -153,7 +153,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     final Color selBg = new Color(c.getRed(), c.getGreen(), c.getBlue(), getAlpha());
     int w = getWidth();
     int h = getHeight();
-    if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || (isSelected() && myPanel.hasFocus())) {
+    if (/*!UIUtil.isUnderAquaLookAndFeel() ||*/ myPanel.isInFloatingMode() || (isSelected() && myPanel.hasFocus())) {
       g.setPaint(isSelected() && isFocused() ? selBg : bg);
       g.fillRect(0, 0, w - (isLastElement() /*|| !UIUtil.isUnderAquaLookAndFeel()*/ ? 0 : getDecorationOffset()), h);
     }
@@ -180,7 +180,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
         g.translate(-2, 0);
       }
 
-      if (!UIUtil.isUnderAquaLookAndFeel() || myPanel.isInFloatingMode() || isNextSelected()) {
+      if (/*!UIUtil.isUnderAquaLookAndFeel() || */myPanel.isInFloatingMode() || isNextSelected()) {
         if (! isLastElement()) {
           path = new Path2D.Double();
           path.moveTo(0, 0);

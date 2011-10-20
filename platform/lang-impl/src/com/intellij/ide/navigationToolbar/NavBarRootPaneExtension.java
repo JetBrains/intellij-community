@@ -242,7 +242,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
       @Override
       protected void paintComponent(Graphics g) {
-        if (UIUtil.isUnderAquaLookAndFeel()) {
+        //if (UIUtil.isUnderAquaLookAndFeel()) {
           final Rectangle r = getBounds();
           final Graphics2D g2d = (Graphics2D)g;
           if (!isMainToolbarVisible()) {
@@ -275,9 +275,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
             if (!undocked) g.drawLine(0, 0, r.width, 0);
             g.drawLine(0, r.height - 1, r.width - 1, r.height - 1);
           }
-        } else {
-          super.paintComponent(g);
-        }
+        //} else {
+        //  super.paintComponent(g);
+        //}
       }
 
       @Override
