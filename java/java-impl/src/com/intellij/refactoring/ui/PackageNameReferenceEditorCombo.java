@@ -33,12 +33,14 @@ public class PackageNameReferenceEditorCombo extends ReferenceEditorComboWithBro
     super(null, text, project, false, recentsKey);
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog(chooserTitle, project);
+        final PackageChooserDialog chooser = new PackageChooserDialog(chooserTitle, project);
         chooser.selectPackage(getText());
         chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          setText(aPackage.getQualifiedName());
+        if (chooser.isOK()) {
+          final PsiPackage aPackage = chooser.getSelectedPackage();
+          if (aPackage != null) {
+            setText(aPackage.getQualifiedName());
+          }
         }
       }
     });
