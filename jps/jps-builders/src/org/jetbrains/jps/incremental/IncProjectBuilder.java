@@ -7,19 +7,17 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.zip.DeflaterOutputStream;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
 public class IncProjectBuilder {
-
   public static final String JPS_SERVER_NAME = "JPS BUILD";
+
   private final String myProjectName;
   private final BuilderRegistry myBuilderRegistry;
   private ProjectChunks myProductionChunks;
@@ -27,7 +25,10 @@ public class IncProjectBuilder {
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
   private final Mappings myMappings;
 
-  public IncProjectBuilder(Project project, String projectName, final Mappings mappings, BuilderRegistry builderRegistry) {
+  public IncProjectBuilder(String projectName,
+                           Project project,
+                           final Mappings mappings,
+                           BuilderRegistry builderRegistry) {
     myProjectName = projectName;
     myBuilderRegistry = builderRegistry;
     myProductionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE);
@@ -69,7 +70,8 @@ public class IncProjectBuilder {
       context.getBuildDataManager().close();
       final File mappingsDataFile = Paths.getMappingsStorageFile(myProjectName);
       try {
-        final BufferedWriter writer = new BufferedWriter(new FileWriter(mappingsDataFile));
+        FileUtil.createIfDoesntExist(mappingsDataFile);
+        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new DeflaterOutputStream(new FileOutputStream(mappingsDataFile))));
         try {
           context.getMappings().write(writer);
         }

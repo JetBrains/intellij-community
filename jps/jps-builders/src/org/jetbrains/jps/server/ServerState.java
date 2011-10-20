@@ -10,13 +10,13 @@ import org.jetbrains.jps.api.BuildParameters;
 import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
-import org.jetbrains.jps.incremental.BuilderRegistry;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
-import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
+import java.util.zip.DeflaterInputStream;
 
 /**
  * @author Eugene Zhuravlev
@@ -51,6 +51,8 @@ class ServerState {
   }
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
+    final String projectName = getProjectName(projectPath);
+
     Project project;
     Mappings mappings;
     synchronized (myConfigurationLock) {
@@ -59,9 +61,27 @@ class ServerState {
         project = loadProject(projectPath, params);
         myProjects.put(projectPath, project);
       }
+
       mappings = myProjectMappings.get(projectPath);
       if (mappings == null) {
-        mappings = new Mappings();
+        final File mappingsStorageFile = Paths.getMappingsStorageFile(projectName);
+        try {
+          final BufferedReader reader = new BufferedReader(new InputStreamReader(new DeflaterInputStream(new FileInputStream(mappingsStorageFile))));
+          try {
+            mappings = new Mappings(reader);
+          }
+          finally {
+            reader.close();
+          }
+        }
+        catch (FileNotFoundException e) {
+          mappings = new Mappings();
+        }
+        catch (IOException e) {
+          msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
+          mappings = new Mappings();
+        }
+
         myProjectMappings.put(projectPath, mappings);
       }
     }
@@ -84,7 +104,7 @@ class ServerState {
       }
     };
 
-    final IncProjectBuilder builder = new IncProjectBuilder(project, getProjectName(projectPath), mappings, BuilderRegistry.getInstance());
+    final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
     if (msgHandler != null) {
       builder.addMessageHandler(msgHandler);
     }
