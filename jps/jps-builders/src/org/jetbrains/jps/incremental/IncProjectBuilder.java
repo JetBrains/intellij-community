@@ -1,12 +1,14 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -14,7 +16,6 @@ import java.util.List;
  */
 public class IncProjectBuilder {
 
-  private final Project myProject;
   private final String myProjectName;
   private final BuilderRegistry myBuilderRegistry;
   private ProjectChunks myProductionChunks;
@@ -23,7 +24,6 @@ public class IncProjectBuilder {
   private final Mappings myMappings;
 
   public IncProjectBuilder(Project project, String projectName, final Mappings mappings, BuilderRegistry builderRegistry) {
-    myProject = project;
     myProjectName = projectName;
     myBuilderRegistry = builderRegistry;
     myProductionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE);
@@ -36,7 +36,7 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake) {
-    final CompileContext context = new CompileContext(scope, myProjectName, isMake, myMappings, new MessageHandler() {
+    final CompileContext context = new CompileContext(scope, myProjectName, isMake, myMappings, myProductionChunks, myTestChunks, new MessageHandler() {
       public void processMessage(BuildMessage msg) {
         for (MessageHandler h : myMessageHandlers) {
           h.processMessage(msg);
@@ -44,14 +44,7 @@ public class IncProjectBuilder {
       }
     });
     try {
-      if (!isMake) {
-        context.getBuildDataManager().clean();
-      }
-
-      for (Module module : scope.getAffectedModules()) {
-        //context.processMessage(new ProgressMessage("Cleaning module " + module.getName()));
-        //myProject.cleanModule(module);
-      }
+      cleanOutputRoots(scope, context);
 
       runTasks(context, myBuilderRegistry.getBeforeTasks());
 
@@ -68,6 +61,68 @@ public class IncProjectBuilder {
     }
     finally {
       context.getBuildDataManager().close();
+    }
+  }
+
+  private void cleanOutputRoots(CompileScope scope, CompileContext context) {
+    final Collection<Module> allProjectModules = scope.getProject().getModules().values();
+    final Collection<Module> modulesToClean = new HashSet<Module>();
+
+    if (context.isMake()) {
+      for (Module module : scope.getAffectedModules()) {
+        if (context.isDirty(module)) {
+          modulesToClean.add(module);
+        }
+      }
+    }
+    else {
+      modulesToClean.addAll(scope.getAffectedModules());
+
+      final Set<Module> allModules = new HashSet<Module>(allProjectModules);
+      allModules.removeAll(scope.getAffectedModules());
+      if (allModules.isEmpty()) {
+        // whole project is affected
+        context.getBuildDataManager().clean();
+      }
+    }
+
+    if (!modulesToClean.isEmpty()) {
+      final Set<File> toDelete = new HashSet<File>();
+      final Set<File> allSourceRoots = new HashSet<File>();
+      for (Module module : modulesToClean) {
+        toDelete.add(new File(module.getOutputPath()));
+        toDelete.add(new File(module.getTestOutputPath()));
+      }
+      for (Module module : allProjectModules) {
+        for (Object root : module.getSourceRoots()) {
+          allSourceRoots.add(new File((String)root));
+        }
+        for (Object root : module.getTestRoots()) {
+          allSourceRoots.add(new File((String)root));
+        }
+      }
+      // check that output and source roots are not overlapping
+      for (File outputRoot : toDelete) {
+        boolean okToDelete = true;
+        if (PathUtil.isUnder(allSourceRoots, outputRoot)) {
+          okToDelete = false;
+        }
+        else {
+          final Set<File> _outRoot = Collections.singleton(outputRoot);
+          for (File srcRoot : allSourceRoots) {
+            if (PathUtil.isUnder(_outRoot, srcRoot)) {
+              okToDelete = false;
+              break;
+            }
+          }
+        }
+        if (okToDelete) {
+          FileUtil.delete(outputRoot);
+        }
+        else {
+          context.processMessage(new CompilerMessage("JPS BUILD", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
+        }
+      }
     }
   }
 
