@@ -228,6 +228,15 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     assert presentation.typeText == 'String'
   }
 
+  public void testSubstitutedMethodType() throws Exception {
+    myFixture.configureByText "a.groovy", "new HashMap<String, Integer>().put<caret>x"
+    def presentation = new LookupElementPresentation()
+    myFixture.completeBasic()[0].renderElement(presentation)
+    assert presentation.itemText == 'put'
+    assert presentation.tailText == '(String key, Integer value)'
+    assert presentation.typeText == 'Integer'
+  }
+
   public void testIntCompletionInPlusMethod() {doBasicTest();}
   public void testIntCompletionInGenericParameter() {doBasicTest();}
 
