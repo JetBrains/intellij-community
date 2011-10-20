@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -19,13 +20,15 @@ public class IncProjectBuilder {
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
+  private final Mappings myMappings;
 
-  public IncProjectBuilder(Project project, String projectName, BuilderRegistry builderRegistry) {
+  public IncProjectBuilder(Project project, String projectName, final Mappings mappings, BuilderRegistry builderRegistry) {
     myProject = project;
     myProjectName = projectName;
     myBuilderRegistry = builderRegistry;
     myProductionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE);
+    myMappings = mappings;
   }
 
   public void addMessageHandler(MessageHandler handler) {
@@ -33,7 +36,7 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake) {
-    final CompileContext context = new CompileContext(scope, myProjectName, isMake, new MessageHandler() {
+    final CompileContext context = new CompileContext(scope, myProjectName, isMake, myMappings, new MessageHandler() {
       public void processMessage(BuildMessage msg) {
         for (MessageHandler h : myMessageHandlers) {
           h.processMessage(msg);

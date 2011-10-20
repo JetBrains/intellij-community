@@ -33,7 +33,6 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -82,7 +81,7 @@ public class JavaParserDefinition implements ParserDefinition {
       return ((JavaStubElementType)type).createPsi(node);
     }
 
-    return PsiUtilCore.NULL_PSI_ELEMENT;
+    throw new IllegalStateException("incorrect element type for JavaParserDefinition: " + type);
   }
 
   public PsiFile createFile(final FileViewProvider viewProvider) {

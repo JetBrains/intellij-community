@@ -24,12 +24,11 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiClassUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import junit.runner.BaseTestRunner;
@@ -53,25 +52,16 @@ public class JUnitUtil {
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String SUITE_METHOD_NAME = "suite";
 
-  private static final Key<PsiType> TEST_INTERFACE_KEY = Key.create(TEST_INTERFACE);
-  public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod, @NotNull Project project) {
+  public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (psiMethod.isConstructor()) return false;
+    if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType == null || returnType instanceof PsiPrimitiveType) return false;
-    if (!returnType.equalsToText(TEST_INTERFACE) && !returnType.equalsToText(TESTSUITE_CLASS)) {
-      PsiType cachedTestInterfaceType = project.getUserData(TEST_INTERFACE_KEY);
-      if (cachedTestInterfaceType == null)  {
-        final PsiType testType = JavaPsiFacade.getInstance(project).getElementFactory().createTypeFromText(TEST_INTERFACE, null);
-        project.putUserData(TEST_INTERFACE_KEY,testType);
-        cachedTestInterfaceType = testType;
-      }
-      if (!TypeConversionUtil.isAssignable(cachedTestInterfaceType, returnType)) {
-        return false;
-      }
-    }
-    return psiMethod.getParameterList().getParametersCount() == 0;
+    return returnType.equalsToText(TEST_INTERFACE)||
+           returnType.equalsToText(TESTSUITE_CLASS) ||
+           InheritanceUtil.isInheritor(returnType, TEST_INTERFACE);
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
@@ -123,7 +113,7 @@ public class JUnitUtil {
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
-      if (isSuiteMethod(method, psiClass.getProject())) return true;
+      if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
     }
 
@@ -172,6 +162,7 @@ public class JUnitUtil {
     return false;
   }
 
+  @Nullable
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
@@ -197,6 +188,8 @@ public class JUnitUtil {
     if (testCaseClass == null) throw new NoJUnitException(scope.getDisplayName());
     return testCaseClass;
   }
+
+  @Nullable
   private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
     return JavaPsiFacade.getInstance(project).findClass(TESTCASE_CLASS, scope);
   }
@@ -246,7 +239,7 @@ public class JUnitUtil {
   public static PsiMethod findFirstTestMethod(PsiClass clazz) {
     PsiMethod testMethod = null;
     for (PsiMethod method : clazz.getMethods()) {
-      if (isTestMethod(MethodLocation.elementInClass(method, clazz)) || isSuiteMethod(method, clazz.getProject())) {
+      if (isTestMethod(MethodLocation.elementInClass(method, clazz)) || isSuiteMethod(method)) {
         testMethod = method;
         break;
       }

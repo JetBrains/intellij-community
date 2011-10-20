@@ -8,11 +8,11 @@ package org.jetbrains.ether;
  * To change this template use File | Settings | File Templates.
  */
 public class TestMarkDirty extends IncrementalTestCase {
-    public TestMarkDirty() throws Exception {
-        super("markDirty");
-    }
+  public TestMarkDirty() throws Exception {
+    super("markDirty");
+  }
 
-    public void testRecompileDependent () throws Exception {
-        doTest();
-    }
+  public void testRecompileDependent() throws Exception {
+    doTest();
+  }
 }

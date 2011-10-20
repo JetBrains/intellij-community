@@ -69,7 +69,6 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_DND_ENABLED = true;
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
-    public boolean IS_TRIPLE_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = false;
     @Deprecated
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
     @Deprecated
@@ -458,19 +457,12 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.IS_WHEEL_FONTCHANGE_ENABLED = val;
   }
 
-  public boolean isMouseClickSelectionHonorsCamelWords(int clicksCount) {
-    switch (clicksCount) {
-      case 2:  return myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
-      case 3:  return myOptions.IS_TRIPLE_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
-      default: return false;
-    }
+  public boolean isMouseClickSelectionHonorsCamelWords() {
+    return myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
   }
 
-  public void setMouseClickSelectionHonorsCamelWords(int clicksCount, boolean val) {
-    switch (clicksCount) {
-      case 2: myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val; break;
-      case 3: myOptions.IS_TRIPLE_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
-    }
+  public void setMouseClickSelectionHonorsCamelWords(boolean val) {
+    myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
   }
 
   public boolean isVariableInplaceRenameEnabled() {

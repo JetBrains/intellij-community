@@ -49,7 +49,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     super(uiSettings);
     init();
     myActionsPanel.setLayout(new BorderLayout(5, 0));
-    final JButton button = new JButton("Browse repositories");
+    final JButton button = new JButton("Browse repositories...");
     button.setMnemonic('b');
     button.addActionListener(new ActionListener() {
       @Override
@@ -63,7 +63,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(button, BorderLayout.WEST);
-    final JButton manageRepositoriesBtn = new JButton("Manage repositories");
+    final JButton manageRepositoriesBtn = new JButton("Manage repositories...");
     manageRepositoriesBtn.setMnemonic('m');
     manageRepositoriesBtn.addActionListener(new ActionListener() {
       @Override

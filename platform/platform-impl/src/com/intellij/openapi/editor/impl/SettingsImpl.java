@@ -32,11 +32,9 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.Nullable;
 
 public class SettingsImpl implements EditorSettings {
-  private TIntIntHashMap myHonorCamelHumpsOnClicks;
   @Nullable private final EditorEx myEditor;
   private Boolean myIsCamelWords;
 
@@ -70,6 +68,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsAdditionalPageAtBottom              = null;
   private Boolean myIsDndEnabled                          = null;
   private Boolean myIsWheelFontChangeEnabled              = null;
+  private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
   private Boolean myIsRenameVariablesInplace              = null;
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
@@ -374,19 +373,15 @@ public class SettingsImpl implements EditorSettings {
   public void setWheelFontChangeEnabled(boolean val) {
     myIsWheelFontChangeEnabled = val ? Boolean.TRUE : Boolean.FALSE;
   }
-  
-  public boolean isMouseClickSelectionHonorsCamelWords(int clicksCount) {
-    if (myHonorCamelHumpsOnClicks != null && myHonorCamelHumpsOnClicks.containsKey(clicksCount)) {
-      return myHonorCamelHumpsOnClicks.get(clicksCount) > 0;
-    }
-    return EditorSettingsExternalizable.getInstance().isMouseClickSelectionHonorsCamelWords(clicksCount);
+
+  public boolean isMouseClickSelectionHonorsCamelWords() {
+    return myIsMouseClickSelectionHonorsCamelWords != null
+           ? myIsMouseClickSelectionHonorsCamelWords.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isMouseClickSelectionHonorsCamelWords();
   }
 
-  public void setMouseClickSelectionHonorsCamelWords(int clicksCount, boolean val) {
-    if (myHonorCamelHumpsOnClicks == null) {
-      myHonorCamelHumpsOnClicks = new TIntIntHashMap();
-    }
-    myHonorCamelHumpsOnClicks.put(clicksCount, val ? 1 : 0);
+  public void setMouseClickSelectionHonorsCamelWords(boolean val) {
+    myIsMouseClickSelectionHonorsCamelWords = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
   public boolean isVariableInplaceRenameEnabled() {

@@ -16,7 +16,6 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,15 +46,6 @@ public abstract class JBTableRowEditor extends JPanel {
     myListeners.add(listener);
   }
 
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    final JComponent c = getPreferredFocusedComponent();
-    if (c != null && c.isVisible()) {
-      IdeFocusManager.getGlobalInstance().requestFocus(c, true);
-    }
-  }
-
   public void fireDocumentChanged(DocumentEvent e, int column) {
     for (RowDocumentListener listener : myListeners) {
       listener.documentChanged(e, column);
@@ -64,6 +54,7 @@ public abstract class JBTableRowEditor extends JPanel {
 
   @Nullable
   public final MouseEvent getMouseEvent() {
+    if (myMouseEvent != null && myMouseEvent.getClickCount() == 0) return null;
     return myMouseEvent;
   }
 

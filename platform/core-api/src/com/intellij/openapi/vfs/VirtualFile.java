@@ -74,7 +74,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Gets the path of this file. Path is a string which uniquely identifies file within given
    * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>{@link LocalFileSystem}</code> it is an absolute file path with file separator characters
+   * For <code>{@link com.intellij.openapi.vfs.LocalFileSystem}</code> it is an absolute file path with file separator characters
    * (File.separatorChar) replaced to the forward slash ('/').
    *
    * @return the path
@@ -170,7 +170,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Renames this file to the <code>newName</code>.<p>
    * This method should be only called within write-action.
-   * See {@link Application#runWriteAction}.
+   * See {@link com.intellij.openapi.application.Application#runWriteAction(Runnable)}.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.

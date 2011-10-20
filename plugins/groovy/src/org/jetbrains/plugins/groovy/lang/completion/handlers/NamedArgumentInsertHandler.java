@@ -51,7 +51,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     final Editor editor = context.getEditor();
 
     if (argumentList != null) {
-      if (context.getCompletionChar() == ':' || context.getCompletionChar() == ' ') {
+      if (context.getCompletionChar() == ':') {
         context.setAddCompletionChar(false);
       }
       
@@ -61,8 +61,8 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       s = StringUtil.trimEnd(s, ")");
 
       if (s.trim().length() == 0) {
-        editor.getDocument().insertString(tailOffset, ": ");
-        editor.getCaretModel().moveToOffset(tailOffset + 2);
+        editor.getDocument().insertString(tailOffset, ":");
+        editor.getCaretModel().moveToOffset(tailOffset + 1);
       }
       else {
         if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {

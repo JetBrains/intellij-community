@@ -8,11 +8,11 @@ package org.jetbrains.ether;
  * To change this template use File | Settings | File Templates.
  */
 public class TestClassRename extends IncrementalTestCase {
-    public TestClassRename() throws Exception {
-        super("changeName");
-    }
+  public TestClassRename() throws Exception {
+    super("changeName");
+  }
 
-    public void testChangeClassName() throws Exception {
-        doTest();
-    }
+  public void testChangeClassName() throws Exception {
+    doTest();
+  }
 }

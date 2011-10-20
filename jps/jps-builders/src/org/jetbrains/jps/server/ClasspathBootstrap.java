@@ -86,8 +86,6 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
 
-    //cp.add(getResourcePath(Mappings.class));  // todo: temporary
-
     //final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
     //final File[] files = jpsRuntime.listFiles();
     //if (files != null) {

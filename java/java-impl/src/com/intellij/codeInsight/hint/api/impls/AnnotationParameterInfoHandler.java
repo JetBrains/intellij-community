@@ -120,7 +120,8 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
   private static PsiAnnotationMethod findAnnotationMethod(PsiFile file, int offset) {
     PsiNameValuePair pair = ParameterInfoUtils.findParentOfType(file, offset, PsiNameValuePair.class);
     if (pair == null) return null;
-    final PsiElement resolved = pair.getReference().resolve();
+    final PsiReference reference = pair.getReference();
+    final PsiElement resolved = reference != null ? reference.resolve():null;
     return resolved instanceof PsiAnnotationMethod ? (PsiAnnotationMethod)resolved : null;
   }
 }

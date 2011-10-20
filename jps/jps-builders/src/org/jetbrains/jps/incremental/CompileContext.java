@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
@@ -25,6 +26,8 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
+  private final Mappings myMappings;
+  private final Set<Module> myDirtyModules = new HashSet<Module>();
 
   private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
     @NotNull
@@ -33,12 +36,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   };
 
-  public CompileContext(CompileScope scope, String projectName, boolean isMake, MessageHandler delegateMessageHandler) {
+  public CompileContext(CompileScope scope, String projectName, boolean isMake, final Mappings mappings, MessageHandler delegateMessageHandler) {
     myScope = scope;
     myIsMake = isMake;
     myDelegateMessageHandler = delegateMessageHandler;
     final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
     myDataManager = new BuildDataManager(buildDataRoot);
+    myMappings = mappings;
   }
 
   public Project getProject() {
@@ -47,6 +51,29 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public boolean isMake() {
     return myIsMake;
+  }
+
+  public boolean isDirty(ModuleChunk chunk) {
+    for (Module module : chunk.getModules()) {
+      if (myDirtyModules.contains(module)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void setDirty(ModuleChunk chunk, boolean isDirty) {
+    final Set<Module> modules = chunk.getModules();
+    if (isDirty) {
+      myDirtyModules.addAll(modules);
+    }
+    else {
+      myDirtyModules.removeAll(modules);
+    }
+  }
+
+  public Mappings getMappings() {
+    return myMappings;
   }
 
   public boolean isCompilingTests() {

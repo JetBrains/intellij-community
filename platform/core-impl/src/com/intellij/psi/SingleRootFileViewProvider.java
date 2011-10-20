@@ -267,15 +267,15 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return contentSize > PersistentFSConstants.MAX_INTELLISENSE_FILESIZE;
   }
 
-  private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxInBytes) {
+  private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
-      if (lengthInChars < maxInBytes / 2) return false;
-      if (lengthInChars > maxInBytes ) return true;
+      if (lengthInChars < maxBytes / 2) return false;
+      if (lengthInChars > maxBytes ) return true;
     }
 
-    return vFile.getLength() > maxInBytes;
+    return vFile.getLength() > maxBytes;
   }
 
   @Nullable

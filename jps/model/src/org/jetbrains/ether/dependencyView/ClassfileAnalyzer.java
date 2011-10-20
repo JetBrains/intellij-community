@@ -1,7 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
-import org.jetbrains.ether.Pair;
+import com.intellij.openapi.util.Pair;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
 import org.objectweb.asm.signature.SignatureReader;

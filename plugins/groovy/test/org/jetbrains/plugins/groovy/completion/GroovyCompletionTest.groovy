@@ -325,7 +325,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m arg111: <caret> }
+ { m arg111:<caret> }
 }
 """
   }
@@ -397,7 +397,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111: <caret>)}
+ { m(arg111:<caret>)}
 }
 """
   }
@@ -432,7 +432,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111: <caret>)}
+ { m(arg111:<caret>)}
 }
 """
   }
@@ -798,6 +798,16 @@ return foo()"""
     checkCompletion("new Abcd<caret>", '<', "new AbcdClass<<caret>>()")
   }
 
+  public void testMapKeysUsedInFile() throws Exception {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    doVariantableTest 'foo1', 'foo3', 'foo4', 'Foo5', 'Foo7'
+  }
+
+  public void testNamedArgsUsedInFile() throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    doVariantableTest 'foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'false', 'float'
+  }
+
   public void testSuggestMembersOfExpectedType() {
     myFixture.addClass("enum Foo { aaaaaaaaaaaaaaaaaaaaaa, bbbbbb }")
     checkCompletion("Foo f = aaaaaaaa<caret>", '\n', "Foo f = Foo.aaaaaaaaaaaaaaaaaaaaaa<caret>")
@@ -887,6 +897,29 @@ class Fopppp {
 
   public void testWordCompletionInLiterals() {
     checkSingleItemCompletion('def foo = "fo<caret>"', 'def foo = "foo<caret>"')
+  }
+  public void testWordCompletionInLiterals2() {
+    checkSingleItemCompletion('''
+println "abcd"
+"a<caret>"
+''', '''
+println "abcd"
+"abcd<caret>"
+''')
+  }
+
+  public void testWordCompletionInComments() {
+    checkSingleItemCompletion('''
+println "abcd"
+// a<caret>"
+''', '''
+println "abcd"
+// abcd<caret>"
+''')
+  }
+
+  public void testNoModifiersAfterDef() throws Exception {
+    checkSingleItemCompletion 'def priv<caret>', 'def priv<caret>'
   }
 
   public void testIfSpace() { checkCompletion 'int iff; if<caret>', ' ', "int iff; if <caret>" }

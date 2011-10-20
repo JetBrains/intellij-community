@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Processor;
@@ -140,8 +141,7 @@ public class LeakHunter {
     object.putUserData(IS_NOT_A_LEAK, Boolean.TRUE);
   }
   private static boolean isReallyLeak(Field field, String fieldName, Object value, Class valueClass) {
-    if (value instanceof UserDataHolder && ((UserDataHolder)value).getUserData(IS_NOT_A_LEAK) != null) return false;
-    return true;
+    return !(value instanceof UserDataHolder) || ((UserDataHolder)value).getUserData(IS_NOT_A_LEAK) == null;
   }
 
   private static final Set<String> noFollowClasses = new THashSet<String>();
@@ -170,7 +170,11 @@ public class LeakHunter {
     checkLeak(root, ProjectImpl.class);
   }
   @TestOnly
-  public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) {
+  public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) throws AssertionError {
+    checkLeak(root, suspectClass, null);
+  }
+  @TestOnly
+  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, final Processor<T> isReallyLeak) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -186,9 +190,10 @@ public class LeakHunter {
         @Override
         public boolean process(BackLink backLink) {
           UserDataHolder leaked = (UserDataHolder)backLink.value;
-          if (leaked.getUserData(REPORTED_LEAKED) == null) {
+          if (((UserDataHolderBase)leaked).replace(REPORTED_LEAKED,null,Boolean.TRUE) && (isReallyLeak == null || isReallyLeak.process((T)leaked))) {
             String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
-            System.out.println("LEAK: hash: "+System.identityHashCode(leaked) + "; place: "+ place);
+            System.out.println("Leaked object found:" + leaked +
+                               "; hash: "+System.identityHashCode(leaked) + "; place: "+ place);
             while (backLink != null) {
               String valueStr;
               try {
@@ -202,8 +207,7 @@ public class LeakHunter {
             }
             System.out.println(";-----");
 
-            leaked.putUserData(REPORTED_LEAKED, Boolean.TRUE);
-            throw new RuntimeException();
+            throw new AssertionError();
           }
           return true;
         }
