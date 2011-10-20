@@ -123,7 +123,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
 
       JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.getInstance().hasContextHelp()) {
+      if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
       }
       leftPanel.add(myCancelButton);
@@ -150,7 +150,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myCancelButton);
       buttonPanel.add(Box.createHorizontalStrut(5));
-      if (ApplicationInfo.getInstance().hasContextHelp()) {
+      if (ApplicationInfo.contextHelpAvailable()) {
         buttonPanel.add(myHelpButton);
       }
     }

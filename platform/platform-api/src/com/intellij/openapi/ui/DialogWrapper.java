@@ -447,7 +447,7 @@ public abstract class DialogWrapper {
   private Action[] filter(Action[] actions) {
     ArrayList<Action> answer = new ArrayList<Action>();
     for (Action action : actions) {
-      if (action != null && (ApplicationInfo.getInstance().hasContextHelp() || action != getHelpAction())) {
+      if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
         answer.add(action);
       }
     }

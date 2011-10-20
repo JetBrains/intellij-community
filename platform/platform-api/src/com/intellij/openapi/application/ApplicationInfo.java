@@ -43,4 +43,8 @@ public abstract class ApplicationInfo {
     return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
   }
 
+
+  public static boolean contextHelpAvailable() {
+    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
+  }
 }

@@ -53,7 +53,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    if (!ApplicationInfo.getInstance().hasContextHelp()) {
+    if (!ApplicationInfo.contextHelpAvailable()) {
       presentation.setVisible(false);
       return;
     }
