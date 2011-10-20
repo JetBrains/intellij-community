@@ -20,6 +20,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.MacOtherAction;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
@@ -338,7 +339,7 @@ public abstract class DialogWrapper {
    */
   @Nullable
   protected JComponent createSouthPanel() {
-    Action[] actions = createActions();
+    Action[] actions = filter(createActions());
     Action[] leftSideActions = createLeftSideActions();
     List<JButton> buttons = new ArrayList<JButton>();
 
@@ -441,6 +442,16 @@ public abstract class DialogWrapper {
     panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
 
     return panel;
+  }
+
+  private Action[] filter(Action[] actions) {
+    ArrayList<Action> answer = new ArrayList<Action>();
+    for (Action action : actions) {
+      if (action != null && (ApplicationInfo.getInstance().hasContextHelp() || action != getHelpAction())) {
+        answer.add(action);
+      }
+    }
+    return answer.toArray(new Action[answer.size()]);
   }
 
 

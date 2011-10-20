@@ -19,9 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -225,7 +225,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     group.add(new ShowFilesAction());
     group.add(new HideOutOfCyclePackagesAction());
     group.add(new GroupByScopeTypeAction());
-    group.add(new HelpAction());
+    group.add(new ContextHelpAction("dependency.viewer.tool.window"));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
@@ -523,16 +523,6 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
           new CyclicDependenciesHandler(myProject, myBuilder.getScope()).analyze();
         }
       });
-    }
-  }
-
-  private static class HelpAction extends AnAction {
-    private HelpAction() {
-      super(CommonBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
-    }
-
-    public void actionPerformed(AnActionEvent event) {
-      HelpManager.getInstance().invokeHelp("dependency.viewer.tool.window");//todo
     }
   }
 

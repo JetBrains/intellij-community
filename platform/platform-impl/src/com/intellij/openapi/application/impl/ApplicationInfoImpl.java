@@ -72,6 +72,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
   private boolean myEAP;
+  private boolean myHasContextHelp = true;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
   @NonNls private String myWebHelpUrl = "http://www.jetbrains.com/idea/webhelp/";
@@ -121,6 +122,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_LIST_URL = "list-url";
   @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
   @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
+  @NonNls private static final String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
   @NonNls private static final String ELEMENT_WHATSNEW = "whatsnew";
   @NonNls private static final String ELEMENT_KEYMAP = "keymap";
   @NonNls private static final String ATTRIBUTE_WINDOWS_URL = "win";
@@ -262,6 +264,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getWebHelpUrl() {
     return myWebHelpUrl;
+  }
+
+  @Override
+  public boolean hasContextHelp() {
+    return myHasContextHelp;
   }
 
   public String getWhatsNewUrl() {
@@ -411,6 +418,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       if (webHelpUrl != null) {
         myWebHelpUrl = webHelpUrl;
       }
+      final String attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_CONTEXT_HELP);
+      myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
     }
 
     Element updateUrls = parentNode.getChild(UPDATE_URLS_ELEMENT_NAME);
