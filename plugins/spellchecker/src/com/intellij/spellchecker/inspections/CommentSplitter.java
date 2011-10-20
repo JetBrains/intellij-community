@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ import java.util.regex.Pattern;
 
 public class CommentSplitter extends BaseSplitter {
 
-   private static final Pattern HTML = Pattern.compile("<(\\S+?).*?>(.*?)</\\1>");
+   private static final Pattern HTML = Pattern.compile("<(\\S+?)[^<>]*?>(.*?)</\\1>");
 
 
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
