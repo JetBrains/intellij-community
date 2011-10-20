@@ -400,11 +400,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       final String propName = myLocalVar != null ? JavaCodeStyleManager
         .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
-      final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
-
-      TypeSelectorManagerImpl typeSelectorManager = myExpr != null
-                                                ? new TypeSelectorManagerImpl(myProject, initializerType, myExpr, occurences)
-                                                : new TypeSelectorManagerImpl(myProject, initializerType, occurences);
+      PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
 
       boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
 
@@ -421,7 +417,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
           myInplaceIntroduceParameterPopup =
             new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
-                                               typeSelectorManager,
+                                               createTypeSelectorManager(occurences, initializerType),
                                                myExpr, myLocalVar, method, methodToSearchFor, occurences,
                                                getParamsToRemove(method, occurences),
                                                mustBeFinal);
@@ -430,13 +426,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           }
         }
         else {
-          AbstractInplaceIntroducer.stopIntroduce(myEditor);
+          activeIntroducer.stopIntroduce(myEditor);
           myExpr = (PsiExpression)activeIntroducer.getExpr();
           myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();
           occurences = (PsiExpression[])activeIntroducer.getOccurrences();
           enteredName = activeIntroducer.getInputName();
           replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
           delegate = ((InplaceIntroduceParameterPopup)activeIntroducer).isGenerateDelegate();
+          initializerType = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
         }
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -455,7 +452,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         final IntroduceParameterDialog dialog =
           new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr,
                                        createNameSuggestionGenerator(myExpr, propName, myProject, enteredName),
-                                       typeSelectorManager, methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal);
+                                       createTypeSelectorManager(occurences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal);
         dialog.setReplaceAllOccurrences(replaceAllOccurrences);
         dialog.setGenerateDelegate(delegate);
         dialog.show();
@@ -463,6 +460,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           myEditor.getSelectionModel().removeSelection();
         }
       }
+    }
+
+    private TypeSelectorManagerImpl createTypeSelectorManager(PsiExpression[] occurences, PsiType initializerType) {
+      return myExpr != null ? new TypeSelectorManagerImpl(myProject, initializerType, myExpr, occurences)
+                            : new TypeSelectorManagerImpl(myProject, initializerType, occurences);
     }
 
     private TIntArrayList getParamsToRemove(PsiMethod method, PsiExpression[] occurences) {

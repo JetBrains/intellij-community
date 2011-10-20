@@ -38,9 +38,7 @@ import com.intellij.codeInspection.ui.EntryPointsNode;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -49,7 +47,6 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -203,15 +200,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myNonJavaCheckbox, gc);
 
-      final JButton configureAnnotations = new JButton("Configure annotations");
-      configureAnnotations.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
-          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-          EntryPointsManagerImpl.getInstance(project).configureAnnotations();
-        }
-      });
+      final JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsBtn(this);
       gc.fill = GridBagConstraints.NONE;
       gc.gridy++;
 
@@ -446,8 +435,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(element.getProject());
-      if (AnnotationUtil.isAnnotated((PsiModifierListOwner)element, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
-          AnnotationUtil.isAnnotated((PsiModifierListOwner)element, entryPointsManager.getAdditionalAnnotations())) {
+      if (entryPointsManager.isEntryPoint((PsiModifierListOwner)element)) {
         return true;
       }
     }

@@ -93,7 +93,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
 
   protected Settings showRefactoringDialog(Project project,
-                                           Editor editor,
+                                           final Editor editor,
                                            PsiClass parentClass,
                                            PsiExpression expr,
                                            PsiType type,
@@ -150,31 +150,32 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     String enteredName = null;
     boolean replaceAllOccurrences = true;
-    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences);
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
         myInplaceIntroduceConstantPopup =
-          new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurrences, typeSelectorManager,
+          new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurrences,
+                                            new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences),
                                             anchorElement, anchorElementIfAll,
                                             expr != null ? createOccurrenceManager(expr, parentClass) : null);
         if (myInplaceIntroduceConstantPopup.startInplaceIntroduceTemplate() ){
           return null;
         }
       } else {
-        AbstractInplaceIntroducer.stopIntroduce(editor);
+        activeIntroducer.stopIntroduce(editor);
         expr = (PsiExpression)activeIntroducer.getExpr();
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
         occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
         replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
+        type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
       }
     }
 
 
     final IntroduceConstantDialog dialog =
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurrences, getParentClass(),
-                                  typeSelectorManager, enteredName);
+                                  new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), enteredName);
     dialog.setReplaceAllOccurrences(replaceAllOccurrences);
     dialog.show();
     if (!dialog.isOK()) {

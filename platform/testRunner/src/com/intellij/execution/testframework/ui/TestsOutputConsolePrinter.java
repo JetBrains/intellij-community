@@ -106,15 +106,14 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         scrollToBeginning();
       }
     };
-    if (isRoot() && myUnboundOutputRoot != null) {
-      myUnboundOutputRoot.invokeInAlarm(clearRunnable);
-      myUnboundOutputRoot.printOn(this);
-      myUnboundOutputRoot.invokeInAlarm(scrollRunnable);
-    } else {
-      myCurrentTest.invokeInAlarm(clearRunnable);
-      myCurrentTest.printOn(this);
-      myCurrentTest.invokeInAlarm(scrollRunnable);
-    }
+    final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
+    currentProxyOrRoot.invokeInAlarm(clearRunnable);
+    currentProxyOrRoot.printOn(this);
+    currentProxyOrRoot.invokeInAlarm(scrollRunnable);
+  }
+
+  private AbstractTestProxy getCurrentProxyOrRoot() {
+    return isRoot() && myUnboundOutputRoot != null ? myUnboundOutputRoot : myCurrentTest;
   }
 
   public boolean isCurrent(CompositePrintable printable) {
@@ -145,7 +144,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   protected void scrollToBeginning() {
     myConsole.performWhenNoDeferredOutput(new Runnable() {
       public void run() {
-        myConsole.scrollTo(myMarkOffset);
+        final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
+        if (!currentProxyOrRoot.isInProgress()) {
+          //do not scroll to any mark during run
+          myConsole.scrollTo(myMarkOffset);
+        }
       }
     });
   }

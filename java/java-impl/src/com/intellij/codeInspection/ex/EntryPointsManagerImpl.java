@@ -25,8 +25,11 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -37,10 +40,12 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -49,6 +54,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 @State(
@@ -360,6 +367,19 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }.show();
   }
 
+  public static JButton createConfigureAnnotationsBtn(final JComponent parent) {
+    final JButton configureAnnotations = new JButton("Configure annotations...");
+    configureAnnotations.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        EntryPointsManagerImpl.getInstance(project).configureAnnotations();
+      }
+    });
+    return configureAnnotations;
+  }
+
   public void addAllPersistentEntries(EntryPointsManagerImpl manager) {
     myPersistentEntryPoints.putAll(manager.myPersistentEntryPoints);
   }
@@ -410,5 +430,10 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
   public void setAddNonJavaEntries(final boolean addNonJavaEntries) {
     myAddNonJavaEntries = addNonJavaEntries;
+  }
+  
+  public boolean isEntryPoint(PsiModifierListOwner element) {
+    return AnnotationUtil.isAnnotated(element, ADDITIONAL_ANNOTATIONS) ||
+           AnnotationUtil.isAnnotated(element, getAdditionalAnnotations());
   }
 }

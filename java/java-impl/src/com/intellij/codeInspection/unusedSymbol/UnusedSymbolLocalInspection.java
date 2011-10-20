@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -25,10 +24,7 @@ import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiModifierListOwner;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -128,17 +124,13 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
-
-      final JButton configureAnnotations = new JButton("Configure annotations");
-      configureAnnotations.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
-          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-          EntryPointsManagerImpl.getInstance(project).configureAnnotations();
-        }
-      });
-      myAnnos.add(configureAnnotations, BorderLayout.NORTH);
+      final GridBagConstraints gc =
+            new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                   new Insets(0, 0, 0, 0), 0, 0);
+      myAnnos.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(myPanel), gc);
+      gc.weightx = 1;
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      myAnnos.add(Box.createHorizontalBox(), gc);
     }
 
     public JComponent getPanel() {
@@ -160,8 +152,6 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   }
 
   public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {
-    final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(modifierListOwner.getProject());
-    return AnnotationUtil.isAnnotated(modifierListOwner, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
-           AnnotationUtil.isAnnotated(modifierListOwner, entryPointsManager.getAdditionalAnnotations());
+    return EntryPointsManagerImpl.getInstance(modifierListOwner.getProject()).isEntryPoint(modifierListOwner);
   }
 }
