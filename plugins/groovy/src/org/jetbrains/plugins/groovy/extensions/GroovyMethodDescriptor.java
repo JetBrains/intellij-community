@@ -1,21 +1,19 @@
 package org.jetbrains.plugins.groovy.extensions;
 
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiMethod;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 
 import java.util.*;
 
 /**
  * @author Sergey Evdokimov
  */
-public class GroovyMethodDescriptor {
+public class GroovyMethodDescriptor extends AbstractExtensionPointBean {
 
   private static final String ATTR_NAMES_DELIMITER = " \t\n\r,;";
 
