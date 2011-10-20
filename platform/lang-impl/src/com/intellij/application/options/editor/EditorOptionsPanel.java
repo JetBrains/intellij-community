@@ -67,8 +67,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbVirtualPageAtBottom;
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
-  private JCheckBox myCbHonorCamelHumpsWhenSelectingByDoubleClick;
-  private JCheckBox myCbHonorCamelHumpsWhenSelectingByTripleClick;
+  private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
 
   private JPanel myHighlightSettingsPanel;
   private JRadioButton myRbPreferScrolling;
@@ -160,8 +159,7 @@ public class EditorOptionsPanel {
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
     myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
-    myCbHonorCamelHumpsWhenSelectingByDoubleClick.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords(2));
-    myCbHonorCamelHumpsWhenSelectingByTripleClick.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords(3));
+    myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
 
     myRbPreferMovingCaret.setSelected(editorSettings.isRefrainFromScrolling());
     myRbPreferScrolling.setSelected(!editorSettings.isRefrainFromScrolling());
@@ -238,8 +236,7 @@ public class EditorOptionsPanel {
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
-    editorSettings.setMouseClickSelectionHonorsCamelWords(2, myCbHonorCamelHumpsWhenSelectingByDoubleClick.isSelected());
-    editorSettings.setMouseClickSelectionHonorsCamelWords(3, myCbHonorCamelHumpsWhenSelectingByTripleClick.isSelected());
+    editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
     editorSettings.setRefrainFromScrolling(myRbPreferMovingCaret.isSelected());
 
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
@@ -345,8 +342,7 @@ public class EditorOptionsPanel {
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
-    isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByDoubleClick, editorSettings.isMouseClickSelectionHonorsCamelWords(2));
-    isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByTripleClick, editorSettings.isMouseClickSelectionHonorsCamelWords(3));
+    isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
 
     isModified |= myRbPreferMovingCaret.isSelected() != editorSettings.isRefrainFromScrolling();
 
