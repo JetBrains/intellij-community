@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -153,8 +154,14 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   public void visitClosure(GrClosableBlock closure) {
-    if ((myChild1.getElementType() == mLCURLY && myChild2.getElementType() != PARAMETERS_LIST && myChild2.getElementType() != mCLOSABLE_BLOCK_OP)
-        || myChild2.getElementType() == mRCURLY) {
+    ASTNode rBraceAtTheEnd = GeeseUtil.getClosureRBraceAtTheEnd(myChild1);
+    if (mySettings.USE_FLYING_GEESE_BRACES && myChild2.getElementType() == mRCURLY && rBraceAtTheEnd != null) {
+      myResult = Spacing.createSpacing(0, 0, 0, true, 100, 0);
+    }
+    else if ((myChild1.getElementType() == mLCURLY &&
+              myChild2.getElementType() != PARAMETERS_LIST &&
+              myChild2.getElementType() != mCLOSABLE_BLOCK_OP)
+             || myChild2.getElementType() == mRCURLY) {
       myResult = Spacing.createDependentLFSpacing(0, 1, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else if (myChild1.getElementType() == mCLOSABLE_BLOCK_OP) {
       GrStatement[] statements = closure.getStatements();
