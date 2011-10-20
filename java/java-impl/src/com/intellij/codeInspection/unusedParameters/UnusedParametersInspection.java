@@ -28,6 +28,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -45,6 +46,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -71,6 +74,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
       if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
 
       if (RefUtil.isEntryPoint(refMethod)) return null;
+      if (EntryPointsManagerImpl.getInstance(manager.getProject()).isEntryPoint(refMethod.getElement())) return null;
 
       if (refMethod.isAppMain()) return null;
 
@@ -215,6 +219,18 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     return SHORT_NAME;
   }
 
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gc =
+      new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                             new Insets(5, 0, 0, 0), 0, 0);
+    panel.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(panel), gc);
+    gc.weightx = 1;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(Box.createHorizontalBox(), gc);
+    return panel;
+  }
 
   private static class AcceptSuggested implements LocalQuickFix {
     private final RefManager myManager;
