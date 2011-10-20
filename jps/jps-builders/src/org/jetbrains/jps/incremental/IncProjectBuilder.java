@@ -36,7 +36,9 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake) {
-    final CompileContext context = new CompileContext(scope, myProjectName, isMake, myMappings, myProductionChunks, myTestChunks, new MessageHandler() {
+    final CompileContext context = new CompileContext(
+      scope, myProjectName, isMake, myMappings, myProductionChunks, myTestChunks, new MessageHandler() {
+
       public void processMessage(BuildMessage msg) {
         for (MessageHandler h : myMessageHandlers) {
           h.processMessage(msg);
@@ -163,10 +165,6 @@ public class IncProjectBuilder {
     do {
       nextPassRequired = false;
       for (Builder builder : builders) {
-
-        //final String sourcesKind = context.isCompilingTests() ? "test" : "production";
-        //context.processMessage(new ProgressMessage("Compiling " + chunk.getName() + "[" + sourcesKind+"]; Compiler: " + builder.getDescription()));
-
         final Builder.ExitCode buildResult = builder.build(context, chunk);
         if (buildResult == Builder.ExitCode.ABORT) {
           throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");

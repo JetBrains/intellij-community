@@ -20,6 +20,8 @@ public abstract class Builder {
     OK, ABORT, ADDITIONAL_PASS_REQUIRED
   }
 
+  public abstract String getName();
+
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
 
   public abstract String getDescription();

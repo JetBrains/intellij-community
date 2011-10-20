@@ -87,6 +87,11 @@ public class JavaBuilder extends Builder{
     });
   }
 
+  @Override
+  public String getName() {
+    return BUILDER_NAME;
+  }
+
   public String getDescription() {
     return "Java Builder";
   }

@@ -11,7 +11,9 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.jps.api.JpsRemoteProto;
+import org.jetbrains.jps.incremental.Paths;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +33,8 @@ public class Server {
   private final ChannelPipelineFactory myPipelineFactory;
   private final ExecutorService myBuildsExecutor;
 
-  public Server() {
+  public Server(File systemDir) {
+    Paths.getInstance().setSystemRoot(systemDir);
     final ExecutorService threadPool = Executors.newCachedThreadPool();
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
     myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
@@ -74,7 +77,7 @@ public class Server {
   public static void main(String[] args) {
     try {
       int port = DEFAULT_SERVER_PORT;
-
+      File systemDir = null;
       if (args.length > 0) {
         try {
           port = Integer.parseInt(args[0]);
@@ -83,9 +86,11 @@ public class Server {
           System.err.println("Error parsing port: " + e.getMessage());
           System.exit(-1);
         }
+
+        systemDir = new File(args[1]);
       }
 
-      final Server server = new Server();
+      final Server server = new Server(systemDir);
       server.start(port);
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
         public void run() {

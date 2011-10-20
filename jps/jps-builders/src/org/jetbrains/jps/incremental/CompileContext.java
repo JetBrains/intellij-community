@@ -49,8 +49,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myProductionChunks = productionChunks;
     myTestChunks = testChunks;
     myDelegateMessageHandler = delegateMessageHandler;
-    final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
-    myDataManager = new BuildDataManager(buildDataRoot);
+    myDataManager = new BuildDataManager(projectName);
     myMappings = mappings;
     myProjectPaths = new ProjectPaths(scope.getProject());
   }

@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.jps.incremental.Paths;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,22 +15,20 @@ import java.util.Map;
  */
 public class BuildDataManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
+  private static final String TIMESTAMP_STORAGE = "stamps";
+  private final String myProjectName;
 
-  public static final String TIMESTAMP_STORAGE = "timestamps";
-
-  private final File myDataRoot;
   private final Map<String, TimestampStorage> myBuilderToStampStorageMap = new HashMap<String, TimestampStorage>();
-  //private final Map<String, AbstractStateStorage> myBuilderToStorageMap = new HashMap<String, AbstractStateStorage>();
 
-  public BuildDataManager(File dataRoot) {
-    myDataRoot = dataRoot;
+  public BuildDataManager(String projectName) {
+    myProjectName = projectName;
   }
 
   public TimestampStorage getTimestampStorage(String builderName) throws IOException {
     synchronized (myBuilderToStampStorageMap) {
       TimestampStorage storage = myBuilderToStampStorageMap.get(builderName);
       if (storage == null) {
-        storage = new TimestampStorage(getStoreFile(builderName, TIMESTAMP_STORAGE));
+        storage = new TimestampStorage(new File(getTimestampsStorageRoot(builderName), "data"));
         myBuilderToStampStorageMap.put(builderName, storage);
       }
       return storage;
@@ -39,7 +38,7 @@ public class BuildDataManager {
   public void clean() {
     synchronized (myBuilderToStampStorageMap) {
       close();
-      FileUtil.delete(myDataRoot);
+      FileUtil.delete(Paths.getInstance().getDataStorageRoot(myProjectName));
     }
   }
 
@@ -54,7 +53,7 @@ public class BuildDataManager {
           LOG.info(e);
         }
       }
-      FileUtil.delete(getDataRoot(builderName, TIMESTAMP_STORAGE));
+      FileUtil.delete(Paths.getInstance().getBuilderDataRoot(myProjectName, builderName));
     }
   }
 
@@ -69,7 +68,7 @@ public class BuildDataManager {
           catch (IOException e) {
             LOG.error(e);
             final String builderName = entry.getKey();
-            FileUtil.delete(getDataRoot(builderName, TIMESTAMP_STORAGE));
+            FileUtil.delete(getTimestampsStorageRoot(builderName));
           }
         }
       }
@@ -79,15 +78,7 @@ public class BuildDataManager {
     }
   }
 
-  private File getStoreFile(String builderName, String storageName) {
-    return new File(getDataRoot(builderName, storageName), "data");
+  public File getTimestampsStorageRoot(String builderName) {
+    return new File(Paths.getInstance().getBuilderDataRoot(myProjectName, builderName), TIMESTAMP_STORAGE);
   }
-
-  private File getDataRoot(String builderName, String storageName) {
-    return new File(myDataRoot, builderName + File.separator + storageName);
-  }
-
-  //public <K, V> AbstractStateStorage<K, V> getStorage(String builderName) {
-  //
-  //}
 }
