@@ -86,16 +86,17 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
         else {
           m = Pattern.compile("([ \\t]*)([\\n \\t]*)[\\],](.*)", Pattern.DOTALL).matcher(s);
           if (m.matches()) {
-            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), ": ");
-            editor.getCaretModel().moveToOffset(tailOffset + 2);
+            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), ":");
+            editor.getCaretModel().moveToOffset(tailOffset + 1);
           }
           else {
             m = Pattern.compile("([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
             if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
             
-            String toInsert = m.group(2).startsWith("\n") ? ": ," : ": , ";
+            String toInsert = m.group(2).startsWith("\n") ? ":," : ":, ";
             editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), toInsert);
-            editor.getCaretModel().moveToOffset(tailOffset + 2);
+            editor.getCaretModel().moveToOffset(tailOffset + 1);
+            context.setTailOffset(tailOffset + 1);
           }
         }
       }
