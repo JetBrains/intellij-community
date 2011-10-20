@@ -68,7 +68,8 @@ public class PsiElementResolveResult implements ResolveResult{
 
   @NonNls
   public String toString() {
-    return "PsiElementResolveResult: " + (myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText());
+    return "PsiElementResolveResult with " + myElement.getClass() + ": " +
+           (myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText());
   }
 
   public static ResolveResult[] createResults(@Nullable Collection<? extends PsiElement> elements) {
