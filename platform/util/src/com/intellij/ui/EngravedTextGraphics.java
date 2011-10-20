@@ -23,6 +23,7 @@ import java.awt.*;
 import java.text.AttributedCharacterIterator;
 
 public class EngravedTextGraphics extends Graphics2DDelegate {
+  private final static Color SHADOW_COLOR = new Color(250, 250, 250, 140);
   public EngravedTextGraphics(Graphics2D g2d) {
     super(g2d);
   }
@@ -35,7 +36,7 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   @Override
   public void drawChars(char[] data, int offset, int length, int x, int y) {
     final Color color = getColor();
-    setColor(new Color(245, 245, 245));
+    setColor(SHADOW_COLOR);
     super.drawChars(data, offset, length, x, y + 1);
 
     setColor(color);
@@ -46,7 +47,7 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   public void drawString(String str, int x, int y) {
     final Color color = getColor();
 
-    setColor(new Color(245, 245, 245));
+    setColor(SHADOW_COLOR);
     super.drawString(str, x, y + 1);
 
     setColor(color);
@@ -57,7 +58,7 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   public void drawString(AttributedCharacterIterator iterator, float x, float y) {
     final Color color = getColor();
 
-    setColor(new Color(245, 245, 245));
+    setColor(SHADOW_COLOR);
     super.drawString(iterator, x, y + 1);
 
     setColor(color);
@@ -68,7 +69,7 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   public void drawString(AttributedCharacterIterator iterator, int x, int y) {
     final Color color = getColor();
 
-    setColor(new Color(245, 245, 245));
+    setColor(SHADOW_COLOR);
     super.drawString(iterator, x, y + 1);
 
     setColor(color);
@@ -79,7 +80,7 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   public void drawString(String s, float x, float y) {
     final Color color = getColor();
 
-    setColor(new Color(245, 245, 245));
+    setColor(SHADOW_COLOR);
     super.drawString(s, x, y + 1);
 
     setColor(color);

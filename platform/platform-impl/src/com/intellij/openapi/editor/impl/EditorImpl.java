@@ -4911,13 +4911,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 break;
 
               case 3:
-                if (mySettings.isMouseClickSelectionHonorsCamelWords()) {
-                  // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
-                  // is assumed to select 'hump' while the later points to the whole word.
-                  selectWordAtCaret(false);
-                  break;
-                }
-              case 4:
                 mySelectionModel.selectLineAtCaret();
                 setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
                 mySavedSelectionStart = mySelectionModel.getSelectionStart();

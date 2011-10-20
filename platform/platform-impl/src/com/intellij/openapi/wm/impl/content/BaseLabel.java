@@ -16,7 +16,9 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
@@ -26,6 +28,8 @@ import java.awt.*;
 class BaseLabel extends JLabel {
 
   protected static final int TAB_SHIFT = 1;
+  private static final Color DEFAULT_ACTIVE_FORE = Color.black;
+  private static final SameColor DEFAULT_PASSIVE_FORE = new SameColor(50);
 
   protected ToolWindowContentUi myUi;
 
@@ -36,8 +40,8 @@ class BaseLabel extends JLabel {
   public BaseLabel(ToolWindowContentUi ui, boolean bold) {
     myUi = ui;
     setOpaque(false);
-    setActiveFg(Color.white);
-    setPassiveFg(Color.white);
+    setActiveFg(DEFAULT_ACTIVE_FORE);
+    setPassiveFg(DEFAULT_PASSIVE_FORE);
     myBold = bold;
     updateFont();
   }
@@ -67,8 +71,22 @@ class BaseLabel extends JLabel {
   }
 
   protected void paintComponent(final Graphics g) {
-    setForeground(myUi.myWindow.isActive() ? myActiveFg : myPassiveFg);
-    super.paintComponent(g);
+    final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
+    setForeground(fore);
+    final Graphics graphics = allowEngravement() && myUi.myWindow.isActive() && fore.equals(Color.black) ? new EngravedTextGraphics((Graphics2D)g) : g;
+    super.paintComponent(graphics);
+  }
+
+  protected boolean allowEngravement() {
+    return true;
+  }
+
+  protected Color getActiveFg(boolean selected) {
+    return DEFAULT_ACTIVE_FORE;
+  }
+
+  protected Color getPassiveFg(boolean selected) {
+    return DEFAULT_PASSIVE_FORE;
   }
 
   protected void updateTextAndIcon(Content content, boolean isSelected) {
@@ -77,9 +95,8 @@ class BaseLabel extends JLabel {
       setIcon(null);
     } else {
       setText(content.getDisplayName());
-      setActiveFg(isSelected ? Color.white : new Color(188, 195, 219));
-
-      setPassiveFg(isSelected ? Color.white : new Color(213, 210, 202));
+      setActiveFg(getActiveFg(isSelected));
+      setPassiveFg(getPassiveFg(isSelected));
 
       setToolTipText(content.getDescription());
 
@@ -94,7 +111,7 @@ class BaseLabel extends JLabel {
         setIcon(null);
       }
 
-      myBold = isSelected;
+      myBold = false;//isSelected;
       updateFont();
     }
   }

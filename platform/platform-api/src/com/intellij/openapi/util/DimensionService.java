@@ -270,13 +270,13 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     if (frame == null) return key; //during frame initialization
 
     final Point topLeft = frame.getLocation();
-    final Rectangle frameScreen = ScreenUtil.getScreenRectangle(topLeft.x, topLeft.y);
-    StringBuffer buf = new StringBuffer(key);
-    buf.append('.').append(frameScreen.x)
+    Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
+    final Rectangle frameScreen = ScreenUtil.getScreenRectangle(center);
+    return new StringBuffer(key)
+      .append('.').append(frameScreen.x)
       .append('.').append(frameScreen.y)
       .append('.').append(frameScreen.width)
-      .append('.').append(frameScreen.height);
-
-    return buf.toString();
+      .append('.').append(frameScreen.height)
+      .toString();
   }
 }

@@ -134,7 +134,7 @@ public class SchemesPanel extends JPanel {
       }
     });
     panel.add(myDeleteButton,
-              new GridBagConstraints(3, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0, 0));
+              new GridBagConstraints(3, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
 
     SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemesManager =
       ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager();

@@ -297,11 +297,16 @@ public class CharsetToolkit {
     return GuessedEncoding.INVALID_UTF8;
   }
 
+  @Nullable
   public Charset guessFromBOM() {
+    return guessFromBOM(buffer);
+  }
+
+  @Nullable
+  public static Charset guessFromBOM(@NotNull byte[] buffer) {
     if (hasUTF8Bom(buffer)) return UTF8_CHARSET;
     if (hasUTF16LEBom(buffer)) return Charset.forName("UTF-16LE");
     if (hasUTF16BEBom(buffer)) return Charset.forName("UTF-16BE");
-
     return null;
   }
 
