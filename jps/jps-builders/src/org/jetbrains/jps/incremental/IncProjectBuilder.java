@@ -7,7 +7,10 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -16,6 +19,7 @@ import java.util.*;
  */
 public class IncProjectBuilder {
 
+  public static final String JPS_SERVER_NAME = "JPS BUILD";
   private final String myProjectName;
   private final BuilderRegistry myBuilderRegistry;
   private ProjectChunks myProductionChunks;
@@ -63,10 +67,23 @@ public class IncProjectBuilder {
     }
     finally {
       context.getBuildDataManager().close();
+      final File mappingsDataFile = Paths.getMappingsStorageFile(myProjectName);
+      try {
+        final BufferedWriter writer = new BufferedWriter(new FileWriter(mappingsDataFile));
+        try {
+          context.getMappings().write(writer);
+        }
+        finally {
+          writer.close();
+        }
+      }
+      catch (IOException e) {
+        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
+      }
     }
   }
 
-  private void cleanOutputRoots(CompileScope scope, CompileContext context) {
+  private static void cleanOutputRoots(CompileScope scope, CompileContext context) {
     final Collection<Module> allProjectModules = scope.getProject().getModules().values();
     final Collection<Module> modulesToClean = new HashSet<Module>();
 
@@ -128,7 +145,7 @@ public class IncProjectBuilder {
           FileUtil.delete(outputRoot);
         }
         else {
-          context.processMessage(new CompilerMessage("JPS BUILD", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
+          context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
         }
       }
     }

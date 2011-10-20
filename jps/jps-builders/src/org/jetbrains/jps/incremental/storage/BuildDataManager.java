@@ -38,7 +38,7 @@ public class BuildDataManager {
   public void clean() {
     synchronized (myBuilderToStampStorageMap) {
       close();
-      FileUtil.delete(Paths.getInstance().getDataStorageRoot(myProjectName));
+      FileUtil.delete(Paths.getDataStorageRoot(myProjectName));
     }
   }
 
@@ -53,7 +53,7 @@ public class BuildDataManager {
           LOG.info(e);
         }
       }
-      FileUtil.delete(Paths.getInstance().getBuilderDataRoot(myProjectName, builderName));
+      FileUtil.delete(Paths.getBuilderDataRoot(myProjectName, builderName));
     }
   }
 
@@ -79,6 +79,6 @@ public class BuildDataManager {
   }
 
   public File getTimestampsStorageRoot(String builderName) {
-    return new File(Paths.getInstance().getBuilderDataRoot(myProjectName, builderName), TIMESTAMP_STORAGE);
+    return new File(Paths.getBuilderDataRoot(myProjectName, builderName), TIMESTAMP_STORAGE);
   }
 }

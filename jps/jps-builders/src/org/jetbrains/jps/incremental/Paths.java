@@ -26,12 +26,15 @@ public class Paths {
     mySystemRoot = systemRoot;
   }
 
-  public File getDataStorageRoot(String projectName) {
-    return new File(mySystemRoot, projectName.toLowerCase(Locale.US));
+  public static File getDataStorageRoot(String projectName) {
+    return new File(getInstance().mySystemRoot, projectName.toLowerCase(Locale.US));
   }
 
-  public File getBuilderDataRoot(final String projectName, String builderName) {
+  public static File getBuilderDataRoot(final String projectName, String builderName) {
     return new File(getDataStorageRoot(projectName), builderName.toLowerCase(Locale.US));
   }
 
+  public static File getMappingsStorageFile(final String projectName) {
+    return new File(getDataStorageRoot(projectName), "mappings/data");
+  }
 }
