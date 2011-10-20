@@ -437,8 +437,8 @@ public final class PsiUtil extends PsiUtilCore {
     return getApplicabilityLevel(method, substitutorForMethod, argList.getExpressionTypes(), getLanguageLevel(argList));
   }
 
-  public static int getApplicabilityLevel(final PsiMethod method, final PsiSubstitutor substitutorForMethod, @NotNull final PsiType[] args,
-                                           final LanguageLevel languageLevel) {
+  public static int getApplicabilityLevel(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutorForMethod, @NotNull final PsiType[] args,
+                                           @NotNull final LanguageLevel languageLevel) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
@@ -472,7 +472,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   private static boolean areFirstArgumentsApplicable(final PsiType[] args, final PsiParameter[] parms, final LanguageLevel languageLevel,
-                                                final PsiSubstitutor substitutorForMethod) {
+                                                @NotNull final PsiSubstitutor substitutorForMethod) {
 
     for (int i = 0; i < parms.length - 1; i++) {
       final PsiType type = args[i];
@@ -488,7 +488,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   private static PsiType getParameterType(final PsiParameter parameter,
                                  final LanguageLevel languageLevel,
-                                 final PsiSubstitutor substitutor) {
+                                 @NotNull final PsiSubstitutor substitutor) {
     PsiType parmType = parameter.getType();
     if (parmType instanceof PsiClassType) {
       parmType = ((PsiClassType)parmType).setLanguageLevel(languageLevel);
