@@ -24,13 +24,13 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 
 /**
@@ -203,19 +203,29 @@ public class ConfigImportHelper {
       return new File(oldInstallHome, "config");
     }
 
-    File[] launchFileCandidates = getLaunchFilesCandidates(oldInstallHome);
-    for (File file : launchFileCandidates) {
-      if (file.exists()) {
-        String configDir = PathManager.substituteVars(getConfigFromLaxFile(file), oldInstallHome.getPath());
+    final File[] launchFileCandidates = getLaunchFilesCandidates(oldInstallHome);
+
+    // custom config folder
+    for (File candidate : launchFileCandidates) {
+      if (candidate.exists()) {
+        String configDir = PathManager.substituteVars(getPropertyFromLaxFile(candidate, PathManager.PROPERTY_CONFIG_PATH),
+                                                      oldInstallHome.getPath());
         if (configDir != null) {
           File probableConfig = new File(configDir);
           if (probableConfig.exists()) return probableConfig;
+        }
+      }
+    }
 
-          // in IDEA 11 idea.properties does not contain product version: "# idea.config.path=${user.home}/.IntelliJIdea/config"
-          String attempt2 = settings.fixConfigDir(configDir);
-          if (attempt2 != null && !configDir.equals(attempt2)) {
-            probableConfig = new File(attempt2);
-            if (probableConfig.exists()) return probableConfig;
+    // custom config folder not found - use paths selector
+    for (File candidate : launchFileCandidates) {
+      if (candidate.exists()) {
+        final String pathsSelector = getPropertyFromLaxFile(candidate, PathManager.PROPERTY_PATHS_SELECTOR);
+        if (pathsSelector != null) {
+          final String configDir = PathManager.getDefaultConfigPathFor(pathsSelector);
+          final File probableConfig = new File(configDir);
+          if (probableConfig.exists()) {
+            return probableConfig;
           }
         }
       }
@@ -233,6 +243,7 @@ public class ConfigImportHelper {
         new File(new File(new File(bin, "idea.app"), "Contents"), "Info.plist"),
         new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist"),
         new File(bin, "idea.properties"),
+        //TODO? other minor IDEs?
         new File(bin, "idea.lax"),
         new File(bin, "idea.bat"),
         new File(bin, "idea.sh")
@@ -250,7 +261,8 @@ public class ConfigImportHelper {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static String getConfigFromLaxFile(File file) {
+  public static String getPropertyFromLaxFile(@NotNull final File file,
+                                              @NotNull final String propertyName) {
     if (file.getName().endsWith(".properties")) {
       try {
         InputStream fis = new BufferedInputStream(new FileInputStream(file));
@@ -261,22 +273,35 @@ public class ConfigImportHelper {
         finally {
           fis.close();
         }
-        return bundle.getString("idea.config.path");
+        if (bundle.containsKey(propertyName)) {
+          return bundle.getString(propertyName);
+        } 
+        return null;
       }
       catch (IOException e) {
         return null;
       }
-      catch (MissingResourceException e) {
-        // property is missing or commented out, go on with this file
-      }
+    }
+    
+    final String fileContent = getContent(file);
+
+    // try to find custom config path
+    final String propertyValue = findProperty(propertyName, fileContent);
+    if (!StringUtil.isEmpty(propertyValue)) {
+      return propertyValue;
     }
 
-    String fileContent = getContent(file);
-    String configParam = "idea.config.path=";
-    int idx = fileContent.indexOf(configParam);
+    return null;
+  }
+
+  @Nullable
+  private static String findProperty(final String propertyName, 
+                                     final String fileContent) {
+    String param = propertyName + "=";
+    int idx = fileContent.indexOf(param);
     if (idx == -1) {
-      configParam = "<key>idea.config.path</key>";
-      idx = fileContent.indexOf(configParam);
+      param = "<key>" + propertyName + "</key>";
+      idx = fileContent.indexOf(param);
       if (idx == -1) return null;
       idx = fileContent.indexOf("<string>", idx);
       if (idx == -1) return null;
@@ -285,7 +310,7 @@ public class ConfigImportHelper {
     }
     else {
       String configDir = "";
-      idx += configParam.length();
+      idx += param.length();
       if (fileContent.length() > idx) {
         if (fileContent.charAt(idx) == '"') {
           idx++;
