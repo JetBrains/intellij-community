@@ -53,20 +53,25 @@ public class IncProjectBuilder {
     try {
       cleanOutputRoots(scope, context);
 
+      context.processMessage(new ProgressMessage("Running 'before' tasks"));
       runTasks(context, myBuilderRegistry.getBeforeTasks());
 
       context.setCompilingTests(false);
+      context.processMessage(new ProgressMessage("Building production sources"));
       buildChunks(context, myProductionChunks);
 
       context.setCompilingTests(true);
+      context.processMessage(new ProgressMessage("Building test sources"));
       buildChunks(context, myTestChunks);
 
+      context.processMessage(new ProgressMessage("Running 'after' tasks"));
       runTasks(context, myBuilderRegistry.getAfterTasks());
     }
     catch (ProjectBuildException e) {
       context.processMessage(new ProgressMessage(e.getMessage()));
     }
     finally {
+      context.processMessage(new ProgressMessage("Build complete"));
       context.getBuildDataManager().close();
       final File mappingsDataFile = Paths.getMappingsStorageFile(myProjectName);
       try {
@@ -144,6 +149,7 @@ public class IncProjectBuilder {
           }
         }
         if (okToDelete) {
+          context.processMessage(new ProgressMessage("Cleaning " + outputRoot.getPath()));
           FileUtil.delete(outputRoot);
         }
         else {

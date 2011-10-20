@@ -292,8 +292,9 @@ public class JpsServerManager implements ApplicationComponent{
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
     cmdLine.addParameter("-ea");
+    cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
     cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-    cmdLine.addParameter("-Xmx256m"); // todo: get this value from settings
+    cmdLine.addParameter("-Xmx512m"); // todo: get this value from settings
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getApplicationClasspath();

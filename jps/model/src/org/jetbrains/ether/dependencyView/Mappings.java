@@ -3,6 +3,7 @@ package org.jetbrains.ether.dependencyView;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
@@ -93,8 +94,13 @@ public class Mappings implements RW.Writable {
     }
   }
 
+  @Nullable
   private ClassRepr getReprByName(final StringCache.S name) {
-    final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(classToSourceFile.get(name));
+    final StringCache.S source = classToSourceFile.get(name);
+
+    assert source != null;
+
+    final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(source);
 
     if (reprs != null) {
       for (ClassRepr repr : reprs) {
@@ -318,7 +324,11 @@ public class Mappings implements RW.Writable {
       affectedUsages.add(rootUsage);
 
       for (StringCache.S p : subclasses) {
-        final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(p));
+        final StringCache.S source = classToSourceFile.get(p);
+
+        assert source != null;
+
+        final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(source);
 
         if (deps != null) {
           dependents.addAll(deps);
@@ -336,7 +346,11 @@ public class Mappings implements RW.Writable {
       affectedUsages.add(rootUsage);
 
       for (StringCache.S p : subclasses) {
-        final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(classToSourceFile.get(p));
+        final StringCache.S source = classToSourceFile.get(p);
+
+        assert source != null;
+
+        final Collection<StringCache.S> deps = fileToFileDependency.foxyGet(source);
 
         if (deps != null) {
           dependents.addAll(deps);
@@ -601,7 +615,11 @@ public class Mappings implements RW.Writable {
                 }
 
                 if (allAbstract && visited) {
-                  affectedFiles.add(classToSourceFile.get(p));
+                  final StringCache.S source = classToSourceFile.get(p);
+
+                  assert source != null;
+
+                  affectedFiles.add(source);
                 }
               }
             }
