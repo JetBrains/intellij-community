@@ -26,20 +26,20 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class EmptyDirectoryInspection extends BaseGlobalInspection {
 
@@ -61,15 +61,16 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public void runInspection(
-    final AnalysisScope scope, final InspectionManager manager,
+  public void runInspection(final AnalysisScope scope, final InspectionManager manager,
     final GlobalInspectionContext context,
     final ProblemDescriptionsProcessor processor) {
     final Project project = context.getProject();
-    final ProjectFileIndex index =
-      ProjectRootManager.getInstance(project).getFileIndex();
-    final GlobalSearchScope searchScope =
-      (GlobalSearchScope)scope.toSearchScope();
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final SearchScope searchScope = scope.toSearchScope();
+    if (!(searchScope instanceof GlobalSearchScope)) {
+      return;
+    }
+    final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
     final PsiManager psiManager = PsiManager.getInstance(project);
     index.iterateContent(new ContentIterator() {
       @Override
@@ -77,19 +78,17 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
         if (!fileOrDir.isDirectory()) {
           return true;
         }
-        if (!searchScope.contains(fileOrDir)) {
+        if (!globalSearchScope.contains(fileOrDir)) {
           return true;
         }
-        if (onlyReportDirectoriesUnderSourceRoots &&
-            !index.isInSourceContent(fileOrDir)) {
+        if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(fileOrDir)) {
           return true;
         }
         final VirtualFile[] children = fileOrDir.getChildren();
         if (children.length != 0) {
           return true;
         }
-        final Application application =
-          ApplicationManager.getApplication();
+        final Application application = ApplicationManager.getApplication();
         final PsiDirectory directory = application.runReadAction(
           new Computable<PsiDirectory>() {
             @Override
@@ -97,36 +96,25 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
               return psiManager.findDirectory(fileOrDir);
             }
           });
-        final RefElement refDirectory =
-          context.getRefManager().getReference(directory);
-        if (context.shouldCheck(refDirectory,
-                                EmptyDirectoryInspection.this)) {
+        final RefElement refDirectory = context.getRefManager().getReference(directory);
+        if (context.shouldCheck(refDirectory, EmptyDirectoryInspection.this)) {
           return true;
         }
-        final String relativePath =
-          getPathRelativeToModule(fileOrDir, project);
+        final String relativePath = getPathRelativeToModule(fileOrDir, project);
         if (relativePath == null) {
           return true;
         }
-        processor.addProblemElement(refDirectory,
-                                    manager.createProblemDescriptor(
-                                      InspectionGadgetsBundle.message(
-                                        "empty.directories.problem.descriptor",
-                                        relativePath),
-                                      new EmptyPackageFix(fileOrDir.getUrl(),
-                                                          fileOrDir.getName())));
+        processor.addProblemElement(refDirectory, manager.createProblemDescriptor(InspectionGadgetsBundle.message(
+          "empty.directories.problem.descriptor", relativePath), new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
         return true;
       }
     });
   }
 
   @Nullable
-  private static String getPathRelativeToModule(VirtualFile file,
-                                                Project project) {
-    final ProjectRootManager rootManager =
-      ProjectRootManager.getInstance(project);
-    final Application application =
-      ApplicationManager.getApplication();
+  private static String getPathRelativeToModule(VirtualFile file, Project project) {
+    final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    final Application application = ApplicationManager.getApplication();
     final VirtualFile[] contentRoots = application.runReadAction(
       new Computable<VirtualFile[]>() {
         @Override
@@ -135,7 +123,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
         }
       });
     for (VirtualFile otherRoot : contentRoots) {
-      if (VfsUtil.isAncestor(otherRoot, file, false)) {
+      if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
         return VfsUtilCore.getRelativePath(file, otherRoot, '/');
       }
     }
@@ -166,10 +154,8 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     }
 
     @Override
-    public void applyFix(@NotNull Project project,
-                         @NotNull CommonProblemDescriptor descriptor) {
-      final VirtualFile file =
-        VirtualFileManager.getInstance().findFileByUrl(url);
+    public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
+      final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file == null) {
         return;
       }
