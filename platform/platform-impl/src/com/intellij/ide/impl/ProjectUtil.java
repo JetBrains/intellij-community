@@ -100,6 +100,14 @@ public class ProjectUtil {
     if (virtualFile == null) return null;
     ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
     if (strong != null) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      for (Project project : openProjects) {
+        if (isSameProject(path, project)) {
+          focusProjectWindow(project, false);
+          return project;
+        }
+      }
+
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
 
