@@ -177,12 +177,18 @@ def find_user_password(self, realm, authuri):
         else:
             def read_hgrc_authtoken(ui, authuri):
                 try:
-                    # hg 1.8
+                    # since hg 1.8
                     from mercurial.url import readauthforuri
                 except ImportError:
                     # hg 1.9: readauthforuri moved to httpconnection
                     from mercurial.httpconnection import readauthforuri
-                res = readauthforuri(self.ui, authuri)
+                from inspect import getargspec
+                args, _, _, _ = getargspec(readauthforuri)
+                if len(args) == 2:
+                    res = readauthforuri(self.ui, authuri)
+                else:
+                    # since hg 1.9.2 readauthforuri accepts 3 required arguments instead of 2
+                    res = readauthforuri(self.ui, authuri, "")
                 if res:
                     group, auth = res
                     return auth
@@ -201,4 +207,4 @@ def find_user_password(self, realm, authuri):
             raise util.Abort(_('http authorization required'))
         user, passwd = retrievedPass
         self.add_password(realm, authuri, user, passwd)
-        return retrievedPass    
+        return retrievedPass
