@@ -17,3 +17,9 @@ public class Test<T> {
         public static final String TEST = "test";
     }
 }
+class A {
+  class X {}
+}
+class B extends A {
+  void foo(X x) {}
+}
