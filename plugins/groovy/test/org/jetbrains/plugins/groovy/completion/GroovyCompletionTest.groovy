@@ -342,7 +342,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m (arg111: <caret>, zzz) }
+ { m (arg111:<caret>, zzz) }
 }
 """
   }
@@ -361,7 +361,7 @@ class A {
     myFixture.checkResult("""
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m (arg111: <caret>, {
+ { m (arg111:<caret>, {
       out << "asdasdas"
  } ) }
 }
@@ -380,7 +380,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m([arg111: <caret>])}
+ { m([arg111:<caret>])}
 }
 """
   }
@@ -414,7 +414,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111: <caret>,)}
+ { m(arg111:<caret>,)}
 }
 """
   }
@@ -517,7 +517,7 @@ class A {
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  {
-   m(arg111: <caret>,
+   m(arg111:<caret>,
      arg222: 222,
    )
  }
@@ -543,7 +543,7 @@ class A {
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  {
-   m(arg111: <caret>
+   m(arg111:<caret>
      , arg222: 222,
      arg333: 333,
    )

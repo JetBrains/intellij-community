@@ -207,7 +207,8 @@ public class ImportOldConfigsPanel extends JDialog {
         return;
       }
 
-      if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome, mySettings.getProductName(ThreeState.NO))) {
+      assert instHome != null;
+      if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome, mySettings)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getInvalidHomeErrorText(productWithVendor, instHome),
                                       mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);

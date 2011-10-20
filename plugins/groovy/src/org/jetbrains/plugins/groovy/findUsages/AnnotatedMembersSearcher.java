@@ -76,7 +76,14 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 
-    final String annotationFQN = annClass.getQualifiedName();
+    AccessToken token = ReadAction.start();
+    final String annotationFQN;
+    try {
+      annotationFQN = annClass.getQualifiedName();
+    }
+    finally {
+      token.finish();
+    }
     assert annotationFQN != null;
 
     final SearchScope scope = p.getScope();
@@ -102,7 +109,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     }
 
     for (PsiModifierListOwner candidate : candidates) {
-      AccessToken token = ReadAction.start();
+      token = ReadAction.start();
       try {
         if (!AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
           continue;

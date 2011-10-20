@@ -79,7 +79,7 @@ public class JavaBuilder extends Builder{
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (callback) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
-              callback.associate(className, Callbacks.getDefaultLookup(srcFile.getPath()), reader);
+              callback.associate(className, Callbacks.getDefaultLookup(FileUtil.toSystemIndependentName(srcFile.getPath())), reader);
             }
           }
         }
@@ -189,10 +189,7 @@ public class JavaBuilder extends Builder{
       return exitCode;
     }
 
-    ProjectPaths paths = ProjectPaths.KEY.get(context);
-    if (paths == null) {
-      ProjectPaths.KEY.set(context, paths = new ProjectPaths(context.getProject()));
-    }
+    final ProjectPaths paths = context.getProjectPaths();
 
     final Mappings delta = new Mappings();
     DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());

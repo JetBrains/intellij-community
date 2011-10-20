@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
-    <problem>
-        <file>Test.java</file>
-        <line>9</line>
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unqualified inner class access</problem_class>
-        <description>&lt;code&gt;Entry&lt;/code&gt; is not qualified with outer class #loc</description>
-    </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unqualified inner class access</problem_class>
+    <description>&lt;code&gt;Entry&lt;/code&gt; is not qualified with outer class #loc</description>
+  </problem>
 
   <problem>
     <file>Test.java</file>
@@ -19,13 +19,6 @@
     <line>10</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unqualified inner class access</problem_class>
     <description>&lt;code&gt;Entry&lt;/code&gt; is not qualified with outer class #loc</description>
-  </problem>
-
-  <problem>
-    <file>Test.java</file>
-    <line>14</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unqualified inner class access</problem_class>
-    <description>&lt;code&gt;Inner&lt;/code&gt; is not qualified with outer class #loc</description>
   </problem>
 
 </problems>

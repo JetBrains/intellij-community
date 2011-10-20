@@ -389,7 +389,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (parameterList == null) return null;
 
     PsiElement parent = parameterList.getParent();
-    assert parent instanceof PsiJavaCodeReferenceElement : parent + "; text=" + parent.getText();
+    if (!(parent instanceof PsiJavaCodeReferenceElement)) return null;
+    
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
     final int parameterIndex;
 

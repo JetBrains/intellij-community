@@ -43,23 +43,19 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unqualified.inner.class.access.display.name");
+    return InspectionGadgetsBundle.message("unqualified.inner.class.access.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unqualified.inner.class.access.problem.descriptor");
+    return InspectionGadgetsBundle.message("unqualified.inner.class.access.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unqualified.inner.class.access.option"),
-      this, "ignoreReferencesToLocalInnerClasses");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unqualified.inner.class.access.option"),
+                                          this, "ignoreReferencesToLocalInnerClasses");
   }
 
   @Override
@@ -67,8 +63,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     return new UnqualifiedInnerClassAccessFix();
   }
 
-  private static class UnqualifiedInnerClassAccessFix
-    extends InspectionGadgetsFix {
+  private static class UnqualifiedInnerClassAccessFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
@@ -77,14 +72,12 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiJavaCodeReferenceElement)) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)element;
+      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass)) {
         return;
@@ -111,8 +104,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       if (importList == null) {
         return;
       }
-      final PsiImportStatement[] importStatements =
-        importList.getImportStatements();
+      final PsiImportStatement[] importStatements = importList.getImportStatements();
       final int importStatementsLength = importStatements.length;
       boolean onDemand = false;
       PsiImportStatement referenceImportStatement = null;
@@ -135,41 +127,33 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       }
       final ReferenceCollector referenceCollector;
       if (onDemand) {
-        referenceCollector =
-          new ReferenceCollector(qualifiedName, onDemand);
+        referenceCollector = new ReferenceCollector(qualifiedName, onDemand);
       }
       else {
-        referenceCollector =
-          new ReferenceCollector(innerClassName, onDemand);
+        referenceCollector = new ReferenceCollector(innerClassName, onDemand);
       }
       final PsiClass[] classes = javaFile.getClasses();
       for (PsiClass psiClass : classes) {
         psiClass.accept(referenceCollector);
       }
-      final Collection<PsiJavaCodeReferenceElement> references =
-        referenceCollector.getReferences();
-      final SmartPointerManager pointerManager =
-        SmartPointerManager.getInstance(project);
+      final Collection<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();
+      final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       final List<SmartPsiElementPointer> pointers = new ArrayList();
       for (PsiJavaCodeReferenceElement reference : references) {
-        final SmartPsiElementPointer<PsiJavaCodeReferenceElement> pointer =
-          pointerManager.createSmartPsiElementPointer(reference);
+        final SmartPsiElementPointer<PsiJavaCodeReferenceElement> pointer = pointerManager.createSmartPsiElementPointer(reference);
         pointers.add(pointer);
       }
       if (referenceImportStatement != null) {
         referenceImportStatement.delete();
       }
       ImportUtils.addImportIfNeeded(containingClass, referenceElement);
-      final PsiDocumentManager documentManager =
-        PsiDocumentManager.getInstance(project);
-      final Document document =
-        documentManager.getDocument(containingFile);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      final Document document = documentManager.getDocument(containingFile);
       if (document == null) {
         return;
       }
       documentManager.doPostponedOperationsAndUnblockDocument(document);
-      final String text = buildNewText(javaFile, references,
-                                       containingClass, new StringBuilder()).toString();
+      final String text = buildNewText(javaFile, references, containingClass, new StringBuilder()).toString();
       document.replaceString(0, document.getTextLength(), text);
       documentManager.commitDocument(document);
       if (pointers.size() > 1) {
@@ -181,11 +165,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       }
     }
 
-
-    private static StringBuilder buildNewText(
-      PsiElement element,
-      Collection<PsiJavaCodeReferenceElement> references,
-      PsiClass aClass, StringBuilder out) {
+    private static StringBuilder buildNewText(PsiElement element, Collection<PsiJavaCodeReferenceElement> references,
+                                              PsiClass aClass, StringBuilder out) {
       if (element == null) {
         return out;
       }
@@ -211,16 +192,11 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
       return out;
     }
 
-    private static boolean isReferenceToTargetClass(
-      String referenceText, PsiClass targetClass,
-      PsiElement context) {
+    private static boolean isReferenceToTargetClass(String referenceText, PsiClass targetClass, PsiElement context) {
       final PsiManager manager = targetClass.getManager();
-      final JavaPsiFacade facade =
-        JavaPsiFacade.getInstance(manager.getProject());
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-      final PsiClass referencedClass =
-        resolveHelper.resolveReferencedClass(referenceText,
-                                             context);
+      final PsiClass referencedClass = resolveHelper.resolveReferencedClass(referenceText, context);
       if (referencedClass == null) {
         return true;
       }
@@ -228,13 +204,11 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
   }
 
-  private static class ReferenceCollector
-    extends JavaRecursiveElementVisitor {
+  private static class ReferenceCollector extends JavaRecursiveElementVisitor {
 
     private final String name;
     private final boolean onDemand;
-    private final Set<PsiJavaCodeReferenceElement> references =
-      new HashSet();
+    private final Set<PsiJavaCodeReferenceElement> references = new HashSet();
 
     ReferenceCollector(String name, boolean onDemand) {
       this.name = name;
@@ -242,8 +216,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (reference.isQualified()) {
         return;
@@ -271,8 +244,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
@@ -286,12 +258,10 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     return new UnqualifiedInnerClassAccessVisitor();
   }
 
-  private class UnqualifiedInnerClassAccessVisitor
-    extends BaseInspectionVisitor {
+  private class UnqualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (reference.isQualified()) {
         return;
@@ -309,10 +279,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         if (PsiTreeUtil.isAncestor(containingClass, reference, true)) {
           return;
         }
-        final PsiClass referenceClass =
-          PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-        if (PsiTreeUtil.isAncestor(referenceClass, containingClass,
-                                   true)) {
+        final PsiClass referenceClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+        if (referenceClass != null && referenceClass.isInheritor(containingClass, true)) {
           return;
         }
       }
@@ -320,8 +288,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
   }

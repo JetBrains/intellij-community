@@ -34,13 +34,13 @@ import java.util.PropertyResourceBundle;
 import java.util.Set;
 
 public class PathManager {
-  @NonNls private static final String PROPERTIES_FILE = "idea.properties.file";
-  @NonNls private static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
-  @NonNls private static final String PROPERTY_CONFIG_PATH = "idea.config.path";
-  @NonNls private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
-  @NonNls private static final String PROPERTY_HOME_PATH = "idea.home.path";
-  @NonNls private static final String PROPERTY_LOG_PATH = "idea.log.path";
-  @NonNls private static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  @NonNls public static final String PROPERTIES_FILE = "idea.properties.file";
+  @NonNls public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
+  @NonNls public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
+  @NonNls public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
+  @NonNls public static final String PROPERTY_HOME_PATH = "idea.home.path";
+  @NonNls public static final String PROPERTY_LOG_PATH = "idea.log.path";
+  @NonNls public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
 
   @NonNls private static String ourHomePath;
   @NonNls private static String ourSystemPath;
@@ -176,13 +176,17 @@ public class PathManager {
       final String selector = getPathsSelector();
       // Mac: ~/Library/Preferences/@@selector@@
       // Others: ~/.@@selector@@/config
-      ourConfigPath = SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Preferences/" + selector
-                                                                         : File.separator + "." + selector + File.separator + "config");
+      ourConfigPath = getDefaultConfigPathFor(selector);
     }
     else {
       ourConfigPath = getHomePath() + File.separator + "config";
     }
     return ourConfigPath;
+  }
+
+  public static String getDefaultConfigPathFor(String selector) {
+    return SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Preferences/" + selector
+                                                              : File.separator + "." + selector + File.separator + "config");
   }
 
   public static String getPathsSelector() {
