@@ -96,7 +96,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), getType());//myDefaultType.getType());
   }
 
-  protected PsiType getType() {
+  public PsiType getType() {
     return myTypeSelectorManager.getDefaultType();
   }
 
