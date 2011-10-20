@@ -51,7 +51,8 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     ASTNode astNode = containingFile.getNode();
     assert astNode != null;
     CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
-    final GroovyBlock block = new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, groovySettings);
+    GroovyCodeStyleSettings customSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
+    final GroovyBlock block = new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, groovySettings, customSettings);
     return new GroovyFormattingModel(containingFile, block, FormattingDocumentModelImpl.createOn(containingFile));
   }
 

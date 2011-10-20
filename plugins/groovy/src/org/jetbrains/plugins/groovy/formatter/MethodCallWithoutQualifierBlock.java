@@ -42,11 +42,12 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
                                          Alignment alignment,
                                          Wrap wrap,
                                          CommonCodeStyleSettings settings,
+                                         GroovyCodeStyleSettings groovySettings,
                                          boolean topLevel,
                                          List<ASTNode> children,
                                          PsiElement elem,
                                          Map<PsiElement, Alignment> innerAlignments) {
-    super(nameElement.getNode(), alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings, innerAlignments);
+    super(nameElement.getNode(), alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings, groovySettings, innerAlignments);
     myNameElement = nameElement;
     myTopLevel = topLevel;
     myChildren = children;
@@ -58,8 +59,8 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlocks = new ArrayList<Block>();
-      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), myInnerAlignments.get(myNameElement), Indent.getContinuationWithoutFirstIndent(), myWrap, mySettings, myInnerAlignments));
-      GroovyBlockGenerator.addNestedChildrenSuffix(mySubBlocks, myAlignment, myWrap, mySettings, myTopLevel, myChildren, myChildren.size(), myInnerAlignments);
+      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), myInnerAlignments.get(myNameElement), Indent.getContinuationWithoutFirstIndent(), myWrap, mySettings, myGroovySettings, myInnerAlignments));
+      GroovyBlockGenerator.addNestedChildrenSuffix(mySubBlocks, myAlignment, myWrap, mySettings, myGroovySettings, myTopLevel, myChildren, myChildren.size(), myInnerAlignments);
     }
     return mySubBlocks;
   }

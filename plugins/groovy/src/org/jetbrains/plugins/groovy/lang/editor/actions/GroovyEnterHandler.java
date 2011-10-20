@@ -35,11 +35,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -141,7 +141,8 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+    GroovyCodeStyleSettings codeStyleSettings =
+      CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
     if (!codeStyleSettings.USE_FLYING_GEESE_BRACES) return false;
 
     PsiElement element = file.findElementAt(caretOffset);

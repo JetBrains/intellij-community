@@ -22,13 +22,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -78,9 +79,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private Spacing myResult;
   private ASTNode myChild1;
   private ASTNode myChild2;
+  private GroovyCodeStyleSettings myGroovySettings;
 
-  public GroovySpacingProcessor(ASTNode node, CommonCodeStyleSettings settings) {
+  public GroovySpacingProcessor(ASTNode node, CommonCodeStyleSettings settings, GroovyCodeStyleSettings groovySettings) {
     mySettings = settings;
+    myGroovySettings = groovySettings;
 
     _init(node);
 
@@ -155,7 +158,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   public void visitClosure(GrClosableBlock closure) {
     ASTNode rBraceAtTheEnd = GeeseUtil.getClosureRBraceAtTheEnd(myChild1);
-    if (mySettings.USE_FLYING_GEESE_BRACES && myChild2.getElementType() == mRCURLY && rBraceAtTheEnd != null) {
+    if (myGroovySettings.USE_FLYING_GEESE_BRACES && myChild2.getElementType() == mRCURLY && rBraceAtTheEnd != null) {
       myResult = Spacing.createSpacing(0, 0, 0, true, 100, 0);
     }
     else if ((myChild1.getElementType() == mLCURLY &&
@@ -378,9 +381,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                                       mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     } else if (myChild2.getElementType() == mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_IF_PARENTHESES);
-    } else if (myChild1.getElementType() == mLPAREN) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_IF_PARENTHESES);
-    } else if (myChild2.getElementType() == mRPAREN) {
+    } else if (myChild1.getElementType() == mLPAREN || myChild2.getElementType() == mRPAREN) {
       createSpaceInCode(mySettings.SPACE_WITHIN_IF_PARENTHESES);
     } else if (((GrIfStatement) myParent).getThenBranch() == myChild2.getPsi()) {
       createSpacingBeforeElementInsideControlStatement();
@@ -419,10 +420,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  private void createParenSpace(final boolean onNewLine, final boolean space) {
-    createParenSpace(onNewLine, space, myParent.getTextRange());
-  }
-
   private void createParenSpace(final boolean onNewLine, final boolean space, final TextRange dependance) {
     if (onNewLine) {
       final int spaces = space ? 1 : 0;
@@ -434,6 +431,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
 
+  @Nullable
   private static ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
     while (current != null) {
       if (current.getElementType() == expected) return current;
@@ -466,10 +464,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
 
   private void processModifierList(ASTNode modifierList) {
-    if (modifierList.getLastChildNode().getElementType() == ANNOTATION && mySettings.METHOD_ANNOTATION_WRAP == CodeStyleSettings.WRAP_ALWAYS) {
-      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-    }
-    else if (mySettings.MODIFIER_LIST_WRAP) {
+    if (modifierList.getLastChildNode().getElementType() == ANNOTATION &&
+        mySettings.METHOD_ANNOTATION_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS || mySettings.MODIFIER_LIST_WRAP) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
@@ -493,11 +489,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
   }
 
-  private Spacing getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle, TextRange dependantRange, boolean keepOneLine) {
-    if (dependantRange != null && braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+  private Spacing getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle, @Nullable TextRange dependantRange, boolean keepOneLine) {
+    if (dependantRange != null && braceStyle == CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
       int space = spaceBeforeLbrace ? 1 : 0;
       return createNonLFSpace(space, dependantRange, false);
-    } else if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+    } else if (braceStyle == CommonCodeStyleSettings.END_OF_LINE || braceStyle == CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
       int space = spaceBeforeLbrace ? 1 : 0;
       return createNonLFSpace(space, null, false);
     } else if (keepOneLine) {
@@ -508,7 +504,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  private Spacing createNonLFSpace(int spaces, final TextRange dependantRange, final boolean keepLineBreaks) {
+  private Spacing createNonLFSpace(int spaces, @Nullable final TextRange dependantRange, final boolean keepLineBreaks) {
     final ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == mSL_COMMENT) {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -523,6 +519,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     return treePrev != null && (treePrev.getPsi() instanceof PsiWhiteSpace || treePrev.getTextLength() == 0);
   }
 
+  @Nullable
   static ASTNode getPrevElementType(final ASTNode child) {
     return FormatterUtil.getPreviousNonWhitespaceLeaf(child);
   }
