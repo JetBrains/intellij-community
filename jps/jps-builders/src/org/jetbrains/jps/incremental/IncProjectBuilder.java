@@ -90,8 +90,14 @@ public class IncProjectBuilder {
       final Set<File> toDelete = new HashSet<File>();
       final Set<File> allSourceRoots = new HashSet<File>();
       for (Module module : modulesToClean) {
-        toDelete.add(new File(module.getOutputPath()));
-        toDelete.add(new File(module.getTestOutputPath()));
+        final File out = context.getProjectPaths().getModuleOutputDir(module, false);
+        if (out != null) {
+          toDelete.add(out);
+        }
+        final File testOut = context.getProjectPaths().getModuleOutputDir(module, true);
+        if (testOut != null) {
+          toDelete.add(testOut);
+        }
       }
       for (Module module : allProjectModules) {
         for (Object root : module.getSourceRoots()) {

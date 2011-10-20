@@ -35,6 +35,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       return buildSnapshot(key);
     }
   };
+  private final ProjectPaths myProjectPaths;
 
   public CompileContext(CompileScope scope,
                         String projectName,
@@ -51,10 +52,15 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
     myDataManager = new BuildDataManager(buildDataRoot);
     myMappings = mappings;
+    myProjectPaths = new ProjectPaths(scope.getProject());
   }
 
   public Project getProject() {
     return myScope.getProject();
+  }
+
+  public ProjectPaths getProjectPaths() {
+    return myProjectPaths;
   }
 
   public boolean isMake() {

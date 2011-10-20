@@ -189,10 +189,7 @@ public class JavaBuilder extends Builder{
       return exitCode;
     }
 
-    ProjectPaths paths = ProjectPaths.KEY.get(context);
-    if (paths == null) {
-      ProjectPaths.KEY.set(context, paths = new ProjectPaths(context.getProject()));
-    }
+    final ProjectPaths paths = context.getProjectPaths();
 
     final Mappings delta = new Mappings();
     DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());

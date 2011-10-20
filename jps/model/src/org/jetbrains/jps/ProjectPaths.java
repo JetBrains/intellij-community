@@ -1,6 +1,5 @@
 package org.jetbrains.jps;
 
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +11,6 @@ import java.util.*;
  *         Date: 9/30/11
  */
 public class ProjectPaths {
-  public static final Key<ProjectPaths> KEY = Key.create("_project_paths_");
-
   @NotNull
   private final Project myProject;
   @Nullable
@@ -81,10 +78,16 @@ public class ProjectPaths {
       if (it instanceof ModuleSourceEntry) {
         final Module dep = ((ModuleSourceEntry) it).getModule();
         if (!excludeMainModuleOutput && kind.isTestsIncluded()) {
-          classpath.add(getModuleOutputDir(dep, true));
+          final File out = getModuleOutputDir(dep, true);
+          if (out != null) {
+            classpath.add(out);
+          }
         }
         if (!excludeMainModuleOutput || kind.isTestsIncluded()) {
-          classpath.add(getModuleOutputDir(dep, false));
+          final File out = getModuleOutputDir(dep, false);
+          if (out != null) {
+            classpath.add(out);
+          }
         }
       }
       else if (it instanceof Module) {
@@ -169,6 +172,7 @@ public class ProjectPaths {
     (forTests ? myCustomModuleTestOutputDir : myCustomModuleOutputDir).put(module, outputDir);
   }
 
+  @Nullable
   public File getModuleOutputDir(Module module, boolean forTests) {
     File customOutput = (forTests ? myCustomModuleTestOutputDir : myCustomModuleOutputDir).get(module);
     if (customOutput != null) {
