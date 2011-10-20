@@ -60,7 +60,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
     if (mySubBlocks == null) {
       mySubBlocks = new ArrayList<Block>();
       mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), myInnerAlignments.get(myNameElement), Indent.getContinuationWithoutFirstIndent(), myWrap, mySettings, myGroovySettings, myInnerAlignments));
-      GroovyBlockGenerator.addNestedChildrenSuffix(mySubBlocks, myAlignment, myWrap, mySettings, myGroovySettings, myTopLevel, myChildren, myChildren.size(), myInnerAlignments);
+      new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, myAlignment, myTopLevel, myChildren, myChildren.size());
     }
     return mySubBlocks;
   }

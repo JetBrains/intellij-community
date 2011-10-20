@@ -116,6 +116,14 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return mySettings;
   }
 
+  public GroovyCodeStyleSettings getGroovySettings() {
+    return myGroovySettings;
+  }
+
+  public Map<PsiElement, Alignment> getInnerAlignments() {
+    return myInnerAlignments;
+  }
+
   @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
@@ -124,7 +132,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = GroovyBlockGenerator.generateSubBlocks(myNode, myAlignment, myWrap, mySettings, myGroovySettings, this);
+      mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
     }
     return mySubBlocks;
   }
