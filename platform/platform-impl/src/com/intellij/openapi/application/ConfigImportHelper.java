@@ -31,6 +31,8 @@ import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.PropertyResourceBundle;
 
 /**
@@ -203,7 +205,7 @@ public class ConfigImportHelper {
       return new File(oldInstallHome, "config");
     }
 
-    final File[] launchFileCandidates = getLaunchFilesCandidates(oldInstallHome);
+    final File[] launchFileCandidates = getLaunchFilesCandidates(oldInstallHome, settings);
 
     // custom config folder
     for (File candidate : launchFileCandidates) {
@@ -235,28 +237,40 @@ public class ConfigImportHelper {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static File[] getLaunchFilesCandidates(File instHome) {
-    File bin = new File(instHome, BIN_FOLDER);
+  private static File[] getLaunchFilesCandidates(@NotNull final File instHome, @NotNull final ConfigImportSettings settings) {
+    final File bin = new File(instHome, BIN_FOLDER);
+    final List<File> files = new ArrayList<File>();
     if (SystemInfo.isMac) {
-      return new File[]{
-        new File(new File(instHome, "Contents"), "Info.plist"),
-        new File(new File(new File(bin, "idea.app"), "Contents"), "Info.plist"),
-        new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist"),
-        new File(bin, "idea.properties"),
-        //TODO? other minor IDEs?
-        new File(bin, "idea.lax"),
-        new File(bin, "idea.bat"),
-        new File(bin, "idea.sh")
-      };
+      // Info.plist
+      files.add(new File(new File(instHome, "Contents"), "Info.plist"));
+
+      files.add(new File(new File(new File(bin, "idea.app"), "Contents"), "Info.plist"));
+      files.add(new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist"));
     }
-    else {
-      return new File[]{
-        new File(bin, "idea.properties"),
-        new File(bin, "idea.lax"),
-        new File(bin, "idea.bat"),
-        new File(bin, "idea.sh")
-      };
+    // idea.properties
+    files.add(new File(bin, "idea.properties"));
+
+    
+    // other binary scripts
+    final String executableName = StringUtil.toLowerCase(settings.getProductName(ThreeState.NO));
+    // * defaults:
+    addLaunchExecutableScriptsCandidates(files, executableName, bin);
+    // * customized files:
+    files.addAll(settings.getCustomLaunchFilesCandidates(instHome, bin));
+    // * legacy support:
+    if (!"idea".equals(executableName)) {
+      // for compatibility with some platform-base IDEs with wrong executable names
+      addLaunchExecutableScriptsCandidates(files, "idea", bin);
     }
+    return files.toArray(new File[files.size()]);
+  }
+
+  private static void addLaunchExecutableScriptsCandidates(final List<File> files,
+                                                           final String executableName,
+                                                           final File binFolder) {
+    files.add(new File(binFolder, executableName + ".lax"));
+    files.add(new File(binFolder, executableName + ".bat"));
+    files.add(new File(binFolder, executableName + ".sh"));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -374,17 +388,18 @@ public class ConfigImportHelper {
     return dir;
   }
 
-  public static boolean isInstallationHomeOrConfig(String installationHome, String productName) {
+  public static boolean isInstallationHomeOrConfig(@NotNull final String installationHome, 
+                                                   @NotNull final ConfigImportSettings settings) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
     if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 
-    String mainJarName = StringUtil.toLowerCase(productName) + ".jar";
+    String mainJarName = StringUtil.toLowerCase(settings.getProductName(ThreeState.NO)) + ".jar";
     //noinspection HardCodedStringLiteral
     boolean quickTest = new File(new File(installationHome, "lib"), mainJarName).exists() &&
                         new File(installationHome, BIN_FOLDER).exists();
     if (!quickTest) return false;
 
-    File[] files = getLaunchFilesCandidates(new File(installationHome));
+    File[] files = getLaunchFilesCandidates(new File(installationHome), settings);
     for (File file : files) {
       if (file.exists()) return true;
     }
