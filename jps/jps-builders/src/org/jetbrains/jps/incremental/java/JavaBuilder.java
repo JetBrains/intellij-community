@@ -79,7 +79,7 @@ public class JavaBuilder extends Builder{
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (callback) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
-              callback.associate(className, Callbacks.getDefaultLookup(srcFile.getPath()), reader);
+              callback.associate(className, Callbacks.getDefaultLookup(FileUtil.toSystemIndependentName(srcFile.getPath())), reader);
             }
           }
         }
