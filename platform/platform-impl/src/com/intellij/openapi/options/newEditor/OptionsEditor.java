@@ -1107,7 +1107,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     public boolean updateForCurrentConfigurable() {
       final Configurable current = getContext().getCurrentConfigurable();
 
-      if (!isShowing(current)) return false;
+      if (current != null && !myConfigurable2Content.containsKey(current)) return false;
 
       String text = getFilterText();
 
