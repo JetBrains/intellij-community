@@ -222,6 +222,6 @@ libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-r
 libraryLicense(name: "protobuf", version: "2.3.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
 libraryLicense(name: "Netty", libraryName: "Netty", version: "3.2.5", license: "Apache 2.0", url: "http://www.jboss.org/netty", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 jetbrainsLibrary("JPS")
-jetbrainsLibrary("JPS-facade")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
+jetbrainsLibrary("optimizedFileManager.jar")
