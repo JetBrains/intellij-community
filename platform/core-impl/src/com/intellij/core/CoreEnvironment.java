@@ -19,7 +19,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -94,7 +93,6 @@ public class CoreEnvironment {
     new ApplicationManager() {{
       ourApplication = myApplication;
     }};
-    ApplicationComponentLocator.setInstance(myApplication);
     myLocalFileSystem = new CoreLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 

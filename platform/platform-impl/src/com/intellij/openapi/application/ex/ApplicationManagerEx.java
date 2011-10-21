@@ -17,7 +17,6 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -46,7 +45,6 @@ public class ApplicationManagerEx extends ApplicationManager {
 
   private static void setApplication(Application instance) {
     ourApplication = instance;
-    ApplicationComponentLocator.setInstance(instance);
     CachedSingletonsRegistry.cleanupCachedFields();
   }
 
