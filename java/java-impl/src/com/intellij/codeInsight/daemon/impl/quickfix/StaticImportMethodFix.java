@@ -251,11 +251,13 @@ public class StaticImportMethodFix implements IntentionAction {
             return new DefaultListCellRenderer(){
               @Override
               public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                JPanel panel = new JPanel(new BorderLayout());
+                if (moduleRenderer != null) {
+                  Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                  panel.add(moduleComponent, BorderLayout.CENTER);
+                }
                 rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 Component rightArrowComponent = rightArrow.getNextStepLabel();
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(moduleComponent, BorderLayout.CENTER);
                 panel.add(rightArrowComponent, BorderLayout.EAST);
                 return panel;
               }
