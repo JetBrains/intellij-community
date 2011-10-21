@@ -15,22 +15,22 @@
        <psi.referenceContributor language="JAVA" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
        <psi.referenceContributor language="XML" implementation="com.theoryinpractice.testng.TestNGSuiteReferenceContributor"/>
 
-      <localInspection shortName="JUnitTestNG" displayName="Convert JUnit Tests to TestNG" groupName="TestNG" enabledByDefault="false"
+      <localInspection language="JAVA" shortName="JUnitTestNG" displayName="Convert JUnit Tests to TestNG" groupName="TestNG" enabledByDefault="false"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.JUnitConvertTool"/>
-      <localInspection shortName="ConvertOldAnnotations" displayName="Convert old @Configuration TestNG annotations" groupName="TestNG"
+      <localInspection language="JAVA" shortName="ConvertOldAnnotations" displayName="Convert old @Configuration TestNG annotations" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspection"/>
-      <localInspection shortName="ConvertJavadoc" displayName="Convert TestNG Javadoc to 1.5 annotations" groupName="TestNG"
+      <localInspection language="JAVA" shortName="ConvertJavadoc" displayName="Convert TestNG Javadoc to 1.5 annotations" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertJavadocInspection"/>
-      <localInspection shortName="ConvertAnnotations" displayName="Convert TestNG annotations to javadocs" groupName="TestNG"
+      <localInspection language="JAVA" shortName="ConvertAnnotations" displayName="Convert TestNG annotations to javadocs" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertAnnotationInspection"/>
-      <localInspection shortName="dependsOnMethodTestNG" displayName="dependsOnMethods problem" groupName="TestNG" enabledByDefault="true"
+      <localInspection language="JAVA" shortName="dependsOnMethodTestNG" displayName="dependsOnMethods problem" groupName="TestNG" enabledByDefault="true"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.DependsOnMethodInspection"/>
-      <localInspection shortName="groupsTestNG" displayName="Groups problem" groupName="TestNG" enabledByDefault="true" level="WARNING"
+      <localInspection language="JAVA" shortName="groupsTestNG" displayName="Groups problem" groupName="TestNG" enabledByDefault="true" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.DependsOnGroupsInspection"/>
-      <localInspection shortName="UndeclaredTests" displayName="Undeclared test" groupName="TestNG" enabledByDefault="false" level="WARNING"
+      <localInspection language="JAVA" shortName="UndeclaredTests" displayName="Undeclared test" groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.UndeclaredTestInspection"/>
 
       <intentionAction>
