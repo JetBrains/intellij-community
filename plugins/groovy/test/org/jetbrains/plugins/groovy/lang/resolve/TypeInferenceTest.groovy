@@ -21,6 +21,8 @@ import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -262,12 +264,27 @@ class X {
 map = new X()
 
 map['i'] += 2
-''')
-    GrAssignmentExpression assignment = file.topStatements[2]
+''') as GroovyFile
+    GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
     assertTrue(assignment.getLValue().getType().equalsToText(CommonClassNames.JAVA_UTIL_DATE))
   }
 
   void testAllTypeParamsAreSubstituted() {
     assertTypeEquals('java.util.Map', 'a.groovy')
+  }
+
+  void testDiamond() {
+    GroovyFile file = myFixture.configureByText('a.groovy', '''
+List<String> list = new ArrayList<>()
+List<Integer> l2
+
+(list, l2) = [new ArrayList<>(), new ArrayList<>()]
+''') as GroovyFile
+
+    def statements = file.topStatements
+
+    assertEquals('java.util.ArrayList<java.lang.String>', (statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type.canonicalText)
+    assertEquals('java.util.ArrayList<java.lang.String>', ((statements[2] as GrAssignmentExpression).RValue as GrListOrMap).initializers[0].type.canonicalText)
+    assertEquals('java.util.ArrayList<java.lang.Integer>', ((statements[2] as GrAssignmentExpression).RValue as GrListOrMap).initializers[1].type.canonicalText)
   }
 }

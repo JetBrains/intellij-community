@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -112,7 +116,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
 
     PsiElement parent = getParent();
-    if (parent instanceof GrCodeReferenceElement) {
+    if (parent instanceof GrCodeReferenceElementImpl) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind(forCompletion);
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
       else if (parentKind == STATIC_MEMBER_FQ) return CLASS;
@@ -283,6 +287,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       case CLASS_FQ:
       case CLASS_OR_PACKAGE_FQ: {
         final String refText = PsiUtil.getQualifiedReferenceText(this);
+        LOG.assertTrue(refText != null, this.getText());
+
         final int lastDot = refText.lastIndexOf(".");
         String parentPackageFQName = lastDot > 0 ? refText.substring(0, lastDot) : "";
         final PsiPackage parentPackage = JavaPsiFacade.getInstance(getProject()).findPackage(parentPackageFQName);
@@ -396,6 +402,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         case CLASS_FQ:
         case PACKAGE_FQ:
           String qName = PsiUtil.getQualifiedReferenceText(ref);
+          LOG.assertTrue(qName != null, ref.getText());
 
           JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
           if (kind == CLASS_OR_PACKAGE_FQ || kind == CLASS_FQ) {
@@ -476,7 +483,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
               final PsiClass clazz = (PsiClass) resolve;
               PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
               List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
-              
+
               final PsiField field = clazz.findFieldByName(refName, false);
               if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
                 result.add(new GroovyResolveResultImpl(field, helper.isAccessible(field, ref, null)));
@@ -549,5 +556,56 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @Override
   public void processVariants(PrefixMatcher matcher, Consumer<Object> consumer) {
     processVariantsImpl(getKind(true), consumer);
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getTypeArguments() {
+    GrTypeArgumentList typeArgumentList = getTypeArgumentList();
+    if (typeArgumentList != null && typeArgumentList.isDiamond()) {
+      return inferDiamondTypeArguments();
+    }
+    else {
+      return super.getTypeArguments();
+    }
+  }
+
+  private PsiType[] inferDiamondTypeArguments() {
+    PsiElement parent = getParent();
+    if (!(parent instanceof GrNewExpression)) return PsiType.EMPTY_ARRAY;
+
+    PsiElement pparent = PsiUtil.skipParentheses(parent.getParent(), true);
+
+    PsiType ltype = null;
+    if (pparent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), parent, false)) {
+      GrExpression lValue = ((GrAssignmentExpression)pparent).getLValue();
+      if (PsiUtil.mightBeLValue(lValue)) {
+        ltype = lValue.getNominalType();
+      }
+    }
+    else if (pparent instanceof GrVariable && ((GrVariable)pparent).getInitializerGroovy() == parent) {
+      ltype = ((GrVariable)pparent).getDeclaredType();
+    }
+    else if (pparent instanceof GrListOrMap) {
+      PsiElement ppparent = PsiUtil.skipParentheses(pparent.getParent(), true);
+
+      if (ppparent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)ppparent).getRValue(), pparent, false)) {
+        PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)ppparent).getLValue(), false);
+        if (lValue instanceof GrTupleExpression) {
+          GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
+          int index = ArrayUtil.find(initializers, parent);
+          GrExpression[] expressions = ((GrTupleExpression)lValue).getExpressions();
+          if (index < expressions.length) {
+            ltype = expressions[index].getNominalType();
+          }
+        }
+      }
+    }
+
+    if (ltype instanceof PsiClassType) {
+      return ((PsiClassType)ltype).getParameters();
+    }
+
+    return PsiType.EMPTY_ARRAY;
   }
 }

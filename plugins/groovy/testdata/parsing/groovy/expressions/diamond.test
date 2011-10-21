@@ -30,8 +30,9 @@ Groovy script
         PsiWhiteSpace(' ')
         Reference element
           PsiElement(identifier)('ArrayList')
-          PsiElement(<)('<')
-          PsiElement(>)('>')
+          Type arguments
+            PsiElement(<)('<')
+            PsiElement(>)('>')
         Arguments
           PsiElement(()('(')
           PsiElement())(')')

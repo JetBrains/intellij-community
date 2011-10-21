@@ -696,19 +696,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkDiamonds(GrCodeReferenceElement refElement, AnnotationHolder holder) {
-    final GrTypeArgumentList typeArgList = refElement.getTypeArgumentList();
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
-    if (typeArgList != null || configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) return;
+    if (configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) return;
 
-    final PsiElement lastChild = refElement.getLastChild();
-    if (lastChild == null || lastChild.getNode().getElementType() != GroovyTokenTypes.mGT) return;
-
-    final PsiElement prev = lastChild.getPrevSibling();
-    if (prev == null || prev.getNode().getElementType() != GroovyTokenTypes.mLT) return;
-
-    final String message = GroovyBundle.message("diamonds.are.not.allowed.in.groovy.0", configUtils.getSDKVersion(refElement));
-    final TextRange range = new TextRange(prev.getTextRange().getStartOffset(), lastChild.getTextRange().getEndOffset());
-    holder.createErrorAnnotation(range, message);
+    GrTypeArgumentList typeArgumentList = refElement.getTypeArgumentList();
+    if (typeArgumentList != null && typeArgumentList.isDiamond()) {
+      final String message = GroovyBundle.message("diamonds.are.not.allowed.in.groovy.0", configUtils.getSDKVersion(refElement));
+      holder.createErrorAnnotation(typeArgumentList, message);
+    }
   }
 
   @Override
