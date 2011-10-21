@@ -21,7 +21,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testJComponentAdd() throws Throwable {
-    checkPreferredItems(0, "name", "b", "foo", "fooBean239", "this");
+    checkPreferredItems(0, "name", "b", "fooBean239", "this", "getName");
   }
   
   public void testJComponentAddNew() throws Throwable {
@@ -287,7 +287,14 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "boo", "bar")
   }
 
-
+  public void testPreferCollectionsEmptyList() throws Throwable {
+    myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }");
+    configureNoCompletion(getTestName(false) + ".java");
+    myFixture.complete(CompletionType.SMART, 2);
+    assertPreferredItems(0, "local", "local.subList", "emptyList", "singletonList", "unmodifiableList");
+    assert 'Collections.emptyList' in lookup.items[2].allLookupStrings
+    assert 'FList.emptyList' in lookup.items[5].allLookupStrings
+  }
 
   @Override
   protected String getBasePath() {

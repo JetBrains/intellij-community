@@ -897,7 +897,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
+      if (cause instanceof StorageException || cause instanceof IOException || cause instanceof IndexOutOfBoundsException) {
         scheduleRebuild(indexId, cause);
       }
       else {

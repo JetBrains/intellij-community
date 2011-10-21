@@ -292,5 +292,20 @@
       <reference ref="Debugger.CompareValueWithClipboard"/>
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
+
+    <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
+      <add-to-group group-id="ShowPackageDepsGroup" anchor="first"/>
+      <add-to-group group-id="AnalyzeActions" anchor="first"/>
+    </action>
+    <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction">
+      <add-to-group group-id="AnalyzeActions" relative-to-action="ShowPackageDeps" anchor="after"/>
+    </action>
+    <action id="ShowDependenciesOnTarget" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetAction">
+        <add-to-group group-id="AnalyzeActions" relative-to-action="ShowBackwardPackageDeps" anchor="after"/>
+    </action>
+    <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction">
+      <add-to-group group-id="AnalyzeActions" anchor="last"/>
+    </action>
+
   </actions>
 </component>

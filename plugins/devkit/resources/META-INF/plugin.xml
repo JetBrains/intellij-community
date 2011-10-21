@@ -18,6 +18,7 @@
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions" extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin" implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension" implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>

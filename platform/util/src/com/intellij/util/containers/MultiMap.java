@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class MultiMap<K, V> {
-
   public static final MultiMap EMPTY = new MultiMap() {
     @Override
     protected Map createMap() {
@@ -33,15 +32,22 @@ public class MultiMap<K, V> {
   };
 
   private final Map<K, Collection<V>> myMap;
-
   private Collection<V> values;
 
   public MultiMap() {
     myMap = createMap();
   }
 
+  public MultiMap(int i, float v) {
+    myMap = createMap(i, v);
+  }
+
   protected Map<K, Collection<V>> createMap() {
     return new HashMap<K, Collection<V>>();
+  }
+
+  protected Map<K, Collection<V>> createMap(int i, float v) {
+    return new HashMap<K, Collection<V>>(i, v);
   }
 
   protected Collection<V> createCollection() {
@@ -52,10 +58,9 @@ public class MultiMap<K, V> {
     return Collections.emptyList();
   }
 
-  public void putAllValues(MultiMap<? extends K, ? extends V> from) {
-    for (K k : from.keySet()) {
-      //noinspection unchecked
-      putValues(k, ((MultiMap)from).get(k));
+  public <Kk extends K, Vv extends V> void putAllValues(MultiMap<Kk, Vv> from) {
+    for (Map.Entry<Kk, Collection<Vv>> entry : from.entrySet()) {
+      putValues(entry.getKey(), entry.getValue());
     }
   }
 
@@ -211,8 +216,20 @@ public class MultiMap<K, V> {
     return myMap.remove(key);
   }
 
+  @NotNull
   public static <K, V> MultiMap<K, V> emptyInstance() {
-    return EMPTY;
+    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final MultiMap<K, V> empty = EMPTY;
+    return empty;
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> create() {
+    return new MultiMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> create(int i, float v) {
+    return new MultiMap<K, V>(i, v);
   }
 
   @Override

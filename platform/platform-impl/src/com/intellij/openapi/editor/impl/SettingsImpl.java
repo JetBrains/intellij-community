@@ -38,10 +38,6 @@ public class SettingsImpl implements EditorSettings {
   @Nullable private final EditorEx myEditor;
   private Boolean myIsCamelWords;
 
-  public SettingsImpl(@Nullable EditorEx editor) {
-    myEditor = editor;
-  }
-
   // This group of settings does not have UI
   private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
   private int                     myAdditionalLinesCount          = 5;
@@ -80,6 +76,10 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
 
+  public SettingsImpl(@Nullable EditorEx editor) {
+    myEditor = editor;
+  }
+  
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
            ? myIsRightMarginShown.booleanValue()

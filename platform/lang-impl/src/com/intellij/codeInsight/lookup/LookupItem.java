@@ -29,12 +29,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,7 +67,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   private double myPriority;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
-  private final Set<String> myAllLookupStrings = new THashSet<String>();
+  private final Set<String> myAllLookupStrings = new HashSet<String>();
   private String myPresentable;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
 

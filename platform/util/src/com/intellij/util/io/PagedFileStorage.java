@@ -63,7 +63,7 @@ public class PagedFileStorage implements Forceable {
   private MappedBufferWrapper myLastBuffer2;
   private int myLastChangeCount;
   private int myLastChangeCount2;
-  private final int myStorageIndex;
+  private int myStorageIndex;
 
   private static final int MAX_PAGES_COUNT = 0xFFFF;
   private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
@@ -439,6 +439,7 @@ public class PagedFileStorage implements Forceable {
     finally {
       unmapAll();
       myLock.myIndex2Storage.remove(myStorageIndex);
+      myStorageIndex = -1;
     }
   }
 
@@ -519,6 +520,10 @@ public class PagedFileStorage implements Forceable {
 
     try {
       assert page <= MAX_PAGES_COUNT;
+
+      if (myStorageIndex == -1) {
+        myStorageIndex = myLock.registerPagedFileStorage(this);
+      }
       MappedBufferWrapper mappedBufferWrapper = myLock.myBuffersCache.get(myStorageIndex | page);
       MappedByteBuffer buf = mappedBufferWrapper.buf();
 

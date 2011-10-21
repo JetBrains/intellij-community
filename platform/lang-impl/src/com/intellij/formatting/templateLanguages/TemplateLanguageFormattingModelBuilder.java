@@ -53,20 +53,23 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
     if (node == null) {
       return createDummyBlock(node);
     }
-    final Language dataLanguage = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(dataLanguage);
-    if (builder instanceof DelegatingFormattingModelBuilder && ((DelegatingFormattingModelBuilder)builder).dontFormatMyModel()) {
-      return createDummyBlock(node);
+    if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+      final Language dataLanguage = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
+      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(dataLanguage);
+      if (builder instanceof DelegatingFormattingModelBuilder && ((DelegatingFormattingModelBuilder)builder).dontFormatMyModel()) {
+        return createDummyBlock(node);
+      }
+      if (builder != null) {
+        final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
+        List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
+        if (childWrappers.size() == 1) {
+          childWrappers = buildChildWrappers(childWrappers.get(0).getOriginal());
+        }
+        return createTemplateLanguageBlock(node, Wrap.createWrap(WrapType.NONE, false), null,
+                                           filterBlocksByRange(childWrappers, node.getTextRange()), settings);
+      }
     }
-    if (builder == null) {
-      return createTemplateLanguageBlock(node,  Wrap.createWrap(WrapType.NONE, false), null, Collections.<DataLanguageBlockWrapper>emptyList(), settings);
-    }
-    final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
-    List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
-    if (childWrappers.size() == 1) {
-      childWrappers = buildChildWrappers(childWrappers.get(0).getOriginal());
-    }
-    return createTemplateLanguageBlock(node,  Wrap.createWrap(WrapType.NONE, false), null, filterBlocksByRange(childWrappers, node.getTextRange()), settings);
+    return createTemplateLanguageBlock(node,  Wrap.createWrap(WrapType.NONE, false), null, Collections.<DataLanguageBlockWrapper>emptyList(), settings);
   }
 
   protected AbstractBlock createDummyBlock(final ASTNode node) {

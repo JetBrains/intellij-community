@@ -80,9 +80,10 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
     }
   }
 
-  protected void initLogConsoles(final RunProfile runConfiguration, final ProcessHandler processHandler) {
+  protected void initLogConsoles(final RunProfile runConfiguration, final ProcessHandler processHandler, ExecutionConsole console) {
     if (runConfiguration instanceof RunConfigurationBase) {
       myManager.initLogConsoles((RunConfigurationBase)runConfiguration, processHandler);
+      OutputFileUtil.attachDumpListener((RunConfigurationBase)runConfiguration, processHandler, console);
     }
   }
 

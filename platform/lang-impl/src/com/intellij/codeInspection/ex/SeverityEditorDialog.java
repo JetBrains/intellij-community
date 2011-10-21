@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -152,10 +153,18 @@ public class SeverityEditorDialog extends DialogWrapper {
       });
     } else {
       ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions();
-      final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
-      LOG.assertTrue(javaPage != null);
-      ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(dataContext), javaPage);
-      colorAndFontOptions.disposeUIResources();
+      final Configurable[] configurables = colorAndFontOptions.buildConfigurables();
+      try {
+        final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
+        LOG.assertTrue(javaPage != null);
+        ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(dataContext), javaPage);
+      }
+      finally {
+        for (Configurable configurable : configurables) {
+          configurable.disposeUIResources();
+        }
+        colorAndFontOptions.disposeUIResources();
+      }
     }
   }
 

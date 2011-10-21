@@ -21,6 +21,7 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -47,5 +48,10 @@ public class GroovyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public String getConfigurableDisplayName() {
     return "Groovy";
+  }
+
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new GroovyCodeStyleSettings(settings);
   }
 }

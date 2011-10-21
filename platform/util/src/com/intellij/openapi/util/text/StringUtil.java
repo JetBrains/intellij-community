@@ -964,6 +964,16 @@ public class StringUtil {
     return s == null || s.trim().length() == 0;
   }
 
+  /**
+   * Allows to answer if given symbol is white space, tabulation or line feed.
+   * 
+   * @param c  symbol to check
+   * @return   <code>true</code> if given symbol is white space, tabulation or line feed; <code>false</code> otherwise
+   */
+  public static boolean isWhiteSpace(char c) {
+    return c == '\n' || c == '\t' || c == ' ';
+  }
+  
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable) {
     return ExceptionUtil.getThrowableText(aThrowable);

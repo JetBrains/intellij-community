@@ -157,14 +157,21 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myArray = null;
     myCount = chars.length();
     myStringRef = null;
-    if (isSubSequence()) {
-      myDeferredChangesStorage = new TextChangesStorage();
-      myStart = 0;
-      myEnd = -1;
+    myDeferredChangesLock.lock();
+    try {
+      if (isSubSequence()) {
+        myDeferredChangesStorage = new TextChangesStorage();
+        myStart = 0;
+        myEnd = -1;
+      }
+      else {
+        myDeferredChangesStorage.clear();
+      }
     }
-    else {
-      myDeferredChangesStorage.clear();
+    finally {
+      myDeferredChangesLock.unlock();
     }
+    
     if (subj != null) {
       trimToSize(subj);
     }
@@ -349,7 +356,13 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (myOriginalSequence != null) return myOriginalSequence.charAt(i);
     final char result;
     if (hasDeferredChanges()) {
-      result = myDeferredChangesStorage.charAt(myArray, i);
+      myDeferredChangesLock.lock();
+      try {
+        result = myDeferredChangesStorage.charAt(myArray, i);
+      }
+      finally {
+        myDeferredChangesLock.unlock();
+      }
     }
     else {
       result = myArray[i];
@@ -444,7 +457,13 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (start == end) return "";
     final CharSequence result;
     if (myOriginalSequence == null) {
-      result = myDeferredChangesStorage.substring(myArray, start + myStart, end + myStart);
+      myDeferredChangesLock.lock();
+      try {
+        result = myDeferredChangesStorage.substring(myArray, start + myStart, end + myStart);
+      }
+      finally {
+        myDeferredChangesLock.unlock();
+      }
     }
     else {
       result = myOriginalSequence.subSequence(start, end);

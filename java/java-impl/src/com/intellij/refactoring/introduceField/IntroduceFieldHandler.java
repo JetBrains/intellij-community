@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
+import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurrences.*;
@@ -102,7 +103,6 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
     final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
-    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences);
 
     String enteredName = null;
     boolean replaceAll = false;
@@ -110,20 +110,21 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
         myInplaceIntroduceFieldPopup =
-          new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr, typeSelectorManager, editor,
-                                         allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurrenceManager(
-                  expr, parentClass) : null,
-                                         project);
+          new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr,
+                                         new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), editor,
+                                         allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll,
+                                         expr != null ? createOccurrenceManager(expr, parentClass) : null,project);
         if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
           return null;
         }
       } else {
-        AbstractInplaceIntroducer.stopIntroduce(editor);
+        activeIntroducer.stopIntroduce(editor);
         expr = (PsiExpression)activeIntroducer.getExpr();
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
         occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
         replaceAll = activeIntroducer.isReplaceAllOccurrences();
+        type = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
         IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
       }
     }
@@ -133,7 +134,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       currentMethodConstructor,
       localVariable != null, declareStatic, occurrences,
       allowInitInMethod, allowInitInMethodIfAll,
-      typeSelectorManager,
+      new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences),
       enteredName
     );
     dialog.setReplaceAllOccurrences(replaceAll);

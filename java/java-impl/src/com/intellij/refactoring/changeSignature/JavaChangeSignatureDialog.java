@@ -59,9 +59,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -243,10 +241,28 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return len;
   }
   
-  private int getTypesColumnWidth() {
+  private int getNamesMaxLength() {
+    int len = 0;
+    for (ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
+      final String text = item.parameter.getName();
+      len = Math.max(len, text == null ? 0 : text.length());
+    }
+    return len;
+  }  
+  
+  private int getColumnWidth(int index) {
+    int letters = getTypesMaxLength() + (index == 0 ? 1 : getNamesMaxLength() + 2);
     Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
     font = new Font(font.getFontName(), font.getStyle(), 12);
-    return  (getTypesMaxLength() + 1)* Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
+    return  letters * Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
+  }
+
+  private int getTypesColumnWidth() {
+    return  getColumnWidth(0);
+  }    
+  
+  private int getNamesColumnWidth() {
+    return getColumnWidth(1);
   }
 
   @Override
@@ -351,7 +367,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         if (me == null) {
           return myTypeEditor.getFocusTarget();
         }
-        return me.getPoint().getX() <= getTypesColumnWidth() ? myTypeEditor.getFocusTarget() : myNameEditor.getFocusTarget();
+        final double x = me.getPoint().getX();
+        return x <= getTypesColumnWidth()
+               ? myTypeEditor.getFocusTarget()
+               : myDefaultValueEditor == null || x <= getNamesColumnWidth()
+                 ? myNameEditor.getFocusTarget()
+                 : myDefaultValueEditor.getFocusTarget();
       }
 
       @Override

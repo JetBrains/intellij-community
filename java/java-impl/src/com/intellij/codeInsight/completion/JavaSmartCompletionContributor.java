@@ -223,9 +223,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             parent != null &&
             !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
           for (ExpectedTypeInfo info : mergedInfos) {
-            new JavaMembersGetter(info.getType()).addMembers(position, true, noTypeCheck);
+            final boolean searchInheritors = params.getInvocationCount() > 1;
+            new JavaMembersGetter(info.getType()).addMembers(position, searchInheritors, noTypeCheck);
             if (!info.getDefaultType().equals(info.getType())) {
-              new JavaMembersGetter(info.getDefaultType()).addMembers(position, true, noTypeCheck);
+              new JavaMembersGetter(info.getDefaultType()).addMembers(position, searchInheritors, noTypeCheck);
             }
           }
         }
@@ -388,7 +389,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (parameterList == null) return null;
 
     PsiElement parent = parameterList.getParent();
-    assert parent instanceof PsiJavaCodeReferenceElement : parent + "; text=" + parent.getText();
+    if (!(parent instanceof PsiJavaCodeReferenceElement)) return null;
+    
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
     final int parameterIndex;
 

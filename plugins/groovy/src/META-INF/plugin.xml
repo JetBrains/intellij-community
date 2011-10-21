@@ -566,6 +566,9 @@
     <localInspection language="Groovy" shortName="GroovyNegatedConditional" displayName="Negated conditional expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNegatedConditionalInspection"/>
+    <localInspection language="Groovy" shortName="GroovyInArgumentCheck" displayName="Incompatible 'in' argument types"
+                     enabledByDefault="false" groupName="Probable bugs" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInArgumentCheckInspection"/>
     <localInspection language="Groovy" shortName="GroovyNegatedIf" displayName="Negated if condition expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNegatedIfInspection"/>
@@ -900,6 +903,16 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.ImportOnDemandIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.ConvertToGeeseBracesIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.ConvertFromGeeseBracesIntention</className>
     </intentionAction>
     <intentionAction>
           <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

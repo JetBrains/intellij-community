@@ -17,6 +17,7 @@
 package com.intellij.execution;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -281,8 +282,16 @@ public class ExecutionHelper {
 
 
   public static void executeExternalProcess(@Nullable final Project myProject,
-                                            @NotNull final OSProcessHandler processHandler,
-                                            @NotNull final ExecutionMode mode) {
+                                            @NotNull final ProcessHandler processHandler,
+                                            @NotNull final ExecutionMode mode,
+                                            @NotNull final GeneralCommandLine cmdline) {
+    executeExternalProcess(myProject,  processHandler,  mode, cmdline.getCommandLineString());
+  }
+  
+  public static void executeExternalProcess(@Nullable final Project myProject,
+                                            @NotNull final ProcessHandler processHandler,
+                                            @NotNull final ExecutionMode mode,
+                                            @NotNull final String presentableCmdline) {
     final String title = mode.getTitle() != null ? mode.getTitle() : "Please wait...";
     assert title != null;
 
@@ -299,7 +308,7 @@ public class ExecutionHelper {
         };
       }
       else {
-        process = createTimelimitedExecutionProcess(processHandler, mode.getTimeout());
+        process = createTimelimitedExecutionProcess(processHandler, mode.getTimeout(), presentableCmdline);
       }
     }
     if (mode.withModalProgress()) {
@@ -388,8 +397,9 @@ public class ExecutionHelper {
     };
   }
 
-  private static Runnable createTimelimitedExecutionProcess(final OSProcessHandler processHandler,
-                                                            final int timeout) {
+  private static Runnable createTimelimitedExecutionProcess(final ProcessHandler processHandler,
+                                                            final int timeout,
+                                                            @NotNull final String presentableCmdline) {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
@@ -398,7 +408,8 @@ public class ExecutionHelper {
           try {
             final boolean finished = processHandler.waitFor(1000 * timeout);
             if (!finished) {
-              LOG.error("Timeout (" + timeout + " sec) on executing: " + processHandler.getCommandLine());
+              final String msg = "Timeout (" + timeout + " sec) on executing: " +  presentableCmdline;
+              LOG.error(msg);
               processHandler.destroyProcess();
             }
           }

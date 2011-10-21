@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,47 +29,47 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class ProjectFileIndexFacade extends FileIndexFacade {
-  private final ProjectRootManager myRootManager;
   private final DirectoryIndex myDirectoryIndex;
+  private final ProjectFileIndex myFileIndex;
 
   public ProjectFileIndexFacade(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
     super(project);
-    myRootManager = rootManager;
     myDirectoryIndex = directoryIndex;
+    myFileIndex = rootManager.getFileIndex();
   }
 
   public boolean isInContent(final VirtualFile file) {
-    return myRootManager.getFileIndex().isInContent(file);
+    return myFileIndex.isInContent(file);
   }
 
   @Override
   public boolean isInSource(VirtualFile file) {
-    return myRootManager.getFileIndex().isInSource(file);
+    return myFileIndex.isInSource(file);
   }
 
   @Override
   public boolean isInSourceContent(VirtualFile file) {
-    return myRootManager.getFileIndex().isInSourceContent(file);
+    return myFileIndex.isInSourceContent(file);
   }
 
   @Override
   public boolean isInLibraryClasses(VirtualFile file) {
-    return myRootManager.getFileIndex().isInLibraryClasses(file);
+    return myFileIndex.isInLibraryClasses(file);
   }
 
   @Override
   public boolean isInLibrarySource(VirtualFile file) {
-    return myRootManager.getFileIndex().isInLibrarySource(file);
+    return myFileIndex.isInLibrarySource(file);
   }
 
   public boolean isExcludedFile(final VirtualFile file) {
-    return myRootManager.getFileIndex().isIgnored(file);
+    return myFileIndex.isIgnored(file);
   }
 
   @Nullable
   @Override
   public Module getModuleForFile(VirtualFile file) {
-    return myRootManager.getFileIndex().getModuleForFile(file);
+    return myFileIndex.getModuleForFile(file);
   }
 
   public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {

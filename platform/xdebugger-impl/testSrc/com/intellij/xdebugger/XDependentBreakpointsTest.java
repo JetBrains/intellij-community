@@ -61,6 +61,7 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
 
     List<XBreakpoint<?>> breakpoints = getAllBreakpoints();
     assertEquals(3, breakpoints.size());
+    assertEquals("default", ((MyBreakpointProperties)breakpoints.get(0).getProperties()).myOption);
     XLineBreakpoint newMaster = (XLineBreakpoint)breakpoints.get(1);
     XLineBreakpoint newSlave = (XLineBreakpoint)breakpoints.get(2);
     assertEquals("file://master", newMaster.getFileUrl());
@@ -70,10 +71,10 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
   }
 
   private XLineBreakpoint<MyBreakpointProperties> createSlave() {
-    return myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "file://slave", 2, new MyBreakpointProperties());
+    return myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "file://slave", 2, new MyBreakpointProperties("z-slave"));
   }
 
   private XLineBreakpoint<MyBreakpointProperties> createMaster() {
-    return myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "file://master", 1, new MyBreakpointProperties());
+    return myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "file://master", 1, new MyBreakpointProperties("z-master"));
   }
 }

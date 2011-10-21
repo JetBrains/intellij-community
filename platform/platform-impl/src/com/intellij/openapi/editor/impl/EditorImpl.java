@@ -122,6 +122,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
+  private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK 
+    = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
@@ -4924,7 +4926,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 break;
 
               case 3:
-                if (mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords()) {
+                if (HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
                   // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
                   // is assumed to select 'hump' while the later points to the whole word.
                   selectWordAtCaret(false);

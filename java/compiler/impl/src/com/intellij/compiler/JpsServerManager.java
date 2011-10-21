@@ -58,6 +58,7 @@ import org.jetbrains.jps.server.Server;
 
 import javax.tools.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
@@ -71,7 +72,7 @@ public class JpsServerManager implements ApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JpsServerManager");
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private volatile OSProcessHandler myProcessHandler;
-
+  private final File mySystemDirectory;
   private volatile Client myClient = new Client();
   private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
     public void submit(Runnable runnable) {
@@ -80,7 +81,18 @@ public class JpsServerManager implements ApplicationComponent{
   });
 
   public JpsServerManager(ProjectManager projectManager) {
+    final String systemPath = PathManager.getSystemPath();
+    File system = new File(systemPath);
+    try {
+      system = system.getCanonicalFile();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    mySystemDirectory = system;
+
     projectManager.addProjectManagerListener(new ProjectWatcher());
+
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
@@ -275,12 +287,14 @@ public class JpsServerManager implements ApplicationComponent{
     return paths;
   }
 
-  private static Process launchServer(int port) throws ExecutionException {
+  private Process launchServer(int port) throws ExecutionException {
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
+    cmdLine.addParameter("-ea");
+    cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
     cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-    cmdLine.addParameter("-Xmx256m"); // todo: get this value from settings
+    cmdLine.addParameter("-Xmx512m"); // todo: get this value from settings
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getApplicationClasspath();
@@ -301,8 +315,11 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.addParameter(org.jetbrains.jps.server.Server.class.getName());
     cmdLine.addParameter(Integer.toString(port));
 
-    final File workDirectory = new File(PathManager.getSystemPath(), COMPILE_SERVER_SYSTEM_ROOT);
+    final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
     workDirectory.mkdirs();
+
+    cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
+
     cmdLine.setWorkDirectory(workDirectory);
 
     return cmdLine.createProcess();

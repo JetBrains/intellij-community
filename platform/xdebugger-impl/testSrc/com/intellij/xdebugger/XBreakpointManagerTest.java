@@ -53,12 +53,12 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testSerialize() {
     XLineBreakpoint<MyBreakpointProperties> breakpoint =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("abc"));
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("z1"));
     breakpoint.setCondition("cond");
     breakpoint.setLogExpression("log");
     breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
     breakpoint.setLogMessage(true);
-    myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("123"));
+    myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("z2"));
 
     reload();
     List<XBreakpoint<?>> breakpoints = getAllBreakpoints();
@@ -71,13 +71,13 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     XLineBreakpoint lineBreakpoint = assertInstanceOf(breakpoints.get(1), XLineBreakpoint.class);
     assertEquals(239, lineBreakpoint.getLine());
     assertEquals("myurl", lineBreakpoint.getFileUrl());
-    assertEquals("abc", assertInstanceOf(lineBreakpoint.getProperties(), MyBreakpointProperties.class).myOption);
+    assertEquals("z1", assertInstanceOf(lineBreakpoint.getProperties(), MyBreakpointProperties.class).myOption);
     assertEquals("cond", lineBreakpoint.getCondition());
     assertEquals("log", lineBreakpoint.getLogExpression());
     assertTrue(lineBreakpoint.isLogMessage());
     assertEquals(SuspendPolicy.NONE, lineBreakpoint.getSuspendPolicy());
 
-    assertEquals("123", assertInstanceOf(breakpoints.get(2).getProperties(), MyBreakpointProperties.class).myOption);
+    assertEquals("z2", assertInstanceOf(breakpoints.get(2).getProperties(), MyBreakpointProperties.class).myOption);
     assertEquals(SuspendPolicy.ALL, breakpoints.get(2).getSuspendPolicy());
     assertFalse(breakpoints.get(2).isLogMessage());
   }

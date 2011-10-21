@@ -33,13 +33,13 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -83,6 +83,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
   private int myStatus = MessageHelper.PASSED_TEST;
   private Set<String> startedMethods = new HashSet<String>();
+  private TestProxy myLastSelected;
 
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
@@ -133,6 +134,13 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     openSourceListener = new OpenSourceSelectionListener();
     tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
+
+    TrackRunningTestUtil.installStopListeners(tree, this, new Pass<AbstractTestProxy>() {
+      @Override
+      public void pass(AbstractTestProxy abstractTestProxy) {
+        myLastSelected = (TestProxy)abstractTestProxy;
+      }
+    });
 
     return tree;
   }
@@ -214,7 +222,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     treeBuilder.repaintWithParents(proxy);
     count++;
     if (count > total) total = count;
-    if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
+    if (myLastSelected == proxy) {
+      myLastSelected = null;
+    }
+    if (myLastSelected == null && TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       selectTest(proxy);
     }
     return proxy;
@@ -360,7 +371,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
         }
         else {
           final DefaultMutableTreeNode node = treeBuilder.getNodeForElement(rootNode);
-          if (node != null) {
+          if (node != null && myLastSelected == null) {
             tree.getSelectionModel().setSelectionPath(new TreePath(node));
           }
         }

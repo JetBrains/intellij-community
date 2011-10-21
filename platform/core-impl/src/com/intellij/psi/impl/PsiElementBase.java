@@ -22,6 +22,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -132,7 +133,10 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   public void navigate(boolean requestFocus) {
-    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
+    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
+    if (descriptor != null) {
+      descriptor.navigate(requestFocus);
+    }
   }
 
   public boolean canNavigate() {

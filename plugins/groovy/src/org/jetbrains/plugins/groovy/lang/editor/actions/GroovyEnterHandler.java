@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -35,9 +35,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -94,9 +98,16 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       if (afterArrow) {
         return Result.Stop;
       }
+
+      if (editor.isInsertMode() &&
+          !HandlerUtils.isReadOnly(editor) &&
+          !editor.getSelectionModel().hasSelection() &&
+          handleFlyingGeese(editor, caret, dataContext, originalHandler, file)) {
+        return Result.DefaultForceIndent;
+      }
     }
 
-    if (handleEnter(editor, dataContext, file.getProject(), originalHandler, file)) {
+    if (handleEnter(editor, dataContext, file.getProject(), originalHandler)) {
       return Result.Stop;
     }
     return Result.Continue;
@@ -105,7 +116,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
   protected static boolean handleEnter(Editor editor,
                                        DataContext dataContext,
                                        @NotNull Project project,
-                                       EditorActionHandler originalHandler, PsiFile file) {
+                                       EditorActionHandler originalHandler) {
     if (HandlerUtils.isReadOnly(editor)) {
       return false;
     }
@@ -118,7 +129,51 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     if (handleInString(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
+
     return false;
+  }
+
+  private static boolean handleFlyingGeese(Editor editor,
+                                           int caretOffset,
+                                           DataContext dataContext,
+                                           EditorActionHandler originalHandler,
+                                           PsiFile file) {
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return false;
+
+    GroovyCodeStyleSettings codeStyleSettings =
+      CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
+    if (!codeStyleSettings.USE_FLYING_GEESE_BRACES) return false;
+
+    PsiElement element = file.findElementAt(caretOffset);
+    if (element != null && element.getNode().getElementType() == TokenType.WHITE_SPACE) {
+      element = GeeseUtil.getNextNonWhitespaceToken(element);
+    }
+    if (element == null || !GeeseUtil.isClosureRBrace(element)) return false;
+
+    element = GeeseUtil.getNextNonWhitespaceToken(element);
+    if (element == null ||
+        element.getNode().getElementType() != GroovyTokenTypes.mNLS ||
+        StringUtil.countChars(element.getText(), '\n') > 1) {
+      return false;
+    }
+
+    element = GeeseUtil.getNextNonWhitespaceToken(element);
+    if (element == null || !GeeseUtil.isClosureRBrace(element)) return false;
+
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+
+    int toRemove = element.getTextRange().getStartOffset();
+    document.deleteString(caretOffset + 1, toRemove);
+
+    originalHandler.execute(editor, dataContext);
+
+    String text = document.getText();
+    int nextLineFeed = text.indexOf('\n', caretOffset + 1);
+    CodeStyleManager.getInstance(project).reformatText(file, caretOffset, nextLineFeed);
+
+    return true;
   }
 
   private static boolean handleBetweenSquareBraces(Editor editor,
@@ -163,7 +218,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
 
   private static boolean handleInString(Editor editor, int caretOffset, DataContext dataContext, EditorActionHandler originalHandler) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
     PsiFile file = PsiManager.getInstance(project).findFile(FileDocumentManager.getInstance().getFile(editor.getDocument()));
@@ -184,8 +239,6 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     // For simple String literals like 'abcdef'
     if (mSTRING_LITERAL == node.getElementType()) {
       if (GroovyEditorActionUtil.isPlainStringLiteral(node)) {
-        String text = node.getText();
-        String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
         TextRange literalRange = stringElement.getTextRange();
         document.insertString(literalRange.getEndOffset(), "''");
         document.insertString(literalRange.getStartOffset(), "''");
@@ -221,8 +274,6 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
-        String text = parent.getText();
-        String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
         TextRange parentRange = parent.getTextRange();
         document.insertString(parentRange.getEndOffset(), "\"\"");
         document.insertString(parentRange.getStartOffset(), "\"\"");

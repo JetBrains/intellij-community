@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author Roman Chernyatchik
  * @date Oct 17, 2007
  */
@@ -67,7 +65,7 @@ public class ColoredProcessHandler extends OSProcessHandler {
     if (myCharset != null) {
       return myCharset;
     }
-    // Charset wan't specified - use default one
+    // Charset wasn't specified - use default one
     return super.getCharset();
   }
 

@@ -75,7 +75,13 @@ public abstract class PluginManagerMain implements Disposable {
 
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
-  @NonNls private static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
+  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
+                                                    "    <style type=\"text/css\">" +
+                                                    "        p {" +
+                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
+                                                    "        }" +
+                                                    "    </style>" +
+                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
   @NonNls private static final String TEXT_SUFIX = "</body></html>";
 
   @NonNls private static final String HTML_PREFIX = "<html><body><a href=\"";

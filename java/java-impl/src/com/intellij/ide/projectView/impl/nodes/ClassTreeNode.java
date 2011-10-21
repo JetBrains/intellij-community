@@ -95,7 +95,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   @Override
   public String getTitle() {
     final PsiClass psiClass = getValue();
-    if (psiClass != null) {
+    if (psiClass != null && psiClass.isValid()) {
       return psiClass.getQualifiedName();
     }
     return super.getTitle();

@@ -23,6 +23,11 @@ public class ResourcesBuilder extends Builder{
   public ResourcesBuilder() {
   }
 
+  @Override
+  public String getName() {
+    return BUILDER_NAME;
+  }
+
   public ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     CompilerConfiguration config = null;
     for (Module module : chunk.getModules()) {

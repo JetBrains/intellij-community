@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,8 @@ public class UsageViewUtil {
     }
 
     final Language lang = psiElement.getLanguage();
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
+    final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
+    assert provider != null : lang;
     return provider.getDescriptiveName(psiElement);
   }
 
@@ -144,7 +145,7 @@ public class UsageViewUtil {
   }
 
   @NotNull
-  public static UsageInfo[] toUsageInfoArray(@NotNull final Collection<UsageInfo> collection) {
+  public static UsageInfo[] toUsageInfoArray(@NotNull final Collection<? extends UsageInfo> collection) {
     final int size = collection.size();
     return size == 0 ? UsageInfo.EMPTY_ARRAY : collection.toArray(new UsageInfo[size]);
   }

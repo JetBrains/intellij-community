@@ -38,16 +38,19 @@ public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
 
   public final void updateUI() {
     SwingUtilities.updateComponentTreeUI(myCbx);
-    SwingUtilities.updateComponentTreeUI((JComponent)myCbx.getRenderer());
+    final ListCellRenderer renderer = myCbx.getRenderer();
+    if (renderer instanceof JComponent) {
+      SwingUtilities.updateComponentTreeUI((JComponent)renderer);
+    }
   }
 
-  public V getValue() throws Exception{
-    if(myCbx.isEditable()){
+  public V getValue() throws Exception {
+    if (myCbx.isEditable()) {
       final Component editorComponent = myCbx.getEditor().getEditorComponent();
       //noinspection unchecked
       return (V)((JTextField)editorComponent).getText();
     }
-    else{
+    else {
       //noinspection unchecked
       return (V)myCbx.getSelectedItem();
     }

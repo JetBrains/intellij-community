@@ -51,7 +51,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     final Editor editor = context.getEditor();
 
     if (argumentList != null) {
-      if (context.getCompletionChar() == ':' || context.getCompletionChar() == ' ') {
+      if (context.getCompletionChar() == ':') {
         context.setAddCompletionChar(false);
       }
       
@@ -61,8 +61,8 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       s = StringUtil.trimEnd(s, ")");
 
       if (s.trim().length() == 0) {
-        editor.getDocument().insertString(tailOffset, ": ");
-        editor.getCaretModel().moveToOffset(tailOffset + 2);
+        editor.getDocument().insertString(tailOffset, ":");
+        editor.getCaretModel().moveToOffset(tailOffset + 1);
       }
       else {
         if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
@@ -86,16 +86,17 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
         else {
           m = Pattern.compile("([ \\t]*)([\\n \\t]*)[\\],](.*)", Pattern.DOTALL).matcher(s);
           if (m.matches()) {
-            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), ": ");
-            editor.getCaretModel().moveToOffset(tailOffset + 2);
+            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), ":");
+            editor.getCaretModel().moveToOffset(tailOffset + 1);
           }
           else {
             m = Pattern.compile("([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
             if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
             
-            String toInsert = m.group(2).startsWith("\n") ? ": ," : ": , ";
+            String toInsert = m.group(2).startsWith("\n") ? ":," : ":, ";
             editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), toInsert);
-            editor.getCaretModel().moveToOffset(tailOffset + 2);
+            editor.getCaretModel().moveToOffset(tailOffset + 1);
+            context.setTailOffset(tailOffset + 1);
           }
         }
       }

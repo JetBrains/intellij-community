@@ -50,6 +50,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTER = new SkipDefaultValuesSerializationFilters();
   private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>>(true);
   private final Map<XBreakpointType, XBreakpointBase<?,?,?>> myDefaultBreakpoints = new LinkedHashMap<XBreakpointType, XBreakpointBase<?, ?, ?>>();
+  private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new HashSet<XBreakpointBase<?, ?, ?>>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<XBreakpointType, EventDispatcher<XBreakpointListener>>();
   private final Map<XBreakpointType<?,?>, XBreakpointTypeDialogState> myBreakpointsDialogSettings = new HashMap<XBreakpointType<?,?>, XBreakpointTypeDialogState>();
   private final EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
@@ -128,6 +129,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     else {
       myBreakpoints.put(type, breakpoint);
     }
+    myAllBreakpoints.add(breakpoint);
     if (breakpoint instanceof XLineBreakpointImpl) {
       myLineBreakpointManager.registerBreakpoint((XLineBreakpointImpl)breakpoint, initUI);
     }
@@ -145,6 +147,10 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
+    if (!myAllBreakpoints.contains(breakpoint)) {
+      return;
+    }
+
     if (breakpoint instanceof XLineBreakpointImpl) {
       myLineBreakpointManager.breakpointChanged((XLineBreakpointImpl)breakpoint);
     }
@@ -165,6 +171,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     XBreakpointType type = breakpoint.getType();
     XBreakpointBase<?,?,?> breakpointBase = (XBreakpointBase<?,?,?>)breakpoint;
     myBreakpoints.remove(type, breakpointBase);
+    myAllBreakpoints.remove(breakpointBase);
     if (breakpointBase instanceof XLineBreakpointImpl) {
       myLineBreakpointManager.unregisterBreakpoint((XLineBreakpointImpl)breakpointBase);
     }
@@ -189,10 +196,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @NotNull
   public XBreakpointBase<?,?,?>[] getAllBreakpoints() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    List<XBreakpointBase<?, ?, ?>> breakpoints = new ArrayList<XBreakpointBase<?, ?, ?>>();
-    breakpoints.addAll(myDefaultBreakpoints.values());
-    breakpoints.addAll(myBreakpoints.values());
-    return breakpoints.toArray(new XBreakpointBase[breakpoints.size()]);
+    return myAllBreakpoints.toArray(new XBreakpointBase[myAllBreakpoints.size()]);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -322,6 +326,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       }
     }
 
+    myAllBreakpoints.clear();
     myDefaultBreakpoints.clear();
     for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
       loadBreakpoint(breakpointState, true);

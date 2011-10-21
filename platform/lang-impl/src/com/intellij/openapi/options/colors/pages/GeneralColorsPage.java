@@ -121,6 +121,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<String, TextAttributesKey>();
+  public static final String DISPLAY_NAME = OptionsBundle.message("options.general.display.name");
 
   static{
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES);
@@ -156,7 +157,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   @NotNull
   public String getDisplayName() {
-    return OptionsBundle.message("options.general.display.name");
+    return DISPLAY_NAME;
   }
 
   public Icon getIcon() {

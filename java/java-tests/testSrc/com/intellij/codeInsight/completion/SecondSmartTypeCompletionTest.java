@@ -48,7 +48,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     configure();
     assertStringItems("foos().toArray(EMPTY_ARRAY)", "foos().toArray(EMPTY_ARRAY2)");
     selectItem(myItems[0]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResult();
   }
 
   public void testToArrayGenericArrayCreation() throws Throwable { doTest(); }
@@ -62,7 +62,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     configure();
     assertStringItems("foos().toArray(Bar.EMPTY_ARRAY)", "foos().toArray(Bar.EMPTY_ARRAY2)");
     selectItem(myItems[0]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResult();
   }
 
   public void testNonInitializedField() throws Throwable { doTest(); }
@@ -104,14 +104,14 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     assertEquals("Arrays.asList(f.bar())", ((LookupItem)((LookupElementDecorator)myItems[0]).getDelegate()).getPresentableText());
     assertEquals("Arrays.asList(f.foo())", ((LookupItem)((LookupElementDecorator)myItems[1]).getDelegate()).getPresentableText());
     selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResult();
   }
 
   public void testRestoreInitialPrefix() throws Throwable {
     configureByFileNoComplete(BASE_PATH + "/" + getTestName(false) + ".java");
     complete(1);
     assertStringItems("MyEnum.Bar", "MyEnum.Foo");
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResult();
     complete(1);
     assertStringItems("my.getEnum", "MyEnum.Bar", "MyEnum.Foo");
   }
@@ -155,13 +155,17 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   public void testEmptyListInMethodCall() throws Throwable {
     configure();
     selectItem(myItems[0]);
+    checkResult();
+  }
+
+  private void checkResult() {
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
   }
 
   public void testSingletonMap() throws Throwable {
     configure();
     selectItem(myItems[0]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResult();
   }
 
   protected void checkResultByFile(@NonNls final String filePath)  {
@@ -174,7 +178,19 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   private void doTest() throws Exception {
     configure();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResult();
+  }
+
+  public void testInheritorMembers() throws Throwable {
+    configure();
+    selectItem(myItems[0]);
+    checkResult();
+  }
+
+  public void testInheritorEnumMembers() throws Throwable {
+    configure();
+    selectItem(myItems[0]);
+    checkResult();
   }
 
   @Override

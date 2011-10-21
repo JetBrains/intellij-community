@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,12 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -75,7 +76,6 @@ public abstract class BaseRefactoringProcessor {
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
   protected Runnable myPrepareSuccessfulSwingThreadCallback = EmptyRunnable.INSTANCE;
-
 
   protected BaseRefactoringProcessor(Project project) {
     this(project, null);
@@ -168,7 +168,8 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"),
+                                                                           true, myProject)) {
       return;
     }
 
@@ -195,7 +196,7 @@ public abstract class BaseRefactoringProcessor {
     if (!isPreview) {
       isPreview = !ensureElementsWritable(usages, descriptor) || UsageViewUtil.hasReadOnlyUsages(usages);
       if (isPreview) {
-        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
+        setStatusBarInfo(RefactoringBundle.message("readonly.occurences.found"));
       }
     }
     if (isPreview) {
@@ -203,6 +204,13 @@ public abstract class BaseRefactoringProcessor {
     }
     else {
       execute(usages);
+    }
+  }
+
+  private void setStatusBarInfo(final String message) {
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo(message);
     }
   }
 
@@ -258,7 +266,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   private static boolean ensureFilesWritable(final Project project, Collection<? extends PsiElement> elements) {
-    PsiElement[] psiElements = PsiUtilBase.toPsiElementArray(elements);
+    PsiElement[] psiElements = PsiUtilCore.toPsiElementArray(elements);
     return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
   }
 
@@ -276,6 +284,7 @@ public abstract class BaseRefactoringProcessor {
     return PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DEFAULT;
   }
@@ -357,7 +366,8 @@ public abstract class BaseRefactoringProcessor {
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
-    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
+    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
+                                        RefactoringBundle.message("usageView.doAction"));
   }
 
   private static Set<UsageInfo> getUsageInfosToRefactor(final UsageView usageView) {
@@ -424,11 +434,11 @@ public abstract class BaseRefactoringProcessor {
 
     int count = writableUsageInfos.length;
     if (count > 0) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
+      setStatusBarInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
     }
     else {
       if (!isPreviewUsages(writableUsageInfos)) {
-        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.noUsages"));
+        setStatusBarInfo(RefactoringBundle.message("statusBar.noUsages"));
       }
     }
   }
@@ -440,7 +450,6 @@ public abstract class BaseRefactoringProcessor {
    * <code>{@link #performRefactoring(UsageInfo[])}</code>.
    */
   protected void performPsiSpoilingRefactoring() {
-
   }
 
   protected void prepareSuccessful() {
@@ -462,7 +471,6 @@ public abstract class BaseRefactoringProcessor {
    * Override in subclasses
    */
   protected void prepareTestRun() {
-
   }
 
   public final void run() {
@@ -549,7 +557,7 @@ public abstract class BaseRefactoringProcessor {
     return showConflicts(conflicts, null);
   }
 
-  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) {
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new ConflictsInTestsException(conflicts.values());
     }
@@ -567,7 +575,7 @@ public abstract class BaseRefactoringProcessor {
     return true;
   }
 
-  protected ConflictsDialog prepareConflictsDialog(MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) {
+  protected ConflictsDialog prepareConflictsDialog(MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
       public void run() {
         execute(usages);

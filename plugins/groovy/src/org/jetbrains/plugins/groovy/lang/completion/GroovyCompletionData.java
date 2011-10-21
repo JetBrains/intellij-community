@@ -70,6 +70,10 @@ public class GroovyCompletionData {
   public static void addGroovyKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();
+    if (parent instanceof GrLiteral) {
+      return;
+    }
+    
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
       if (suggestPackage(position)) {
         result.addElement(keyword(PsiKeyword.PACKAGE, TailType.SPACE));
@@ -82,7 +86,7 @@ public class GroovyCompletionData {
       addExtendsImplements(position, result);
       registerControlCompletion(position, result);
 
-      if (parent instanceof GrExpression && !(parent instanceof GrLiteral)) {
+      if (parent instanceof GrExpression) {
         addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.NEW, PsiKeyword.THIS, "as");
       }
 
@@ -523,7 +527,8 @@ public class GroovyCompletionData {
     if (GroovyCompletionUtil.asSimpleVariable(context) || GroovyCompletionUtil.asTypedMethod(context)) {
       return true;
     }
-    if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false)) {
+    if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false) &&
+        !psiElement().afterLeaf("def").accepts(context)) {
       return true;
     }
 

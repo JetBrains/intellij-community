@@ -441,14 +441,19 @@ public class GradleModulesImporter {
           GradleLog.LOG.warn(String.format("Can't find %s of the library '%s' at path '%s'", pathType, gradleLibrary.getName(), path));
           continue;
         }
-        VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
-        if (jarRoot == null) {
-          GradleLog.LOG.warn(String.format(
-            "Can't parse contents of the jar file at path '%s' for the library '%s''", path, gradleLibrary.getName()
-          ));
-          continue;
+        if (virtualFile.isDirectory()) {
+          model.addRoot(virtualFile, pathType.getRootType());
         }
-        model.addRoot(jarRoot, pathType.getRootType());
+        else {
+          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
+          if (jarRoot == null) {
+            GradleLog.LOG.warn(String.format(
+              "Can't parse contents of the jar file at path '%s' for the library '%s''", path, gradleLibrary.getName()
+            ));
+            continue;
+          }
+          model.addRoot(jarRoot, pathType.getRootType());
+        }
       }
     }
   }

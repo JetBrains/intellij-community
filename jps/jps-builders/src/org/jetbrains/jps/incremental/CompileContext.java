@@ -3,9 +3,8 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.Project;
+import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
@@ -22,9 +21,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   private final CompileScope myScope;
   private final boolean myIsMake;
+  private final ProjectChunks myProductionChunks;
+  private final ProjectChunks myTestChunks;
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
+  private final Mappings myMappings;
+  private final Set<Module> myDirtyModules = new HashSet<Module>();
 
   private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
     @NotNull
@@ -32,21 +35,84 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       return buildSnapshot(key);
     }
   };
+  private final ProjectPaths myProjectPaths;
 
-  public CompileContext(CompileScope scope, String projectName, boolean isMake, MessageHandler delegateMessageHandler) {
+  public CompileContext(CompileScope scope,
+                        String projectName,
+                        boolean isMake,
+                        final Mappings mappings,
+                        ProjectChunks productionChunks,
+                        ProjectChunks testChunks,
+                        MessageHandler delegateMessageHandler) {
     myScope = scope;
     myIsMake = isMake;
+    myProductionChunks = productionChunks;
+    myTestChunks = testChunks;
     myDelegateMessageHandler = delegateMessageHandler;
-    final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
-    myDataManager = new BuildDataManager(buildDataRoot);
+    myDataManager = new BuildDataManager(projectName);
+    myMappings = mappings;
+    myProjectPaths = new ProjectPaths(scope.getProject());
   }
 
   public Project getProject() {
     return myScope.getProject();
   }
 
+  public ProjectPaths getProjectPaths() {
+    return myProjectPaths;
+  }
+
   public boolean isMake() {
     return myIsMake;
+  }
+
+  public boolean isDirty(ModuleChunk chunk) {
+    for (Module module : chunk.getModules()) {
+      if (isDirty(module)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isDirty(Module module) {
+    return myDirtyModules.contains(module);
+  }
+
+  public void setDirty(ModuleChunk chunk, boolean isDirty) {
+    final Set<Module> modules = chunk.getModules();
+    if (isDirty) {
+      myDirtyModules.addAll(modules);
+    }
+    else {
+      myDirtyModules.removeAll(modules);
+    }
+
+    // now mark all modules that depend on dirty modules
+    final ClasspathKind classpathKind = ClasspathKind.compile(isCompilingTests());
+    final ProjectChunks chunks = isCompilingTests()? myTestChunks : myProductionChunks;
+    boolean found = false;
+    for (ModuleChunk moduleChunk : chunks.getChunkList()) {
+      if (!found) {
+        if (moduleChunk.equals(chunk)) {
+          found = true;
+        }
+      }
+      else {
+        MODULES_LOOP: for (final Module module : moduleChunk.getModules()) {
+          for (ClasspathItem dependency : module.getClasspath(classpathKind)) {
+            if (dependency instanceof Module && isDirty((Module)dependency)) {
+              myDirtyModules.addAll(moduleChunk.getModules());
+              break MODULES_LOOP;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public Mappings getMappings() {
+    return myMappings;
   }
 
   public boolean isCompilingTests() {
@@ -84,22 +150,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   /** @noinspection unchecked*/
-  //private boolean processModule(Module module, FileProcessor processor) throws Exception {
-  //  final Set<File> excludes = new HashSet<File>();
-  //  for (String excludePath : (Collection<String>)module.getExcludes()) {
-  //    excludes.add(new File(excludePath));
-  //  }
-  //
-  //  final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
-  //  for (String root : roots) {
-  //    final File rootFile = new File(root);
-  //    if (!processRootRecursively(module, rootFile, root, processor, excludes)) {
-  //      return false;
-  //    }
-  //  }
-  //  return true;
-  //}
-
   private FSSnapshot buildSnapshot(Module module) {
     final Set<File> excludes = new HashSet<File>();
     for (String excludePath : (Collection<String>)module.getExcludes()) {
@@ -113,25 +163,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
     return snapshot;
   }
-
-  //private static boolean processRootRecursively(final Module module, final File fromFile, final String sourceRoot, FileProcessor processor, final Set<File> excluded) throws Exception {
-  //  if (fromFile.isDirectory()) {
-  //    if (isExcluded(excluded, fromFile)) {
-  //      return true;
-  //    }
-  //    final File[] children = fromFile.listFiles();
-  //    if (children != null) {
-  //      for (File child : children) {
-  //        final boolean shouldContinue = processRootRecursively(module, child, sourceRoot, processor, excluded);
-  //        if (!shouldContinue) {
-  //          return false;
-  //        }
-  //      }
-  //    }
-  //    return true;
-  //  }
-  //  return processor.apply(module, fromFile, sourceRoot);
-  //}
 
   private static void buildStructure(final FSSnapshot.Node from, final Set<File> excluded) {
     final File nodeFile = from.getFile();

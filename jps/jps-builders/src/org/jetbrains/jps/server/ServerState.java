@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 import org.codehaus.groovy.runtime.MethodClosure;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
@@ -9,13 +10,13 @@ import org.jetbrains.jps.api.BuildParameters;
 import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
-import org.jetbrains.jps.incremental.BuilderRegistry;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
-import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
+import java.util.zip.DeflaterInputStream;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,6 +27,8 @@ class ServerState {
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
 
   private final Map<String, Project> myProjects = new HashMap<String, Project>();
+  private final Map<String, Mappings> myProjectMappings = new HashMap<String, Mappings>();
+
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
@@ -43,17 +46,43 @@ class ServerState {
   public void clearProjectCache(Collection<String> projectPaths) {
     synchronized (myConfigurationLock) {
       myProjects.keySet().removeAll(projectPaths);
+      myProjectMappings.keySet().removeAll(projectPaths);
     }
   }
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
-    Project project;
+    final String projectName = getProjectName(projectPath);
 
+    Project project;
+    Mappings mappings;
     synchronized (myConfigurationLock) {
       project = myProjects.get(projectPath);
       if (project == null) {
         project = loadProject(projectPath, params);
         myProjects.put(projectPath, project);
+      }
+
+      mappings = myProjectMappings.get(projectPath);
+      if (mappings == null) {
+        final File mappingsStorageFile = Paths.getMappingsStorageFile(projectName);
+        try {
+          final BufferedReader reader = new BufferedReader(new InputStreamReader(new DeflaterInputStream(new FileInputStream(mappingsStorageFile))));
+          try {
+            mappings = new Mappings(reader);
+          }
+          finally {
+            reader.close();
+          }
+        }
+        catch (FileNotFoundException e) {
+          mappings = new Mappings();
+        }
+        catch (IOException e) {
+          msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
+          mappings = new Mappings();
+        }
+
+        myProjectMappings.put(projectPath, mappings);
       }
     }
 
@@ -75,7 +104,7 @@ class ServerState {
       }
     };
 
-    final IncProjectBuilder builder = new IncProjectBuilder(project, getProjectName(projectPath), BuilderRegistry.getInstance());
+    final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
     if (msgHandler != null) {
       builder.addMessageHandler(msgHandler);
     }

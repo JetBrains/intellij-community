@@ -65,6 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -111,7 +112,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
 
     if (!isDecorated()) {
-      setBorder(new NavBarBorder(false, -1));
+      setBorder(/*new NavBarBorder(false, -1)*/ new EmptyBorder(1,0,1,4));
     }
     setOpaque(false);
 

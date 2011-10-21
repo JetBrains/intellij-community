@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
@@ -142,9 +143,29 @@ public class EditorFragmentComponent extends JPanel {
                                                          boolean showFolding,
                                                          boolean hideByAnyKey) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+    Document document = editor.getDocument();
 
-    int startLine = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-    int endLine = Math.min(editor.offsetToLogicalPosition(range.getEndOffset()).line + 1, editor.getDocument().getLineCount() - 1);
+    int startOffset = range.getStartOffset();
+    int startLine = document.getLineNumber(startOffset);
+    CharSequence text = document.getCharsSequence();
+    // There is a possible case that we have a situation like below:
+    //    line 1
+    //    line 2 <fragment start>
+    //    line 3<fragment end>
+    // We don't want to include 'line 2' to the target fragment then.
+    boolean incrementLine = false;
+    for (int offset = startOffset, max = Math.min(range.getEndOffset(), text.length()); offset < max; offset++) {
+      char c = text.charAt(offset);
+      incrementLine = StringUtil.isWhiteSpace(c);
+      if (!incrementLine || c == '\n') {
+        break;
+      } 
+    }
+    if (incrementLine) {
+      startLine++;
+    } 
+    
+    int endLine = Math.min(document.getLineNumber(range.getEndOffset()) + 1, document.getLineCount() - 1);
 
     //if (editor.logicalPositionToXY(new LogicalPosition(startLine, 0)).y >= editor.logicalPositionToXY(new LogicalPosition(endLine, 0)).y) return null;
     if (startLine >= endLine) return null;

@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.AnnotatedElementsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,10 +47,15 @@ import java.util.List;
 public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
 
   @NotNull
-  private static List<PsiModifierListOwner> getAnnotatedMemberCandidates(PsiClass clazz, GlobalSearchScope scope) {
+  private static List<PsiModifierListOwner> getAnnotatedMemberCandidates(final PsiClass clazz, final GlobalSearchScope scope) {
     final String name = clazz.getName();
     if (name == null) return Collections.emptyList();
-    final Collection<PsiElement> members = StubIndex.getInstance().get(GrAnnotatedMemberIndex.KEY, name, clazz.getProject(), scope);
+    final Collection<PsiElement> members = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiElement>>() {
+      @Override
+      public Collection<PsiElement> compute() {
+        return StubIndex.getInstance().get(GrAnnotatedMemberIndex.KEY, name, clazz.getProject(), scope);
+      }
+    });
     if (members.isEmpty()) {
       return Collections.emptyList();
     }
@@ -69,7 +76,14 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 
-    final String annotationFQN = annClass.getQualifiedName();
+    AccessToken token = ReadAction.start();
+    final String annotationFQN;
+    try {
+      annotationFQN = annClass.getQualifiedName();
+    }
+    finally {
+      token.finish();
+    }
     assert annotationFQN != null;
 
     final SearchScope scope = p.getScope();
@@ -95,7 +109,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     }
 
     for (PsiModifierListOwner candidate : candidates) {
-      AccessToken token = ReadAction.start();
+      token = ReadAction.start();
       try {
         if (!AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
           continue;

@@ -292,7 +292,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    initLogConsoles(myConfiguration, myRunContentDescriptor.getProcessHandler());
+    initLogConsoles(myConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
 
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();

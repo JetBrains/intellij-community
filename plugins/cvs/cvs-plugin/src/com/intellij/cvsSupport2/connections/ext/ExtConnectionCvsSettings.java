@@ -117,7 +117,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     Exception sourceException = t.getUnderlyingException();
     if (!(sourceException instanceof IOException)) return t;
     String localizedMessage = t.getLocalizedMessage();
-    if (!localizedMessage.startsWith(UNHANDLED_RESPONSE_PREFIX)) return t;
+    if (localizedMessage == null || !localizedMessage.startsWith(UNHANDLED_RESPONSE_PREFIX)) return t;
     String response = localizedMessage.substring(UNHANDLED_RESPONSE_PREFIX.length(),
                                                  localizedMessage.length() - 1);
     if (StringUtil.startsWithConcatenationOf(response, USER + "@", HOST)) {

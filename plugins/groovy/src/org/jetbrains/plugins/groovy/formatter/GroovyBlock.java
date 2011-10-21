@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
@@ -47,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -63,22 +63,46 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected Indent myIndent;
   final protected Wrap myWrap;
   final protected CommonCodeStyleSettings mySettings;
+  final protected GroovyCodeStyleSettings myGroovySettings;
   final protected Map<PsiElement, Alignment> myInnerAlignments;
-
 
   protected List<Block> mySubBlocks = null;
 
-  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CommonCodeStyleSettings settings) {
-    this(node, alignment, indent, wrap, settings, Collections.<PsiElement, Alignment>emptyMap());
+  public GroovyBlock(@NotNull final ASTNode node,
+                     @Nullable final Alignment alignment,
+                     @NotNull final Indent indent,
+                     @Nullable final Wrap wrap,
+                     final CommonCodeStyleSettings settings,
+                     GroovyCodeStyleSettings groovySettings
+                    ) {
+    this(node, alignment, indent, wrap, settings, groovySettings, CollectionFactory.<PsiElement, Alignment>hashMap());
   }
 
-  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CommonCodeStyleSettings settings,
+  public GroovyBlock(@NotNull final ASTNode node,
+                     @Nullable Alignment alignment,
+                     @NotNull final Indent indent,
+                     @Nullable final Wrap wrap,
+                     final CommonCodeStyleSettings settings,
+                     GroovyCodeStyleSettings groovySettings,
                      @NotNull Map<PsiElement, Alignment> innerAlignments) {
     myNode = node;
-    myAlignment = alignment;
+    if (groovySettings.USE_FLYING_GEESE_BRACES && isLeaf()) {
+      PsiElement psi = myNode.getPsi();
+      if (alignment == null) alignment = innerAlignments.get(psi);
+      if (alignment == null) alignment = Alignment.createAlignment(true);
+
+      myAlignment = alignment;
+      innerAlignments.put(psi, myAlignment);
+    }
+    else {
+      myAlignment = alignment;
+    }
+
+
     myIndent = indent;
     myWrap = wrap;
     mySettings = settings;
+    myGroovySettings = groovySettings;
     myInnerAlignments = innerAlignments;
   }
 
@@ -92,6 +116,14 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return mySettings;
   }
 
+  public GroovyCodeStyleSettings getGroovySettings() {
+    return myGroovySettings;
+  }
+
+  public Map<PsiElement, Alignment> getInnerAlignments() {
+    return myInnerAlignments;
+  }
+
   @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
@@ -100,7 +132,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = GroovyBlockGenerator.generateSubBlocks(myNode, myAlignment, myWrap, mySettings, this);
+      mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
     }
     return mySubBlocks;
   }
@@ -134,7 +166,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
         return Spacing.getReadOnlySpacing();
       }
 
-      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), mySettings).getSpacing();
+      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), mySettings, myGroovySettings).getSpacing();
       return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock)child1), ((GroovyBlock)child2), mySettings);
     }
     return null;
@@ -172,6 +204,11 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
 
     if (BLOCK_SET.contains(astNode.getElementType()) ||
         SWITCH_STATEMENT.equals(astNode.getElementType())) {
+//      PsiElement psi = ((GroovyBlock)getSubBlocks().get(newChildIndex)).getNode().getPsi();
+ //     if (GeeseUtil.isClosureRBrace(psi)) {
+   //     return new ChildAttributes(Indent.getNoneIndent(), GeeseUtil.calculateRBraceAlignment(psi, myInnerAlignments));
+    //  }
+
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (CASE_SECTION.equals(astNode.getElementType())) {

@@ -69,7 +69,10 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
   }
 
   public Object getValue() {
-    final PsiElement child = getFirstChild();
+    return getLiteralValue(getFirstChild());
+  }
+
+  public static Object getLiteralValue(PsiElement child) {
     IElementType elemType = child.getNode().getElementType();
     String text = child.getText();
     if (TokenSets.NUMBERS.contains(elemType)) {
@@ -122,6 +125,9 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
         text = StringUtil.trimEnd(text.substring(1), "\"");
       }
       return StringUtil.unescapeStringCharacters(text);
+    }
+    else if (elemType == mREGEX_LITERAL) {
+      return StringUtil.trimStart(StringUtil.trimEnd(text, "/"), "/");
     }
     return null; //todo
   }

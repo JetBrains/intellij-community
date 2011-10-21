@@ -531,10 +531,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return myLocalVariable;
   }
 
-  public static void stopIntroduce(Editor editor) {
+  public void stopIntroduce(Editor editor) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null) {
-      templateState.gotoEnd(true);
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          templateState.gotoEnd(true);
+        }
+      };
+      CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), getCommandName());
     }
   }
 

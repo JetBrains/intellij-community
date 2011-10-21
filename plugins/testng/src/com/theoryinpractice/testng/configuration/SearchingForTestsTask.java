@@ -292,7 +292,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         TestClassFilter projectFilter =
           new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true);
         TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter, false)));
+        calculateDependencies(null, classes, TestNGUtil.getAllTestClasses(filter, false));
         if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
@@ -319,7 +319,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       })) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      classes.putAll(calculateDependencies(null, psiClass));
+      calculateDependencies(null, classes, psiClass);
     }
     else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
@@ -351,7 +351,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
           }
         }
       );
-      classes.putAll(calculateDependencies(methods, psiClass));
+      calculateDependencies(methods, classes, psiClass);
       Collection<PsiMethod> psiMethods = classes.get(psiClass);
       if (psiMethods == null) {
         psiMethods = new LinkedHashSet<PsiMethod>();
@@ -404,10 +404,16 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     return params;
   }
 
-  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods,
-                                                                     @Nullable final PsiClass... classes) {
-    //we build up a list of dependencies
-    final Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
+  private void calculateDependencies(PsiMethod[] methods,
+                                     final Map<PsiClass, Collection<PsiMethod>> results,
+                                     @Nullable final PsiClass... classes) {
+    calculateDependencies(methods, results, new LinkedHashSet<PsiMember>(), classes);
+  }
+
+  private void calculateDependencies(final PsiMethod[] methods,
+                                     final Map<PsiClass, Collection<PsiMethod>> results,
+                                     final Set<PsiMember> alreadyMarkedToBeChecked,
+                                     @Nullable final PsiClass... classes) {
     if (classes != null && classes.length > 0) {
       final Set<String> groupDependencies = new HashSet<String>();
       TestNGUtil.collectAnnotationValues(groupDependencies, "dependsOnGroups", methods, classes);
@@ -415,6 +421,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       final Set<String> testMethodDependencies = new HashSet<String>();
       TestNGUtil.collectAnnotationValues(testMethodDependencies, "dependsOnMethods", methods, classes);
 
+      final Set<PsiMember> membersToCheckNow = new LinkedHashSet<PsiMember>();
       if (!groupDependencies.isEmpty() || !testMethodDependencies.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -424,11 +431,15 @@ public class SearchingForTestsTask extends Task.Backgroundable {
             LOG.assertTrue(testAnnotation != null);
             for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
               if (psiMember instanceof PsiMethod && testMethodDependencies.contains(psiMember.getName())) {
-                appendMember(psiMember, results);
+                if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
+                  membersToCheckNow.add(psiMember);
+                }
               } else if (!groupDependencies.isEmpty()) {
                 final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN);
                 if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groupDependencies)) {
-                  appendMember(psiMember, results);
+                  if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
+                    membersToCheckNow.add(psiMember);
+                  }
                 }
               }
             }
@@ -438,23 +449,46 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
       if (methods == null) {
         for (PsiClass c : classes) {
-          results.put(c, new LinkedHashSet<PsiMethod>());
+          if (!results.containsKey(c)) {
+            results.put(c, new LinkedHashSet<PsiMethod>());
+          }
         }
       }
+      for (PsiMember psiMember : membersToCheckNow) {
+        PsiClass psiClass;
+        PsiMethod[] meths = null;
+        if (psiMember instanceof PsiMethod) {
+          psiClass = psiMember.getContainingClass();
+          meths = new PsiMethod[] {(PsiMethod)psiMember};
+        } else {
+          psiClass = (PsiClass)psiMember;
+        }
+        calculateDependencies(meths, results, alreadyMarkedToBeChecked, psiClass);
+      }
     }
-    return results;
   }
 
-  private static void appendMember(final PsiMember psiMember, final Map<PsiClass, Collection<PsiMethod>> results) {
+  private static boolean appendMember(final PsiMember psiMember,
+                                      final Set<PsiMember> underConsideration,
+                                      final Map<PsiClass, Collection<PsiMethod>> results) {
+    boolean result = false;
     final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
     Collection<PsiMethod> psiMethods = results.get(psiClass);
     if (psiMethods == null) {
       psiMethods = new LinkedHashSet<PsiMethod>();
       results.put(psiClass, psiMethods);
+      if (psiMember instanceof PsiClass) {
+        result = underConsideration.add(psiMember);
+      }
     }
     if (psiMember instanceof PsiMethod) {
-      psiMethods.add((PsiMethod)psiMember);
+      final boolean add = psiMethods.add((PsiMethod)psiMember);
+      if (add) {
+        return underConsideration.add(psiMember);
+      }
+      return false;
     }
+    return result;
   }
 
   private GlobalSearchScope getSearchScope() {

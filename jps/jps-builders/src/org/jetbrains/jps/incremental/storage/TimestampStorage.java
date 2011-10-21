@@ -32,6 +32,10 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampValidi
     update(file, new TimestampValidityState(timestamp));
   }
 
+  public void markDirty(File file) throws IOException {
+    update(file, null);
+  }
+
   private static class FileKeyDescriptor implements KeyDescriptor<File> {
     private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 

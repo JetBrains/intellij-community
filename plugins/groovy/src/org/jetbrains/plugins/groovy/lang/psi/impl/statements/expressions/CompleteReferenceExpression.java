@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -299,9 +298,10 @@ public class CompleteReferenceExpression {
                                                    Project project) {
     final ResolveState state = ResolveState.initial();
     if (qualifierType instanceof PsiClassType) {
-      PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
+      PsiClassType.ClassResolveResult result = ((PsiClassType)qualifierType).resolveGenerics();
+      PsiClass qualifierClass = result.getElement();
       if (qualifierClass != null) {
-        qualifierClass.processDeclarations(processor, state, null, refExpr);
+        qualifierClass.processDeclarations(processor, state.put(PsiSubstitutor.KEY, result.getSubstitutor()), null, refExpr);
       }
     }
     else if (qualifierType instanceof PsiArrayType) {

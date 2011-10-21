@@ -650,8 +650,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       size = UIUtil.addInsets(size, myEditor.getInsets());
     }
 
-    System.out.println(size);
-
     return size;
   }
 

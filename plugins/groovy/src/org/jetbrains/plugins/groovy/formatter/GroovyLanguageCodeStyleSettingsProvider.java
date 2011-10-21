@@ -41,6 +41,11 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
                                 @NotNull SettingsType settingsType) {
+    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
+      consumer.showAllStandardOptions();
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
+      return;
+    }
     consumer.showAllStandardOptions();
   }
 
@@ -115,6 +120,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       }
     };
   }
+  
+  
 
   private final static String INDENT_OPTIONS_SAMPLE =
     /*
