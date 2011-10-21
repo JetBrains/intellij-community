@@ -67,6 +67,9 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
   @NonNls
   protected abstract String getTestRoot();
 
+  protected void prepareProject(VirtualFile rootDir) {
+  }
+
   protected interface PerformAction {
     void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception;
   }
