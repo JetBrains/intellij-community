@@ -136,13 +136,36 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     method(args);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
+  public ParameterDescriptor parameter(Map args) {
+    return new ParameterDescriptor(args);
+  }
+  
+  @SuppressWarnings("unchecked")
   public void method(Map<Object, Object> args) {
     args.put("type", stringifyType(args.get("type")));
+
+    Object namedParams = args.get("namedParams");
+    if (namedParams instanceof List) {
+      LinkedHashMap newParams = new LinkedHashMap();
+      newParams.put("args", namedParams);
+      Object oldParams = args.get("params");
+      if (oldParams instanceof Map) {
+        newParams.putAll((Map)oldParams);
+      }
+      args.put("params", newParams);
+    }
+
     //noinspection unchecked
-    final Map<Object, Object> params = (Map)args.get("params");
-    if (params != null) {
-      for (Map.Entry<Object, Object> entry : params.entrySet()) {
-        entry.setValue(stringifyType(entry.getValue()));
+    Object params = args.get("params");
+    if (params instanceof Map) {
+      boolean first = true;
+      for (Map.Entry<Object, Object> entry : ((Map<Object, Object>)params).entrySet()) {
+        Object value = entry.getValue();
+        if (!first || !(value instanceof List)) {
+          entry.setValue(stringifyType(value));
+        }
+        first = false;
       }
     }
     final Object toThrow = args.get(THROWS);
@@ -198,5 +221,14 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return null;
   }
 
+  public static class ParameterDescriptor {
+    public final String name;
+    public final String type;
+
+    private ParameterDescriptor(Map args) {
+      this.name = (String)args.get("name");
+      this.type = stringifyType(args.get("type"));
+    }
+  }
 
 }

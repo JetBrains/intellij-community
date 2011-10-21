@@ -16,15 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.light.LightIdentifier;
+import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -61,7 +60,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private PsiClass myContainingClass;
   private Object myMethodKind;
   private String[] myNamedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
-  private Runnable myOnRename;
+  private final PsiReferenceList myThrowsList;
 
   private Object myData;
   private boolean myConstructor;
@@ -72,6 +71,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     myParameterList = new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE);
     myModifierList = new GrLightModifierList(this);
     myConstructor = false;
+    myThrowsList = new LightReferenceListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, PsiReferenceList.Role.THROWS_LIST);
   }
 
   public void setNamedParametersArray(@NotNull String[] namedParametersArray) {
@@ -105,21 +105,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    if (myOnRename == null) {
-      throw new IncorrectOperationException("Please don't rename light methods");
-    }
-
-    myName = name;
-    myOnRename.run();
-    return this;
-  }
-
-  public void setOnRename(Runnable onRename) {
-    myOnRename = onRename;
-  }
-
-  public void setRenamable() {
-    myOnRename = EmptyRunnable.INSTANCE;
+    throw new IncorrectOperationException("Please don't rename light methods");
   }
 
   @NotNull
@@ -248,7 +234,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return new LightEmptyImplementsList(getManager());
+    return myThrowsList;
   }
 
   public PsiCodeBlock getBody() {
@@ -435,6 +421,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public <T> T getData() {
+    //noinspection unchecked
     return (T)myData;
   }
 
@@ -450,6 +437,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   public GrLightMethodBuilder setData(@Nullable Object data) {
     myData = data;
+    return this;
+  }
+
+  public GrLightMethodBuilder addException(PsiClassType type) {
+    ((LightReferenceListBuilder)myThrowsList).addReference(type);
     return this;
   }
 

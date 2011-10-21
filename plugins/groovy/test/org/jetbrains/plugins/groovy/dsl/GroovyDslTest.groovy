@@ -44,9 +44,13 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   }
 
   private def doCustomTest(String s) {
-    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", s);
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    addGdsl(s)
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
+  }
+
+  private def addGdsl(String text) {
+    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", text);
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
   }
 
   public void doTest() throws Throwable {
@@ -132,17 +136,15 @@ public class MyCategory {
   public void foo(String s) {}
 }""")
     def foo = category.getMethods()[0]
-    final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", """
-contributor([:]){category 'MyCategory'}""");
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    addGdsl("""
+    contributor([:]){category 'MyCategory'}""")
     myFixture.renameElement foo, "bar", false, false
 
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
   public void testPathRegexp() {
-    final PsiFile file = myFixture.addFileToProject("a.gdsl", "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }");
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    addGdsl "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }"
 
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("aaa/foo.groovy", "fff<caret>x").virtualFile
     myFixture.completeBasic()
@@ -151,5 +153,29 @@ contributor([:]){category 'MyCategory'}""");
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("bbb/foo.groovy", "fff<caret>x").virtualFile
     myFixture.completeBasic()
     assertEmpty myFixture.lookupElementStrings
+  }
+
+  public void testNamedParameters() {
+    addGdsl '''contribute(currentType(String.name)) {
+  method name:'foo', type:void, params:[:], namedParams:[
+    parameter(name:'param1', type:String),
+    parameter(name:'param2', type:Integer),
+  ]
+}'''
+    myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
+    def items = myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['param1', 'param2']
+  }
+
+  public void testNamedParametersGroovyConverntion() {
+    addGdsl '''contribute(currentType(String.name)) {
+  method name:'foo', type:void, params:[args:[
+      parameter(name:'param1', type:String),
+      parameter(name:'param2', type:Integer),
+    ]]
+}'''
+    myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
+    def items = myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['param1', 'param2']
   }
 }
