@@ -49,7 +49,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final FontMetrics myBoldMetrics;
 
   public static final Color BACKGROUND_COLOR = new Color(235, 244, 254);
-  static final Color FOREGROUND_COLOR = Color.black;
+  private static final Color FOREGROUND_COLOR = Color.black;
   private static final Color GRAYED_FOREGROUND_COLOR = new Color(160, 160, 160);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
   private static final Color SELECTED_FOREGROUND_COLOR = Color.white;
@@ -126,7 +126,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.clear();
     myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
-    allowedWidth -= setItemTextLabel(item, foreground, isSelected, presentation, allowedWidth);
+    allowedWidth -= setItemTextLabel(item, presentation.getItemTextForeground(), isSelected, presentation, allowedWidth);
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
