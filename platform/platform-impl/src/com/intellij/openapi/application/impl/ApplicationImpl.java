@@ -207,16 +207,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     mySplash = splash;
     myName = appName;
 
-    PluginsFacade.INSTANCE = new PluginsFacade() {
-      public IdeaPluginDescriptor getPlugin(PluginId id) {
-        return PluginManager.getPlugin(id);
-      }
-
-      public IdeaPluginDescriptor[] getPlugins() {
-        return PluginManager.getPlugins();
-      }
-    };
-
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;

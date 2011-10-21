@@ -23,12 +23,12 @@ import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
@@ -216,7 +216,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     if (t != null) {
       final PluginId pluginId = IdeErrorsDialog.findPluginId(t);
       if (pluginId != null) {
-        final IdeaPluginDescriptor ideaPluginDescriptor = PluginsFacade.INSTANCE.getPlugin(pluginId);
+        final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
         if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
           descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
         }

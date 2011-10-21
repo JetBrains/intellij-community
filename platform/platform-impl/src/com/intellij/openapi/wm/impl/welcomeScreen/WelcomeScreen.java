@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -352,7 +351,7 @@ public class WelcomeScreen implements Disposable {
   private void createListOfPlugins(final JPanel installedPluginsPanel, final JPanel bundledPluginsPanel) {
     //Create the list of installed plugins
     List<IdeaPluginDescriptor> installedPlugins =
-      new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginsFacade.INSTANCE.getPlugins()));
+      new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
 
     if (installedPlugins.size() == 0) {
       addListItemToPlugins(installedPluginsPanel,

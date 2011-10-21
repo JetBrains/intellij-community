@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -309,7 +308,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return;
     }
 
-    IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(pluginId);
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     final Ref<Boolean> hasDependants = new Ref<Boolean>(false);
     PluginManager.checkDependants(plugin, new Function<PluginId, IdeaPluginDescriptor>() {
                                     @Override
@@ -439,7 +438,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
     else {
-      text.append(DiagnosticBundle.message("error.list.message.blame.plugin", PluginsFacade.INSTANCE.getPlugin(pluginId).getName()));
+      text.append(DiagnosticBundle.message("error.list.message.blame.plugin", PluginManager.getPlugin(pluginId).getName()));
     }
     text.append(" ").append(DiagnosticBundle.message("error.list.message.info",
                                                      DateFormatUtil.formatPrettyDateTime(message.getDate()),

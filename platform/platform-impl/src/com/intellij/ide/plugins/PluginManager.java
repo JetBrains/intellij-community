@@ -28,7 +28,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
@@ -96,16 +95,6 @@ public class PluginManager {
 
   public static long startupStart;
   public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
-
-  public static class Facade extends PluginsFacade {
-    public IdeaPluginDescriptor getPlugin(PluginId id) {
-      return PluginManager.getPlugin(id);
-    }
-
-    public IdeaPluginDescriptor[] getPlugins() {
-      return PluginManager.getPlugins();
-    }
-  }
 
   private static IdeaPluginDescriptorImpl[] ourPlugins;
   private static Map<String, PluginId> ourPluginClasses;
@@ -178,9 +167,6 @@ public class PluginManager {
         public void run() {
           try {
             ClassloaderUtil.clearJarURLCache();
-
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            PluginsFacade.INSTANCE = new Facade();
 
             Class aClass = Class.forName(mainClass);
             final Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
