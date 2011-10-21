@@ -22,7 +22,13 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     final PsiMethod method = p.getMethod();
     final SearchScope scope = p.getScope();
 
-    final PsiClass parentClass = method.getContainingClass();
+    final PsiClass parentClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Nullable
+      @Override
+      public PsiClass compute() {
+        return method.getContainingClass();
+      }
+    });
     assert parentClass != null;
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
       public boolean process(final PsiClass inheritor) {
