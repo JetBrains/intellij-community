@@ -41,7 +41,7 @@ public class XhtmlFormattingModelBuilder implements FormattingModelBuilder {
     return new XmlFormattingModel(psiFile,
                                                             new XmlBlock(SourceTreeToPsiMap.psiElementToTree(psiFile),
                                                                          null, null,
-                                                                         new HtmlPolicy(settings, documentModel), null, null),
+                                                                         new HtmlPolicy(settings, documentModel), null, null, false),
                                                             documentModel);
   }
 

@@ -40,7 +40,7 @@ public class HtmlFormattingModelBuilder implements FormattingModelBuilder {
     final FormattingDocumentModelImpl documentModel = FormattingDocumentModelImpl.createOn(psiFile);
     return new XmlFormattingModel(psiFile,
                                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(psiFile),
-                                                                        null, null, new HtmlPolicy(settings, documentModel), null, null),
+                                                                        null, null, new HtmlPolicy(settings, documentModel), null, null, false),
                                                            documentModel);
   }
 

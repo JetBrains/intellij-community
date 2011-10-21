@@ -36,7 +36,7 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
                                      final Block original, final Indent indent,
                                      final int offset,
                                      @Nullable TextRange range) {
-    super(node, original.getWrap(), original.getAlignment(), policy);
+    super(node, original.getWrap(), original.getAlignment(), policy, false);
     myInjectedBlock = new InjectedLanguageBlockWrapper(original, offset, range, null);
     myIndent = indent;
   }

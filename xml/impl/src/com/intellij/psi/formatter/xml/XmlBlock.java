@@ -45,12 +45,22 @@ public class XmlBlock extends AbstractXmlBlock {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.XmlBlock");
 
   public XmlBlock(final ASTNode node,
+                    final Wrap wrap,
+                    final Alignment alignment,
+                    final XmlFormattingPolicy policy,
+                    final Indent indent,
+                    final TextRange textRange) {
+    this(node, wrap, alignment, policy, indent, textRange, false);
+  }
+
+  public XmlBlock(final ASTNode node,
                   final Wrap wrap,
                   final Alignment alignment,
                   final XmlFormattingPolicy policy,
                   final Indent indent,
-                  final TextRange textRange) {
-    super(node, wrap, alignment, policy);
+                  final TextRange textRange,
+                  final boolean preserveSpace) {
+    super(node, wrap, alignment, policy, preserveSpace);
     myIndent = indent;
     myTextRange = textRange;
   }
@@ -123,7 +133,7 @@ public class XmlBlock extends AbstractXmlBlock {
     while (child != null) {
       if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
           child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-        result.add(new XmlBlock(child, null, null, formattingPolicy, null, null));
+        result.add(new XmlBlock(child, null, null, formattingPolicy, null, null, isPreserveSpace()));
       }
       else if (!child.getPsi().getLanguage().isKindOf(XMLLanguage.INSTANCE) && containsOuterLanguageElement(child)) {
         // Fix for EA-20311:
@@ -174,7 +184,7 @@ public class XmlBlock extends AbstractXmlBlock {
       if (child instanceof OuterLanguageElement) {
         hasOuterLangElements = true;
       }
-      result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
+      result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null, isPreserveSpace()));
       child = child.getTreeNext();
     }
     if (hasOuterLangElements) {

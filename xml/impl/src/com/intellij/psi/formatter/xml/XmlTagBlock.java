@@ -33,11 +33,21 @@ public class XmlTagBlock extends AbstractXmlBlock{
   private final Indent myIndent;
 
   public XmlTagBlock(final ASTNode node,
+                       final Wrap wrap,
+                       final Alignment alignment,
+                       final XmlFormattingPolicy policy,
+                       final Indent indent) {
+      super(node, wrap, alignment, policy, false);
+      myIndent = indent;
+  }
+
+  public XmlTagBlock(final ASTNode node,
                      final Wrap wrap,
                      final Alignment alignment,
                      final XmlFormattingPolicy policy,
-                     final Indent indent) {
-    super(node, wrap, alignment, policy);
+                     final Indent indent,
+                     final boolean preserveSpace) {
+    super(node, wrap, alignment, policy, preserveSpace);
     myIndent = indent;
   }
 
@@ -196,6 +206,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
+    if (isPreserveSpace()) return Spacing.getReadOnlySpacing();
     if(child1 instanceof AbstractSyntheticBlock && child2 instanceof AbstractSyntheticBlock) {
       return getSpacing((AbstractSyntheticBlock)child1, (AbstractSyntheticBlock)child2);
     }

@@ -62,6 +62,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     boolean firstIsText = isTextFragment(node1);
     boolean secondIsText = isTextFragment(node2);
 
+    if (((AbstractXmlBlock)child1).isPreserveSpace() && ((AbstractXmlBlock)child2).isPreserveSpace()) {
+      return Spacing.getReadOnlySpacing();
+    }
+
     if (type1 == XmlElementType.XML_CDATA_START || type2 == XmlElementType.XML_CDATA_END) {
       if (myXmlFormattingPolicy.getKeepWhiteSpacesInsideCDATA()) {
         return Spacing.getReadOnlySpacing();

@@ -43,11 +43,21 @@ import java.util.List;
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected XmlFormattingPolicy myXmlFormattingPolicy;
   protected XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
+  private boolean myPreserveSpace;
+
+  protected AbstractXmlBlock(final ASTNode node,
+                            final Wrap wrap,
+                            final Alignment alignment,
+                            final XmlFormattingPolicy policy) {
+    this(node, wrap, alignment, policy, false);
+  }
+
 
   protected AbstractXmlBlock(final ASTNode node,
                           final Wrap wrap,
                           final Alignment alignment,
-                          final XmlFormattingPolicy policy) {
+                          final XmlFormattingPolicy policy,
+                          final boolean preserveSpace) {
     super(node, wrap, alignment);
     myXmlFormattingPolicy = policy;
     if (node == null) {
@@ -57,6 +67,39 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       myXmlFormattingPolicy.setRootBlock(node, this);
     }
     myInjectedBlockBuilder = new XmlInjectedLanguageBlockBuilder(myXmlFormattingPolicy);
+    myPreserveSpace = shouldPreserveSpace(node, preserveSpace);
+  }
+
+
+  /**
+   * Handles xml:space='preserve|default' attribute.
+   * See <a href="http://www.w3.org/TR/2004/REC-xml-20040204/#sec-white-space">Extensible Markup Language (XML) 1.0 (Third Edition),
+   * White Space Handling</a>
+   *
+   * @return True if the space must be preserved (xml:space='preserve'), false if the attribute
+   *         contains 'default'. If the attribute is not defined, return the current value.
+   */ 
+  private static boolean shouldPreserveSpace(ASTNode node, boolean defaultValue) {
+    if (node.getPsi() instanceof XmlTag) {
+      XmlTag tag = (XmlTag)node.getPsi();
+      if (tag != null) {
+        XmlAttribute spaceAttr = tag.getAttribute("xml:space");
+        if (spaceAttr != null) {
+          String value = spaceAttr.getValue();
+          if ("preserve".equals(value)) {
+            return true;
+          }
+          if ("default".equals(value))  {
+            return false;
+          }
+        }
+      }
+    }
+    return defaultValue;
+  }
+  
+  public boolean isPreserveSpace() {
+    return myPreserveSpace;
   }
 
 
@@ -250,7 +293,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       result.add(createTagBlock(child, indent != null ? indent : Indent.getNoneIndent(), wrap, alignment));
     } else if (child.getElementType() == XmlElementType.XML_DOCTYPE) {
       result.add(
-        new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null) {
+        new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace()) {
           protected Wrap getDefaultWrap(final ASTNode node) {
             final IElementType type = node.getElementType();
             return type == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN ? Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false) : null;
@@ -265,11 +308,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
 
   protected XmlBlock createSimpleChild(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
-    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null);
+    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace());
   }
 
   protected XmlTagBlock createTagBlock(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
-    return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent());
+    return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent(), isPreserveSpace());
   }
 
   @Nullable

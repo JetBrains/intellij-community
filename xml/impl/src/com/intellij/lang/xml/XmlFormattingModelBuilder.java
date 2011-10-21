@@ -47,7 +47,7 @@ public class XmlFormattingModelBuilder implements FormattingModelBuilder {
     final ASTNode root = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     final FormattingDocumentModelImpl documentModel = FormattingDocumentModelImpl.createOn(element.getContainingFile());
     return new XmlFormattingModel(element.getContainingFile(),
-                                                           new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null),
+                                                           new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null, false),
                                                            documentModel);
   }
 
