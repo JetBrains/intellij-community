@@ -70,13 +70,40 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                            PsiType type,
                                            PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
-    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
+    final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+
     PsiElement element = null;
     if (expr != null) {
       element = expr.getUserData(ElementToWorkOn.PARENT);
       if (element == null) element = expr;
     }
     if (element == null) element = anchorElement;
+
+    PsiLocalVariable localVariable = null;
+    if (expr instanceof PsiReferenceExpression) {
+      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
+      if (ref instanceof PsiLocalVariable) {
+        localVariable = (PsiLocalVariable)ref;
+      }
+    }
+    else if (anchorElement instanceof PsiLocalVariable) {
+      localVariable = (PsiLocalVariable)anchorElement;
+    }
+
+    String enteredName = null;
+    boolean replaceAll = false;
+    if (activeIntroducer != null) {
+      activeIntroducer.stopIntroduce(editor);
+      expr = (PsiExpression)activeIntroducer.getExpr();
+      localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
+      occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
+      enteredName = activeIntroducer.getInputName();
+      replaceAll = activeIntroducer.isReplaceAllOccurrences();
+      type = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
+      IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
+    }
+
+    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
     final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(element, parentClass);
     boolean declareStatic = staticParentElement != null;
 
@@ -88,44 +115,20 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
         declareStatic = isInSuperOrThis;
       }
     }
-
-    PsiLocalVariable localVariable = null;
-    if (expr instanceof PsiReferenceExpression) {
-      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
-      if (ref instanceof PsiLocalVariable) {
-        localVariable = (PsiLocalVariable)ref;
-      }
-    } else if (anchorElement instanceof PsiLocalVariable) {
-      localVariable = (PsiLocalVariable)anchorElement;
-    }
-
     int occurrencesNumber = occurrences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
     final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
 
-    String enteredName = null;
-    boolean replaceAll = false;
-    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
-      final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
-      if (activeIntroducer == null) {
-        myInplaceIntroduceFieldPopup =
-          new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr,
-                                         new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), editor,
-                                         allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll,
-                                         expr != null ? createOccurrenceManager(expr, parentClass) : null,project);
-        if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
-          return null;
-        }
-      } else {
-        activeIntroducer.stopIntroduce(editor);
-        expr = (PsiExpression)activeIntroducer.getExpr();
-        localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
-        occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
-        enteredName = activeIntroducer.getInputName();
-        replaceAll = activeIntroducer.isReplaceAllOccurrences();
-        type = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
-        IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
+        (expr == null || expr.isPhysical()) && activeIntroducer == null) {
+      myInplaceIntroduceFieldPopup =
+        new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr,
+                                       new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), editor,
+                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll,
+                                       expr != null ? createOccurrenceManager(expr, parentClass) : null, project);
+      if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
+        return null;
       }
     }
 

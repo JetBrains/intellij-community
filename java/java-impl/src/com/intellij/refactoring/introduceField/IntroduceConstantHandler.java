@@ -101,15 +101,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiElement anchorElement,
                                            PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
-    for (PsiExpression occurrence : occurrences) {
-      if (RefactoringUtil.isAssignmentLHS(occurrence)) {
-        String message =
-          RefactoringBundle.getCannotRefactorMessage("Selected expression is used for write");
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
-        highlightError(project, editor, occurrence);
-        return null;
-      }
-    }
+    
     PsiLocalVariable localVariable = null;
     if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression)expr).resolve();
@@ -120,6 +112,30 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       localVariable = (PsiLocalVariable)anchorElement;
     }
 
+    String enteredName = null;
+    boolean replaceAllOccurrences = true;
+
+    final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+    if (activeIntroducer != null) {
+      activeIntroducer.stopIntroduce(editor);
+      expr = (PsiExpression)activeIntroducer.getExpr();
+      localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
+      occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
+      enteredName = activeIntroducer.getInputName();
+      replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
+      type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
+    }
+    
+    for (PsiExpression occurrence : occurrences) {
+      if (RefactoringUtil.isAssignmentLHS(occurrence)) {
+        String message =
+          RefactoringBundle.getCannotRefactorMessage("Selected expression is used for write");
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+        highlightError(project, editor, occurrence);
+        return null;
+      }
+    }
+    
     if (localVariable == null) {
       final PsiElement errorElement = isStaticFinalInitializer(expr);
       if (errorElement != null) {
@@ -148,34 +164,24 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
     }
 
-    String enteredName = null;
-    boolean replaceAllOccurrences = true;
-    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
-      final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
-      if (activeIntroducer == null) {
-        myInplaceIntroduceConstantPopup =
-          new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurrences,
-                                            new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences),
-                                            anchorElement, anchorElementIfAll,
-                                            expr != null ? createOccurrenceManager(expr, parentClass) : null);
-        if (myInplaceIntroduceConstantPopup.startInplaceIntroduceTemplate() ){
-          return null;
-        }
-      } else {
-        activeIntroducer.stopIntroduce(editor);
-        expr = (PsiExpression)activeIntroducer.getExpr();
-        localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
-        occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
-        enteredName = activeIntroducer.getInputName();
-        replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
-        type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
+
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences);
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
+        (expr == null || expr.isPhysical()) && activeIntroducer == null) {
+      myInplaceIntroduceConstantPopup =
+        new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurrences,
+                                          typeSelectorManager,
+                                          anchorElement, anchorElementIfAll,
+                                          expr != null ? createOccurrenceManager(expr, parentClass) : null);
+      if (myInplaceIntroduceConstantPopup.startInplaceIntroduceTemplate()) {
+        return null;
       }
     }
 
 
     final IntroduceConstantDialog dialog =
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurrences, getParentClass(),
-                                  new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), enteredName);
+                                  typeSelectorManager, enteredName);
     dialog.setReplaceAllOccurrences(replaceAllOccurrences);
     dialog.show();
     if (!dialog.isOK()) {

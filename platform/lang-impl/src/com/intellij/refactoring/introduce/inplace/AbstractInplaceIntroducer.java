@@ -544,7 +544,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Nullable
-  public static AbstractInplaceIntroducer getActiveIntroducer(Editor editor) {
+  public static AbstractInplaceIntroducer getActiveIntroducer(@Nullable Editor editor) {
+    if (editor == null) return null;
     return editor.getUserData(ACTIVE_INTRODUCE);
   }
 }

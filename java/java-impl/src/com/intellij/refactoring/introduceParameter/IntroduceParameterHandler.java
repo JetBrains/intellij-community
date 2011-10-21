@@ -378,6 +378,22 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         occurences = CodeInsightUtil.findReferenceExpressions(method, myLocalVar);
       }
 
+      String enteredName = null;
+      boolean replaceAllOccurrences = false;
+      boolean delegate = false;
+      PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
+
+      final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
+      if (activeIntroducer != null) {
+        activeIntroducer.stopIntroduce(myEditor);
+        myExpr = (PsiExpression)activeIntroducer.getExpr();
+        myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();
+        occurences = (PsiExpression[])activeIntroducer.getOccurrences();
+        enteredName = activeIntroducer.getInputName();
+        replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
+        delegate = ((InplaceIntroduceParameterPopup)activeIntroducer).isGenerateDelegate();
+        initializerType = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
+      }
 
       boolean mustBeFinal = false;
       if (myLocalVar != null) {
@@ -400,7 +416,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       final String propName = myLocalVar != null ? JavaCodeStyleManager
         .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
-      PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
 
       boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
 
@@ -408,32 +423,15 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         isInplaceAvailableOnDataContext &= myExpr.isPhysical();
       }
 
-      String enteredName = null;
-      boolean replaceAllOccurrences = false;
-      boolean delegate = false;
-      if (isInplaceAvailableOnDataContext) {
-        final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
-        if (activeIntroducer == null) {
-
-          myInplaceIntroduceParameterPopup =
-            new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
-                                               createTypeSelectorManager(occurences, initializerType),
-                                               myExpr, myLocalVar, method, methodToSearchFor, occurences,
-                                               getParamsToRemove(method, occurences),
-                                               mustBeFinal);
-          if (myInplaceIntroduceParameterPopup.startInplaceIntroduceTemplate()) {
-            return;
-          }
-        }
-        else {
-          activeIntroducer.stopIntroduce(myEditor);
-          myExpr = (PsiExpression)activeIntroducer.getExpr();
-          myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();
-          occurences = (PsiExpression[])activeIntroducer.getOccurrences();
-          enteredName = activeIntroducer.getInputName();
-          replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
-          delegate = ((InplaceIntroduceParameterPopup)activeIntroducer).isGenerateDelegate();
-          initializerType = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
+      if (isInplaceAvailableOnDataContext && activeIntroducer == null) {
+        myInplaceIntroduceParameterPopup =
+          new InplaceIntroduceParameterPopup(myProject, myEditor, classMemberRefs,
+                                             createTypeSelectorManager(occurences, initializerType),
+                                             myExpr, myLocalVar, method, methodToSearchFor, occurences,
+                                             getParamsToRemove(method, occurences),
+                                             mustBeFinal);
+        if (myInplaceIntroduceParameterPopup.startInplaceIntroduceTemplate()) {
+          return;
         }
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
