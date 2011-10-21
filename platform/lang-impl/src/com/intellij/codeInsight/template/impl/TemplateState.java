@@ -24,7 +24,6 @@ import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -64,10 +63,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class TemplateState implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateState");
@@ -920,8 +917,10 @@ public class TemplateState implements Disposable {
   }
 
   private void initTabStopHighlighters() {
+    final Set<String> vars = new HashSet<String>();
     for (int i = 0; i < myTemplate.getVariableCount(); i++) {
       String variableName = myTemplate.getVariableNameAt(i);
+      if (!vars.add(variableName)) continue;
       int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
       if (segmentNumber < 0) continue;
       RangeHighlighter segmentHighlighter = getSegmentHighlighter(segmentNumber, false, false);
