@@ -43,6 +43,7 @@ import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -131,6 +132,13 @@ public class GradleApiFacadeManager {
         params.setMainClass(MAIN_CLASS_NAME);
         
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+        
+        // It may take a while for gradle api to resolve external dependencies. Default RMI timeout
+        // is 15 seconds (http://download.oracle.com/javase/1.4.2/docs/guide/rmi/sunrmiproperties.html#connectionTimeout),
+        // we don't want to get EOFException because of that.
+        params.getVMParametersList().addParametersString(
+          "-Dsun.rmi.transport.connectionTimeout=" + String.valueOf(TimeUnit.HOURS.toMillis(1))
+        );
         //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
         return params;
       }
