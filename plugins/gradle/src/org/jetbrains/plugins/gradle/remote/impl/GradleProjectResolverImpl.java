@@ -13,16 +13,13 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.importing.model.*;
-import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
+import org.jetbrains.plugins.gradle.remote.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -37,16 +34,25 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleProjectResolverImpl extends RemoteObject implements GradleProjectResolver, RemoteGradleService {
   
-  private static final Set<String> NON_UNIQUE_PATH_ENTRIES = new HashSet<String>(Arrays.asList(
-    "src", "main", "java", "test", "resources" 
-  ));
-  
-  private final BlockingQueue<ProjectConnection>             myConnections = new LinkedBlockingQueue<ProjectConnection>();
-  private final AtomicReference<RemoteGradleProcessSettings> mySettings    = new AtomicReference<RemoteGradleProcessSettings>();
-  
+  private final BlockingQueue<ProjectConnection>             myConnections       = new LinkedBlockingQueue<ProjectConnection>();
+  private final AtomicReference<RemoteGradleProcessSettings> mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
+  private final GradleLibraryNamesMixer                      myLibraryNamesMixer = new GradleLibraryNamesMixer();
+
   @NotNull
   @Override
   public GradleProject resolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries)
+    throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
+  {
+    try {
+      return doResolveProjectInfo(projectPath, downloadLibraries);
+    }
+    catch (Throwable e) {
+      throw new GradleApiException(e);
+    }
+  }
+  
+  @NotNull
+  private GradleProject doResolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, IllegalArgumentException, IllegalStateException
   {
     ProjectConnection connection = getConnection(projectPath);
@@ -58,7 +64,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     // populating dependent module object.
     Map<String, Pair<GradleModule, IdeaModule>> modules = createModules(project, result);
     populateModules(modules.values(), result);
-    diversifyLibraryNamesIfNecessary(result);
+    myLibraryNamesMixer.mixNames(result.getLibraries());
     return result;
   }
 
@@ -315,46 +321,6 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     return null;
   }
 
-  /**
-   * Gradle API doesn't provide library names at the moment, so, we deduce them from the path. However, it's possible to have identical
-   * names then.
-   * <p/>
-   * This method solves that by diversifying duplicate library names.
-   * 
-   * @param project  target project which library names should be diversified if necessary
-   */
-  private static void diversifyLibraryNamesIfNecessary(@NotNull GradleProject project) {
-    Map<String, GradleLibrary> libraries = new HashMap<String, GradleLibrary>();
-    for (GradleLibrary library : project.getLibraries()) {
-      GradleLibrary previous = libraries.remove(library.getName());
-      if (previous == null) {
-        libraries.put(library.getName(), library);
-        continue;
-      }
-      previous.setName(generateName(previous));
-      libraries.put(previous.getName(), previous);
-      library.setName(generateName(library));
-      libraries.put(library.getName(), library);
-    }
-  }
-  
-  @NotNull
-  private static String generateName(@NotNull GradleLibrary library) {
-    for (LibraryPathType pathType : LibraryPathType.values()) {
-      String path = library.getPath(pathType);
-      if (path == null) {
-        continue;
-      }
-      File file = new File(path).getParentFile();
-      for (; file != null; file = file.getParentFile()) {
-        if (!NON_UNIQUE_PATH_ENTRIES.contains(file.getName())) {
-          return file.getName() + "-" + library.getName();
-        }
-      }
-    }
-    return library.getName();
-  }
-  
   /**
    * Allows to retrieve gradle api connection to use for the given project.
    * 

@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.gradle.importing.model.GradleModule;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -157,14 +159,21 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
           }
           catch (Exception e) {
             Throwable unwrapped = RemoteUtil.unwrap(e);
+            String reason = unwrapped.getLocalizedMessage();
+            if (!StringUtil.isEmpty(reason)) {
+              errorReason.set(reason);
+            }
             if (unwrapped.getClass() == NoClassDefFoundError.class) {
               errorReason.set(GradleBundle.message("gradle.import.text.incomplete.tooling.api"));
             }
-            else {
-              errorReason.set(unwrapped.getLocalizedMessage());
+            else if (unwrapped.getClass() == GradleApiException.class) {
+              GradleLog.LOG.warn("Can't resolve gradle project. Reason: gradle api threw an exception:\n"
+                                 + ((GradleApiException)unwrapped).getOriginalReason()
+              );
             }
-            // Ignore here because it will be reported on method exit.
-            GradleLog.LOG.warn("Can't resolve gradle project", e);
+            else {
+              GradleLog.LOG.warn("Can't resolve gradle project", e);
+            }
           }
         }
       });
