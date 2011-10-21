@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +31,22 @@ import java.io.File;
  * @author dsl
  */
 public abstract class MultiFileTestCase extends CodeInsightTestCase {
-
   protected boolean myDoCompare = true;
 
-  protected void doTest(PerformAction performAction) throws Exception {
-    doTest(performAction, true);
+  protected void doTest(final PerformAction performAction) throws Exception {
+    doTest(performAction, getTestName(true));
   }
 
-  protected void doTest(PerformAction performAction, final boolean lowercaseFirstLetter) throws Exception {
-    String testName = getTestName(lowercaseFirstLetter);
+  protected void doTest(final PerformAction performAction, final boolean lowercaseFirstLetter) throws Exception {
+    doTest(performAction, getTestName(lowercaseFirstLetter));
+  }
+
+  protected void doTest(final PerformAction performAction, final String testName) throws Exception {
     String root = getTestDataPath() + getTestRoot() + testName;
 
     String rootBefore = root + "/before";
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete, false);
-    setupProject(rootDir);
+    prepareProject(rootDir);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     String rootAfter = root + "/after";
@@ -59,7 +61,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     }
   }
 
-  protected void setupProject(VirtualFile rootDir) {
+  protected void prepareProject(VirtualFile rootDir) {
     PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
   }
 
@@ -73,5 +75,4 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
   protected interface PerformAction {
     void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception;
   }
-
 }
