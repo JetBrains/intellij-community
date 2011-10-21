@@ -18,12 +18,13 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
-public class MultiMap<K, V> {
+public class MultiMap<K, V> implements Serializable {
 
   public static final MultiMap EMPTY = new MultiMap() {
     @Override
@@ -31,6 +32,7 @@ public class MultiMap<K, V> {
       return Collections.emptyMap();
     }
   };
+  private static final long serialVersionUID = -2632269270151455493L;
 
   private final Map<K, Collection<V>> myMap;
 
