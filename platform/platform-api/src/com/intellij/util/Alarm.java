@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -100,7 +101,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delay, ModalityState.stateForComponent(myActivationComponent));
   }
 
-  public void addRequest(final Runnable request, int delayMillis, final ModalityState modalityState) {
+  public void addRequest(final Runnable request, int delayMillis, @Nullable final ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }

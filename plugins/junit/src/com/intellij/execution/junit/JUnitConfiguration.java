@@ -357,6 +357,11 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return myData.FORK_MODE;
   }
 
+  @Override
+  public boolean collectOutputFromProcessHandler() {
+    return false;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     private String DIR_NAME;

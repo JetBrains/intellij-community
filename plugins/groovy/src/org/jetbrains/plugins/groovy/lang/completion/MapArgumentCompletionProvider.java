@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
@@ -26,6 +25,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -89,7 +89,8 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
-    if (map.isEmpty()) {
+    boolean sure = !map.isEmpty();
+    if (!sure) {
       map = findOtherNamedArgumentsInFile(mapOrArgumentList);
     }
     
@@ -98,10 +99,15 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     for (Map.Entry<String, GroovyNamedArgumentProvider.ArgumentDescriptor> entry : map.entrySet()) {
-      LookupElement lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
-        .setIcon(GroovyIcons.DYNAMIC)
+      LookupElementBuilder lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
         .setTailText(":");
+
+      if (sure) {
+        lookup = lookup.setIcon(GroovyIcons.DYNAMIC);
+      } else {
+        lookup = lookup.setItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
+      }
 
       result.addElement(lookup);
     }
@@ -116,7 +122,9 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         if (element instanceof GrArgumentLabel) {
           final String name = ((GrArgumentLabel)element).getName();
           if (GroovyNamesUtil.isIdentifier(name)) {
-            map.put(name, new GroovyNamedArgumentProvider.ArgumentDescriptor());
+            GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = new GroovyNamedArgumentProvider.ArgumentDescriptor();
+            descriptor.setShowFirst(false);
+            map.put(name, descriptor);
           }
         }
         super.visitElement(element);

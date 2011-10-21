@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
@@ -47,8 +46,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -271,30 +268,17 @@ public class GroovyCompletionUtil {
     return setupLookupBuilder(element, substitutor, builder);
   }
 
-  private static PsiMethod generateMethodInCategory(GroovyResolveResult result) {
-    final PsiElement element = result.getElement();
-    assert element instanceof PsiMethod;
-    final LightMethodBuilder builder = new LightMethodBuilder(element.getManager(), GroovyFileType.GROOVY_LANGUAGE, ((PsiMethod)element).getName());
-    final PsiParameter[] params = ((PsiMethod)element).getParameterList().getParameters();
-    for (int i = 1; i < params.length; i++) {
-      builder.addParameter(params[i]);
-    }
-    builder.setBaseIcon(GroovyIcons.METHOD);
-    return builder;
-  }
-
   public static LookupElement getLookupElement(Object o) {
     if (o instanceof LookupElement) return (LookupElement)o;
     if (o instanceof PsiNamedElement) return generateLookupElement((PsiNamedElement)o);
     if (o instanceof PsiElement) return setupLookupBuilder((PsiElement)o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, ((PsiElement)o).getText()));
-    return LookupElementBuilder.create(o, o.toString());
+    return LookupElementBuilder.create(o, o.toString()).setItemTextUnderlined(true);
   }
-  public static LookupElementBuilder generateLookupElement(PsiNamedElement element) {
-    LookupElementBuilder builder = LookupElementBuilder.create(element);
-    return setupLookupBuilder(element, PsiSubstitutor.EMPTY, builder);
+  private static LookupElementBuilder generateLookupElement(PsiNamedElement element) {
+    return setupLookupBuilder(element, PsiSubstitutor.EMPTY, LookupElementBuilder.create(element));
   }
 
-  public static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
+  private static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
     builder = builder.setIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .setInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
@@ -426,9 +410,10 @@ public class GroovyCompletionUtil {
   }
 
   //need to shorten references in type argument list
-  public static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
+  private static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
     final Document document = manager.getDocument(file);
+    assert document != null;
     manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref instanceof GrCodeReferenceElement) {

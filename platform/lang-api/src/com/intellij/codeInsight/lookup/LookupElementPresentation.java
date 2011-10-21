@@ -33,6 +33,7 @@ public class LookupElementPresentation {
   private boolean myStrikeout;
   private boolean myTailGrayed;
   private Color myTailForeground;
+  private Color myItemTextForeground = Color.black;
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myTypeGrayed;
@@ -136,6 +137,14 @@ public class LookupElementPresentation {
     myItemTextUnderlined = itemTextUnderlined;
   }
 
+  @NotNull public Color getItemTextForeground() {
+    return myItemTextForeground;
+  }
+
+  public void setItemTextForeground(@NotNull Color itemTextForeground) {
+    myItemTextForeground = itemTextForeground;
+  }
+
   public void copyFrom(@NotNull LookupElementPresentation presentation) {
     myIcon = presentation.myIcon;
     myTypeIcon = presentation.myTypeIcon;
@@ -147,6 +156,8 @@ public class LookupElementPresentation {
     myTailForeground = presentation.myTailForeground;
     myItemTextBold = presentation.myItemTextBold;
     myTypeGrayed = presentation.myTypeGrayed;
+    myItemTextUnderlined = presentation.myItemTextUnderlined;
+    myItemTextForeground = presentation.myItemTextForeground;
   }
 
   public boolean isTypeGrayed() {

@@ -183,8 +183,11 @@ public class DefaultHighlighter {
   }
 
   public static final TextAttributes MAP_KEY_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+
+  public static final Color MAP_KEY_COLOR = new Color(0, 128, 0);
+
   static {
-    MAP_KEY_ATTRIBUTES.setForegroundColor(new Color(0, 128, 0));
+    MAP_KEY_ATTRIBUTES.setForegroundColor(MAP_KEY_COLOR);
   }
   public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey.createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
   public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey.createTextAttributesKey(LITERAL_CONVERSION_ID, LITERAL_CONVERSION_ATTRIBUTES);

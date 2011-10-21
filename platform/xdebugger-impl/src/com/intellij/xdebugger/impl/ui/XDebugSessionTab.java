@@ -198,7 +198,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (env != null) {
       final RunProfile runConfiguration = env.getRunProfile();
       registerFileMatcher(runConfiguration);
-      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler());
+      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
     }
 
     rebuildViews();

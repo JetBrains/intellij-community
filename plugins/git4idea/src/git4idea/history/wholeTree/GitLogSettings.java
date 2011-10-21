@@ -61,6 +61,7 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
     public boolean mySelectedUserIsMe;
     // false => filter
     public boolean myHighlight = true;
+    public boolean myShowTree = true;
   }
 
   @Override
@@ -71,6 +72,14 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   @Override
   public void loadState(MyState state) {
     myState = state;
+  }
+
+  public boolean isShowTree() {
+    return myState.myShowTree;
+  }
+
+  public void setShowTree(final boolean value) {
+    myState.myShowTree = value;
   }
   
   public void setSelectedUser(final String selected) {

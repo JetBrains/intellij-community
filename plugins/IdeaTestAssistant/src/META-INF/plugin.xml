@@ -18,6 +18,7 @@
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="com.intellij.testAssistant.TestDataAsRelatedFileProvider"/>
+    <gotoRelatedProvider implementation="com.intellij.testAssistant.GotoTestRelatedProvider"/>
   </extensions>
 
   <project-components>

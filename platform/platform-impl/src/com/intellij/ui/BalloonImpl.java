@@ -569,7 +569,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           myFadedIn = true;
 
-          startFadeoutTimer();
+          startFadeoutTimer((int)BalloonImpl.this.myFadeoutTime);
         }
         else {
           layeredPane.remove(myComp);
@@ -592,14 +592,13 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myAnimator.resume();
   }
 
-  private void startFadeoutTimer() {
-    if (myFadeoutTime > 0) {
-      Alarm fadeoutAlarm = new Alarm(this);
-      fadeoutAlarm.addRequest(new Runnable() {
+  public void startFadeoutTimer(final int fadeoutTime) {
+    if (fadeoutTime > 0) {
+      new Alarm(this).addRequest(new Runnable() {
         public void run() {
           hide();
         }
-      }, (int)myFadeoutTime, null);
+      }, fadeoutTime, null);
     }
   }
 

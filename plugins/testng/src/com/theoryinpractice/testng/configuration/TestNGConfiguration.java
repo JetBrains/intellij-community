@@ -421,4 +421,9 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
     return null;
   }
+
+  @Override
+  public boolean collectOutputFromProcessHandler() {
+    return false;
+  }
 }

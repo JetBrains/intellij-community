@@ -83,15 +83,15 @@
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
     <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
 
-    <localInspection shortName="CheckNodeTest" displayName="Check Node Test" groupName="XPath" enabledByDefault="true" level="WARNING"
+    <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check Node Test" groupName="XPath" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>
-    <localInspection shortName="ImplicitTypeConversion" displayName="Implicit Type Conversion" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="ImplicitTypeConversion" displayName="Implicit Type Conversion" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion"/>
-    <localInspection shortName="RedundantTypeConversion" displayName="Redundant Type Conversion" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="RedundantTypeConversion" displayName="Redundant Type Conversion" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion"/>
-    <localInspection shortName="IndexZeroUsage" displayName="Use of index 0 in XPath predicates" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="IndexZeroUsage" displayName="Use of index 0 in XPath predicates" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate"/>
-    <localInspection shortName="HardwiredNamespacePrefix" displayName="Hardwired Namespace Prefix" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" displayName="Hardwired Namespace Prefix" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix"/>
 
     <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />

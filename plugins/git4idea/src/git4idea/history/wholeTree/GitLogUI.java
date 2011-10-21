@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -65,9 +66,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -90,7 +93,7 @@ public class GitLogUI implements Disposable {
   private final Map<VirtualFile, SymbolicRefs> myRefs;
   private final SymbolicRefs myRecalculatedCommon;
   private UIRefresh myUIRefresh;
-  private JBTable myJBTable;
+  private MouseOpenJBTable myJBTable;
   private GraphGutter myGraphGutter;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   final List<CommitI> myCommitsInRepositoryChangesBrowser;
@@ -125,6 +128,9 @@ public class GitLogUI implements Disposable {
 
   private final TableCellRenderer myAuthorRenderer;
   private MyRootsAction myRootsAction;
+  private JPanel myEqualToHeadr;
+  private boolean myThereAreFilters;
+  private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -154,6 +160,7 @@ public class GitLogUI implements Disposable {
 
     initUiRefresh();
     myAuthorRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myMyShowTreeAction = new MyShowTreeAction();
   }
   
   public void initFromSettings() {
@@ -247,6 +254,8 @@ public class GitLogUI implements Disposable {
     myDataBeingAdded = false;
     myJBTable.revalidate();
     myJBTable.repaint();
+    ((JComponent) myEqualToHeadr.getParent()).revalidate();
+    myEqualToHeadr.getParent().repaint();
   }
 
   private void start() {
@@ -423,6 +432,7 @@ public class GitLogUI implements Disposable {
     myJBTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        myGraphGutter.getComponent().repaint();
         mySelectionRequestsMerger.request();
       }
     });
@@ -572,7 +582,7 @@ public class GitLogUI implements Disposable {
   }
 
   private JPanel createMainTable() {
-    myJBTable = new JBTable(myTableModel) {
+    myJBTable = new MouseOpenJBTable(myTableModel) {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         final TableCellRenderer custom = myTableModel.getColumnInfo(column).getRenderer(myTableModel.getValueAt(row, column));
@@ -596,10 +606,11 @@ public class GitLogUI implements Disposable {
     myJBTable.getExpandableItemsHandler().setEnabled(false);
     myJBTable.setShowGrid(false);
     myJBTable.setModel(myTableModel);
+    myJBTable.setBorder(null);
     myJBTable.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
-        createContextMenu().getComponent().show(comp,x,y);
+        createContextMenu().getComponent().show(comp, x, y);
       }
     });
 
@@ -624,22 +635,51 @@ public class GitLogUI implements Disposable {
       @Override
       public void run() {
         updateByScroll();
-        // todo uncomment for git tree
-        /*if (myGraphGutter.getComponent().isVisible()) {
-          myGraphGutter.getComponent().repaint();
-        }*/
       }
-    });
+    }, new Runnable() {
+      @Override
+      public void run() {
+        if (myGraphGutter.getComponent().isVisible()) {
+          myGraphGutter.getComponent().repaint();
+        }
+      }
+    }
+    );
     scrollPane.getViewport().addChangeListener(myMyChangeListener);
 
     final JPanel wrapper = new DataProviderPanel(new BorderLayout());
     wrapper.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     final JPanel mainBorderWrapper = new JPanel(new BorderLayout());
-    myGraphGutter.getComponent().setVisible(false);
-    // todo uncomment for git tree
-    //mainBorderWrapper.add(myGraphGutter.getComponent(), BorderLayout.WEST);
+    final JPanel wrapperGutter = new JPanel(new BorderLayout());
+    //myGraphGutter.getComponent().setVisible(false);
+    myEqualToHeadr = new JPanel() {
+      @Override
+      public Dimension getPreferredSize() {
+        return getMySize();
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return getMySize();
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return getMySize();
+      }
+
+      public Dimension getMySize() {
+        final int height = myJBTable.getTableHeader().getHeight();
+        final int width = myGraphGutter.getComponent().getPreferredSize().width;
+        return new Dimension(width, height);
+      }
+    };
+    myEqualToHeadr.setBorder(BorderFactory.createMatteBorder(0,0,1,0,UIUtil.getBorderColor()));
+    wrapperGutter.add(myEqualToHeadr, BorderLayout.NORTH);
+    wrapperGutter.add(myGraphGutter.getComponent(), BorderLayout.CENTER);
+    mainBorderWrapper.add(wrapperGutter, BorderLayout.WEST);
     mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
-    mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
+    //mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
     myDetailsPanel = new GitLogDetailsPanel(myProject, myDetailsCache, new Convertor<VirtualFile, SymbolicRefs>() {
       @Override
@@ -675,6 +715,7 @@ public class GitLogUI implements Disposable {
     group.add(myStructureFilterAction.asTextAction());
     group.add(myCherryPickAction);
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
+    group.add(myMyShowTreeAction);
     group.add(myRefreshAction);
     return ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
   }
@@ -714,6 +755,7 @@ public class GitLogUI implements Disposable {
     myRefreshAction = new MyRefreshAction();
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
     group.add(myRootsAction);
+    group.add(myMyShowTreeAction);
     group.add(myRefreshAction);
     // todo debug
     //group.add(new TestIndexAction());
@@ -1268,9 +1310,13 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
-    myGraphGutter.getComponent().setVisible(false);
+    myThereAreFilters = true;
+    myEqualToHeadr.getParent().setVisible(false);
     if (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected) {
-      myGraphGutter.getComponent().setVisible(true);
+      myThereAreFilters = false;
+      if (myMyShowTreeAction.isSelected(null)) {
+        myEqualToHeadr.getParent().setVisible(true);
+      }
       myUsersSearchContext.clear();
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters());
     } else {
@@ -1574,6 +1620,61 @@ public class GitLogUI implements Disposable {
         popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
       } else {
         popup.showInBestPositionFor(e.getDataContext());
+      }
+    }
+  }
+
+  public static class MouseOpenJBTable extends JBTable {
+    public MouseOpenJBTable() {
+    }
+
+    public MouseOpenJBTable(TableModel model) {
+      super(model);
+    }
+
+    @Override
+    public void processMouseEvent(MouseEvent e) {
+      super.processMouseEvent(e);
+    }
+
+    @Override
+    public void processMouseMotionEvent(MouseEvent e) {
+      super.processMouseMotionEvent(e);
+    }
+
+    @Override
+    protected void processMouseWheelEvent(MouseWheelEvent e) {
+      super.processMouseWheelEvent(e);
+    }
+  }
+  
+  public class MyShowTreeAction extends ToggleAction implements DumbAware {
+    private boolean myIsSelected;
+    private final GitLogSettings myInstance;
+
+    public MyShowTreeAction() {
+      super("Show graph", "Show graph", IconLoader.getIcon("/icons/branch.png"));
+      myInstance = GitLogSettings.getInstance(myProject);
+      myIsSelected = myInstance.isShowTree();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(! myThereAreFilters);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myIsSelected;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myIsSelected = state;
+      myInstance.setShowTree(state);
+      if (! myThereAreFilters) {
+        myEqualToHeadr.getParent().setVisible(state);
       }
     }
   }

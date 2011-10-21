@@ -112,6 +112,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
     myTestsRootNode = new SMTestProxy.SMRootTestProxy();
+    //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
     //TODO[romeo] improve

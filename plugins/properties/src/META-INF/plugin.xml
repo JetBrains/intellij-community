@@ -46,15 +46,15 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.PropertyReferenceViaLastWordSearcher"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 
-    <localInspection shortName="UnusedProperty" bundle="messages.PropertiesBundle" key="unused.property.inspection.display.name"
-                     groupKey="properties.files.inspection.group.display.name" enabledByDefault="false" level="WARNING"
+    <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle" key="unused.property.inspection.display.name"
+                     groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedPropertyInspection"/>
     <globalInspection shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle" key="duplicate.property.display.name"
                       groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>
-    <localInspection shortName="TrailingSpacesInProperty" bundle="messages.PropertiesBundle"
+    <localInspection language="Properties" shortName="TrailingSpacesInProperty" bundle="messages.PropertiesBundle"
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.TrailingSpacesInPropertyInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>

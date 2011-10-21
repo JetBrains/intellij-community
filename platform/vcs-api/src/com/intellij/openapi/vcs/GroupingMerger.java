@@ -55,7 +55,7 @@ public abstract class GroupingMerger<T, S> {
     // for group headers to not be left alone without its group
     if (idx > 0 && (! filter(first.get(idx - 1)))) {
       -- idx;
-      if (idx > 0) --idx;
+      //if (idx > 0) --idx;         // todo whether its ok
     }
     final ReadonlyList<T> remergePart = first.cut(idx);
     if (idx > 0) {
@@ -67,7 +67,7 @@ public abstract class GroupingMerger<T, S> {
             public void consume(T t, Integer integer) {
               doForGroup(t, first);
               first.add(t);
-              int was = integer + finalIdx + 1;
+              int was = integer + finalIdx;
               //System.out.println("was " + integer + "became " + (first.getSize() - 1));
               oldBecame(was, first.getSize() - 1);
             }
@@ -78,7 +78,6 @@ public abstract class GroupingMerger<T, S> {
 
         final T wrapped = wrapItem(t);
         first.add(wrapped);
-        // todo should more effectively compute size!!!
         afterConsumed(wrapped, first.getSize() - 1);
       }
     });
@@ -87,14 +86,12 @@ public abstract class GroupingMerger<T, S> {
 
   private void doForGroup(T t, StepList<T> first) {
     final S newGroup = getGroup(t);
-    if (! Comparing.equal(newGroup, myCurrentGroup)) {
+    if (newGroup != null && ! Comparing.equal(newGroup, myCurrentGroup)) {
       first.add(wrapGroup(newGroup, t));
       myCurrentGroup = newGroup;
     }
   }
 
-  // todo here I doubt very much abt comparator usage, but seems like it doesn't reorder items from same repo
-  // todo which is essential
   public void merge(final ReadonlyList<T> one,
                               final ReadonlyList<T> two,
                               final Comparator<T> comparator,
