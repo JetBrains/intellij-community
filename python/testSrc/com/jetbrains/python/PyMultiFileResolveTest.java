@@ -326,7 +326,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
       public boolean accept(VirtualFile file) {
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+        FileType fileType = file.getFileType();
         return fileType == PythonFileType.INSTANCE;
       }
     });
