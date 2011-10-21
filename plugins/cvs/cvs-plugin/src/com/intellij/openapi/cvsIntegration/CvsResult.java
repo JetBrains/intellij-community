@@ -38,4 +38,6 @@ public interface CvsResult {
   void addError(VcsException error);
 
   List<VcsException> getErrorsAndWarnings();
+
+  boolean hasNoErrors();
 }

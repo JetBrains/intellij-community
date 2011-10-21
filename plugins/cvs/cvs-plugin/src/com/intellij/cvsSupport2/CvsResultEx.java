@@ -91,6 +91,11 @@ public class CvsResultEx implements CvsResult {
     return myErrors;
   }
 
+  @Override
+  public boolean hasNoErrors() {
+    return false;
+  }
+
   public boolean finishedUnsuccessfully(CvsHandler handler) {
     checkIsCanceled(handler);
     if (hasErrors()) return true;
