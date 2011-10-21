@@ -411,31 +411,31 @@
 
     <psi.referenceContributor implementation="com.jetbrains.django.ref.DjangoReferenceContributor"/>
 
-    <localInspection shortName="DjangoCloseTagInspection" bundle="com.jetbrains.django.ui.Django" key="inspection.close.tag.name"
+    <localInspection language="DjangoTemplate" shortName="DjangoCloseTagInspection" bundle="com.jetbrains.django.ui.Django" key="inspection.close.tag.name"
                      groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.TemplateCloseTagInspection"/>
-    <localInspection shortName="DuplicatedBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DuplicatedBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
                      key="INSP.NAME.duplicated.block.names" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.DuplicatedBlockNamesInspection"/>
-    <localInspection shortName="ExtendsTagPositionInspection" bundle="com.jetbrains.django.ui.Django" key="INSP.NAME.extends.tag.position"
+    <localInspection language="DjangoTemplate" shortName="ExtendsTagPositionInspection" bundle="com.jetbrains.django.ui.Django" key="INSP.NAME.extends.tag.position"
                      groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.ExtendsTagPositionInspection"/>
-    <localInspection shortName="DjangoUnresolvedTemplateReferenceInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedTemplateReferenceInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-template-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedTemplateReferenceInspection"/>
-    <localInspection shortName="DjangoUnresolvedStaticReferenceInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedStaticReferenceInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-static-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedStaticReferenceInspection"/>
-    <localInspection shortName="DjangoBrokenLineCommentInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DjangoBrokenLineCommentInspection" bundle="com.jetbrains.django.ui.Django"
                      key="broken.line.comment.inspection.name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.DjangoBrokenLineCommentInspection"/>
-    <localInspection shortName="DjangoUnresolvedTagInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedTagInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-tag.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedTagInspection"/>
-    <localInspection shortName="DjangoUnresolvedFilterInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedFilterInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-filter.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedFilterInspection"/>
-    <localInspection shortName="DjangoUnresolvedLoadInspection" bundle="com.jetbrains.django.ui.Django"
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedLoadInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-load.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedLoadReferenceInspection"/>
 
@@ -556,16 +556,16 @@
 
     <psi.referenceContributor implementation="com.jetbrains.appengine.ref.AppEngineReferenceContributor"/>
 
-    <localInspection shortName="Query_index_required" bundle="com.jetbrains.appengine.ui.Messages" key="query-inspection-name"
+    <localInspection language="GQL" shortName="Query_index_required" bundle="com.jetbrains.appengine.ui.Messages" key="query-inspection-name"
                      groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.appengine.inspection.IndexRequiredQueryInspection"/>
-    <localInspection shortName="Query_restricted" bundle="com.jetbrains.appengine.ui.Messages" key="restricted-query-inspection-name"
+    <localInspection language="GQL" shortName="Query_restricted" bundle="com.jetbrains.appengine.ui.Messages" key="restricted-query-inspection-name"
                      groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.appengine.inspection.RestrictedQueryInspection"/>
-    <localInspection shortName="Query_bound_parameters" bundle="com.jetbrains.appengine.ui.Messages" key="query-bound-param-inspection-name"
+    <localInspection language="GQL" shortName="Query_bound_parameters" bundle="com.jetbrains.appengine.ui.Messages" key="query-bound-param-inspection-name"
                      groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.appengine.inspection.QueryBoundParametersInspection"/>
-    <localInspection shortName="Restricted_Python_calls" bundle="com.jetbrains.appengine.ui.Messages" key="sandbox-inspection-name"
+    <localInspection language="GQL" shortName="Restricted_Python_calls" bundle="com.jetbrains.appengine.ui.Messages" key="sandbox-inspection-name"
                      groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.appengine.inspection.SandboxInspection"/>
 
