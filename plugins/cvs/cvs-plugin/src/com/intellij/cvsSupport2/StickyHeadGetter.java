@@ -132,8 +132,6 @@ public abstract class StickyHeadGetter {
       public void addError(VcsException ex) {
         logSuccess.set(Boolean.FALSE);
       }
-      public void addWarning(VcsException ex) {
-      }
       public List<VcsException> getErrors() {
         return null;
       }

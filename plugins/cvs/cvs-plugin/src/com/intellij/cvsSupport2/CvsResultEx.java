@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,64 +22,76 @@ import com.intellij.openapi.vcs.VcsException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Iterator;
 
 /**
  * author: lesya
  */
 public class CvsResultEx implements CvsResult {
   private final List<VcsException> myErrors = new ArrayList<VcsException>();
-  private final List<VcsException> myWarnings = new ArrayList<VcsException>();
   private boolean myIsCanceled = false;
 
+  @Override
   public void setIsCanceled() {
     myIsCanceled = true;
   }
 
+  @Override
   public List<VcsException> getErrors() {
-    return myErrors;
+    final ArrayList<VcsException> errors = new ArrayList<VcsException>();
+    for (VcsException error : myErrors) {
+      if (!error.isWarning()) {
+        errors.add(error);
+      }
+    }
+    return errors;
   }
 
   public List<VcsException> getWarnings() {
-    return myWarnings;
+    final ArrayList<VcsException> warnings = new ArrayList<VcsException>();
+    for (VcsException error : myErrors) {
+      if (error.isWarning()) {
+        warnings.add(error);
+      }
+    }
+    return warnings;
   }
 
+  @Override
   public boolean isCanceled() {
     return myIsCanceled;
   }
 
+  @Override
   public void addAllErrors(Collection<VcsException> errors) {
     myErrors.addAll(errors);
   }
 
-  public void addAllWarnings(Collection<VcsException> warnings) {
-    myWarnings.addAll(warnings);
-  }
-
+  @Override
   public boolean hasNoErrors() {
-    return myErrors.isEmpty();
+    for (VcsException error : myErrors) {
+      if (!error.isWarning()) {
+        return false;
+      }
+    }
+    return true;
   }
 
+  @Override
   public VcsException composeError() {
     return myErrors.iterator().next();
   }
 
+  @Override
   public void addError(VcsException error) {
     myErrors.add(error);
   }
 
+  @Override
   public List<VcsException> getErrorsAndWarnings() {
-    ArrayList<VcsException> result = new ArrayList<VcsException>();
-    result.addAll(myErrors);
-    for (Iterator<VcsException> iterator = myWarnings.iterator(); iterator.hasNext();) {
-      VcsException vcsException = iterator.next();
-      vcsException.setIsWarning(true);
-    }
-    result.addAll(myWarnings);
-    return result;
+    return myErrors;
   }
 
-  public boolean finishedUnsuccessfully(boolean shouldBeLoggedIn, CvsHandler handler) {
+  public boolean finishedUnsuccessfully(CvsHandler handler) {
     checkIsCanceled(handler);
     if (!hasNoErrors()) return true;
     if (isCanceled()) return true;

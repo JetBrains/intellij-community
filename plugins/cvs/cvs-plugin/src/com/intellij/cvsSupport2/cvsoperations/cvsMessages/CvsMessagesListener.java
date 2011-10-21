@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsMessages;
 
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
-
-import java.text.MessageFormat;
 
 public interface CvsMessagesListener {
 
   CvsMessagesListener STANDARD_OUTPUT = new CvsMessagesAdapter() {
+    @Override
     public void addMessage(MessageEvent event) {
       if (event.getMessage().length() > 0)
         System.out.println(event.getMessage());
       System.out.flush();
     }
 
+    @Override
     public void commandStarted(String command) {
-      System.out.println(com.intellij.CvsBundle.message("output.command.started", command));
+      System.out.println(CvsBundle.message("output.command.started", command));
       System.out.flush();
     }
 
@@ -43,9 +44,7 @@ public interface CvsMessagesListener {
 
   void commandStarted(String command);
 
-  void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot);
-
-  void addWarning(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot);
+  void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot, boolean warning);
 
   void addFileMessage(String message, ICvsFileSystem cvsFileSystem);
 

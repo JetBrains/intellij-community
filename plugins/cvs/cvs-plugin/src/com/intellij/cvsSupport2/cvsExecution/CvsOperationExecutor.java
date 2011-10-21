@@ -42,9 +42,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.ui.errorView.ErrorViewFactory;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -91,9 +93,7 @@ public class CvsOperationExecutor {
     this(true, project, modalityState);
   }
 
-  public void performActionSync(final CvsHandler handler,
-                                final CvsOperationExecutorCallback callback) {
-
+  public void performActionSync(final CvsHandler handler, final CvsOperationExecutorCallback callback) {
     final CvsTabbedWindow tabbedWindow = myIsQuietOperation ? null : openTabbedWindow(handler);
 
     final Runnable finish = new Runnable() {
@@ -101,15 +101,14 @@ public class CvsOperationExecutor {
       public void run() {
         try {
           myResult.addAllErrors(handler.getErrorsExceptAborted());
-          myResult.addAllWarnings(handler.getWarnings());
           handler.finish();
           if (myProject == null || myProject != null && !myProject.isDisposed()) {
-            showErrors(handler.getErrorsExceptAborted(), handler.getWarnings(), tabbedWindow);
+            showErrors(handler, tabbedWindow);
           }
         }
         finally {
           try {
-            if (myResult.finishedUnsuccessfully(true, handler)) {
+            if (myResult.finishedUnsuccessfully(handler)) {
               callback.executionFinished(false);
             }
             else {
@@ -136,12 +135,12 @@ public class CvsOperationExecutor {
 
           handler.beforeLogin();
 
-          if (myResult.finishedUnsuccessfully(false, handler)) return;
+          if (myResult.finishedUnsuccessfully(handler)) return;
 
           setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
           handler.run(myProject, myExecutor);
-          if (myResult.finishedUnsuccessfully(true, handler)) return;
+          if (myResult.finishedUnsuccessfully(handler)) return;
 
         }
         catch (ProcessCanceledException ex) {
@@ -200,70 +199,47 @@ public class CvsOperationExecutor {
     return ProgressManager.getInstance().getProgressIndicator() != null;
   }
 
-  protected void showErrors(final List<VcsException> errors, CvsTabbedWindow tabbedWindow) {
-    showErrors(errors, new ArrayList<VcsException>(), tabbedWindow);
-  }
-
-  protected void showErrors(final List<VcsException> errors,
-                            final List<VcsException> warnings,
-                            final CvsTabbedWindow tabbedWindow) {
+  protected void showErrors(final CvsHandler handler, final CvsTabbedWindow tabbedWindow) {
+    final List<VcsException> errors = handler.getErrorsExceptAborted();
     if (!myShowErrors || myIsQuietOperation) return;
     if (tabbedWindow == null) {
-      if (errors.isEmpty() && warnings.isEmpty()) return;
+      if (errors.isEmpty()) return;
       final List<String> messages = new ArrayList<String>();
       for (VcsException error : errors) {
         if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {
           messages.add(error.getMessage());
         }
       }
-      for (VcsException error : warnings) {
-        if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {
-          messages.add(error.getMessage());
-        }
-      }
       final String errorMessage = StringUtil.join(messages, "\n");
-      Messages.showErrorDialog(errorMessage, "CVS error");
+      Messages.showErrorDialog(errorMessage, "CVS Error");
       return;
     }
-    if (errors.isEmpty() && warnings.isEmpty()) {
+    if (errors.isEmpty()) {
       tabbedWindow.hideErrors();
     }
     else {
-      ErrorTreeView errorTreeView = tabbedWindow.addErrorsTreeView(ErrorViewFactory.SERVICE.getInstance()
-                                                                   .createErrorTreeView(myProject,
-                                                                                        null,
-                                                                                        true,
-                                                                                        new AnAction[]{
-                                                                                          (DefaultActionGroup)ActionManager.getInstance()
-                                                                                                              .getAction("CvsActions")},
-                                                                                        new AnAction[]{new AnAction(
-                                                                                          CvsBundle.message(
-                                                                                            "configure.global.cvs.settings.action.name"), null,
-                                                                                          IconLoader.getIcon("/nodes/cvs_global.png")) {
-                                                                                          public void actionPerformed(AnActionEvent e) {
-                                                                                            new ConfigureCvsGlobalSettingsDialog().show();
-                                                                                          }
-                                                                                        }, new ReconfigureCvsRootAction()
-                                                                                        },
-                                                                                        new ContentManagerProvider() {
-                                                                                          public ContentManager getParentContent() {
-                                                                                            return tabbedWindow.getContentManager();
-                                                                                          }
-                                                                                        }));
-      fillErrors(errors, warnings, errorTreeView);
+      ErrorTreeView errorTreeView = tabbedWindow.addErrorsTreeView(
+        ErrorViewFactory.SERVICE.getInstance().createErrorTreeView(
+          myProject, null, true,
+          new AnAction[]{(DefaultActionGroup)ActionManager.getInstance().getAction("CvsActions")},
+          new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()},
+          new ContentManagerProvider() {
+            public ContentManager getParentContent() {
+              return tabbedWindow.getContentManager();
+            }
+          }));
+      for (final VcsException exception : errors) {
+        final String groupName = DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ' ' + handler.getTitle();
+        if (exception.isWarning()) {
+          errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), groupName, DummyNavigatable.INSTANCE,
+                                   null, null, exception);
+        } else {
+          errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), groupName, DummyNavigatable.INSTANCE,
+                                   null, null, exception);
+        }
+      }
       tabbedWindow.ensureVisible(myProject);
     }
-  }
-
-  private static void fillErrors(final List<VcsException> errors, final List<VcsException> warnings, final ErrorTreeView errorTreeView) {
-    for (final VcsException exception : errors) {
-      errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), exception.getVirtualFile(), -1, -1, exception);
-    }
-
-    for (final VcsException exception : warnings) {
-      errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), exception.getVirtualFile(), -1, -1, exception);
-    }
-
   }
 
   @NotNull private static Editor createView(Project project) {
@@ -287,7 +263,6 @@ public class CvsOperationExecutor {
       return CvsBundle.message("status.text.action.completed.with.errors", actionName);
     }
   }
-
 
   @Nullable
   public CvsTabbedWindow openTabbedWindow(final CvsHandler output) {
@@ -332,6 +307,35 @@ public class CvsOperationExecutor {
 
   public CvsResult getResult() {
     return myResult;
+  }
+
+  private static class DummyNavigatable implements Navigatable {
+    public static final Navigatable INSTANCE = new DummyNavigatable();
+
+    private DummyNavigatable() {}
+
+    @Override
+    public void navigate(boolean requestFocus) {}
+
+    @Override
+    public boolean canNavigate() {
+      return false;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return false;
+    }
+  }
+
+  private static class GlobalCvsSettingsAction extends AnAction {
+    public GlobalCvsSettingsAction() {
+      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, IconLoader.getIcon("/nodes/cvs_global.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      new ConfigureCvsGlobalSettingsDialog().show();
+    }
   }
 
   private class ReconfigureCvsRootAction extends AnAction {
