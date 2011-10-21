@@ -94,6 +94,7 @@ public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
         presentation.setText("");
         presentation.setIcon(null);
         presentation.setDescription("Switch Tasks");
+        presentation.setVisible(false);
       } else {
         String s = getText(activeTask);
         presentation.setText(s);
