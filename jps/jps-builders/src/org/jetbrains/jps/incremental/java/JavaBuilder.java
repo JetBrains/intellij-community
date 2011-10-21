@@ -75,11 +75,19 @@ public class JavaBuilder extends Builder{
           final File srcFile = out.getSourceFile();
           if (srcFile != null && content != null) {
             // todo: the callback is not thread-safe?
+            final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
+            final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
+            try {
+              context.getBuildDataManager().getOutputToSourceStorage().update(outputPath, sourcePath);
+            }
+            catch (IOException ignored) {
+              // todo
+            }
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (callback) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
-              callback.associate(className, Callbacks.getDefaultLookup(FileUtil.toSystemIndependentName(srcFile.getPath())), reader);
+              callback.associate(className, Callbacks.getDefaultLookup(sourcePath), reader);
             }
           }
         }
