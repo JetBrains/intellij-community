@@ -440,7 +440,9 @@ public class AndroidUtils {
     }
   }
 
-  public static boolean executeCommand(GeneralCommandLine commandLine, final StringBuilder messageBuilder) throws ExecutionException {
+  public static boolean executeCommand(GeneralCommandLine commandLine,
+                                       final StringBuilder messageBuilder,
+                                       @Nullable Integer timeout) throws ExecutionException {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
     handler.addProcessListener(new ProcessAdapter() {
@@ -450,11 +452,21 @@ public class AndroidUtils {
     });
     handler.startNotify();
     try {
-      handler.waitFor();
+      if (timeout != null) {
+        handler.waitFor(timeout);
+      }
+      else {
+        handler.waitFor();
+      }
     }
     catch (ProcessCanceledException e) {
       return false;
     }
+
+    if (!handler.isProcessTerminated()) {
+      return true;
+    }
+
     String message = messageBuilder.toString();
     LOG.info(message);
     int exitCode = handler.getProcess().exitValue();
@@ -476,15 +488,15 @@ public class AndroidUtils {
     });
   }
 
-  public static void runExternalTool(final Project project,
+  public static void runExternalTool(@Nullable final Project project,
                                      GeneralCommandLine commandLine,
                                      boolean printOutputToAndroidConsole,
-                                     ProcessHandler processHandler) {
+                                     @Nullable ProcessHandler processHandler) {
     StringBuilder messageBuilder = new StringBuilder();
     String result;
     boolean success = false;
     try {
-      success = executeCommand(commandLine, messageBuilder);
+      success = executeCommand(commandLine, messageBuilder, null);
       result = messageBuilder.toString();
     }
     catch (ExecutionException e) {
@@ -497,6 +509,7 @@ public class AndroidUtils {
                                                    ConsoleViewContentType.NORMAL_OUTPUT :
                                                    ConsoleViewContentType.ERROR_OUTPUT;
         final String finalResult = result;
+        assert project != null;
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {

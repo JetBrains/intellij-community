@@ -34,7 +34,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.android.actions.RunAndroidSdkManagerAction;
+import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.run.TargetSelectionMode;
 import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
@@ -166,7 +166,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
           return;
         }
 
-        RunAndroidSdkManagerAction.runTool(platform.getSdk().getLocation());
+        RunAndroidAvdManagerAction.runAvdManager(platform.getSdk().getLocation());
       }
     });
 

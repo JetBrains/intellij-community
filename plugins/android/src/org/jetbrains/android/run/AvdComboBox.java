@@ -11,7 +11,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.actions.RunAndroidSdkManagerAction;
+import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -58,7 +58,7 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
           return;
         }
 
-        RunAndroidSdkManagerAction.runTool(platform.getSdk().getLocation());
+        RunAndroidAvdManagerAction.runAvdManager(platform.getSdk().getLocation());
       }
     });
 

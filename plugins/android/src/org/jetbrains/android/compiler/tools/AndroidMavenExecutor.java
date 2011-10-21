@@ -66,7 +66,7 @@ public class AndroidMavenExecutor {
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
       StringBuilder messageBuilder = new StringBuilder();
-      boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder);
+      boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder, null);
       String message = messageBuilder.toString();
       if (message != null && !success) {
         LOG.info(message);

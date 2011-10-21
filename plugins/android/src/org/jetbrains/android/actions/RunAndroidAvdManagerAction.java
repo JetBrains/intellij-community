@@ -29,22 +29,26 @@ import java.io.File;
 /**
  * @author Eugene.Kudelevsky
  */
-public class RunAndroidSdkManagerAction extends AndroidRunSdkToolAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.RunAndroidSdkManagerAction");
+public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.RunAndroidAvdManagerAction");
 
-  public RunAndroidSdkManagerAction() {
-    super(AndroidBundle.message("android.run.sdk.manager.action.text"));
+  public RunAndroidAvdManagerAction() {
+    super(AndroidBundle.message("android.run.avd.manager.action.text"));
   }
 
   @Override
-  protected void doRunTool(@NotNull final String sdkPath) {
+  protected void doRunTool(@NotNull String sdkPath) {
+    runAvdManager(sdkPath);
+  }
+
+  public static void runAvdManager(@NotNull final String sdkPath) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         final String toolPath = sdkPath + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName());
         GeneralCommandLine commandLine = new GeneralCommandLine();
         commandLine.setExePath(toolPath);
-        commandLine.addParameter("sdk");
+        commandLine.addParameter("avd");
 
         final StringBuilder messageBuilder = new StringBuilder();
         try {
