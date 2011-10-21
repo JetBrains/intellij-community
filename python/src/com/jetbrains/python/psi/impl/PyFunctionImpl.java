@@ -170,7 +170,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         elementType = types.iterator().next();
       }
       else if (n > 0) {
-        elementType = new PyUnionType(types);
+        elementType = PyUnionType.union(types);
       }
     }
     if (elementType != null) {

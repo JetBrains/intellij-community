@@ -2,9 +2,10 @@ from pydevd_file_utils import GetFileNameAndBaseFromFile
 
 def read_file(filename):
     f = open(filename, "r")
-    s =  f.read()
+    s = f.read()
     f.close()
     return s
+
 
 def offset_to_line_number(text, offset):
     curLine = 1
@@ -23,6 +24,7 @@ def offset_to_line_number(text, offset):
         curOffset += 1
 
     return curLine
+
 
 def get_line(text, linenno):
     curLine = 1
@@ -49,6 +51,7 @@ def get_source(frame):
     except:
         return None
 
+
 def get_template_file_name(frame):
     try:
         source = get_source(frame)
@@ -58,6 +61,7 @@ def get_template_file_name(frame):
     except:
         return None
 
+
 def get_template_line(frame):
     source = get_source(frame)
     file_name = get_template_file_name(frame)
@@ -66,30 +70,34 @@ def get_template_line(frame):
     except:
         return None
 
+
 class DjangoTemplateFrame:
     def __init__(self, frame):
         file_name = get_template_file_name(frame)
-        context = frame.f_locals['context']
+        self.back_context = frame.f_locals['context']
         self.f_code = FCode('Django Template', file_name)
         self.f_lineno = get_template_line(frame)
         self.f_back = frame
         self.f_globals = {}
-        self.f_locals = self.collect_context(context)
+        self.f_locals = self.collect_context(self.back_context)
         self.f_trace = None
 
     def collect_context(self, context):
         res = {}
-        for d in context.dicts:
-            for k,v in d.items():
-                res[k] = v
+        try:
+            for d in context.dicts:
+                for k, v in d.items():
+                    res[k] = v
+        except  AttributeError:
+            pass
         return res
 
     def changeVariable(self, name, value):
-        context = self.f_back.f_locals['context']
-        for d in context.dicts:
-            for k,v in d.items():
+        for d in self.back_context.dicts:
+            for k, v in d.items():
                 if k == name:
                     d[k] = value
+
 
 class FCode:
     def __init__(self, name, filename):
@@ -100,7 +108,7 @@ class FCode:
 def is_django_exception_break_context(frame):
     try:
         name = frame.f_code.co_name
-    except :
+    except:
         name = None
     return name in ['_resolve_lookup', 'find_template']
 

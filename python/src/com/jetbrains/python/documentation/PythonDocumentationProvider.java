@@ -90,11 +90,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = fun.getName();
-    cat.add("def ").addWith(func_name_wrapper, $(name));
-    cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
+    cat.addItem("def ").addWith(func_name_wrapper, $(name));
+    cat.addItem(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     if (!PyNames.INIT.equals(name)) {
-      cat.add(escaper.apply("\nInferred type: "));
-      cat.add(escaper.apply(getTypeDescription(fun)));
+      cat.addItem(escaper.apply("\nInferred type: "));
+      cat.addItem(escaper.apply(getTypeDescription(fun)));
     }
     return cat;
   }
@@ -186,7 +186,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     PyDecoratorList deco_list = what.getDecoratorList();
     if (deco_list != null) {
       for (PyDecorator deco : deco_list.getDecorators()) {
-        cat.add(describeDeco(deco, deco_name_wrapper, escaper)).add(deco_separator); // can't easily pass describeDeco to map() %)
+        cat.add(describeDeco(deco, deco_name_wrapper, escaper)).addItem(deco_separator); // can't easily pass describeDeco to map() %)
       }
     }
     return cat;
@@ -206,21 +206,24 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = cls.getName();
-    cat.add("class ");
+    cat.addItem("class ");
     if (allow_html && link_own_name) cat.addWith(LinkMyClass, $(name));
     else cat.addWith(name_wrapper, $(name));
     final PyExpression[] ancestors = cls.getSuperClassExpressions();
     if (ancestors.length > 0) {
-      cat.add("(");
+      cat.addItem("(");
       boolean is_not_first = false;
       for (PyExpression parent : ancestors) {
-        if (is_not_first) cat.add(", ");
+        final String parentName = parent.getName();
+        if (parentName == null) {
+          continue;
+        }
+        if (is_not_first) cat.addItem(", ");
         else is_not_first = true;
-        final String parent_name = parent.getName();
-        if (allow_html) cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
-        else cat.add(parent_name);
+        if (allow_html) cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
+        else cat.addItem(parentName);
       }
-      cat.add(")");
+      cat.addItem(")");
     }
     return cat;
   }
@@ -232,14 +235,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final FP.Lambda1<String, String> arg_wrapper   // add escaping, if need be
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
-    cat.add("@").addWith(name_wrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
+    cat.addItem("@").addWith(name_wrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
     if (deco.hasArgumentList()) {
       PyArgumentList arglist = deco.getArgumentList();
       if (arglist != null) {
         cat
-          .add("(")
+          .addItem("(")
           .add(interleave(FP.map(FP.combine(LReadableRepr, arg_wrapper), arglist.getArguments()), ", "))
-          .add(")")
+          .addItem(")")
         ;
       }
     }

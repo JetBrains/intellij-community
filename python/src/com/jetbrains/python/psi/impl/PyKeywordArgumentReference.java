@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
       if (!calleeCandidate.isValidResult()) continue;
       final PsiElement element = calleeCandidate.getElement();
       if (element == null) continue;
-      final PyFunction calleeFunction = resolveToFunction(element);
+      final PyFunction calleeFunction = resolveToFunction(element, new HashSet<PsiElement>());
       if (calleeFunction != null) {
         final PsiElement result = calleeFunction.getParameterList().getElementNamed(myElement.getKeyword());
         if (result != null) {
@@ -45,17 +46,21 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
   }
 
   @Nullable
-  private static PyFunction resolveToFunction(PsiElement element) {
+  private static PyFunction resolveToFunction(PsiElement element, HashSet<PsiElement> visited) {
+    if (visited.contains(element)) {
+      return null;
+    }
+    visited.add(element);
     if (element instanceof PyFunction) {
-      return (PyFunction) element;
+      return (PyFunction)element;
     }
     if (element instanceof PyTargetExpression) {
       final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
-      return resolveToFunction(assignedValue);
+      return resolveToFunction(assignedValue, visited);
     }
     if (element instanceof PyReferenceExpression) {
       final PsiElement resolveResult = ((PyReferenceExpression)element).getReference().resolve();
-      return resolveToFunction(resolveResult);
+      return resolveToFunction(resolveResult, visited);
     }
     return null;
   }

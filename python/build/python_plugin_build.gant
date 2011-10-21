@@ -65,6 +65,10 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/yaml/lib") {
       include(name: "yaml.jar")
     }
+    fileset(dir: "${ideaPlugins}/coverage/lib") {
+      include(name: "coverage.jar")
+      include(name: "coverage-agent.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
