@@ -15,6 +15,8 @@
  */
 package git4idea.repo;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import org.ini4j.Ini;
@@ -94,20 +96,23 @@ class GitConfig {
       throw new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e);
     }
 
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManager.getPluginByClassName(GitConfig.class.getName()));
+    ClassLoader classLoader = plugin == null ? null : plugin.getPluginClassLoader(); // null if IDEA is started from IDEA
+
     Collection<Remote> remotes = new ArrayList<Remote>();
     Collection<Url> urls = new ArrayList<Url>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
-      
+
       if (sectionName.startsWith("remote")) {
-        Remote remote = parseRemoteSection(sectionName, section);
+        Remote remote = parseRemoteSection(sectionName, section, classLoader);
         if (remote != null) {
           remotes.add(remote);
         }
       }
       else if (sectionName.startsWith("url")) {
-        Url url = parseUrlSection(sectionName, section);
+        Url url = parseUrlSection(sectionName, section, classLoader);
         if (url != null) {
           urls.add(url);
         }
@@ -176,8 +181,8 @@ class GitConfig {
   }
 
   @Nullable
-  private static Remote parseRemoteSection(String sectionName, Profile.Section section) {
-    RemoteBean remoteBean = section.as(RemoteBean.class);
+  private static Remote parseRemoteSection(@NotNull String sectionName, @NotNull Profile.Section section, @Nullable ClassLoader classLoader) {
+    RemoteBean remoteBean = section.as(RemoteBean.class, classLoader);
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
     if (matcher.matches()) {
       return new Remote(matcher.group(1), remoteBean);
@@ -187,8 +192,8 @@ class GitConfig {
   }
 
   @Nullable
-  private static Url parseUrlSection(String sectionName, Profile.Section section) {
-    UrlBean urlBean = section.as(UrlBean.class);
+  private static Url parseUrlSection(@NotNull String sectionName, @NotNull Profile.Section section, @Nullable ClassLoader classLoader) {
+    UrlBean urlBean = section.as(UrlBean.class, classLoader);
     Matcher matcher = URL_SECTION.matcher(sectionName);
     if (matcher.matches()) {
       return new Url(matcher.group(1), urlBean);
@@ -230,8 +235,8 @@ class GitConfig {
   }
 
   private interface RemoteBean {
-    @Nullable String getFetch();
-    @Nullable String getPush();
+    @Nullable String   getFetch();
+    @Nullable String   getPush();
     @Nullable String[] getUrl();
     @Nullable String[] getPushUrl();
   }
