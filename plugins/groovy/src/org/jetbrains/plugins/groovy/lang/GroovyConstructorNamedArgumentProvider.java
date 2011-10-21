@@ -23,7 +23,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -41,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import java.util.EnumSet;
 import java.util.Map;
 
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
 /**
@@ -55,7 +58,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, ArgumentDescriptor> result) {
+                                Map<String, NamedArgumentDescriptor> result) {
     if (!(call instanceof GrNewExpression)) return;
 
     if (resolve != null) {
@@ -91,7 +94,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
   public static void processClass(@NotNull GrCall call,
                                   PsiClassType type,
                                   @Nullable String argumentName,
-                                  Map<String, ArgumentDescriptor> result) {
+                                  Map<String, NamedArgumentDescriptor> result) {
     if (argumentName == null) {
       ResolveUtil.processAllDeclarations(type, new MyPsiScopeProcessor(result, call), ResolveState.initial(), call);
     }
@@ -125,16 +128,16 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
 
   private static class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
     private final String myNameHint;
-    private final Map<String, ArgumentDescriptor> myResult;
+    private final Map<String, NamedArgumentDescriptor> myResult;
     private final EnumSet<ResolveKind> myResolveTargetKinds;
 
-    private MyPsiScopeProcessor(Map<String, ArgumentDescriptor> result, GroovyPsiElement context) {
+    private MyPsiScopeProcessor(Map<String, NamedArgumentDescriptor> result, GroovyPsiElement context) {
       myResolveTargetKinds = ResolverProcessor.RESOLVE_KINDS_METHOD_PROPERTY;
       myNameHint = null;
       myResult = result;
     }
 
-    private MyPsiScopeProcessor(@NotNull String propertyName, boolean findSetter, Map<String, ArgumentDescriptor> result, GroovyPsiElement context) {
+    private MyPsiScopeProcessor(@NotNull String propertyName, boolean findSetter, Map<String, NamedArgumentDescriptor> result, GroovyPsiElement context) {
       if (findSetter) {
         myResolveTargetKinds = ResolverProcessor.RESOLVE_KINDS_METHOD;
         myNameHint = GroovyPropertyUtils.getSetterName(propertyName);
@@ -176,7 +179,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
           type = substitutor.substitute(type);
         }
 
-        myResult.put(propertyName, new TypeCondition(type, element));
+        myResult.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element).setPriority(Priority.AS_LOCAL_VARIABLE));
       }
 
       return true;

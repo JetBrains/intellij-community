@@ -19,6 +19,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -36,7 +38,7 @@ public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentPr
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, ArgumentDescriptor> result) {
+                                Map<String, NamedArgumentDescriptor> result) {
     if (!forCompletion) return;
 
     String[] namedParametersArray;
@@ -55,7 +57,7 @@ public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentPr
     }
 
     for (String parameter : namedParametersArray) {
-      result.put(parameter, TYPE_ANY);
+      result.put(parameter, NamedArgumentDescriptor.SIMPLE_ON_TOP);
     }
   }
 }

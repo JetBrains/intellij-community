@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -78,7 +79,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
     String labelName = getName();
 
-    GroovyNamedArgumentProvider.ArgumentDescriptor descr =
+    NamedArgumentDescriptor descr =
       GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, labelName, false).get(labelName);
 
     if (descr != null) {

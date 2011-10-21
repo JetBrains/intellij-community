@@ -27,7 +27,7 @@ public class GroovyMethodInfo {
   private final String myReturnTypeCalculatorClassName;
   private PairFunction<GrMethodCall, PsiMethod, PsiType> myReturnTypeCalculatorInstance;
 
-  private final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedArguments;
+  private final Map<String, NamedArgumentDescriptor> myNamedArguments;
   private final  String myNamedArgProviderClassName;
   private GroovyNamedArgumentProvider myNamedArgProviderInstance;
 
@@ -185,7 +185,7 @@ public class GroovyMethodInfo {
   }
 
   @Nullable
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedArguments() {
+  public Map<String, NamedArgumentDescriptor> getNamedArguments() {
     return myNamedArguments;
   }
 
