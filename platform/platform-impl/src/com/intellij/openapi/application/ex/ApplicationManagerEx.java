@@ -15,12 +15,8 @@
  */
 package com.intellij.openapi.application.ex;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Splash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,22 +37,5 @@ public class ApplicationManagerEx extends ApplicationManager {
                                        @NotNull @NonNls String appName,
                                        @Nullable Splash splash) {
     new ApplicationImpl(internal, isUnitTestMode, isHeadlessMode, isCommandline, appName, splash);
-  }
-
-  private static void setApplication(Application instance) {
-    ourApplication = instance;
-    CachedSingletonsRegistry.cleanupCachedFields();
-  }
-
-  public static void setApplication(Application instance, @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    Disposer.register(parent, new Disposable() {
-      public void dispose() {
-        if (old != null) { // to prevent NPEs in threads still running
-          setApplication(old);
-        }
-      }
-    });
-    setApplication(instance);
   }
 }

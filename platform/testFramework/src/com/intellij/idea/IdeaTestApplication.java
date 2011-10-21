@@ -24,7 +24,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
   }
 
   public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
-    final boolean isForeignApp = !(ApplicationManager.getApplication() instanceof ApplicationImpl);
+    final boolean isForeignApp = /*!(ApplicationManager.getApplication() instanceof ApplicationImpl);*/ false;
     if (ourInstance == null || isForeignApp) {
       if (isForeignApp) {
         disposeInstance();

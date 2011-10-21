@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,7 +29,7 @@ public abstract class FlyIdeaTestCase extends TestCase {
         return old != null ? old.executeOnPooledThread(action) : super.executeOnPooledThread(action);
       }
     };
-    ApplicationManagerEx.setApplication(app, myRootDisposable);
+    ApplicationManager.setApplication(app, myRootDisposable);
   }
 
   public File getTempDir() throws IOException {

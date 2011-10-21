@@ -71,6 +71,8 @@ public class CoreEnvironment {
   protected final PsiManagerImpl myPsiManager;
 
   public CoreEnvironment(Disposable parentDisposable) {
+    Extensions.cleanRootArea(parentDisposable);
+
     myFileTypeRegistry = new CoreFileTypeRegistry();
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     FileTypeRegistry.ourInstanceGetter = new Getter<FileTypeRegistry>() {
@@ -90,9 +92,7 @@ public class CoreEnvironment {
     };
 
     myApplication = new MockApplication(parentDisposable);
-    new ApplicationManager() {{
-      ourApplication = myApplication;
-    }};
+    ApplicationManager.setApplication(myApplication, parentDisposable);
     myLocalFileSystem = new CoreLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 

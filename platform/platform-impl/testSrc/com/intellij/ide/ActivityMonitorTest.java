@@ -18,8 +18,8 @@ package com.intellij.ide;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockProjectEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
@@ -44,7 +44,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
     myCurrentState = ModalityState.NON_MODAL;
     final ModalityStateEx any = new ModalityStateEx();
 
-    ApplicationManagerEx.setApplication(new MockApplication(getTestRootDisposable()) {
+    ApplicationManager.setApplication(new MockApplication(getTestRootDisposable()) {
       @NotNull
       @Override
       public ModalityState getCurrentModalityState() {
@@ -55,8 +55,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
       public ModalityState getAnyModalityState() {
         return any;
       }
-
-    },getTestRootDisposable());
+    }, getTestRootDisposable());
     myMonitor = new UiActivityMonitorImpl();
     disposeOnTearDown(myMonitor);
   }
