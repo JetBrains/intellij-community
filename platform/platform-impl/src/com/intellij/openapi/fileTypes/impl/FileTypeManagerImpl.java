@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.BaseSchemeProcessor;
@@ -56,9 +57,10 @@ import java.util.*;
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
   private static final int VERSION = 10;
+  private static final Key<FileType> FILE_TYPE_KEY = Key.create("cached file type");
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
-  private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
+  private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
@@ -273,17 +275,30 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return type == null ? UnknownFileType.INSTANCE : type;
   }
 
+  public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
+    file.putUserData(FILE_TYPE_KEY, fileType);
+  }
+
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
+    FileType fileType = file.getUserData(FILE_TYPE_KEY);
+    if (fileType != null) return fileType;
+
     final FileType assignedFileType = file instanceof LightVirtualFile? ((LightVirtualFile)file).getAssignedFileType() : null;
     if (assignedFileType != null) return assignedFileType;
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = mySpecialFileTypes.size(); i < size; i++) {
-      final FileTypeIdentifiableByVirtualFile fileType = mySpecialFileTypes.get(i);
-      if (fileType.isMyFileType(file)) return fileType;
+      final FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
+      if (type.isMyFileType(file)) return type;
     }
 
-    return getFileTypeByFileName(file.getName());
+    FileType byName = getFileTypeByFileName(file.getName());
+    if (byName != UnknownFileType.INSTANCE) return byName;
+
+    FileType detected = LoadTextUtil.detectFromContent(file);
+    if (detected != UnknownFileType.INSTANCE) cacheFileType(file, detected);
+    return detected;
   }
 
   public boolean isFileOfType(VirtualFile file, FileType type) {
@@ -292,6 +307,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     final List<FileNameMatcher> matchers = getAssociations(type);
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = matchers.size(); i < size; i++) {
       final FileNameMatcher matcher = matchers.get(i);
       if (matcher.accept(file.getName())) return true;
@@ -821,7 +837,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
                                             final String fileTypeDescr,
                                             final String iconPath,
                                             final UserFileType ft) {
-    if (iconPath != null && !"".equals(iconPath.trim())) {
+    if (iconPath != null && !StringUtil.isEmptyOrSpaces(iconPath)) {
       Icon icon = IconLoader.getIcon(iconPath);
       ft.setIcon(icon);
     }
@@ -866,7 +882,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return myPatternsTable;
   }
 
-  public void setPatternsTable(Set<FileType> fileTypes, FileTypeAssocTable assocTable) {
+  public void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {

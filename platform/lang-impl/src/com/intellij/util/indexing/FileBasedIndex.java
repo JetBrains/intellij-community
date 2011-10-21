@@ -35,6 +35,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
@@ -1785,9 +1786,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
         if (file instanceof VirtualFileWithId) {
           try {
-            if (file instanceof NewVirtualFile) {
-              file.putUserData(NewVirtualFile.FILE_TYPE_KEY, file.getFileType());
-            }
+            FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+
             boolean oldStuff = true;
             if (!isTooLarge(file)) {
               for (ID<?, ?> indexId : myIndices.keySet()) {
@@ -1833,9 +1833,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
           finally {
-            if (file instanceof NewVirtualFile) {
-              file.putUserData(NewVirtualFile.FILE_TYPE_KEY, null);
-            }
+            FileTypeManagerImpl.cacheFileType(file, null);
           }
         }
       }
@@ -1871,7 +1869,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private boolean isTooLarge(VirtualFile file) {
     if (SingleRootFileViewProvider.isTooLarge(file)) {
-      final FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+      final FileType type = file.getFileType();
       return !myNoLimitCheckTypes.contains(type);
     }
     return false;
@@ -1879,7 +1877,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private boolean isTooLarge(VirtualFile file, long contentSize) {
     if (SingleRootFileViewProvider.isTooLarge(file, contentSize)) {
-      final FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+      final FileType type = file.getFileType();
       return !myNoLimitCheckTypes.contains(type);
     }
     return false;
@@ -1934,7 +1932,6 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
     else {
-/*      nvf.clearCachedFileType(); */
       nvf.setFlag(ALREADY_PROCESSED, false);
     }
   }

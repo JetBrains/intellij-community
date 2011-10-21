@@ -263,6 +263,20 @@ public class FileUtil {
   }
 
   @NotNull
+  public static byte[] loadFirst(@NotNull InputStream stream, int maxLength) throws IOException {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    final byte[] bytes = BUFFER.get();
+    while (maxLength > 0) {
+      int n = stream.read(bytes, 0, Math.min(maxLength, bytes.length));
+      if (n <= 0) break;
+      buffer.write(bytes, 0, n);
+      maxLength -= n;
+    }
+    buffer.close();
+    return buffer.toByteArray();
+  }
+
+  @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
     //noinspection IOResourceOpenedButNotSafelyClosed
     return loadTextAndClose(new InputStreamReader(stream));
