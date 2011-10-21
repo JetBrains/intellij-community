@@ -515,8 +515,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  static boolean isWhiteSpace(final ASTNode treePrev) {
-    return treePrev != null && (treePrev.getPsi() instanceof PsiWhiteSpace || treePrev.getTextLength() == 0);
+  static boolean isWhiteSpace(final ASTNode node) {
+    return node != null && (node.getPsi() instanceof PsiWhiteSpace || node.getTextLength() == 0);
   }
 
   @Nullable

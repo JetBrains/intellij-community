@@ -905,6 +905,16 @@
       <className>org.jetbrains.plugins.groovy.intentions.style.ImportOnDemandIntention</className>
     </intentionAction>
     <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.ConvertToGeeseBracesIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.ConvertFromGeeseBracesIntention</className>
+    </intentionAction>
+    <intentionAction>
           <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
           <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
           <className>org.jetbrains.plugins.groovy.intentions.style.ReplaceQualifiedReferenceWithImportIntention</className>
