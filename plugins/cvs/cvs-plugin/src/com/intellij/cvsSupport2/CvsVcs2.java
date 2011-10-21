@@ -192,7 +192,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.performActionSync(new CommandCvsHandler(title, operation), CvsOperationExecutorCallback.EMPTY);
     CvsResult result = executor.getResult();
-    if (!result.hasNoErrors()) {
+    if (result.hasErrors()) {
       throw result.composeError();
     }
   }

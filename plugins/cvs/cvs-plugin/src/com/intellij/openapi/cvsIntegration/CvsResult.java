@@ -31,7 +31,7 @@ public interface CvsResult {
 
   void addAllErrors(Collection<VcsException> errors);
 
-  boolean hasNoErrors();
+  boolean hasErrors();
 
   VcsException composeError();
 

@@ -181,7 +181,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
       }, CvsBundle.message("operation.name.test.connection"), true, null);
       if (result.isCanceled()) throw new ProcessCanceledException();
 
-      if (!result.hasNoErrors()) {
+      if (result.hasErrors()) {
         final VcsException vcsException = result.composeError();
         throw new AuthenticationException(vcsException.getLocalizedMessage(), vcsException.getCause());
       }

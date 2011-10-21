@@ -88,7 +88,7 @@ public class CvsContentRevision implements ContentRevision {
     if (result.isCanceled()) {
       throw new ProcessCanceledException();
     }
-    if (!result.hasNoErrors()) {
+    if (result.hasErrors()) {
       throw result.composeError();
     }
     if (!operation.isLoaded()) {

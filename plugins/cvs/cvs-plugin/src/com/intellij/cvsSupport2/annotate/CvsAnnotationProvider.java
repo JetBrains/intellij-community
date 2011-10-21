@@ -123,7 +123,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation),
                                CvsOperationExecutorCallback.EMPTY);
     final CvsResult result = executor.getResult();
-    if (!result.hasNoErrors()) {
+    if (result.hasErrors()) {
       if (!retryOnFailure) {
         throw result.composeError();
       }

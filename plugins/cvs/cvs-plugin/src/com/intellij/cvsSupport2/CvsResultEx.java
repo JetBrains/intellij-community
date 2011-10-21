@@ -67,13 +67,13 @@ public class CvsResultEx implements CvsResult {
   }
 
   @Override
-  public boolean hasNoErrors() {
+  public boolean hasErrors() {
     for (VcsException error : myErrors) {
       if (!error.isWarning()) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -93,7 +93,7 @@ public class CvsResultEx implements CvsResult {
 
   public boolean finishedUnsuccessfully(CvsHandler handler) {
     checkIsCanceled(handler);
-    if (!hasNoErrors()) return true;
+    if (hasErrors()) return true;
     if (isCanceled()) return true;
     return false;
   }

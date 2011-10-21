@@ -60,7 +60,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
       if (result.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      if (!result.hasNoErrors()) {
+      if (result.hasErrors()) {
         throw result.composeError();
       }
       if (isDeleted()){

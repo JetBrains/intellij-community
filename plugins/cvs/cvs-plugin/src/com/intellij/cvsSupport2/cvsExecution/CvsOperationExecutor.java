@@ -302,7 +302,7 @@ public class CvsOperationExecutor {
   }
 
   public boolean hasNoErrors() {
-    return myResult.hasNoErrors();
+    return !myResult.hasErrors();
   }
 
   public CvsResult getResult() {
