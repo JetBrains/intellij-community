@@ -39,7 +39,7 @@ public class GitTableScrollChangeListener implements ChangeListener {
   public GitTableScrollChangeListener(final JBTable table,
                                       final DetailsCache detailsCache,
                                       final BigTableTableModel tableModel,
-                                      Runnable checkSelection) {
+                                      Runnable checkSelection, final Runnable fastListener) {
     myDetailsCache = detailsCache;
     myTableModel = tableModel;
     myCheckSelection = checkSelection;
@@ -48,6 +48,9 @@ public class GitTableScrollChangeListener implements ChangeListener {
     myTimer = UIUtil.createNamedTimer("Git table scroll timer",100, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        if (fastListener != null) {
+          fastListener.run();
+        }
         final boolean shouldPing = (System.currentTimeMillis() - myRefreshMark) > 300;
         //final boolean shouldPing = false;
         if (((mySpeedometer.getSpeed() < 0.1) && mySpeedometer.hasData()) || shouldPing) {
