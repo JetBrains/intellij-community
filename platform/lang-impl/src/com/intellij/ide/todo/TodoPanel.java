@@ -144,7 +144,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
             if (path == null) {
               return;
             }
-            NodeDescriptor desciptor = (NodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+            final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+            NodeDescriptor desciptor = userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
             if (!(desciptor instanceof TodoItemNode)) {
               return;
             }
@@ -242,9 +243,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
-      if (userObject != null) {
-        Object element = userObject.getElement();
+      Object userObject = node.getUserObject();
+      if (userObject instanceof NodeDescriptor) {
+        Object element = ((NodeDescriptor)userObject).getElement();
         TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
         if (pointer != null) {
           final SmartTodoItemPointer value = pointer.getValue();
@@ -346,11 +347,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return null;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
-      if (userObject == null) {
+      Object userObject = node.getUserObject();
+      if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = userObject.getElement();
+      Object element = ((NodeDescriptor)userObject).getElement();
       if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
         return null;
       }
@@ -531,11 +532,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return null;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
-      if (userObject == null) {
+      Object userObject = node.getUserObject();
+      if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = userObject.getElement();
+      Object element = ((NodeDescriptor)userObject).getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
         pointer = myTodoTreeBuilder.getNextPointer((TodoItemNode)element);
@@ -553,11 +554,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return null;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
-      if (userObject == null) {
+      Object userObject = node.getUserObject();
+      if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = userObject.getElement();
+      Object element = ((NodeDescriptor)userObject).getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
         pointer = myTodoTreeBuilder.getPreviousPointer((TodoItemNode)element);
