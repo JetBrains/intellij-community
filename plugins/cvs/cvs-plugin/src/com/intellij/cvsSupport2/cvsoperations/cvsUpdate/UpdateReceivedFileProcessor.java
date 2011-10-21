@@ -67,7 +67,7 @@ public class UpdateReceivedFileProcessor implements ReceivedFileProcessor {
     if (virtualFile == null) return false;
     final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if (importProvider != null && importProvider.isProjectFile(virtualFile)) return true;
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    FileType fileType = virtualFile.getFileType();
     return
       fileType == StdFileTypes.IDEA_PROJECT
       || fileType == StdFileTypes.IDEA_MODULE

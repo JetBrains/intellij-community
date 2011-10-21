@@ -95,7 +95,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
   private static boolean hasTextEditor(VirtualFile selectedFile) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType fileType = fileTypeManager.getFileTypeByFile(selectedFile);
+    FileType fileType = selectedFile.getFileType();
     return !fileType.isBinary() && fileType != StdFileTypes.GUI_DESIGNER_FORM;
   }
 

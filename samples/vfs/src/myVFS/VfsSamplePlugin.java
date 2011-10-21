@@ -70,7 +70,7 @@ public class VfsSamplePlugin implements ProjectComponent {
 
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         if (!fileTypeManager.isFileIgnored(file)
-                && fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
+                && file.getFileType() == StdFileTypes.JAVA) {
             ourJavaFilesCount += increase;
             return true;
             //System.out.println("ourJavaFilesCount = " + ourJavaFilesCount);

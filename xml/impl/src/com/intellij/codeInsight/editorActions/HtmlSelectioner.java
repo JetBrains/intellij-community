@@ -75,7 +75,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     }
 
     PsiFile psiFile = e.getContainingFile();
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(psiFile.getVirtualFile());
+    FileType fileType = psiFile.getVirtualFile().getFileType();
 
     addAttributeSelection(result, e);
     final FileViewProvider fileViewProvider = psiFile.getViewProvider();

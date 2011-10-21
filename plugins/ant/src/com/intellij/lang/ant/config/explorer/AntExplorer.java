@@ -487,7 +487,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         boolean b = super.isFileVisible(file, showHiddenFiles);
         if (!file.isDirectory()) {
-          b &= StdFileTypes.XML.equals(FileTypeManager.getInstance().getFileTypeByFile(file));
+          b &= StdFileTypes.XML.equals(file.getFileType());
         }
         return b;
       }

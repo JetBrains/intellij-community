@@ -154,7 +154,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     });
     Collections.reverse(myRevisions);
 
-    myContentFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    myContentFileType = file.getFileType();
 
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
 

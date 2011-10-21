@@ -107,7 +107,7 @@ public class CompileAction extends CompileActionBase {
       }
       else if (files.length == 1) {
         final VirtualFile file = files[0];
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+        FileType fileType = file.getFileType();
         if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
@@ -175,7 +175,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        FileType fileType = typeManager.getFileTypeByFile(file);
+        FileType fileType = file.getFileType();
         if (!(compilerManager.isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file))) {
           continue;
         }

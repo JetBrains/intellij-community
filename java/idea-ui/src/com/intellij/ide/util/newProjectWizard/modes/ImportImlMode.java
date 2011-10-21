@@ -120,7 +120,7 @@ public class ImportImlMode extends WizardMode {
       if (!isVisible || file.isDirectory()) {
         return isVisible;
       }
-      return StdFileTypes.IDEA_MODULE.equals(FileTypeManager.getInstance().getFileTypeByFile(file));
+      return StdFileTypes.IDEA_MODULE.equals(file.getFileType());
     }
   }
 }

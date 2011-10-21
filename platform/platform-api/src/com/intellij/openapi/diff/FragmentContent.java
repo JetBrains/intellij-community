@@ -91,7 +91,7 @@ public class FragmentContent extends DiffContent {
   public static FragmentContent fromRangeMarker(RangeMarker rangeMarker, Project project) {
     Document document = rangeMarker.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType type = file.getFileType();
     return new FragmentContent(new DocumentContent(project, document), TextRange.create(rangeMarker), project, type);
   }
 

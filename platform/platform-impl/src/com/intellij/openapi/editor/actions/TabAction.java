@@ -65,7 +65,7 @@ public class TabAction extends EditorAction {
 
     final Document doc = editor.getDocument();
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(doc);
-    final FileType fileType = vFile == null ? null : FileTypeManager.getInstance().getFileTypeByFile(vFile);
+    final FileType fileType = vFile == null ? null : vFile.getFileType();
 
     int tabSize = settings.getIndentSize(fileType);
     int spacesToAddCount = tabSize - columnNumber % tabSize;

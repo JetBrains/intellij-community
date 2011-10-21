@@ -88,7 +88,7 @@ public class HotSwapManager extends AbstractProjectComponent {
               return;
             }
             progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-            if(file.getFileSystem() instanceof JarFileSystem && FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFile(file))) {
+            if(file.getFileSystem() instanceof JarFileSystem && FileTypes.ARCHIVE.equals(file.getFileType())) {
               if(file.getTimeStamp() > timeStamp) {
                 super.acceptDirectory(file, fileRoot, filePath);
               }
@@ -102,7 +102,7 @@ public class HotSwapManager extends AbstractProjectComponent {
             if (progress.isCancelled()) {
               return;
             }
-            if (file.getTimeStamp() > timeStamp && StdFileTypes.CLASS.equals(fileTypeManager.getFileTypeByFile(file))) {
+            if (file.getTimeStamp() > timeStamp && StdFileTypes.CLASS.equals(file.getFileType())) {
               //noinspection HardCodedStringLiteral
               if (SystemInfo.isFileSystemCaseSensitive? filePath.endsWith(CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
                 progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));

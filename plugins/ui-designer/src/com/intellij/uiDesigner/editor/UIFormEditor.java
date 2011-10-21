@@ -87,7 +87,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
     //TODO[anton,vova] fire when changed
     return
       FileDocumentManager.getInstance().getDocument(myFile) != null &&
-      FileTypeManager.getInstance().getFileTypeByFile(myFile) == StdFileTypes.GUI_DESIGNER_FORM;
+      myFile.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
   }
 
   public void selectNotify(){

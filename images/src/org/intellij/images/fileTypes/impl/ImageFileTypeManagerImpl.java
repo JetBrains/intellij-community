@@ -53,7 +53,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
 
   public boolean isImage(VirtualFile file) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType fileTypeByFile = fileTypeManager.getFileTypeByFile(file);
+    FileType fileTypeByFile = file.getFileType();
     return fileTypeByFile instanceof ImageFileType;
   }
 

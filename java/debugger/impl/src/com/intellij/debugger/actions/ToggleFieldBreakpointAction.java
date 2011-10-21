@@ -176,7 +176,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       if (file != null) {
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         final VirtualFile virtualFile = file.getVirtualFile();
-        FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
+        FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
         if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {
           final PsiField field = FieldBreakpoint.findField(project, document, editor.getCaretModel().getOffset());
           if(field != null){

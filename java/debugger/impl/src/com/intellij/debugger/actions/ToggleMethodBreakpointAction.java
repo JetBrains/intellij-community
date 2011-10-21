@@ -111,7 +111,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
         if (file != null) {
           FileTypeManager fileTypeManager = FileTypeManager.getInstance();
           final VirtualFile virtualFile = file.getVirtualFile();
-          FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
+          FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
           if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {
             method = findMethod(project, editor);
           }

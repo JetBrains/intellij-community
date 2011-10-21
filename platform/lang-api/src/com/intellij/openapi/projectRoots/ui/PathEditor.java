@@ -376,7 +376,7 @@ public class PathEditor {
           tempFile = LocalFileSystem.getInstance().findFileByPath(path);
         }
         if (tempFile != null && !tempFile.isDirectory()) {
-          return Boolean.valueOf(FileTypeManager.getInstance().getFileTypeByFile(tempFile).equals(FileTypes.ARCHIVE));
+          return Boolean.valueOf(tempFile.getFileType().equals(FileTypes.ARCHIVE));
         }
         return Boolean.FALSE;
       }

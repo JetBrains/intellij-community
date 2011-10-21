@@ -227,7 +227,7 @@ public class FileTypeUtil
         }
 
         if (ProjectUtil.isProjectOrWorkspaceFile(file)) return false;
-        FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+      FileType type = file.getFileType();
 
         return types.get(type.getName()) != null;
     }
@@ -251,7 +251,7 @@ public class FileTypeUtil
 
     public FileType getFileTypeByFile(VirtualFile file)
     {
-        FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+      FileType type = file.getFileType();
 
         return getFileTypeByType(type);
     }

@@ -77,7 +77,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
         addRecursively(files, file, fileType);
       }
       else {
-        if (fileType == null || fileType.equals(typeManager.getFileTypeByFile(file))) {
+        if (fileType == null || fileType.equals(file.getFileType())) {
           files.add(file);
         }
       }
@@ -126,7 +126,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
           addRecursively(container, child, fileType);
         }
         else {
-          if (fileType == null || fileType.equals(typeManager.getFileTypeByFile(child))) {
+          if (fileType == null || fileType.equals(child.getFileType())) {
             container.add(child);
           }
         }

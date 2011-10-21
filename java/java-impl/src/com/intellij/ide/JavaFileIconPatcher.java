@@ -52,7 +52,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
   }
 
   private static Icon replaceIcon(VirtualFile file, int flags, Project project, Icon baseIcon) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA && !FileIndexUtil.isJavaSourceFile(project, file)) {
       return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON;
     }
