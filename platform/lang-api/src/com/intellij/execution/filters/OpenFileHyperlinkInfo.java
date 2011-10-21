@@ -16,44 +16,71 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
   private final Project myProject;
   private final VirtualFile myFile;
-  private final int myLine;
-  private final int myColumn;
+  private final int myDocumentLine;
+  private final int myDocumentColumn;
 
   public OpenFileHyperlinkInfo(@NotNull OpenFileDescriptor descriptor) {
     this(descriptor.getProject(), descriptor.getFile(), descriptor.getLine(), descriptor.getColumn());
   }
 
-  public OpenFileHyperlinkInfo(Project project, @NotNull final VirtualFile file, final int line, final int column) {
+  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file,
+                               int documentLine, int documentColumn) {
     myProject = project;
     myFile = file;
-    myLine = line;
-    myColumn = column;
+    myDocumentLine = documentLine;
+    myDocumentColumn = documentColumn;
   }
 
-  public OpenFileHyperlinkInfo(Project project, @NotNull final VirtualFile file, final int line) {
-    this (project, file, line, 0);
+  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull final VirtualFile file, final int line) {
+    this(project, file, line, 0);
   }
 
   public OpenFileDescriptor getDescriptor() {
-    return new OpenFileDescriptor(myProject, myFile, myLine, myColumn);
+    int offset = calculateOffset(myFile, myDocumentLine, myDocumentColumn);
+    if (offset != -1) {
+      return new OpenFileDescriptor(myProject, myFile, offset);
+    }
+    // although document position != logical position, it seems better than returning 'null'
+    return new OpenFileDescriptor(myProject, myFile, myDocumentLine, myDocumentColumn);
   }
 
   public void navigate(final Project project) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final VirtualFile file = myFile;
-        if(file.isValid()) {
+        if (file.isValid()) {
           FileEditorManager.getInstance(project).openTextEditor(getDescriptor(), true);
         }
+      }
+    });
+  }
+
+  private static int calculateOffset(@NotNull final VirtualFile file,
+                                     final int documentLine, final int documentColumn) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+
+      @Override
+      public Integer compute() {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          int lineStartOffset = document.getLineStartOffset(documentLine);
+          int lineEndOffset = document.getLineEndOffset(documentLine);
+          int fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset);
+          return lineStartOffset + fixedColumn;
+        }
+        return -1;
       }
     });
   }
