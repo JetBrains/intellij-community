@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
@@ -49,7 +49,7 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
   }
 
   @NotNull
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return Collections.emptyMap();
   }
 

@@ -8,7 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -292,7 +292,7 @@ public class DynamicMemberUtils {
 
     private PsiTypeParameter[] myTypeParameters;
     private GrParameterList myParameterList;
-    private Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> namedParameters;
+    private Map<String, NamedArgumentDescriptor> namedParameters;
 
     public final String mySource;
 
@@ -323,7 +323,7 @@ public class DynamicMemberUtils {
 
     @NotNull
     @Override
-    public Map<String,GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+    public Map<String,NamedArgumentDescriptor> getNamedParameters() {
       return namedParameters;
     }
 

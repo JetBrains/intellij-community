@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -467,12 +468,12 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @NotNull
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
-      Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> result = Maps.newHashMap();
+      Map<String, NamedArgumentDescriptor> result = Maps.newHashMap();
       for (String parameter : stub.getNamedParameters()) {
-        result.put(parameter, GroovyNamedArgumentProvider.TYPE_ANY);
+        result.put(parameter, NamedArgumentDescriptor.SIMPLE_ON_TOP);
       }
       return result;
     }

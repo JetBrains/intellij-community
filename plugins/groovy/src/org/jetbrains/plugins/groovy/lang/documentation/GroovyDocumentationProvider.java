@@ -39,7 +39,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
@@ -390,8 +390,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (object instanceof GroovyResolveResult) {
       return ((GroovyResolveResult)object).getElement();
     }
-    if (object instanceof GroovyNamedArgumentProvider.ArgumentDescriptor) {
-      return ((GroovyNamedArgumentProvider.ArgumentDescriptor)object).getNavigationElement();
+    if (object instanceof NamedArgumentDescriptor) {
+      return ((NamedArgumentDescriptor)object).getNavigationElement();
     }
     return null;
   }

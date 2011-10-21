@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -228,19 +228,19 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   public static class ParameterDescriptor {
     public final String name;
-    public final GroovyNamedArgumentProvider.ArgumentDescriptor descriptor;
+    public final NamedArgumentDescriptor descriptor;
 
     private ParameterDescriptor(Map args, PsiElement context) {
       name = (String)args.get("name");
       final String typeText = stringifyType(args.get("type"));
       Object doc = args.get("doc");
-      descriptor = new GroovyNamedArgumentProvider.ArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context)) {
+      descriptor = new NamedArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context)) {
         @Override
         public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
           return typeText == null || ClassContextFilter.isSubtype(type, context.getContainingFile(), typeText);
         }
       };
-      descriptor.setShowFirst(true);
+      descriptor.setPriority(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP);
     }
 
   }

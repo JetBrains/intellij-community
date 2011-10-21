@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -174,7 +174,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
   @NotNull
   @Override
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myBaseMethod.getNamedParameters();
   }
 

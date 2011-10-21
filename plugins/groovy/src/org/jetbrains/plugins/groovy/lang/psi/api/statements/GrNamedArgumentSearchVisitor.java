@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -38,7 +38,7 @@ import java.util.*;
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
   private static final Set<String> METHOD_NAMES = new HashSet<String>(Arrays.asList("containsKey", "remove", "get"));
 
-  private final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myResult = new HashMap<String, GroovyNamedArgumentProvider.ArgumentDescriptor>();
+  private final Map<String, NamedArgumentDescriptor> myResult = new HashMap<String, NamedArgumentDescriptor>();
 
   private final String myFirstArgumentName;
 
@@ -46,7 +46,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     myFirstArgumentName = firstArgumentName;
   }
 
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getResult() {
+  public Map<String, NamedArgumentDescriptor> getResult() {
     return myResult;
   }
 
@@ -65,7 +65,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   }
 
   private void add(String refName) {
-    myResult.put(refName, GroovyNamedArgumentProvider.TYPE_ANY);
+    myResult.put(refName, NamedArgumentDescriptor.SIMPLE_ON_TOP);
   }
 
   @Override
@@ -96,7 +96,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     super.visitReferenceExpression(referenceExpression);
   }
 
-  public static Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> find(GrVariable variable) {
+  public static Map<String, NamedArgumentDescriptor> find(GrVariable variable) {
     final GrExpression initializerGroovy = variable.getInitializerGroovy();
 
     if (!(initializerGroovy instanceof GrClosableBlock)) {

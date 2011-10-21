@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.ArrayList;
@@ -79,7 +79,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
           method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
 
           if (isNamed) {
-            Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> namedParams = Maps.newHashMap();
+            Map<String, NamedArgumentDescriptor> namedParams = Maps.newHashMap();
             for (Object o : (List)value) {
               if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
                 namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,

@@ -34,7 +34,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -61,7 +61,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private Object myMethodKind;
-  private Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedParameters = Collections.emptyMap();
+  private Map<String, NamedArgumentDescriptor> myNamedParameters = Collections.emptyMap();
   private final PsiReferenceList myThrowsList;
 
   private Object myData;
@@ -76,7 +76,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     myThrowsList = new LightReferenceListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, PsiReferenceList.Role.THROWS_LIST);
   }
 
-  public void setNamedParameters(@NotNull Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> namedParameters) {
+  public void setNamedParameters(@NotNull Map<String, NamedArgumentDescriptor> namedParameters) {
     this.myNamedParameters = namedParameters;
   }
 
@@ -136,7 +136,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @NotNull
   @Override
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myNamedParameters;
   }
 
