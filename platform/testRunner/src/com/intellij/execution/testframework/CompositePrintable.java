@@ -40,6 +40,7 @@ public class CompositePrintable implements Printable, Disposable {
   private final PrintablesWrapper myWrapper = new PrintablesWrapper();
   protected int myExceptionMark;
   private int myCurrentSize = 0;
+  private String myOutputFile = null;
   private static final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public void flush() {
@@ -119,6 +120,10 @@ public class CompositePrintable implements Printable, Disposable {
     myExceptionMark = exceptionMark;
   }
 
+  public void setOutputFilePath(String outputFile) {
+    myOutputFile = outputFile;
+  }
+
   private static final Logger LOG = Logger.getInstance("#" + PrintablesWrapper.class.getName());
 
   private class PrintablesWrapper {
@@ -167,6 +172,41 @@ public class CompositePrintable implements Printable, Disposable {
             printable.printOn(myPrinter);
           }
           myPrinter.close();
+          if (myOutputFile != null) {
+            PrintStream printStream = null;
+            try {
+              printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
+              final PrintStream finalPrintStream = printStream;
+              for (Printable currentPrintable : currentPrintables) {
+                currentPrintable.printOn(new Printer() {
+                  @Override
+                  public void print(String text, ConsoleViewContentType contentType) {
+                    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
+                      finalPrintStream.print(text);
+                    }
+                  }
+
+                  @Override
+                  public void printHyperlink(String text, HyperlinkInfo info) {
+                    finalPrintStream.print(text);
+                  }
+
+                  @Override
+                  public void onNewAvailable(@NotNull Printable printable) {}
+                  @Override
+                  public void mark() {}
+                });
+              }
+            }
+            catch (FileNotFoundException e) {
+              LOG.error(e);
+            }
+            finally {
+              if (printStream != null) {
+                printStream.close();
+              }
+            }
+          }
         }
       };
       invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());

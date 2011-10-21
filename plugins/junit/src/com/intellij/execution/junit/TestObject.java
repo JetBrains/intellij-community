@@ -268,6 +268,7 @@ public abstract class TestObject implements JavaCommandLine {
       public void notifyStart(TestProxy root) {
         super.notifyStart(root);
         unboundOutputRoot.addChild(root);
+        unboundOutputRoot.setOutputFilePath(myConfiguration.getOutputFilePath());
         final JUnitRunningModel model = getModel();
         if (model != null) {
           handler.getOut().setDispatchListener(model.getNotifier());

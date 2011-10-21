@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -35,6 +36,8 @@ import java.util.*;
  * Date: 01-Feb-2006
  */
 public class LogFilesManager implements Disposable {
+  public static final Logger LOG = Logger.getInstance("#" + LogFilesManager.class.getName());
+
   private static final int UPDATE_INTERVAL = 500;
 
   private final Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();

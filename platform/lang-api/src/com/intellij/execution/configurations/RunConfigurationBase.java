@@ -41,9 +41,16 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
   private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
+
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
+  @NonNls private static final String FILE_OUTPUT = "output_file";
+  @NonNls private static final String SAVE = "is_save";
+  @NonNls private static final String OUTPUT_FILE = "path";
+
   private final Icon myIcon;
+  private boolean mySaveOutput = false;
+  private String myFileOutputPath = null;
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
@@ -97,6 +104,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
     runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
     runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
+    runConfiguration.myFileOutputPath = myFileOutputPath;
+    runConfiguration.mySaveOutput = mySaveOutput;
     copyCopyableDataTo(runConfiguration);
     return runConfiguration;
   }
@@ -167,6 +176,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
       logFile.readExternal((Element)fileElement);
       myPredefinedLogFiles.add(logFile);
     }
+    final Element fileOutputElement = element.getChild(FILE_OUTPUT);
+    if (fileOutputElement != null) {
+      myFileOutputPath = fileOutputElement.getAttributeValue(OUTPUT_FILE);
+      final String isSave = fileOutputElement.getAttributeValue(SAVE);
+      mySaveOutput = isSave != null && Boolean.parseBoolean(isSave);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -180,6 +195,34 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
       predefinedLogFile.writeExternal(fileElement);
       element.addContent(fileElement);
     }
+    final Element fileOutputPathElement = new Element(FILE_OUTPUT);
+    if (myFileOutputPath != null) {
+      fileOutputPathElement.setAttribute(OUTPUT_FILE, myFileOutputPath);
+    }
+    fileOutputPathElement.setAttribute(SAVE, String.valueOf(mySaveOutput));
+    if (myFileOutputPath != null || mySaveOutput) {
+      element.addContent(fileOutputPathElement);
+    }
+  }
+
+  public boolean isSaveOutputToFile() {
+    return mySaveOutput;
+  }
+
+  public void setSaveOutputToFile(boolean redirectOutput) {
+    mySaveOutput = redirectOutput;
+  }
+
+  public String getOutputFilePath() {
+    return myFileOutputPath;
+  }
+
+  public void setFileOutputPath(String fileOutputPath) {
+    myFileOutputPath = fileOutputPath;
+  }
+
+  public boolean collectOutputFromProcessHandler() {
+    return true;
   }
 
   public boolean excludeCompileBeforeLaunchOption() {
