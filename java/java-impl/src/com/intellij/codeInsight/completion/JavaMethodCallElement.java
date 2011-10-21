@@ -235,7 +235,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       String typeParamsText = getTypeParamsText(true);
       if (typeParamsText != null) {
         if (typeParamsText.length() > 10) {
-          typeParamsText = typeParamsText.substring(0, 10) + "...";
+          typeParamsText = typeParamsText.substring(0, 10) + "...>";
         }
 
         String itemText = presentation.getItemText();
