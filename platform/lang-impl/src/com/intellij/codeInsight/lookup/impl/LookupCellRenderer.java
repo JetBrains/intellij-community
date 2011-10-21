@@ -126,7 +126,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.clear();
     myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
-    allowedWidth -= setItemTextLabel(item, presentation.getItemTextForeground(), isSelected, presentation, allowedWidth);
+    allowedWidth -= setItemTextLabel(item, isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), isSelected, presentation, allowedWidth);
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
