@@ -1,3 +1,0 @@
-fun box(i: Int?) {
-    val j = i?.plus(3) //verify error
-}

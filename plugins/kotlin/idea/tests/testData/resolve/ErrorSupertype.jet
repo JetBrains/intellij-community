@@ -1,3 +1,0 @@
-class C(x : `std::Int`Int) : NotFound {
-    val xx : `std::Int`Int
-}
