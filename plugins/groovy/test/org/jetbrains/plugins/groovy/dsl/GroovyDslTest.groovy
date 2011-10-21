@@ -28,6 +28,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.documentation.DocumentationManager
+import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 
 /**
  * @author peter
@@ -168,16 +170,18 @@ public class MyCategory {
     assert myFixture.lookupElementStrings == ['param1', 'param2']
   }
 
-  public void testNamedParametersGroovyConverntion() {
+  public void testNamedParametersGroovyConvention() {
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
-      parameter(name:'param1', type:String),
+      parameter(name:'param1', type:String, doc:'My doc'),
       parameter(name:'param2', type:Integer),
     ]]
 }'''
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['param1', 'param2']
+    def element = DocumentationManager.getInstance(project).getElementFromLookup(myFixture.editor, myFixture.file)
+    assert 'My doc' == new GroovyDocumentationProvider().generateDoc(element, null)
   }
 
   public void testCheckNamedArgumentTypes() {

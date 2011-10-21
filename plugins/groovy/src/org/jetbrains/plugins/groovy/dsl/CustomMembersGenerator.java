@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import groovy.lang.Closure;
@@ -142,7 +143,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   @SuppressWarnings("MethodMayBeStatic")
   public ParameterDescriptor parameter(Map args) {
-    return new ParameterDescriptor(args);
+    return new ParameterDescriptor(args, myDescriptor.justGetPlaceFile());
   }
   
   @SuppressWarnings("unchecked")
@@ -229,16 +230,40 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     public final String name;
     public final GroovyNamedArgumentProvider.ArgumentDescriptor descriptor;
 
-    private ParameterDescriptor(Map args) {
-      this.name = (String)args.get("name");
+    private ParameterDescriptor(Map args, PsiElement context) {
+      name = (String)args.get("name");
       final String typeText = stringifyType(args.get("type"));
-      descriptor = new GroovyNamedArgumentProvider.ArgumentDescriptor() {
+      Object doc = args.get("doc");
+      descriptor = new GroovyNamedArgumentProvider.ArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context)) {
         @Override
         public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
           return typeText == null || ClassContextFilter.isSubtype(type, context.getContainingFile(), typeText);
         }
       };
       descriptor.setShowFirst(true);
+    }
+
+  }
+  
+  public static class GdslNamedParameter extends FakePsiElement {
+    private final String myName;
+    public final String docString;
+    private final PsiElement myParent;
+
+    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent) {
+      myName = name;
+      this.docString = doc;
+      myParent = parent;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myParent;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
     }
   }
 
