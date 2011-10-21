@@ -84,6 +84,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   @Nullable
   public Module findModule(final String moduleName) {
+    if (myProject.isDisposed()) return null;
     return ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       @Nullable
       @Override
