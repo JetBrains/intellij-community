@@ -42,22 +42,22 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
   }
 
   protected void doTest(final PerformAction performAction, final String testName) throws Exception {
-    String root = getTestDataPath() + getTestRoot() + testName;
+    String path = getTestDataPath() + getTestRoot() + testName;
 
-    String rootBefore = root + "/before";
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete, false);
+    String pathBefore = path + "/before";
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, pathBefore, myFilesToDelete, false);
     prepareProject(rootDir);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    String rootAfter = root + "/after";
-    VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
+    String pathAfter = path + "/after";
+    VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter.replace(File.separatorChar, '/'));
 
-    performAction.performAction(rootDir, rootDir2);
+    performAction.performAction(rootDir, rootAfter);
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     FileDocumentManager.getInstance().saveAllDocuments();
 
     if (myDoCompare) {
-      PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+      PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
     }
   }
 
