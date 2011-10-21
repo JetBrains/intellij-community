@@ -20,15 +20,23 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
+  private static final Logger LOG = Logger.getInstance("#" + DefaultImplementationTextSelectioner.class.getName());
+
   public int getTextStartOffset(@NotNull final PsiElement parent) {
-    return parent.getTextRange().getStartOffset();
+    final TextRange textRange = parent.getTextRange();
+    LOG.assertTrue(textRange != null, parent);
+    return textRange.getStartOffset();
   }
 
   public int getTextEndOffset(@NotNull PsiElement element) {
-    return element.getTextRange().getEndOffset();
+    final TextRange textRange = element.getTextRange();
+    LOG.assertTrue(textRange != null, element);
+    return textRange.getEndOffset();
   }
 }
