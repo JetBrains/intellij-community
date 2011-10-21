@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,25 +30,26 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.event.*;
-import java.util.*;
+import java.util.EventListener;
+import java.util.Map;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
 
   private final Project myProject;
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
-  private final GroovyIntroduceVariableBase.Validator myValidator;
+  private final GrIntroduceVariableHandler.Validator myValidator;
   private Map<String, PsiType> myTypeMap = null;
   private final EventListenerList myListenerList = new EventListenerList();
 
@@ -62,11 +63,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   private JComboBox myTypeComboBox;
   private JLabel myTypeLabel;
   private JLabel myNameLabel;
-  private JButton buttonOK;
-  public String myEnteredName;
 
   public GroovyIntroduceVariableDialog(GrIntroduceContext context,
-                                       GroovyIntroduceVariableBase.Validator validator,
+                                       GrIntroduceVariableHandler.Validator validator,
                                        String[] possibleNames) {
     super(context.project, true);
     myProject = context.project;
@@ -76,7 +75,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     setUpNameComboBox(possibleNames);
 
     setModal(true);
-    getRootPane().setDefaultButton(buttonOK);
     setTitle(REFACTORING_NAME);
     init();
     setUpDialog();
@@ -170,7 +168,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
       public void actionPerformed(ActionEvent e) {
         myTypeComboBox.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
   }
 
@@ -207,7 +205,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
       public void actionPerformed(ActionEvent e) {
         myNameComboBox.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
