@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
+import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,11 +29,15 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -68,7 +73,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ilyas
@@ -460,17 +467,21 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @NotNull
-  public String[] getNamedParametersArray() {
+  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
-      return stub.getNamedParameters();
+      Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> result = Maps.newHashMap();
+      for (String parameter : stub.getNamedParameters()) {
+        result.put(parameter, GroovyNamedArgumentProvider.TYPE_ANY);
+      }
+      return result;
     }
 
     GrOpenBlock body = getBlock();
-    if (body == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (body == null) return Collections.emptyMap();
 
     GrParameter[] parameters = getParameters();
-    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (parameters.length == 0) return Collections.emptyMap();
     GrParameter firstParameter = parameters[0];
 
     PsiType type = firstParameter.getTypeGroovy();
@@ -478,7 +489,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     //equalsToText can't be called here because of stub creating
 
     if (type != null && typeElement != null && type.getPresentableText() != null && !type.getPresentableText().endsWith("Map")) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyMap();
     }
 
     GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(firstParameter.getNameIdentifierGroovy().getText());

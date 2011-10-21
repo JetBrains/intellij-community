@@ -18,9 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import com.intellij.psi.PsiField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+
+import java.util.Map;
 
 /**
  * @author ven
@@ -37,7 +40,7 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
   GrAccessorMethod[] getGetters();
 
   @NotNull
-  String[] getNamedParametersArray();
+  Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters();
 
   void clearCaches();
 }

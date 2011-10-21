@@ -19,14 +19,15 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.PsiClass
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
@@ -163,7 +164,7 @@ public class MyCategory {
   ]
 }'''
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
-    def items = myFixture.completeBasic()
+    myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['param1', 'param2']
   }
 
@@ -175,7 +176,21 @@ public class MyCategory {
     ]]
 }'''
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
-    def items = myFixture.completeBasic()
+    myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['param1', 'param2']
+  }
+
+  public void testCheckNamedArgumentTypes() {
+    addGdsl '''contribute(currentType(String.name)) {
+  method name:'foo', type:void, params:[args:[
+      parameter(name:'param1', type:File),
+      parameter(name:'param2', type:Integer),
+    ]]
+}'''
+    myFixture.configureByText 'a.groovy', '''
+"".foo(param1:<warning descr="Type of argument 'param1' can not be 'Integer'">2</warning>, param2:2)
+'''
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
+    myFixture.checkHighlighting(true, false, false)
   }
 }

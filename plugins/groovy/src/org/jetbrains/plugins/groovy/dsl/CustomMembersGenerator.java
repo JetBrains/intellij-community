@@ -10,11 +10,15 @@ import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaMethod;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.InvokerHelper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -223,11 +227,18 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   public static class ParameterDescriptor {
     public final String name;
-    public final String type;
+    public final GroovyNamedArgumentProvider.ArgumentDescriptor descriptor;
 
     private ParameterDescriptor(Map args) {
       this.name = (String)args.get("name");
-      this.type = stringifyType(args.get("type"));
+      final String typeText = stringifyType(args.get("type"));
+      descriptor = new GroovyNamedArgumentProvider.ArgumentDescriptor() {
+        @Override
+        public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
+          return typeText == null || ClassContextFilter.isSubtype(type, context.getContainingFile(), typeText);
+        }
+      };
+      descriptor.setShowFirst(true);
     }
   }
 

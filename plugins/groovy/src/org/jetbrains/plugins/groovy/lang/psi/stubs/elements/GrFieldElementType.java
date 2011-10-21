@@ -19,7 +19,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
@@ -29,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
@@ -49,12 +50,12 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   public GrFieldStub createStub(GrField psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
 
-    String[] namedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
+    Set<String> namedParameters = Collections.emptySet();
     if (psi instanceof GrFieldImpl){
-      namedParametersArray = psi.getNamedParametersArray();
+      namedParameters = psi.getNamedParameters().keySet();
     }
 
-    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray, FIELD, GrFieldStub.buildFlags(psi),
+    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParameters.toArray(new String[namedParameters.size()]), FIELD, GrFieldStub.buildFlags(psi),
                            GrStubUtils.getTypeText(psi));
   }
 
@@ -94,9 +95,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
   static void indexFieldStub(GrFieldStub stub, IndexSink sink) {
     String name = stub.getName();
-    if (name != null) {
-      sink.occurrence(GrFieldNameIndex.KEY, name);
-    }
+    sink.occurrence(GrFieldNameIndex.KEY, name);
     for (String annName : stub.getAnnotations()) {
       if (annName != null) {
         sink.occurrence(GrAnnotatedMemberIndex.KEY, annName);

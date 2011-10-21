@@ -128,10 +128,6 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
   static class SimpleExceptionsGen implements GenExceptions {
     private final ThrownExceptionInfo[] myInfos;
 
-    public SimpleExceptionsGen() {
-      myInfos = new ThrownExceptionInfo[0];
-    }
-
     public SimpleExceptionsGen(ThrownExceptionInfo[] infos) {
       myInfos = infos;
     }

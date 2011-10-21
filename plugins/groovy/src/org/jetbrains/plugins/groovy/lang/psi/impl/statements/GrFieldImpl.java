@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
+import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
@@ -28,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -45,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -211,10 +214,14 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @NotNull
-  public String[] getNamedParametersArray() {
+  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
-      return stub.getNamedParameters();
+      Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> result = Maps.newHashMap();
+      for (String parameter : stub.getNamedParameters()) {
+        result.put(parameter, GroovyNamedArgumentProvider.TYPE_ANY);
+      }
+      return result;
     }
 
     return GrNamedArgumentSearchVisitor.find(this);

@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -38,7 +38,7 @@ import java.util.*;
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
   private static final Set<String> METHOD_NAMES = new HashSet<String>(Arrays.asList("containsKey", "remove", "get"));
 
-  private Set<String> myResult;
+  private final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myResult = new HashMap<String, GroovyNamedArgumentProvider.ArgumentDescriptor>();
 
   private final String myFirstArgumentName;
 
@@ -46,8 +46,8 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     myFirstArgumentName = firstArgumentName;
   }
 
-  public String[] getResult() {
-    return myResult == null ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(myResult);
+  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getResult() {
+    return myResult;
   }
 
   private void extractArguments(GrArgumentList argumentList) {
@@ -65,11 +65,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   }
 
   private void add(String refName) {
-    if (myResult == null) {
-      myResult = new HashSet<String>();
-    }
-
-    myResult.add(refName);
+    myResult.put(refName, GroovyNamedArgumentProvider.TYPE_ANY);
   }
 
   @Override
@@ -100,16 +96,16 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     super.visitReferenceExpression(referenceExpression);
   }
 
-  public static String[] find(GrVariable variable) {
+  public static Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> find(GrVariable variable) {
     final GrExpression initializerGroovy = variable.getInitializerGroovy();
 
     if (!(initializerGroovy instanceof GrClosableBlock)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyMap();
     }
 
     final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
     final GrParameter[] parameters = closure.getAllParameters();
-    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (parameters.length == 0) return Collections.emptyMap();
 
     GrParameter parameter = parameters[0];
 

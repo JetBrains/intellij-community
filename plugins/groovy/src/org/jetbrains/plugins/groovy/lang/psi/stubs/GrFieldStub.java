@@ -53,6 +53,7 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
     myTypeText = typeText;
   }
 
+  @NotNull
   public String getName() {
     return StringRef.toString(myName);
   }

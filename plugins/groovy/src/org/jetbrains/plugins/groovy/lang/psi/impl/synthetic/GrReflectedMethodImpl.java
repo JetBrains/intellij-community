@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Max Medvedev
@@ -172,8 +174,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
   @NotNull
   @Override
-  public String[] getNamedParametersArray() {
-    return myBaseMethod.getNamedParametersArray();
+  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+    return myBaseMethod.getNamedParameters();
   }
 
   @NotNull

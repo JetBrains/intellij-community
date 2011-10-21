@@ -16,13 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -46,8 +49,8 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
   }
 
   @NotNull
-  public String[] getNamedParametersArray() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedParameters() {
+    return Collections.emptyMap();
   }
 
   @Override

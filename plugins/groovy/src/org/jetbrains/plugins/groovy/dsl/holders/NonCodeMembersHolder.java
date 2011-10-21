@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -25,6 +26,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.ArrayList;
@@ -77,13 +79,14 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
           method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
 
           if (isNamed) {
-            List<String> namedParams = new ArrayList<String>();
+            Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> namedParams = Maps.newHashMap();
             for (Object o : (List)value) {
               if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
-                namedParams.add(((CustomMembersGenerator.ParameterDescriptor)o).name);
+                namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,
+                                ((CustomMembersGenerator.ParameterDescriptor)o).descriptor);
               }
             }
-            method.setNamedParametersArray(namedParams.toArray(new String[namedParams.size()]));
+            method.setNamedParameters(namedParams);
           }
         }
       }
