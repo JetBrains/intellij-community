@@ -116,7 +116,9 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         if (element instanceof GrArgumentLabel) {
           final String name = ((GrArgumentLabel)element).getName();
           if (GroovyNamesUtil.isIdentifier(name)) {
-            map.put(name, new GroovyNamedArgumentProvider.ArgumentDescriptor());
+            GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = new GroovyNamedArgumentProvider.ArgumentDescriptor();
+            descriptor.setShowFirst(false);
+            map.put(name, descriptor);
           }
         }
         super.visitElement(element);
