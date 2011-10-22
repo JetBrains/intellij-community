@@ -6,7 +6,6 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -63,10 +62,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected static boolean isDebug(ConfigurationPerRunnerSettings configurationSettings) {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(configurationSettings.getRunnerId());
-  }
-
-  private AbstractRunConfiguration.RunnerType getRunnerType() {
-    return isDebug() ? AbstractRunConfiguration.RunnerType.DEBUG : AbstractRunConfiguration.RunnerType.RUN;
   }
 
   public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
@@ -133,7 +128,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     // Extend command line
     RunnerSettings runnerSettings = getRunnerSettings();
-    PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig,runnerSettings, commandLine, getRunnerType());
+    PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig,runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
 
     final ProcessHandler processHandler = doCreateProcess(commandLine);
     ProcessTerminatedListener.attach(processHandler);
