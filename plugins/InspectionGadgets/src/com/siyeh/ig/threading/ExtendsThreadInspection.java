@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,31 +26,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsThreadInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ClassExplicitlyExtendsThread";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("extends.thread.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "extends.thread.problem.descriptor");
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass instanceof PsiAnonymousClass) {
+      return InspectionGadgetsBundle.message("anonymous.extends.thread.problem.descriptor");
+    } else {
+      return InspectionGadgetsBundle.message("extends.thread.problem.descriptor");
+    }
   }
 
   /**
    * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(java.lang.Object...)
    */
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiClass superClass = (PsiClass)infos[0];
-    if (superClass instanceof PsiAnonymousClass) return null;
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass instanceof PsiAnonymousClass) {
+      return null;
+    }
     return new ReplaceInheritanceWithDelegationFix();
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ExtendsThreadVisitor();
   }
@@ -59,8 +70,7 @@ public class ExtendsThreadInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType() ||
-          aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
       final PsiClass superClass = aClass.getSuperClass();

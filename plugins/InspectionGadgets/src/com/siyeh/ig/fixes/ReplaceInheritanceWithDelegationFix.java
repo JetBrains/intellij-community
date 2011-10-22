@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message(
       "replace.inheritance.with.delegation.quickfix");
   }
 
+  @Override
   public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
     final PsiClass aClass = (PsiClass)nameElement.getParent();
