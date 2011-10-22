@@ -178,7 +178,7 @@ public abstract class SplitterWithSecondHideable {
     mySplitter.setDoubleBuffered(true);
     mySplitter.setFirstComponent(firstComponent);
     mySplitter.setSecondComponent(myFictivePanel);
-    mySplitter.setShowDividerIcon(false);
+    //mySplitter.setShowDividerIcon(false);
     mySplitter.setProportion(1.0f);
   }
   
