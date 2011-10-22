@@ -133,6 +133,7 @@ a++""");
 package com
 interface Goo {
   int mainConstant = 42
+  int secondConstant = 1
 }
 '''
     myFixture.addFileToProject("com/Foo.groovy", """
@@ -151,6 +152,8 @@ println 2 //3
       waitForBreakpoint()
       eval 'Foo.bar', '2'
       eval 'mainConstant', '42'
+      eval 'secondConstant', '1'
+      eval 'mainConstant - secondConstant', '41'
     }
   }
 
