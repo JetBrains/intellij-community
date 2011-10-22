@@ -31,7 +31,6 @@ import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -74,12 +73,14 @@ public class CvsChangeProvider implements ChangeProvider {
     myChangeListManager = ChangeListManager.getInstance(vcs.getProject());
   }
 
+  @Override
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
     final Runnable checkCanceled = new Runnable() {
+      @Override
       public void run() {
         if (progress != null) {
           progress.checkCanceled();
@@ -120,12 +121,13 @@ public class CvsChangeProvider implements ChangeProvider {
     }
   }
 
+  @Override
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
 
-  public void doCleanup(final List<VirtualFile> files) {
-  }
+  @Override
+  public void doCleanup(final List<VirtualFile> files) {}
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
                                 final Runnable checkCanceled) throws VcsException {
@@ -208,7 +210,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     final Entry entry = myEntriesManager.getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
-    VcsRevisionNumber number = entry != null ? createRevisionNumber(entry.getRevision(), status) : VcsRevisionNumber.NULL;
+    final VcsRevisionNumber number = entry != null ? createRevisionNumber(entry.getRevision(), status) : VcsRevisionNumber.NULL;
     processStatus(filePath, dir.findChild(filePath.getName()), status, number, builder);
     checkSwitchedFile(filePath, builder, dir, entry);
   }
@@ -264,13 +266,13 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Nullable
-  private static String getSwitchedTagCaption(final String tag, final String parentTag, final boolean checkParentTag) {
+  private static String getSwitchedTagCaption(final String tag, @Nullable final String parentTag, final boolean checkParentTag) {
     if (tag == null) return CvsUtil.HEAD;
     final String tagOnly = tag.substring(1);
     if (CvsUtil.isNonDateTag(tag)) {
       // a switch between a branch tag and a non-branch tag is not a switch
       if (checkParentTag && parentTag != null && CvsUtil.isNonDateTag(parentTag)) {
-        String parentTagOnly = parentTag.substring(1);
+        final String parentTagOnly = parentTag.substring(1);
         if (tagOnly.equals(parentTagOnly)) {
           return null;
         }
@@ -279,7 +281,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (tag.startsWith(CvsUtil.STICKY_DATE_PREFIX)) {
       try {
-        Date date = Entry.STICKY_DATE_FORMAT.parse(tagOnly);
+        final Date date = Entry.STICKY_DATE_FORMAT.parse(tagOnly);
         return CvsBundle.message("switched.date.format", date);
       }
       catch (ParseException e) {
@@ -290,7 +292,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
-    VirtualFile parentDir = dir.getParent();
+    final VirtualFile parentDir = dir.getParent();
     if (parentDir == null || !myFileIndex.isInContent(parentDir)) {
       return;
     }
@@ -324,9 +326,9 @@ public class CvsChangeProvider implements ChangeProvider {
       return;
     }
     final String dirTag = myEntriesManager.getCvsInfoFor(dir).getStickyTag();
-    String dirStickyInfo = getStickyInfo(dirTag);
+    final String dirStickyInfo = getStickyInfo(dirTag);
     if (entry != null && !Comparing.equal(entry.getStickyInformation(), dirStickyInfo)) {
-      VirtualFile file = filePath.getVirtualFile();
+      final VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
         if (entry.getStickyTag() != null) {
           builder.processSwitchedFile(file, CvsBundle.message("switched.tag.format", entry.getStickyTag()), false);
@@ -360,13 +362,13 @@ public class CvsChangeProvider implements ChangeProvider {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
-          new Change(createCvsRevision(filePath, number), CurrentContentRevision.create(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
+          new Change(createCvsRevision(filePath, number), createCvsRevision(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
       final CvsUpToDateRevision beforeRevision = createCvsRevision(filePath, number);
-      final ContentRevision afterRevision = CurrentContentRevision.create(filePath);
+      final ContentRevision afterRevision = createCvsRevision(filePath);
       if (beforeRevision instanceof BinaryContentRevision) {
         final byte[] binaryContent = ((BinaryContentRevision)beforeRevision).getBinaryContent();
         if (binaryContent != null && Arrays.equals(binaryContent, ((BinaryContentRevision)afterRevision).getBinaryContent())) {
@@ -382,7 +384,7 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processChange(new Change(beforeRevision, afterRevision, status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.ADDED) {
-      builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status), CvsVcs2.getKey());
+      builder.processChange(new Change(null, createCvsRevision(filePath), status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.DELETED) {
       // not sure about deleted content
@@ -403,10 +405,10 @@ public class CvsChangeProvider implements ChangeProvider {
   public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
     final VirtualFile parent = f.getParent();
     final String name = f.getName();
-    Entry entry = myEntriesManager.getEntryFor(parent, name);
+    final Entry entry = myEntriesManager.getEntryFor(parent, name);
     if (entry != null && entry.isResultOfMerge()) {
       // try created by VCS during merge
-      byte[] content = CvsUtil.getStoredContentForFile(f, entry.getRevision());
+      final byte[] content = CvsUtil.getStoredContentForFile(f, entry.getRevision());
       if (content != null) {
         return content;
       }
@@ -414,12 +416,13 @@ public class CvsChangeProvider implements ChangeProvider {
       return CvsUtil.getCachedStoredContent(parent, name, entry.getRevision());
     }
     final long upToDateTimestamp = getUpToDateTimeForFile(f);
-    FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
+    final FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
+      @Override
       public boolean isSuitable(long revisionTimestamp) {
         return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, revisionTimestamp);
       }
     };
-    byte[] localHistoryContent = LocalHistory.getInstance().getByteContent(f, c);
+    final byte[] localHistoryContent = LocalHistory.getInstance().getByteContent(f, c);
     if (localHistoryContent == null) {
       if (entry != null && CvsUtil.haveCachedContent(f, entry.getRevision())) {
         return CvsUtil.getCachedStoredContent(parent, name, entry.getRevision());
@@ -429,7 +432,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   public long getUpToDateTimeForFile(@NotNull VirtualFile vFile) {
-    Entry entry = myEntriesManager.getEntryFor(vFile.getParent(), vFile.getName());
+    final Entry entry = myEntriesManager.getEntryFor(vFile.getParent(), vFile.getName());
     if (entry == null) return -1;
     // retrieve of any file version in time is not correct since update/merge was applie3d to already modified file
     /*if (entry.isResultOfMerge()) {
@@ -439,17 +442,29 @@ public class CvsChangeProvider implements ChangeProvider {
       }
     }*/
 
-    Date lastModified = entry.getLastModified();
+    final Date lastModified = entry.getLastModified();
     if (lastModified == null) return -1;
     return lastModified.getTime();
   }
 
-  private CvsUpToDateRevision createCvsRevision(FilePath path, VcsRevisionNumber revisionNumber) {
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path.getName());
-    if (fileType.isBinary()) {
-      return new CvsUpToDateBinaryRevision(path, revisionNumber);
+  private CurrentContentRevision createCvsRevision(FilePath filePath) {
+    final VirtualFile parent = filePath.getVirtualFileParent();
+    final String name = filePath.getName();
+    final Entry entry = myEntriesManager.getEntryFor(parent, name);
+    if ((entry != null && entry.isBinary()) || filePath.getFileType().isBinary()) {
+      return new CurrentBinaryContentRevision(filePath);
     }
-    return new CvsUpToDateRevision(path, revisionNumber);
+    return new CurrentContentRevision(filePath);
+  }
+
+  private CvsUpToDateRevision createCvsRevision(FilePath filePath, VcsRevisionNumber revisionNumber) {
+    final VirtualFile parent = filePath.getVirtualFileParent();
+    final String name = filePath.getName();
+    final Entry entry = myEntriesManager.getEntryFor(parent, name);
+    if ((entry != null && entry.isBinary()) || filePath.getFileType().isBinary()) {
+      return new CvsUpToDateBinaryRevision(filePath, revisionNumber);
+    }
+    return new CvsUpToDateRevision(filePath, revisionNumber);
   }
 
   private static boolean isInContent(VirtualFile file) {
@@ -460,25 +475,25 @@ public class CvsChangeProvider implements ChangeProvider {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Retrieving directory content for " + directory);
     }
-    CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
-    DirectoryContent result = new DirectoryContent(cvsInfo);
+    final CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
+    final DirectoryContent result = new DirectoryContent(cvsInfo);
 
     VirtualFile[] children = CvsVfsUtil.getChildrenOf(directory);
     if (children == null) children = VirtualFile.EMPTY_ARRAY;
 
-    Collection<Entry> entries = cvsInfo.getEntries();
+    final Collection<Entry> entries = cvsInfo.getEntries();
 
-    HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
+    final HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
     for (VirtualFile child : children) {
       nameToFileMap.put(child.getName(), child);
     }
 
     for (final Entry entry : entries) {
       checkCanceled.run();
-      String fileName = entry.getFileName();
+      final String fileName = entry.getFileName();
       if (entry.isDirectory()) {
         if (nameToFileMap.containsKey(fileName)) {
-          VirtualFile virtualFile = nameToFileMap.get(fileName);
+          final VirtualFile virtualFile = nameToFileMap.get(fileName);
           if (isInContent(virtualFile)) {
             result.addDirectory(new VirtualFileEntry(virtualFile, entry));
           }
@@ -489,7 +504,7 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       else {
         if (nameToFileMap.containsKey(fileName) || entry.isRemoved()) {
-          VirtualFile virtualFile = nameToFileMap.get(fileName);
+          final VirtualFile virtualFile = nameToFileMap.get(fileName);
           if (isInContent(virtualFile)) {
             result.addFile(new VirtualFileEntry(virtualFile, entry));
           }
@@ -503,7 +518,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     for (final String name : nameToFileMap.keySet()) {
       checkCanceled.run();
-      VirtualFile unknown = nameToFileMap.get(name);
+      final VirtualFile unknown = nameToFileMap.get(name);
       if (unknown.isDirectory()) {
         if (isInContent(unknown)) {
           result.addUnknownDirectory(unknown);
@@ -511,7 +526,7 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       else {
         if (isInContent(unknown)) {
-          boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
+          final boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
           if (isIgnored) {
             result.addIgnoredFile(unknown);
           }
@@ -535,11 +550,12 @@ public class CvsChangeProvider implements ChangeProvider {
       myPath = path;
     }
 
+    @Override
     @Nullable
     public String getContent() throws VcsException {
       if (myContent == null) {
         try {
-          byte[] fileBytes = getUpToDateBinaryContent();
+          final byte[] fileBytes = getUpToDateBinaryContent();
           myContent = fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
         }
         catch (CannotFindCvsRootException e) {
@@ -551,7 +567,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     @Nullable
     protected byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
-      VirtualFile virtualFile = myPath.getVirtualFile();
+      final VirtualFile virtualFile = myPath.getVirtualFile();
       byte[] result = null;
       if (virtualFile != null) {
         result = getLastUpToDateContentFor(virtualFile);
@@ -561,7 +577,7 @@ public class CvsChangeProvider implements ChangeProvider {
         final GetFileContentOperation operation;
         if (virtualFile != null) {
           // todo maybe refactor where data lives
-          Entry entry = myEntriesManager.getEntryFor(virtualFile.getParent(), virtualFile.getName());
+          final Entry entry = myEntriesManager.getEntryFor(virtualFile.getParent(), virtualFile.getName());
           if (entry != null) {
             revision = entry.getRevision();
           }
@@ -583,11 +599,13 @@ public class CvsChangeProvider implements ChangeProvider {
       return result;
     }
 
+    @Override
     @NotNull
     public FilePath getFile() {
       return myPath;
     }
 
+    @Override
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevisionNumber;
@@ -606,6 +624,7 @@ public class CvsChangeProvider implements ChangeProvider {
       super(path, revisionNumber);
     }
 
+    @Override
     @Nullable
     public byte[] getBinaryContent() throws VcsException {
       if (myBinaryContent == null) {
