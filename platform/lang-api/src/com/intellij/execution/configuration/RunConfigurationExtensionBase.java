@@ -65,7 +65,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
 
   protected abstract void patchCommandLine(@NotNull final T configuration,
                                            RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
-                                           @NotNull final AbstractRunConfiguration.RunnerType type) throws ExecutionException;
+                                           @NotNull final String runnerId) throws ExecutionException;
 
   /**
    * Validate extensions after general configuration validation passed

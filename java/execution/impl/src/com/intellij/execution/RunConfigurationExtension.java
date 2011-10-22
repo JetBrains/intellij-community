@@ -22,7 +22,6 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
@@ -45,7 +44,7 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   protected void patchCommandLine(@NotNull RunConfigurationBase configuration,
                                   RunnerSettings runnerSettings,
                                   @NotNull GeneralCommandLine cmdLine,
-                                  @NotNull AbstractRunConfiguration.RunnerType type)  throws ExecutionException {}
+                                  @NotNull String runnerId)  throws ExecutionException {}
 
   @Override
   protected boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {

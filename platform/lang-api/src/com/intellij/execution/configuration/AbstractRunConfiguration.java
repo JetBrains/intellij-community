@@ -33,9 +33,4 @@ public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<
   public void setPassParentEnvs(final boolean passParentEnvs) {
     myPassParentEnvs = passParentEnvs;
   }
-
-  public enum RunnerType {
-    RUN,
-    DEBUG
-  }
 }
