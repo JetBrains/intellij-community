@@ -279,7 +279,7 @@ public class ClassfileAnalyzer {
                                         methods, targets, policy, outerClassName.get(), localClassFlag.get()) : null;
 
       if (repr != null) {
-        repr.updateClassUsages(usages.getUsages());
+        repr.updateClassUsages(usages);
       }
 
       return new Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>>(repr,
@@ -403,22 +403,22 @@ public class ClassfileAnalyzer {
             usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType)element).className));
           }
 
-          typ.updateClassUsages(usages.getUsages());
+          typ.updateClassUsages(name, usages);
 
           super.visitMultiANewArrayInsn(desc, dims);
         }
 
         @Override
-        public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+        public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
           processSignature(signature);
-          TypeRepr.getType(desc).updateClassUsages(usages.getUsages());
-          super.visitLocalVariable(name, desc, signature, start, end, index);
+          TypeRepr.getType(desc).updateClassUsages(name, usages);
+          super.visitLocalVariable(n, desc, signature, start, end, index);
         }
 
         @Override
         public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
           if (type != null) {
-            TypeRepr.createClassType(type).updateClassUsages(usages.getUsages());
+            TypeRepr.createClassType(type).updateClassUsages(name, usages);
           }
 
           super.visitTryCatchBlock(start, end, handler, type);
@@ -439,7 +439,7 @@ public class ClassfileAnalyzer {
             }
           }
 
-          typ.updateClassUsages(usages.getUsages());
+          typ.updateClassUsages(name, usages);
 
           super.visitTypeInsn(opcode, type);
         }
