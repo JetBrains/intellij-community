@@ -1,8 +1,11 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.Set;
 
@@ -40,5 +43,21 @@ public class Paths {
 
   public static File getMappingsStorageFile(final String projectName) {
     return new File(getDataStorageRoot(projectName), "mappings/data");
+  }
+
+  public static URI toURI(String localPath){
+    try {
+      String p = FileUtil.toSystemIndependentName(localPath);
+      if (!p.startsWith("/")) {
+        p = "/" + p;
+      }
+      if (p.startsWith("//")) {
+        p = "//" + p;
+      }
+      return new URI("file", null, p.replaceAll(" ", "%20"), null);
+    }
+    catch (URISyntaxException e) {
+      throw new Error(e);
+    }
   }
 }

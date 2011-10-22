@@ -1,12 +1,10 @@
 package org.jetbrains.jps.incremental.java;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.Paths;
 
 import javax.tools.*;
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 
 /**
@@ -23,28 +21,12 @@ class OutputFileObject extends SimpleJavaFileObject {
   private final File mySourceFile;
 
   public OutputFileObject(JavacFileManager.Context context, File file, Kind kind, @Nullable String className, JavaFileObject source) {
-    super(fastToURI(file), kind);
+    super(Paths.toURI(file.getPath()), kind);
     myContext = context;
     myFile = file;
     myClassName = className;
 
-    mySourceFile = source != null? new File(source.toUri()) : null;
-  }
-
-  private static URI fastToURI(File f) {
-    try {
-      String p = FileUtil.toSystemIndependentName(f.getPath());
-      if (!p.startsWith("/")) {
-        p = "/" + p;
-      }
-      if (p.startsWith("//")) {
-        p = "//" + p;
-      }
-      return new URI("file", null, p, null);
-    }
-    catch (URISyntaxException e) {
-      throw new Error(e);
-    }
+    mySourceFile = source != null? new File(Paths.toURI(source.toUri().getPath())) : null;
   }
 
   public File getFile() {

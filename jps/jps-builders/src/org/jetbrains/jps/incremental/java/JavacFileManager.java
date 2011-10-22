@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -166,14 +165,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     catch (IOException e) {
       e.printStackTrace(); // todo
     }
-  }
-
-  private static URI toURI(String outputDir, String name, JavaFileObject.Kind kind) {
-    return createUri("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + kind.extension);
-  }
-
-  private static URI createUri(String url) {
-    return URI.create(url.replaceAll(" ","%20"));
   }
 
   private static JavaFileObject.Kind getKind(String name) {
