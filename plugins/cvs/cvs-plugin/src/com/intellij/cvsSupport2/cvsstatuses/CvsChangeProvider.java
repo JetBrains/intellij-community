@@ -362,13 +362,13 @@ public class CvsChangeProvider implements ChangeProvider {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
-          new Change(createCvsRevision(filePath, number), createCvsRevision(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
+          new Change(createCvsRevision(filePath, number), CurrentContentRevision.create(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
       final CvsUpToDateRevision beforeRevision = createCvsRevision(filePath, number);
-      final ContentRevision afterRevision = createCvsRevision(filePath);
+      final ContentRevision afterRevision = CurrentContentRevision.create(filePath);
       if (beforeRevision instanceof BinaryContentRevision) {
         final byte[] binaryContent = ((BinaryContentRevision)beforeRevision).getBinaryContent();
         if (binaryContent != null && Arrays.equals(binaryContent, ((BinaryContentRevision)afterRevision).getBinaryContent())) {
@@ -384,7 +384,7 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processChange(new Change(beforeRevision, afterRevision, status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.ADDED) {
-      builder.processChange(new Change(null, createCvsRevision(filePath), status), CvsVcs2.getKey());
+      builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.DELETED) {
       // not sure about deleted content
@@ -447,21 +447,8 @@ public class CvsChangeProvider implements ChangeProvider {
     return lastModified.getTime();
   }
 
-  private CurrentContentRevision createCvsRevision(FilePath filePath) {
-    final VirtualFile parent = filePath.getVirtualFileParent();
-    final String name = filePath.getName();
-    final Entry entry = myEntriesManager.getEntryFor(parent, name);
-    if ((entry != null && entry.isBinary()) || filePath.getFileType().isBinary()) {
-      return new CurrentBinaryContentRevision(filePath);
-    }
-    return new CurrentContentRevision(filePath);
-  }
-
   private CvsUpToDateRevision createCvsRevision(FilePath filePath, VcsRevisionNumber revisionNumber) {
-    final VirtualFile parent = filePath.getVirtualFileParent();
-    final String name = filePath.getName();
-    final Entry entry = myEntriesManager.getEntryFor(parent, name);
-    if ((entry != null && entry.isBinary()) || filePath.getFileType().isBinary()) {
+    if (filePath.getFileType().isBinary()) {
       return new CvsUpToDateBinaryRevision(filePath, revisionNumber);
     }
     return new CvsUpToDateRevision(filePath, revisionNumber);
