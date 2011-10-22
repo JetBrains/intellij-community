@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
@@ -14,22 +13,22 @@ import java.io.IOException;
  */
 public class OutputToSourceMapping extends AbstractStateStorage<String, String> {
 
-  public OutputToSourceMapping(File storePath) throws IOException {
+  public OutputToSourceMapping(File storePath) throws Exception {
     super(storePath, new EnumeratorStringDescriptor(), new EnumeratorStringDescriptor());
   }
 
   @Override
-  public void update(@NotNull String outputPath, @Nullable String sourcePath) throws IOException {
+  public void update(@NotNull String outputPath, @Nullable String sourcePath) throws Exception {
     super.update(FileUtil.toSystemIndependentName(outputPath), sourcePath != null? FileUtil.toSystemIndependentName(sourcePath) : null);
   }
 
   @Override
-  public void remove(@NotNull String outputPath) throws IOException {
+  public void remove(@NotNull String outputPath) throws Exception {
     super.remove(FileUtil.toSystemIndependentName(outputPath));
   }
 
   @Override
-  public String getState(@NotNull String outputPath) throws IOException {
+  public String getState(@NotNull String outputPath) throws Exception {
     return super.getState(FileUtil.toSystemIndependentName(outputPath));
   }
 }

@@ -12,7 +12,7 @@ import java.util.Collection;
  *         Date: 9/21/11
  */
 public class FilesCollector implements FileProcessor{
-  private static FileFilter ALL_FILES = new FileFilter() {
+  public static FileFilter ALL_FILES = new FileFilter() {
     public boolean accept(File pathname) {
       return true;
     }

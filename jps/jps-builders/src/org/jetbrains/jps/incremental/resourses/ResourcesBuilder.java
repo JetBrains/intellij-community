@@ -8,6 +8,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
@@ -45,6 +46,7 @@ public class ResourcesBuilder extends Builder{
     }
     try {
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
+      final OutputToSourceMapping outputToSourceMapping = context.getBuildDataManager().getOutputToSourceStorage();
       final ResourcePatterns finalPatterns = patterns;
       context.processFiles(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws Exception {
@@ -52,7 +54,7 @@ public class ResourcesBuilder extends Builder{
             if (isFileDirty(file, context, tsStorage)) {
               try {
                 context.processMessage(new ProgressMessage("Copying " + file.getPath()));
-                copyResource(context, module, file, sourceRoot);
+                copyResource(context, module, file, sourceRoot, outputToSourceMapping);
               }
               catch (IOException e) {
                 context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
@@ -65,8 +67,6 @@ public class ResourcesBuilder extends Builder{
         }
       });
 
-      //context.processMessage(new ProgressMessage("Done copying resources for " + chunk.getName()));
-
       return ExitCode.OK;
     }
     catch (Exception e) {
@@ -74,7 +74,11 @@ public class ResourcesBuilder extends Builder{
     }
   }
 
-  private void copyResource(CompileContext context, Module module, File file, String sourceRoot) throws IOException {
+  private static void copyResource(CompileContext context,
+                                   Module module,
+                                   File file,
+                                   String sourceRoot,
+                                   final OutputToSourceMapping outputToSourceMapping) throws Exception {
     final String outputRoot = context.isCompilingTests() ? module.getTestOutputPath() : module.getOutputPath();
     final String relativePath = FileUtil.getRelativePath(sourceRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
     final String prefix = module.getSourceRootPrefixes().get(sourceRoot);
@@ -86,7 +90,15 @@ public class ResourcesBuilder extends Builder{
     }
     targetPath.append('/').append(relativePath);
 
-    FileUtil.copyContent(file, new File(targetPath.toString()));
+    final String outputPath = targetPath.toString();
+    FileUtil.copyContent(file, new File(outputPath));
+    try {
+      outputToSourceMapping.update(outputPath, file.getPath());
+    }
+    catch (Exception e) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+    }
+
   }
 
   public String getDescription() {

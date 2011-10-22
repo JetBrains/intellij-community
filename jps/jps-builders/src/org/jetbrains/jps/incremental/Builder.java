@@ -4,7 +4,6 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
@@ -12,7 +11,7 @@ import java.io.IOException;
  */
 public abstract class Builder {
 
-  public static boolean isFileDirty(File file, CompileContext context, TimestampStorage tsStorage) throws IOException {
+  public static boolean isFileDirty(File file, CompileContext context, TimestampStorage tsStorage) throws Exception {
     return !context.isMake() || tsStorage.getStamp(file) != file.lastModified();
   }
 

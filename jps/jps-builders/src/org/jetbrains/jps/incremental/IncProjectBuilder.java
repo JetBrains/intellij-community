@@ -6,6 +6,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 
 import java.io.*;
 import java.util.*;
@@ -176,12 +177,34 @@ public class IncProjectBuilder {
 
   private void buildChunk(CompileContext context, ModuleChunk chunk) throws ProjectBuildException{
     try {
+         // TODO: check how the output-source storage is filled and!
+      if (context.isMake()) {
+        // cleanup outputs
+        final HashSet<File> allChunkSources = new HashSet<File>();
+        context.processFiles(chunk, new FilesCollector(allChunkSources, FilesCollector.ALL_FILES));
+
+        final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
+        final HashSet<File> allChunkRemovedSources = new HashSet<File>();
+        for (Module module : chunk.getModules()) {
+          final File moduleOutput = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
+          if (moduleOutput != null && moduleOutput.exists()) {
+            deleteOutputsOfRemovedSources(moduleOutput, storage, allChunkSources, allChunkRemovedSources);
+          }
+        }
+
+        Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
+      }
+
       for (BuilderCategory category : BuilderCategory.values()) {
         runBuilders(context, chunk, myBuilderRegistry.getBuilders(category));
       }
     }
+    catch (Exception e) {
+      throw new ProjectBuildException(e);
+    }
     finally {
       context.clearFileCache();
+      Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
     }
   }
 
@@ -200,6 +223,30 @@ public class IncProjectBuilder {
       }
     }
     while (nextPassRequired);
+  }
+
+  private static void deleteOutputsOfRemovedSources(File file, final OutputToSourceMapping outputToSourceStorage, Set<File> allChunkSources, Set<File> removedSources) throws Exception {
+    if (file.isDirectory()) {
+      final File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          deleteOutputsOfRemovedSources(child, outputToSourceStorage, allChunkSources, removedSources);
+        }
+      }
+    }
+    else {
+      final String outPath = file.getPath();
+      final String srcPath = outputToSourceStorage.getState(outPath);
+      if (srcPath != null) {
+        // if we know about the association
+        final File outputSource = new File(srcPath);
+        if (!allChunkSources.contains(outputSource)) {
+          removedSources.add(outputSource);
+          FileUtil.delete(file);
+          outputToSourceStorage.remove(outPath);
+        }
+      }
+    }
   }
 
 }
