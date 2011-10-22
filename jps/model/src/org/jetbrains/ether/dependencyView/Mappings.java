@@ -929,8 +929,13 @@ public class Mappings implements RW.Writable {
 
         if (classes != null) {
           for (ClassRepr cr : classes) {
-            classToSourceFile.remove(cr.fileName);
+            classToSubclasses.remove(cr.name);
+            classToSourceFile.remove(cr.name);
             classToClassDependency.remove(cr.name);
+
+            for (StringCache.S superSomething : cr.getSupers()) {
+              classToSubclasses.removeFrom(superSomething, cr.name);
+            }
 
             for (UsageRepr.Usage u : usages) {
               if (u instanceof UsageRepr.ClassUsage) {
