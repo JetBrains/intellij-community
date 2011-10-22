@@ -30,11 +30,6 @@ public class Callbacks {
     Collection<StringCache.S> getClassFiles();
 
     void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-
-    void associate(Set<Pair<ClassRepr, Set<StringCache.S>>> classes,
-                   Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>> usages,
-                   String sourceFileName);
-
     void associateForm(StringCache.S formName, StringCache.S className);
   }
 }
