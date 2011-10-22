@@ -1,10 +1,9 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.ether.RW;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +16,29 @@ import java.util.Map;
  */
 public class StringCache {
 
-  public static class S implements Comparable<S>, RW.Writable {
+  public static class S implements Comparable<S>, RW.Writable, KeyDescriptor<S> {
     public final int index;
     public final String value;
+
+    @Override
+    public void save(final DataOutput out, final S value) throws IOException {
+      out.writeUTF(value.value);
+    }
+
+    @Override
+    public S read(final DataInput in) throws IOException {
+      return get(in.readUTF());
+    }
+
+    @Override
+    public int getHashCode(final S value) {
+      return value.hashCode();
+    }
+
+    @Override
+    public boolean isEqual(final S val1, final S val2) {
+      return val1.equals(val2);
+    }
 
     private S(final int i, final String v) {
       index = i;

@@ -17,7 +17,7 @@ import java.util.*;
 public class TypeRepr {
 
   public static abstract class AbstractType implements RW.Writable {
-    public abstract void updateClassUsages(Set<UsageRepr.Usage> s);
+    public abstract void updateClassUsages(StringCache.S owner, UsageRepr.Cluster s);
 
     public abstract String getDescr();
   }
@@ -31,7 +31,7 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(Set<UsageRepr.Usage> s) {
+    public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
 
     }
 
@@ -79,8 +79,8 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(Set<UsageRepr.Usage> s) {
-      elementType.updateClassUsages(s);
+    public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+      elementType.updateClassUsages(owner, s);
     }
 
     ArrayType(final AbstractType elementType) {
@@ -118,8 +118,8 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(Set<UsageRepr.Usage> s) {
-      s.add(UsageRepr.createClassUsage(className));
+    public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+      s.addUsage(owner.value, UsageRepr.createClassUsage(className));
     }
 
     ClassType(final BufferedReader r) {
@@ -236,7 +236,7 @@ public class TypeRepr {
 
     switch (t.getSort()) {
       case Type.OBJECT:
-        return getType(new ClassType(t.getClassName()));
+        return getType(new ClassType(t.getClassName().replaceAll("\\.", "/")));
 
       case Type.ARRAY:
         return getType(new ArrayType(getType(t.getElementType())));

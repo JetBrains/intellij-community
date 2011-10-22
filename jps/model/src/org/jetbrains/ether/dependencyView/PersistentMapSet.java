@@ -1,11 +1,30 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.ether.RW;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,9 +33,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-public class FoxyMap<K, V> implements Map<K, Object> {
+public class PersistentMapSet<X> extends PersistentHashMap<StringCache.S, Set<X>> {
+  public PersistentMapSet(File file, KeyDescriptor<StringCache.S> sKeyDescriptor, DataExternalizer<Set<X>> valueExternalizer)
+    throws IOException {
+    super(file, sKeyDescriptor, valueExternalizer);
+  }
 
-  public static <X extends RW.Writable, Y extends RW.Writable> void write (final BufferedWriter w, final FoxyMap<X, Y> m){
+  /*
+  public static <X extends RW.Writable> void write (final BufferedWriter w, final PersistentMapSet<X> m){
     RW.writeln(w, Integer.toString(m.size()));
 
     for (Entry<X, Object> e : m.entrySet()) {
@@ -34,8 +58,8 @@ public class FoxyMap<K, V> implements Map<K, Object> {
     }
   }
 
-  public static <X, Y> FoxyMap<X,Y> read (final BufferedReader r, final RW.Reader<X> xr, final RW.Reader<Y> yr, final CollectionConstructor<Y> cc){
-    final FoxyMap<X, Y> result = new FoxyMap<X,Y>(cc);
+  public static <X, Y> PersistentMapSet<X,Y> read (final BufferedReader r, final RW.Reader<X> xr, final RW.Reader<Y> yr, final CollectionConstructor<Y> cc){
+    final PersistentMapSet<X, Y> result = new PersistentMapSet<X,Y>(cc);
 
     final int size = RW.readInt(r);
 
@@ -61,7 +85,7 @@ public class FoxyMap<K, V> implements Map<K, Object> {
 
   private final CollectionConstructor<V> constr;
 
-  public FoxyMap(final CollectionConstructor<V> c) {
+  public PersistentMapSet(final CollectionConstructor<V> c) {
     constr = c;
   }
 
@@ -137,19 +161,6 @@ public class FoxyMap<K, V> implements Map<K, Object> {
     return c;
   }
 
-  public void removeFrom (final K key, final V value) {
-    final Object got = map.get(key);
-
-    if (got != null) {
-      if (got instanceof Collection) {
-          ((Collection)got).remove(value);
-      }
-      else if (got.equals(value)) {
-        map.remove(key);
-      }
-    }
-  }
-
   public Object remove(final Object key) {
     return map.remove(key);
   }
@@ -191,4 +202,5 @@ public class FoxyMap<K, V> implements Map<K, Object> {
   public Set<Entry<K, Object>> entrySet() {
     return map.entrySet();
   }
+  */
 }

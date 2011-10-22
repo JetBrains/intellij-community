@@ -79,16 +79,16 @@ public class MethodRepr extends ProtoMember {
     };
   }
 
-  public void updateClassUsages(final Set<UsageRepr.Usage> s) {
-    type.updateClassUsages(s);
+  public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+    type.updateClassUsages(owner, s);
 
     for (int i = 0; i < argumentTypes.length; i++) {
-      argumentTypes[i].updateClassUsages(s);
+      argumentTypes[i].updateClassUsages(owner, s);
     }
 
     if (exceptions != null) {
       for (TypeRepr.AbstractType typ : exceptions) {
-        typ.updateClassUsages(s);
+        typ.updateClassUsages(owner, s);
       }
     }
   }

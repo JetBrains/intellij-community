@@ -290,25 +290,6 @@ public class ProjectWrapper {
     FileWrapper(final BufferedReader r) {
       myName = StringCache.get(RW.readString(r));
       myModificationTime = RW.readLong(r);
-
-      final Set<ClassRepr> classes = (Set<ClassRepr>)RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr>());
-      final Set<Pair<ClassRepr, Set<StringCache.S>>> classesWithSubclasses = new HashSet<Pair<ClassRepr, Set<StringCache.S>>>();
-
-      for (ClassRepr c : classes) {
-        final Set<StringCache.S> subClasses = (Set<StringCache.S>)RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
-        classesWithSubclasses.add(new Pair<ClassRepr, Set<StringCache.S>>(c, subClasses));
-      }
-
-      final UsageRepr.Cluster usages = new UsageRepr.Cluster(r);
-      final Set<UsageRepr.Usage> annotationUsages = (Set<UsageRepr.Usage>)RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
-      final Set<StringCache.S> formClasses = (Set<StringCache.S>)RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
-
-      backendCallback
-        .associate(classesWithSubclasses, new Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>(usages, annotationUsages), myName.value);
-
-      for (StringCache.S classFileName : formClasses) {
-        backendCallback.associateForm(myName, classFileName);
-      }
     }
 
     public StringCache.S getName() {
@@ -324,20 +305,6 @@ public class ProjectWrapper {
 
       RW.writeln(w, name.value);
       RW.writeln(w, Long.toString(getStamp()));
-
-      final Set<ClassRepr> classes = dependencyMapping.getClasses(name);
-
-      RW.writeln(w, classes);
-
-      if (classes != null) {
-        for (ClassRepr c : classes) {
-          RW.writeln(w, dependencyMapping.getSubClasses(c.name));
-        }
-      }
-
-      dependencyMapping.getUsages(name).write(w);
-      RW.writeln(w, dependencyMapping.getAnnotationUsages(name));
-      RW.writeln(w, dependencyMapping.getFormClass(name));
     }
 
     @Override
@@ -845,7 +812,7 @@ public class ProjectWrapper {
     return myModules.values();
   }
 
-  final Mappings dependencyMapping;
+  Mappings dependencyMapping;
   final Callbacks.Backend backendCallback;
   final Set<StringCache.S> affectedFiles;
 
@@ -894,13 +861,15 @@ public class ProjectWrapper {
       myLibraries.put(l.getName(), new LibraryWrapper(l));
     }
 
-    myHistory = loadHistory ? loadSnapshot(dependencyMapping, affectedFiles) : null;
+    myHistory = loadHistory ? loadSnapshot(affectedFiles) : null;
+
+    if (loadHistory) {
+      dependencyMapping = myHistory.dependencyMapping;
+    }
   }
 
-  private ProjectWrapper(final BufferedReader r, final Mappings mappings, final Set<StringCache.S> affected) {
-    dependencyMapping = mappings;
+  private ProjectWrapper(final BufferedReader r, final Set<StringCache.S> affected) {
     affectedFiles = affected;
-    backendCallback = dependencyMapping.getCallback();
     myProject = null;
     myProjectBuilder = null;
     myHistory = null;
@@ -924,6 +893,9 @@ public class ProjectWrapper {
     }
 
     RW.readMany(r, StringCache.reader, affectedFiles);
+
+    dependencyMapping = new Mappings(r);
+    backendCallback = dependencyMapping.getCallback();
   }
 
   private String getAbsolutePath(final String relative) {
@@ -958,18 +930,20 @@ public class ProjectWrapper {
     RW.writeln(w, getModules());
 
     RW.writeln(w, affectedFiles, StringCache.fromS);
+
+    dependencyMapping.write(w);
   }
 
   private String getProjectSnapshotFileName() {
     return myProjectSnapshot;
   }
 
-  private ProjectWrapper loadSnapshot(final Mappings mappings, final Set<StringCache.S> affectedFiles) {
+  private ProjectWrapper loadSnapshot(final Set<StringCache.S> affectedFiles) {
     initJPSDirectory();
 
     try {
       final BufferedReader r = new BufferedReader(new FileReader(getProjectSnapshotFileName()));
-      final ProjectWrapper w = new ProjectWrapper(r, mappings, affectedFiles);
+      final ProjectWrapper w = new ProjectWrapper(r, affectedFiles);
       r.close();
 
       return w;
