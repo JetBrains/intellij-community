@@ -21,6 +21,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.CellConstraints;
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.FileMonitor;
 import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
@@ -70,6 +72,8 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
     cp.add(getResourcePath(TIntHash.class));  // trove
     cp.add(getResourcePath(FileUtil.class));  // util module
+    cp.add(getResourcePath(Pointer.class));  // jna.jar
+    cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons
     cp.add(getResourcePath(MacroExpander.class));  // jps-model

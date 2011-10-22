@@ -27,6 +27,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>
 
