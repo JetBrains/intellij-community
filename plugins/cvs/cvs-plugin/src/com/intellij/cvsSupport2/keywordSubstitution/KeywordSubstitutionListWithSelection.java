@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.keywordSubstitution;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ListWithSelection;
 
 /**
@@ -33,19 +34,25 @@ public class KeywordSubstitutionListWithSelection extends ListWithSelection<Keyw
     add(KeywordSubstitutionWrapper.KEYWORD_REPLACEMENT);
   }
 
-  public static KeywordSubstitutionListWithSelection createOnFileName(String fileName,
-                                                                      CvsConfiguration config){
-    KeywordSubstitutionListWithSelection result = new KeywordSubstitutionListWithSelection();
-    boolean binary = FileTypeManager.getInstance().getFileTypeByFileName(fileName).isBinary();
-    result.select(binary ? KeywordSubstitutionWrapper.BINARY :
-        KeywordSubstitutionWrapper.getValue(config.DEFAULT_TEXT_FILE_SUBSTITUTION));
+  public static KeywordSubstitutionListWithSelection createOnFile(VirtualFile vFile, CvsConfiguration config) {
+    final KeywordSubstitutionListWithSelection result = new KeywordSubstitutionListWithSelection();
+    if (vFile.getFileType().isBinary()) {
+      result.select(KeywordSubstitutionWrapper.BINARY);
+    }
+    else {
+      result.select(KeywordSubstitutionWrapper.getValue(config.DEFAULT_TEXT_FILE_SUBSTITUTION));
+    }
     return result;
   }
   
   public static KeywordSubstitutionListWithSelection createOnExtension(String extension){
-    KeywordSubstitutionListWithSelection result = new KeywordSubstitutionListWithSelection();
-    boolean binary = FileTypeManager.getInstance().getFileTypeByExtension(extension).isBinary();
-    result.select(binary ? KeywordSubstitutionWrapper.BINARY : KeywordSubstitutionWrapper.KEYWORD_EXPANSION);
+    final KeywordSubstitutionListWithSelection result = new KeywordSubstitutionListWithSelection();
+    if (FileTypeManager.getInstance().getFileTypeByExtension(extension).isBinary()) {
+      result.select(KeywordSubstitutionWrapper.BINARY);
+    }
+    else {
+      result.select(KeywordSubstitutionWrapper.KEYWORD_EXPANSION);
+    }
     return result;
   }
 }

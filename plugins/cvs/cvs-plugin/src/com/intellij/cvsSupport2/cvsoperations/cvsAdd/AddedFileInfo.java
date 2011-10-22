@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
@@ -50,10 +51,11 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
 
   public AddedFileInfo(VirtualFile addedFile, @NotNull Project project, CvsConfiguration config) {
     myAddedFile = addedFile;
-    mySubstitution = KeywordSubstitutionListWithSelection.createOnFileName(myAddedFile.getName(), config);
+    mySubstitution = KeywordSubstitutionListWithSelection.createOnFile(myAddedFile, config);
     myProject = project;
   }
 
+  @Nullable
   public KeywordSubstitution getKeywordSubstitution() {
     if (myAddedFile.isDirectory()) {
       return null;
@@ -123,7 +125,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   }
 
   public Collection<AddedFileInfo> collectAllIncludedFiles() {
-    ArrayList<AddedFileInfo> result = new ArrayList<AddedFileInfo>();
+    final ArrayList<AddedFileInfo> result = new ArrayList<AddedFileInfo>();
     if (!myIncluded) return result;
     result.add(this);
 
@@ -155,9 +157,10 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   }
 
   private static class MyComparator implements Comparator {
+    @Override
     public int compare(Object o1, Object o2) {
-      AddedFileInfo info1 = (AddedFileInfo)o1;
-      AddedFileInfo info2 = (AddedFileInfo)o2;
+      final AddedFileInfo info1 = (AddedFileInfo)o1;
+      final AddedFileInfo info2 = (AddedFileInfo)o2;
       if (info1.getFile().isDirectory() && !info2.getFile().isDirectory()) return -1;
       if (!info1.getFile().isDirectory() && info2.getFile().isDirectory()) return 1;
       return info1.getPresentableText().compareTo(info2.getPresentableText());
@@ -165,6 +168,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   }
 
   private static class MyObservable extends Observable {
+    @Override
     public synchronized void setChanged() {
       super.setChanged();
     }
@@ -182,13 +186,12 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     for (int i = 0; i < getChildCount(); i++) {
       ((AddedFileInfo)getChildAt(i)).removeIncludedObserver(observer);
     }
-
   }
 
   public boolean hasIncludedNodes() {
     if (myIncluded) return true;
     for (int i = 0; i < getChildCount(); i++) {
-      AddedFileInfo child = ((AddedFileInfo)getChildAt(i));
+      final AddedFileInfo child = ((AddedFileInfo)getChildAt(i));
       if (child.hasIncludedNodes()) return true;
     }
     return false;
@@ -197,7 +200,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   public void clearAllCvsAdminDirectoriesInIncludedDirectories() {
     if (!myIncluded) return;
     if (!myAddedFile.isDirectory()) return;
-    CvsStorageComponent cvsStorageComponent = CvsStorageSupportingDeletionComponent.getInstance(myProject);
+    final CvsStorageComponent cvsStorageComponent = CvsStorageSupportingDeletionComponent.getInstance(myProject);
     cvsStorageComponent.deleteIfAdminDirCreated(myAddedFile);
   }
 }
