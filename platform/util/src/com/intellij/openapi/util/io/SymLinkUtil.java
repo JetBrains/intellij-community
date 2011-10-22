@@ -69,7 +69,7 @@ public class SymLinkUtil {
 
   public static boolean isSymLink(@NotNull final File file) {
     try {
-      return file.exists() && ourMediator != null && ourMediator.isSymLink(file.getAbsolutePath());
+      return ourMediator != null && file.exists() && ourMediator.isSymLink(file.getAbsolutePath());
     }
     catch (Exception e) {
       LOG.warn(e);
