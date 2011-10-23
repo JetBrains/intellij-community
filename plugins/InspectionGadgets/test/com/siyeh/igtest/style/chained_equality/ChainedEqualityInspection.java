@@ -1,4 +1,4 @@
-package com.siyeh.igtest.confusing;
+package com.siyeh.igtest.style.chained_equality;
 
 public class ChainedEqualityInspection
 {

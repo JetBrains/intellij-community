@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.siyeh.ig.style;
 
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,14 +33,12 @@ public class ChainedEqualityInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "chained.equality.comparisons.display.name");
+    return InspectionGadgetsBundle.message("chained.equality.comparisons.display.name");
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "chained.equality.comparisons.problem.descriptor");
+    return InspectionGadgetsBundle.message("chained.equality.comparisons.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -50,30 +48,17 @@ public class ChainedEqualityInspection extends BaseInspection {
   private static class ChainedEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (JavaTokenType.EQEQ != tokenType && JavaTokenType.NE != tokenType) {
         return;
       }
-      if (!isEqualityComparison(expression)) {
-        return;
-      }
-      final PsiExpression lhs = expression.getLOperand();
-      if (!(lhs instanceof PsiBinaryExpression)) {
-        return;
-      }
-      if (!isEqualityComparison((PsiBinaryExpression)lhs)) {
+      final PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 3) {
         return;
       }
       registerError(expression);
-    }
-
-    private static boolean isEqualityComparison(
-      @NotNull PsiBinaryExpression expression) {
-      final IElementType tokenType = expression.getOperationTokenType();
-      return tokenType.equals(JavaTokenType.EQEQ) ||
-             tokenType.equals(JavaTokenType.NE);
     }
   }
 }
