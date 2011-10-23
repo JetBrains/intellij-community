@@ -70,7 +70,7 @@ public class ImportAction extends ActionOnSelectedElement {
   private AbstractAction createCheckoutAction(final boolean makeNewFilesReadOnly) {
     return new AbstractAction(false) {
       protected String getTitle(VcsContext context) {
-        return CvsBundle.message("operation.name.checkout.project");
+        return CvsBundle.message("operation.name.check.out.project");
       }
 
       protected CvsHandler getCvsHandler(CvsContext context) {
