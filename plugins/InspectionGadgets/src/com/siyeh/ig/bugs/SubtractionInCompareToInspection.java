@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,33 +42,20 @@ public class SubtractionInCompareToInspection extends BaseInspection {
     return new SubtractionInCompareToVisitor();
   }
 
-  private static class SubtractionInCompareToVisitor
-    extends BaseInspectionVisitor {
+  private static class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(@NotNull PsiBinaryExpression exp) {
-      super.visitBinaryExpression(exp);
-      if (!(exp.getROperand() != null)) {
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.MINUS)) {
         return;
       }
-      if (!isSubtraction(exp)) {
-        return;
-      }
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(exp, PsiMethod.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
       if (!MethodUtils.isCompareTo(method)) {
         return;
       }
-      registerError(exp);
-    }
-
-    private static boolean isSubtraction(PsiBinaryExpression exp) {
-      final PsiExpression rhs = exp.getROperand();
-      if (rhs == null) {
-        return false;
-      }
-      final IElementType tokenType = exp.getOperationTokenType();
-      return tokenType.equals(JavaTokenType.MINUS);
+      registerError(expression);
     }
   }
 }
