@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.Paths;
 
 import javax.tools.*;
 import java.io.File;
@@ -111,7 +112,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
         }
       }
     }
-    final File file = (dir == null? new File(fileName) : new File(dir, fileName));
+    final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
     return new OutputFileObject(myContext, file, kind, className, src);
   }
 
@@ -119,7 +120,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (loc == StandardLocation.CLASS_OUTPUT) {
       if (myOutputsMap.size() > 1 && sourceFile != null) {
         // multiple outputs case
-        final File outputDir = findOutputDir(new File(sourceFile.toUri()));
+        final File outputDir = findOutputDir(new File(Paths.toURI(sourceFile.toUri().getPath())));
         if (outputDir != null) {
           return outputDir;
         }

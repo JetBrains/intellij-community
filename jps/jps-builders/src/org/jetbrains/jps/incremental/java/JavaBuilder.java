@@ -580,7 +580,7 @@ public class JavaBuilder extends Builder{
       final String srcPath;
       final JavaFileObject source = diagnostic.getSource();
       if (source != null) {
-        srcPath = FileUtil.toSystemIndependentName(new File(source.toUri()).getPath());
+        srcPath = FileUtil.toSystemIndependentName(source.toUri().getPath());
       }
       else {
         srcPath = null;
