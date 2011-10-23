@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class ImportAction extends ActionOnSelectedElement {
     if (!importWizard.isOK()) return CvsHandler.NULL;
 
     myImportDetails = importWizard.createImportDetails();
+    if (myImportDetails == null) return CvsHandler.NULL;
     return CommandCvsHandler.createImportHandler(myImportDetails);
   }
 
@@ -92,7 +93,6 @@ public class ImportAction extends ActionOnSelectedElement {
             //TODO inherit cvs for all modules
             //ModuleLevelVcsManager.getInstance(project).setActiveVcs(CvsVcs2.getInstance(project));
           }
-
         }
       }
     };

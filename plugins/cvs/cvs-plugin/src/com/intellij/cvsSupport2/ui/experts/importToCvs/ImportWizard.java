@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.CvsBundle;
 
 import javax.swing.tree.TreeSelectionModel;
+import java.io.File;
 
 /**
  * author: lesya
@@ -71,7 +72,9 @@ public class ImportWizard extends CvsWizard {
     String moduleName = mySettingsStep.getModuleName();
     String importModuleName = module.getElementPath().equals(".") ? moduleName : module.getElementPath() + "/" + moduleName;
 
-    return new ImportDetails(mySelectImportLocationStep.getSelectedFile(),
+    final File selectedFile = mySelectImportLocationStep.getSelectedFile();
+    if (selectedFile == null) return null;
+    return new ImportDetails(selectedFile,
                              mySettingsStep.getVendor(),
                              mySettingsStep.getReleaseTag(),
                              mySettingsStep.getLogMessage(),
@@ -84,5 +87,4 @@ public class ImportWizard extends CvsWizard {
   protected String getHelpID() {
     return "cvs.import";
   }
-
 }
