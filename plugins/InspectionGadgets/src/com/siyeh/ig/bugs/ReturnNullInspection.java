@@ -117,7 +117,7 @@ public class ReturnNullInspection extends BaseInspection {
              parent instanceof PsiTypeCastExpression) {
         parent = parent.getParent();
       }
-      if (parent == null || !(parent instanceof PsiReturnStatement)) {
+      if (!(parent instanceof PsiReturnStatement)) {
         return;
       }
       final PsiMethod method =

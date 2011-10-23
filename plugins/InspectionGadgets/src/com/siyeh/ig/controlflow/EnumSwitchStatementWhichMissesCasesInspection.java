@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection
         return false;
       }
       final PsiType type = expression.getType();
-      if (type == null || !(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType)) {
         return false;
       }
       final PsiClassType classType = (PsiClassType)type;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -333,7 +333,7 @@ public class ConstantMathCallInspection extends BaseInspection {
       final PsiExpression argument = arguments[0];
       final Object argumentValue =
         ConstantExpressionUtil.computeCastTo(argument, PsiType.DOUBLE);
-      if (argumentValue == null || !(argumentValue instanceof Double)) {
+      if (!(argumentValue instanceof Double)) {
         return;
       }
       final double doubleValue = ((Double)argumentValue).doubleValue();

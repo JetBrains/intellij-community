@@ -596,7 +596,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     final PsiElement prevStatement =
       PsiTreeUtil.skipSiblingsBackward(context,
                                        PsiWhiteSpace.class, PsiComment.class);
-    if (prevStatement == null || !(prevStatement instanceof PsiStatement)) {
+    if (!(prevStatement instanceof PsiStatement)) {
       return null;
     }
     return (PsiStatement)prevStatement;

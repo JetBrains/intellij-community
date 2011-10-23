@@ -268,8 +268,7 @@ public class IOResourceInspection extends ResourceInspection {
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (argument == null ||
-          !(argument instanceof PsiReferenceExpression)) {
+      if (!(argument instanceof PsiReferenceExpression)) {
         return;
       }
       final PsiReference reference = (PsiReference)argument;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class ConnectionResourceInspection extends BaseInspection {
       final PsiReferenceExpression referenceExpression =
         (PsiReferenceExpression)lhs;
       final PsiElement referent = referenceExpression.resolve();
-      if (referent == null || !(referent instanceof PsiVariable)) {
+      if (!(referent instanceof PsiVariable)) {
         return;
       }
       final PsiVariable boundVariable = (PsiVariable)referent;

@@ -39,7 +39,7 @@ public abstract class ResourceInspection extends BaseInspection {
       final PsiReferenceExpression referenceExpression =
         (PsiReferenceExpression)lhs;
       final PsiElement referent = referenceExpression.resolve();
-      if (referent == null || !(referent instanceof PsiVariable)) {
+      if (!(referent instanceof PsiVariable)) {
         return null;
       }
       return (PsiVariable)referent;
