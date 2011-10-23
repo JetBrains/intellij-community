@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsBrowser;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -42,26 +43,26 @@ public class CheckoutHelper {
     myPanel = panel;
   }
 
-  public boolean prepareCheckoutData(CvsElement element, boolean useAltCheckoutPath, String altCheckoutPath) {
+  public boolean prepareCheckoutData(CvsElement element, boolean useAltCheckoutPath) {
     myElement = element;
     if (!useAltCheckoutPath) {
-
-      if (!requestLocation()) return false;
-
-      if (shouldCreateDirectoryOfTheSameName()) {
-        if (!creatingConfirmation()) return false;
+      if (!requestLocation()) {
+        return false;
       }
-
+      if (shouldCreateDirectoryOfTheSameName()) {
+        if (!creatingConfirmation()) {
+          return false;
+        }
+      }
     }
     return true;
-
   }
 
   private boolean creatingConfirmation() {
     File checkoutDirectory = new File(myCheckoutLocation, myElement.getCheckoutPath());
     if (checkoutDirectory.isDirectory()) return true;
-    String message = com.intellij.CvsBundle.message("confirmation.text.directory.will.be.created", checkoutDirectory);
-    return Messages.showYesNoDialog(message, com.intellij.CvsBundle.message("operation.name.check.out.project"), Messages.getQuestionIcon()) == 0;
+    return Messages.showYesNoDialog(CvsBundle.message("confirmation.text.directory.will.be.created", checkoutDirectory),
+                                    CvsBundle.message("operation.name.check.out.project"), Messages.getQuestionIcon()) == 0;
   }
 
   private boolean shouldCreateDirectoryOfTheSameName() {
@@ -73,8 +74,9 @@ public class CheckoutHelper {
   @Nullable
   public VirtualFile chooseCheckoutLocation(String pathToSuggestedFolder) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle(com.intellij.CvsBundle.message("dialog.description.select.a.directory.to.check.out.the.files.to"));
-    VirtualFile suggestedCheckoutFolder = LocalFileSystem.getInstance().findFileByPath(pathToSuggestedFolder.replace(File.separatorChar, '/'));
+    descriptor.setTitle(CvsBundle.message("dialog.description.select.a.directory.to.check.out.the.files.to"));
+    VirtualFile suggestedCheckoutFolder =
+      LocalFileSystem.getInstance().findFileByPath(pathToSuggestedFolder.replace(File.separatorChar, '/'));
     return FileChooser.chooseFile(myPanel, descriptor, suggestedCheckoutFolder);
   }
 
@@ -89,6 +91,4 @@ public class CheckoutHelper {
   public File getCheckoutLocation() {
     return myCheckoutLocation;
   }
-
-
 }

@@ -133,7 +133,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       CvsElement[] cvsElements = myTree.getCurrentSelection();
 
       CvsElement selectedElement = cvsElements[0];
-      if (!myCheckoutHelper.prepareCheckoutData(selectedElement, false, null)) {
+      if (!myCheckoutHelper.prepareCheckoutData(selectedElement, false)) {
         return;
       }
       CvsHandler checkoutHandler = CommandCvsHandler.createCheckoutHandler(
