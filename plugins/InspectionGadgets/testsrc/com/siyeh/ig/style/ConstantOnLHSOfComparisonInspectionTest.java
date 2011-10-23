@@ -1,4 +1,4 @@
-package com.siyeh.ig.numeric;
+package com.siyeh.ig.style;
 
 import com.siyeh.ig.IGInspectionTestCase;
 import com.siyeh.ig.style.ConstantOnLHSOfComparisonInspection;

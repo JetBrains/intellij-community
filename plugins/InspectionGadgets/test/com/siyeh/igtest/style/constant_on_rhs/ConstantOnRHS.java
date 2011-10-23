@@ -1,6 +1,6 @@
-package com.siyeh.igtest.style;
+package com.siyeh.igtest.style.constant_on_rhs;
 
-public class ConstantOnRHSInspection
+public class ConstantOnRHS
 {
     private int m_bar = 4;
     private boolean m_foo = (m_bar == 3);
@@ -11,5 +11,6 @@ public class ConstantOnRHSInspection
         {
 
         }
+        if (m_bar == ) {}
     }
 }
