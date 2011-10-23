@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>CharacterComparison.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Character comparison</problem_class>
+    <description>Character comparison &lt;code&gt;c &lt; d&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>CharacterComparison.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Character comparison</problem_class>
+    <description>Character comparison &lt;code&gt;c &gt; d&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>CharacterComparison.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Character comparison</problem_class>
+    <description>Character comparison &lt;code&gt;c &gt;= d&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>CharacterComparison.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Character comparison</problem_class>
+    <description>Character comparison &lt;code&gt;c &lt;= d&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+</problems>

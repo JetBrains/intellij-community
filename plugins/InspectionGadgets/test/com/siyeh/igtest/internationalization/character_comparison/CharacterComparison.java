@@ -1,8 +1,8 @@
-package com.siyeh.igtest.internationalization;
+package com.siyeh.igtest.internationalization.character_comparison;
 
-public class CharacterComparisonInspection
+public class CharacterComparison
 {
-    public CharacterComparisonInspection()
+    public CharacterComparison()
     {
         super();
     }
@@ -27,7 +27,10 @@ public class CharacterComparisonInspection
         {
             return;
         }
-
+        if (c == d) return;
+        if (c < ) return;
+        @org.jetbrains.annotations.NonNls char a = 'a';
+        if (c < a) return;
     }
 
 }

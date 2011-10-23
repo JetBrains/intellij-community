@@ -1,6 +1,6 @@
 package com.siyeh.igtest.style.chained_equality;
 
-public class ChainedEqualityInspection
+public class ChainedEquality
 {
     public void fooBar()
     {
