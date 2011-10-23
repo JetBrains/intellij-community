@@ -504,12 +504,6 @@ public class Mappings implements RW.Writable {
 
       self.appendDependents(pastClasses, dependants);
 
-      //final Collection<StringCache.S> dep = classToClassDependency.foxyGet(fileName);
-
-      //if (dep != null) {
-      //  dependants.addAll(dep);
-      //}
-
       final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
       final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
       final Map<UsageRepr.Usage, Util.UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, Util.UsageConstraint>();
@@ -846,6 +840,20 @@ public class Mappings implements RW.Writable {
 
       for (ClassRepr c : classDiff.removed()) {
         affectedUsages.add(c.createUsage());
+      }
+      
+      for (ClassRepr c : classDiff.added()) {
+        final Collection<StringCache.S> depClasses = classToClassDependency.foxyGet(c.name);
+        
+        if (depClasses != null) {
+          for (StringCache.S depClass : depClasses) {
+            final StringCache.S fName = classToSourceFile.get(depClass);
+            
+            assert (fName != null);
+
+            affectedFiles.add(fName);
+          }
+        }
       }
 
       if (dependants != null) {
