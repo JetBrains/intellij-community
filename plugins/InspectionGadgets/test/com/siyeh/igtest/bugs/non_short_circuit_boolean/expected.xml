@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NonShortCircuitBoolean.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-short-circuit boolean expression</problem_class>
+    <description>Non-short-circuit boolean expression &lt;code&gt;m_bar &amp; m_baz &amp; m_foo&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>NonShortCircuitBoolean.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-short-circuit boolean expression</problem_class>
+    <description>Non-short-circuit boolean expression &lt;code&gt;m_bar | m_baz&lt;/code&gt; #loc</description>
+  </problem>
+</problems>
