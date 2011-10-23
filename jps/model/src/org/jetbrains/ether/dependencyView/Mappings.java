@@ -925,7 +925,7 @@ public class Mappings implements RW.Writable {
       for (StringCache.S file : removed) {
         final Set<ClassRepr> classes = (Set<ClassRepr>)sourceFileToClasses.foxyGet(file);
         final UsageRepr.Cluster cluster = sourceFileToUsages.get(file);
-        final Set<UsageRepr.Usage> usages = cluster.getUsages();
+        final Set<UsageRepr.Usage> usages = cluster == null ? null : cluster.getUsages();
 
         if (classes != null) {
           for (ClassRepr cr : classes) {
@@ -937,12 +937,14 @@ public class Mappings implements RW.Writable {
               classToSubclasses.removeFrom(superSomething, cr.name);
             }
 
-            for (UsageRepr.Usage u : usages) {
-              if (u instanceof UsageRepr.ClassUsage) {
-                final Set<StringCache.S> residents = cluster.getResidence(u);
+            if (usages != null) {
+              for (UsageRepr.Usage u : usages) {
+                if (u instanceof UsageRepr.ClassUsage) {
+                  final Set<StringCache.S> residents = cluster.getResidence(u);
 
-                if (residents != null && residents.contains(cr.name)) {
-                  classToClassDependency.removeFrom (((UsageRepr.ClassUsage)u).className, cr.name);
+                  if (residents != null && residents.contains(cr.name)) {
+                    classToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                  }
                 }
               }
             }
