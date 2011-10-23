@@ -42,4 +42,10 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless null check</problem_class>
     <description>Pointless null check can be removed</description>
   </problem>
+  <problem>
+    <file>PointlessNullCheck.java</file>
+    <line>33</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless 'null' check</problem_class>
+    <description>Pointless 'null' check can be removed</description>
+  </problem>
 </problems>
