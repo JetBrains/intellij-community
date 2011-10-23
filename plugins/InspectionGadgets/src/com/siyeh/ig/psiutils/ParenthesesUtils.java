@@ -75,12 +75,18 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(JavaTokenType.NE, EQUALITY_PRECEDENCE);
   }
 
+  @Nullable public static PsiElement getParentSkipParentheses(PsiElement element) {
+    PsiElement parent = element.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      parent = parent.getParent();
+    }
+    return parent;
+  }
+
   @Nullable
-  public static PsiExpression stripParentheses(
-    @Nullable PsiExpression expression) {
+  public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
       expression = parenthesizedExpression.getExpression();
     }
     return expression;
