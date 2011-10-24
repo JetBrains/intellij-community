@@ -441,9 +441,9 @@ public class AndroidUtils {
     }
   }
 
-  public static boolean executeCommand(GeneralCommandLine commandLine,
-                                       final StringBuilder messageBuilder,
-                                       @Nullable Integer timeout) throws ExecutionException {
+  public static ExecutionStatus executeCommand(GeneralCommandLine commandLine,
+                                               final StringBuilder messageBuilder,
+                                               @Nullable Integer timeout) throws ExecutionException {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
     handler.addProcessListener(new ProcessAdapter() {
@@ -454,24 +454,26 @@ public class AndroidUtils {
     handler.startNotify();
     try {
       if (timeout != null) {
-        handler.waitFor(timeout);
+        if (timeout > 0) {
+          handler.waitFor(timeout);
+        }
       }
       else {
         handler.waitFor();
       }
     }
     catch (ProcessCanceledException e) {
-      return false;
+      return ExecutionStatus.ERROR;
     }
 
     if (!handler.isProcessTerminated()) {
-      return true;
+      return ExecutionStatus.TIMEOUT;
     }
 
     String message = messageBuilder.toString();
     LOG.info(message);
     int exitCode = handler.getProcess().exitValue();
-    return exitCode == 0;
+    return exitCode == 0 ? ExecutionStatus.SUCCESS : ExecutionStatus.ERROR;
   }
 
   public static void runExternalToolInSeparateThread(@Nullable final Project project,
@@ -497,7 +499,7 @@ public class AndroidUtils {
     String result;
     boolean success = false;
     try {
-      success = executeCommand(commandLine, messageBuilder, null);
+      success = executeCommand(commandLine, messageBuilder, null) == ExecutionStatus.SUCCESS;
       result = messageBuilder.toString();
     }
     catch (ExecutionException e) {

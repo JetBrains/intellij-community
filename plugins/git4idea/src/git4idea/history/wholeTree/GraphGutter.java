@@ -78,6 +78,10 @@ public class GraphGutter {
     myStarted = true;
   }
 
+  public PresentationStyle getStyle() {
+    return myStyle;
+  }
+
   public void setStyle(PresentationStyle style) {
     myStyle = style;
     myComponent.repaint();
@@ -322,7 +326,7 @@ public class GraphGutter {
               used.add(myModel.getCorrectedWire(myModel.getCommitAt(commitsStart)));
             }
           }
-          if (wireEvent.isStart()) {
+          if (wireEvent.isStart() && ! wireEvent.isEnd()) {
             used.add(myModel.getCorrectedWire(myModel.getCommitAt(wireEvent.getCommitIdx())));
           }
           

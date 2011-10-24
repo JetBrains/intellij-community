@@ -33,7 +33,7 @@ public interface LowLevelAccess {
 
   void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
-                             int maxCnt, SymbolicRefs refs) throws VcsException;
+                             int maxCnt, SymbolicRefs refs, final boolean topoOrder) throws VcsException;
 
   SymbolicRefs getRefs() throws VcsException;
   void loadCommits(final Collection<String> startingPoints,
@@ -41,7 +41,7 @@ public interface LowLevelAccess {
                    final Collection<ChangesFilter.Filter> filters,
                    final AsynchConsumer<GitCommit> consumer,
                    int useMaxCnt,
-                   Getter<Boolean> isCanceled, SymbolicRefs refs) throws VcsException;
+                   Getter<Boolean> isCanceled, SymbolicRefs refs, final boolean topoOrder) throws VcsException;
 
   Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException;
   Collection<String> getTagsWithCommit(final SHAHash hash) throws VcsException;
@@ -65,6 +65,7 @@ public interface LowLevelAccess {
    */
   boolean cherryPick(GitCommit hash) throws VcsException;
   void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
-                             final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException;
+                             final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt,
+                             final boolean topoOrder) throws VcsException;
   List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefs refs) throws VcsException;
 }

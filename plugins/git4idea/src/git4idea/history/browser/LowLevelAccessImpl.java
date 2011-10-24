@@ -67,7 +67,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   public void loadHashesWithParents(final @NotNull Collection<String> startingPoints,
                                     @NotNull final Collection<ChangesFilter.Filter> filters,
                                     final AsynchConsumer<CommitHashPlusParents> consumer,
-                                    Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException {
+                                    Getter<Boolean> isCanceled, int useMaxCnt, final boolean topoOrder) throws VcsException {
     final List<String> parameters = new ArrayList<String>();
     final Collection<VirtualFile> paths = new HashSet<VirtualFile>();
     ChangesFilter.filtersToParameters(filters, parameters, paths);
@@ -82,6 +82,11 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     if (useMaxCnt > 0) {
       parameters.add("--max-count=" + useMaxCnt);
     }
+    if (topoOrder) {
+      parameters.add("--topo-order");
+    } else {
+      parameters.add("--date-order");
+    }
 
     GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, paths, ArrayUtil.toStringArray(parameters));
   }
@@ -93,7 +98,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
   public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
-                             int maxCnt, SymbolicRefs refs) throws VcsException {
+                             int maxCnt, SymbolicRefs refs, final boolean topoOrder) throws VcsException {
     final Collection<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>(filtersIn);
     if (beforePoint != null) {
       filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
@@ -102,7 +107,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       filters.add(new ChangesFilter.AfterDate(afterPoint));
     }
 
-    loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, maxCnt, null, refs);
+    loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, maxCnt, null, refs, topoOrder);
   }
 
   // uses cached version
@@ -141,7 +146,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                           @NotNull final Collection<ChangesFilter.Filter> filters,
                           @NotNull final AsynchConsumer<GitCommit> consumer,
                           int useMaxCnt,
-                          Getter<Boolean> isCanceled, SymbolicRefs refs)
+                          Getter<Boolean> isCanceled, SymbolicRefs refs, final boolean topoOrder)
     throws VcsException {
 
     final List<String> parameters = new ArrayList<String>();
@@ -158,6 +163,11 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       }
     } else {
       parameters.add("--all");
+    }
+    if (topoOrder) {
+      parameters.add("--topo-order");
+    } else {
+      parameters.add("--date-order");
     }
 
     for (String endPoint : endPoints) {

@@ -269,7 +269,7 @@ public abstract class GroovyRefactoringUtil {
 
   @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset, boolean strict) {
     if (!(file instanceof GroovyFileBase)) return PsiElement.EMPTY_ARRAY;
-    Language language = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+    Language language = GroovyFileType.GROOVY_LANGUAGE;
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
 

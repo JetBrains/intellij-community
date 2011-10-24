@@ -78,7 +78,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
-    super(viewProvider, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+    super(viewProvider, GroovyFileType.GROOVY_LANGUAGE);
   }
 
   @NotNull

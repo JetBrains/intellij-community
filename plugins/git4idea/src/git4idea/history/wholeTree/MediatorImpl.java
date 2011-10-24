@@ -127,7 +127,7 @@ public class MediatorImpl implements Mediator {
   @Override
   public void reload(final RootsHolder rootsHolder,
                      final Collection<String> startingPoints,
-                     final GitLogFilters filters) {
+                     final GitLogFilters filters, final boolean topoOrder) {
     myTicket.increment();
     myTableWrapper.reset(filters.isEmpty());
     myController.reset();
@@ -140,7 +140,7 @@ public class MediatorImpl implements Mediator {
     } else {
       mySequenceBuffers = null;
     }*/
-    myLoader.loadSkeleton(myTicket.copy(), rootsHolder, startingPoints, filters, myController);
+    myLoader.loadSkeleton(myTicket.copy(), rootsHolder, startingPoints, filters, myController, topoOrder);
   }
 
   public void setLoader(Loader loader) {

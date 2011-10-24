@@ -63,6 +63,7 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
     // false => filter
     public boolean myHighlight = true;
     public boolean myShowTree = true;
+    public boolean myTopoOrder = false;
   }
 
   @Override
@@ -73,6 +74,14 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   @Override
   public void loadState(MyState state) {
     myState = state;
+  }
+
+  public boolean isTopoOrder() {
+    return myState.myTopoOrder;
+  }
+
+  public void setTopoOrder(final boolean value) {
+    myState.myTopoOrder = value;
   }
   
   public Set<String> getActiveRoots() {

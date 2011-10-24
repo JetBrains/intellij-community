@@ -44,7 +44,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
  * @author ilyas
  */
 public class GroovyParserDefinition implements ParserDefinition {
-  public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+  public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_LANGUAGE);
 
   @NotNull
   public Lexer createLexer(Project project) {

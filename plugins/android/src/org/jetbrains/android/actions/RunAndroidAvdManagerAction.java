@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ExecutionStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -52,7 +53,9 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
 
         final StringBuilder messageBuilder = new StringBuilder();
         try {
-          AndroidUtils.executeCommand(commandLine, messageBuilder, null);
+          if (AndroidUtils.executeCommand(commandLine, messageBuilder, 500) == ExecutionStatus.TIMEOUT) {
+            return;
+          }
         }
         catch (ExecutionException e) {
           LOG.error(e);
@@ -64,7 +67,7 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
           commandLine = new GeneralCommandLine();
           commandLine.setExePath(toolPath);
           try {
-            AndroidUtils.executeCommand(commandLine, messageBuilder, null);
+            AndroidUtils.executeCommand(commandLine, messageBuilder, 0);
           }
           catch (ExecutionException e) {
             LOG.error(e);

@@ -62,11 +62,13 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.history.browser.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
@@ -137,6 +139,7 @@ public class GitLogUI implements Disposable {
   private JPanel myEqualToHeadr;
   private boolean myThereAreFilters;
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
+  private JLabel myOrderLabel;
   //private GitLogUI.MyTreeSettingsButton myMyTreeSettingsButton;
 
   public GitLogUI(Project project, final Mediator mediator) {
@@ -204,6 +207,10 @@ public class GitLogUI implements Disposable {
     }
   }
 
+  private void setOrderText(boolean topoOrder) {
+    myOrderLabel.setText(topoOrder ? "Topo Order" : "Date Order");
+  }
+
   private void initUiRefresh() {
     myUIRefresh = new UIRefresh() {
       @Override
@@ -219,6 +226,7 @@ public class GitLogUI implements Disposable {
         }
         fireTableRepaint();
         updateMoreVisibility();
+        orderLabelVisibility();
       }
 
       @Override
@@ -261,6 +269,10 @@ public class GitLogUI implements Disposable {
         myBranchSelectorAction.setSymbolicRefs(myRecalculatedCommon);
       }
     };
+  }
+
+  private void orderLabelVisibility() {
+    myOrderLabel.setVisible(myGraphGutter.getComponent().getWidth() > 60);
   }
 
   private void fireTableRepaint() {
@@ -720,6 +732,10 @@ public class GitLogUI implements Disposable {
     };
     myEqualToHeadr.setBorder(BorderFactory.createMatteBorder(1,0,1,0, UIUtil.getBorderColor()));
     final JPanel wr2 = new JPanel(new BorderLayout());
+    myOrderLabel = new JLabel();
+    myOrderLabel.setForeground(UIUtil.getInactiveTextColor());
+    myOrderLabel.setBorder(new EmptyBorder(0,1,0,0));
+    wr2.add(myOrderLabel, BorderLayout.WEST);
     wr2.add(treeSettings.getLabel(), BorderLayout.EAST);
     myEqualToHeadr.add(wr2, BorderLayout.CENTER);
     treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(UIUtil.getLabelBackground()));
@@ -1366,15 +1382,23 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
-    myThereAreFilters = true;
+    myThereAreFilters = ! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected);
+    final boolean topoOrder = (! myThereAreFilters) && myRootsUnderVcs.size() == 1 ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
+    myOrderLabel.setVisible(false);
+    setOrderText(topoOrder);
+    if (topoOrder) {
+      myTableModel.useNoGroupingStrategy();
+    } else {
+      myTableModel.useDateGroupingStrategy();
+    }
+
     myEqualToHeadr.getParent().setVisible(false);
-    if (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected) {
-      myThereAreFilters = false;
+    if (! myThereAreFilters) {
       if (myMyShowTreeAction.isSelected(null)) {
         myEqualToHeadr.getParent().setVisible(true);
       }
       myUsersSearchContext.clear();
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters());
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(), topoOrder);
     } else {
       ChangesFilter.Comment comment = null;
       if (! commentFilterEmpty) {
@@ -1421,13 +1445,15 @@ public class GitLogUI implements Disposable {
 
       final List<String> possibleReferencies = commentFilterEmpty ? null : Arrays.asList(myPreviousFilter.split("[\\s]"));
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, structureFilters,
-                                                                                            possibleReferencies));
+                                                                                            possibleReferencies), topoOrder);
     }
     myCommentSearchContext.addHighlighter(myDetailsPanel.getHtmlHighlighter());
     updateMoreVisibility();
     mySelectionRequestsMerger.request();
     fireTableRepaint();
     myTableModel.fireTableRowsDeleted(0, was);
+    myGraphGutter.getComponent().revalidate();
+    myGraphGutter.getComponent().repaint();
   }
 
   interface Colors {
@@ -1741,6 +1767,9 @@ public class GitLogUI implements Disposable {
     private final Icon myIcon;
     private JLabel myLabel;
     private final GitLogUI.MySelectRootsForTreeAction myRootsForTreeAction;
+    private final DumbAwareAction myDateOrder;
+    private final GitLogSettings mySettings;
+    private final DumbAwareAction myTopoOrder;
 
     public MyTreeSettings() {
       myIcon = IconLoader.getIcon("/general/comboArrow.png");
@@ -1750,13 +1779,55 @@ public class GitLogUI implements Disposable {
         public void actionPerformed(AnActionEvent e) {
           myGraphGutter.setStyle(GraphGutter.PresentationStyle.multicolour);
         }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? VcsUtil.ourDot : VcsUtil.ourNotDot);
+        }
       };
-      myCalmAction = new DumbAwareAction("Two colors") {
+      myCalmAction = new DumbAwareAction("Two Colors") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           myGraphGutter.setStyle(GraphGutter.PresentationStyle.calm);
         }
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+        }
       };
+
+      mySettings = GitLogSettings.getInstance(myProject);
+      myDateOrder = new DumbAwareAction("Date Order") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (! mySettings.isTopoOrder()) return;
+          mySettings.setTopoOrder(false);
+          reloadRequest();
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(mySettings.isTopoOrder() ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+        }
+      };
+      myTopoOrder = new DumbAwareAction("Topo Order") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (mySettings.isTopoOrder()) return;
+          mySettings.setTopoOrder(true);
+          reloadRequest();
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(mySettings.isTopoOrder() ? VcsUtil.ourDot : VcsUtil.ourNotDot);
+        }
+      };
+
       myRootsForTreeAction = new MySelectRootsForTreeAction();
       myLabel = new JLabel(myIcon);
       myLabel.setOpaque(false);
@@ -1786,8 +1857,14 @@ public class GitLogUI implements Disposable {
 
     private DefaultActionGroup createActionGroup() {
       final DefaultActionGroup dab = new DefaultActionGroup();
+      if (myRootsUnderVcs.size() == 1) {
+        dab.add(myDateOrder);
+        dab.add(myTopoOrder);
+        dab.add(new Separator());
+      }
       dab.add(myMultiColorAction);
       dab.add(myCalmAction);
+      dab.add(new Separator());
       dab.add(myRootsForTreeAction);
       return dab;
     }
@@ -1840,6 +1917,12 @@ public class GitLogUI implements Disposable {
               GitLogSettings.getInstance(myProject).setActiveRoots(paths);
               myGraphGutter.getComponent().revalidate();
               myGraphGutter.getComponent().repaint();
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  orderLabelVisibility();
+                }
+              });
             }
           }
         }).setTitle("Show graph for:").

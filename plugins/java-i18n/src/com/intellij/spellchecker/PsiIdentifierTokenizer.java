@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.spellchecker;
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements;
-
-import com.intellij.lang.Language;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.spellchecker.inspections.IdentifierSplitter;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
+import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
- * @author ilyas
+ * @author yole
  */
-public abstract class GroovyDocChameleonElementType extends ILazyParseableElementType {
-  public GroovyDocChameleonElementType(@NonNls String debugName) {
-    super(debugName);
+public class PsiIdentifierTokenizer extends Tokenizer<PsiIdentifier> {
+  @Override
+  public void tokenize(@NotNull PsiIdentifier element, TokenConsumer consumer) {
+    consumer.consumeToken(element, true, IdentifierSplitter.getInstance());
   }
-
-  @NotNull
-  public Language getLanguage() {
-    return GroovyFileType.GROOVY_LANGUAGE;
-  }
-
 }

@@ -18,6 +18,7 @@ package com.intellij.core;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
@@ -56,6 +57,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
+    myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
   }

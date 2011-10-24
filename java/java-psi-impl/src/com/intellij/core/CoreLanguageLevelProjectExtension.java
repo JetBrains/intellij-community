@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.core;
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements;
-
-import com.intellij.lang.Language;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
- * @author ilyas
+ * @author yole
  */
-public abstract class GroovyDocChameleonElementType extends ILazyParseableElementType {
-  public GroovyDocChameleonElementType(@NonNls String debugName) {
-    super(debugName);
-  }
-
+public class CoreLanguageLevelProjectExtension extends LanguageLevelProjectExtension {
   @NotNull
-  public Language getLanguage() {
-    return GroovyFileType.GROOVY_LANGUAGE;
+  @Override
+  public LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_6;
   }
 
+  @Override
+  public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+  }
+
+  @Override
+  public void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload) {
+  }
 }

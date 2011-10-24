@@ -19,10 +19,8 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.spellchecker.inspections.IdentifierSplitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.spellchecker.tokenizer.TokenizerBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author shkate@jetbrains.com
  */
 public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<T> {
-  private final Tokenizer<PsiIdentifier> myIdentifierTokenizer = TokenizerBase.create(IdentifierSplitter.getInstance());
+  private final Tokenizer<PsiIdentifier> myIdentifierTokenizer = new PsiIdentifierTokenizer();
   private final PsiTypeTokenizer myTypeTokenizer = new PsiTypeTokenizer();
 
   @Override

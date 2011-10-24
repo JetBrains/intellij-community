@@ -70,6 +70,11 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
         buf.append(footnote);
       }
     }
+
+    if (myMode == null) {
+      myMode = myModes.get(0);
+    }
+
     myWizardContext = wizardContext;
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(BorderFactory.createEtchedBorder());

@@ -67,6 +67,8 @@ public class BigTableTableModel extends AbstractTableModel {
   private int myNumEventsInGroup;
   
   private final Set<VirtualFile> myActiveRoots;
+  private final CommitGroupingStrategy myDefaultStrategy;
+  private final CommitGroupingStrategy myNoGrouping;
 
   public BigTableTableModel(@NotNull final List<ColumnInfo> columns, Runnable init) {
     myColumns = columns;
@@ -78,7 +80,7 @@ public class BigTableTableModel extends AbstractTableModel {
 
     myCurrentComparator = CommitIReorderingInsideOneRepoComparator.getInstance();
     final DateChangeListGroupingStrategy delegate = new DateChangeListGroupingStrategy();
-    myStrategy = new CommitGroupingStrategy() {
+    myDefaultStrategy = new CommitGroupingStrategy() {
       @Override
       public void beforeStart() {
         delegate.beforeStart();
@@ -89,11 +91,22 @@ public class BigTableTableModel extends AbstractTableModel {
         return delegate.getGroupName(new Date(commit.getTime()));
       }
     };
+    myStrategy = myDefaultStrategy;
     myLines = new BigArray<CommitI>(10);
     myCutCount = -1;
 
     myCommitIdxInterval = 50;
     myNumEventsInGroup = 20;
+    myNoGrouping = new CommitGroupingStrategy() {
+      @Override
+      public String getGroupName(CommitI commit) {
+        return null;
+      }
+
+      @Override
+      public void beforeStart() {
+      }
+    };
   }
 
   public void setCommitIdxInterval(int commitIdxInterval) {
@@ -398,7 +411,7 @@ public class BigTableTableModel extends AbstractTableModel {
 
       @Override
       protected String getGroup(CommitI commitI) {
-        return mySkeletonBuilder != null ? null : myStrategy.getGroupName(commitI);
+        return myStrategy.getGroupName(commitI);
       }
 
       @Override
@@ -468,6 +481,7 @@ public class BigTableTableModel extends AbstractTableModel {
 
     for (int i = myLines.getSize() - 1; i >= 0; i--) {
       final CommitI current = myLines.get(i);
+      if (current.holdsDecoration()) continue;
       if (current.selectRepository(myRootsHolder.getRoots()).equals(targetRepo)) {
         return i + 1;      // will be equal to list size sometimes, is that ok?
       } else {
@@ -493,6 +507,14 @@ public class BigTableTableModel extends AbstractTableModel {
 
   public void setStrategy(CommitGroupingStrategy strategy) {
     myStrategy = strategy;
+  }
+
+  public void useDateGroupingStrategy() {
+    myStrategy = myDefaultStrategy;
+  }
+
+  public void useNoGroupingStrategy() {
+    myStrategy = myNoGrouping;
   }
 
   public void printNavigation() {

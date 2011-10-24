@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ExecutionStatus;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -66,7 +67,7 @@ public class AndroidMavenExecutor {
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
       StringBuilder messageBuilder = new StringBuilder();
-      boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder, null);
+      boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder, null) == ExecutionStatus.SUCCESS;
       String message = messageBuilder.toString();
       if (message != null && !success) {
         LOG.info(message);

@@ -59,11 +59,9 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   private static DictionarySuggestionProvider findProvider() {
     Object[] extensions = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
 
-    if (extensions != null) {
-      for (Object extension : extensions) {
-        if (extension instanceof DictionarySuggestionProvider) {
-          return (DictionarySuggestionProvider)extension;
-        }
+    for (Object extension : extensions) {
+      if (extension instanceof DictionarySuggestionProvider) {
+        return (DictionarySuggestionProvider)extension;
       }
     }
     return null;
@@ -88,9 +86,12 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         PsiElement psiElement = descriptor.getPsiElement();
         PsiFile containingFile = psiElement.getContainingFile();
         Editor editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
+        if (editor == null) {
+          return;
+        }
         
         if (editor instanceof EditorWindow) {
-          map.put(LangDataKeys.EDITOR.getName(), editor);
+          map.put(PlatformDataKeys.EDITOR.getName(), editor);
           map.put(LangDataKeys.PSI_ELEMENT.getName(), psiElement);
         } else if (ApplicationManager.getApplication().isUnitTestMode()) { // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
           map.put(
@@ -103,7 +104,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
           );
         }
         
-        DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext());
+        DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
         AnAction action = new RenameElementAction();
         AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
         action.actionPerformed(event);

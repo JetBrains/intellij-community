@@ -67,7 +67,7 @@ public class LoadController implements Loader {
                            final RootsHolder rootsHolder,
                            final Collection<String> startingPoints,
                            final GitLogFilters filters,
-                           final LoadGrowthController loadGrowthController) {
+                           final LoadGrowthController loadGrowthController, final boolean topoOrder) {
     if (myPreviousAlgorithm != null) {
       myPreviousAlgorithm.stop();
     }
@@ -91,7 +91,7 @@ public class LoadController implements Loader {
         public void consume(final List<ChangesFilter.Filter> filters) {
           final LoaderAndRefresherImpl loaderAndRefresher =
           new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
-                                     loadGrowthController.getId(), haveStructureFilter);
+                                     loadGrowthController.getId(), haveStructureFilter, topoOrder);
           list.add(loaderAndRefresher);
         }
       }, true, root);

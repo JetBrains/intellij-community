@@ -59,6 +59,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   // state
   @NotNull
   private volatile StepType myStepType;
+  private final boolean myTopoOrder;
 
   private static boolean parameterCheck(final Integer i) {
     return i != null && i > 0;
@@ -72,11 +73,12 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
                                 Project project,
                                 MyRootHolder rootHolder,
                                 final UsersIndex usersIndex,
-                                final LoadGrowthController.ID id, boolean haveStructureFilter) {
+                                final LoadGrowthController.ID id, boolean haveStructureFilter, boolean topoOrder) {
     myRootHolder = rootHolder;
     myUsersIndex = usersIndex;
     myId = id;
     myHaveStructureFilter = haveStructureFilter;
+    myTopoOrder = topoOrder;
     myLoadParents = filters == null || filters.isEmpty();
     myTicket = ticket;
     myFilters = filters;
@@ -245,7 +247,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
         @Override
         public void finished() {
         }
-      }, count, myProgressAnalog, mySymbolicRefs);
+      }, count, myProgressAnalog, mySymbolicRefs, myTopoOrder);
     }
     catch (VcsException e) {
       myMediator.acceptException(e);
@@ -283,7 +285,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private void loadShort(final long continuation, int maxCount) {
     final Collection<ChangesFilter.Filter> filters = addContinuation(continuation);
     try {
-      myLowLevelAccess.loadHashesWithParents(myStartingPoints, filters, myRepeatingLoadConsumer, myProgressAnalog, maxCount);
+      myLowLevelAccess.loadHashesWithParents(myStartingPoints, filters, myRepeatingLoadConsumer, myProgressAnalog, maxCount, myTopoOrder);
     }
     catch (VcsException e) {
       myMediator.acceptException(e);
