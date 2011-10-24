@@ -35,7 +35,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SpeedSearchBase;
@@ -161,7 +160,8 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         final IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
-        pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null);
+        pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null,
+                         myFilter.getFilter(), myDescriptionTextArea);
         myActionToolbar.updateActionsImmediately();
       }
     });
@@ -220,17 +220,9 @@ public abstract class PluginManagerMain implements Disposable {
             final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
             UpdateChecker.checkPluginsHost(host, downloaded, false);
             for (PluginDownloader downloader : downloaded) {
-              final PluginNode node = new PluginNode();
-              final VirtualFile pluginFile = PluginDownloader.findPluginFile(downloader.getFileName(), host);
-              if (pluginFile != null) {
-                node.setId(downloader.getPluginId());
-                node.setName(downloader.getPluginName());
-                node.setVersion(downloader.getPluginVersion());
-                node.setRepositoryName(host);
-                node.setDownloadUrl(pluginFile.getUrl());
-                node.setDepends(downloader.getDepends(), null);
-                node.setDescription(downloader.getDescription());
-                list.add(node);
+              final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
+              if (pluginNode != null) {
+                list.add(pluginNode);
               }
             }
           }
@@ -332,14 +324,14 @@ public abstract class PluginManagerMain implements Disposable {
     }
   }
 
-  private void pluginInfoUpdate(Object plugin) {
-    if (plugin != null) {
+  public static void pluginInfoUpdate(Object plugin, @Nullable final String filter, final JEditorPane descriptionTextArea) {
+    if (plugin instanceof IdeaPluginDescriptor) {
       IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
 
 
       String description = pluginDescriptor.getDescription();
       if (description != null) {
-        description = SearchUtil.markup(description, myFilter.getFilter());
+        description = SearchUtil.markup(description, filter);
       }
       String changeNotes = pluginDescriptor.getChangeNotes();
       if (!StringUtil.isEmpty(changeNotes)) {
@@ -383,10 +375,10 @@ public abstract class PluginManagerMain implements Disposable {
       }
 
 
-      setTextValue(description, myDescriptionTextArea);
+      setTextValue(description, descriptionTextArea);
     }
     else {
-      setTextValue(null, myDescriptionTextArea);
+      setTextValue(null, descriptionTextArea);
     }
   }
 
@@ -411,7 +403,7 @@ public abstract class PluginManagerMain implements Disposable {
     return null;
   }
 
-  private static class MyHyperlinkListener implements HyperlinkListener {
+  public static class MyHyperlinkListener implements HyperlinkListener {
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JEditorPane pane = (JEditorPane)e.getSource();

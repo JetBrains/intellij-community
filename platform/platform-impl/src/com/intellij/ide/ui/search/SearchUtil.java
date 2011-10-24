@@ -321,7 +321,7 @@ public class SearchUtil {
     };
   }
 
-  public static String markup(@NonNls @NotNull String textToMarkup, String filter) {
+  public static String markup(@NonNls @NotNull String textToMarkup, @Nullable String filter) {
     if (filter == null || filter.length() == 0) {
       return textToMarkup;
     }

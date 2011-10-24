@@ -68,6 +68,7 @@ public class PluginDownloader {
   //additional settings
   private String myDescription;
   private List<PluginId> myDepends;
+  private String myChangeNotes;
 
   public PluginDownloader(final String pluginId, final String pluginUrl, final String pluginVersion) {
     myPluginId = pluginId;
@@ -133,7 +134,8 @@ public class PluginDownloader {
               return true;
             }
           });
-          descriptor = PluginManager.loadDescriptor(new File(outputDir, FileUtil.getNameWithoutExtension(myFile)), PluginManager.PLUGIN_XML);
+          final File file = new File(new File(new File(outputDir, myPluginId), "lib"), myPluginId +".jar");
+          descriptor = PluginManager.loadDescriptor(file, PluginManager.PLUGIN_XML);
         }
         finally {
           FileUtil.delete(outputDir);
@@ -159,7 +161,9 @@ public class PluginDownloader {
       if (untilBuild != null && untilBuild.compareTo(currentBuildNumber) < 0) {
         return false;
       }
-    }
+      setDescription(descriptor.getDescription());
+      setChangeNotes(descriptor.getChangeNotes());
+     }
     return true;
   }
 
@@ -338,6 +342,14 @@ public class PluginDownloader {
     return myDepends;
   }
 
+  public void setChangeNotes(String changeNotes) {
+    myChangeNotes = changeNotes;
+  }
+
+  public String getChangeNotes() {
+    return myChangeNotes;
+  }
+
   public static PluginDownloader createDownloader(IdeaPluginDescriptor pluginDescriptor) throws UnsupportedEncodingException {
     final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
     @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
@@ -396,5 +408,23 @@ public class PluginDownloader {
     else {
       return child;
     }
+  }
+
+  @Nullable
+  public static PluginNode createPluginNode(String host, PluginDownloader downloader) {
+    final PluginNode node = new PluginNode();
+    final VirtualFile pluginFile = findPluginFile(downloader.myPluginUrl, host);
+    if (pluginFile != null) {
+      node.setId(downloader.getPluginId());
+      node.setName(downloader.getPluginName());
+      node.setVersion(downloader.getPluginVersion());
+      node.setRepositoryName(host);
+      node.setDownloadUrl(pluginFile.getUrl());
+      node.setDepends(downloader.getDepends(), null);
+      node.setDescription(downloader.getDescription());
+      node.setChangeNotes(downloader.getChangeNotes());
+      return node;
+    }
+    return null;
   }
 }
