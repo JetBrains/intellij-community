@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
@@ -386,8 +387,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public RelativePoint guessBestPopupLocation(Editor editor) {
-    VisualPosition logicalPosition = editor.getCaretModel().getVisualPosition();
-    Point p = editor.visualPositionToXY(new VisualPosition(logicalPosition.line + 1, logicalPosition.column));
+    CaretModel caretModel = editor.getCaretModel();
+    final VisualPosition visualPosition;
+    if (caretModel.isUpToDate()) {
+      visualPosition = caretModel.getVisualPosition();
+    }
+    else {
+      visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
+    }
+    Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     if (!visibleArea.contains(p)) {
