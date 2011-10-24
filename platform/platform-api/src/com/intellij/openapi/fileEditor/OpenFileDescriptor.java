@@ -44,41 +44,43 @@ public class OpenFileDescriptor implements Navigatable {
   @NotNull
   private final VirtualFile myFile;
   private final int         myOffset;
-  private final int         myLine;
-  private final int         myColumn;
+  private final int         myLogicalLine;
+  private final int         myLogicalColumn;
   private final RangeMarker myRangeMarker;
   private final Project     myProject;
 
   private boolean myUseCurrentWindow = false;
 
-  public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int offset) {
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
     this(project, file, -1, -1, offset, false);
   }
 
-  public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col) {
-    this(project, file, line, col, -1, false);
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
+    this(project, file, logicalLine, logicalColumn, -1, false);
   }
 
-  public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col, boolean persistent) {
-    this(project, file, line, col, -1, persistent);
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
+                            int logicalLine, int logicalColumn, boolean persistent) {
+    this(project, file, logicalLine, logicalColumn, -1, persistent);
   }
 
-  public OpenFileDescriptor(Project project, @NotNull VirtualFile file) {
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
     this(project, file, -1, -1, -1, false);
   }
 
-  private OpenFileDescriptor(final Project project, @NotNull final VirtualFile file, int line, int col, int offset, boolean persistent) {
+  private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
+                             int logicalLine, int logicalColumn, int offset, boolean persistent) {
     myProject = project;
 
     myFile = file;
-    myLine = line;
-    myColumn = col;
+    myLogicalLine = logicalLine;
+    myLogicalColumn = logicalColumn;
     myOffset = offset;
     if (offset >= 0) {
       myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
     }
-    else if (line >= 0 ){
-      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, line, Math.max(0, col), persistent);
+    else if (logicalLine >= 0 ){
+      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, logicalLine, Math.max(0, logicalColumn), persistent);
     }
     else {
       myRangeMarker = null;
@@ -100,11 +102,11 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public int getLine() {
-    return myLine;
+    return myLogicalLine;
   }
 
   public int getColumn() {
-    return myColumn;
+    return myLogicalColumn;
   }
 
   public void navigate(boolean requestFocus) {
@@ -181,20 +183,26 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public void navigateIn(@NotNull Editor e) {
-    if (getOffset() >= 0) {
-      e.getCaretModel().moveToOffset(Math.min(getOffset(), e.getDocument().getTextLength()));
+    final int offset = getOffset();
+    CaretModel caretModel = e.getCaretModel();
+    boolean caretMoved = false;
+    if (myLogicalLine != -1) {
+      LogicalPosition pos = new LogicalPosition(myLogicalLine, myLogicalColumn);
+      if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
+        caretModel.moveToLogicalPosition(pos);
+        caretMoved = true;
+      }
     }
-    else if (getLine() != -1) {
-      LogicalPosition pos = new LogicalPosition(getLine(), getColumn());
-      e.getCaretModel().moveToLogicalPosition(pos);
-    }
-    else {
-      return;
+    if (!caretMoved && offset >= 0) {
+      caretModel.moveToOffset(Math.min(offset, e.getDocument().getTextLength()));
+      caretMoved = true;
     }
 
-    e.getSelectionModel().removeSelection();
-    scrollToCaret(e);
-    unfoldCurrentLine(e);
+    if (caretMoved) {
+      e.getSelectionModel().removeSelection();
+      scrollToCaret(e);
+      unfoldCurrentLine(e);
+    }
   }
 
   private static void unfoldCurrentLine(@NotNull final Editor editor) {

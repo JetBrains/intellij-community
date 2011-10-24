@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -36,26 +37,15 @@ public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentPr
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, ArgumentDescriptor> result) {
-    if (!forCompletion) return;
-
-    String[] namedParametersArray;
-
+                                Map<String, NamedArgumentDescriptor> result) {
     if (resolve instanceof GrMethod) {
-      namedParametersArray = ((GrMethod)resolve).getNamedParametersArray();
+      result.putAll(((GrMethod)resolve).getNamedParameters());
     }
     else if (resolve instanceof GrField) {
-      namedParametersArray = ((GrField)resolve).getNamedParametersArray();
+      result.putAll(((GrField)resolve).getNamedParameters());
     }
     else if (resolve instanceof GrVariable) {
-      namedParametersArray = GrNamedArgumentSearchVisitor.find((GrVariable)resolve);
-    }
-    else {
-      return;
-    }
-
-    for (String parameter : namedParametersArray) {
-      result.put(parameter, TYPE_ANY);
+      result.putAll(GrNamedArgumentSearchVisitor.find((GrVariable)resolve));
     }
   }
 }

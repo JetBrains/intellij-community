@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
@@ -83,7 +82,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     if (virtualFile.isDirectory()) {
       return null;
     }
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    FileType fileType = virtualFile.getFileType();
     if (fileType.isBinary()) return "binary file";
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM
         || fileType == StdFileTypes.IDEA_MODULE

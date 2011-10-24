@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
         return false;
       }
       final PsiElement target = referenceExpression.resolve();
-      if (target == null || !(target instanceof PsiField)) {
+      if (!(target instanceof PsiField)) {
         return false;
       }
       final PsiField superField = (PsiField)target;

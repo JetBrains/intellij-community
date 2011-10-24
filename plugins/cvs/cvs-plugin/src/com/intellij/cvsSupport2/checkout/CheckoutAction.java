@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.checkout;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.AbstractAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
@@ -51,7 +52,7 @@ public class CheckoutAction extends AbstractAction {
   }
 
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.check.out.project");
+    return CvsBundle.message("operation.name.check.out.project");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

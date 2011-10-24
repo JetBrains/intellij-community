@@ -144,19 +144,19 @@ public class ClassRepr extends Proto {
     return result;
   }
 
-  public void updateClassUsages(final Set<UsageRepr.Usage> s) {
-    superClass.updateClassUsages(s);
+  public void updateClassUsages(final UsageRepr.Cluster s) {
+    superClass.updateClassUsages(name, s);
 
     for (TypeRepr.AbstractType t : interfaces) {
-      t.updateClassUsages(s);
+      t.updateClassUsages(name, s);
     }
 
     for (MethodRepr m : methods) {
-      m.updateClassUsages(s);
+      m.updateClassUsages(name, s);
     }
 
     for (FieldRepr f : fields) {
-      f.updateClassUsages(s);
+      f.updateClassUsages(name, s);
     }
   }
 

@@ -15,18 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.Set;
  * @author peter
  */
 public class NonCodeMembersHolder implements CustomMembersHolder {
-  private final List<LightMethodBuilder> myMethods = new ArrayList<LightMethodBuilder>();
+  private final List<GrLightMethodBuilder> myMethods = new ArrayList<GrLightMethodBuilder>();
   private static final Key<CachedValue<ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder>>> CACHED_HOLDERS = Key.create("CACHED_HOLDERS");
 
   public static NonCodeMembersHolder generateMembers(Set<Map> methods, final PsiFile place) {
@@ -59,18 +60,34 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     for (Map prop : data) {
       String name = String.valueOf(prop.get("name"));
 
-      final LightMethodBuilder method = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, name).addModifier(PsiModifier.PUBLIC);
+      final GrLightMethodBuilder method = new GrLightMethodBuilder(manager, name).addModifier(PsiModifier.PUBLIC);
 
       if (Boolean.TRUE.equals(prop.get("constructor"))) {
         method.setConstructor(true);
       } else {
-        method.setMethodReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
+        method.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
       }
 
       final Object params = prop.get("params");
       if (params instanceof Map) {
+        boolean first = true;
         for (Object paramName : ((Map)params).keySet()) {
-          method.addParameter(String.valueOf(paramName), convertToPsiType(String.valueOf(((Map)params).get(paramName)), place));
+          Object value = ((Map)params).get(paramName);
+          boolean isNamed = first && value instanceof List;
+          first = false;
+          String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
+          method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
+
+          if (isNamed) {
+            Map<String, NamedArgumentDescriptor> namedParams = Maps.newHashMap();
+            for (Object o : (List)value) {
+              if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
+                namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,
+                                ((CustomMembersGenerator.ParameterDescriptor)o).descriptor);
+              }
+            }
+            method.setNamedParameters(namedParams);
+          }
         }
       }
 

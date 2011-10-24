@@ -101,6 +101,13 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static byte[] append(@NotNull byte[] array, byte value) {
+    array = realloc(array, array.length + 1);
+    array[array.length - 1] = value;
+    return array;
+  }
+
+  @NotNull
   public static char[] realloc(@NotNull char[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_CHAR_ARRAY;
@@ -232,6 +239,20 @@ public class ArrayUtil {
       return a1;
     }
     int[] result = new int[a1.length + a2.length];
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
+  }
+
+  @NotNull
+  public static byte[] mergeArrays(@NotNull byte[] a1, @NotNull byte[] a2) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+    byte[] result = new byte[a1.length + a2.length];
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;

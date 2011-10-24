@@ -137,6 +137,19 @@ public class FoxyMap<K, V> implements Map<K, Object> {
     return c;
   }
 
+  public void removeFrom (final K key, final V value) {
+    final Object got = map.get(key);
+
+    if (got != null) {
+      if (got instanceof Collection) {
+          ((Collection)got).remove(value);
+      }
+      else if (got.equals(value)) {
+        map.remove(key);
+      }
+    }
+  }
+
   public Object remove(final Object key) {
     return map.remove(key);
   }

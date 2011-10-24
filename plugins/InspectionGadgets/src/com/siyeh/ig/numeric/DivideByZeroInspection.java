@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class DivideByZeroInspection extends BaseInspection {
       }
       final Object value =
         ConstantExpressionUtil.computeCastTo(rhs, PsiType.DOUBLE);
-      if (value == null || !(value instanceof Double)) {
+      if (!(value instanceof Double)) {
         return;
       }
       final double constantValue = ((Double)value).doubleValue();
@@ -86,7 +86,7 @@ public class DivideByZeroInspection extends BaseInspection {
       }
       final Object value = ConstantExpressionUtil.computeCastTo(rhs,
                                                                 PsiType.DOUBLE);
-      if (value == null || !(value instanceof Double)) {
+      if (!(value instanceof Double)) {
         return;
       }
       final double constantValue = ((Double)value).doubleValue();

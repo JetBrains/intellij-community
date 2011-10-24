@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection
   extends BaseInspection {
@@ -47,22 +49,19 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "exception.from.catch.which.doesnt.wrap.display.name");
+    return InspectionGadgetsBundle.message("exception.from.catch.which.doesnt.wrap.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "exception.from.catch.which.doesnt.wrap.problem.descriptor");
+    return InspectionGadgetsBundle.message("exception.from.catch.which.doesnt.wrap.problem.descriptor");
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "exception.from.catch.which.doesntwrap.ignore.option"), this,
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option"), this,
                                           "ignoreGetMessage");
   }
 
@@ -71,15 +70,12 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
     return new ExceptionFromCatchWhichDoesntWrapVisitor();
   }
 
-  private class ExceptionFromCatchWhichDoesntWrapVisitor
-    extends BaseInspectionVisitor {
+  private class ExceptionFromCatchWhichDoesntWrapVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
-      final PsiCatchSection catchSection =
-        PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class,
-                                    true, PsiClass.class);
+      final PsiCatchSection catchSection = PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class, true, PsiClass.class);
       if (catchSection == null) {
         return;
       }
@@ -88,8 +84,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
         return;
       }
       @NonNls final String parameterName = parameter.getName();
-      if ("ignore".equals(parameterName) ||
-          "ignored".equals(parameterName)) {
+      if ("ignore".equals(parameterName) || "ignored".equals(parameterName)) {
         return;
       }
       final PsiExpression exception = statement.getException();
@@ -107,6 +102,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
 
   private class ReferenceFinder extends JavaRecursiveElementVisitor {
 
+    private final Set<PsiReferenceExpression> visited = new HashSet();
     private boolean argumentsContainCatchParameter = false;
     private final PsiParameter parameter;
 
@@ -116,7 +112,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-      if (argumentsContainCatchParameter) {
+      if (argumentsContainCatchParameter || !visited.add(expression)) {
         return;
       }
       super.visitReferenceExpression(expression);

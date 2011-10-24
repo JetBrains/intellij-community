@@ -15,16 +15,15 @@
  */
 package com.intellij.idea;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.PluginsFacade;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,16 +32,6 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
 
   private IdeaTestApplication() {
     super(true, true, true);
-
-    PluginsFacade.INSTANCE = new PluginsFacade() {
-      public IdeaPluginDescriptor getPlugin(PluginId id) {
-        return PluginManager.getPlugin(id);
-      }
-
-      public IdeaPluginDescriptor[] getPlugins() {
-        return PluginManager.getPlugins();
-      }
-    };
   }
 
   public void setDataProvider(@Nullable DataProvider dataContext) {
@@ -55,9 +44,14 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
   }
 
   public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
-    if (ourInstance == null) {
+    final boolean isForeignApp = /*!(ApplicationManager.getApplication() instanceof ApplicationImpl);*/ false;
+    if (ourInstance == null || isForeignApp) {
+      if (isForeignApp) {
+        disposeInstance();
+        PluginManager.invalidatePlugins();
+      }
       new IdeaTestApplication();
-      PluginsFacade.INSTANCE.getPlugins(); //initialization
+      PluginManager.getPlugins();
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       new WriteAction() {
         protected void run(Result result) throws Throwable {
@@ -74,8 +68,12 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
 
   @Override
   public void dispose() {
+    disposeInstance();
+  }
+
+  private static void disposeInstance() {
     if (ourInstance == null) return;
-    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    Application applicationEx = ApplicationManager.getApplication();
     if (applicationEx != null) {
       Disposer.dispose(applicationEx);
       //ApplicationManagerEx.setApplication(null); it will set automatically back to null

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -179,9 +181,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
         (toolWindowId == null || project == null || !Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
     }
-    if (type == NotificationDisplayType.BALLOON && ProjectManager.getInstance().getOpenProjects().length == 0) {
-      type = NotificationDisplayType.STICKY_BALLOON;
-    }
 
     switch (type) {
       case NONE:
@@ -219,10 +218,23 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
     Window window = findWindowForBalloon(project);
     if (window instanceof IdeFrameImpl) {
-      boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType;
-      Balloon balloon = createBalloon(notification, false, !sticky, !sticky);
+      final ProjectManager projectManager = ProjectManager.getInstance();
+      boolean noProjects = projectManager.getOpenProjects().length == 0;
+      boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
+      final Balloon balloon = createBalloon(notification, false, !sticky, !sticky);
       Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
       ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
+      if (noProjects && NotificationDisplayType.BALLOON == displayType) {
+        projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+          @Override
+          public void projectOpened(Project project) {
+            projectManager.removeProjectManagerListener(this);
+            if (!balloon.isDisposed()) {
+              ((BalloonImpl)balloon).startFadeoutTimer(300);
+            }
+          }
+        });
+      }
     }
   }
 

@@ -13,8 +13,8 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class FieldRepr extends ProtoMember {
-  public void updateClassUsages(final Set<UsageRepr.Usage> s) {
-    type.updateClassUsages(s);
+  public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+    type.updateClassUsages(owner, s);
   }
 
   public FieldRepr(final int a, final String n, final String d, final String s, final Object v) {

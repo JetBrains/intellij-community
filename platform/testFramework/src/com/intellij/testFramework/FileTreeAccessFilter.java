@@ -39,7 +39,7 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
 
     if (myAddedClasses.contains(file) || myTreeAccessAllowed) return false;
 
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType fileType = file.getFileType();
     return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
   }
 

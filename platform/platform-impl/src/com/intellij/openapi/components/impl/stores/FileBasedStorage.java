@@ -29,10 +29,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
@@ -57,7 +59,6 @@ public class FileBasedStorage extends XmlElementStorage {
   private final String myFilePath;
   private final IFile myFile;
   protected final String myRootElementName;
-  private static final byte[] BUFFER = new byte[10];
 
   private static boolean myConfigDirectoryRefreshed = false;
 
@@ -274,55 +275,14 @@ public class FileBasedStorage extends XmlElementStorage {
     return isProjectOrModuleFile() ? "Please correct the file content" : "File content will be recreated";
   }
 
-  private Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
-
-    int bytesToSkip = skipBom(file);
-
+  private static Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
     InputStream stream = file.getInputStream();
     try {
-      if (bytesToSkip > 0) {
-        synchronized (BUFFER) {
-          int read = 0;
-          while (read < bytesToSkip) {
-            int r = stream.read(BUFFER, 0, bytesToSkip - read);
-            if (r < 0) throw new IOException("Can't skip BOM for file: " + myFile.getPath());
-            read += r;
-          }
-        }
-      }
-
       return JDOMUtil.loadDocument(stream);
     }
     finally {
       stream.close();
     }
-  }
-
-  private static int skipBom(final VirtualFile virtualFile) {
-    synchronized (BUFFER) {
-      try {
-        InputStream input = virtualFile.getInputStream();
-        final int read;
-        try {
-          read = input.read(BUFFER);
-        }
-        finally {
-          input.close();
-        }
-
-        if (startsWith(BUFFER, read, CharsetToolkit.UTF8_BOM)) {
-          return CharsetToolkit.UTF8_BOM.length;
-        }
-        return 0;
-      }
-      catch (IOException e) {
-        return 0;
-      }
-    }
-  }
-
-  private static boolean startsWith(final byte[] buffer, final int read, final byte[] bom) {
-    return read >= bom.length && ArrayUtil.startsWith(buffer, bom);
   }
 
   public String getFileName() {

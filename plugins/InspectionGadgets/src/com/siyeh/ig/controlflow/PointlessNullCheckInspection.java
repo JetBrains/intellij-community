@@ -1,3 +1,18 @@
+/*
+ * Copyright 2011 Jetbrains
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -84,82 +99,56 @@ public class PointlessNullCheckInspection extends BaseInspection {
     }
   }
 
-  private static class PointlessNullCheckVisitor
-    extends BaseInspectionVisitor {
+  private static class PointlessNullCheckVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitBinaryExpression(PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      final IElementType operationTokenType =
-        expression.getOperationTokenType();
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(
-        expression.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(
-        expression.getROperand());
+      final IElementType operationTokenType = expression.getOperationTokenType();
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
       final PsiBinaryExpression binaryExpression;
-      final PsiInstanceOfExpression instanceofExpression;
+      final PsiExpression possibleInstanceofExpression;
       if (operationTokenType.equals(JavaTokenType.ANDAND)) {
-        if (lhs instanceof PsiBinaryExpression &&
-            rhs instanceof PsiInstanceOfExpression) {
+        if (lhs instanceof PsiBinaryExpression) {
           binaryExpression = (PsiBinaryExpression)lhs;
-          instanceofExpression = (PsiInstanceOfExpression)rhs;
+          possibleInstanceofExpression = rhs;
         }
-        else if (rhs instanceof PsiBinaryExpression &&
-                 lhs instanceof PsiInstanceOfExpression) {
+        else if (rhs instanceof PsiBinaryExpression) {
           binaryExpression = (PsiBinaryExpression)rhs;
-          instanceofExpression = (PsiInstanceOfExpression)lhs;
+          possibleInstanceofExpression = lhs;
         }
         else {
           return;
         }
-        final IElementType tokenType =
-          binaryExpression.getOperationTokenType();
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (!tokenType.equals(JavaTokenType.NE)) {
           return;
         }
       }
       else if (operationTokenType.equals(JavaTokenType.OROR)) {
-        if (lhs instanceof PsiBinaryExpression &&
-            rhs instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression =
-            (PsiPrefixExpression)rhs;
-          final IElementType prefixTokenType =
-            prefixExpression.getOperationTokenType();
+        if (lhs instanceof PsiBinaryExpression && rhs instanceof PsiPrefixExpression) {
+          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)rhs;
+          final IElementType prefixTokenType = prefixExpression.getOperationTokenType();
           if (!JavaTokenType.EXCL.equals(prefixTokenType)) {
-            return;
-          }
-          final PsiExpression operand =
-            ParenthesesUtils.stripParentheses(
-              prefixExpression.getOperand());
-          if (!(operand instanceof PsiInstanceOfExpression)) {
             return;
           }
           binaryExpression = (PsiBinaryExpression)lhs;
-          instanceofExpression = (PsiInstanceOfExpression)operand;
+          possibleInstanceofExpression = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
         }
-        else if (rhs instanceof PsiBinaryExpression &&
-                 lhs instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression =
-            (PsiPrefixExpression)lhs;
-          final IElementType prefixTokenType =
-            prefixExpression.getOperationTokenType();
+        else if (rhs instanceof PsiBinaryExpression && lhs instanceof PsiPrefixExpression) {
+          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)lhs;
+          final IElementType prefixTokenType = prefixExpression.getOperationTokenType();
           if (!JavaTokenType.EXCL.equals(prefixTokenType)) {
             return;
           }
-          final PsiExpression operand =
-            ParenthesesUtils.stripParentheses(
-              prefixExpression.getOperand());
-          if (!(operand instanceof PsiInstanceOfExpression)) {
-            return;
-          }
           binaryExpression = (PsiBinaryExpression)rhs;
-          instanceofExpression = (PsiInstanceOfExpression)operand;
+          possibleInstanceofExpression = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
         }
         else {
           return;
         }
-        final IElementType tokenType =
-          binaryExpression.getOperationTokenType();
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (!tokenType.equals(JavaTokenType.EQEQ)) {
           return;
         }
@@ -167,44 +156,29 @@ public class PointlessNullCheckInspection extends BaseInspection {
       else {
         return;
       }
-      final PsiReferenceExpression referenceExpression1 =
-        getReferenceFromNullCheck(binaryExpression);
+      final PsiReferenceExpression referenceExpression1 = getReferenceFromNullCheck(binaryExpression);
       if (referenceExpression1 == null) {
         return;
       }
-      final PsiExpression operand =
-        ParenthesesUtils.stripParentheses(
-          instanceofExpression.getOperand());
-      if (!(operand instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression2 =
-        (PsiReferenceExpression)operand;
-      final PsiElement target1 = referenceExpression1.resolve();
-      final PsiElement target2 = referenceExpression2.resolve();
-      if (target1 == null || !target1.equals(target2)) {
+      final PsiReferenceExpression referenceExpression2 = getReferenceFromInstanceofExpression(possibleInstanceofExpression);
+      if (!referencesEqual(referenceExpression1, referenceExpression2)) {
         return;
       }
       registerError(binaryExpression);
     }
 
     @Nullable
-    private static PsiReferenceExpression getReferenceFromNullCheck(
-      PsiBinaryExpression expression) {
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(
-        expression.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(
-        expression.getROperand());
+    private static PsiReferenceExpression getReferenceFromNullCheck(PsiBinaryExpression expression) {
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
       if (lhs instanceof PsiReferenceExpression) {
-        if (!(rhs instanceof PsiLiteralExpression &&
-              PsiType.NULL.equals(rhs.getType()))) {
+        if (!(rhs instanceof PsiLiteralExpression && PsiType.NULL.equals(rhs.getType()))) {
           return null;
         }
         return (PsiReferenceExpression)lhs;
       }
       else if (rhs instanceof PsiReferenceExpression) {
-        if (!(lhs instanceof PsiLiteralExpression &&
-              PsiType.NULL.equals(lhs.getType()))) {
+        if (!(lhs instanceof PsiLiteralExpression && PsiType.NULL.equals(lhs.getType()))) {
           return null;
         }
         return (PsiReferenceExpression)rhs;
@@ -213,5 +187,53 @@ public class PointlessNullCheckInspection extends BaseInspection {
         return null;
       }
     }
+
+    @Nullable
+    private static PsiReferenceExpression getReferenceFromInstanceofExpression(PsiExpression expression) {
+      if (expression instanceof PsiParenthesizedExpression) {
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+        return getReferenceFromInstanceofExpression(parenthesizedExpression.getExpression());
+      }
+      else if (expression instanceof PsiInstanceOfExpression) {
+        final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+        final PsiExpression operand = ParenthesesUtils.stripParentheses(instanceOfExpression.getOperand());
+        if (!(operand instanceof PsiReferenceExpression)) {
+          return null;
+        }
+        return (PsiReferenceExpression)operand;
+      }
+      else if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        final IElementType tokenType = polyadicExpression.getOperationTokenType();
+        if (JavaTokenType.OROR != tokenType) {
+          return null;
+        }
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        final PsiReferenceExpression referenceExpression = getReferenceFromInstanceofExpression(operands[0]);
+        if (referenceExpression == null) {
+          return null;
+        }
+        for (int i = 1, operandsLength = operands.length; i < operandsLength; i++) {
+          if (!referencesEqual(referenceExpression, getReferenceFromInstanceofExpression(operands[i]))) {
+            return null;
+          }
+        }
+        return referenceExpression;
+      } else {
+        return null;
+      }
+    }
+  }
+
+  private static boolean referencesEqual(PsiReferenceExpression reference1, PsiReferenceExpression reference2) {
+    if (reference1 ==  null || reference2 == null) {
+      return false;
+    }
+    final PsiElement target1 = reference1.resolve();
+    if (target1 == null) {
+      return false;
+    }
+    final PsiElement target2 = reference2.resolve();
+    return target1.equals(target2);
   }
 }

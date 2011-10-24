@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,35 +31,37 @@ import java.io.File;
  * @author dsl
  */
 public abstract class MultiFileTestCase extends CodeInsightTestCase {
-
   protected boolean myDoCompare = true;
 
-  protected void doTest(PerformAction performAction) throws Exception {
-    doTest(performAction, true);
+  protected void doTest(final PerformAction performAction) throws Exception {
+    doTest(performAction, getTestName(true));
   }
 
-  protected void doTest(PerformAction performAction, final boolean lowercaseFirstLetter) throws Exception {
-    String testName = getTestName(lowercaseFirstLetter);
-    String root = getTestDataPath() + getTestRoot() + testName;
+  protected void doTest(final PerformAction performAction, final boolean lowercaseFirstLetter) throws Exception {
+    doTest(performAction, getTestName(lowercaseFirstLetter));
+  }
 
-    String rootBefore = root + "/before";
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete, false);
-    setupProject(rootDir);
+  protected void doTest(final PerformAction performAction, final String testName) throws Exception {
+    String path = getTestDataPath() + getTestRoot() + testName;
+
+    String pathBefore = path + "/before";
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, pathBefore, myFilesToDelete, false);
+    prepareProject(rootDir);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    String rootAfter = root + "/after";
-    VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
+    String pathAfter = path + "/after";
+    VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter.replace(File.separatorChar, '/'));
 
-    performAction.performAction(rootDir, rootDir2);
+    performAction.performAction(rootDir, rootAfter);
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     FileDocumentManager.getInstance().saveAllDocuments();
 
     if (myDoCompare) {
-      PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+      PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
     }
   }
 
-  protected void setupProject(VirtualFile rootDir) {
+  protected void prepareProject(VirtualFile rootDir) {
     PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
   }
 
@@ -70,5 +72,4 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
   protected interface PerformAction {
     void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception;
   }
-
 }

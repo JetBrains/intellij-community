@@ -434,7 +434,7 @@ public class VcsUtil {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
-      if (!child.isDirectory() && (fileTypeManager == null || fileTypeManager.getFileTypeByFile(child) != FileTypes.UNKNOWN)) {
+      if (!child.isDirectory() && (fileTypeManager == null || child.getFileType() != FileTypes.UNKNOWN)) {
         files.add(child);
       }
       else if (recursive && child.isDirectory()) {

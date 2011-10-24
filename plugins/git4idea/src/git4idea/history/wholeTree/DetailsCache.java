@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -42,7 +41,7 @@ import java.util.Map;
  * @author irengrig
  */
 public class DetailsCache {
-  private final static int ourSize = 400;
+  private final static int ourSize = 500;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit> myCache;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>> myBranches;
   private final Project myProject;
@@ -64,8 +63,8 @@ public class DetailsCache {
     myStash = new HashMap<VirtualFile, Map<AbstractHash,String>>();
     myRefresh = uiRefresh;
     myLock = new Object();
-    myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit>(ourSize, 50);
-    myBranches = new SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>>(10, 10);
+    myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit>(ourSize, 150);
+    myBranches = new SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>>(20, 20);
   }
 
   public GitCommit convert(final VirtualFile root, final AbstractHash hash) {

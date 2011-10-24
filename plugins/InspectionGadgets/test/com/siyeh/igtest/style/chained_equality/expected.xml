@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>ChainedEqualityInspection.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Chained equality comparisons</problem_class>
+    <description>Chained equality comparison &lt;code&gt;foo == bar == barangus&lt;/code&gt; #loc</description>
+  </problem>
+
+</problems>

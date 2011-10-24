@@ -32,7 +32,7 @@ import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
-import java.io.File;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -65,6 +65,8 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("Root * must be an absolute pathname"),
     new CvsMessagePattern("protocol error: *"),
     new CvsMessagePattern("cvs* tag: nothing known about *"),
+    new CvsMessagePattern("cvs* tag: cannot*"),
+    new CvsMessagePattern("cvs* tag:* failed*"),
     new CvsMessagePattern(new String[]{"cvs *: failed to create lock directory for `", "*", "' (*/#cvs.lock): No such file or directory"}, 2)
   };
 
@@ -75,12 +77,16 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("W * : * already exists on version * : NOT MOVING tag to version *"),
     new CvsMessagePattern(new String[]{"cvs server: ", "*", " added independently by second party"}, 2),
     new CvsMessagePattern("cvs server: failed to create lock directory for `*' (*#cvs.lock): No such file or directory"),
-    new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'")};
+    new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'"),
+    new CvsMessagePattern("cvs tag: warning: *")
+  };
 
   private static final Pattern[] FILE_MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs server: Updating*"),
     PatternUtil.fromMask("Directory * added to the repository"), PatternUtil.fromMask("cvs server: scheduling file `*' for addition"),
     PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *"), PatternUtil.fromMask("RCS file: *,v"),
-    PatternUtil.fromMask("cvs server: Tagging*"), PatternUtil.fromMask("cvs add: scheduling file `*' for addition")};
+    PatternUtil.fromMask("cvs server: Tagging*"), PatternUtil.fromMask("cvs add: scheduling file `*' for addition"),
+    PatternUtil.fromMask("cvs rlog: Logging*")
+  };
 
   private static final Pattern[] MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *")};
 
@@ -92,6 +98,9 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
 
   private final Collection<String> myPreviousErrorMessages = new ArrayList<String>();
   @NonNls private static final String CORRECT_ABOVE_ERRORS_FIRST_PREFIX = "correct above errors first";
+
+  enum MessageType { MESSAGE, FILE_MESSAGE, WARNING, ERROR }
+  private MessageType lastMessage = null;
 
   public CvsMessagesTranslator(CvsMessagesListener listener,
                                ICvsFileSystem cvsFileSystem,
@@ -129,37 +138,47 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     if (message.length() == 0) return;
 
     if (isFileMessage(message)) {
+      lastMessage = MessageType.FILE_MESSAGE;
       myListener.addFileMessage(message, myCvsFileSystem);
       return;
     }
 
     if (isMessage(message)) {
+      lastMessage = MessageType.MESSAGE;
       myListener.addMessage(message);
       return;
     }
+
+    if (!error) return;
 
     final CvsMessagePattern errorMessagePattern = getErrorMessagePattern(message, ERRORS_PATTERNS);
     if (errorMessagePattern != null) {
       if (message.contains(CORRECT_ABOVE_ERRORS_FIRST_PREFIX)) {
         for (String s : myPreviousErrorMessages) {
-          myListener.addError(s, null, myCvsFileSystem, myCvsRoot);
+          myListener.addError(s, null, myCvsFileSystem, myCvsRoot, false);
         }
         myPreviousErrorMessages.clear();
       }
       final String relativeFileName = errorMessagePattern.getRelativeFileName(message);
-      myListener.addError(message, relativeFileName, myCvsFileSystem, myCvsRoot);
+      lastMessage = MessageType.ERROR;
+      myListener.addError(message, relativeFileName, myCvsFileSystem, myCvsRoot, false);
       return;
     }
     final CvsMessagePattern warningMessagePattern = getErrorMessagePattern(message, WARNINGS_PATTERNS);
     if (warningMessagePattern != null) {
-      myListener.addWarning(message, warningMessagePattern.getRelativeFileName(message), myCvsFileSystem, myCvsRoot);
+      lastMessage = MessageType.WARNING;
+      myListener.addError(message,warningMessagePattern.getRelativeFileName(message), myCvsFileSystem, myCvsRoot, true);
       return;
     }
 
-    if (error) {
+    if (message.trim().isEmpty()) return;
+    if (lastMessage == MessageType.ERROR) {
+      myListener.addError(message, null, myCvsFileSystem, myCvsRoot, false);
+    } else if (lastMessage == MessageType.WARNING) {
+      myListener.addError(message, null, myCvsFileSystem, myCvsRoot, true);
+    } else if (error) {
       myPreviousErrorMessages.add(message);
     }
-
   }
 
   private static boolean isFileMessage(String message) {
@@ -209,7 +228,6 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
   private void addUpdatedFileInfo(File file, UpdatedFileInfo updatedFileInfo) {
     if (!myUpdatedFilesManager.fileIsNotUpdated(file)) {
       myListener.addFileMessage(new FileMessage(updatedFileInfo, myUpdatedFilesManager));
-
     }
   }
 
@@ -219,6 +237,5 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     }
   }
 
-  public void binaryMessageSent(final byte[] bytes) {
-  }
+  public void binaryMessageSent(final byte[] bytes) {}
 }

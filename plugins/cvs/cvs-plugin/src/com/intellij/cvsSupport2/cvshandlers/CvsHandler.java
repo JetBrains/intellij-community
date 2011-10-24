@@ -102,10 +102,6 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     return result;
   }
 
-  public List<VcsException> getWarnings() {
-    return myErrorMessageProcessor.getWarnings();
-  }
-
   @Override
   public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
     setText2(message);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,12 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.short.circuit.boolean.expression.display.name");
+    return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.display.name");
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.short.circuit.boolean.expression.problem.descriptor");
+    return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.problem.descriptor");
   }
 
   public InspectionGadgetsFix buildFix(Object... infos) {
@@ -54,21 +52,22 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "non.short.circuit.boolean.expression.replace.quickfix");
+      return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiBinaryExpression expression =
-        (PsiBinaryExpression)descriptor.getPsiElement();
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiExpression rhs = expression.getROperand();
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
       final IElementType tokenType = expression.getOperationTokenType();
-      assert rhs != null;
-      final String newExpression = lhs.getText() +
-                                   getShortCircuitOperand(tokenType) + rhs.getText();
-      replaceExpression(expression, newExpression);
+      final String operandText = getShortCircuitOperand(tokenType);
+      final PsiExpression[] operands = expression.getOperands();
+      final StringBuilder newExpression = new StringBuilder();
+      for (PsiExpression operand : operands) {
+        if (newExpression.length() != 0) {
+          newExpression.append(operandText);
+        }
+        newExpression.append(operand.getText());
+      }
+      replaceExpression(expression, newExpression.toString());
     }
 
     private static String getShortCircuitOperand(IElementType tokenType) {
@@ -85,19 +84,13 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     return new NonShortCircuitBooleanVisitor();
   }
 
-  private static class NonShortCircuitBooleanVisitor
-    extends BaseInspectionVisitor {
+  private static class NonShortCircuitBooleanVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.AND) &&
-          !tokenType.equals(JavaTokenType.OR)) {
+      if (!tokenType.equals(JavaTokenType.AND) && !tokenType.equals(JavaTokenType.OR)) {
         return;
       }
       final PsiType type = expression.getType();

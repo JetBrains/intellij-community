@@ -37,7 +37,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, DumbAware
 
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
     return
-      FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM &&
+      file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM &&
       !StdFileTypes.GUI_DESIGNER_FORM.isBinary() &&
       ModuleUtil.findModuleForFile(file, project) != null;
   }

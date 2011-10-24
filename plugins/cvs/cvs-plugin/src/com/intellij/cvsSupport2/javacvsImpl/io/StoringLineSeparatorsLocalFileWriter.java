@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,8 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     }
     finally {
       CvsUtil.skip(inputStream, length);
-      myErrorProcessor.addWarning(vcsEx);
+      vcsEx.setIsWarning(true);
+      myErrorProcessor.addError(vcsEx);
     }
   }
 
@@ -175,7 +176,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     }
   }
 
-  private String getLineSeparatorFor(VirtualFile virtualFile) {
+  private static String getLineSeparatorFor(VirtualFile virtualFile) {
     try {
       return FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
     }

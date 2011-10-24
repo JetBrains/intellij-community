@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
@@ -26,6 +25,8 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -88,7 +89,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       }
     }
 
-    Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
+    Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
     if (map.isEmpty()) {
       map = findOtherNamedArgumentsInFile(mapOrArgumentList);
     }
@@ -97,26 +98,32 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       map.remove(argument.getLabelName());
     }
 
-    for (Map.Entry<String, GroovyNamedArgumentProvider.ArgumentDescriptor> entry : map.entrySet()) {
-      LookupElement lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
-        .setIcon(GroovyIcons.DYNAMIC)
+    for (Map.Entry<String, NamedArgumentDescriptor> entry : map.entrySet()) {
+      LookupElementBuilder lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
         .setTailText(":");
 
+      if (entry.getValue().getPriority() == NamedArgumentDescriptor.Priority.UNLIKELY) {
+        lookup.setItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
+      }
+      else {
+        lookup = lookup.setIcon(GroovyIcons.DYNAMIC);
+      }
+      
       result.addElement(lookup);
     }
 
   }
 
-  private static Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
-    final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = new HashMap<String, GroovyNamedArgumentProvider.ArgumentDescriptor>();
+  private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
+    final Map<String, NamedArgumentDescriptor> map = new HashMap<String, NamedArgumentDescriptor>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof GrArgumentLabel) {
           final String name = ((GrArgumentLabel)element).getName();
           if (GroovyNamesUtil.isIdentifier(name)) {
-            map.put(name, new GroovyNamedArgumentProvider.ArgumentDescriptor());
+            map.put(name, NamedArgumentDescriptor.SIMPLE_UNLIKELY);
           }
         }
         super.visitElement(element);
@@ -140,7 +147,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
-  private static Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> calcNamedArgumentsForCall(PsiElement mapOrArgumentList) {
+  private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
     if (argumentList instanceof GrArgumentList) {
       if (mapOrArgumentList instanceof GrListOrMap) {

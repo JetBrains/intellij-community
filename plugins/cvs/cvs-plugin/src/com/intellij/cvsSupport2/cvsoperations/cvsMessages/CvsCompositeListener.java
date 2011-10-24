@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ public class CvsCompositeListener implements CvsListenersCollection, CvsMessages
     for (final Object myListener : myListeners) {
       ((CvsMessagesListener)myListener).addFileMessage(message);
     }
-
   }
 
   public void addMessage(String message) {
@@ -62,25 +61,15 @@ public class CvsCompositeListener implements CvsListenersCollection, CvsMessages
     }
   }
 
-  public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot) {
+  public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot, boolean warning) {
     for (final Object myListener : myListeners) {
-      ((CvsMessagesListener)myListener).addError(message, relativeFilePath, cvsFileSystem, cvsRoot);
+      ((CvsMessagesListener)myListener).addError(message, relativeFilePath, cvsFileSystem, cvsRoot, warning);
     }
-
-  }
-
-  public void addWarning(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot) {
-    for (final Object myListener : myListeners) {
-      ((CvsMessagesListener)myListener).addWarning(message, relativeFilePath, cvsFileSystem, cvsRoot);
-    }
-
   }
 
   public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
     for (final Object myListener : myListeners) {
       ((CvsMessagesListener)myListener).addFileMessage(message, cvsFileSystem);
     }
-
   }
-
 }

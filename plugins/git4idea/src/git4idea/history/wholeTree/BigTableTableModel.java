@@ -20,9 +20,7 @@ import com.intellij.openapi.vcs.BigArray;
 import com.intellij.openapi.vcs.GroupingMerger;
 import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.ReadonlyList;
-import com.intellij.util.containers.StepList;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.ColumnInfo;
 import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
+import java.util.HashMap;
 
 /**
  * @author irengrig
@@ -45,6 +44,12 @@ public class BigTableTableModel extends AbstractTableModel {
   private List<VirtualFile> myOrder;
   private Map<VirtualFile, Integer> myAdditions;
   // end group
+  
+  private final BidirectionalMap<InnerIdx, Integer> myIdxMap;
+  // for faster drawing
+  private final Map<VirtualFile, TreeSet<Integer>> myRepoIdxMap;
+  // index of NEXT
+  private final Map<VirtualFile, Integer> myRunningRepoIdxs;
 
   @NotNull
   private final List<ColumnInfo> myColumns;
@@ -63,6 +68,10 @@ public class BigTableTableModel extends AbstractTableModel {
   public BigTableTableModel(@NotNull final List<ColumnInfo> columns, Runnable init) {
     myColumns = columns;
     myInit = init;
+    myIdxMap = new BidirectionalMap<InnerIdx, Integer>();
+    myRunningRepoIdxs = new HashMap<VirtualFile, Integer>();
+    myRepoIdxMap = new HashMap<VirtualFile, TreeSet<Integer>>();
+
     myCurrentComparator = CommitIReorderingInsideOneRepoComparator.getInstance();
     final DateChangeListGroupingStrategy delegate = new DateChangeListGroupingStrategy();
     myStrategy = new CommitGroupingStrategy() {
@@ -131,8 +140,8 @@ public class BigTableTableModel extends AbstractTableModel {
   public int getTotalWires() {
     if (mySkeletonBuilder == null) return -1;
     int wires = 0;
-    for (TreeNavigationImpl navigation : myNavigation.values()) {
-      wires += navigation.getMaximumWires();
+    for (SkeletonBuilder skeletonBuilder : mySkeletonBuilder.values()) {
+      wires += skeletonBuilder.getMaxWireNum();
     }
     return wires;
   }
@@ -142,7 +151,7 @@ public class BigTableTableModel extends AbstractTableModel {
     if (mySkeletonBuilder == null) return null;
     final List<Integer> result = new ArrayList<Integer>(myOrder.size());
     for (VirtualFile file : myOrder) {
-      result.add(myNavigation.get(file).getMaximumWires());
+      result.add(mySkeletonBuilder.get(file).getMaxWireNum());
     }
     return result;
   }
@@ -153,31 +162,108 @@ public class BigTableTableModel extends AbstractTableModel {
     return myAdditions.get(file) + commitI.getWireNumber();
   }
   
-  public WiresGroupIterator getGroupIterator(final int firstRow) {
-    return new WiresGroupIterator(firstRow);
+  public Map<VirtualFile, WireEventsIterator> getGroupIterators(final int firstRow) {
+    final Map<VirtualFile, WireEventsIterator> map = new HashMap<VirtualFile, WireEventsIterator>();
+    for (VirtualFile virtualFile : mySkeletonBuilder.keySet()) {
+      map.put(virtualFile, new WiresGroupIterator(firstRow, virtualFile));
+    }
+    return map;
   }
   
-  class WiresGroupIterator {
+  class WiresGroupIterator implements WireEventsIterator {
     private final int myFirstIdx;
     private List<Integer> myFirstUsed;
+    private final VirtualFile myRoot;
+    private final int myOffset;
+    private final Iterator<WireEvent> myWireEventsIterator;
+    private Integer myFloor;
 
-    WiresGroupIterator(int firstIdx) {
+    WiresGroupIterator(int firstIdx, VirtualFile root) {
       myFirstIdx = firstIdx;
+      myRoot = root;
+      myOffset = myAdditions.get(myRoot);
+
       myFirstUsed = new ArrayList<Integer>();
-      for (VirtualFile file : myOrder) {
-        TreeNavigationImpl navigation = myNavigation.get(file);
-        final List<Integer> used = navigation.getUsedWires(firstIdx, myLines, mySkeletonBuilder.get(file).getFutureConvertor()).getUsed();
-        myFirstUsed.addAll(used);
+      TreeNavigationImpl navigation = myNavigation.get(myRoot);
+      // get less idx
+      myFloor = myRepoIdxMap.get(myRoot).floor(firstIdx);
+      int idx;
+      final ReadonlyList<CommitI> wrapper = createWrapper(myRoot);
+      if (myFloor == null) {
+        myFloor = 0;
+        idx = 0;
+      } else {
+        final List<InnerIdx> keysByValue = myIdxMap.getKeysByValue(myFloor);
+        idx = -1;
+        for (InnerIdx innerIdx : keysByValue) {
+          if (innerIdx.getRoot().equals(myRoot)) {
+            idx = innerIdx.getInsideRepoIdx();
+            break;
+          }
+        }
+        assert idx != -1;
       }
+      final List<Integer> used = navigation.getUsedWires(idx, wrapper, mySkeletonBuilder.get(myRoot).getFutureConvertor()).getUsed();
+      for (Integer integer : used) {
+        myFirstUsed.add(integer + myOffset);
+      }
+      myWireEventsIterator = navigation.createWireEventsIterator(idx);
     }
 
+    @Override
+    public Integer getFloor() {
+      return myFloor;
+    }
+
+    @Override
+    public Iterator<WireEvent> getWireEventsIterator() {
+      return new Iterator<WireEvent>() {
+        @Override
+        public boolean hasNext() {
+          return myWireEventsIterator.hasNext();
+        }
+
+        @Override
+        public WireEvent next() {
+          final WireEvent next = myWireEventsIterator.next();
+          final Convertor<Integer, Integer> innerToOuter = new Convertor<Integer, Integer>() {
+            @Override
+            public Integer convert(Integer o) {
+              if (o == -1) return -1;
+              final int insideRepoIdx = o.intValue();
+              final Integer integer = myIdxMap.get(new InnerIdx(myRoot, insideRepoIdx));
+              assert integer != null;
+              return integer;
+            }
+          };
+          final Convertor<int[], int[]> arraysConvertor = new Convertor<int[], int[]>() {
+            @Override
+            public int[] convert(int[] o) {
+              if (o == null) return null;
+              final int[] result = new int[o.length];
+              for (int i = 0; i < o.length; i++) {
+                int i1 = o[i];
+                result[i] = innerToOuter.convert(i1);
+              }
+              return result;
+            }
+          };
+          final WireEvent wireEvent = new WireEvent(innerToOuter.convert(next.getCommitIdx()), arraysConvertor.convert(next.getCommitsEnds()));
+          wireEvent.setCommitsStarts(arraysConvertor.convert(next.getCommitsStarts()));
+          wireEvent.setWireEnds(arraysConvertor.convert(next.getWireEnds()));
+          return wireEvent;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
+      };
+    }
+
+    @Override
     public List<Integer> getFirstUsed() {
       return myFirstUsed;
-    }
-
-    public WireEvent getEventForRow(final int row) {
-      assert row >= myFirstIdx;
-      return myNavigation.get(getCommitAt(row).selectRepository(myRootsHolder.getRoots())).getEventForRow(row);
     }
   }
 
@@ -211,8 +297,7 @@ public class BigTableTableModel extends AbstractTableModel {
   }
 
   public void clear(boolean noFilters) {
-    // todo uncomment for git log tree
-    /*if (noFilters) {
+    if (noFilters) {
       myCurrentComparator = CommitIComparator.getInstance();
       myNavigation = new HashMap<VirtualFile, TreeNavigationImpl>();
       mySkeletonBuilder = new HashMap<VirtualFile, SkeletonBuilder>();
@@ -225,15 +310,19 @@ public class BigTableTableModel extends AbstractTableModel {
         myNavigation.put(vf, navigation);
         mySkeletonBuilder.put(vf, skeletonBuilder);
         myAdditions.put(vf, 0);
+        myRepoIdxMap.put(vf, new TreeSet<Integer>());
+
+        myRunningRepoIdxs.put(vf, 0);
+        myIdxMap.clear();
       }
     } else {
       myCurrentComparator = CommitIReorderingInsideOneRepoComparator.getInstance();
-    */
+
       myAdditions = null;
       mySkeletonBuilder = null;
       myNavigation = null;
       myOrder = null;
-    //}
+    }
     myLines = new BigArray<CommitI>(10);
     myCutCount = -1;
   }
@@ -251,16 +340,17 @@ public class BigTableTableModel extends AbstractTableModel {
       Collections.sort(lines, myCurrentComparator);
     }
 
-    final Integer[] parentsIdx = new Integer[1];
-    parentsIdx[0] = 0;
-
-    final Set<Integer> whatToRecount = mySkeletonBuilder == null ? null : new HashSet<Integer>();
-    final Map<Integer, Integer> indexRecalculation = new HashMap<Integer, Integer>();
     myStrategy.beforeStart();
     
     // find those ..... long awaited start idx by stupid long iteration since
     // items can NOT be ordered by simple rule
+    final int[] parentsIdx = new int[1];
+    parentsIdx[0] = 0;
     int idxFrom = findIdx(lines);
+
+    final CommitI commitI = lines.get(0);
+    final VirtualFile listRoot = commitI.selectRepository(myRootsHolder.getRoots());
+    final ReadonlyList<CommitI> wrapperList = createWrapper(listRoot);
 
     int recountFrom = new GroupingMerger<CommitI, String>() {
       @Override
@@ -274,9 +364,14 @@ public class BigTableTableModel extends AbstractTableModel {
       @Override
       protected void afterConsumed(CommitI commitI, int i) {
         if (mySkeletonBuilder != null && ! commitI.holdsDecoration()) {
-          whatToRecount.add(i);
-          //mySkeletonBuilder.get(commitI.selectRepository(myRootsHolder.getRoots())).consume(commitI, parents.get(parentsIdx[0]), myLines, i);
-          //++parentsIdx[0];
+          final VirtualFile root = commitI.selectRepository(myRootsHolder.getRoots());
+          final Integer innerIdx = myRunningRepoIdxs.get(root);
+          myIdxMap.put(new InnerIdx(root, innerIdx), i);
+          myRepoIdxMap.get(root).add(i);
+          myRunningRepoIdxs.put(root, innerIdx + 1);
+
+          mySkeletonBuilder.get(root).consume(commitI, parents.get(parentsIdx[0]), wrapperList, innerIdx);
+          ++ parentsIdx[0];
         }
       }
 
@@ -287,7 +382,7 @@ public class BigTableTableModel extends AbstractTableModel {
 
       @Override
       protected String getGroup(CommitI commitI) {
-        return mySkeletonBuilder != null ? "" : myStrategy.getGroupName(commitI);
+        return mySkeletonBuilder != null ? null : myStrategy.getGroupName(commitI);
       }
 
       @Override
@@ -298,40 +393,48 @@ public class BigTableTableModel extends AbstractTableModel {
       @Override
       protected void oldBecame(int was, int is) {
         if (mySkeletonBuilder != null && was != is) {
-          indexRecalculation.put(was, is);
-          /*CommitI commitI = myLines.get(is);
-          if (! commitI.holdsDecoration()) {
-            mySkeletonBuilder.get(commitI.selectRepository(myRootsHolder.getRoots())).oldBecameNew(was, is);
-          }*/
+          final List<InnerIdx> keys = myIdxMap.getKeysByValue(was);
+          final VirtualFile root = myLines.get(is).selectRepository(myRootsHolder.getRoots());
+          assert ! root.equals(listRoot);
+          myRepoIdxMap.get(root).remove(was);
+          myRepoIdxMap.get(root).add(is);
+
+          InnerIdx found = null;
+          for (InnerIdx key : keys) {
+            if (key.getRoot().equals(root)) {
+              found = key;
+              break;
+            }
+          }
+          assert found != null;
+          myIdxMap.put(found, is);
         }
-        // todo
-        //System.out.println("old: " + was + " became: " + is);
       }
     }.firstPlusSecond(myLines, new ReadonlyList.ArrayListWrapper<CommitI>(lines), myCurrentComparator, mySkeletonBuilder == null ? -1 : idxFrom);
     
     if (mySkeletonBuilder != null) {
-      for (SkeletonBuilder skeletonBuilder : mySkeletonBuilder.values()) {
-        skeletonBuilder.oldBecameNew(indexRecalculation);
-      }
+      myNavigation.get(listRoot).recalcIndex(wrapperList, mySkeletonBuilder.get(listRoot).getFutureConvertor());
 
-      for (int i = recountFrom; i < myLines.getSize(); i++) {
-        final CommitI commitI = myLines.get(i);
-        if (mySkeletonBuilder != null && ! commitI.holdsDecoration() && whatToRecount.contains(i)) {
-          mySkeletonBuilder.get(commitI.selectRepository(myRootsHolder.getRoots())).consume(commitI, parents.get(parentsIdx[0]), myLines, i);
-          ++parentsIdx[0];
-        }
-      }
-
-      for (Map.Entry<VirtualFile, TreeNavigationImpl> entry : myNavigation.entrySet()) {
-        final TreeNavigationImpl navigation = myNavigation.get(entry.getKey());
-        navigation.recalcIndex(myLines, mySkeletonBuilder.get(entry.getKey()).getFutureConvertor());
-      }
       int size = 0;
       for (VirtualFile file : myOrder) {
         myAdditions.put(file, size);
-        size += myNavigation.get(file).getMaximumWires();
+        size += mySkeletonBuilder.get(file).getMaxWireNum();
       }
     }
+  }
+
+  private ReadonlyList<CommitI> createWrapper(final VirtualFile root) {
+    return new ReadonlyList<CommitI>() {
+        @Override
+        public CommitI get(int idx) {
+          return myLines.get(myIdxMap.get(new InnerIdx(root, idx)));
+        }
+
+        @Override
+        public int getSize() {
+          return myRunningRepoIdxs.get(root);
+        }
+      };
   }
 
   private int findIdx(List<CommitI> lines) {
@@ -344,7 +447,7 @@ public class BigTableTableModel extends AbstractTableModel {
         return i + 1;      // will be equal to list size sometimes, is that ok?
       } else {
         if (current.getTime() > time) {
-          return i + 1;
+          return i;
         }
       }
     }
@@ -363,12 +466,49 @@ public class BigTableTableModel extends AbstractTableModel {
     myStrategy = strategy;
   }
 
-  // todo test
   public void printNavigation() {
     for (Map.Entry<VirtualFile, TreeNavigationImpl> entry : myNavigation.entrySet()) {
       if (entry.getKey().getPath().contains("inner")) {
         entry.getValue().printSelf();
       }
+    }
+  }
+
+  public static class InnerIdx {
+    private final VirtualFile myRoot;
+    private final int myInsideRepoIdx;
+
+    public InnerIdx(VirtualFile root, int insideRepoIdx) {
+      myRoot = root;
+      myInsideRepoIdx = insideRepoIdx;
+    }
+
+    public VirtualFile getRoot() {
+      return myRoot;
+    }
+
+    public int getInsideRepoIdx() {
+      return myInsideRepoIdx;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InnerIdx innerIdx = (InnerIdx)o;
+
+      if (myInsideRepoIdx != innerIdx.myInsideRepoIdx) return false;
+      if (!myRoot.equals(innerIdx.myRoot)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myRoot.hashCode();
+      result = 31 * result + myInsideRepoIdx;
+      return result;
     }
   }
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ConstantOnRHS.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant on right side of comparison</problem_class>
+    <description>&lt;code&gt;m_bar == 3&lt;/code&gt;: constant on right side of comparison #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConstantOnRHS.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant on right side of comparison</problem_class>
+    <description>&lt;code&gt;m_bar == 3&lt;/code&gt;: constant on right side of comparison #loc</description>
+  </problem>
+
+</problems>

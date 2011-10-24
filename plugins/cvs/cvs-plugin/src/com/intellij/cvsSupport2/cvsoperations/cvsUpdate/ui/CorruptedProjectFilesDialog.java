@@ -83,7 +83,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
   private void showNextFileInfo() {
     VirtualFile currentVirtualFile = getCurrentVirtualFile();
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(currentVirtualFile);
+    FileType fileType = currentVirtualFile.getFileType();
     myMessageLabel.setText(
       com.intellij.CvsBundle.message("label.project.files.cannot.be.merged.without.conflict",
 

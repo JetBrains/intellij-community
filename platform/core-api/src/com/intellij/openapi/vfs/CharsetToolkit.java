@@ -76,6 +76,8 @@ import java.util.Map;
 public class CharsetToolkit {
   @NonNls public static final String UTF8 = "UTF-8";
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
+  public static final Charset UTF_16LE_CHARSET = Charset.forName("UTF-16LE");
+  public static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
 
   private final byte[] buffer;
   private final Charset defaultCharset;
@@ -86,10 +88,10 @@ public class CharsetToolkit {
   public static final byte[] UTF16BE_BOM = {-2, -1, };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
-  @NonNls private static final Map<String, byte[]> CHARSET_TO_BOM = new THashMap<String,byte[]>();
+  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_BOM = new THashMap<Charset, byte[]>(2);
   static {
-    CHARSET_TO_BOM.put("UTF-16LE", UTF16LE_BOM);
-    CHARSET_TO_BOM.put("UTF-16BE", UTF16BE_BOM);
+    CHARSET_TO_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
+    CHARSET_TO_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
   }
 
   /**
@@ -221,65 +223,81 @@ public class CharsetToolkit {
     // if it's not the case, we can assume the encoding is the default encoding of the system
     boolean validU8Char = true;
 
-    int length = Math.min( buffer.length, guess_length );
+    int length = Math.min(buffer.length, guess_length);
     int i = 0;
     while (i < length) {
       byte b0 = buffer[i];
-      byte b1 = i+1>=length ? 0 : buffer[i + 1];
-      byte b2 = i+2>=length ? 0 : buffer[i + 2];
-      byte b3 = i+3>=length ? 0 : buffer[i + 3];
-      byte b4 = i+4>=length ? 0 : buffer[i + 4];
-      byte b5 = i+5>=length ? 0 : buffer[i + 5];
+      byte b1 = i + 1 >= length ? 0 : buffer[i + 1];
+      byte b2 = i + 2 >= length ? 0 : buffer[i + 2];
+      byte b3 = i + 3 >= length ? 0 : buffer[i + 3];
+      byte b4 = i + 4 >= length ? 0 : buffer[i + 4];
+      byte b5 = i + 5 >= length ? 0 : buffer[i + 5];
       if (b0 < 0) {
         // a high order bit was encountered, thus the encoding is not US-ASCII
         // it may be either an 8-bit encoding or UTF-8
         highOrderBit = true;
-        // a two-bytes sequence was encoutered
+        // a two-bytes sequence was encountered
         if (isTwoBytesSequence(b0)) {
           // there must be one continuation byte of the form 10xxxxxx,
-          // otherwise the following characteris is not a valid UTF-8 construct
-          if (!isContinuationChar(b1))
+          // otherwise the following characters is not a valid UTF-8 construct
+          if (!isContinuationChar(b1)) {
             validU8Char = false;
-          else
+          }
+          else {
             i++;
+          }
         }
-        // a three-bytes sequence was encoutered
+        // a three-bytes sequence was encountered
         else if (isThreeBytesSequence(b0)) {
           // there must be two continuation bytes of the form 10xxxxxx,
-          // otherwise the following characteris is not a valid UTF-8 construct
-          if (!(isContinuationChar(b1) && isContinuationChar(b2)))
+          // otherwise the following characters is not a valid UTF-8 construct
+          if (!(isContinuationChar(b1) && isContinuationChar(b2))) {
             validU8Char = false;
-          else
+          }
+          else {
             i += 2;
+          }
         }
-        // a four-bytes sequence was encoutered
+        // a four-bytes sequence was encountered
         else if (isFourBytesSequence(b0)) {
           // there must be three continuation bytes of the form 10xxxxxx,
-          // otherwise the following characteris is not a valid UTF-8 construct
-          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3)))
+          // otherwise the following characters is not a valid UTF-8 construct
+          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3))) {
             validU8Char = false;
-          else
+          }
+          else {
             i += 3;
+          }
         }
-        // a five-bytes sequence was encoutered
+        // a five-bytes sequence was encountered
         else if (isFiveBytesSequence(b0)) {
           // there must be four continuation bytes of the form 10xxxxxx,
-          // otherwise the following characteris is not a valid UTF-8 construct
-          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4)))
+          // otherwise the following characters is not a valid UTF-8 construct
+          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4))) {
             validU8Char = false;
-          else
+          }
+          else {
             i += 4;
+          }
         }
-        // a six-bytes sequence was encoutered
+        // a six-bytes sequence was encountered
         else if (isSixBytesSequence(b0)) {
           // there must be five continuation bytes of the form 10xxxxxx,
-          // otherwise the following characteris is not a valid UTF-8 construct
-          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4) && isContinuationChar(b5)))
+          // otherwise the following characters is not a valid UTF-8 construct
+          if (!(isContinuationChar(b1) &&
+                isContinuationChar(b2) &&
+                isContinuationChar(b3) &&
+                isContinuationChar(b4) &&
+                isContinuationChar(b5))) {
             validU8Char = false;
-          else
+          }
+          else {
             i += 5;
-        } else
+          }
+        }
+        else {
           validU8Char = false;
+        }
       }
       if (!validU8Char) break;
       i++;
@@ -294,10 +312,16 @@ public class CharsetToolkit {
     return GuessedEncoding.INVALID_UTF8;
   }
 
+  @Nullable
   public Charset guessFromBOM() {
+    return guessFromBOM(buffer);
+  }
+
+  @Nullable
+  public static Charset guessFromBOM(@NotNull byte[] buffer) {
     if (hasUTF8Bom(buffer)) return UTF8_CHARSET;
-    if (hasUTF16LEBom(buffer)) return Charset.forName("UTF-16LE");
-    if (hasUTF16BEBom(buffer)) return Charset.forName("UTF-16BE");
+    if (hasUTF16LEBom(buffer)) return UTF_16LE_CHARSET;
+    if (hasUTF16BEBom(buffer)) return UTF_16BE_CHARSET;
 
     return null;
   }
@@ -311,9 +335,9 @@ public class CharsetToolkit {
   }
 
   public static Charset guessEncoding(@NotNull File f, int bufferLength, Charset defaultCharset) throws IOException {
-    FileInputStream fis = new FileInputStream(f);
     byte[] buffer = new byte[bufferLength];
     int read;
+    FileInputStream fis = new FileInputStream(f);
     try {
       read = fis.read(buffer);
     }
@@ -470,7 +494,7 @@ public class CharsetToolkit {
 
   @Nullable
   public static byte[] getBom(@NotNull Charset charset) {
-    return CHARSET_TO_BOM.get(charset.name());
+    return CHARSET_TO_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM

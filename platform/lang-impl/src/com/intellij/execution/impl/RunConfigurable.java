@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -80,7 +81,7 @@ class RunConfigurable extends BaseConfigurable {
   private final Tree myTree = new Tree(myRoot);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private JComponent myToolbarComponent;
-  private final JSplitPane myPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true);
+  private final Splitter mySplitter = new Splitter(false);
   private JPanel myWholePanel;
   private StorageAccessors myConfig;
   private Configurable mySelectedConfigurable = null;
@@ -477,13 +478,9 @@ class RunConfigurable extends BaseConfigurable {
   public JComponent createComponent() {
     myWholePanel = new JPanel(new BorderLayout());
     myConfig = StorageAccessors.createGlobal("runConfigurationTab");
-    myPanel.setLeftComponent(createLeftPanel());
-    myPanel.setRightComponent(myRightPanel);
-    myPanel.setBorder(null);
-    final int value = (int)myConfig.getFloat(DIVIDER_PROPORTION, 200);
-
-    myPanel.setDividerLocation(value > 0 ? value : 200);
-    myWholePanel.add(myPanel, BorderLayout.CENTER);
+    mySplitter.setFirstComponent(createLeftPanel());
+    mySplitter.setSecondComponent(myRightPanel);
+    myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
     updateDialog();
 
@@ -491,6 +488,9 @@ class RunConfigurable extends BaseConfigurable {
     d.width = Math.max(d.width, 800);
     d.height = Math.max(d.height, 600);
     myWholePanel.setPreferredSize(d);
+
+    final float value = myConfig.getFloat(DIVIDER_PROPORTION, 0.2f);
+    mySplitter.setProportion((int)value > 0 ? (float)(value / myWholePanel.getPreferredSize().getWidth()) : value);
 
     return myWholePanel;
   }
@@ -669,7 +669,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myRightPanel.removeAll();
-    myConfig.setFloat(DIVIDER_PROPORTION, myPanel.getDividerLocation());
+    myConfig.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
   }
 
   private void updateDialog() {

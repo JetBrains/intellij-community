@@ -42,7 +42,7 @@ public class CompilerContentIterator implements ContentIterator {
     if (fileOrDir.isDirectory()) return true;
     if (!fileOrDir.isInLocalFileSystem()) return true;
     if (myInSourceOnly && !myFileIndex.isInSourceContent(fileOrDir)) return true;
-    if (myFileType == null || myFileType == fileTypeManager.getFileTypeByFile(fileOrDir)) {
+    if (myFileType == null || myFileType == fileOrDir.getFileType()) {
       myFiles.add(fileOrDir);
     }
     return true;

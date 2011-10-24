@@ -110,7 +110,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
         return false; // do not index TODOs in library sources
       }
 
-      final FileType fileType = myFtManager.getFileTypeByFile(file);
+      final FileType fileType = file.getFileType();
       if (ProjectUtil.isProjectOrWorkspaceFile(file, fileType)) {
         return false;
       }

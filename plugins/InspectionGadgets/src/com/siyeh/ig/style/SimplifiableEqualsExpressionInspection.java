@@ -26,6 +26,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +37,13 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "simplifiable.equals.expression.display.name");
+    return InspectionGadgetsBundle.message("simplifiable.equals.expression.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "simplifiable.equals.expression.problem.descriptor");
+    return InspectionGadgetsBundle.message("simplifiable.equals.expression.problem.descriptor");
   }
 
   @Override
@@ -51,52 +51,78 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
     return new SimplifiableEqualsExpressionFix();
   }
 
-  private static class SimplifiableEqualsExpressionFix
-    extends InspectionGadgetsFix {
+  private static class SimplifiableEqualsExpressionFix extends InspectionGadgetsFix {
 
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "simplifiable.equals.expression.quickfix");
+      return InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
+      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(element);
       if (!(parent instanceof PsiPolyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression =
-        (PsiPolyadicExpression)parent;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (operands.length != 2) {
         return;
       }
-      final PsiExpression operand = operands[1];
+      final PsiExpression operand = ParenthesesUtils.stripParentheses(operands[1]);
       if (!(operand instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)operand;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
       final PsiExpression argument = arguments[0];
-      replaceExpression(polyadicExpression,
-                        argument.getText() + ".equals(" + qualifier.getText() + ")");
+      final PsiType type = argument.getType();
+      final String newQualifierText;
+      if (PsiType.BOOLEAN.equals(type)) {
+        final Object value = ExpressionUtils.computeConstantExpression(argument);
+        if (Boolean.TRUE.equals(value)) {
+          newQualifierText = "java.lang.Boolean.TRUE";
+        }
+        else if (Boolean.FALSE.equals(value)) {
+          newQualifierText = "java.lang.Boolean.FALSE";
+        }
+        else {
+          newQualifierText = "java.lang.Boolean.valueOf(" + argument.getText() + ")";
+        }
+      }
+      else if (PsiType.BYTE.equals(type)) {
+        newQualifierText = "java.lang.Byte.valueOf(" + argument.getText() + ')';
+      }
+      else if (PsiType.SHORT.equals(type)) {
+        newQualifierText = "java.lang.Short.valueOf(" + argument.getText() + ')';
+      }
+      else if (PsiType.INT.equals(type)) {
+        newQualifierText = "java.lang.Integer.valueOf(" + argument.getText() + ')';
+      }
+      else if (PsiType.LONG.equals(type)) {
+        newQualifierText = "java.lang.Long.valueOf(" + argument.getText() + ')';
+      }
+      else if (PsiType.FLOAT.equals(type)) {
+        newQualifierText = "java.lang.Float.valueOf(" + argument.getText() + ')';
+      }
+      else if (PsiType.DOUBLE.equals(type)) {
+        newQualifierText = "java.lang.Double.valueOf(" + argument.getText() + ')';
+      }
+      else {
+        newQualifierText = argument.getText();
+      }
+      replaceExpression(polyadicExpression, newQualifierText + ".equals(" + qualifier.getText() + ")");
     }
   }
 
@@ -105,8 +131,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
     return new SimplifiableEqualsExpressionVisitor();
   }
 
-  private static class SimplifiableEqualsExpressionVisitor
-    extends BaseInspectionVisitor {
+  private static class SimplifiableEqualsExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -117,13 +142,16 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (operands.length != 2) {
           return;
         }
-        final PsiExpression lhs = operands[0];
-        final PsiVariable variable =
-          getVariableFromNullComparison(lhs, false);
+        final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
+        if (lhs == null) {
+          return;
+        }
+        final PsiVariable variable = getVariableFromNullComparison(lhs, false);
         if (variable == null) {
           return;
         }
-        if (!isEqualsConstant(operands[1], variable)) {
+        final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
+        if (!isEqualsConstant(rhs, variable)) {
           return;
         }
         registerError(lhs);
@@ -133,45 +161,42 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (operands.length != 2) {
           return;
         }
-        final PsiExpression lhs = operands[0];
-        final PsiVariable variable =
-          getVariableFromNullComparison(lhs, true);
+        final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
+        if (lhs == null) {
+          return;
+        }
+        final PsiVariable variable = getVariableFromNullComparison(lhs, true);
         if (variable == null) {
           return;
         }
-        if (!isEqualsConstant(operands[1], variable)) {
+        final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
+        if (!isEqualsConstant(rhs, variable)) {
           return;
         }
         registerError(lhs);
       }
     }
 
-    private static boolean isEqualsConstant(PsiExpression expression,
-                                            PsiVariable variable) {
+    private static boolean isEqualsConstant(PsiExpression expression, PsiVariable variable) {
       if (!(expression instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expression;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
         return false;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifier;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
       final PsiElement target = referenceExpression.resolve();
       if (!variable.equals(target)) {
         return false;
       }
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return false;
@@ -181,15 +206,12 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiVariable getVariableFromNullComparison(
-      PsiExpression expression, boolean equals) {
+    private static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
       if (!(expression instanceof PsiPolyadicExpression)) {
         return null;
       }
-      final PsiPolyadicExpression polyadicExpression =
-        (PsiPolyadicExpression)expression;
-      final IElementType tokenType =
-        polyadicExpression.getOperationTokenType();
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (equals) {
         if (!JavaTokenType.EQEQ.equals(tokenType)) {
           return null;
@@ -207,12 +229,10 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       final PsiExpression lhs = operands[0];
       final PsiExpression rhs = operands[1];
       if (PsiType.NULL.equals(lhs.getType())) {
-        System.out.println(rhs);
         if (!(rhs instanceof PsiReferenceExpression)) {
           return null;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)rhs;
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)rhs;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
           return null;
@@ -223,8 +243,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (!(lhs instanceof PsiReferenceExpression)) {
           return null;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)lhs;
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
           return null;

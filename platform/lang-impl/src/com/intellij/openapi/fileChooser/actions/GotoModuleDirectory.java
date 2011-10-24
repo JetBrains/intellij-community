@@ -48,7 +48,7 @@ public final class GotoModuleDirectory extends FileChooserAction {
     if (module == null) {
       module = e.getData(LangDataKeys.MODULE);
     }
-    if (module == null) {
+    if (module == null || module.isDisposed()) {
       return null;
     }
     final VirtualFile moduleFile = validated(module.getModuleFile());

@@ -19,7 +19,6 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +54,7 @@ class ExtCompareFiles extends BaseExternalTool {
 
   private boolean canExternalizeAsFile(VirtualFile file) {
     if (file == null || file.isDirectory()) return false;
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType fileType = file.getFileType();
     if (fileType.isBinary() && fileType != FileTypes.UNKNOWN) return false;
     return true;
   }

@@ -2,7 +2,7 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 
 public class PointlessNullCheck {
 
-    public void testViolations(String arg) {
+    public void testViolations(Object arg) {
         if (arg != null && arg instanceof String) {
             System.out.println("this should trigger a warning");
         }
@@ -29,6 +29,9 @@ public class PointlessNullCheck {
 
         if (((arg) != (null)) && ((arg) instanceof String)) {
           System.out.println("this should trigger a warning");
+        }
+        if (arg != null && (arg instanceof String || arg instanceof Integer)) {
+            System.out.println("this should trigger a warning");
         }
      }
 

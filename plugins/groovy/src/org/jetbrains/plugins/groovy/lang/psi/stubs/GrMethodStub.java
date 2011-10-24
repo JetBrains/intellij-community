@@ -42,7 +42,7 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
     myNamedParameters = namedParameters;
   }
 
-  public String getName() {
+  @NotNull public String getName() {
     return StringRef.toString(myName);
   }
 

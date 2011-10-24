@@ -120,7 +120,7 @@ public class TagsHelper {
     CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     CvsResult executionResult = executor.getResult();
-    if (!executionResult.hasNoErrors()) throw executionResult.composeError();
+    if (executionResult.hasErrors()) throw executionResult.composeError();
     return (BranchesProvider)operation;
   }
 

@@ -25,6 +25,6 @@ import java.util.List;
 public interface ErrorProcessor {
 
   void addError(VcsException ex);
-  void addWarning(VcsException ex);
+
   List<VcsException> getErrors();
 }

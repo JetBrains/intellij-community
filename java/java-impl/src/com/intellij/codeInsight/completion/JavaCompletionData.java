@@ -108,27 +108,13 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     START_OF_CODE_FRAGMENT
   );
 
-  static final AndFilter START_SWITCH = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
-        new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
-  static final OrFilter INSIDE_SWITCH = new OrFilter(START_SWITCH,
-                                                       new AndFilter(
-                                                         END_OF_BLOCK,
-                                                         new NotFilter(START_SWITCH),
-                                                         new OrFilter(
-                                                           new ParentElementFilter(new ClassFilter(PsiSwitchLabelStatement.class)),
-                                                           new LeftNeighbour(new OrFilter(
-                                                             new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2),
-                                                             new AndFilter(new TextFilter(";", ":"), new ParentElementFilter(
-                                                               new ClassFilter(PsiSwitchStatement.class), 3)),
-                                                             new AndFilter(new TextFilter("}"), new ParentElementFilter(
-                                                               new ClassFilter(PsiSwitchStatement.class), 4))
-                                                           )))));
+  static final ElementPattern<PsiElement> START_SWITCH = psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchStatement.class));
 
-  private static final ElementPattern<Object> SUPER_OR_THIS_PATTERN =
+  private static final ElementPattern<PsiElement> SUPER_OR_THIS_PATTERN =
     and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
         not(psiElement().afterLeaf(PsiKeyword.CASE)),
         not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
-        not(new FilterPattern(START_SWITCH)));
+        not(START_SWITCH));
 
 
   public static final AndFilter CLASS_START = new AndFilter(
@@ -472,10 +458,10 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     if (isStatementPosition(position)) {
-      if (INSIDE_SWITCH.isAcceptable(position, position)) {
+      if (PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class, false, PsiMember.class) != null) {
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.CASE), TailType.SPACE));
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.CASE_COLON));
-        if (!psiElement().afterLeaf(psiElement().withText(":").withParent(PsiSwitchLabelStatement.class)).accepts(position)) {
+        if (START_SWITCH.accepts(position)) {
           return;
         }
       }

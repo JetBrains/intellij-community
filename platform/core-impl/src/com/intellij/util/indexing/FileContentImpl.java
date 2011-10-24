@@ -18,7 +18,6 @@ package com.intellij.util.indexing;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
@@ -102,7 +101,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     myContentAsText = contentAsText;
     myContent = content;
     myCharset = charset;
-    myFileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
+    myFileType = file.getFileType();
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
   }

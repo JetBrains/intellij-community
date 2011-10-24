@@ -15,8 +15,10 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.ui.table.JBTable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,16 +32,19 @@ import java.util.List;
  * Time: 4:11 PM
  */
 public class GraphGutter {
-  private static final int ourLineWidth = 10;
+  private static final int ourLineWidth = 8;
   private static final int ourInterLineWidth = 1;
-  
+  private static final int ourInterRepoLineWidth = 5;
+  public static final int ourIndent = 2;
+
   private int myHeaderHeight;
   private int myRowHeight;
   private final BigTableTableModel myModel;
   private MyComponent myComponent;
   private JViewport myTableViewPort;
-  private JBTable myJBTable;
+  private GitLogUI.MouseOpenJBTable myJBTable;
   private boolean myStarted;
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GraphGutter");
 
   public GraphGutter(BigTableTableModel model) {
     myModel = model;
@@ -47,7 +52,8 @@ public class GraphGutter {
   }
 
   public void setHeaderHeight(int headerHeight) {
-    myHeaderHeight = headerHeight;
+    //myHeaderHeight = headerHeight;
+    myHeaderHeight = 0;
   }
 
   public void setRowHeight(int rowHeight) {
@@ -62,7 +68,7 @@ public class GraphGutter {
     myTableViewPort = tableViewPort;
   }
 
-  public void setJBTable(JBTable JBTable) {
+  public void setJBTable(GitLogUI.MouseOpenJBTable JBTable) {
     myJBTable = JBTable;
   }
 
@@ -72,104 +78,256 @@ public class GraphGutter {
 
   // will lay near but not inside scroll pane
   class MyComponent extends JPanel {
+    MyComponent() {
+      setDoubleBuffered(true);
+      setBackground(UIUtil.getTableBackground());
+    }
+
     @Override
     public Dimension getPreferredSize() {
       Dimension preferredSize = super.getPreferredSize();
       if (! myStarted) return preferredSize;
       int totalWires = myModel.getTotalWires();
-      return new Dimension(endPoint(totalWires), preferredSize.height);
+      List<Integer> wiresGroups = getWiresGroups();
+      return new Dimension(endPoint(totalWires, wiresGroups), preferredSize.height);
     }
     
-    private int endPoint(final int wireNumber) {
-      return (wireNumber + 1) * ourLineWidth + wireNumber * ourInterLineWidth;
+    private int endPoint(final int wireNumber, List<Integer> wiresGroups) {
+      int add = 0;
+      for (Integer wiresGroup : wiresGroups) {
+        if (wiresGroup - 1 <= wireNumber) {
+          add += ourInterRepoLineWidth - ourInterLineWidth;
+        }
+      }
+      return (wireNumber + 1) * ourLineWidth + wireNumber * ourInterLineWidth + add + ourIndent;
+    }
+    
+    private void drawConnectorsFragment(final Graphics g,
+                                        final int idxFrom,
+                                        final int yOffset,
+                                        final Set<Integer> wires,
+                                        @Nullable final WireEvent event,
+                                        HashSet<Integer> selected, final List<Integer> wiresGroups) {
+      final Color darker2 = UIUtil.getTableSelectionBackground().darker();
+      final Color darker = new Color(255,128,0);
+
+      int rowYOffset = yOffset;
+      for (int i = idxFrom; i < event.getCommitIdx(); i++) {
+        for (Integer wire : wires) {
+          g.setColor(selected.contains(i) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
+          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+          g.drawLine(startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
+        }
+        rowYOffset += myRowHeight;
+      }
+
+      final int eventWire = myModel.getCorrectedWire(myModel.getCommitAt(event.getCommitIdx()));
+      g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (eventWire/2 % 2 == 1 ? darker : darker2));
+      int eventStartXPoint = startPoint(eventWire, wiresGroups) + ourLineWidth/2;
+
+      final Set<Integer> skip = new HashSet<Integer>();
+      if (event.isStart() && event.isEnd()) {
+        return;
+      }
+      if (event.isStart()) {
+        skip.add(eventWire);
+        g.drawLine(eventStartXPoint, rowYOffset + myRowHeight/2, eventStartXPoint, rowYOffset + myRowHeight);
+      }
+      if (event.isEnd()) {
+        skip.add(eventWire);
+        g.drawLine(eventStartXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight/2);
+      }
+      
+      
+      final int[] commitsStarts = event.getCommitsStarts();
+      if (commitsStarts != null) {
+        for (int commitsStart : commitsStarts) {
+          if (commitsStart == -1) continue;
+          final int wire = myModel.getCorrectedWire(myModel.getCommitAt(commitsStart));
+          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+          g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
+          g.drawLine(startXPoint, rowYOffset + myRowHeight, eventStartXPoint, rowYOffset + myRowHeight/2);
+        }
+      }
+      final int[] wireEnds = event.getWireEnds();
+      if (wireEnds != null) {
+        for (int end : wireEnds) {
+          if (end == -1) continue;
+          final int wire = myModel.getCorrectedWire(myModel.getCommitAt(end));
+          skip.add(wire);
+          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+          g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
+          g.drawLine(startXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight/2);
+        }
+      }
+
+      for (Integer wire : wires) {
+        if (skip.contains(wire)) continue;
+        int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+        g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
+        g.drawLine(startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
+      }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      if (! myStarted) return;
-
-      Graphics graphics = g.create();
       try {
-        int height = getHeight();
+        super.paintComponent(g);
+        if (! myStarted) return;
 
-        // separators
-        List<Integer> wiresGroups = myModel.getWiresGroups();
-        int running = 0;
-        if (wiresGroups.size() > 1) {
-          for (int i = 0; i < wiresGroups.size() - 1; i++) {
-            Integer integer = wiresGroups.get(i);
-            int x1 = (running + integer) == 0 ? 0 : endPoint(running + integer - 1);
-            graphics.setColor(UIUtil.getBorderColor());
-            graphics.drawLine(x1, 0, x1, height);
-            running += integer;
-          }
-        }
-        // cells
-        int yOffset = (int) myTableViewPort.getViewPosition().getY();
-        int integerPart = yOffset / myRowHeight;
-        int firstCellPart = yOffset - integerPart * myRowHeight;
-
-        if (firstCellPart > 0) {
-          drawFirst(graphics, firstCellPart, integerPart);
-        }
-        int width = getWidth();
-        int upBound = firstCellPart == 0 ? 0 : myRowHeight - firstCellPart;  // todo +-
-        upBound += myHeaderHeight;
-        int idx = integerPart + (firstCellPart > 0 ? 1 : 0);
-
-        BigTableTableModel.WiresGroupIterator groupIterator;
+        Graphics graphics = g.create();
         try {
-          groupIterator = myModel.getGroupIterator(idx);
-        } catch (Exception e) {
-          return;
-          //
-          // TODO remove!!!
-        }
-        List<Integer> firstUsed = groupIterator.getFirstUsed();
-        while (upBound < height && idx < myModel.getRowCount()) {
-          CommitI commitAt = myModel.getCommitAt(idx);
+          int height = getHeight();
 
-          WireEvent eventForRow = groupIterator.getEventForRow(idx);
-          if (eventForRow != null) {
-            //todo minus, plus..
+          // cells
+          int yOffset = (int) myTableViewPort.getViewPosition().getY();
+          int integerPart = yOffset / myRowHeight;
+          int firstCellPart = yOffset - integerPart * myRowHeight;
+          int width = getWidth();
+          int upBound = firstCellPart == 0 ? 0 : - firstCellPart;
+          upBound += myHeaderHeight;
+          //int idx = integerPart + (firstCellPart > 0 ? 1 : 0);
+          int idx = integerPart;
+          int lastIdx = idx + (getHeight()/myRowHeight + 1);
+          
+          final int[] selectedRows = myJBTable.getSelectedRows();
+          drawSelection(graphics, width, upBound, idx, lastIdx, selectedRows);
+          final HashSet<Integer> selected = new HashSet<Integer>();
+          for (int selectedRow : selectedRows) {
+            selected.add(selectedRow);
           }
-          // todo temp out
-          /*for (Integer i : firstUsed) {
-            int start = startPoint(i);
-            graphics.setColor(UIUtil.getBorderColor());
-            graphics.drawRect(start - 1, upBound, start + 1, upBound + myRowHeight);
-          }*/
 
-          if (! commitAt.holdsDecoration()) {
-            int correctedWire = myModel.getCorrectedWire(commitAt);
-            int startXPoint = startPoint(correctedWire);
-            graphics.setColor(Color.black);
-            ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, 8, 8, 0, 360);
-            graphics.setColor(correctedWire == 0 ? Color.red : Color.yellow);
-            ((Graphics2D) graphics).fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, 8, 8, 0, 360);
-            //graphics.drawString("" + correctedWire, startXPoint, upBound + myRowHeight);
-          } else {
-            graphics.setColor(Color.black);
-            //((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth/2 - 2, upBound + myRowHeight/2 - 2, 4, 4, 0, 360);
-            //graphics.drawString("H", 0, upBound + myRowHeight);
-          }
-          graphics.setColor(UIUtil.getBorderColor());
-          graphics.drawLine(0, upBound, width, upBound);
-          ++ idx;
-          upBound += myRowHeight;
+          // separators
+          List<Integer> wiresGroups = getWiresGroups();
+
+          drawRepoBounds(graphics, height, wiresGroups);
+
+          drawConnectors(graphics, lastIdx, upBound, idx, selected, wiresGroups);
+
+          drawPoints(graphics, lastIdx, upBound, idx, selected, wiresGroups);
+        } finally {
+          graphics.dispose();
         }
-      } finally {
-        graphics.dispose();
+      } catch (Exception e) {
+        LOG.info(e);
       }
     }
 
-    private int startPoint(int correctedWire) {
-      return correctedWire == 0 ? 0 : endPoint(correctedWire - 1);
+    private List<Integer> getWiresGroups() {
+      List<Integer> wiresGroups = myModel.getWiresGroups();
+      if (wiresGroups == null) return Collections.emptyList();
+      int running = 0;
+      for (int i = 0; i < wiresGroups.size(); i++) {
+        Integer integer = wiresGroups.get(i);
+        wiresGroups.set(i, running + integer);
+        running += integer;
+      }
+      return wiresGroups;
     }
 
-    private void drawFirst(Graphics graphics, int firstCellPart, int idx) {
-      //To change body of created methods use File | Settings | File Templates.
+    private void drawSelection(Graphics graphics, int width, int upBound, int idx, int lastIdx, int[] selectedRows) {
+      for (int selectedRow : selectedRows) {
+        if (selectedRow >= idx && selectedRow <= lastIdx) {
+          graphics.setColor(UIUtil.getTableSelectionBackground());
+          graphics.fillRect(0, upBound + (selectedRow - idx) * myRowHeight,width,myRowHeight);
+        }
+      }
+    }
+
+    private void drawPoints(Graphics graphics, int lastIdx, int upBound, int idx, HashSet<Integer> selected, List<Integer> wiresGroups) {
+      final Color darker = UIUtil.getTableSelectionBackground();
+      final Color fill = new Color(176,230,255);
+      while (idx <= lastIdx && idx < myModel.getRowCount()) {
+        CommitI commitAt = myModel.getCommitAt(idx);
+        final boolean contains = selected.contains(idx);
+
+        if (! commitAt.holdsDecoration()) {
+          int correctedWire = myModel.getCorrectedWire(commitAt);
+          int startXPoint = startPoint(correctedWire, wiresGroups);
+          graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : fill);
+          ((Graphics2D) graphics).fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, 7, 7, 0, 360);
+          //graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : UIUtil.getTableSelectionBackground().brighter());
+
+          graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : UIUtil.getTableSelectionBackground());
+          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4, 7, 7, 0, 360);
+
+          if (! contains) {
+            graphics.setColor(UIUtil.getTableSelectionForeground());
+            ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4 + 1, 6, 6, 100, 90);
+          }
+
+          graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : darker);
+          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, 7, 7, 0, 360);
+          //graphics.drawString("" + correctedWire, startXPoint, upBound + myRowHeight);
+        } else {
+          //((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth/2 - 2, upBound + myRowHeight/2 - 2, 4, 4, 0, 360);
+          //graphics.drawString("H", 0, upBound + myRowHeight);
+        }
+        ++ idx;
+        upBound += myRowHeight;
+      }
+    }
+
+    private void drawConnectors(Graphics graphics, int lastIdx, int upBound, int idx, HashSet<Integer> selected, List<Integer> wiresGroups) {
+      final Map<VirtualFile,WireEventsIterator> groupIterators = myModel.getGroupIterators(idx);
+      for (Map.Entry<VirtualFile, WireEventsIterator> entry : groupIterators.entrySet()) {
+        final WireEventsIterator eventsIterator = entry.getValue();
+        int idxFrom = idx;
+        int yOff = upBound;
+        Set<Integer> used = new HashSet<Integer>(eventsIterator.getFirstUsed());
+        final Iterator<WireEvent> iterator = eventsIterator.getWireEventsIterator();
+        while (iterator.hasNext()) {
+          final WireEvent wireEvent = iterator.next();
+
+          if (wireEvent.getCommitIdx() >= idx) {
+            drawConnectorsFragment(graphics, idxFrom, yOff, used, wireEvent, selected, wiresGroups);
+            int delta = wireEvent.getCommitIdx() + 1 - idxFrom;
+            delta = delta < 0 ? 0 : delta;
+            yOff += delta * myRowHeight;
+            idxFrom = wireEvent.getCommitIdx() + 1;
+          }
+          // add starts, minus ended
+          final int[] wireEnds = wireEvent.getWireEnds();
+          if (wireEnds != null) {
+            for (int wireEnd : wireEnds) {
+              used.remove(Integer.valueOf(myModel.getCorrectedWire(myModel.getCommitAt(wireEnd))));
+            }
+          }
+          if (wireEvent.isEnd()) {
+            used.remove(Integer.valueOf(myModel.getCorrectedWire(myModel.getCommitAt(wireEvent.getCommitIdx()))));
+          }
+          final int[] commitsStarts = wireEvent.getCommitsStarts();
+          if (commitsStarts != null) {
+            for (int commitsStart : commitsStarts) {
+              if (commitsStart == -1) continue;
+              used.add(myModel.getCorrectedWire(myModel.getCommitAt(commitsStart)));
+            }
+          }
+          if (wireEvent.isStart()) {
+            used.add(myModel.getCorrectedWire(myModel.getCommitAt(wireEvent.getCommitIdx())));
+          }
+          
+          if (wireEvent.getCommitIdx() > lastIdx) break;
+        }
+      }
+    }
+
+    private void drawRepoBounds(Graphics graphics, int height, List<Integer> wiresGroups) {
+      graphics.setColor(UIUtil.getBorderColor());
+      if (wiresGroups.size() > 1) {
+        for (int i = 0; i < wiresGroups.size() - 1; i++) {
+          Integer integer = wiresGroups.get(i);
+          int x1 = integer == 0 ? 0 : endPoint(integer - 1, wiresGroups);
+          if (x1 > 0) {
+            x1 -= ourInterRepoLineWidth/2 + 1;
+          }
+          graphics.drawLine(x1, 0, x1, height);
+        }
+      }
+    }
+
+    private int startPoint(int correctedWire, List<Integer> wiresGroups) {
+      return correctedWire == 0 ? ourIndent : endPoint(correctedWire - 1, wiresGroups);
     }
   }
 }

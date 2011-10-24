@@ -161,7 +161,8 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
       if (methodCallExpression != null &&
           ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), newExpression) > -1) {
         final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
-        return PsiUtil.getApplicabilityLevel((PsiMethod)resolveResult.getElement(), resolveResult.getSubstitutor(), types, PsiUtil.getLanguageLevel(originalPosition))
+        PsiMethod method = (PsiMethod)resolveResult.getElement();
+        return method == null || PsiUtil.getApplicabilityLevel(method, resolveResult.getSubstitutor(), types, PsiUtil.getLanguageLevel(originalPosition))
                != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
       }
     }

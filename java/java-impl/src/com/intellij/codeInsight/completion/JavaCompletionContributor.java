@@ -131,7 +131,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaCompletionData.AFTER_TRY_BLOCK.isAcceptable(position, position) ||
-        JavaCompletionData.START_SWITCH.isAcceptable(position, position) ||
+        JavaCompletionData.START_SWITCH.accepts(position) ||
         JavaCompletionData.INSTANCEOF_PLACE.isAcceptable(position, position) ||
         JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
       return null;

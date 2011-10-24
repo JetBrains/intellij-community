@@ -592,7 +592,7 @@ public class BackendCompilerWrapper {
       public boolean processFile(final VirtualFile child) {
         try {
           assert child.isValid();
-          if (!child.isDirectory() && myCompiler.getCompilableFileTypes().contains(typeManager.getFileTypeByFile(child))) {
+          if (!child.isDirectory() && myCompiler.getCompilableFileTypes().contains(child.getFileType())) {
             updateOutputItemsList(outputDir, child, sourceRoot, packagePrefix, filesToRefresh, results, srcRootScope);
           }
           return true;

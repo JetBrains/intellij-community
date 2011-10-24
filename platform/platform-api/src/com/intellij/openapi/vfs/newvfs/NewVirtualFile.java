@@ -20,10 +20,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -33,11 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
-  public static final Key<FileType> FILE_TYPE_KEY = Key.<FileType>create("file type");
   private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {
@@ -47,32 +42,8 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    final InputStream is = getInputStream();
-    final byte[] bytes;
-    try {
-      bytes = FileUtil.adaptiveLoadBytes(is);
-    }
-    finally {
-      is.close();
-    }
-    return bytes;
+    throw new IOException("not applicable to the "+this);
   }
-
-  /*
-  @NotNull
-  public FileType getFileType() {
-    if (myCachedFileType == null) {
-      myCachedFileType = FileTypeManager.getInstance().getFileTypeByFile(this);
-    }
-    return myCachedFileType;
-  }
-
-  private volatile FileType myCachedFileType = null;
-
-  public void clearCachedFileType() {
-    myCachedFileType = null;
-  }
-  */
 
   @NotNull
   public abstract NewVirtualFileSystem getFileSystem();
@@ -155,11 +126,4 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract void setFlag(int flag_mask, boolean value);
 
   public abstract boolean getFlag(int flag_mask);
-
-  @NotNull
-  @Override
-  public FileType getFileType() {
-    FileType fileType = getUserData(FILE_TYPE_KEY);
-    return fileType == null ? super.getFileType() : fileType;
-  }
 }

@@ -21,11 +21,11 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,7 +137,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   private void loadDefaultTemplates() {
     final Set<URL> processedUrls = new HashSet<URL>();
-    for (PluginDescriptor plugin : PluginsFacade.INSTANCE.getPlugins()) {
+    for (PluginDescriptor plugin : PluginManager.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
         if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) {

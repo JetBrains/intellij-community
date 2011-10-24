@@ -16,15 +16,35 @@ import java.util.Map;
 public class BuildDataManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String TIMESTAMP_STORAGE = "stamps";
+  private static final String OUTPUTS_STORAGE = "out-src";
   private final String myProjectName;
 
   private final Map<String, TimestampStorage> myBuilderToStampStorageMap = new HashMap<String, TimestampStorage>();
+  private final OutputToSourceMapping myOutputToSourceMap;
 
-  public BuildDataManager(String projectName) {
+  public BuildDataManager(String projectName)  {
     myProjectName = projectName;
+    myOutputToSourceMap = createOutputToSourceMap();
   }
 
-  public TimestampStorage getTimestampStorage(String builderName) throws IOException {
+  private OutputToSourceMapping createOutputToSourceMap() {
+    final File root = getOutputToSourceStorageRoot();
+    final File dataFile = new File(root, "data");
+    try {
+      return new OutputToSourceMapping(dataFile);
+    }
+    catch (Exception e) {
+      FileUtil.delete(root);
+      try {
+        return new OutputToSourceMapping(dataFile);
+      }
+      catch (Exception e1) {
+        throw new RuntimeException(e1);
+      }
+    }
+  }
+
+  public TimestampStorage getTimestampStorage(String builderName) throws Exception {
     synchronized (myBuilderToStampStorageMap) {
       TimestampStorage storage = myBuilderToStampStorageMap.get(builderName);
       if (storage == null) {
@@ -35,14 +55,22 @@ public class BuildDataManager {
     }
   }
 
+  public OutputToSourceMapping getOutputToSourceStorage() {
+    return myOutputToSourceMap;
+  }
+
   public void clean() {
     synchronized (myBuilderToStampStorageMap) {
-      close();
-      FileUtil.delete(Paths.getDataStorageRoot(myProjectName));
+      try {
+        closeTimestampStorages();
+      }
+      finally {
+        myOutputToSourceMap.wipe();
+      }
     }
   }
 
-  public void cleanStorage(String builderName) {
+  public void cleanTimestampStorage(String builderName) {
     synchronized (myBuilderToStampStorageMap) {
       final TimestampStorage storage = myBuilderToStampStorageMap.remove(builderName);
       if (storage != null) {
@@ -58,6 +86,23 @@ public class BuildDataManager {
   }
 
   public void close() {
+    try {
+      closeTimestampStorages();
+    }
+    finally {
+      synchronized (myOutputToSourceMap) {
+        try {
+          myOutputToSourceMap.close();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          FileUtil.delete(getOutputToSourceStorageRoot());
+        }
+      }
+    }
+  }
+
+  private void closeTimestampStorages() {
     synchronized (myBuilderToStampStorageMap) {
       try {
         for (Map.Entry<String, TimestampStorage> entry : myBuilderToStampStorageMap.entrySet()) {
@@ -76,6 +121,10 @@ public class BuildDataManager {
         myBuilderToStampStorageMap.clear();
       }
     }
+  }
+
+  public File getOutputToSourceStorageRoot() {
+    return new File(Paths.getDataStorageRoot(myProjectName), OUTPUTS_STORAGE);
   }
 
   public File getTimestampsStorageRoot(String builderName) {

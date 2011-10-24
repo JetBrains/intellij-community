@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.application.impl;
+package com.siyeh.ig.numeric;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.siyeh.ig.IGInspectionTestCase;
 
-/**
- * @author max
- */
-public abstract class PluginsFacade {
-  public static PluginsFacade INSTANCE;
+public class ComparisonOfShortAndCharInspectionTest extends IGInspectionTestCase {
 
-  public abstract IdeaPluginDescriptor getPlugin(PluginId id);
-  public abstract IdeaPluginDescriptor[] getPlugins();
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/numeric/comparison_of_short_and_char", new ComparisonOfShortAndCharInspection());
+  }
 }

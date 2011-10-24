@@ -23,7 +23,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -62,8 +62,15 @@ public class GrKindWeigher extends CompletionWeigher {
 
     final PsiElement qualifier = parent.getQualifier();
     if (qualifier == null) {
-      if (o instanceof GroovyNamedArgumentProvider.ArgumentDescriptor) {
-        return ((GroovyNamedArgumentProvider.ArgumentDescriptor)o).isShowFirst() ? NotQualifiedKind.local : NotQualifiedKind.unknown;
+      if (o instanceof NamedArgumentDescriptor) {
+        switch (((NamedArgumentDescriptor)o).getPriority()) {
+          case ALWAYS_ON_TOP:
+            return NotQualifiedKind.onTop;
+          case AS_LOCAL_VARIABLE:
+            return NotQualifiedKind.local;
+          default:
+            return NotQualifiedKind.unknown;
+        }
       }
       if (o instanceof PsiVariable && !(o instanceof PsiField)) {
         return NotQualifiedKind.local;
@@ -135,6 +142,7 @@ public class GrKindWeigher extends CompletionWeigher {
     member,
     currentClassMember,
     local,
+    onTop
   }
 
   private static enum QualifiedKind {

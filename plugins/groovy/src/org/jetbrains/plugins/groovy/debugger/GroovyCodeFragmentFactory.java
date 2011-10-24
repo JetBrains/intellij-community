@@ -49,10 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @author ven
@@ -154,6 +151,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     final GrClosableBlock closure = PsiTreeUtil.getParentOfType(context, GrClosableBlock.class);
     final Map<String, String> parameters = new THashMap<String, String>();
+    final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
@@ -210,8 +208,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       }
 
       private void replaceWithReference(GrExpression expr, final String exprText) {
-        final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-        visitReferenceExpression((GrReferenceExpression)expr.replaceWithExpression(factory.createExpressionFromText(exprText), false));
+        replacements.put(expr, exprText);
       }
 
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
@@ -231,6 +228,11 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
         }
       }
     });
+
+    for (GrExpression expression : replacements.keySet()) {
+      expression.replaceWithExpression(factory.createExpressionFromText(replacements.get(expression)), false);
+    }
+    
     return Pair.create(parameters, toEval);
   }
 

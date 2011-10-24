@@ -127,13 +127,13 @@ def doo() { println <warning>foo</warning> }
 
   public void testSupportsVersion() {
     checkHighlighting '''
-if (supportsVersion(ide:[intellij:'9.0'])) {
+if (supportsVersion(intellij:'9.0')) {
   contribute(currentType("java.lang.String")) { property name:"foo" }
 } else {
   contribute(currentType("java.lang.String")) { property name:"bar" }
 }
 
-if (!supportsVersion(ide:[groovyEclipse:'9.0'])) {
+if (!supportsVersion(groovyEclipse:'9.0')) {
   contribute(currentType("java.lang.String")) { property name:"goo" }
 }
 ''',
@@ -142,7 +142,15 @@ if (!supportsVersion(ide:[groovyEclipse:'9.0'])) {
 
   public void testAssertVersion() {
     checkHighlighting '''
-assertVersion ide:[intellij:'9.0']
+assertVersion dsl:'1.0'
+contribute(currentType("java.lang.String")) { property name:"foo" }
+''',
+                      'println "".foo'
+  }
+
+  public void testAssertVersionDsl() {
+    checkHighlighting '''
+assertVersion intellij:'9.0'
 contribute(currentType("java.lang.String")) { property name:"foo" }
 ''',
                       'println "".foo'
@@ -150,7 +158,15 @@ contribute(currentType("java.lang.String")) { property name:"foo" }
 
   public void testAssertVersionFail() {
     checkHighlighting '''
-assertVersion ide:[intellij:'239.0']
+assertVersion intellij:'239.0'
+contribute(currentType("java.lang.String")) { property name:"foo" }
+''',
+                      'println "".<warning>foo</warning>'
+  }
+
+  public void testAssertVersionFailDsl() {
+    checkHighlighting '''
+assertVersion dsl:'239.0'
 contribute(currentType("java.lang.String")) { property name:"foo" }
 ''',
                       'println "".<warning>foo</warning>'

@@ -26,7 +26,6 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorageException;
@@ -194,7 +193,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                          Splash splash) {
     super(null);
 
-    ApplicationManagerEx.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
 
     getPicoContainer().registerComponentInstance(Application.class, this);
 
@@ -206,16 +205,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myStartTime = System.currentTimeMillis();
     mySplash = splash;
     myName = appName;
-
-    PluginsFacade.INSTANCE = new PluginsFacade() {
-      public IdeaPluginDescriptor getPlugin(PluginId id) {
-        return PluginManager.getPlugin(id);
-      }
-
-      public IdeaPluginDescriptor[] getPlugins() {
-        return PluginManager.getPlugins();
-      }
-    };
 
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;

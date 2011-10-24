@@ -22,6 +22,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 
 import java.util.HashMap;
@@ -36,18 +38,18 @@ public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgument
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, ArgumentDescriptor> result) {
+                                Map<String, NamedArgumentDescriptor> result) {
     if (!forCompletion || !(resolve instanceof PsiMethod)) return;
 
     PsiType returnType = ((PsiMethod)resolve).getReturnType();
     if (!(returnType instanceof PsiClassType)) return;
 
-    Map<String, ArgumentDescriptor> map = new HashMap<String, ArgumentDescriptor>();
+    Map<String, NamedArgumentDescriptor> map = new HashMap<String, NamedArgumentDescriptor>();
 
     GroovyConstructorNamedArgumentProvider.processClass(call, (PsiClassType)returnType, argumentName, map);
 
     for (String name : map.keySet()) {
-      result.put(name, TYPE_ANY_NOT_FIRST);
+      result.put(name, NamedArgumentDescriptor.SIMPLE_UNLIKELY);
     }
   }
 }

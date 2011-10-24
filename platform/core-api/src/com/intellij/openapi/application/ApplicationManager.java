@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Provides access to the <code>Application</code>.
  */
@@ -28,5 +32,22 @@ public class ApplicationManager {
    */
   public static Application getApplication(){
     return ourApplication;
+  }
+
+  private static void setApplication(Application instance) {
+    ourApplication = instance;
+    CachedSingletonsRegistry.cleanupCachedFields();
+  }
+
+  public static void setApplication(Application instance, @NotNull Disposable parent) {
+    final Application old = ourApplication;
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        if (old != null) { // to prevent NPEs in threads still running
+          setApplication(old);
+        }
+      }
+    });
+    setApplication(instance);
   }
 }

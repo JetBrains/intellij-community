@@ -24,6 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 */
 public class GroovyProblemFileHighlightFilter implements Condition<VirtualFile> {
   public boolean value(VirtualFile virtualFile) {
-    return FileTypeManager.getInstance().getFileTypeByFile(virtualFile) == GroovyFileType.GROOVY_FILE_TYPE;
+    return virtualFile.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
   }
 }

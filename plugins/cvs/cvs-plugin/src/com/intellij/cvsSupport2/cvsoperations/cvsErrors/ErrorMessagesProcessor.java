@@ -27,34 +27,21 @@ import java.util.List;
 
 public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorProcessor {
   private final List<VcsException> myErrors;
-  private final List<VcsException> myWarnings;
 
   public ErrorMessagesProcessor(List<VcsException> errors) {
     myErrors = errors;
-    myWarnings = new ArrayList<VcsException>();
   }
 
   public ErrorMessagesProcessor() {
     this(new ArrayList<VcsException>());
   }
 
-  public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot) {
-    addErrorOnCurrentMessage(relativeFilePath, message, cvsFileSystem, myErrors, cvsRoot);
-  }
-
-  public void addWarning(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot) {
-    addErrorOnCurrentMessage(relativeFilePath, message, cvsFileSystem, myWarnings, cvsRoot);
-  }
-
-  private static void addErrorOnCurrentMessage(String relativeFileName,
-                                               String message,
-                                               ICvsFileSystem cvsFileSystem,
-                                               List<VcsException> collection,
-                                               String cvsRoot) {
-    VirtualFile vFile = getVirtualFile(cvsFileSystem, relativeFileName);
+  public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot, boolean warning) {
+    VirtualFile vFile = getVirtualFile(cvsFileSystem, relativeFilePath);
     VcsException vcsException = new CvsException(message, cvsRoot);
     if (vFile != null) vcsException.setVirtualFile(vFile);
-    collection.add(vcsException);
+    vcsException.setIsWarning(warning);
+    myErrors.add(vcsException);
   }
 
   private static VirtualFile getVirtualFile(ICvsFileSystem cvsFileSystem, String relativeFileName) {
@@ -67,20 +54,7 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
     return myErrors;
   }
 
-  public List<VcsException> getWarnings() {
-    return myWarnings;
-  }
-
-  public void clear() {
-    myErrors.clear();
-    myWarnings.clear();
-  }
-
   public void addError(VcsException ex) {
     myErrors.add(ex);
-  }
-
-  public void addWarning(VcsException ex) {
-    myWarnings.add(ex);
   }
 }

@@ -35,7 +35,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -73,8 +72,7 @@ public class DeviceChooser implements Disposable {
     myFacet = facet;
     myFilter = filter;
 
-    DefaultTableModel defaultTableModel = new DefaultTableModel();
-    myDeviceTable.setModel(defaultTableModel);
+    myDeviceTable.setModel(new MyDeviceTableModel(EMPTY_DEVICE_ARRAY));
     myDeviceTable.setSelectionMode(multipleSelection ?
                                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
                                    ListSelectionModel.SINGLE_SELECTION);

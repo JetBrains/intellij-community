@@ -218,7 +218,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiMethod createConstructor() {
-    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public _Dummy_() {} }");
+    return createConstructor("_Dummy_");
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls final String name) {
+    final PsiJavaFile aFile = createDummyJavaFile(join("class ", name, " { public ", name, "() {} }"));
     final PsiMethod method = aFile.getClasses()[0].getMethods()[0];
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }

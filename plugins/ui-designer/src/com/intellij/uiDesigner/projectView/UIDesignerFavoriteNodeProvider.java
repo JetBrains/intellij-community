@@ -67,7 +67,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
     VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(context);
     if (vFile != null) {
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
+      final FileType fileType = vFile.getFileType();
       if (fileType.equals(StdFileTypes.GUI_DESIGNER_FORM)) {
         final PsiFile formFile = PsiManager.getInstance(project).findFile(vFile);
         if (formFile == null) return null;

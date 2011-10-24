@@ -103,24 +103,26 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                                      boolean isOnTheFly,
                                                      VirtualFile virtualFile,
                                                      Charset charset, List<ProblemDescriptor> descriptors) {
-    if (!FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
-        && ChooseFileEncodingAction.isEnabledAndWhyNot(virtualFile) == null // can't reload in another encoding, no point trying
+    if (FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
+        || ChooseFileEncodingAction.isEnabledAndWhyNot(virtualFile) != null // can't reload in another encoding, no point trying
       ) {
-      // check if file was loaded in correct encoding
-      byte[] bytes;
-      try {
-        bytes = virtualFile.contentsToByteArray();
-      }
-      catch (IOException e) {
-        return;
-      }
-      String separator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, file.getProject());
-      String toSave = StringUtil.convertLineSeparators(file.getText(), separator);
-      byte[] bytesToSave = toSave.getBytes(charset);
-      if (!Arrays.equals(bytesToSave, bytes)) {
-        descriptors.add(manager.createProblemDescriptor(file, "File was loaded in a wrong encoding: '"+charset+"'",
-                                                        RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
-      }
+      return;
+    }
+    // check if file was loaded in correct encoding
+    byte[] bytes;
+    try {
+      bytes = virtualFile.contentsToByteArray();
+    }
+    catch (IOException e) {
+      return;
+    }
+    String separator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, file.getProject());
+    String toSave = StringUtil.convertLineSeparators(file.getText(), separator);
+    byte[] bom = virtualFile.getBOM();
+    byte[] bytesToSave = ArrayUtil.mergeArrays(bom == null ? ArrayUtil.EMPTY_BYTE_ARRAY : bom, toSave.getBytes(charset));
+    if (!Arrays.equals(bytesToSave, bytes)) {
+      descriptors.add(manager.createProblemDescriptor(file, "File was loaded in a wrong encoding: '"+charset+"'",
+                                                      RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
     }
   }
 

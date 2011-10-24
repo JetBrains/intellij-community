@@ -31,7 +31,7 @@ public class FileIndexUtil {
   public static boolean isJavaSourceFile(@NotNull Project project, @NotNull VirtualFile file) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (file.isDirectory()) return false;
-    if (fileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;
+    if (file.getFileType() != StdFileTypes.JAVA) return false;
     if (fileTypeManager.isFileIgnored(file)) return false;
     return ProjectRootManager.getInstance(project).getFileIndex().isInSource(file);
   }

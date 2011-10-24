@@ -39,7 +39,7 @@ public class ExpectedTypeUtils {
     boolean calculateTypeForComplexReferences) {
     PsiElement context = expression.getParent();
     PsiExpression wrappedExpression = expression;
-    while (context != null && context instanceof PsiParenthesizedExpression) {
+    while (context instanceof PsiParenthesizedExpression) {
       wrappedExpression = (PsiExpression)context;
       context = context.getParent();
     }

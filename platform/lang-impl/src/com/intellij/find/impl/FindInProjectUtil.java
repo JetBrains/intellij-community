@@ -304,7 +304,7 @@ public class FindInProjectUtil {
                                          final Processor<UsageInfo> consumer) {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return 0;
-    if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return 0; // do not decompile .class files
+    if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return 0;
     final int[] offset = {0};
@@ -343,7 +343,7 @@ public class FindInProjectUtil {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (!virtualFile.isValid()) return;
-        if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return;
+        if (virtualFile.getFileType().isBinary()) return;
         length[0] = virtualFile.getLength();
       }
     });
@@ -423,7 +423,7 @@ public class FindInProjectUtil {
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
       public boolean accept(final VirtualFile file) {
         return file.isDirectory() ||
-               !fileTypeManager.isFileIgnored(file) && !fileTypeManager.getFileTypeByFile(file).isBinary() && searchScope.contains(file);
+               !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
       }
     };
     for (VirtualFile file : files) {

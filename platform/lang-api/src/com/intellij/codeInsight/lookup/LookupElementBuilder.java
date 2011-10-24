@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Set;
 
@@ -129,6 +130,18 @@ public class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, caseSensitive);
   }
 
+  public LookupElementBuilder setItemTextForeground(@NotNull Color itemTextForeground) {
+    final LookupElementPresentation presentation = copyPresentation();
+    presentation.setItemTextForeground(itemTextForeground);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myAllLookupStrings, myCaseSensitive);
+  }
+
+  public LookupElementBuilder setItemTextUnderlined(boolean underlined) {
+    final LookupElementPresentation presentation = copyPresentation();
+    presentation.setItemTextUnderlined(underlined);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myAllLookupStrings, myCaseSensitive);
+  }
+
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
     return setTypeText(typeText, false);
   }
@@ -162,7 +175,7 @@ public class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder setStrikeout() {
     return setStrikeout(true);
   }
-  
+
   public LookupElementBuilder setStrikeout(boolean strikeout) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setStrikeout(strikeout);
@@ -228,7 +241,7 @@ public class LookupElementBuilder extends LookupElement {
                                                          : myInsertHandler != insertHandler) return false;
     if (!myLookupString.equals(that.myLookupString)) return false;
     if (!myObject.equals(that.myObject)) return false;
-    
+
     final LookupElementRenderer<LookupElement> renderer = that.myRenderer;
     if (myRenderer != null && renderer != null ? !myRenderer.getClass().equals(renderer.getClass()) : myRenderer != renderer) return false;
 

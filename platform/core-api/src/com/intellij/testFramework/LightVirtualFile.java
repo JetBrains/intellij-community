@@ -171,11 +171,6 @@ public class LightVirtualFile extends VirtualFile {
     return ourFileSystem;
   }
 
-  @NotNull
-  public FileType getFileType() {
-    return myFileType != null ? myFileType : super.getFileType();
-  }
-
   @Nullable
   public FileType getAssignedFileType() {
     return myFileType;

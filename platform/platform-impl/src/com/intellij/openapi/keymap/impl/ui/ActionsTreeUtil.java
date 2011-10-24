@@ -17,11 +17,11 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
@@ -73,7 +73,7 @@ public class ActionsTreeUtil {
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<IdeaPluginDescriptor>();
-    Collections.addAll(plugins, PluginsFacade.INSTANCE.getPlugins());
+    Collections.addAll(plugins, PluginManager.getPlugins());
     Collections.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
         return o1.getName().compareTo(o2.getName());

@@ -214,7 +214,7 @@ public class FileChooserDescriptor implements Cloneable{
     if (file.isDirectory() && myChooseFolders) {
       return file;
     }
-    boolean isJar = FileTypeManager.getInstance().getFileTypeByFile(file) == FileTypes.ARCHIVE;
+    boolean isJar = file.getFileType() == FileTypes.ARCHIVE;
     if (!isJar) {
       return acceptAsGeneralFile(file) ? file : null;
     }

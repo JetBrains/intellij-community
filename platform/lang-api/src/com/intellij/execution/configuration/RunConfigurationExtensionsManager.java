@@ -135,10 +135,10 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   public void patchCommandLine(@NotNull final U configuration,
                                final RunnerSettings runnerSettings,
                                @NotNull final GeneralCommandLine cmdLine,
-                               @NotNull final AbstractRunConfiguration.RunnerType type) throws ExecutionException {
+                               @NotNull final String runnerId) throws ExecutionException {
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration, runnerSettings)) {
-      extension.patchCommandLine(configuration, runnerSettings, cmdLine, type);
+      extension.patchCommandLine(configuration, runnerSettings, cmdLine, runnerId);
     }
   }
 

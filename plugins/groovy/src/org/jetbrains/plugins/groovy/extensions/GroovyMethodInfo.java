@@ -21,12 +21,13 @@ public class GroovyMethodInfo {
   private static Map<String, Map<String, List<GroovyMethodInfo>>> LIGHT_METHOD_INFOS;
   
   private final List<String> myParams;
-  
+  private final ClassLoader myClassLoader;
+
   private final String myReturnType;
   private final String myReturnTypeCalculatorClassName;
   private PairFunction<GrMethodCall, PsiMethod, PsiType> myReturnTypeCalculatorInstance;
 
-  private final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedArguments;
+  private final Map<String, NamedArgumentDescriptor> myNamedArguments;
   private final  String myNamedArgProviderClassName;
   private GroovyNamedArgumentProvider myNamedArgProviderInstance;
 
@@ -121,6 +122,7 @@ public class GroovyMethodInfo {
   }
 
   public GroovyMethodInfo(GroovyMethodDescriptor method) {
+    myClassLoader = method.getLoaderForClass();
     myParams = method.getParams();
     myReturnType = method.returnType;
     myReturnTypeCalculatorClassName = method.returnTypeCalculator;
@@ -177,13 +179,13 @@ public class GroovyMethodInfo {
   @NotNull
   public PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
     if (myReturnTypeCalculatorInstance == null) {
-      myReturnTypeCalculatorInstance = ClassInstanceCache.getInstance(myReturnTypeCalculatorClassName);
+      myReturnTypeCalculatorInstance = ClassInstanceCache.getInstance(myReturnTypeCalculatorClassName, myClassLoader);
     }
     return myReturnTypeCalculatorInstance;
   }
 
   @Nullable
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedArguments() {
+  public Map<String, NamedArgumentDescriptor> getNamedArguments() {
     return myNamedArguments;
   }
 
@@ -193,7 +195,7 @@ public class GroovyMethodInfo {
 
   public GroovyNamedArgumentProvider getNamedArgProvider() {
     if (myNamedArgProviderInstance == null) {
-      myNamedArgProviderInstance = ClassInstanceCache.getInstance(myNamedArgProviderClassName);
+      myNamedArgProviderInstance = ClassInstanceCache.getInstance(myNamedArgProviderClassName, myClassLoader);
     }
     return myNamedArgProviderInstance;
   }

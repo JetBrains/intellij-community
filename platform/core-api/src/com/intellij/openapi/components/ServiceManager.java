@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.application.ApplicationComponentLocator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.util.NotNullFunction;
@@ -33,7 +33,7 @@ public class ServiceManager {
   }
 
   public static <T> T getService(@NotNull Class<T> serviceClass) {
-    return (T)ApplicationComponentLocator.getComponentInstance(serviceClass.getName());
+    return (T)ApplicationManager.getApplication().getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
   public static <T> T getService(@NotNull Project project, @NotNull Class<T> serviceClass) {

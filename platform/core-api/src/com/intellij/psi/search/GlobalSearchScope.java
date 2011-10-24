@@ -406,7 +406,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean contains(VirtualFile file) {
       if (!super.contains(file)) return false;
 
-      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
+      final FileType fileType = file.getFileType();
       for (FileType otherFileType : myFileTypes) {
         if (fileType.equals(otherFileType)) return true;
       }

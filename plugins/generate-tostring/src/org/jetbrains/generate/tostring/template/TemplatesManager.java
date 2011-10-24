@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,13 +69,22 @@ public class TemplatesManager implements PersistentStateComponent<TemplatesState
         }
     }
 
-    public Collection<TemplateResource> getAllTemplates() {
-        Collection<TemplateResource> templates = new LinkedHashSet<TemplateResource>(Arrays.asList(TemplateResourceLocator.getDefaultTemplates()));
-        templates.addAll(myState.templates);
-        return templates;
+  public Collection<TemplateResource> getAllTemplates() {
+    TemplateResource[] defaultTemplates = TemplateResourceLocator.getDefaultTemplates();
+    HashSet<String> names = new HashSet<String>();
+    for (TemplateResource defaultTemplate : defaultTemplates) {
+      names.add(defaultTemplate.getFileName());
     }
+    Collection<TemplateResource> templates = new LinkedHashSet<TemplateResource>(Arrays.asList(defaultTemplates));
+    for (TemplateResource template : myState.templates) {
+      if (!names.contains(template.getFileName())) {
+        templates.add(template);
+      }
+    }
+    return templates;
+  }
 
-    public TemplateResource getDefaultTemplate() {
+  public TemplateResource getDefaultTemplate() {
         for (TemplateResource template : getAllTemplates()) {
             if (Comparing.equal(template.getFileName(), myState.defaultTempalteName)) {
                 return template;

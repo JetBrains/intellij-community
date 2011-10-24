@@ -189,7 +189,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
       final int lineStart = document.getLineStartOffset(line);
       final int lineEnd = document.getLineEndOffset(line);
       final CharSequence docText = document.getCharsSequence();
-      final int tabSize = CodeStyleFacade.getInstance(project).getTabSize(FileTypeManager.getInstance().getFileTypeByFile(file));
+      final int tabSize = CodeStyleFacade.getInstance(project).getTabSize(file.getFileType());
 
       offset = lineStart;
       int col = 0;

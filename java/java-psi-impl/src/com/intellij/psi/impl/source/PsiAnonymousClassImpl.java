@@ -166,6 +166,15 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
+
+    final PsiClassStub stub = getStub();
+    if (stub != null) {
+      // no tree is loaded
+      // that means we could not have come from resolving something inside anonymous class, we just resolving the base class reference
+      // so skip the (very expensive) getBaseClassReference() call which would load tree
+      return true;
+    }
+
     if (lastParent != null/* IMPORTANT: do not call getBaseClassReference() for lastParent == null and lastParent which is not under our node - loads tree!*/
         && lastParent.getParent() == this && lastParent == getBaseClassReference()) {
       return true;

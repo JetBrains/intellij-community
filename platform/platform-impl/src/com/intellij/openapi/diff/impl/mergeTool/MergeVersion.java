@@ -123,7 +123,7 @@ public interface MergeVersion {
     public FileType getContentType() {
       VirtualFile file = getFile();
       if (file == null) return FileTypes.PLAIN_TEXT;
-      return FileTypeManager.getInstance().getFileTypeByFile(file);
+      return file.getFileType();
     }
 
     private static void setDocumentText(final Document document, final String text, String name, Project project) {

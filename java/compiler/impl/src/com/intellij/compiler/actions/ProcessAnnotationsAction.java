@@ -127,7 +127,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
       }
       else if (files.size() == 1) {
         final VirtualFile file = files.iterator().next();
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+        FileType fileType = file.getFileType();
         if (CompilerManager.getInstance(project).isCompilableFileType(fileType)) {
           elementDescription = "'" + file.getName() + "'";
         }
@@ -185,7 +185,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
         }
       }
       else {
-        FileType fileType = typeManager.getFileTypeByFile(file);
+        FileType fileType = file.getFileType();
         if (!(compilerManager.isCompilableFileType(fileType))) {
           continue;
         }

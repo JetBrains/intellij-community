@@ -16,26 +16,25 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.light.LightIdentifier;
+import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -47,7 +46,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
@@ -60,8 +61,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private Object myMethodKind;
-  private String[] myNamedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
-  private Runnable myOnRename;
+  private Map<String, NamedArgumentDescriptor> myNamedParameters = Collections.emptyMap();
+  private final PsiReferenceList myThrowsList;
 
   private Object myData;
   private boolean myConstructor;
@@ -72,10 +73,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     myParameterList = new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE);
     myModifierList = new GrLightModifierList(this);
     myConstructor = false;
+    myThrowsList = new LightReferenceListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, PsiReferenceList.Role.THROWS_LIST);
   }
 
-  public void setNamedParametersArray(@NotNull String[] namedParametersArray) {
-    this.myNamedParametersArray = namedParametersArray;
+  public void setNamedParameters(@NotNull Map<String, NamedArgumentDescriptor> namedParameters) {
+    this.myNamedParameters = namedParameters;
   }
 
   @Override
@@ -105,21 +107,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    if (myOnRename == null) {
-      throw new IncorrectOperationException("Please don't rename light methods");
-    }
-
-    myName = name;
-    myOnRename.run();
-    return this;
-  }
-
-  public void setOnRename(Runnable onRename) {
-    myOnRename = onRename;
-  }
-
-  public void setRenamable() {
-    myOnRename = EmptyRunnable.INSTANCE;
+    throw new IncorrectOperationException("Please don't rename light methods");
   }
 
   @NotNull
@@ -148,8 +136,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @NotNull
   @Override
-  public String[] getNamedParametersArray() {
-    return myNamedParametersArray;
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    return myNamedParameters;
   }
 
   @NotNull
@@ -248,7 +236,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return new LightEmptyImplementsList(getManager());
+    return myThrowsList;
   }
 
   public PsiCodeBlock getBody() {
@@ -418,7 +406,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     GrLightMethodBuilder copy = new GrLightMethodBuilder(myManager, myName);
     copy.setMethodKind(myMethodKind);
     copy.setData(myData);
-    copy.setNamedParametersArray(myNamedParametersArray);
+    copy.setNamedParameters(myNamedParameters);
     if (getNavigationElement() != this) {
       copy.setNavigationElement(getNavigationElement());
     }
@@ -435,6 +423,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public <T> T getData() {
+    //noinspection unchecked
     return (T)myData;
   }
 
@@ -450,6 +439,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   public GrLightMethodBuilder setData(@Nullable Object data) {
     myData = data;
+    return this;
+  }
+
+  public GrLightMethodBuilder addException(PsiClassType type) {
+    ((LightReferenceListBuilder)myThrowsList).addReference(type);
     return this;
   }
 

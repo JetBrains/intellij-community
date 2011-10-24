@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -133,6 +134,8 @@ class UndoableGroup {
               DocumentReference[] affectedDocuments = action.getAffectedDocuments();
               if (affectedDocuments != null) {
                 for (DocumentReference affectedDocument : affectedDocuments) {
+                  VirtualFile file = affectedDocument.getFile();
+                  if (file == null || !file.isValid()) continue;
                   DocumentEx document = (DocumentEx)affectedDocument.getDocument();
                   if (document == null) continue;
                   documentsToRemoveFromBulk.remove(document);

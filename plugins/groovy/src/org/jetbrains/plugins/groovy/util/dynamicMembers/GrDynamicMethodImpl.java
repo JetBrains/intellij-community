@@ -22,6 +22,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -121,8 +123,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @NotNull
-  public String[] getNamedParametersArray() {
-    return myMethod.getNamedParametersArray();
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    return myMethod.getNamedParameters();
   }
 
   @NotNull

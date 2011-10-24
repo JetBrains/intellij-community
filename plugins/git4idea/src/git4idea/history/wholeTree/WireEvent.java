@@ -53,6 +53,14 @@ public class WireEvent {
     }
   }
 
+  public void setWireEnds(@Nullable int[] wireEnds) {
+    myWireEnds = wireEnds;
+  }
+
+  public void setCommitsStarts(int[] commitsStarts) {
+    myCommitsStarts = commitsStarts;
+  }
+
   @Nullable
   public int[] getWireEnds() {
     return myWireEnds;

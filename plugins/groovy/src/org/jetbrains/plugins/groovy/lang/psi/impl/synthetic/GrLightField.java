@@ -21,11 +21,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -33,6 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author sergey.evdokimov
@@ -45,14 +48,6 @@ public class GrLightField extends GrLightVariable implements GrField {
   private boolean mySetterInitialized = false;
 
   private final PsiClass myContainingClass;
-
-  public GrLightField(@NotNull PsiClass containingClass,
-                      @NonNls String name,
-                      @NonNls @NotNull String type,
-                      @NotNull PsiElement element) {
-    super(containingClass.getManager(), name, type, element);
-    myContainingClass = containingClass;
-  }
 
   public GrLightField(@NotNull PsiClass containingClass,
                       @NonNls String name,
@@ -123,8 +118,8 @@ public class GrLightField extends GrLightVariable implements GrField {
 
   @NotNull
   @Override
-  public String[] getNamedParametersArray() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    return Collections.emptyMap();
   }
 
   @Override

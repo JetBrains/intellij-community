@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -39,8 +40,9 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
 
   public GrMethodStub createStub(GrMethod psi, StubElement parentStub) {
 
+    Set<String> namedParameters = psi.getNamedParameters().keySet();
     return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),
-                                psi.getNamedParametersArray(), this);
+                            namedParameters.toArray(new String[namedParameters.size()]), this);
   }
 
   public void serialize(GrMethodStub stub, StubOutputStream dataStream) throws IOException {

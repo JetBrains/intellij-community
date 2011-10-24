@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -25,12 +24,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class DiffContentUtil {
   public static FileType getContentType(VirtualFile file) {
     if (file == null) return null;
-    return FileTypeManager.getInstance().getFileTypeByFile(file);
+    return file.getFileType();
   }
 
   public static boolean isTextFile(VirtualFile file) {
     return file != null && file.isValid() && !file.isDirectory() &&
-           isTextType(FileTypeManager.getInstance().getFileTypeByFile(file));
+           isTextType(file.getFileType());
   }
 
   public static boolean isTextType(FileType fileType) {

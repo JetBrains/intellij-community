@@ -66,7 +66,7 @@ public class FileContent extends DiffContent {
 
   public boolean isBinary() {
     if (myFile.isDirectory()) return false;
-    return FileTypeManager.getInstance().getFileTypeByFile(myFile).isBinary();
+    return myFile.getFileType().isBinary();
   }
 
   public static FileContent createFromTempFile(Project project, String name, String ext, byte[] content) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,14 +26,12 @@ public class InstanceofThisInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instanceof.check.for.this.display.name");
+    return InspectionGadgetsBundle.message("instanceof.check.for.this.display.name");
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "instanceof.check.for.this.problem.descriptor");
+    return InspectionGadgetsBundle.message("instanceof.check.for.this.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -47,15 +46,10 @@ public class InstanceofThisInspection extends BaseInspection {
       if (thisValue.getQualifier() != null) {
         return;
       }
-      PsiElement parent = thisValue.getParent();
-      while (parent != null &&
-             (parent instanceof PsiParenthesizedExpression ||
-              parent instanceof PsiConditionalExpression ||
-              parent instanceof PsiTypeCastExpression)) {
-        parent = parent.getParent();
-      }
-      if (parent == null ||
-          !(parent instanceof PsiInstanceOfExpression)) {
+      final PsiElement parent =
+        PsiTreeUtil.skipParentsOfType(thisValue, PsiParenthesizedExpression.class,
+                                      PsiConditionalExpression.class, PsiTypeCastExpression.class);
+      if (!(parent instanceof PsiInstanceOfExpression)) {
         return;
       }
       registerError(thisValue);

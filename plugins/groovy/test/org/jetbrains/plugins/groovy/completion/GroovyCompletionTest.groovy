@@ -814,7 +814,7 @@ return foo()"""
 
   public void testNamedArgsUsedInFile() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    doVariantableTest 'foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'false', 'float'
+    doVariantableTest 'foo2', 'false', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
   }
 
   public void testSuggestMembersOfExpectedType() {

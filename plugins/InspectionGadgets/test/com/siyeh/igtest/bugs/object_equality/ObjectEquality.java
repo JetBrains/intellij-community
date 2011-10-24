@@ -1,11 +1,11 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.bugs.object_equality;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObjectEqualsInspection
+public class ObjectEquality
 {
-    public ObjectEqualsInspection()
+    public ObjectEquality()
     {
     }
 
@@ -25,6 +25,7 @@ public class ObjectEqualsInspection
         {
 
         }
+        if (map1 == ) {}
     }
     
     public void fooBarEnum()
@@ -40,7 +41,7 @@ public class ObjectEqualsInspection
     public void fooBarClass()
     {
         final Class class1 = String.class;
-        final Class class2 = Object.class;
+        final Class class2 = com.siyeh.igtest.bugs.Object.class;
         if (class1 == class2)
         {
 
@@ -50,4 +51,19 @@ public class ObjectEqualsInspection
 
         }
     }
+
+  public void fooBarPrivate(X x, X y) {
+    if (x == y) {
+
+    }
+  }
+
+  enum MyEnum{
+    foo, bar, baz;
+  }
+
+  class X {
+    private X() {}
+  }
+
 }

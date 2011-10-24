@@ -882,7 +882,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title"), false, false,
-                                                                   true, new Insets(14, 0, 10, 0)));
+                                                                   true, new Insets(13, 0, 0, 0)));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
     Splitter rightPanel = new Splitter(true);

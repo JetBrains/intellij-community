@@ -70,7 +70,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
 
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory()
-           && myFileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA
+           && file.getFileType() == StdFileTypes.JAVA
            && !myFileTypeManager.isFileIgnored(file)
            && isInSourceContent(file);
   }

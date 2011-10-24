@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SubtractionInCompareTo.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Subtraction in 'compareTo()'</problem_class>
+    <description>Subtraction &lt;code&gt;m_foo - ((SubtractionInCompareTo)foo).m_foo&lt;/code&gt; in 'compareTo()' may result in overflow errors #loc</description>
+  </problem>
+</problems>

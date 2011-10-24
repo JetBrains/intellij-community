@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,12 @@ public class ReturnThisInspection extends BaseInspection {
         return;
       }
       PsiElement parent = thisValue.getParent();
-      while (parent != null &&
-             (parent instanceof PsiParenthesizedExpression ||
+      while (parent instanceof PsiParenthesizedExpression ||
               parent instanceof PsiConditionalExpression ||
-              parent instanceof PsiTypeCastExpression)) {
+              parent instanceof PsiTypeCastExpression) {
         parent = parent.getParent();
       }
-      if (parent == null || !(parent instanceof PsiReturnStatement)) {
+      if (!(parent instanceof PsiReturnStatement)) {
         return;
       }
       registerError(thisValue);

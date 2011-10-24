@@ -38,6 +38,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
@@ -296,6 +298,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {
+    if (element instanceof CustomMembersGenerator.GdslNamedParameter) {
+      return ((CustomMembersGenerator.GdslNamedParameter)element).docString;
+    }
+
     if (element instanceof GrReferenceExpression) {
       return getMethodCandidateInfo((GrReferenceExpression)element);
     }
@@ -303,7 +309,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (element instanceof GrGdkMethod) {
       element = ((GrGdkMethod)element).getStaticMethod();
     }
-    
+
     final GrDocComment doc = PsiTreeUtil.getParentOfType(originalElement, GrDocComment.class);
     if (doc != null) {
       element = GrDocCommentUtil.findDocOwner(doc);
@@ -383,6 +389,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if (object instanceof GroovyResolveResult) {
       return ((GroovyResolveResult)object).getElement();
+    }
+    if (object instanceof NamedArgumentDescriptor) {
+      return ((NamedArgumentDescriptor)object).getNavigationElement();
     }
     return null;
   }

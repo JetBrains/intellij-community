@@ -2,7 +2,9 @@ package org.jetbrains.jps.incremental.messages;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 
 /**
  * @author Eugene Zhuravlev
@@ -17,6 +19,10 @@ public class CompilerMessage extends BuildMessage {
   private final String mySourcePath;
   private final long myLine;
   private final long myColumn;
+
+  public CompilerMessage(String compilerName, Throwable internalError) {
+    this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
+  }
 
   public CompilerMessage(String compilerName, Kind kind, String messageText) {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
@@ -74,4 +80,24 @@ public class CompilerMessage extends BuildMessage {
   public String toString() {
     return getCompilerName() + ":" + getKind().name() + ":" + super.toString();
   }
+
+  private static String getTextFromThrowable(Throwable internalError) {
+    StringBuilder text = new StringBuilder();
+    text.append("Error: ");
+    final String msg = internalError.getMessage();
+    if (msg != null) {
+      text.append(msg);
+    }
+    else {
+      text.append(internalError.getClass().getName());
+    }
+    text.append("\n");
+
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    internalError.printStackTrace(new PrintStream(out));
+    text.append(out.toString());
+
+    return text.toString();
+  }
+
 }

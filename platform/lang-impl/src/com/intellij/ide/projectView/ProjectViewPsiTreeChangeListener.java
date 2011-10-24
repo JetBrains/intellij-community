@@ -87,7 +87,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       if (parent == null) break;
       if (parent instanceof PsiFile) {
         VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
-        if (virtualFile != null && myFileTypeManager.getFileTypeByFile(virtualFile) != FileTypes.PLAIN_TEXT) {
+        if (virtualFile != null && virtualFile.getFileType() != FileTypes.PLAIN_TEXT) {
           // adding a class within a file causes a new node to appear in project view => entire dir should be updated
           parent = ((PsiFile)parent).getContainingDirectory();
           if (parent == null) break;

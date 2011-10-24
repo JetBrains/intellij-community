@@ -573,8 +573,7 @@ public class ImportUtils {
     final String memberName = member.getName();
     final PsiImportStatementBase existingImportStatement =
       importList.findSingleImportStatement(memberName);
-    if (existingImportStatement != null &&
-        existingImportStatement instanceof PsiImportStaticStatement) {
+    if (existingImportStatement instanceof PsiImportStaticStatement) {
       final PsiClass importClass = ((PsiImportStaticStatement)existingImportStatement).resolveTargetClass();
       if (InheritanceUtil.isInheritorOrSelf(importClass, memberClass, true)) {
         return true;

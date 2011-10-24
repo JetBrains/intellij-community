@@ -32,8 +32,8 @@ import java.util.Map;
  * @author yole
  */
 public class CoreFileTypeRegistry extends FileTypeRegistry {
-  private Map<String, FileType> myExtensionsMap = new HashMap<String, FileType>();
-  private List<FileType> myAllFileTypes = new ArrayList<FileType>();
+  private final Map<String, FileType> myExtensionsMap = new HashMap<String, FileType>();
+  private final List<FileType> myAllFileTypes = new ArrayList<FileType>();
 
   public CoreFileTypeRegistry() {
     myAllFileTypes.add(UnknownFileType.INSTANCE);

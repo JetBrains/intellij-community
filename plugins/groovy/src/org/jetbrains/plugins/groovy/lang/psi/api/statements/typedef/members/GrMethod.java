@@ -22,6 +22,7 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -32,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
+
+import java.util.Map;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -82,7 +85,7 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   GrModifierList getModifierList();
 
   @NotNull
-  String[] getNamedParametersArray();
+  Map<String, NamedArgumentDescriptor> getNamedParameters();
 
   @NotNull
   GrReflectedMethod[] getReflectedMethods();

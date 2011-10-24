@@ -103,7 +103,7 @@ public final class PreviewFormAction extends AnAction{
     final VirtualFile file = editor.getFile();
     e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
-      FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM
+      file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM
     );
   }
 

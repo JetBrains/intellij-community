@@ -180,6 +180,12 @@ public class JpsServerManager implements ApplicationComponent{
       final Semaphore semaphore  = new Semaphore();
       semaphore.down();
       processHandler.addProcessListener(new ProcessAdapter() {
+        public void onTextAvailable(ProcessEvent event, Key outputType) {
+          // re-translate server's output to idea.log
+          LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ event.getText());
+        }
+      });
+      processHandler.addProcessListener(new ProcessAdapter() {
         public void processTerminated(ProcessEvent event) {
           try {
             processHandler.removeProcessListener(this);

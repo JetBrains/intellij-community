@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogConsoleManager;
-import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.diagnostic.logging.*;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -140,6 +137,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       }
       if (profile instanceof RunConfigurationBase) {
         myManager.initLogConsoles((RunConfigurationBase)profile, myExecutionResult.getProcessHandler());
+        OutputFileUtil.attachDumpListener((RunConfigurationBase)profile, myExecutionResult.getProcessHandler(), console);
       }
     }
     MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);

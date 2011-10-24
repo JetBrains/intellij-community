@@ -78,7 +78,7 @@ public class UnindentSelectionAction extends EditorAction {
     if (startIndex < 0 || endIndex < 0) return;
 
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    final FileType fileType = vFile == null ? null : FileTypeManager.getInstance().getFileTypeByFile(vFile);
+    final FileType fileType = vFile == null ? null : vFile.getFileType();
 
     int blockIndent = CodeStyleFacade.getInstance(project).getIndentSize(fileType);
     IndentSelectionAction.doIndent(endIndex, startIndex, document, project, editor, -blockIndent);

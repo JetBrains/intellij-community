@@ -39,7 +39,7 @@ public class AssociateFileType extends AnAction {
       haveSmthToDo = false;
     }
     else {
-      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFile(file) == FileTypes.UNKNOWN;
+      haveSmthToDo = file.getFileType() == FileTypes.UNKNOWN;
     }
     presentation.setVisible(haveSmthToDo || ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     presentation.setEnabled(haveSmthToDo);

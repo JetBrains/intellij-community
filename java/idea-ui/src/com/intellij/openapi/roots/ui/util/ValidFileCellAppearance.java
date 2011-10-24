@@ -29,7 +29,7 @@ public class ValidFileCellAppearance extends BaseTextCommentCellAppearance {
   }
 
   protected Icon getIcon() {
-    return FileTypeManager.getInstance().getFileTypeByFile(myFile).getIcon();
+    return myFile.getFileType().getIcon();
   }
 
   protected String getSecondaryText() {

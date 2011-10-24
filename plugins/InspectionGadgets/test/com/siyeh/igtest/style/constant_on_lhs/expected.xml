@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ConstantOnLHS.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant on left side of comparison</problem_class>
+    <description>&lt;code&gt;3 == m_bar&lt;/code&gt;: constant on left side of comparison #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConstantOnLHS.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant on left side of comparison</problem_class>
+    <description>&lt;code&gt;3 == m_bar&lt;/code&gt;: constant on left side of comparison #loc</description>
+  </problem>
+</problems>

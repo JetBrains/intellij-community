@@ -163,7 +163,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     if (executionResult.isCanceled()) {
       throw new ProcessCanceledException();
     }
-    else if (! executionResult.hasNoErrors()) {
+    else if (executionResult.hasErrors()) {
       throw executionResult.composeError();
     }
     if (result[0] == null) {
@@ -192,7 +192,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         }
       });
     final CvsResult cvsResult = runRLogOperation(operation2);
-    if (!cvsResult.hasNoErrors()) {
+    if (cvsResult.hasErrors()) {
       throw cvsResult.composeError();
     }
     return new Pair<CvsChangeList, FilePath>(result[0], filePath);
@@ -248,7 +248,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       if (executionResult.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      else if (!executionResult.hasNoErrors()) {
+      else if (executionResult.hasErrors()) {
         throw executionResult.composeError();
       }
     }
@@ -285,7 +285,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     if (executionResult.isCanceled()) {
       throw new ProcessCanceledException();
     }
-    else if (!executionResult.hasNoErrors()) {
+    else if (executionResult.hasErrors()) {
       throw executionResult.composeError();
     }
     else {

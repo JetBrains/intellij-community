@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -459,12 +460,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (namedArguments.length == 0) return;
 
-      Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
+      Map<String, NamedArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
 
       for (GrNamedArgument namedArgument : namedArguments) {
         String labelName = namedArgument.getLabelName();
 
-        GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = map.get(labelName);
+        NamedArgumentDescriptor descriptor = map.get(labelName);
 
         if (descriptor == null) continue;
 

@@ -31,7 +31,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -198,7 +197,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
 
   private void registerPluginActions() {
-    final IdeaPluginDescriptor[] plugins = PluginsFacade.INSTANCE.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
       final List<Element> elementList = plugin.getActionsDescriptionElements();
@@ -329,7 +328,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
@@ -471,7 +470,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
@@ -932,7 +931,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(id);
+      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
       if (plugin != null) {
         String name = plugin.getName();
         if (name == null) {

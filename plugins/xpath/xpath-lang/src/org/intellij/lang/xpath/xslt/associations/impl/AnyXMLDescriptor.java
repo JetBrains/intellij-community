@@ -33,7 +33,7 @@ public class AnyXMLDescriptor extends FileChooserDescriptor {
     }
 
     public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        final FileType fileType = myFileTypeManager.getFileTypeByFile(file);
+      final FileType fileType = file.getFileType();
         return file.isDirectory() || (super.isFileVisible(file, showHiddenFiles)
                 && FileAssociationsManager.XML_FILES_LIST.contains(fileType));
     }

@@ -2,10 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -191,6 +188,13 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     configure();
     selectItem(myItems[0]);
     checkResult();
+  }
+
+  public void testEmptyMapPresentation() {
+    configure();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    assertEquals("Collections.<String, S...>emptyMap", presentation.getItemText());
   }
 
   @Override

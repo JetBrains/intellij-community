@@ -77,6 +77,8 @@ public class IdeaTitledBorder extends TitledBorder {
 
     //applying text inset
     insideInsets.left -= TEXT_INSET_H;
+    insideInsets.right -= TEXT_INSET_H;
+    insideInsets.bottom -= TEXT_INSET_H;
 
     //applying indent
     TEXT_INSET_H -= indent;

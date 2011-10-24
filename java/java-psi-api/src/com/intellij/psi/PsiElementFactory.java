@@ -108,7 +108,17 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @return the created constructor instance.
    */
-  @NotNull PsiMethod createConstructor();
+  @NotNull
+  PsiMethod createConstructor();
+
+  /**
+   * Creates an empty constructor with a given name.
+   *
+   * @param name the name of the constructor to create.
+   * @return the created constructor instance.
+   */
+  @NotNull
+  PsiMethod createConstructor(@NotNull @NonNls String name);
 
   /**
    * Creates an empty class initializer block.

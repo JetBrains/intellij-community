@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import groovy.lang.Closure;
@@ -10,11 +11,15 @@ import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaMethod;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.InvokerHelper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -136,13 +141,36 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     method(args);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
+  public ParameterDescriptor parameter(Map args) {
+    return new ParameterDescriptor(args, myDescriptor.justGetPlaceFile());
+  }
+  
+  @SuppressWarnings("unchecked")
   public void method(Map<Object, Object> args) {
     args.put("type", stringifyType(args.get("type")));
+
+    Object namedParams = args.get("namedParams");
+    if (namedParams instanceof List) {
+      LinkedHashMap newParams = new LinkedHashMap();
+      newParams.put("args", namedParams);
+      Object oldParams = args.get("params");
+      if (oldParams instanceof Map) {
+        newParams.putAll((Map)oldParams);
+      }
+      args.put("params", newParams);
+    }
+
     //noinspection unchecked
-    final Map<Object, Object> params = (Map)args.get("params");
-    if (params != null) {
-      for (Map.Entry<Object, Object> entry : params.entrySet()) {
-        entry.setValue(stringifyType(entry.getValue()));
+    Object params = args.get("params");
+    if (params instanceof Map) {
+      boolean first = true;
+      for (Map.Entry<Object, Object> entry : ((Map<Object, Object>)params).entrySet()) {
+        Object value = entry.getValue();
+        if (!first || !(value instanceof List)) {
+          entry.setValue(stringifyType(value));
+        }
+        first = false;
       }
     }
     final Object toThrow = args.get(THROWS);
@@ -198,5 +226,45 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return null;
   }
 
+  public static class ParameterDescriptor {
+    public final String name;
+    public final NamedArgumentDescriptor descriptor;
+
+    private ParameterDescriptor(Map args, PsiElement context) {
+      name = (String)args.get("name");
+      final String typeText = stringifyType(args.get("type"));
+      Object doc = args.get("doc");
+      descriptor = new NamedArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context)) {
+        @Override
+        public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
+          return typeText == null || ClassContextFilter.isSubtype(type, context.getContainingFile(), typeText);
+        }
+      };
+      descriptor.setPriority(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP);
+    }
+
+  }
+  
+  public static class GdslNamedParameter extends FakePsiElement {
+    private final String myName;
+    public final String docString;
+    private final PsiElement myParent;
+
+    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent) {
+      myName = name;
+      this.docString = doc;
+      myParent = parent;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myParent;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
+  }
 
 }

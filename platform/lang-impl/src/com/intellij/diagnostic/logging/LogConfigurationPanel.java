@@ -20,13 +20,18 @@ import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -58,6 +63,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private JButton myRemoveButton;
   private JPanel myScrollPanel;
   private JButton myEditButton;
+  private JBCheckBox myRedirectOutputCb;
+  private TextFieldWithBrowseButton myOutputFile;
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<LogFileOptions, PredefinedLogFile>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new ArrayList<PredefinedLogFile>();
 
@@ -144,6 +151,15 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     myScrollPanel.add(scrollPane, BorderLayout.CENTER);
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
+    myOutputFile.addBrowseFolderListener("Choose File to Save Console Output", "Console output would be saved to the specified file", null,
+                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
+                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myRedirectOutputCb.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myOutputFile.setEnabled(myRedirectOutputCb.isSelected());
+      }
+    });
   }
 
   private void setUpColumnWidth(final JTableHeader tableHeader, final int preferredWidth, int columnIdx) {
@@ -220,6 +236,11 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       }
     }
     myModel.setItems(list);
+    final boolean redirectOutputToFile = configuration.isSaveOutputToFile();
+    myRedirectOutputCb.setSelected(redirectOutputToFile);
+    final String fileOutputPath = configuration.getOutputFilePath();
+    myOutputFile.setText(fileOutputPath != null ? FileUtil.toSystemDependentName(fileOutputPath) : "");
+    myOutputFile.setEnabled(redirectOutputToFile);
   }
 
   protected void applyEditorTo(final RunConfigurationBase configuration) throws ConfigurationException {
@@ -244,7 +265,10 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
     for (PredefinedLogFile logFile : myUnresolvedPredefined) {
       configuration.addPredefinedLogFile(logFile);
-  }
+    }
+    final String text = myOutputFile.getText();
+    configuration.setFileOutputPath(StringUtil.isEmpty(text) ? null : FileUtil.toSystemIndependentName(text));
+    configuration.setSaveOutputToFile(myRedirectOutputCb.isSelected());
   }
 
   @NotNull

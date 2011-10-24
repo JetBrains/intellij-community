@@ -105,8 +105,12 @@ public class GroovyDslExecutor {
       return StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
     }
     else if (ver instanceof Map) {
-      def we = ver.ide?.intellij
-      return we != null && StringUtil.compareVersionNumbers(ideaVersion, we) >= 0
+      if (ver.dsl) {
+        return StringUtil.compareVersionNumbers('1.0', ver.dsl) >= 0
+      }
+      if (ver.intellij) {
+        return StringUtil.compareVersionNumbers(ideaVersion, ver.intellij) >= 0
+      }
     }
     return false
   }

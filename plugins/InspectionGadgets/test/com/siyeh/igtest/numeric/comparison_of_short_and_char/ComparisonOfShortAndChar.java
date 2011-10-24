@@ -1,4 +1,4 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.numeric.comparison_of_short_and_char;
 
 public class ComparisonOfShortAndChar
 {

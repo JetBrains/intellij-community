@@ -15,10 +15,7 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.Builder;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FileProcessor;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -75,11 +72,19 @@ public class JavaBuilder extends Builder{
           final File srcFile = out.getSourceFile();
           if (srcFile != null && content != null) {
             // todo: the callback is not thread-safe?
+            final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
+            final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
+            try {
+              context.getBuildDataManager().getOutputToSourceStorage().update(outputPath, sourcePath);
+            }
+            catch (Exception e) {
+              context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+            }
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (callback) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
-              callback.associate(className, Callbacks.getDefaultLookup(FileUtil.toSystemIndependentName(srcFile.getPath())), reader);
+              callback.associate(className, Callbacks.getDefaultLookup(sourcePath), reader);
             }
           }
         }
@@ -100,7 +105,6 @@ public class JavaBuilder extends Builder{
     try {
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
       final Set<File> filesToCompile = new LinkedHashSet<File>();
-      final Set<String> removedPaths = new HashSet<String>(); // only collect them in make mode
       final List<File> formsToCompile = new ArrayList<File>();
       final List<File> upToDateForms = new ArrayList<File>();
       final Set<String> srcRoots = new HashSet<String>();
@@ -151,7 +155,18 @@ public class JavaBuilder extends Builder{
       }
       upToDateForms.clear();
 
-      // todo: collect removed stuff
+      final Set<File> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
+      final Set<String> removedPaths; // only collect them in make mode
+      if (removed == null || removed.isEmpty()){
+        removedPaths = Collections.emptySet();
+      }
+      else {
+        removedPaths = new HashSet<String>();
+        for (File file : removed) {
+          removedPaths.add(file.getPath());
+        }
+      }
+
 
       return compile(context, chunk, filesToCompile, formsToCompile, removedPaths);
     }
@@ -190,7 +205,9 @@ public class JavaBuilder extends Builder{
   private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms, Set<String> removedSources) throws Exception {
     ExitCode exitCode = ExitCode.OK;
 
-    if (files.isEmpty() && forms.isEmpty()) {
+    final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
+
+    if (!hasSourcesToCompile && removedSources.isEmpty()) {
       return exitCode;
     }
 
@@ -226,33 +243,36 @@ public class JavaBuilder extends Builder{
     final OutputFilesSink outputSink = new OutputFilesSink(context);
     Collection<File> successfulForms = Collections.emptyList();
     try {
-      boolean compiledOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, diagnosticSink, outputSink);
+      if (hasSourcesToCompile) {
+        // todo: before compile, basing on Mappings, delete all classes that correspond to files being compiled
+        final boolean compiledOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, diagnosticSink, outputSink);
 
-      final Collection<File> chunkSourcePath = ProjectPaths.getSourcePathsWithDependents(chunk, context.isCompilingTests());
-      final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
+        final Collection<File> chunkSourcePath = ProjectPaths.getSourcePathsWithDependents(chunk, context.isCompilingTests());
+        final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
 
-      if (!forms.isEmpty()) {
-        try {
-          context.processMessage(new ProgressMessage("Instrumenting forms [" + chunk.getName() + "]"));
-          successfulForms = instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
+        if (!forms.isEmpty()) {
+          try {
+            context.processMessage(new ProgressMessage("Instrumenting forms [" + chunk.getName() + "]"));
+            successfulForms = instrumentForms(context, chunk, chunkSourcePath, compiledClassesLoader, forms, outputSink);
+          }
+          finally {
+            context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getName() + "]"));
+          }
         }
-        finally {
-          context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getName() + "]"));
-        }
-      }
 
-      if (addNotNullAssertions) {
-        try {
-          context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunk.getName() + "]"));
-          instrumentNotNull(context, outputSink, compiledClassesLoader);
+        if (addNotNullAssertions) {
+          try {
+            context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunk.getName() + "]"));
+            instrumentNotNull(context, outputSink, compiledClassesLoader);
+          }
+          finally {
+            context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunk.getName() + "]"));
+          }
         }
-        finally {
-          context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunk.getName() + "]"));
-        }
-      }
 
-      if (!compiledOk || diagnosticSink.getErrorCount() > 0) {
-        throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
+        if (!compiledOk || diagnosticSink.getErrorCount() > 0) {
+          throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
+        }
       }
     }
     finally {
@@ -289,7 +309,6 @@ public class JavaBuilder extends Builder{
         }
         else {
           exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-          // todo: mark as dirty also all those that depend on this module recursively
           context.setDirty(chunk, true);
         }
       }
@@ -561,7 +580,7 @@ public class JavaBuilder extends Builder{
       final String srcPath;
       final JavaFileObject source = diagnostic.getSource();
       if (source != null) {
-        srcPath = FileUtil.toSystemIndependentName(new File(source.toUri()).getPath());
+        srcPath = FileUtil.toSystemIndependentName(source.toUri().getPath());
       }
       else {
         srcPath = null;

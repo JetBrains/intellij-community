@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<problems>
+  <problem>
+    <file>ComparisonOfShortAndChar.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Comparison of 'short' and 'char' values</problem_class>
+    <description>Equality comparison &lt;code&gt;bar == baz&lt;/code&gt; of short and char values #loc</description>
+  </problem>
+
+  <problem>
+    <file>ComparisonOfShortAndChar.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Comparison of 'short' and 'char' values</problem_class>
+    <description>Equality comparison &lt;code&gt;bar != baz&lt;/code&gt; of short and char values #loc</description>
+  </problem>
+</problems>
