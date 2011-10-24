@@ -18,7 +18,6 @@ package git4idea.repo;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
@@ -137,42 +136,103 @@ class GitConfig {
 
   @NotNull
   private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
-    Pair<Collection<String>, Collection<String>> substitutedUrls = substituteUrls(urls, remote);
-    Collection<String> pushUrls;
-    if (remote.getPushUrls().isEmpty()) {
-      pushUrls = substitutedUrls.getSecond();
-    } else {
-      pushUrls = remote.getPushUrls();    // explicit pushUrls are not impacted by insteadOf or pushInsteadOf
-    }
-    return new GitRemote(remote.myName, substitutedUrls.getFirst(), pushUrls, remote.getFetchSpec(), remote.getPushSpec());
+    UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
+    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(), remote.getFetchSpec(), remote.getPushSpec());
   }
 
+  /**
+   * <p>
+   *   Applies {@code url.<base>.insteadOf} and {@code url.<base>.pushInsteadOf} transformations to {@code url} and {@code pushUrl} of
+   *   the given remote.
+   * </p>
+   * <p>
+   *   The logic, is as follows:
+   *   <ul>
+   *     <li>If remote.url starts with url.insteadOf, it it substituted.</li>
+   *     <li>If remote.pushUrl starts with url.insteadOf, it is substituted.</li>
+   *     <li>If remote.pushUrl starts with url.pushInsteadOf, it is not substituted.</li>
+   *     <li>If remote.url starts with url.pushInsteadOf, but remote.pushUrl is given, additional push url is not added.</li>
+   *   </ul>
+   * </p>
+   *
+   * <p>
+   *   TODO: if there are several matches in url sections, the longest should be applied. // currently only one is applied
+   * </p>
+   *
+   * <p>
+   *   This is according to {@code man git-config ("url.<base>.insteadOf" and "url.<base>.pushInsteadOf" sections},
+   *   {@code man git-push ("URLS" section)} and the following discussions in the Git mailing list:
+   *   <a href="http://article.gmane.org/gmane.comp.version-control.git/183587">insteadOf override urls and pushUrls</a>,
+   *   <a href="http://thread.gmane.org/gmane.comp.version-control.git/127910">pushInsteadOf doesn't override explicit pushUrl</a>.
+   * </p>
+   */
   @NotNull
-  private static Pair<Collection<String>, Collection<String>> substituteUrls(@NotNull Collection<Url> urls, @NotNull Remote remote) {
-    Collection<String> finalUrls = new ArrayList<String>(remote.getUrls().size());
-    Collection<String> additionalPushUrls = new ArrayList<String>();
+  private static UrlsAndPushUrls substituteUrls(@NotNull Collection<Url> urlSections, @NotNull Remote remote) {
+    Collection<String> urls = new ArrayList<String>(remote.getUrls().size());
+    Collection<String> pushUrls = new ArrayList<String>();
+
+    // urls are substituted by insteadOf
+    // if there are no pushUrls, we create a pushUrl for pushInsteadOf substitutions
     for (final String remoteUrl : remote.getUrls()) {
       boolean substituted = false;
-      for (Url url : urls) {
+      for (Url url : urlSections) {
         String insteadOf = url.getInsteadOf();
         String pushInsteadOf = url.getPushInsteadOf();
         // null means no entry, i.e. nothing to substitute. Empty string means substituting everything
         if (insteadOf != null && remoteUrl.startsWith(insteadOf)) {
-          finalUrls.add(substituteUrl(remoteUrl, url, insteadOf));
+          urls.add(substituteUrl(remoteUrl, url, insteadOf));
           substituted = true;
           break;
-        } else if (pushInsteadOf != null && remoteUrl.startsWith(pushInsteadOf)) {
-          additionalPushUrls.add(substituteUrl(remoteUrl, url, pushInsteadOf)); // pushUrl is different
-          finalUrls.add(remoteUrl);                                             // but url is left intact
+        }
+        else if (pushInsteadOf != null && remoteUrl.startsWith(pushInsteadOf)) {
+          if (remote.getPushUrls().isEmpty()) { // only if there are no explicit pushUrls
+              pushUrls.add(substituteUrl(remoteUrl, url, pushInsteadOf)); // pushUrl is different
+          }
+          urls.add(remoteUrl);                                             // but url is left intact
           substituted = true;
           break;
         } 
       }
       if (!substituted) {
-        finalUrls.add(remoteUrl);
+        urls.add(remoteUrl);
       }
     }
-    return Pair.create(finalUrls, additionalPushUrls);
+
+    // pushUrls are substituted only by insteadOf, not by pushInsteadOf
+    for (final String remotePushUrl : remote.getPushUrls()) {
+      boolean substituted = false;
+      for (Url url : urlSections) {
+        String insteadOf = url.getInsteadOf();
+        // null means no entry, i.e. nothing to substitute. Empty string means substituting everything
+        if (insteadOf != null && remotePushUrl.startsWith(insteadOf)) {
+          pushUrls.add(substituteUrl(remotePushUrl, url, insteadOf));
+          substituted = true;
+          break;
+        }
+      }
+      if (!substituted) {
+        pushUrls.add(remotePushUrl);
+      }
+    }
+    return new UrlsAndPushUrls(urls, pushUrls);
+  }
+  
+  private static class UrlsAndPushUrls {
+    final Collection<String> myUrls;
+    final Collection<String> myPushUrls;
+
+    private UrlsAndPushUrls(Collection<String> urls, Collection<String> pushUrls) {
+      myPushUrls = pushUrls;
+      myUrls = urls;
+    }
+
+    public Collection<String> getPushUrls() {
+      return myPushUrls;
+    }
+
+    public Collection<String> getUrls() {
+      return myUrls;
+    }
   }
 
   @NotNull
