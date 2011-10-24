@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.util;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.CharacterIterator;
@@ -78,17 +79,9 @@ public final class Strings {
     return !tail.equals(lowerCase) && !isUpperCase(word);
   }
 
-  public static String capitalize(String word) {
-    if (word.length() == 0) return word;
-
-    StringBuffer buf = new StringBuffer(word);
-    buf.setCharAt(0, Character.toUpperCase(buf.charAt(0)));
-    return buf.toString();
-  }
-
   public static void capitalize(List<String> words) {
     for (int i = 0; i < words.size(); i++) {
-      words.set(i, capitalize(words.get(i)));
+      words.set(i, StringUtil.capitalize(words.get(i)));
     }
   }
 
