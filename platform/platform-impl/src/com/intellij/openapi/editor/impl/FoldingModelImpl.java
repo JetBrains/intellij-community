@@ -462,7 +462,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return EditorDocumentPriorities.FOLD_MODEL;
   }
 
-  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
+  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
+                                     boolean neverExpands)
+  {
     if (startOffset + 1 >= endOffset) {
       LOG.error("Invalid offsets: ("+startOffset+", "+endOffset+")");
     }

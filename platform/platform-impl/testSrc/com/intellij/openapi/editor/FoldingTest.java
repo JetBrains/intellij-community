@@ -1,6 +1,8 @@
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -96,6 +98,49 @@ public class FoldingTest extends LightPlatformTestCase {
           assertNotNull(region);
         }
       });
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
+  }
+
+  public void testDuplicateRegions() {
+    StringBuilder text = new StringBuilder();
+    for (int i = 0; i < 450; i++) {
+      text.append('a');
+    }
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(text));
+    try {
+      final Ref<Boolean> expandedStatus = new Ref<Boolean>();
+      final int startOffset = 6;
+      final int endOffset = 16;
+      final FoldingModelEx model = (FoldingModelEx)editor.getFoldingModel();
+      model.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          model.addFoldRegion(2, 20, "..");
+          model.addFoldRegion(4, 18, "..");
+          FoldRegion oldRegion = model.addFoldRegion(startOffset, endOffset, "..");
+          assertNotNull(oldRegion);
+          expandedStatus.set(!oldRegion.isExpanded());
+        }
+      });
+      assertEquals(3, model.getAllFoldRegions().length);
+      
+      final Ref<FoldRegion> newRegion = new Ref<FoldRegion>();
+      model.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          newRegion.set(model.createFoldRegion(startOffset, endOffset, "..", null, false));
+          assertNotNull(newRegion.get());
+          newRegion.get().setExpanded(expandedStatus.get());
+          boolean additionFlag = model.addFoldRegion(newRegion.get());
+          assertTrue(additionFlag);
+        }
+      });
+      FoldRegion fetched = model.fetchOutermost(startOffset);
+      assertSame(newRegion.get(), fetched);
+      assertEquals(3, model.getAllFoldRegions().length);
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);

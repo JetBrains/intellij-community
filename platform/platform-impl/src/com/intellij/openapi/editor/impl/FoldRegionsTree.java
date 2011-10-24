@@ -159,7 +159,19 @@ abstract class FoldRegionsTree {
     int fastIndex = myCachedLastIndex != -1 && isBatchFoldingProcessing()
                     ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
     if (fastIndex < 0) fastIndex = -fastIndex - 1;
-
+    
+    // There is a possible case that given range is the first at the current batch iteration. It's also possible that it
+    // range with the same bounds is already registered (e.g. particular range is registered during 'build initial fold regions' phase
+    // and given range has the same offsets but different 'expanded' status.
+    // We explicitly check for such situation, remove existing region and add the given one instead.
+    if (fastIndex < myRegions.size()) {
+      FoldRegion foldRegion = myRegions.get(fastIndex);
+      if (foldRegion.getStartOffset() == range.getStartOffset() && foldRegion.getEndOffset() == range.getEndOffset()) {
+        removeRegion(foldRegion);
+        return addRegion(range);
+      } 
+    } 
+    
     for (int i = fastIndex - 1; i >=0; --i) {
       final FoldRegion region = myRegions.get(i);
       if (region.getEndOffset() < range.getStartOffset()) break;
