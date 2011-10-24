@@ -195,6 +195,8 @@ public class ImplementationViewComponent extends JPanel {
 
         ((EditorEx)myEditor).setHighlighter(highlighter);
 
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.weightx = 1;
         if (myElements.length > 1) {
           myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
           updateRenderer(project);
@@ -211,6 +213,7 @@ public class ImplementationViewComponent extends JPanel {
 
           myLabel = new JLabel();
           myLabel.setVisible(false);
+          toolbarPanel.add(myFileChooser, gc);
         }
         else {
           myFileChooser = new ComboBox();
@@ -225,16 +228,12 @@ public class ImplementationViewComponent extends JPanel {
             myLabel.setText(file.getPresentableName());
             myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
           }
-          
+          toolbarPanel.add(myLabel, gc);
         }
 
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        gc.weightx = 1;
-        toolbarPanel.add(myFileChooser, gc);
         gc.fill = GridBagConstraints.NONE;
         gc.weightx = 0;
         toolbarPanel.add(myCountLabel, gc);
-        toolbarPanel.add(myLabel, gc);
 
         header.add(toolbarPanel, BorderLayout.CENTER);
         header.add(myLocationLabel, BorderLayout.EAST);
