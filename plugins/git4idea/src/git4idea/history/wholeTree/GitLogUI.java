@@ -12,8 +12,10 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,6 +71,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.File;
@@ -131,6 +134,7 @@ public class GitLogUI implements Disposable {
   private JPanel myEqualToHeadr;
   private boolean myThereAreFilters;
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
+  //private GitLogUI.MyTreeSettingsButton myMyTreeSettingsButton;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -652,29 +656,7 @@ public class GitLogUI implements Disposable {
     final JPanel mainBorderWrapper = new JPanel(new BorderLayout());
     final JPanel wrapperGutter = new JPanel(new BorderLayout());
     //myGraphGutter.getComponent().setVisible(false);
-    myEqualToHeadr = new JPanel() {
-      @Override
-      public Dimension getPreferredSize() {
-        return getMySize();
-      }
-
-      @Override
-      public Dimension getMaximumSize() {
-        return getMySize();
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        return getMySize();
-      }
-
-      public Dimension getMySize() {
-        final int height = myJBTable.getTableHeader().getHeight();
-        final int width = myGraphGutter.getComponent().getPreferredSize().width;
-        return new Dimension(width, height);
-      }
-    };
-    myEqualToHeadr.setBorder(BorderFactory.createMatteBorder(0,0,1,0,UIUtil.getBorderColor()));
+    createTreeUpperComponent();
     wrapperGutter.add(myEqualToHeadr, BorderLayout.NORTH);
     wrapperGutter.add(myGraphGutter.getComponent(), BorderLayout.CENTER);
     mainBorderWrapper.add(wrapperGutter, BorderLayout.WEST);
@@ -696,6 +678,55 @@ public class GitLogUI implements Disposable {
     splitter.setSecondComponent(borderWrapper);
     splitter.setDividerWidth(4);
     return splitter;
+  }
+
+  private void createTreeUpperComponent() {
+    final MyTreeSettings treeSettings = new MyTreeSettings();
+    myEqualToHeadr = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return getMySize();
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return getMySize();
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return getMySize();
+      }
+
+      public Dimension getMySize() {
+        final int height = myJBTable.getTableHeader().getHeight();
+        final int width = myGraphGutter.getComponent().getPreferredSize().width;
+        return new Dimension(width, height);
+      }
+    };
+    myEqualToHeadr.setBorder(BorderFactory.createMatteBorder(1,0,1,0, UIUtil.getBorderColor()));
+    final JPanel wr2 = new JPanel(new BorderLayout());
+    wr2.add(treeSettings.getLabel(), BorderLayout.EAST);
+    myEqualToHeadr.add(wr2, BorderLayout.CENTER);
+    treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(UIUtil.getLabelBackground()));
+    treeSettings.getLabel().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        treeSettings.execute(e);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        treeSettings.getLabel().setBackground(UIUtil.getLabelBackground());
+        treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(UIUtil.getLabelBackground()));
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        treeSettings.getLabel().setBackground(UIUtil.getLabelBackground().darker());
+        treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(Color.black));
+      }
+    });
   }
 
   private ActionPopupMenu createContextMenu() {
@@ -1676,6 +1707,61 @@ public class GitLogUI implements Disposable {
       if (! myThereAreFilters) {
         myEqualToHeadr.getParent().setVisible(state);
       }
+    }
+  }
+  
+  public class MyTreeSettings {
+    private final DumbAwareAction myMultiColorAction;
+    private final DumbAwareAction myCalmAction;
+    private final Icon myIcon;
+    private JLabel myLabel;
+
+    public MyTreeSettings() {
+      myIcon = IconLoader.getIcon("/general/comboArrow.png");
+
+      myMultiColorAction = new DumbAwareAction("Multicolour") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myGraphGutter.setStyle(GraphGutter.PresentationStyle.multicolour);
+        }
+      };
+      myCalmAction = new DumbAwareAction("Calm") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myGraphGutter.setStyle(GraphGutter.PresentationStyle.calm);
+        }
+      };
+      myLabel = new JLabel(myIcon);
+      myLabel.setOpaque(false);
+    }
+
+    public JLabel getLabel() {
+      return myLabel;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    public void execute(final MouseEvent e) {
+      final DefaultActionGroup group = createActionGroup();
+      final DataContext parent = DataManager.getInstance().getDataContext(myEqualToHeadr);
+      final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
+      final JBPopup popup = JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
+                                new Runnable() {
+                                  @Override
+                                  public void run() {
+                                  }
+                                }, 20);
+      popup.show(new RelativePoint(e));
+    }
+
+    private DefaultActionGroup createActionGroup() {
+      final DefaultActionGroup dab = new DefaultActionGroup();
+      dab.add(myMultiColorAction);
+      dab.add(myCalmAction);
+      return dab;
     }
   }
 }
