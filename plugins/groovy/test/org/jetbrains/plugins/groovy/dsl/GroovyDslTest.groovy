@@ -180,8 +180,12 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['param1', 'param2']
+    assert 'My doc' == generateDoc()
+  }
+
+  private String generateDoc() {
     def element = DocumentationManager.getInstance(project).getElementFromLookup(myFixture.editor, myFixture.file)
-    assert 'My doc' == new GroovyDocumentationProvider().generateDoc(element, null)
+    return new GroovyDocumentationProvider().generateDoc(element, null)
   }
 
   public void testCheckNamedArgumentTypes() {
@@ -196,5 +200,23 @@ public class MyCategory {
 '''
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
     myFixture.checkHighlighting(true, false, false)
+  }
+
+  public void testMethodDoc() {
+    addGdsl '''contribute(currentType(String.name)) {
+  method name:'foo', type:void, params:[:], doc:'Some doc'
+}'''
+    myFixture.configureByText 'a.groovy', '"".fo<caret>o'
+    myFixture.completeBasic()
+    assert 'Some doc' == generateDoc()
+  }
+
+  public void testPropertyDoc() {
+    addGdsl '''contribute(currentType(String.name)) {
+  property name:'foo', type:int, doc:'Some doc2'
+}'''
+    myFixture.configureByText 'a.groovy', '"".fo<caret>o'
+    myFixture.completeBasic()
+    assert 'Some doc2' == generateDoc()
   }
 }

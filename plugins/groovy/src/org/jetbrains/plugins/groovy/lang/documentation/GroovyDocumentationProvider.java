@@ -35,10 +35,12 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -56,9 +58,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -293,7 +297,16 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Nullable
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    return JavaDocumentationProvider.getExternalJavaDocUrl(element);
+    List<String> result = new ArrayList<String>();
+    PsiElement docElement = getDocumentationElement(element, originalElement);
+    if (docElement != null) {
+      ContainerUtil.addIfNotNull(result, docElement.getUserData(NonCodeMembersHolder.DOCUMENTATION_URL));
+    }
+    List<String> list = JavaDocumentationProvider.getExternalJavaDocUrl(element);
+    if (list != null) {
+      result.addAll(list);
+    }
+    return result.isEmpty() ? null : result;
   }
 
   @Nullable
@@ -306,6 +319,19 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       return getMethodCandidateInfo((GrReferenceExpression)element);
     }
 
+    element = getDocumentationElement(element, originalElement);
+    
+    if (element == null) return null;
+
+    String gdslDoc = element.getUserData(NonCodeMembersHolder.DOCUMENTATION);
+    if (gdslDoc != null) {
+      return gdslDoc;
+    }
+
+    return JavaDocumentationProvider.generateExternalJavadoc(element);
+  }
+
+  private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrGdkMethod) {
       element = ((GrGdkMethod)element).getStaticMethod();
     }
@@ -334,7 +360,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
     }
 
-    return JavaDocumentationProvider.generateExternalJavadoc(element);
+    if (element instanceof GrPropertyForCompletion) {
+      element = ((GrPropertyForCompletion)element).getOriginalAccessor();
+    }
+    return element;
   }
 
   public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {

@@ -32,8 +32,11 @@ import java.util.List;
  */
 
 public class GrPropertyForCompletion extends LightFieldBuilder {
+  @NotNull private final PsiMethod myOriginalAccessor;
+
   public GrPropertyForCompletion(@NotNull PsiMethod method, @NotNull String name, @NotNull PsiType type) {
     super(method.getManager(), name, type);
+    myOriginalAccessor = method;
 
     List<String> modifiers = new ArrayList<String>();
     if (method.hasModifierProperty(GrModifier.PUBLIC)) modifiers.add(GrModifier.PUBLIC);
@@ -44,6 +47,11 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
     setContainingClass(method.getContainingClass());
     setModifiers(ArrayUtil.toStringArray(modifiers));
     setBaseIcon(GroovyIcons.PROPERTY);
+  }
+
+  @NotNull
+  public PsiMethod getOriginalAccessor() {
+    return myOriginalAccessor;
   }
 
   @Override

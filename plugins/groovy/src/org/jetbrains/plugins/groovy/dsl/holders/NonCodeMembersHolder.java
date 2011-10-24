@@ -38,6 +38,8 @@ import java.util.Set;
  * @author peter
  */
 public class NonCodeMembersHolder implements CustomMembersHolder {
+  public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
+  public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
   private final List<GrLightMethodBuilder> myMethods = new ArrayList<GrLightMethodBuilder>();
   private static final Key<CachedValue<ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder>>> CACHED_HOLDERS = Key.create("CACHED_HOLDERS");
 
@@ -108,6 +110,16 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
             method.addException((PsiClassType)psiType);
           }
         }
+      }
+
+      Object doc = prop.get("doc");
+      if (doc instanceof String) {
+        method.putUserData(DOCUMENTATION, (String)doc);
+      }
+
+      Object docUrl = prop.get("docUrl");
+      if (docUrl instanceof String) {
+        method.putUserData(DOCUMENTATION_URL, (String)docUrl);
       }
 
       myMethods.add(method);
