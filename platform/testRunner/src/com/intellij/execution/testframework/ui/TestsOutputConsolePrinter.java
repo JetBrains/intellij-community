@@ -145,7 +145,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     myConsole.performWhenNoDeferredOutput(new Runnable() {
       public void run() {
         final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
-        if (!currentProxyOrRoot.isInProgress()) {
+        if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
           //do not scroll to any mark during run
           myConsole.scrollTo(myMarkOffset);
         }
