@@ -19,6 +19,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.ReopenProjectAction;
+import com.intellij.ide.dnd.*;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -26,14 +28,17 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,6 +48,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -226,8 +232,11 @@ public class WelcomeScreen implements Disposable {
     // Add QuickStarts and Docs to main panel
     myMainPanel.add(quickStartPanel);
     myMainPanel.add(docsPanel);
+
+    // Accept dropping of project file/dir from file manager and open that project
+    DnDManager.getInstance().registerTarget(new OpenProjectDropTarget(myWelcomePanel), myWelcomePanel);
   }
-  
+
   private JComponent setUpRecentProjectsPanel(IdeRootPane rootPane, AnAction[] recentProjectsActions) {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(MAIN_PANEL_BACKGROUND);
@@ -862,5 +871,54 @@ public class WelcomeScreen implements Disposable {
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     return scrollPane;
+  }
+
+  private static class OpenProjectDropTarget implements DnDNativeTarget {
+    private final JPanel myComponent;
+
+    private OpenProjectDropTarget(JPanel component) {
+      myComponent = component;
+    }
+
+    @Override
+    public void cleanUpOnLeave() {
+    }
+
+    @Override
+    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+    }
+
+    @Override
+    public void drop(DnDEvent event) {
+      String projectPath = getProjectPath(event);
+      assert projectPath != null;
+      ReopenProjectAction action = new ReopenProjectAction(projectPath, projectPath);
+      DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
+      AnActionEvent e = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+      action.actionPerformed(e);
+    }
+
+    @Override
+    public boolean update(DnDEvent event) {
+      event.setDropPossible(getProjectPath(event) != null);
+      return false;
+    }
+
+    @Nullable
+    private static String getProjectPath(DnDEvent event) {
+      if (!FileCopyPasteUtil.isFileListFlavorSupported(event)) return null;
+      Object attachedObject = event.getAttachedObject();
+      if (!(attachedObject instanceof EventInfo)) return null;
+      List<File> files = FileCopyPasteUtil.getFileList(((EventInfo)attachedObject).getTransferable());
+      if (files == null) return null;
+      File file = ContainerUtil.getFirstItem(files);
+      return file != null && isProjectFileOrDir(file) ? file.getAbsolutePath() : null;
+    }
+
+    private static boolean isProjectFileOrDir(File file) {
+      if (file.isFile() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) return true;
+      if (file.isDirectory() && new File(file, Project.DIRECTORY_STORE_FOLDER).isDirectory()) return true;
+      return false;
+    }
   }
 }
