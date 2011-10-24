@@ -32,7 +32,7 @@ public class GroovyElementType extends IElementType {
   private String debugName = null;
 
   public GroovyElementType(String debugName) {
-    super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+    super(debugName, GroovyFileType.GROOVY_LANGUAGE);
     this.debugName = debugName;
   }
 

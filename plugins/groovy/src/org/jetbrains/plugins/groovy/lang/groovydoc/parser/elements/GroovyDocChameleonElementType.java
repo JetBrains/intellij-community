@@ -32,7 +32,7 @@ public abstract class GroovyDocChameleonElementType extends ILazyParseableElemen
 
   @NotNull
   public Language getLanguage() {
-    return GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+    return GroovyFileType.GROOVY_LANGUAGE;
   }
 
 }

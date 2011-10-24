@@ -44,7 +44,7 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
   ILazyParseableElementType GROOVY_DOC_COMMENT = new ILazyParseableElementType("GrDocComment") {
     @NotNull
     public Language getLanguage() {
-      return GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+      return GroovyFileType.GROOVY_LANGUAGE;
     }
 
     public ASTNode parseContents(ASTNode chameleon) {

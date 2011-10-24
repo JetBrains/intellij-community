@@ -27,7 +27,7 @@ public class GroovyDocElementTypeImpl extends GroovyDocElementType {
   private String debugName = null;
 
   public GroovyDocElementTypeImpl(@NonNls String debugName) {
-    super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+    super(debugName, GroovyFileType.GROOVY_LANGUAGE);
     this.debugName = debugName;
   }
 
