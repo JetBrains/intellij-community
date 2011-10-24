@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,9 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
 
   @Override
   public Result postProcessEnter(@NotNull final PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
-    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
+    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER
+        || !CodeStyleSettingsManager.getSettings(file.getProject()).JD_ALIGN_PARAM_COMMENTS)
+    {
       return Result.Continue;
     }
     final CaretModel caretModel = editor.getCaretModel();
