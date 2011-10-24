@@ -27,8 +27,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
-import git4idea.GitDeprecatedRemote;
-import git4idea.GitUtil;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.*;
@@ -59,6 +60,21 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
         e.getPresentation().setEnabled(false);
         return;
       }
+
+      final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(project.getBaseDir());
+      if (gitRepository == null){
+        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+
+      // Check that given repository is properly configured git repository
+      final GitRemote gitHubRemoteBranch = GithubUtil.findGitHubRemoteBranch(gitRepository);
+      if (gitHubRemoteBranch == null) {
+        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabled(false);
+        return;
+      }
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(true);
     }
@@ -69,6 +85,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -81,12 +98,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     final VirtualFile root = project.getBaseDir();
-    // Check if git is already initialized and presence of remote branch
-    final boolean gitDetected = GitUtil.isUnderGit(root);
-    if (!gitDetected) {
-      Messages.showErrorDialog(project, "Cannot find any git repository configured for the project", CANNOT_OPEN_IN_BROWSER);
-      return;
-    }
+    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(root);
+    // Check that given repository is properly configured git repository
+    final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(gitRepository);
+    final String pushUrl = GithubUtil.getGithubUrl(gitRemote);
+
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final String rootPath = root.getPath();
     final String path = virtualFile.getPath();
@@ -95,15 +111,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-
-    // Check that given repository is properly configured git repository
-    final GitDeprecatedRemote githubRemote = GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
-    if (githubRemote == null) {
-      Messages.showErrorDialog(project, "Configured github repository is not found", CANNOT_OPEN_IN_BROWSER);
-      return;
-    }
-
-    final String pushUrl = githubRemote.pushUrl();
     int index = -1;
     if (pushUrl.startsWith(GithubUtil.getHttpsUrl())) {
       index = pushUrl.lastIndexOf('/');

@@ -15,9 +15,16 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,25 +37,47 @@ import java.util.*;
 */
 public class ModuleDescriptor {
   private String myName;
-  private final Map<File, Set<File>> myContentToSourceRoots = new HashMap<File, Set<File>>();
+  private final MultiMap<File, JavaModuleSourceRoot> myContentToSourceRoots = new MultiMap<File, JavaModuleSourceRoot>();
   private final Set<File> myLibraryFiles = new HashSet<File>();
   private final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
   private static final String[] ourModuleNameStoplist = new String[] {
       "java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"
   };
   private boolean myReuseExistingElement;
+  private List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<ModuleBuilder.ModuleConfigurationUpdater>();
+  private ModuleType myModuleType;
 
-  public ModuleDescriptor(final File contentRoot, final Set<File> sourceRoots) {
+  public ModuleDescriptor(final File contentRoot, final ModuleType moduleType, final Collection<JavaModuleSourceRoot> sourceRoots) {
     myName = suggestModuleName(contentRoot);
-    myContentToSourceRoots.put(contentRoot, sourceRoots);
+    myContentToSourceRoots.putValues(contentRoot, sourceRoots);
+    myModuleType = moduleType;
+  }
+
+  public ModuleDescriptor(final File contentRoot, final ModuleType moduleType,
+                          final JavaModuleSourceRoot sourceRoot) {
+    this(contentRoot, moduleType, Collections.singletonList(sourceRoot));
   }
 
   public void reuseExisting(boolean reuseExistingElement) {
     myReuseExistingElement = reuseExistingElement;
   }
 
+  public void addConfigurationUpdater(ModuleBuilder.ModuleConfigurationUpdater updater) {
+    myConfigurationUpdaters.add(updater);
+  }
+
+  public void updateModuleConfiguration(Module module, ModifiableRootModel rootModel) {
+    for (ModuleBuilder.ModuleConfigurationUpdater updater : myConfigurationUpdaters) {
+      updater.update(module, rootModel);
+    }
+  }
+
   public boolean isReuseExistingElement() {
     return myReuseExistingElement;
+  }
+
+  public ModuleType getModuleType() {
+    return myModuleType;
   }
 
   private static String suggestModuleName(final File contentRoot) {
@@ -81,34 +110,24 @@ public class ModuleDescriptor {
     return Collections.unmodifiableSet(myContentToSourceRoots.keySet());
   }
 
-  public Set<File> getSourceRoots() {
-    final Set<File> allSources = new HashSet<File>();
-    for (Set<File> files : myContentToSourceRoots.values()) {
-      allSources.addAll(files);
-    }
-    return allSources;
+  public Collection<? extends JavaModuleSourceRoot> getSourceRoots() {
+    return myContentToSourceRoots.values();
   }
 
-  public Set<File> getSourceRoots(File contentRoot) {
-    final Set<File> sources = myContentToSourceRoots.get(contentRoot);
-    return (sources != null) ? Collections.unmodifiableSet(sources) : Collections.<File>emptySet();
+  public Collection<JavaModuleSourceRoot> getSourceRoots(File contentRoot) {
+    return myContentToSourceRoots.get(contentRoot);
   }
   
   public void addContentRoot(File contentRoot) {
-    myContentToSourceRoots.put(contentRoot, new HashSet<File>());
+    myContentToSourceRoots.put(contentRoot, new HashSet<JavaModuleSourceRoot>());
   }
   
-  public Set<File> removeContentRoot(File contentRoot) {
+  public Collection<JavaModuleSourceRoot> removeContentRoot(File contentRoot) {
     return myContentToSourceRoots.remove(contentRoot);
   }
   
-  public void addSourceRoot(final File contentRoot, File sourceRoot) {
-    Set<File> sources = myContentToSourceRoots.get(contentRoot);
-    if (sources == null) {
-      sources = new HashSet<File>();
-      myContentToSourceRoots.put(contentRoot, sources);
-    }
-    sources.add(sourceRoot);
+  public void addSourceRoot(final File contentRoot, JavaModuleSourceRoot sourceRoot) {
+    myContentToSourceRoots.putValue(contentRoot, sourceRoot);
   }
   
   public void addDependencyOn(ModuleDescriptor dependence) {
@@ -137,8 +156,8 @@ public class ModuleDescriptor {
   public String toString() {
     @NonNls final StringBuilder builder = new StringBuilder();
     builder.append("[Module: ").append(getContentRoots()).append(" | ");
-    for (File sourceRoot : getSourceRoots()) {
-      builder.append(sourceRoot.getName()).append(",");
+    for (JavaModuleSourceRoot sourceRoot : getSourceRoots()) {
+      builder.append(sourceRoot.getDirectory().getName()).append(",");
     }
     builder.append("]");
     return builder.toString();

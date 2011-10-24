@@ -135,7 +135,7 @@ class UndoableGroup {
               if (affectedDocuments != null) {
                 for (DocumentReference affectedDocument : affectedDocuments) {
                   VirtualFile file = affectedDocument.getFile();
-                  if (file == null || !file.isValid()) continue;
+                  if (file != null && !file.isValid()) continue;
                   DocumentEx document = (DocumentEx)affectedDocument.getDocument();
                   if (document == null) continue;
                   documentsToRemoveFromBulk.remove(document);

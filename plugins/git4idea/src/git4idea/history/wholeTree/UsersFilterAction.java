@@ -152,7 +152,7 @@ public class UsersFilterAction extends BasePopupAction {
     myEditorField.setOneLineMode(false);
     panel.add(myEditorField, BorderLayout.CENTER);
 
-    myTextFieldCompletionProvider = new TextFieldCompletionProviderDumbAware() {
+    myTextFieldCompletionProvider = new TextFieldCompletionProviderDumbAware(true) {
       @NotNull
       @Override
       protected String getPrefix(@NotNull String currentTextPrefix) {

@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -62,13 +61,18 @@ public class GithubCreateGistAction extends DumbAwareAction {
         return;
       }
       final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-      if (editor != null){
-        e.getPresentation().setVisible(true);
-        e.getPresentation().setEnabled(true);
+      if (editor == null){
+        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabled(false);
         return;
       }
-      e.getPresentation().setVisible(false);
-      e.getPresentation().setEnabled(false);
+      if (!editor.getSelectionModel().hasSelection()){
+        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(true);
     }
     finally {
       if (LOG.isDebugEnabled()) {
@@ -115,8 +119,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     final boolean openInBrowser = dialog.isOpenInBrowser();
     
     // Text
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    final String text = selectionModel.hasSelection() ? selectionModel.getSelectedText() : editor.getDocument().getText();
+    final String text = editor.getSelectionModel().getSelectedText();
     
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override

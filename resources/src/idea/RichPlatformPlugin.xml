@@ -66,6 +66,7 @@
     <extensionPoint name="wizardMode" interface="com.intellij.ide.util.newProjectWizard.modes.WizardMode"/>
     <extensionPoint name="projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"/>
     <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
+    <extensionPoint name="projectStructureDetector" interface="com.intellij.ide.util.newProjectWizard.ProjectStructureDetector"/>
 
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 

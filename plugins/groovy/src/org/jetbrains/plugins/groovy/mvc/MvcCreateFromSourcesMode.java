@@ -60,7 +60,7 @@ public abstract class MvcCreateFromSourcesMode extends WizardMode {
     final StepSequence sequence = new StepSequence();
     final boolean isNewProject = context.getProject() == null;
     if (isNewProject) {
-      sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
+      sequence.addCommonStep(new ProjectNameStep(context, this));
     }
     for (ModuleWizardStep step : myProjectBuilder.createWizardSteps(context, modulesProvider)) {
       if (step instanceof ProjectJdkStep && !isNewProject) {

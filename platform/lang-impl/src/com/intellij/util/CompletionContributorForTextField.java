@@ -37,6 +37,10 @@ public class CompletionContributorForTextField extends CompletionContributor imp
       activeResult = result;
     }
 
+    if (field.isCaseInsensitivity()) {
+      activeResult = activeResult.caseInsensitive();
+    }
+
     field.addCompletionVariants(text, offset, prefix, activeResult);
   }
 }

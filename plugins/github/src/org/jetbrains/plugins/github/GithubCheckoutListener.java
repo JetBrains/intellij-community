@@ -10,8 +10,9 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.github.GitHubRepository;
 import com.intellij.tasks.github.GitHubRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import git4idea.GitDeprecatedRemote;
-import git4idea.GitUtil;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -41,39 +42,39 @@ public class GithubCheckoutListener implements CheckoutListener {
   private Pair<String, String> getGithubProjectInfo(final Project project) {
     final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
-    final boolean gitDetected = GitUtil.isUnderGit(root);
-    if (gitDetected) {
-      final GitDeprecatedRemote gitRemote = GithubUtil.findGitHubRemoteBranch(project, root);
-      if (gitRemote == null) {
-        return null;
-      }
-      String url = gitRemote.fetchUrl();
-      if (url.contains("github.com")) {
-        int i = url.lastIndexOf("/");
-        if (i == -1){
-          return null;
-        }
-        String name = url.substring(i + 1);
-        if (name.endsWith(".git")){
-          name = name.substring(0, name.length() - 4);
-        }
-        url = url.substring(0, i);
-        // We don't want https://
-        if (url.startsWith("https://")){
-          url = url.substring(8);
-        }
-        i = url.lastIndexOf(':');
-        if (i == -1) {
-          i = url.lastIndexOf('/');
-        }
-        if (i == -1){
-          return null;
-        }
-        final String author = url.substring(i + 1);
-        return Pair.create(author, name);
-      }
+    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(project.getBaseDir());
+    if (gitRepository == null){
+      return null;
     }
-    return null;
+
+    // Check that given repository is properly configured git repository
+    final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(gitRepository);
+    if (gitRemote == null) {
+      return null;
+    }
+    String url = GithubUtil.getGithubUrl(gitRemote);
+    int i = url.lastIndexOf("/");
+    if (i == -1){
+      return null;
+    }
+    String name = url.substring(i + 1);
+    if (name.endsWith(".git")){
+      name = name.substring(0, name.length() - 4);
+    }
+    url = url.substring(0, i);
+    // We don't want https://
+    if (url.startsWith("https://")){
+      url = url.substring(8);
+    }
+    i = url.lastIndexOf(':');
+    if (i == -1) {
+      i = url.lastIndexOf('/');
+    }
+    if (i == -1){
+      return null;
+    }
+    final String author = url.substring(i + 1);
+    return Pair.create(author, name);
   }
 
   private void processProject(final Project openedProject, final GithubSettings settings, final String author, final String name) {

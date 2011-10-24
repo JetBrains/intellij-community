@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -217,9 +218,12 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
+      String[] namedParameters = stub.getNamedParameters();
+      if (namedParameters.length == 0) return Collections.emptyMap();
+
       Map<String, NamedArgumentDescriptor> result = Maps.newHashMap();
-      for (String parameter : stub.getNamedParameters()) {
-        result.put(parameter, NamedArgumentDescriptor.SIMPLE_ON_TOP);
+      for (String parameter : namedParameters) {
+        result.put(parameter, GrNamedArgumentSearchVisitor.CODE_NAMED_ARGUMENTS_DESCR);
       }
       return result;
     }

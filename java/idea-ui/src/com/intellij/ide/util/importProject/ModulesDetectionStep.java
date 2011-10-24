@@ -15,12 +15,13 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
+import com.intellij.ide.util.newProjectWizard.JavaProjectStructureDetector;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,28 +34,36 @@ import java.util.*;
  *         Date: Jul 18, 2007
  */
 public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDescriptor>> {
+  private final JavaProjectStructureDetector myDetector;
   private final ProjectFromSourcesBuilder myBuilder;
+  private final ProjectDescriptor myProjectDescriptor;
   private final ModuleInsight myInsight;
   private final Icon myIcon;
   private final String myHelpId;
   private ModulesLayoutPanel myModulesLayoutPanel;
 
-  public ModulesDetectionStep(ProjectFromSourcesBuilder builder, final ModuleInsight insight, Icon icon, @NonNls String helpId) {
+  public ModulesDetectionStep(JavaProjectStructureDetector detector,
+                              ProjectFromSourcesBuilder builder,
+                              ProjectDescriptor projectDescriptor, final ModuleInsight insight,
+                              Icon icon,
+                              @NonNls String helpId) {
     super("Stop module analysis?");
+    myDetector = detector;
     myBuilder = builder;
+    myProjectDescriptor = projectDescriptor;
     myInsight = insight;
     myIcon = icon;
     myHelpId = helpId;
   }
 
   public void updateDataModel() {
-    myBuilder.setModules(myModulesLayoutPanel.getChosenEntries());
+    myProjectDescriptor.setModules(myModulesLayoutPanel.getChosenEntries());
   }
 
   protected JComponent createResultsPanel() {
     myModulesLayoutPanel = new ModulesLayoutPanel(myInsight, new ModulesLayoutPanel.LibraryFilter() {
       public boolean isLibraryChosen(final LibraryDescriptor libDescriptor) {
-        return myBuilder.isLibraryChosen(libDescriptor);
+        return myProjectDescriptor.isLibraryChosen(libDescriptor);
       }
     });
     return myModulesLayoutPanel;
@@ -78,11 +87,10 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   private int calcStateHashCode() {
     final String contentEntryPath = myBuilder.getContentEntryPath();
     int hash = contentEntryPath != null? contentEntryPath.hashCode() : 1;
-    for (Pair<String, String> pair : myBuilder.getSourcePaths()) {
-      hash = 31 * hash + pair.getFirst().hashCode();
-      hash = 31 * hash + pair.getSecond().hashCode();
+    for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
+      hash = 31 * hash + root.getDirectory().hashCode();
     }
-    final List<LibraryDescriptor> libs = myBuilder.getLibraries();
+    final List<LibraryDescriptor> libs = myProjectDescriptor.getLibraries();
     for (LibraryDescriptor lib : libs) {
       final Collection<File> files = lib.getJars();
       for (File file : files) {

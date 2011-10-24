@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.SimpleContent;
@@ -28,14 +27,13 @@ import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -58,7 +56,8 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 /**
@@ -475,6 +474,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
+  private final static Icon ourIcon = IconLoader.findIcon("/actions/checked.png");
+  
   private class PopupAction extends DumbAwareAction {
     private Component myParent;
     private AnAction myUsual;
@@ -638,7 +639,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     private MyUseSoftWrapsAction(boolean turned) {
       super("Use soft wraps");
-      myIcon = IconLoader.findIcon("/actions/checked.png");
+      myIcon = ourIcon;
     }
 
     @Override

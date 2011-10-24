@@ -171,7 +171,7 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private ArrayList<String> gatherSelected(DefaultListModel localModel) {
+  public static ArrayList<String> gatherSelected(DefaultListModel localModel) {
     final ArrayList<String> selected = new ArrayList<String>();
     final Enumeration<?> elements = localModel.elements();
     while (elements.hasMoreElements()) {

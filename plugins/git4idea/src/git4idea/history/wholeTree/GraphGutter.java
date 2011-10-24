@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class GraphGutter {
   private static final int ourLineWidth = 8;
-  private static final int ourInterLineWidth = 1;
+  private static final int ourInterLineWidth = 2; // todo!
   private static final int ourInterRepoLineWidth = 5;
   public static final int ourIndent = 2;
 
@@ -45,10 +45,12 @@ public class GraphGutter {
   private GitLogUI.MouseOpenJBTable myJBTable;
   private boolean myStarted;
   private static final Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GraphGutter");
+  private PresentationStyle myStyle;
 
   public GraphGutter(BigTableTableModel model) {
     myModel = model;
     myComponent = new MyComponent();
+    myStyle = PresentationStyle.calm;
   }
 
   public void setHeaderHeight(int headerHeight) {
@@ -76,8 +78,16 @@ public class GraphGutter {
     myStarted = true;
   }
 
+  public void setStyle(PresentationStyle style) {
+    myStyle = style;
+    myComponent.repaint();
+  }
+
   // will lay near but not inside scroll pane
   class MyComponent extends JPanel {
+
+    public static final int diameter = 7;
+
     MyComponent() {
       setDoubleBuffered(true);
       setBackground(UIUtil.getTableBackground());
@@ -101,28 +111,25 @@ public class GraphGutter {
       }
       return (wireNumber + 1) * ourLineWidth + wireNumber * ourInterLineWidth + add + ourIndent;
     }
-    
+
     private void drawConnectorsFragment(final Graphics g,
                                         final int idxFrom,
                                         final int yOffset,
                                         final Set<Integer> wires,
                                         @Nullable final WireEvent event,
                                         HashSet<Integer> selected, final List<Integer> wiresGroups) {
-      final Color darker2 = UIUtil.getTableSelectionBackground().darker();
-      final Color darker = new Color(255,128,0);
-
       int rowYOffset = yOffset;
       for (int i = idxFrom; i < event.getCommitIdx(); i++) {
         for (Integer wire : wires) {
-          g.setColor(selected.contains(i) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
+          g.setColor(selected.contains(i) ? UIUtil.getTableSelectionForeground() : myStyle.getColorForWire(wire));
           int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-          g.drawLine(startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
+          doubleLine(g, startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
         }
         rowYOffset += myRowHeight;
       }
 
       final int eventWire = myModel.getCorrectedWire(myModel.getCommitAt(event.getCommitIdx()));
-      g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (eventWire/2 % 2 == 1 ? darker : darker2));
+      g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : myStyle.getColorForWire(eventWire));
       int eventStartXPoint = startPoint(eventWire, wiresGroups) + ourLineWidth/2;
 
       final Set<Integer> skip = new HashSet<Integer>();
@@ -131,11 +138,11 @@ public class GraphGutter {
       }
       if (event.isStart()) {
         skip.add(eventWire);
-        g.drawLine(eventStartXPoint, rowYOffset + myRowHeight/2, eventStartXPoint, rowYOffset + myRowHeight);
+        doubleLine(g, eventStartXPoint, rowYOffset + myRowHeight / 2, eventStartXPoint, rowYOffset + myRowHeight);
       }
       if (event.isEnd()) {
         skip.add(eventWire);
-        g.drawLine(eventStartXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight/2);
+        doubleLine(g, eventStartXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight / 2);
       }
       
       
@@ -143,10 +150,11 @@ public class GraphGutter {
       if (commitsStarts != null) {
         for (int commitsStart : commitsStarts) {
           if (commitsStart == -1) continue;
-          final int wire = myModel.getCorrectedWire(myModel.getCommitAt(commitsStart));
+          final CommitI commitAt = myModel.getCommitAt(commitsStart);
+          final int wire = myModel.getCorrectedWire(commitAt);
           int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-          g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
-          g.drawLine(startXPoint, rowYOffset + myRowHeight, eventStartXPoint, rowYOffset + myRowHeight/2);
+          g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : myStyle.getColorForWire(wire));
+          doubleLine(g, startXPoint, rowYOffset + myRowHeight, eventStartXPoint, rowYOffset + myRowHeight / 2);
         }
       }
       final int[] wireEnds = event.getWireEnds();
@@ -156,17 +164,26 @@ public class GraphGutter {
           final int wire = myModel.getCorrectedWire(myModel.getCommitAt(end));
           skip.add(wire);
           int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-          g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
-          g.drawLine(startXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight/2);
+          g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : myStyle.getColorForWire(wire));
+          doubleLine(g, startXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight / 2);
         }
       }
 
       for (Integer wire : wires) {
         if (skip.contains(wire)) continue;
         int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-        g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : (wire/2 % 2 == 1 ? darker : darker2));
-        g.drawLine(startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
+        g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : myStyle.getColorForWire(wire));
+        doubleLine(g, startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
       }
+    }
+    
+    private void doubleLine(final Graphics g, final int x1, final int y1, final int x2, final int y2) {
+      final Color color = g.getColor();
+      g.setColor(Color.gray.brighter());
+      //g.drawLine(x1 - 1,y1,x2 - 1,y2);
+      g.drawLine(x1 + 1, y1, x2 + 1, y2);
+      g.setColor(color);
+      g.drawLine(x1,y1,x2,y2);
     }
 
     @Override
@@ -235,29 +252,31 @@ public class GraphGutter {
     }
 
     private void drawPoints(Graphics graphics, int lastIdx, int upBound, int idx, HashSet<Integer> selected, List<Integer> wiresGroups) {
-      final Color darker = UIUtil.getTableSelectionBackground();
+      final Color darker = UIUtil.getTableSelectionBackground().darker();
       final Color fill = new Color(176,230,255);
       while (idx <= lastIdx && idx < myModel.getRowCount()) {
         CommitI commitAt = myModel.getCommitAt(idx);
         final boolean contains = selected.contains(idx);
 
-        if (! commitAt.holdsDecoration()) {
+        final boolean isInActiveRoots = myModel.getActiveRoots().contains(commitAt.selectRepository(myModel.getRootsHolder().getRoots()));
+        if (! commitAt.holdsDecoration() && isInActiveRoots) {
           int correctedWire = myModel.getCorrectedWire(commitAt);
           int startXPoint = startPoint(correctedWire, wiresGroups);
           graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : fill);
-          ((Graphics2D) graphics).fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, 7, 7, 0, 360);
+          ((Graphics2D) graphics).fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
           //graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : UIUtil.getTableSelectionBackground().brighter());
 
           graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : UIUtil.getTableSelectionBackground());
-          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4, 7, 7, 0, 360);
+          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
 
           if (! contains) {
             graphics.setColor(UIUtil.getTableSelectionForeground());
-            ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4 + 1, 6, 6, 100, 90);
+            ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4 + 1, diameter - 1, diameter - 1, 100, 90);
           }
 
           graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : darker);
-          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, 7, 7, 0, 360);
+          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
+
           //graphics.drawString("" + correctedWire, startXPoint, upBound + myRowHeight);
         } else {
           //((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth/2 - 2, upBound + myRowHeight/2 - 2, 4, 4, 0, 360);
@@ -329,5 +348,27 @@ public class GraphGutter {
     private int startPoint(int correctedWire, List<Integer> wiresGroups) {
       return correctedWire == 0 ? ourIndent : endPoint(correctedWire - 1, wiresGroups);
     }
+  }
+
+  public static enum PresentationStyle {
+    multicolour() {
+      final Color[] ourColors = {new Color(255,128,0), new Color(0,255,128), new Color(128,0,255), new Color(255,0,0), new Color(0,0,255),
+        new Color(128,64,0), new Color(255,0,255), new Color(255,255,0), new Color(0, 255,255)};
+      @Override
+      public Color getColorForWire(int wire) {
+        return ourColors[wire % ourColors.length];
+      }
+    },
+    calm() {
+      final Color darker2 = UIUtil.getTableSelectionBackground().darker();
+      final Color darker = new Color(255,128,0);
+      
+      @Override
+      public Color getColorForWire(int wire) {
+        return (wire/2 % 2 == 1 ? darker : darker2);
+      }
+    };
+
+    public abstract Color getColorForWire(int wire);
   }
 }

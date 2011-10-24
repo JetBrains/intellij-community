@@ -24,13 +24,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
-import git4idea.GitDeprecatedRemote;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -322,30 +321,34 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GitDeprecatedRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
+  public static GitRemote findGitHubRemoteBranch(final GitRepository repository) {
     // i.e. find origin which points on my github repo
-    try {
-      // Check that given repository is properly configured git repository
-      final GithubSettings githubSettings = GithubSettings.getInstance();
-      final String host = githubSettings.getHost();
-      final String username = githubSettings.getLogin();
+    // Check that given repository is properly configured git repository
 
-      final String userRepoMarkerSSHProtocol = host + ":" + username + "/";
-      final String userRepoMarkerOtherProtocols = host + "/" + username + "/";
-
-      final List<GitDeprecatedRemote> gitRemotes = GitDeprecatedRemote.list(project, root);
-      for (GitDeprecatedRemote gitRemote : gitRemotes) {
-        final String pushUrl = gitRemote.pushUrl();
-        if (pushUrl.contains(userRepoMarkerSSHProtocol) || pushUrl.contains(userRepoMarkerOtherProtocols)) {
-          return gitRemote;
-        }
+    for (GitRemote gitRemote : repository.getRemotes()) {
+      if (getGithubUrl(gitRemote) != null){
+        return gitRemote;
       }
-    } catch (VcsException e){
-      // ignore
     }
     return null;
   }
 
+  @Nullable
+  public static String getGithubUrl(final GitRemote gitRemote){
+    final GithubSettings githubSettings = GithubSettings.getInstance();
+    final String host = githubSettings.getHost();
+    final String username = githubSettings.getLogin();
+
+    final String userRepoMarkerSSHProtocol = host + ":" + username + "/";
+    final String userRepoMarkerOtherProtocols = host + "/" + username + "/";
+    for (String pushUrl : gitRemote.getUrls()) {
+      if (pushUrl.contains(userRepoMarkerSSHProtocol) || pushUrl.contains(userRepoMarkerOtherProtocols)) {
+        return pushUrl;
+      }
+    }
+    return null;
+  }
+  
   public static boolean testGitExecutable(final Project project) {
     final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
     final String executable = settings.getPathToGit();

@@ -56,11 +56,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     StringBuilder buffer = new StringBuilder();
     int givenTextOffset = 0;
     boolean textWasChanged = false;
-    for (
-      int i = 0;
-      i < startOffsets.length && givenTextOffset < text.length();
-      i++, givenTextOffset++, buffer.append('\n')) // LF is added for block selection
-    {
+    for (int i = 0; i < startOffsets.length && givenTextOffset < text.length(); i++, givenTextOffset++) {
+      if (i > 0) {
+        buffer.append('\n'); // LF is added for block selection
+      }
       // Calculate offsets offsets of the selection interval being processed now.
       final int fileStartOffset = startOffsets[i];
       final int fileEndOffset = endOffsets[i];
@@ -70,8 +69,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       for (
         PsiElement element = file.findElementAt(fileStartOffset);
         givenTextStartOffset < givenTextEndOffset;
-        element = PsiTreeUtil.nextLeaf(element))
-      {
+        element = PsiTreeUtil.nextLeaf(element)) {
         if (element == null) {
           buffer.append(text.substring(givenTextStartOffset, givenTextEndOffset));
           break;
@@ -81,15 +79,14 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
         int escapedEndOffset;
         if (element instanceof PsiJavaToken && SYMBOL_LITERAL_TYPES.contains(((PsiJavaToken)element).getTokenType())
             // We don't want to un-escape if complete literal is copied.
-            && (elementRange.getStartOffset() < fileStartOffset || elementRange.getEndOffset() > fileEndOffset))
-        {
+            && (elementRange.getStartOffset() < fileStartOffset || elementRange.getEndOffset() > fileEndOffset)) {
           escapedStartOffset = elementRange.getStartOffset() + 1 /* String/char literal quote */;
           escapedEndOffset = elementRange.getEndOffset() - 1 /* String/char literal quote */;
         }
         else {
           escapedStartOffset = escapedEndOffset = elementRange.getStartOffset();
         }
-        
+
         // Process text to the left of the escaped fragment (if any).
         int numberOfSymbolsToCopy = escapedStartOffset - Math.max(fileStartOffset, elementRange.getStartOffset());
         if (numberOfSymbolsToCopy > 0) {

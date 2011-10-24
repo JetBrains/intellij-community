@@ -16,10 +16,7 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
@@ -149,7 +146,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
             if (!(desciptor instanceof TodoItemNode)) {
               return;
             }
-            OpenSourceUtil.openSourcesFrom(TodoPanel.this, false);
+            OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(TodoPanel.this), false);
           }
         }
       }

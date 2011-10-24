@@ -12,8 +12,10 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +31,8 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -43,6 +47,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -69,6 +74,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.File;
@@ -131,6 +137,7 @@ public class GitLogUI implements Disposable {
   private JPanel myEqualToHeadr;
   private boolean myThereAreFilters;
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
+  //private GitLogUI.MyTreeSettingsButton myMyTreeSettingsButton;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -184,6 +191,17 @@ public class GitLogUI implements Disposable {
       myStructureFilter.getSelected().addAll(paths);
     }
     myStructureFilterAction.setPreset();
+
+    final HashSet<VirtualFile> activeRoots = new HashSet<VirtualFile>();
+    final Set<String> saved = settings.getActiveRoots();
+    if (! saved.isEmpty()) {
+      for (VirtualFile vf : myRootsUnderVcs) {
+        if (saved.contains(vf.getPath())) {
+          activeRoots.add(vf);
+        }
+      }
+      myTableModel.setActiveRoots(activeRoots);
+    }
   }
 
   private void initUiRefresh() {
@@ -652,29 +670,7 @@ public class GitLogUI implements Disposable {
     final JPanel mainBorderWrapper = new JPanel(new BorderLayout());
     final JPanel wrapperGutter = new JPanel(new BorderLayout());
     //myGraphGutter.getComponent().setVisible(false);
-    myEqualToHeadr = new JPanel() {
-      @Override
-      public Dimension getPreferredSize() {
-        return getMySize();
-      }
-
-      @Override
-      public Dimension getMaximumSize() {
-        return getMySize();
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        return getMySize();
-      }
-
-      public Dimension getMySize() {
-        final int height = myJBTable.getTableHeader().getHeight();
-        final int width = myGraphGutter.getComponent().getPreferredSize().width;
-        return new Dimension(width, height);
-      }
-    };
-    myEqualToHeadr.setBorder(BorderFactory.createMatteBorder(0,0,1,0,UIUtil.getBorderColor()));
+    createTreeUpperComponent();
     wrapperGutter.add(myEqualToHeadr, BorderLayout.NORTH);
     wrapperGutter.add(myGraphGutter.getComponent(), BorderLayout.CENTER);
     mainBorderWrapper.add(wrapperGutter, BorderLayout.WEST);
@@ -696,6 +692,55 @@ public class GitLogUI implements Disposable {
     splitter.setSecondComponent(borderWrapper);
     splitter.setDividerWidth(4);
     return splitter;
+  }
+
+  private void createTreeUpperComponent() {
+    final MyTreeSettings treeSettings = new MyTreeSettings();
+    myEqualToHeadr = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return getMySize();
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return getMySize();
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return getMySize();
+      }
+
+      public Dimension getMySize() {
+        final int height = myJBTable.getTableHeader().getHeight();
+        final int width = myGraphGutter.getComponent().getPreferredSize().width;
+        return new Dimension(width, height);
+      }
+    };
+    myEqualToHeadr.setBorder(BorderFactory.createMatteBorder(1,0,1,0, UIUtil.getBorderColor()));
+    final JPanel wr2 = new JPanel(new BorderLayout());
+    wr2.add(treeSettings.getLabel(), BorderLayout.EAST);
+    myEqualToHeadr.add(wr2, BorderLayout.CENTER);
+    treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(UIUtil.getLabelBackground()));
+    treeSettings.getLabel().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        treeSettings.execute(e);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        treeSettings.getLabel().setBackground(UIUtil.getLabelBackground());
+        treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(UIUtil.getLabelBackground()));
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        treeSettings.getLabel().setBackground(UIUtil.getLabelBackground().darker());
+        treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(Color.black));
+      }
+    });
   }
 
   private ActionPopupMenu createContextMenu() {
@@ -915,10 +960,21 @@ public class GitLogUI implements Disposable {
   }
 
   public void rootsChanged(List<VirtualFile> rootsUnderVcs) {
+    final RootsHolder wasRootsHolder = myTableModel.getRootsHolder();
+    final HashSet<VirtualFile> activeRoots = new HashSet<VirtualFile>(rootsUnderVcs);
+
+    if (wasRootsHolder != null) {
+      final HashSet<VirtualFile> excludedRoots = new HashSet<VirtualFile>(wasRootsHolder.getRoots());
+      excludedRoots.removeAll(myTableModel.getActiveRoots());
+      activeRoots.removeAll(excludedRoots);
+    }
+
     myRootsUnderVcs = rootsUnderVcs;
     final RootsHolder rootsHolder = new RootsHolder(rootsUnderVcs);
     myTableModel.setRootsHolder(rootsHolder);
+    myTableModel.setActiveRoots(activeRoots);
     myDetailsCache.rootsChanged(rootsUnderVcs);
+    
     if (myStarted) {
       reloadRequest();
     }
@@ -1661,7 +1717,7 @@ public class GitLogUI implements Disposable {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(! myThereAreFilters);
+      e.getPresentation().setEnabled(!myThereAreFilters);
     }
 
     @Override
@@ -1676,6 +1732,143 @@ public class GitLogUI implements Disposable {
       if (! myThereAreFilters) {
         myEqualToHeadr.getParent().setVisible(state);
       }
+    }
+  }
+  
+  public class MyTreeSettings {
+    private final DumbAwareAction myMultiColorAction;
+    private final DumbAwareAction myCalmAction;
+    private final Icon myIcon;
+    private JLabel myLabel;
+    private final GitLogUI.MySelectRootsForTreeAction myRootsForTreeAction;
+
+    public MyTreeSettings() {
+      myIcon = IconLoader.getIcon("/general/comboArrow.png");
+
+      myMultiColorAction = new DumbAwareAction("Multicolour") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myGraphGutter.setStyle(GraphGutter.PresentationStyle.multicolour);
+        }
+      };
+      myCalmAction = new DumbAwareAction("Two colors") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myGraphGutter.setStyle(GraphGutter.PresentationStyle.calm);
+        }
+      };
+      myRootsForTreeAction = new MySelectRootsForTreeAction();
+      myLabel = new JLabel(myIcon);
+      myLabel.setOpaque(false);
+    }
+
+    public JLabel getLabel() {
+      return myLabel;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    public void execute(final MouseEvent e) {
+      final DefaultActionGroup group = createActionGroup();
+      final DataContext parent = DataManager.getInstance().getDataContext(myEqualToHeadr);
+      final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
+      final JBPopup popup = JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
+                                new Runnable() {
+                                  @Override
+                                  public void run() {
+                                  }
+                                }, 20);
+      popup.show(new RelativePoint(e));
+    }
+
+    private DefaultActionGroup createActionGroup() {
+      final DefaultActionGroup dab = new DefaultActionGroup();
+      dab.add(myMultiColorAction);
+      dab.add(myCalmAction);
+      dab.add(myRootsForTreeAction);
+      return dab;
+    }
+  }
+
+  public class MySelectRootsForTreeAction extends DumbAwareAction {
+    public MySelectRootsForTreeAction() {
+      super("Repositories...");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final CheckBoxList checkBoxList = new CheckBoxList();
+
+      final List<VirtualFile> order = myTableModel.getOrder();
+      final Set<VirtualFile> activeRoots = myTableModel.getActiveRoots();
+      
+      final TreeMap<String, Boolean> map = new TreeMap<String, Boolean>();
+      for (VirtualFile virtualFile : order) {
+        map.put(virtualFile.getPath(), activeRoots.contains(virtualFile));
+      }
+      checkBoxList.setStringItems(map);
+
+      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(checkBoxList, checkBoxList).
+        addListener(new JBPopupListener() {
+          @Override
+          public void beforeShown(LightweightWindowEvent event) {
+            checkBoxList.setSelectedIndex(0);
+            IdeFocusManager.getInstance(myProject).requestFocus(checkBoxList, true);
+          }
+
+          @Override
+          public void onClosed(LightweightWindowEvent event) {
+            if (event.isOk()) {
+              final Set<String> paths =
+                new HashSet<String>(ContainedInBranchesConfigDialog.gatherSelected((DefaultListModel)checkBoxList.getModel()));
+              if (paths.isEmpty()) {
+                myMyShowTreeAction.setSelected(null, false);
+                return;
+              }
+              final HashSet<VirtualFile> set = new HashSet<VirtualFile>(order);
+              final Iterator<VirtualFile> iterator = set.iterator();
+              while (iterator.hasNext()) {
+                VirtualFile file = iterator.next();
+                if (!paths.contains(file.getPath())) {
+                  iterator.remove();
+                }
+              }
+              myTableModel.setActiveRoots(set);
+              GitLogSettings.getInstance(myProject).setActiveRoots(paths);
+              myGraphGutter.getComponent().revalidate();
+              myGraphGutter.getComponent().repaint();
+            }
+          }
+        }).setTitle("Show graph for:").
+        createPopup();
+
+      final AnAction ok = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          popup.closeOk(e.getInputEvent());
+        }
+      };
+      ok.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, checkBoxList);
+      ok.registerCustomShortcutSet(CommonShortcuts.ENTER, checkBoxList);
+
+      if (e != null && e.getInputEvent() instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      } else {
+        final Dimension dimension = popup.getContent().getPreferredSize();
+        final Point at = new Point(20,0);
+        popup.show(new RelativePoint(myEqualToHeadr, at));
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      final boolean enabled = myRootsUnderVcs.size() > 1;
+      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(enabled);
     }
   }
 }

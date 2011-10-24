@@ -1185,6 +1185,7 @@
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode" id="CreateFromScratchMode" order="first"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode" id="CreateFromSourcesMode" order="after CreateFromScratchMode"/>
+    <projectStructureDetector implementation="com.intellij.ide.util.newProjectWizard.JavaProjectStructureDetector" order="first"/>
 
   </extensions>
 

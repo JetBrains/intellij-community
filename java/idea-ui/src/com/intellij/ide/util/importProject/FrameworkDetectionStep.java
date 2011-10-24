@@ -25,7 +25,6 @@ import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -54,7 +53,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   private JLabel myFrameworksDetectedLabel;
   private final FrameworkDetectionContext myContext;
 
-  public FrameworkDetectionStep(final Icon icon, final SourcePathsBuilder builder) {
+  public FrameworkDetectionStep(final Icon icon, final ProjectFromSourcesBuilder builder) {
     super(ProjectBundle.message("message.text.stop.searching.for.frameworks", ApplicationNamesInfo.getInstance().getProductName()));
     myIcon = icon;
     myContext = new FrameworkDetectionInWizardContext() {
@@ -125,6 +124,11 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  @Override
+  public boolean isStepVisible() {
+    return !getModuleDescriptors().isEmpty();
   }
 
   public static boolean isEnabled() {

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author irengrig
@@ -64,6 +65,8 @@ public class BigTableTableModel extends AbstractTableModel {
   
   private int myCommitIdxInterval;
   private int myNumEventsInGroup;
+  
+  private final Set<VirtualFile> myActiveRoots;
 
   public BigTableTableModel(@NotNull final List<ColumnInfo> columns, Runnable init) {
     myColumns = columns;
@@ -71,6 +74,7 @@ public class BigTableTableModel extends AbstractTableModel {
     myIdxMap = new BidirectionalMap<InnerIdx, Integer>();
     myRunningRepoIdxs = new HashMap<VirtualFile, Integer>();
     myRepoIdxMap = new HashMap<VirtualFile, TreeSet<Integer>>();
+    myActiveRoots = new HashSet<VirtualFile>();
 
     myCurrentComparator = CommitIReorderingInsideOneRepoComparator.getInstance();
     final DateChangeListGroupingStrategy delegate = new DateChangeListGroupingStrategy();
@@ -140,8 +144,11 @@ public class BigTableTableModel extends AbstractTableModel {
   public int getTotalWires() {
     if (mySkeletonBuilder == null) return -1;
     int wires = 0;
-    for (SkeletonBuilder skeletonBuilder : mySkeletonBuilder.values()) {
-      wires += skeletonBuilder.getMaxWireNum();
+    for (Map.Entry<VirtualFile, SkeletonBuilder> entry : mySkeletonBuilder.entrySet()) {
+      SkeletonBuilder skeletonBuilder = entry.getValue();
+      if (myActiveRoots.contains(entry.getKey())) {
+        wires += skeletonBuilder.getMaxWireNum();
+      }
     }
     return wires;
   }
@@ -151,7 +158,9 @@ public class BigTableTableModel extends AbstractTableModel {
     if (mySkeletonBuilder == null) return null;
     final List<Integer> result = new ArrayList<Integer>(myOrder.size());
     for (VirtualFile file : myOrder) {
-      result.add(mySkeletonBuilder.get(file).getMaxWireNum());
+      if (myActiveRoots.contains(file)) {
+        result.add(mySkeletonBuilder.get(file).getMaxWireNum());
+      }
     }
     return result;
   }
@@ -165,7 +174,9 @@ public class BigTableTableModel extends AbstractTableModel {
   public Map<VirtualFile, WireEventsIterator> getGroupIterators(final int firstRow) {
     final Map<VirtualFile, WireEventsIterator> map = new HashMap<VirtualFile, WireEventsIterator>();
     for (VirtualFile virtualFile : mySkeletonBuilder.keySet()) {
-      map.put(virtualFile, new WiresGroupIterator(firstRow, virtualFile));
+      if (myActiveRoots.contains(virtualFile)) {
+        map.put(virtualFile, new WiresGroupIterator(firstRow, virtualFile));
+      }
     }
     return map;
   }
@@ -327,6 +338,11 @@ public class BigTableTableModel extends AbstractTableModel {
     myCutCount = -1;
   }
 
+  @Nullable
+  public List<VirtualFile> getOrder() {
+    return myOrder;
+  }
+
   public void cutAt(final int lastShownItemIdx) {
     myCutCount = lastShownItemIdx + 1;
   }
@@ -415,10 +431,19 @@ public class BigTableTableModel extends AbstractTableModel {
     if (mySkeletonBuilder != null) {
       myNavigation.get(listRoot).recalcIndex(wrapperList, mySkeletonBuilder.get(listRoot).getFutureConvertor());
 
+      calculateAdditions();
+    }
+  }
+
+  private void calculateAdditions() {
+    if (mySkeletonBuilder != null) {
       int size = 0;
+      myAdditions.clear();
       for (VirtualFile file : myOrder) {
-        myAdditions.put(file, size);
-        size += mySkeletonBuilder.get(file).getMaxWireNum();
+        if (myActiveRoots.contains(file)) {
+          myAdditions.put(file, size);
+          size += mySkeletonBuilder.get(file).getMaxWireNum();
+        }
       }
     }
   }
@@ -460,6 +485,10 @@ public class BigTableTableModel extends AbstractTableModel {
 
   public void setRootsHolder(RootsHolder rootsHolder) {
     myRootsHolder = rootsHolder;
+  }
+
+  public RootsHolder getRootsHolder() {
+    return myRootsHolder;
   }
 
   public void setStrategy(CommitGroupingStrategy strategy) {
@@ -510,5 +539,16 @@ public class BigTableTableModel extends AbstractTableModel {
       result = 31 * result + myInsideRepoIdx;
       return result;
     }
+  }
+
+  public Set<VirtualFile> getActiveRoots() {
+    return myActiveRoots;
+  }
+  
+  public void setActiveRoots(final Collection<VirtualFile> files) {
+    myActiveRoots.clear();
+    myActiveRoots.addAll(files);
+
+    calculateAdditions();
   }
 }

@@ -135,6 +135,12 @@ public class CoreEnvironment {
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
   }
 
+  private static void setApplication(final MockApplication application) {
+    new ApplicationManager() {{
+      ourApplication = application;
+    }};
+  }
+
   public Project getProject() {
     return myProject;
   }

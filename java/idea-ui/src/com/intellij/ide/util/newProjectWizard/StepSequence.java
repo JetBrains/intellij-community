@@ -22,6 +22,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,83 +31,85 @@ import java.util.*;
 
 public class StepSequence {
   private final List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
-  private final Map<String, StepSequence> mySpecificSteps = new HashMap<String, StepSequence>();
-  @NonNls private String myType;
-  private StepSequence myParentSequence;
-
-  public StepSequence() {
-    this(null);
-  }
-
-  public StepSequence(final StepSequence stepSequence) {
-    myParentSequence = stepSequence;
-  }
+  private final List<ModuleWizardStep> myCommonFinishingSteps = new ArrayList<ModuleWizardStep>();
+  private final Map<String, List<ModuleWizardStep>> mySpecificSteps = new HashMap<String, List<ModuleWizardStep>>();
+  @NonNls private List<String> myTypes = new ArrayList<String>();
+  private List<ModuleWizardStep> mySelectedSteps;
 
   public void addCommonStep(@NotNull ModuleWizardStep step){
     myCommonSteps.add(step);
   }
 
-  public void addSpecificSteps(String type, StepSequence sequence){
-    mySpecificSteps.put(type, sequence);
+  public void addCommonFinishingStep(@NotNull ModuleWizardStep step) {
+    myCommonFinishingSteps.add(step);
   }
 
-  public List<ModuleWizardStep> getCommonSteps() {
-    return myCommonSteps;
+  public void addSpecificStep(String type, ModuleWizardStep step) {
+    List<ModuleWizardStep> list = mySpecificSteps.get(type);
+    if (list == null) {
+      list = new ArrayList<ModuleWizardStep>();
+      mySpecificSteps.put(type, list);
+    }
+    list.add(step);
   }
 
-  public StepSequence getSpecificSteps(String type) {
-    return mySpecificSteps.get(type);
-  }
+  private List<ModuleWizardStep> getSelectedSteps() {
+    if (mySelectedSteps == null) {
+      mySelectedSteps = new ArrayList<ModuleWizardStep>();
+      mySelectedSteps.addAll(myCommonSteps);
+      for (String type : myTypes) {
+        final List<ModuleWizardStep> steps = mySpecificSteps.get(type);
+        if (steps != null) {
+          mySelectedSteps.addAll(steps);
+        }
+      }
+      mySelectedSteps.addAll(myCommonFinishingSteps);
+      ContainerUtil.removeDuplicates(mySelectedSteps);
+    }
 
-  public Set<String> getTypes() {
-    return mySpecificSteps.keySet();
+    return mySelectedSteps;
   }
 
   @Nullable
   public ModuleWizardStep getNextStep(ModuleWizardStep step) {
-    final StepSequence stepSequence = mySpecificSteps.get(myType);
-    if (myCommonSteps.contains(step)) {
-      final int idx = myCommonSteps.indexOf(step);
-      if (idx < myCommonSteps.size() - 1) {
-        return myCommonSteps.get(idx + 1);
-      }
-      if (stepSequence != null && stepSequence.getCommonSteps().size() > 0) {
-        return stepSequence.getCommonSteps().get(0);
-      }
-    }
-    if (stepSequence != null) {
-      return stepSequence.getNextStep(step);
-    }
-    return null;
+    final List<ModuleWizardStep> steps = getSelectedSteps();
+    final int i = steps.indexOf(step);
+    return i < steps.size() - 1 ? steps.get(i + 1) : null;
   }
 
   @Nullable
   public ModuleWizardStep getPreviousStep(ModuleWizardStep step) {
-    if (myCommonSteps.contains(step)) {
-      final int idx = myCommonSteps.indexOf(step);
-      if (idx > 0) {
-        return myCommonSteps.get(idx - 1);
-      }
-      if (myParentSequence != null) {
-        final List<ModuleWizardStep> commonSteps = myParentSequence.getCommonSteps();
-        if (!commonSteps.isEmpty()) {
-          return commonSteps.get(commonSteps.size() - 1);
-        }
-      }
-    }
-    final StepSequence stepSequence = mySpecificSteps.get(myType);
-    return stepSequence != null ? stepSequence.getPreviousStep(step) : null;
+    final List<ModuleWizardStep> steps = getSelectedSteps();
+    final int i = steps.indexOf(step);
+    return i > 0 ? steps.get(i - 1) : null;
+  }
+
+  public void setTypes(Collection<String> types) {
+    myTypes.clear();
+    myTypes.addAll(types);
+    mySelectedSteps = null;
   }
 
   public void setType(@NonNls final String type) {
-    if (type == null) {
-      myType = ModuleType.EMPTY.getId();
-    } else {
-      myType = type;
-    }
+    setTypes(Collections.singletonList(type == null ? ModuleType.EMPTY.getId() : type));
   }
 
   public String getSelectedType() {
-    return myType;
+    return ContainerUtil.getFirstItem(myTypes);
+  }
+
+  public List<ModuleWizardStep> getAllSteps() {
+    final List<ModuleWizardStep> result = new ArrayList<ModuleWizardStep>();
+    result.addAll(myCommonSteps);
+    for (List<ModuleWizardStep> steps : mySpecificSteps.values()) {
+      result.addAll(steps);
+    }
+    result.addAll(myCommonFinishingSteps);
+    ContainerUtil.removeDuplicates(result);
+    return result;
+  }
+
+  public ModuleWizardStep getFirstStep() {
+    return myCommonSteps.get(0);
   }
 }

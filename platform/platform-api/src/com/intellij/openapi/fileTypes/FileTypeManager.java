@@ -107,7 +107,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type The file type for which the extensions are requested.
    * @return The array of extensions associated with the file type.
-   * @deprecated since more generic way of associations by means of whildcards exist not every associations matches extension paradigm
+   * @deprecated since more generic way of associations by means of wildcards exist not every associations matches extension paradigm
    */
   @NotNull
   public abstract String[] getAssociatedExtensions(@NotNull FileType type);

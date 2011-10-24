@@ -19,6 +19,16 @@ public abstract class TextFieldCompletionProvider {
 
   static final Key<TextFieldCompletionProvider> COMPLETING_TEXT_FIELD_KEY = Key.create("COMPLETING_TEXT_FIELD_KEY");
 
+  protected boolean myCaseInsensitivity;
+
+  protected TextFieldCompletionProvider() {
+    this(false);
+  }
+
+  protected TextFieldCompletionProvider(boolean caseInsensitivity) {
+    myCaseInsensitivity = caseInsensitivity;
+  }
+
   public void apply(@NotNull EditorTextField field) {
     Project project = field.getProject();
     assert project != null;
@@ -38,6 +48,10 @@ public abstract class TextFieldCompletionProvider {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     assert document != null;
     return document;
+  }
+
+  public boolean isCaseInsensitivity() {
+    return myCaseInsensitivity;
   }
 
   @NotNull
