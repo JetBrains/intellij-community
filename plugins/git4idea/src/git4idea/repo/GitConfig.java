@@ -64,6 +64,10 @@ class GitConfig {
    *   Returns Git remotes defined in {@code .git/config}.
    * </p>
    * <p>
+   *   Remote is returned with all transformations (such as {@code pushUrl, url.<base>.insteadOf}) already applied to it.
+   *   See {@link GitRemote} for details.
+   * </p>
+   * <p>
    *   <b>Note:</b> remotes can be defined separately in {@code .git/remotes} directory, by creating a file for each remote with
    *   remote parameters written in the file.
    *   This method returns ONLY remotes defined in {@code .git/config}.
@@ -137,7 +141,14 @@ class GitConfig {
   @NotNull
   private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
-    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(), remote.getFetchSpec(), remote.getPushSpec());
+    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(), remote.getFetchSpec(), computePushSpec(remote));
+  }
+
+  @NotNull
+  private static String computePushSpec(@NotNull Remote remote) {
+    // supressing @Nullable - @NotNull warning: remote is immutable and remote.getPushSpec can't change.
+    //noinspection ConstantConditions
+    return remote.getPushSpec() == null ? remote.getFetchSpec() : remote.getPushSpec();
   }
 
   /**
@@ -214,6 +225,12 @@ class GitConfig {
         pushUrls.add(remotePushUrl);
       }
     }
+
+    // if no pushUrls are explicitly defined yet via pushUrl or url.<base>.pushInsteadOf, they are the same as urls.
+    if (pushUrls.isEmpty()) {
+      pushUrls = new ArrayList<String>(urls);
+    }
+
     return new UrlsAndPushUrls(urls, pushUrls);
   }
   
@@ -282,9 +299,10 @@ class GitConfig {
       return nonNullCollection(myRemoteBean.getPushUrl());
     }
 
-    @NotNull
-    public String getPushSpec() {
-      return notNull(myRemoteBean.getPush());
+    @Nullable
+    // no need in wrapping null here - we check for it in #computePushSpec 
+    private String getPushSpec() {
+      return myRemoteBean.getPush();
     }
 
     @NotNull

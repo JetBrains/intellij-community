@@ -23,6 +23,25 @@ import java.util.Collection;
  * <p>
  *   Holds information about a remote in Git repository.
  * </p>
+ *
+ * <p>
+ *   Git remote as defined in {@code .git/config} may contain url(s) and pushUrl(s). <br/>
+ *   If no pushUrl is given, then url is used to fetch and to push. Otherwise url is used to fetch, pushUrl is used to push.
+ *   If there are several urls and no pushUrls, then 1 url is used to fetch (because it is not possible and makes no sense to fetch
+ *   several urls at once), and all urls are used to push. If there are several urls and at least one pushUrl, then only pushUrl(s)
+ *   are used to push.
+ *   There are also some rules about url substitution, like {@code url.<base>.insteadOf}.
+ * </p>
+ * <p>
+ *   GitRemote instance constructed by {@link GitConfig#read(java.io.File)} has all these rules applied.
+ *   Thus, for example, if only one {@code url} and no {@code pushUrls} are defined for the remote, 
+ *   both {@link #getUrls()} and {@link #getPushUrls()} will return this url. <br/>
+ *   This is made to avoid urls transformation logic from the code using GitRemote, leaving it all in GitConfig parsing.
+ * </p>
+ * <p>
+ *   Same applies to fetch and push specs: {@link #getPushRefSpec()} returns the spec,
+ *   even if there are no separate record in {@code .git/config}
+ * </p>
  * 
  * <p>
  *   NB: Not all remote preferences (defined in {@code .git/config} are stored in the object.
