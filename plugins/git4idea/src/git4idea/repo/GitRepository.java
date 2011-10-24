@@ -123,6 +123,11 @@ public final class GitRepository implements Disposable {
         repository.updateBranchList();        
       }
     },
+    CONFIG {
+      @Override void update(GitRepository repository) {
+        repository.updateConfig();
+      }
+    },
     ALL_CURRENT {
       @Override void update(GitRepository repository) {
         STATE.update(repository);
@@ -134,6 +139,7 @@ public final class GitRepository implements Disposable {
       @Override void update(GitRepository repository) {
         ALL_CURRENT.update(repository);
         BRANCHES.update(repository);
+        CONFIG.update(repository);
       }
     };
 
@@ -274,7 +280,7 @@ public final class GitRepository implements Disposable {
     }
   }
   
-  void updateConfig() {
+  private void updateConfig() {
     File configFile = new File(VfsUtil.virtualToIoFile(myGitDir), "config");
     myConfig = GitConfig.read(configFile);
   }

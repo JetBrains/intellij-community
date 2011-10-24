@@ -16,12 +16,13 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.commands.GitFileUtils;
 
@@ -36,6 +37,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   private final GitRepository myRepository;
   private final GitRepositoryFiles myRepositoryFiles;
   private final MessageBusConnection myMessageBusConnection;
+  private final QueueProcessor<GitRepository.TrackedTopic> myUpdateQueue;
 
   GitRepositoryUpdater(GitRepository repository) {
     myRepository = repository;
@@ -45,6 +47,8 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     assert gitDir != null;
     gitDir.getChildren();
     LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
+    
+    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(myRepository), myRepository.getProject().getDisposed());
 
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
     myMessageBusConnection = repository.getProject().getMessageBus().connect();
@@ -115,40 +119,32 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
     // update GitRepository on pooled thread, because it requires reading from disk and parsing data.
     if (updateCurrentBranch) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myRepository.update(GitRepository.TrackedTopic.CURRENT_BRANCH);
-        }
-      });
+      myUpdateQueue.add(GitRepository.TrackedTopic.CURRENT_BRANCH);
     }
     if (updateCurrentRevision) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myRepository.update(GitRepository.TrackedTopic.CURRENT_REVISION);
-        }
-      });
+      myUpdateQueue.add(GitRepository.TrackedTopic.CURRENT_REVISION);
     }
     if (updateState) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myRepository.update(GitRepository.TrackedTopic.STATE);
-        }
-      });
+      myUpdateQueue.add(GitRepository.TrackedTopic.STATE);
     }
     if (updateBranches) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myRepository.update(GitRepository.TrackedTopic.BRANCHES);
-        }
-      });
+      myUpdateQueue.add(GitRepository.TrackedTopic.BRANCHES);
     }
     if (configChanged) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myRepository.updateConfig();
-        }
-      });
+      myUpdateQueue.add(GitRepository.TrackedTopic.CONFIG);
     }
   }
 
+  private static class Updater implements Consumer<GitRepository.TrackedTopic> {
+    private final GitRepository myRepository;
+
+    public Updater(GitRepository repository) {
+      myRepository = repository;
+    }
+
+    @Override
+    public void consume(GitRepository.TrackedTopic trackedTopic) {
+      myRepository.update(trackedTopic);
+    }
+  }
 }
