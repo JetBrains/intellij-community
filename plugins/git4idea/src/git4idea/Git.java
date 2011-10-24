@@ -49,9 +49,9 @@ public class Git {
    * // TODO use common format
    */
   public static void init(Project project, VirtualFile root) throws VcsException {
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.INIT);
     h.setNoSSH(true);
-    GitHandlerUtil.runInCurrentThread(h, null);
+    h.run();
     if (!h.errors().isEmpty()) {
       throw h.errors().get(0);
     }
