@@ -454,7 +454,9 @@ public class AndroidUtils {
     handler.startNotify();
     try {
       if (timeout != null) {
-        handler.waitFor(timeout);
+        if (timeout > 0) {
+          handler.waitFor(timeout);
+        }
       }
       else {
         handler.waitFor();
