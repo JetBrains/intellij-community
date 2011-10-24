@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,14 +45,17 @@ public class ModuleDescriptor {
   };
   private boolean myReuseExistingElement;
   private List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<ModuleBuilder.ModuleConfigurationUpdater>();
+  private ModuleType myModuleType;
 
-  public ModuleDescriptor(final File contentRoot, final Collection<JavaModuleSourceRoot> sourceRoots) {
+  public ModuleDescriptor(final File contentRoot, final ModuleType moduleType, final Collection<JavaModuleSourceRoot> sourceRoots) {
     myName = suggestModuleName(contentRoot);
     myContentToSourceRoots.putValues(contentRoot, sourceRoots);
+    myModuleType = moduleType;
   }
 
-  public ModuleDescriptor(final File contentRoot, final JavaModuleSourceRoot sourceRoot) {
-    this(contentRoot, Collections.singletonList(sourceRoot));
+  public ModuleDescriptor(final File contentRoot, final ModuleType moduleType,
+                          final JavaModuleSourceRoot sourceRoot) {
+    this(contentRoot, moduleType, Collections.singletonList(sourceRoot));
   }
 
   public void reuseExisting(boolean reuseExistingElement) {
@@ -70,6 +74,10 @@ public class ModuleDescriptor {
 
   public boolean isReuseExistingElement() {
     return myReuseExistingElement;
+  }
+
+  public ModuleType getModuleType() {
+    return myModuleType;
   }
 
   private static String suggestModuleName(final File contentRoot) {

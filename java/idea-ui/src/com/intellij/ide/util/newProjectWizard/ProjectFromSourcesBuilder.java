@@ -210,7 +210,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
     final String moduleFilePath = descriptor.computeModuleFilePath();
     ModuleBuilder.deleteModuleFile(moduleFilePath);
 
-    final Module module = moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
+    final Module module = moduleModel.newModule(moduleFilePath, descriptor.getModuleType());
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs);
     descriptor.updateModuleConfiguration(module, modifiableModel);

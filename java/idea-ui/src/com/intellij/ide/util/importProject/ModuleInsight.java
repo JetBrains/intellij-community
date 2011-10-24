@@ -20,6 +20,7 @@ import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
@@ -134,7 +135,7 @@ public class ModuleInsight {
           moduleDescriptor.addSourceRoot(moduleContentRoot, sourceRoot);
         }
         else {
-          moduleDescriptor = new ModuleDescriptor(moduleContentRoot, sourceRoot);
+          moduleDescriptor = new ModuleDescriptor(moduleContentRoot, StdModuleTypes.JAVA, sourceRoot);
           contentRootToModules.put(moduleContentRoot, moduleDescriptor);
         }
       }
@@ -280,7 +281,7 @@ public class ModuleInsight {
     for (File root : contentsToExtract) {
       final Collection<JavaModuleSourceRoot> sources = descriptor.removeContentRoot(root);
       if (newModule == null) {
-        newModule = new ModuleDescriptor(root, sources != null ? sources : new HashSet<JavaModuleSourceRoot>());
+        newModule = new ModuleDescriptor(root, StdModuleTypes.JAVA, sources != null ? sources : new HashSet<JavaModuleSourceRoot>());
       }
       else {
         if (sources != null && sources.size() > 0) {

@@ -21,6 +21,7 @@ import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
 import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.module.StdModuleTypes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,7 +55,8 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
     super.updateDataModel();
     List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
     for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
-      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), Collections.<JavaModuleSourceRoot>emptyList());
+      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<JavaModuleSourceRoot>emptyList()
+      );
       descriptor.addConfigurationUpdater(createModuleConfigurationUpdater());
       modules.add(descriptor);
     }
