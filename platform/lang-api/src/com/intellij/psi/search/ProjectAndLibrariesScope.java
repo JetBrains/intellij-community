@@ -89,6 +89,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return scope;
   }
 
+  @NotNull
   public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
     if (scope.isSearchOutsideRootModel()) {
       return super.uniteWith(scope);

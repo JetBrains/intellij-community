@@ -72,8 +72,9 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return super.intersectWith(scope2);
   }
 
+  @NotNull
   @Override
-  public SearchScope intersectWith(LocalSearchScope localScope2) {
+  public SearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
     return super.intersectWith(localScope2);
   }
 
@@ -85,10 +86,11 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
 
   @Override
   @NotNull
-  public GlobalSearchScope union(LocalSearchScope scope) {
+  public GlobalSearchScope union(@NotNull LocalSearchScope scope) {
     return super.union(scope);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     return super.uniteWith(scope);

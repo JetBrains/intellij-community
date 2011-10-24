@@ -277,6 +277,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     return getCachedScope(MODULES | LIBRARIES | (includeTests ? TESTS : 0));
   }
 
+  @NotNull
   public GlobalSearchScope getCachedScope(int options) {
     GlobalSearchScope scope = myScopeCache.get(options);
     if (scope == null) {

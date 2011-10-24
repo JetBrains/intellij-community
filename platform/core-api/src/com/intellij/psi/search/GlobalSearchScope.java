@@ -18,7 +18,6 @@ package com.intellij.psi.search;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -100,7 +99,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return intersectWith((GlobalSearchScope)scope2);
   }
 
-  public SearchScope intersectWith(LocalSearchScope localScope2) {
+  @NotNull
+  public SearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
     PsiElement[] elements2 = localScope2.getScope();
     List<PsiElement> result = new ArrayList<PsiElement>(elements2.length);
     for (final PsiElement element2 : elements2) {
@@ -118,7 +118,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
-  public GlobalSearchScope union(final LocalSearchScope scope) {
+  public GlobalSearchScope union(@NotNull final LocalSearchScope scope) {
     return new GlobalSearchScope(scope.getScope()[0].getProject()) {
       @Override
       public boolean contains(VirtualFile file) {
@@ -147,19 +147,23 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     };
   }
 
+  @NotNull
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return scope;
     return new UnionScope(this, scope, null);
   }
 
+  @NotNull
   public static GlobalSearchScope allScope(@NotNull Project project) {
     return ProjectScope.getAllScope(project);
   }
 
+  @NotNull
   public static GlobalSearchScope projectScope(@NotNull Project project) {
     return ProjectScope.getProjectScope(project);
   }
 
+  @NotNull
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
     return new DelegatingGlobalSearchScope(scope) {
       public boolean contains(final VirtualFile file) {
@@ -179,6 +183,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * @param module the module to get the scope.
    * @return scope including sources and tests, excluding libraries and dependencies.
    */
+  @NotNull
   public static GlobalSearchScope moduleScope(@NotNull Module module) {
     return module.getModuleScope();
   }
@@ -189,6 +194,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * @param module the module to get the scope.
    * @return scope including sources, tests, and libraries, excluding dependencies.
    */
+  @NotNull
   public static GlobalSearchScope moduleWithLibrariesScope(@NotNull Module module) {
     return module.getModuleWithLibrariesScope();
   }
@@ -199,39 +205,48 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * @param module the module to get the scope.
    * @return scope including sources, tests, and dependencies, excluding libraries.
    */
+  @NotNull
   public static GlobalSearchScope moduleWithDependenciesScope(@NotNull Module module) {
     return module.getModuleWithDependenciesScope();
   }
 
+  @NotNull
   public static GlobalSearchScope moduleRuntimeScope(@NotNull Module module, final boolean includeTests) {
     return module.getModuleRuntimeScope(includeTests);
   }
 
+  @NotNull
   public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(@NotNull Module module) {
     return moduleWithDependenciesAndLibrariesScope(module, true);
   }
 
+  @NotNull
   public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(@NotNull Module module, boolean includeTests) {
     return module.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
+  @NotNull
   public static GlobalSearchScope moduleWithDependentsScope(@NotNull Module module) {
     return module.getModuleWithDependentsScope();
   }
 
+  @NotNull
   public static GlobalSearchScope moduleTestsWithDependentsScope(@NotNull Module module) {
     return module.getModuleWithDependentsScope();
   }
 
+  @NotNull
   public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
     return new FileScope(psiFile.getProject(), psiFile.getVirtualFile());
   }
 
-  public static GlobalSearchScope fileScope(final Project project, final VirtualFile virtualFile) {
+  @NotNull
+  public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile) {
     return new FileScope(project, virtualFile);
   }
 
-  public static GlobalSearchScope filesScope(final Project project, final Collection<VirtualFile> files) {
+  @NotNull
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
   }
@@ -428,6 +443,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return super.intersectWith(scope);
     }
 
+    @NotNull
     @Override
     public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (scope instanceof FileTypeRestrictionScope) {
@@ -481,6 +497,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return this;
     }
 
+    @NotNull
     public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
       return scope;
     }
@@ -492,7 +509,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final VirtualFile myVirtualFile;
     private final Module myModule;
 
-    private FileScope(final Project project, final VirtualFile virtualFile) {
+    private FileScope(@NotNull Project project, final VirtualFile virtualFile) {
       super(project);
       myVirtualFile = virtualFile;
       FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
