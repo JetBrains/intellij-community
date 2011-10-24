@@ -471,9 +471,13 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
+      String[] namedParameters = stub.getNamedParameters();
+      if (namedParameters.length == 0) return Collections.emptyMap();
+
       Map<String, NamedArgumentDescriptor> result = Maps.newHashMap();
-      for (String parameter : stub.getNamedParameters()) {
-        result.put(parameter, NamedArgumentDescriptor.SIMPLE_ON_TOP);
+
+      for (String parameter : namedParameters) {
+        result.put(parameter, GrNamedArgumentSearchVisitor.CODE_NAMED_ARGUMENTS_DESCR);
       }
       return result;
     }

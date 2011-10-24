@@ -36,7 +36,10 @@ import java.util.*;
  * Date: 02.06.2009
  */
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
-  private static final Set<String> METHOD_NAMES = new HashSet<String>(Arrays.asList("containsKey", "remove", "get"));
+
+  public static final NamedArgumentDescriptor CODE_NAMED_ARGUMENTS_DESCR = NamedArgumentDescriptor.SIMPLE_AS_LOCAL_VAR;
+
+  private static final List<String> METHOD_NAMES = Arrays.asList("containsKey", "remove", "get");
 
   private final Map<String, NamedArgumentDescriptor> myResult = new HashMap<String, NamedArgumentDescriptor>();
 
@@ -65,7 +68,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   }
 
   private void add(String refName) {
-    myResult.put(refName, NamedArgumentDescriptor.SIMPLE_ON_TOP);
+    myResult.put(refName, CODE_NAMED_ARGUMENTS_DESCR);
   }
 
   @Override
