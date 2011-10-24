@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,12 @@ public class MockProject extends MockComponentManager implements Project {
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
     Extensions.instantiateArea("IDEA_PROJECT", this, null);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        Extensions.disposeArea(MockProject.this);
+      }
+    });
   }
 
   @Override
