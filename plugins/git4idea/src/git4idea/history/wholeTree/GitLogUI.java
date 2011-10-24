@@ -73,12 +73,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -101,7 +99,7 @@ public class GitLogUI implements Disposable {
   private final Map<VirtualFile, SymbolicRefs> myRefs;
   private final SymbolicRefs myRecalculatedCommon;
   private UIRefresh myUIRefresh;
-  private MouseOpenJBTable myJBTable;
+  private JBTable myJBTable;
   private GraphGutter myGraphGutter;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   final List<CommitI> myCommitsInRepositoryChangesBrowser;
@@ -141,6 +139,7 @@ public class GitLogUI implements Disposable {
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
   private JLabel myOrderLabel;
   private boolean myProjectScope;
+  private ActionPopupMenu myContextMenu;
   //private GitLogUI.MyTreeSettingsButton myMyTreeSettingsButton;
 
   public GitLogUI(Project project, final Mediator mediator) {
@@ -615,7 +614,7 @@ public class GitLogUI implements Disposable {
   }
 
   private JPanel createMainTable() {
-    myJBTable = new MouseOpenJBTable(myTableModel) {
+    myJBTable = new JBTable(myTableModel) {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         final TableCellRenderer custom = myTableModel.getColumnInfo(column).getRenderer(myTableModel.getValueAt(row, column));
@@ -640,17 +639,20 @@ public class GitLogUI implements Disposable {
     myJBTable.setShowGrid(false);
     myJBTable.setModel(myTableModel);
     myJBTable.setBorder(null);
-    myJBTable.addMouseListener(new PopupHandler() {
+    final PopupHandler popupHandler = new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
-        createContextMenu().getComponent().show(comp, x, y);
+        createContextMenu();
+        myContextMenu.getComponent().show(comp, x, y);
       }
-    });
+    };
+    myJBTable.addMouseListener(popupHandler);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
     myGraphGutter = new GraphGutter(myTableModel);
     myGraphGutter.setJBTable(myJBTable);
     myGraphGutter.setTableViewPort(scrollPane.getViewport());
+    myGraphGutter.getComponent().addMouseListener(popupHandler);
 
     new AdjustComponentWhenShown() {
       @Override
@@ -762,26 +764,28 @@ public class GitLogUI implements Disposable {
     });
   }
 
-  private ActionPopupMenu createContextMenu() {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(myCopyHashAction);
-    final Point location = MouseInfo.getPointerInfo().getLocation();
-    SwingUtilities.convertPointFromScreen(location, myJBTable);
-    final int row = myJBTable.rowAtPoint(location);
-    if (row >= 0) {
-      final GitCommit commit = getCommitAtRow(row);
-      if (commit != null) {
-        myUsersFilterAction.setPreselectedUser(commit.getCommitter());
+  private void createContextMenu() {
+    if (myContextMenu == null) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      group.add(myCopyHashAction);
+      final Point location = MouseInfo.getPointerInfo().getLocation();
+      SwingUtilities.convertPointFromScreen(location, myJBTable);
+      final int row = myJBTable.rowAtPoint(location);
+      if (row >= 0) {
+        final GitCommit commit = getCommitAtRow(row);
+        if (commit != null) {
+          myUsersFilterAction.setPreselectedUser(commit.getCommitter());
+        }
       }
+      group.add(myBranchSelectorAction.asTextAction());
+      group.add(myUsersFilterAction.asTextAction());
+      group.add(myStructureFilterAction.asTextAction());
+      group.add(myCherryPickAction);
+      group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
+      group.add(myMyShowTreeAction);
+      group.add(myRefreshAction);
+      myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
-    group.add(myBranchSelectorAction.asTextAction());
-    group.add(myUsersFilterAction.asTextAction());
-    group.add(myStructureFilterAction.asTextAction());
-    group.add(myCherryPickAction);
-    group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
-    group.add(myMyShowTreeAction);
-    group.add(myRefreshAction);
-    return ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
   }
 
   private ActionToolbar createToolbar() {
@@ -1710,30 +1714,6 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  public static class MouseOpenJBTable extends JBTable {
-    public MouseOpenJBTable() {
-    }
-
-    public MouseOpenJBTable(TableModel model) {
-      super(model);
-    }
-
-    @Override
-    public void processMouseEvent(MouseEvent e) {
-      super.processMouseEvent(e);
-    }
-
-    @Override
-    public void processMouseMotionEvent(MouseEvent e) {
-      super.processMouseMotionEvent(e);
-    }
-
-    @Override
-    protected void processMouseWheelEvent(MouseWheelEvent e) {
-      super.processMouseWheelEvent(e);
-    }
-  }
-  
   public class MyShowTreeAction extends ToggleAction implements DumbAware {
     private boolean myIsSelected;
     private final GitLogSettings myInstance;
@@ -1917,11 +1897,11 @@ public class GitLogUI implements Disposable {
                   iterator.remove();
                 }
               }
-              
+
               if (myProjectScope) {
                 GitLogSettings.getInstance(myProject).setActiveRoots(paths);
               }
-              
+
               myTableModel.setActiveRoots(set);
               myGraphGutter.getComponent().revalidate();
               myGraphGutter.getComponent().repaint();

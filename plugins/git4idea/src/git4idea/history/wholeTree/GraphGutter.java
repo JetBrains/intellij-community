@@ -17,11 +17,16 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.*;
 import java.util.List;
 
@@ -42,7 +47,7 @@ public class GraphGutter {
   private final BigTableTableModel myModel;
   private MyComponent myComponent;
   private JViewport myTableViewPort;
-  private GitLogUI.MouseOpenJBTable myJBTable;
+  private JBTable myJBTable;
   private boolean myStarted;
   private static final Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GraphGutter");
   private PresentationStyle myStyle;
@@ -70,8 +75,8 @@ public class GraphGutter {
     myTableViewPort = tableViewPort;
   }
 
-  public void setJBTable(GitLogUI.MouseOpenJBTable JBTable) {
-    myJBTable = JBTable;
+  public void setJBTable(JBTable jbTable) {
+    myJBTable = jbTable;
   }
 
   public void start() {
@@ -95,6 +100,18 @@ public class GraphGutter {
     MyComponent() {
       setDoubleBuffered(true);
       setBackground(UIUtil.getTableBackground());
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          myJBTable.dispatchEvent(e);
+        }
+      });
+      addMouseWheelListener(new MouseWheelListener() {
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+          myTableViewPort.dispatchEvent(e);
+        }
+      });
     }
 
     @Override
