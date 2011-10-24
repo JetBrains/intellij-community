@@ -8,8 +8,16 @@ import com.jetbrains.python.fixtures.PyTestCase;
  */
 public class PySpellCheckerTest extends PyTestCase {
   public void testPlainTextSplitter() {
+    doTest();
+  }
+
+  public void testPlainTextSplitter2() {
+    doTest();
+  }
+
+  private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
-    myFixture.configureByFile("inspections/spelling/plainTextSplitter.py");
-    myFixture.checkHighlighting();
+    myFixture.configureByFile("inspections/spelling/" + getTestName(true) + ".py");
+    myFixture.checkHighlighting(true, false, true);
   }
 }
