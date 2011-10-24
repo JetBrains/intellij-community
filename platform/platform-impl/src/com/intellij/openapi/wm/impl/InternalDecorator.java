@@ -463,12 +463,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         insets.right = rightBottoms ? 1: 0;
         insets.bottom = bottomButtons ? 1 : 0;
       } else if (myWindow.getAnchor() == ToolWindowAnchor.LEFT) {
-        insets.top = 4;
+        insets.top = myWindow.isSplitMode() ? 1 : 4;
         insets.left = leftButtons ? 1: 0;
         insets.right = 1;
         insets.bottom = bottomButtons && !windowAtBottom ? 1 : 0;
       } else if (myWindow.getAnchor() == ToolWindowAnchor.RIGHT) {
-        insets.top = 4;
+        insets.top = myWindow.isSplitMode() ? 1 : 4;
         insets.left = 1;
         insets.right = rightBottoms ? 1: 0;
         insets.bottom = bottomButtons && !windowAtBottom ? 1: 0;
