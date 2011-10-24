@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,30 +28,23 @@ public class ComparisonOfShortAndCharInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "comparison.of.short.and.char.display.name");
+    return InspectionGadgetsBundle.message("comparison.of.short.and.char.display.name");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "comparison.of.short.and.char.problem.descriptor");
+    return InspectionGadgetsBundle.message("comparison.of.short.and.char.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new ComparisonOfShortAndCharVisitor();
   }
 
-  private static class ComparisonOfShortAndCharVisitor
-    extends BaseInspectionVisitor {
+  private static class ComparisonOfShortAndCharVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
       if (!ComparisonUtils.isEqualityComparison(expression)) {
         return;
       }
@@ -62,12 +55,10 @@ public class ComparisonOfShortAndCharInspection extends BaseInspection {
         return;
       }
       final PsiType rhsType = rhs.getType();
-      if (PsiType.SHORT.equals(lhsType) &&
-          PsiType.CHAR.equals(rhsType)) {
+      if (PsiType.SHORT.equals(lhsType) && PsiType.CHAR.equals(rhsType)) {
         registerError(expression);
       }
-      else if (PsiType.CHAR.equals(lhsType) &&
-               PsiType.SHORT.equals(rhsType)) {
+      else if (PsiType.CHAR.equals(lhsType) && PsiType.SHORT.equals(rhsType)) {
         registerError(expression);
       }
     }

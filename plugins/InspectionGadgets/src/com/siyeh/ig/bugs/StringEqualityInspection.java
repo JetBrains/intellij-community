@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,12 @@ public class StringEqualityInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.comparison.display.name");
+    return InspectionGadgetsBundle.message("string.comparison.display.name");
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "string.comparison.problem.descriptor");
+    return InspectionGadgetsBundle.message("string.comparison.problem.descriptor");
   }
 
   public boolean isEnabledByDefault() {
@@ -54,12 +52,8 @@ public class StringEqualityInspection extends BaseInspection {
   private static class ObjectEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
       if (!ComparisonUtils.isEqualityComparison(expression)) {
         return;
       }
@@ -68,14 +62,11 @@ public class StringEqualityInspection extends BaseInspection {
         return;
       }
       final PsiExpression rhs = expression.getROperand();
-      if (!isStringType(rhs)) {
+      if (rhs == null || !isStringType(rhs)) {
         return;
       }
       final String lhsText = lhs.getText();
       if (PsiKeyword.NULL.equals(lhsText)) {
-        return;
-      }
-      if (rhs == null) {
         return;
       }
       final String rhsText = rhs.getText();
@@ -86,11 +77,11 @@ public class StringEqualityInspection extends BaseInspection {
       registerError(sign);
     }
 
-    private static boolean isStringType(PsiExpression lhs) {
-      if (lhs == null) {
+    private static boolean isStringType(PsiExpression expression) {
+      if (expression == null) {
         return false;
       }
-      final PsiType lhsType = lhs.getType();
+      final PsiType lhsType = expression.getType();
       if (lhsType == null) {
         return false;
       }

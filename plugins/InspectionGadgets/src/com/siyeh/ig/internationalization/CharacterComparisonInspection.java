@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,13 @@ public class CharacterComparisonInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "character.comparison.display.name");
+    return InspectionGadgetsBundle.message("character.comparison.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "character.comparison.problem.descriptor");
+    return InspectionGadgetsBundle.message("character.comparison.problem.descriptor");
   }
 
   @Override
@@ -53,32 +51,20 @@ public class CharacterComparisonInspection extends BaseInspection {
     return new CharacterComparisonVisitor();
   }
 
-  private static class CharacterComparisonVisitor
-    extends BaseInspectionVisitor {
+  private static class CharacterComparisonVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = expression.getROperand();
-      if (!(rhs != null)) {
-        return;
-      }
-      if (!ComparisonUtils.isComparison(expression)) {
-        return;
-      }
-      if (ComparisonUtils.isEqualityComparison(expression)) {
+      if (!ComparisonUtils.isComparison(expression) || ComparisonUtils.isEqualityComparison(expression)) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
-      if (!isCharacter(lhs)) {
+      if (!isCharacter(lhs) || !isCharacter(rhs)) {
         return;
       }
-      if (!isCharacter(rhs)) {
-        return;
-      }
-      if (NonNlsUtils.isNonNlsAnnotated(lhs) ||
-          NonNlsUtils.isNonNlsAnnotated(rhs)) {
+      if (NonNlsUtils.isNonNlsAnnotated(lhs) || NonNlsUtils.isNonNlsAnnotated(rhs)) {
         return;
       }
       registerError(expression);
@@ -86,8 +72,7 @@ public class CharacterComparisonInspection extends BaseInspection {
 
     private static boolean isCharacter(PsiExpression expression) {
       return TypeUtils.expressionHasType(expression, PsiKeyword.CHAR) ||
-             TypeUtils.expressionHasType(expression,
-                                         CommonClassNames.JAVA_LANG_CHARACTER);
+             TypeUtils.expressionHasType(expression, CommonClassNames.JAVA_LANG_CHARACTER);
     }
   }
 }

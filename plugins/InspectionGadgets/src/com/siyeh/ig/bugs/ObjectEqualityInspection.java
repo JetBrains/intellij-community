@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ public class ObjectEqualityInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "object.comparison.display.name");
+    return InspectionGadgetsBundle.message("object.comparison.display.name");
   }
 
   @Override
@@ -70,16 +69,11 @@ public class ObjectEqualityInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option"), "m_ignoreEnums");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("object.comparison.klass.ignore.option"), "m_ignoreClassObjects");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "object.comparison.enumerated.ignore.option"), "m_ignoreEnums");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "object.comparison.klass.ignore.option"),
-                             "m_ignoreClassObjects");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"),
-                             "m_ignorePrivateConstructors");
+      "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"), "m_ignorePrivateConstructors");
     return optionsPanel;
   }
 
@@ -96,12 +90,8 @@ public class ObjectEqualityInspection extends BaseInspection {
   private class ObjectEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
       if (!ComparisonUtils.isEqualityComparison(expression)) {
         return;
       }
@@ -119,14 +109,10 @@ public class ObjectEqualityInspection extends BaseInspection {
       if (m_ignoreClassObjects && (isClass(rhs) || isClass(lhs))) {
         return;
       }
-      if (m_ignorePrivateConstructors &&
-          (typeHasPrivateConstructor(lhs) ||
-           typeHasPrivateConstructor(rhs))) {
+      if (m_ignorePrivateConstructors && (typeHasPrivateConstructor(lhs) || typeHasPrivateConstructor(rhs))) {
         return;
       }
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiMethod.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
       if (method != null && MethodUtils.isEquals(method)) {
         return;
       }
@@ -134,8 +120,7 @@ public class ObjectEqualityInspection extends BaseInspection {
       registerError(sign);
     }
 
-    private boolean typeHasPrivateConstructor(
-      @Nullable PsiExpression expression) {
+    private boolean typeHasPrivateConstructor(@Nullable PsiExpression expression) {
       if (expression == null) {
         return false;
       }
@@ -153,18 +138,13 @@ public class ObjectEqualityInspection extends BaseInspection {
       }
     }
 
-    private boolean implementersHaveOnlyPrivateConstructors(
-      final PsiClass aClass) {
-      final GlobalSearchScope scope =
-        GlobalSearchScope.allScope(aClass.getProject());
-      final PsiElementProcessor.CollectElementsWithLimit<PsiClass>
-        processor =
-        new PsiElementProcessor.CollectElementsWithLimit(6);
+    private boolean implementersHaveOnlyPrivateConstructors(final PsiClass aClass) {
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(aClass.getProject());
+      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit(6);
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcess(new Runnable() {
         public void run() {
-          ClassInheritorsSearch.search(aClass, scope, true, true).forEach(
-            new PsiElementProcessorAdapter<PsiClass>(processor));
+          ClassInheritorsSearch.search(aClass, scope, true, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
         }
       }, null);
       if (processor.isOverflow()) {
@@ -172,9 +152,7 @@ public class ObjectEqualityInspection extends BaseInspection {
       }
       final Collection<PsiClass> implementers = processor.getCollection();
       for (PsiClass implementer : implementers) {
-        if (!implementer.isInterface() &&
-            !implementer.hasModifierProperty(
-              PsiModifier.ABSTRACT)) {
+        if (!implementer.isInterface() && !implementer.hasModifierProperty(PsiModifier.ABSTRACT)) {
           if (!hasOnlyPrivateConstructors(implementer)) {
             return false;
           }
@@ -216,9 +194,7 @@ public class ObjectEqualityInspection extends BaseInspection {
     }
 
     private boolean isEnumType(@Nullable PsiExpression expression) {
-      return expression != null &&
-             TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                  CommonClassNames.JAVA_LANG_ENUM);
+      return expression != null && TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_ENUM);
     }
 
     private boolean isObjectType(PsiExpression expression) {
@@ -230,8 +206,7 @@ public class ObjectEqualityInspection extends BaseInspection {
              !(type instanceof PsiArrayType) &&
              !(type instanceof PsiPrimitiveType) &&
              !TypeUtils.isJavaLangString(type) &&
-             !TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                   CommonClassNames.JAVA_LANG_NUMBER);
+             !TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_NUMBER);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,13 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "constant.on.rhs.of.comparison.display.name");
+    return InspectionGadgetsBundle.message("constant.on.rhs.of.comparison.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "constant.on.rhs.of.comparison.problem.descriptor");
+    return InspectionGadgetsBundle.message("constant.on.rhs.of.comparison.problem.descriptor");
   }
 
   @Override
@@ -69,37 +67,28 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiBinaryExpression expression =
-        (PsiBinaryExpression)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiBinaryExpression expression = (PsiBinaryExpression)descriptor.getPsiElement();
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {
         return;
       }
-      final String flippedComparison =
-        ComparisonUtils.getFlippedComparison(expression.getOperationTokenType());
+      final String flippedComparison = ComparisonUtils.getFlippedComparison(expression.getOperationTokenType());
       if (flippedComparison == null) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
       final String rhsText = rhs.getText();
       final String lhsText = lhs.getText();
-      replaceExpression(expression,
-                        rhsText + ' ' + flippedComparison + ' ' + lhsText);
+      replaceExpression(expression, rhsText + ' ' + flippedComparison + ' ' + lhsText);
     }
   }
 
-  private static class ConstantOnRHSOfComparisonVisitor
-    extends BaseInspectionVisitor {
+  private static class ConstantOnRHSOfComparisonVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
       if (!ComparisonUtils.isComparison(expression)) {
         return;
       }
@@ -112,8 +101,7 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
     }
 
     private static boolean isConstantExpression(PsiExpression expression) {
-      return ExpressionUtils.isNullLiteral(expression) ||
-             PsiUtil.isConstantExpression(expression);
+      return ExpressionUtils.isNullLiteral(expression) || PsiUtil.isConstantExpression(expression);
     }
   }
 }

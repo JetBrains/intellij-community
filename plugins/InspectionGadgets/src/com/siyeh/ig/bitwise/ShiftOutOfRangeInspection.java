@@ -128,9 +128,6 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
     public void visitBinaryExpression(
       @NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
       final PsiJavaToken sign = expression.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
       if (!tokenType.equals(JavaTokenType.LTLT) &&
