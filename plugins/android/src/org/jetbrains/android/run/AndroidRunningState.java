@@ -644,7 +644,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         message("Can't upload file: device is not available.", STDERR);
         return false;
       }
-      service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
 
       SyncService.SyncResult result = service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
       int code = result.getCode();
