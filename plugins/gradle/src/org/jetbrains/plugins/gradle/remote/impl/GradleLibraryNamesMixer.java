@@ -138,15 +138,16 @@ public class GradleLibraryNamesMixer {
       if (file1 == null) {
         wrapped1.nextFile();
       }
+      else if (!wrapped1.library.getName().startsWith(file1.getName())) {
+        wrapped1.library.setName(file1.getName() + NAME_SEPARATOR + wrapped1.library.getName());
+      }
       if (file2 == null) {
         wrapped2.nextFile();
       }
-
-      if (file1 != null && file2 != null && !file1.getName().equals(file2.getName())) {
-        wrapped1.library.setName(file1.getName() + NAME_SEPARATOR + wrapped1.library.getName());
+      else if (!wrapped2.library.getName().startsWith(file2.getName())) {
         wrapped2.library.setName(file2.getName() + NAME_SEPARATOR + wrapped2.library.getName());
-      } 
-      
+      }
+
       if (wrapped1.library.getName().equals(wrapped2.library.getName())) {
         if (wrapped1AltText != null) {
           diversifyName(wrapped1AltText, wrapped1, file1);
