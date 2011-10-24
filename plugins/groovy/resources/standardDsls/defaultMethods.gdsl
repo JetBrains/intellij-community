@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package standardDsls
 
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiUtil
 import static standardDsls.Constants.NUMBER
 import static standardDsls.Constants.STRING
 
@@ -28,33 +30,27 @@ interface Constants {
   String WILDCARD_PREFIX = "? extends "
 }
 
-def extractTypeParameter(def typeText) {
-  final int start = typeText.indexOf('<')
-  final int end = typeText.lastIndexOf('>')
-
-  if (start < 0) return null
-
-  String componentType = end < 0 ? typeText.substring(start + 1) : typeText.substring(start + 1, end)
-  return removeWildcard(componentType);
+def extractIterableParameter(PsiType type) {
+  if (!type) return null
+  def componentType = PsiUtil.extractIterableTypeParameter(type, true)
+  return removeWildcard(componentType.canonicalText?:componentType.presentableText);
 }
 
 private String removeWildcard(String componentType) {
-  if (componentType.startsWith(Constants.WILDCARD_PREFIX)) {
+  if (componentType?.startsWith(Constants.WILDCARD_PREFIX)) {
     return componentType.substring(Constants.WILDCARD_PREFIX.size())
   }
   return componentType
 }
 
-def constructElementTypeArg(def psiType) {
-  def typeText = psiType.canonicalText ?: psiType.presentableText
-  if (!typeText || typeText == 'null') return ""
-  def arg = extractTypeParameter(typeText)
+def constructElementTypeArg(PsiType psiType) {
+  def arg = extractIterableParameter(psiType)
   if (!arg || arg == "null") return ""
   return "<$arg>"
 }
 
 contributor(ctype: "java.util.Collection") {
-  method name: "getAt", params: [arg: "java.lang.Number"], type: extractTypeParameter(psiType.canonicalText ?: psiType.presentableText)
+  method name: "getAt", params: [arg: "java.lang.Number"], type: extractIterableParameter(psiType)
   method name: "getAt", params: [arg: "groovy.lang.Range"], type: "java.util.List${constructElementTypeArg(psiType)}"
   method name: "getAt", params: [arg: "java.util.Collection"], type: "java.util.List${constructElementTypeArg(psiType)}"
 }
@@ -64,16 +60,16 @@ contributor(ctype:"groovy.lang.GString") {
 }
 
 contributor(ctype:NUMBER) {
-  method name: "plus", type: NUMBER, params:[arg:NUMBER]
-  method name: "minus", type: NUMBER, params:[arg:NUMBER]
-  method name: "multiply", type: NUMBER, params:[arg:NUMBER]
-  method name: "power", type: NUMBER, params:[arg:NUMBER]
-  method name: "div", type: NUMBER, params:[arg:NUMBER]
-  method name: "mod", type: NUMBER, params:[arg:NUMBER]
-  method name: "or", type: NUMBER, params:[arg:NUMBER]
-  method name: "and", type: NUMBER, params:[arg:NUMBER]
-  method name: "xor", type: NUMBER, params:[arg:NUMBER]
-  method name: "next", type: removeWildcard(psiType.canonicalText)
+  method name: "plus",     type: NUMBER,                                params:[arg:NUMBER]
+  method name: "minus",    type: NUMBER,                                params:[arg:NUMBER]
+  method name: "multiply", type: NUMBER,                                params:[arg:NUMBER]
+  method name: "power",    type: NUMBER,                                params:[arg:NUMBER]
+  method name: "div",      type: NUMBER,                                params:[arg:NUMBER]
+  method name: "mod",      type: NUMBER,                                params:[arg:NUMBER]
+  method name: "or",       type: NUMBER,                                params:[arg:NUMBER]
+  method name: "and",      type: NUMBER,                                params:[arg:NUMBER]
+  method name: "xor",      type: NUMBER,                                params:[arg:NUMBER]
+  method name: "next",     type: removeWildcard(psiType.canonicalText)
   method name: "previous", type: removeWildcard(psiType.canonicalText)
   method name: "negative", type: removeWildcard(psiType.canonicalText)
   method name: "positive", type: removeWildcard(psiType.canonicalText)
