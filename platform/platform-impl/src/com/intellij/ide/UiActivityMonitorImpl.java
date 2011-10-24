@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
@@ -31,28 +31,38 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
-  private Map<Object, BusyImpl> myObjects = new HashMap<Object, BusyImpl>();
+  private final Map<Object, BusyImpl> myObjects = new HashMap<Object, BusyImpl>();
 
-  public UiActivityMonitorImpl() {
+  public UiActivityMonitorImpl(Application application) {
     myObjects.put(null, new BusyObjectGlobalImpl());
+    application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+      @Override
+      public void projectComponentsInitialized(Project project) {
+      }
+
+      @Override
+      public void beforeProjectLoaded(@NotNull Project project) {
+      }
+
+      @Override
+      public void afterProjectClosed(@NotNull Project project) {
+        myObjects.remove(project);
+      }
+    });
   }
 
   @Override
   public void initComponent() {
     ProjectManager pm = ProjectManager.getInstance();
-    pm.addProjectManagerListener(new ProjectManagerAdapter() {
-      @Override
-      public void projectClosed(Project project) {
-        myObjects.remove(project);
-      }
-    });
     initBusyObjectFor(pm.getDefaultProject());
 
     LaterInvocator.addModalityStateListener(this, this);
-
   }
 
   @Override
@@ -63,7 +73,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   public void beforeModalityStateChanged(boolean entering) {
     if (isUnitTestMode()) {
       maybeReady();
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -74,10 +85,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   public void maybeReady() {
-    final Iterator<Object> objects = myObjects.keySet().iterator();
-    while (objects.hasNext()) {
-      Object each = objects.next();
-      myObjects.get(each).onReady();
+    for (Map.Entry<Object, BusyImpl> entry : myObjects.entrySet()) {
+      entry.getValue().onReady();
     }
   }
 
@@ -90,7 +99,6 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   public BusyObject getBusy() {
     return _getBusy(null);
   }
-
 
   @Override
   public void addActivity(@NotNull final Project project, @NotNull final Object activity) {
@@ -132,7 +140,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     addActivity(activity, getDefaultModalityState());
   }
 
-  private ModalityState getDefaultModalityState() {
+  private static ModalityState getDefaultModalityState() {
     return ApplicationManager.getApplication().getNoneModalityState();
   }
 
@@ -175,8 +183,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   public void clear() {
-    for (Object eachObject : myObjects.keySet()) {
-      myObjects.get(eachObject).clear();
+    for (Map.Entry<Object, BusyImpl> entry : myObjects.entrySet()) {
+      entry.getValue().clear();
     }
   }
 
@@ -194,8 +202,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   private static class ActivityInfo {
-    private Throwable myAllocation;
-    private ModalityState myEffectiveState;
+    private final Throwable myAllocation;
+    private final ModalityState myEffectiveState;
 
     private ActivityInfo(@Nullable Throwable allocation, @NotNull ModalityState effectiveState) {
       myAllocation = allocation;
@@ -219,9 +227,9 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   private class BusyImpl extends BusyObject.Impl {
 
-    private Map<Object, ActivityInfo> myActivities = new HashMap<Object, ActivityInfo>();
+    private final Map<Object, ActivityInfo> myActivities = new HashMap<Object, ActivityInfo>();
 
-    private Set<Object> myQueuedToRemove = new HashSet<Object>();
+    private final Set<Object> myQueuedToRemove = new HashSet<Object>();
 
     @Override
     public boolean isReady() {
@@ -229,11 +237,11 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
 
     boolean isOwnReady() {
-      if (myActivities.size() == 0) return true;
+      if (myActivities.isEmpty()) return true;
 
       final ModalityState current = getCurrentState();
-      for (Object each : myActivities.keySet()) {
-        final ActivityInfo info = myActivities.get(each);
+      for (Map.Entry<Object, ActivityInfo> entry : myActivities.entrySet()) {
+        final ActivityInfo info = entry.getValue();
         if (!current.dominates(info.getEffectiveState())) {
           return false;
         }
@@ -282,10 +290,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
     @Override
     public boolean isReady() {
-      Iterator<Object> iterator = myObjects.keySet().iterator();
-      while (iterator.hasNext()) {
-        Object eachKey = iterator.next();
-        BusyImpl busy = myObjects.get(eachKey);
+      for (Map.Entry<Object, BusyImpl> entry : myObjects.entrySet()) {
+        BusyImpl busy = entry.getValue();
         if (busy == this) continue;
         if (!busy.isOwnReady()) return false;
       }
@@ -294,7 +300,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
   }
 
-  private void invokeLaterIfNeeded(final MyRunnable runnable) {
+  private static void invokeLaterIfNeeded(final MyRunnable runnable) {
     final Throwable allocation = Registry.is("ide.debugMode") ? new Exception() : null;
 
     if (isUnitTestMode()) {
@@ -310,10 +316,10 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   private interface MyRunnable {
-    public abstract void run(Throwable allocation);
+    void run(Throwable allocation);
   }
 
-  private boolean isUnitTestMode() {
+  private static boolean isUnitTestMode() {
       Application app = ApplicationManager.getApplication();
       return app == null || app.isUnitTestMode();
   }
