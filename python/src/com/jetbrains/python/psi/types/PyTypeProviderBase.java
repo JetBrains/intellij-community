@@ -80,7 +80,10 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   @Override
   public PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context) {
-    ReturnTypeDescriptor descriptor = myMethodToReturnTypeMap.get(function.getName());
+    ReturnTypeDescriptor descriptor;
+    synchronized (myMethodToReturnTypeMap) {
+      descriptor = myMethodToReturnTypeMap.get(function.getName());
+    }
     if (descriptor != null) {
       return descriptor.get(function, callSite, context);
     }
@@ -99,8 +102,10 @@ public class PyTypeProviderBase implements PyTypeProvider {
   protected void registerReturnType(String classQualifiedName,
                                     Collection<String> methods,
                                     final ReturnTypeCallback callback) {
-    for (String method : methods) {
-      myMethodToReturnTypeMap.get(method).put(classQualifiedName, callback);
+    synchronized (myMethodToReturnTypeMap) {
+      for (String method : methods) {
+        myMethodToReturnTypeMap.get(method).put(classQualifiedName, callback);
+      }
     }
   }
 }
