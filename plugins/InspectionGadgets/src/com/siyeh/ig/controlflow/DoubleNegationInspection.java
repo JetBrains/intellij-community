@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +37,7 @@ public class DoubleNegationInspection extends BaseInspection {
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "double.negation.problem.descriptor");
+    return InspectionGadgetsBundle.message("double.negation.problem.descriptor");
   }
 
   @Nullable
@@ -52,44 +52,21 @@ public class DoubleNegationInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("double.negation.quickfix");
     }
 
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiPrefixExpression expression =
-        (PsiPrefixExpression)descriptor.getPsiElement();
-      PsiExpression operand = expression.getOperand();
-      while (operand instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)operand;
-        operand = parenthesizedExpression.getExpression();
-      }
-      if (operand instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)operand;
-        final PsiExpression innerOperand = prefixExpression.getOperand();
-        if (innerOperand == null) {
-          return;
-        }
-        expression.replace(innerOperand);
-      }
-      else if (operand instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)operand;
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement expression = descriptor.getPsiElement();
+      if (expression instanceof PsiPrefixExpression) {
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+        final PsiExpression operand = prefixExpression.getOperand();
+        replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand));
+      } else if (expression instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+        final StringBuilder newExpressionText = new StringBuilder();
         final PsiExpression lhs = binaryExpression.getLOperand();
-        final String lhsText = lhs.getText();
-        final StringBuilder builder =
-          new StringBuilder(lhsText);
-        builder.append("==");
+        newExpressionText.append(BoolUtils.getNegatedExpressionText(lhs));
+        newExpressionText.append("==");
         final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs != null) {
-          final String rhsText = rhs.getText();
-          builder.append(rhsText);
-        }
-        final PsiManager manager = binaryExpression.getManager();
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-        final PsiExpression newExpression =
-          factory.createExpressionFromText(builder.toString(),
-                                           binaryExpression);
-        expression.replace(newExpression);
+        newExpressionText.append(BoolUtils.getNegatedExpressionText(rhs));
+        replaceExpression(binaryExpression, newExpressionText.toString());
       }
     }
   }
@@ -103,39 +80,43 @@ public class DoubleNegationInspection extends BaseInspection {
     @Override
     public void visitPrefixExpression(PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!JavaTokenType.EXCL.equals(tokenType)) {
+      if (!isNegation(expression)) {
         return;
       }
-      checkParent(expression);
+      final PsiExpression operand = expression.getOperand();
+      if (!isNegation(operand)) {
+        return;
+      }
+      registerError(expression);
     }
 
     @Override
     public void visitBinaryExpression(PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!JavaTokenType.NE.equals(tokenType)) {
+      if (!isNegation(expression)) {
         return;
       }
-      checkParent(expression);
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null || !isNegation(lhs) && !isNegation(rhs)) {
+        return;
+      }
+      registerError(expression);
     }
 
-    private void checkParent(PsiExpression expression) {
-      PsiElement parent = expression.getParent();
-      while (parent instanceof PsiParenthesizedExpression) {
-        parent = parent.getParent();
-      }
-      if (!(parent instanceof PsiPrefixExpression)) {
-        return;
-      }
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)parent;
-      final IElementType parentTokenType =
-        prefixExpression.getOperationTokenType();
-      if (!JavaTokenType.EXCL.equals(parentTokenType)) {
-        return;
-      }
-      registerError(prefixExpression);
+    private static boolean isNegation(PsiExpression expression) {
+      expression = ParenthesesUtils.stripParentheses(expression);
+      if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
+      if (expression instanceof PsiBinaryExpression) return isNegation((PsiBinaryExpression)expression);
+      return false;
+    }
+
+    private static boolean isNegation(PsiBinaryExpression expression) {
+      return JavaTokenType.NE.equals(expression.getOperationTokenType());
+    }
+
+    private static boolean isNegation(PsiPrefixExpression expression) {
+      return JavaTokenType.EXCL.equals(expression.getOperationTokenType());
     }
   }
 }
