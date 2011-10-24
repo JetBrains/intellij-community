@@ -66,7 +66,7 @@ class NavBarBorder implements Border {
   }
 
   public Insets getBorderInsets(final Component c) {
-    return new Insets(1, 0, 1, 4);
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR ? new Insets(1, 0, 1, 4) : new Insets(0, 0, 0, 4);
   }
 
   public boolean isBorderOpaque() {
