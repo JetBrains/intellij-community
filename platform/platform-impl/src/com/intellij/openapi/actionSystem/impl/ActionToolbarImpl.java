@@ -129,7 +129,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myActionManager = actionManager;
     myKeymapManager = keymapManager;
     myPlace = place;
-    setMiniMode(false);
     myActionGroup = actionGroup;
     myPresentationFactory = new PresentationFactory();
     myKeymapManagerListener = new MyKeymapManagerListener();
@@ -153,6 +152,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     // It means that if the panel is in slidindg mode then the focus goes to the editor
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
+    setMiniMode(false);
   }
 
   @Override
@@ -1150,7 +1150,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   @Override
   public void setMiniMode(boolean minimalMode) {
-    if (myMinimalMode == minimalMode) return;
+    //if (myMinimalMode == minimalMode) return;
 
     myMinimalMode = minimalMode;
     if (myMinimalMode) {
