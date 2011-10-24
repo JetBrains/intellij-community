@@ -207,8 +207,8 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private void setOrderText(GitLogSettings settings) {
-    myOrderLabel.setText(myRootsUnderVcs.size() == 1 && settings.isTopoOrder() ? "Topo Order" : "Date Order");
+  private void setOrderText(boolean topoOrder) {
+    myOrderLabel.setText(topoOrder ? "Topo Order" : "Date Order");
   }
 
   private void initUiRefresh() {
@@ -991,8 +991,6 @@ public class GitLogUI implements Disposable {
     myTableModel.setActiveRoots(activeRoots);
     myDetailsCache.rootsChanged(rootsUnderVcs);
     
-    setOrderText(GitLogSettings.getInstance(myProject));
-
     if (myStarted) {
       reloadRequest();
     }
@@ -1375,8 +1373,6 @@ public class GitLogUI implements Disposable {
     settings.setSelectedUserIsMe(myUserFilterI.isMeSelected());
     settings.setSelectedPaths(myStructureFilter.myAllSelected ? null : myStructureFilter.getSelected());
 
-    myOrderLabel.setVisible(false);
-
     myState = StepType.CONTINUE;
     final int was = myTableModel.getRowCount();
     myDetailsCache.resetAsideCaches();
@@ -1386,15 +1382,23 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
-    myThereAreFilters = true;
+    myThereAreFilters = ! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected);
+    final boolean topoOrder = (! myThereAreFilters) && myRootsUnderVcs.size() == 1 ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
+    myOrderLabel.setVisible(false);
+    setOrderText(topoOrder);
+    if (topoOrder) {
+      myTableModel.useNoGroupingStrategy();
+    } else {
+      myTableModel.useDateGroupingStrategy();
+    }
+
     myEqualToHeadr.getParent().setVisible(false);
-    if (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected) {
-      myThereAreFilters = false;
+    if (! myThereAreFilters) {
       if (myMyShowTreeAction.isSelected(null)) {
         myEqualToHeadr.getParent().setVisible(true);
       }
       myUsersSearchContext.clear();
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters());
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(), topoOrder);
     } else {
       ChangesFilter.Comment comment = null;
       if (! commentFilterEmpty) {
@@ -1441,13 +1445,15 @@ public class GitLogUI implements Disposable {
 
       final List<String> possibleReferencies = commentFilterEmpty ? null : Arrays.asList(myPreviousFilter.split("[\\s]"));
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, structureFilters,
-                                                                                            possibleReferencies));
+                                                                                            possibleReferencies), topoOrder);
     }
     myCommentSearchContext.addHighlighter(myDetailsPanel.getHtmlHighlighter());
     updateMoreVisibility();
     mySelectionRequestsMerger.request();
     fireTableRepaint();
     myTableModel.fireTableRowsDeleted(0, was);
+    myGraphGutter.getComponent().revalidate();
+    myGraphGutter.getComponent().repaint();
   }
 
   interface Colors {
@@ -1796,8 +1802,8 @@ public class GitLogUI implements Disposable {
       myDateOrder = new DumbAwareAction("Date Order") {
         @Override
         public void actionPerformed(AnActionEvent e) {
+          if (! mySettings.isTopoOrder()) return;
           mySettings.setTopoOrder(false);
-          setOrderText(mySettings);
           reloadRequest();
         }
 
@@ -1810,8 +1816,8 @@ public class GitLogUI implements Disposable {
       myTopoOrder = new DumbAwareAction("Topo Order") {
         @Override
         public void actionPerformed(AnActionEvent e) {
+          if (mySettings.isTopoOrder()) return;
           mySettings.setTopoOrder(true);
-          setOrderText(mySettings);
           reloadRequest();
         }
 

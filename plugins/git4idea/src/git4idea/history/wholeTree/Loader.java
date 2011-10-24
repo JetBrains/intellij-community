@@ -26,7 +26,7 @@ public interface Loader {
   void loadSkeleton(Ticket ticket,
                     RootsHolder rootsHolder,
                     final Collection<String> startingPoints,
-                    final GitLogFilters filters, LoadGrowthController loadGrowthController);
+                    final GitLogFilters filters, LoadGrowthController loadGrowthController, final boolean topoOrder);
 
   void resume();
 }

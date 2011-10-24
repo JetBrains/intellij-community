@@ -73,8 +73,8 @@ public class ByRootLoader extends TaskDescriptor {
   @Override
   public void run(ContinuationContext context) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-    progress(pi, "Load stashed");
-    loadStash();
+    /*progress(pi, "Load stashed");
+    loadStash();*/
     progress(pi, "Try to load by reference");
     loadByHashesAside(context);
   }

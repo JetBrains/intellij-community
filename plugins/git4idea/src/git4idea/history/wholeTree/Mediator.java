@@ -27,7 +27,7 @@ import java.util.List;
 public interface Mediator {
   void reload(RootsHolder rootsHolder,
               final Collection<String> startingPoints,
-              @Nullable final GitLogFilters filters);
+              @Nullable final GitLogFilters filters, final boolean topoOrder);
 
   /**
    * @return false -> ticket already changed
