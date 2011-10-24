@@ -161,8 +161,8 @@ public class ExpressionUtils {
     return false;
   }
 
-  public static boolean isEmptyStringLiteral(
-    @Nullable PsiExpression expression) {
+  public static boolean isEmptyStringLiteral(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
     if (!(expression instanceof PsiLiteralExpression)) {
       return false;
     }

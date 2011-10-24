@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,17 +84,15 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       if (infos[0] instanceof PsiBinaryExpression) {
         final PsiBinaryExpression expression =
           (PsiBinaryExpression)infos[0];
-        return InspectionGadgetsBundle.message(
-          "string.can.be.simplified.problem.descriptor",
+        return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
           calculateSimplifiedBinaryExpression(expression));
       }
-      return InspectionGadgetsBundle.message("string.can.be.simplified.polyadic.problem.descriptor");
+      return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.polyadic.problem.descriptor");
     }
     else {
       final PsiPrefixExpression expression =
         (PsiPrefixExpression)infos[0];
-      return InspectionGadgetsBundle.message(
-        "string.can.be.simplified.problem.descriptor",
+      return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
         calculateSimplifiedPrefixExpression(expression));
     }
   }

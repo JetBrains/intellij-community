@@ -1,10 +1,10 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.performance.trivial_string_concatenation;
 
-public class TrivialStringConcatenationInspection {
+public class TrivialStringConcatenation {
 
     public void foo() {
         final String foo = "" + 4 + "" + 3;
-        String bar = "" + new Integer(4);
+        String bar = "" + new Integer(4) + "asdf";
         Float aFloat = new Float(3.0);
         String baz = "" + aFloat;
 

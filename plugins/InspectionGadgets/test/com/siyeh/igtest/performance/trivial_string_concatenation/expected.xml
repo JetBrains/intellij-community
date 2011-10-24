@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>TrivialStringConcatenation.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Concatenation with empty string</problem_class>
+    <description>Empty string used in concatenation</description>
+  </problem>
+
+  <problem>
+    <file>TrivialStringConcatenation.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Concatenation with empty string</problem_class>
+    <description>Empty string used in concatenation</description>
+  </problem>
+</problems>

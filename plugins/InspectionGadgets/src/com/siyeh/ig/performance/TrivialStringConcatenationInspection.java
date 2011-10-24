@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,25 +41,57 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "trivial.string.concatenation.display.name");
+    return InspectionGadgetsBundle.message("trivial.string.concatenation.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString =
-      calculateReplacementExpression((PsiElement)infos[0]);
-    return InspectionGadgetsBundle.message(
-      "string.can.be.simplified.problem.descriptor",
-      replacementString);
+    return InspectionGadgetsBundle.message("trivial.string.concatenation.problem.descriptor");
   }
 
   @NonNls
-  static String calculateReplacementExpression(PsiElement location) {
-    final PsiBinaryExpression expression = (PsiBinaryExpression)location;
-    final PsiExpression lOperand = expression.getLOperand();
-    final PsiExpression rOperand = expression.getROperand();
+  static String calculateReplacementExpression(PsiLiteralExpression expression) {
+    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+    if (!(parent instanceof PsiBinaryExpression)) {
+      if (parent instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        final PsiClassType stringType = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
+        boolean seenString = false;
+        boolean seenEmpty = false;
+        final StringBuilder text = new StringBuilder();
+        for (PsiExpression operand : operands) {
+          operand = ParenthesesUtils.stripParentheses(operand);
+          if (operand == null) {
+            return null;
+          }
+          if (operand == expression) {
+            seenEmpty = true;
+            continue;
+          }
+
+          if (stringType.equals(operand.getType())) {
+            seenString = true;
+          }
+          if (text.length() > 0) {
+            text.append('+');
+          }
+          if (!seenString && seenEmpty) {
+            text.append(buildReplacement(operand, seenString));
+            seenString = true;
+          }
+          else {
+            text.append(operand.getText());
+          }
+        }
+        return text.toString();
+      }
+      return null;
+    }
+    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+    final PsiExpression lOperand = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
+    final PsiExpression rOperand = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
     final PsiExpression replacement;
     if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
       replacement = rOperand;
@@ -69,38 +99,38 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     else {
       replacement = lOperand;
     }
-    @NonNls final String replacementText;
+    return buildReplacement(replacement, false);
+  }
+
+  private static String buildReplacement(PsiExpression replacement, boolean seenString) {
     if (replacement == null) {
-      replacementText = "";
+      return "";
     }
-    else {
-      if (ExpressionUtils.isNullLiteral(replacement)) {
-        replacementText = "(Object)null";
+    if (ExpressionUtils.isNullLiteral(replacement)) {
+      if (seenString) {
+        return "(Object)null";
       }
       else {
-        replacementText = replacement.getText();
-      }
-      if (TypeUtils.expressionHasType(replacement,
-                                      CommonClassNames.JAVA_LANG_STRING)) {
-        return replacementText;
+        return "String.valueOf((Object)null)";
       }
     }
-    return "String.valueOf(" + replacementText + ')';
+    if (seenString || TypeUtils.expressionHasType(replacement, CommonClassNames.JAVA_LANG_STRING)) {
+      return replacement.getText();
+    }
+    return "String.valueOf(" + replacement.getText() + ')';
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression)infos[0]);
+    return new UnnecessaryTemporaryObjectFix((PsiLiteralExpression)infos[0]);
   }
 
-  private static class UnnecessaryTemporaryObjectFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
 
     private final String m_name;
 
-    private UnnecessaryTemporaryObjectFix(PsiBinaryExpression expression) {
-      m_name = InspectionGadgetsBundle.message("string.replace.quickfix",
-                                               calculateReplacementExpression(expression));
+    private UnnecessaryTemporaryObjectFix(PsiLiteralExpression expression) {
+      m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression));
     }
 
     @NotNull
@@ -109,13 +139,14 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiBinaryExpression expression =
-        (PsiBinaryExpression)descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
+      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+      if (!(parent instanceof PsiExpression)) {
+        return;
+      }
+      final String newExpression = calculateReplacementExpression(expression);
+      replaceExpression((PsiExpression)parent, newExpression);
     }
   }
 
@@ -124,30 +155,28 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     return new TrivialStringConcatenationVisitor();
   }
 
-  private static class TrivialStringConcatenationVisitor
-    extends BaseInspectionVisitor {
+  private static class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
+      if (!TypeUtils.expressionHasType(expression, CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
-      if (!TypeUtils.expressionHasType(expression,
-                                       CommonClassNames.JAVA_LANG_STRING)) {
-        return;
+      final PsiExpression[] operands = expression.getOperands();
+      for (PsiExpression operand : operands) {
+        operand = ParenthesesUtils.stripParentheses(operand);
+        if (operand == null) {
+          return;
+        }
+        if (!ExpressionUtils.isEmptyStringLiteral(operand)) {
+          continue;
+        }
+        if (PsiUtil.isConstantExpression(expression)) {
+          return;
+        }
+        registerError(operand, operand);
       }
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiExpression rhs = expression.getROperand();
-      if (!ExpressionUtils.isEmptyStringLiteral(lhs) &&
-          !ExpressionUtils.isEmptyStringLiteral(rhs)) {
-        return;
-      }
-      if (PsiUtil.isConstantExpression(expression)) {
-        return;
-      }
-      registerError(expression, expression);
     }
   }
 }
