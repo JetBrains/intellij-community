@@ -48,23 +48,6 @@ class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  public void testSmartCompletionCompletion() {
-    myFixture.configureByText("a.groovy", """
-class Aaa {
-  String sss1
-  String sss2
-
-  static {
-    new Aaa(<caret>)
-  }
-}
-""")
-
-    def res = myFixture.complete(CompletionType.SMART)
-    assertNotNull(res)
-    assertSize(2, res)
-  }
-
   public void testEmptyConstructorCompletion() {
     doTestCompletion("""
 class Aaa {
@@ -265,45 +248,10 @@ public class Ccc {
 
     myFixture.configureByText("a.groovy", "new Ccc(ss<caret>)")
 
-    def res = myFixture.complete(CompletionType.SMART)
+    def res = myFixture.completeBasic()
 
     assertNotNull res
     assertSize 4, res
-  }
-
-  public void testStatic1() {
-    myFixture.configureByText("Ccc.groovy", """
-class Ccc {
-  String sss1
-  String sss2
-  static String sss3
-
-  static {
-    new Ccc(<caret>)
-  }
-}
-""")
-    def res = myFixture.complete(CompletionType.SMART)
-    assertNotNull res
-    assertSize 2, res
-  }
-
-  public void testStatic2() {
-    myFixture.configureByText("Ccc.groovy", """
-class Ccc {
-  public String setSss1(String s) {}
-  public String setSss2(String s) {}
-
-  public static String setSss3(String s) {}
-
-  static {
-    new Ccc(<caret>)
-  }
-}
-""")
-    def res = myFixture.complete(CompletionType.SMART)
-    assertNotNull res
-    assertSize 2, res
   }
 
   public void testRenameProperty() {
