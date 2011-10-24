@@ -308,7 +308,7 @@ public class AndroidSdkUtils {
   }
 
   private static boolean tryToImportFromPropertyFiles(@NotNull Module module) {
-    final String targetHashString = AndroidUtils.getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, "target");
+    final String targetHashString = AndroidUtils.getProjectPropertyValue(module, "target");
     if (targetHashString == null) {
       return false;
     }

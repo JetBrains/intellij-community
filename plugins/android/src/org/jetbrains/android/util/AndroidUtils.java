@@ -140,6 +140,7 @@ public class AndroidUtils {
   public static final String SERVICE_CLASS_NAME = "android.app.Service";
   public static final String RECEIVER_CLASS_NAME = "android.content.BroadcastReceiver";
   public static final String PROVIDER_CLASS_NAME = "android.content.ContentProvider";
+  @NonNls public static final String DEFAULT_PROPERTIES_FILE_NAME = "default.properties";
 
   private AndroidUtils() {
   }
@@ -440,7 +441,9 @@ public class AndroidUtils {
     }
   }
 
-  public static boolean executeCommand(GeneralCommandLine commandLine, final StringBuilder messageBuilder) throws ExecutionException {
+  public static boolean executeCommand(GeneralCommandLine commandLine,
+                                       final StringBuilder messageBuilder,
+                                       @Nullable Integer timeout) throws ExecutionException {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
     handler.addProcessListener(new ProcessAdapter() {
@@ -450,11 +453,21 @@ public class AndroidUtils {
     });
     handler.startNotify();
     try {
-      handler.waitFor();
+      if (timeout != null) {
+        handler.waitFor(timeout);
+      }
+      else {
+        handler.waitFor();
+      }
     }
     catch (ProcessCanceledException e) {
       return false;
     }
+
+    if (!handler.isProcessTerminated()) {
+      return true;
+    }
+
     String message = messageBuilder.toString();
     LOG.info(message);
     int exitCode = handler.getProcess().exitValue();
@@ -476,15 +489,15 @@ public class AndroidUtils {
     });
   }
 
-  public static void runExternalTool(final Project project,
+  public static void runExternalTool(@Nullable final Project project,
                                      GeneralCommandLine commandLine,
                                      boolean printOutputToAndroidConsole,
-                                     ProcessHandler processHandler) {
+                                     @Nullable ProcessHandler processHandler) {
     StringBuilder messageBuilder = new StringBuilder();
     String result;
     boolean success = false;
     try {
-      success = executeCommand(commandLine, messageBuilder);
+      success = executeCommand(commandLine, messageBuilder, null);
       result = messageBuilder.toString();
     }
     catch (ExecutionException e) {
@@ -497,6 +510,7 @@ public class AndroidUtils {
                                                    ConsoleViewContentType.NORMAL_OUTPUT :
                                                    ConsoleViewContentType.ERROR_OUTPUT;
         final String finalResult = result;
+        assert project != null;
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -798,7 +812,7 @@ public class AndroidUtils {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
+  private static Pair<Properties, VirtualFile> readPropertyFile(@NotNull Module module, @NotNull String propertyFileName) {
     for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
       final Pair<Properties, VirtualFile> result = readPropertyFile(contentRoot, propertyFileName);
       if (result != null) {
@@ -807,10 +821,18 @@ public class AndroidUtils {
     }
     return null;
   }
+  
+  @Nullable
+  public static Pair<Properties, VirtualFile> readProjectPropertyFile(@NotNull Module module) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(module, SdkConstants.FN_PROJECT_PROPERTIES);
+    return pair != null 
+           ? pair 
+           : readPropertyFile(module, DEFAULT_PROPERTIES_FILE_NAME);
+  }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static Pair<Properties, VirtualFile> readPropertyFile(@NotNull VirtualFile contentRoot, @NotNull String propertyFileName) {
+  private static Pair<Properties, VirtualFile> readPropertyFile(@NotNull VirtualFile contentRoot, @NotNull String propertyFileName) {
     final VirtualFile vFile = contentRoot.findChild(propertyFileName);
     if (vFile != null) {
       final Properties properties = new Properties();
@@ -823,6 +845,14 @@ public class AndroidUtils {
       }
     }
     return null;
+  }
+  
+  @Nullable
+  public static Pair<Properties, VirtualFile> readProjectPropertyFile(@NotNull VirtualFile contentRoot) {
+    final Pair<Properties, VirtualFile> pair = readPropertyFile(contentRoot, SdkConstants.FN_PROJECT_PROPERTIES);
+    return pair != null
+           ? pair
+           : readPropertyFile(contentRoot, DEFAULT_PROPERTIES_FILE_NAME);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -901,5 +931,13 @@ public class AndroidUtils {
       }
     }
     return builder.toString();
+  }
+
+  @Nullable
+  public static String getProjectPropertyValue(Module module, String propertyName) {
+    final String result = getPropertyValue(module, SdkConstants.FN_PROJECT_PROPERTIES, propertyName);
+    return result != null 
+           ? result 
+           : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName); 
   }
 }

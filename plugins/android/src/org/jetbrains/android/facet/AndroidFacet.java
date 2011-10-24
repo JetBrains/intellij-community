@@ -22,6 +22,7 @@ import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
@@ -138,14 +139,14 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return null;
   }
 
-  public AvdManager.AvdInfo[] getAllAvds() {
+  public AvdInfo[] getAllAvds() {
     AvdManager manager = getAvdManagerSilently();
     if (manager != null) {
       if (reloadAvds(manager)) {
         return manager.getAllAvds();
       }
     }
-    return new AvdManager.AvdInfo[0];
+    return new AvdInfo[0];
   }
 
   private boolean reloadAvds(AvdManager manager) {
@@ -165,28 +166,28 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return false;
   }
 
-  public AvdManager.AvdInfo[] getAllCompatibleAvds() {
-    List<AvdManager.AvdInfo> result = new ArrayList<AvdManager.AvdInfo>();
+  public AvdInfo[] getAllCompatibleAvds() {
+    List<AvdInfo> result = new ArrayList<AvdInfo>();
     addCompatibleAvds(result, getAllAvds());
-    return result.toArray(new AvdManager.AvdInfo[result.size()]);
+    return result.toArray(new AvdInfo[result.size()]);
   }
 
-  public AvdManager.AvdInfo[] getValidCompatibleAvds() {
+  public AvdInfo[] getValidCompatibleAvds() {
     AvdManager manager = getAvdManagerSilently();
-    List<AvdManager.AvdInfo> result = new ArrayList<AvdManager.AvdInfo>();
+    List<AvdInfo> result = new ArrayList<AvdInfo>();
     if (manager != null && reloadAvds(manager)) {
       addCompatibleAvds(result, manager.getValidAvds());
     }
-    return result.toArray(new AvdManager.AvdInfo[result.size()]);
+    return result.toArray(new AvdInfo[result.size()]);
   }
 
-  private AvdManager.AvdInfo[] addCompatibleAvds(List<AvdManager.AvdInfo> to, @NotNull AvdManager.AvdInfo[] from) {
-    for (AvdManager.AvdInfo avd : from) {
+  private AvdInfo[] addCompatibleAvds(List<AvdInfo> to, @NotNull AvdInfo[] from) {
+    for (AvdInfo avd : from) {
       if (isCompatibleAvd(avd)) {
         to.add(avd);
       }
     }
-    return to.toArray(new AvdManager.AvdInfo[to.size()]);
+    return to.toArray(new AvdInfo[to.size()]);
   }
 
   @Nullable
@@ -213,7 +214,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     if (avd != null) {
       AvdManager avdManager = getAvdManagerSilently();
       if (avdManager == null) return true;
-      AvdManager.AvdInfo info = avdManager.getAvd(avd, true);
+      AvdInfo info = avdManager.getAvd(avd, true);
       return isCompatibleBaseTarget(info != null ? info.getTarget() : null);
     }
     if (target.isPlatform()) {
@@ -277,7 +278,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return true;
   }
 
-  public boolean isCompatibleAvd(@NotNull AvdManager.AvdInfo avd) {
+  public boolean isCompatibleAvd(@NotNull AvdInfo avd) {
     IAndroidTarget target = getConfiguration().getAndroidTarget();
     return target != null && avd.getTarget() != null && isCompatibleBaseTarget(avd.getTarget());
   }
@@ -385,7 +386,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
             PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
 
-            final PropertiesFile propertiesFile = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_DEFAULT_PROPERTIES);
+            final PropertiesFile propertiesFile = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
             if (propertiesFile == null) {
               return;
             }

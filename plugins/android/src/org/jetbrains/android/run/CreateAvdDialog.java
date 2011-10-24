@@ -18,6 +18,8 @@ package org.jetbrains.android.run;
 
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.ISystemImage;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.ListCellRendererWrapper;
@@ -70,7 +72,7 @@ public class CreateAvdDialog extends DialogWrapper {
   private TextFieldWithBrowseButton mySdCardFileTextField;
   private JComboBox myAbiCombo;
   private final AvdManager myAvdManager;
-  private AvdManager.AvdInfo myCreatedAvd;
+  private AvdInfo myCreatedAvd;
 
   private final Project myProject;
 
@@ -199,6 +201,14 @@ public class CreateAvdDialog extends DialogWrapper {
         setText(AndroidSdkUtils.getPresentableTargetName(value));
       }
     });
+    myAbiCombo.setRenderer(new ListCellRendererWrapper<String>(myAbiCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+          setText(AvdInfo.getPrettyAbiType(value));
+        }
+      }
+    });
     IAndroidTarget target = facet.getConfiguration().getAndroidTarget();
     if (target != null) {
       myTargetBox.setSelectedItem(target);
@@ -263,12 +273,29 @@ public class CreateAvdDialog extends DialogWrapper {
   private void reloadAbiCombo() {
     final IAndroidTarget selectedTarget = (IAndroidTarget)myTargetBox.getSelectedItem();
     if (selectedTarget != null) {
-      final String[] abis = selectedTarget.getAbiList();
+      final ISystemImage[] systemImages = getSystemImages(selectedTarget);
+      final String[] abis = new String[systemImages.length];
+      
+      for (int i = 0; i < abis.length; i++) {
+        abis[i] = systemImages[i].getAbiType();
+      }
+      
       myAbiCombo.setModel(new DefaultComboBoxModel(abis));
       if (abis.length == 0) {
-        LOG.error("Abis not found for target " + selectedTarget.hashString());
+        LOG.warn("Abis not found for target " + selectedTarget.hashString());
       }
     }
+  }
+
+  @NotNull
+  private static ISystemImage[] getSystemImages(@NotNull IAndroidTarget target) {
+    ISystemImage[] images = target.getSystemImages();
+
+    if ((images == null || images.length == 0) && !target.isPlatform()) {
+      images = target.getParent().getSystemImages();
+    }
+
+    return images != null ? images : new ISystemImage[0];
   }
 
   private void updateSpinner() {
@@ -316,7 +343,7 @@ public class CreateAvdDialog extends DialogWrapper {
       return;
     }
     String avdName = myNameField.getText();
-    AvdManager.AvdInfo info = myAvdManager.getAvd(avdName, false);
+    AvdInfo info = myAvdManager.getAvd(avdName, false);
     if (info != null) {
       boolean replace = Messages
                           .showYesNoDialog(myPanel, AndroidBundle.message("replace.avd.question", avdName),
@@ -359,7 +386,7 @@ public class CreateAvdDialog extends DialogWrapper {
   }
 
   @Nullable
-  public AvdManager.AvdInfo getCreatedAvd() {
+  public AvdInfo getCreatedAvd() {
     return myCreatedAvd;
   }
 

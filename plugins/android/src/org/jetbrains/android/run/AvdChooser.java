@@ -20,6 +20,7 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
@@ -136,8 +137,8 @@ public class AvdChooser extends DialogWrapper {
   }
 
   private void updateOkAction() {
-    AvdManager.AvdInfo avd = getSelectedAvd();
-    getOKAction().setEnabled(avd != null ? avd.getStatus() == AvdManager.AvdInfo.AvdStatus.OK : myMustSelect);
+    AvdInfo avd = getSelectedAvd();
+    getOKAction().setEnabled(avd != null ? avd.getStatus() == AvdInfo.AvdStatus.OK : myMustSelect);
   }
 
   @Override
@@ -153,7 +154,7 @@ public class AvdChooser extends DialogWrapper {
     }
   }
 
-  private boolean isAvdBusy(@NotNull AvdManager.AvdInfo avd) {
+  private boolean isAvdBusy(@NotNull AvdInfo avd) {
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
     if (bridge == null) return false;
     IDevice[] devices = bridge.getDevices();
@@ -167,7 +168,7 @@ public class AvdChooser extends DialogWrapper {
   }
 
   private void removeSelectedAvd() {
-    AvdManager.AvdInfo selectedAvd = getSelectedAvd();
+    AvdInfo selectedAvd = getSelectedAvd();
     if (selectedAvd != null) {
       if (isAvdBusy(selectedAvd)) {
         Messages.showErrorDialog(myPanel, AndroidBundle.message("cant.remove.avd.error"));
@@ -190,7 +191,7 @@ public class AvdChooser extends DialogWrapper {
   }
 
   @Nullable
-  public AvdManager.AvdInfo getSelectedAvd() {
+  public AvdInfo getSelectedAvd() {
     MyAvdTableModel model = (MyAvdTableModel)myAvdTable.getModel();
     int selectedRow = myAvdTable.getSelectedRow();
     return selectedRow >= 0 && selectedRow < model.myInfos.length ? model.myInfos[selectedRow] : null;
@@ -199,7 +200,7 @@ public class AvdChooser extends DialogWrapper {
   public void setSelectedAvd(@NotNull String avdName) {
     MyAvdTableModel model = (MyAvdTableModel)myAvdTable.getModel();
     for (int i = 0; i < model.myInfos.length; i++) {
-      AvdManager.AvdInfo info = model.myInfos[i];
+      AvdInfo info = model.myInfos[i];
       if (info.getName().equals(avdName)) {
         myAvdTable.getSelectionModel().setSelectionInterval(i, i);
       }
@@ -207,9 +208,9 @@ public class AvdChooser extends DialogWrapper {
   }
 
   private class MyAvdTableModel extends AbstractTableModel {
-    private final AvdManager.AvdInfo[] myInfos;
+    private final AvdInfo[] myInfos;
 
-    public MyAvdTableModel(AvdManager.AvdInfo[] infos) {
+    public MyAvdTableModel(AvdInfo[] infos) {
       myInfos = infos;
     }
 
@@ -228,7 +229,7 @@ public class AvdChooser extends DialogWrapper {
 
     @Nullable
     public Object getValueAt(int rowIndex, int columnIndex) {
-      AvdManager.AvdInfo info = myInfos[rowIndex];
+      AvdInfo info = myInfos[rowIndex];
       IAndroidTarget target = info.getTarget();
       final String unknown = "<unknown>";
       switch (columnIndex) {
@@ -241,7 +242,7 @@ public class AvdChooser extends DialogWrapper {
         case 3:
           return target != null ? target.getVersion().getApiString() : unknown;
         case 4:
-          return info.getStatus() == AvdManager.AvdInfo.AvdStatus.OK;
+          return info.getStatus() == AvdInfo.AvdStatus.OK;
         case 5:
           return myFacet.isCompatibleAvd(info);
       }
@@ -264,7 +265,7 @@ public class AvdChooser extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    AvdManager.AvdInfo selectedAvd = getSelectedAvd();
+    AvdInfo selectedAvd = getSelectedAvd();
     if (myCompatibleAvd && selectedAvd != null && !myFacet.isCompatibleAvd(selectedAvd)) {
       Messages.showErrorDialog(myPanel, AndroidBundle.message("select.compatible.avd.error"));
       return;

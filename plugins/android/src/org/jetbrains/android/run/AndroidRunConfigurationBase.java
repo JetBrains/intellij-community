@@ -17,6 +17,7 @@
 package org.jetbrains.android.run;
 
 import com.android.ddmlib.Log;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsole;
@@ -114,14 +115,14 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
         }
       }
       if (avdManager != null) {
-        AvdManager.AvdInfo avdInfo = avdManager.getAvd(PREFERRED_AVD, false);
+        AvdInfo avdInfo = avdManager.getAvd(PREFERRED_AVD, false);
         if (avdInfo == null) {
           throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.found.error", PREFERRED_AVD));
         }
         if (!facet.isCompatibleAvd(avdInfo)) {
           throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.compatible.error", PREFERRED_AVD));
         }
-        if (avdInfo.getStatus() != AvdManager.AvdInfo.AvdStatus.OK) {
+        if (avdInfo.getStatus() != AvdInfo.AvdStatus.OK) {
           throw new RuntimeConfigurationError(AndroidBundle.message("avd.not.valid.error", PREFERRED_AVD));
         }
       }

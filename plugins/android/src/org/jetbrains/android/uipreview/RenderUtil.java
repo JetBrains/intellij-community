@@ -2,10 +2,7 @@ package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
-import com.android.ide.common.resources.ResourceDeltaKind;
-import com.android.ide.common.resources.ResourceFolder;
-import com.android.ide.common.resources.ResourceRepository;
-import com.android.ide.common.resources.ResourceResolver;
+import com.android.ide.common.resources.*;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.resources.configuration.VersionQualifier;
 import com.android.io.FolderWrapper;
@@ -37,6 +34,9 @@ import org.xmlpull.v1.XmlPullParserException;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -222,7 +222,10 @@ class RenderUtil {
     return result;
   }
 
-  public static void loadResources(@NotNull ResourceRepository repository, @NotNull IAbstractFolder... rootFolders) throws IOException {
+  public static void loadResources(@NotNull ResourceRepository repository,
+                                   @NotNull IAbstractFolder... rootFolders) throws IOException, RenderingException {
+    final ScanningContext scanningContext = new ScanningContext(repository);
+
     for (IAbstractFolder rootFolder : rootFolders) {
       for (IAbstractResource file : rootFolder.listMembers()) {
         if (!(file instanceof IAbstractFolder)) {
@@ -235,11 +238,28 @@ class RenderUtil {
         if (resFolder != null) {
           for (IAbstractResource childRes : folder.listMembers()) {
             if (childRes instanceof IAbstractFile) {
-              resFolder.processFile((IAbstractFile)childRes, ResourceDeltaKind.ADDED);
+              resFolder.processFile((IAbstractFile)childRes, ResourceDeltaKind.ADDED, scanningContext);
             }
           }
         }
       }
     }
+
+    final List<String> errors = scanningContext.getErrors();
+    if (errors != null && errors.size() > 0) {
+      throw new RenderingException(merge(errors));
+    }
+  }
+
+  private static String merge(@NotNull Collection<String> strs) {
+    final StringBuilder result = new StringBuilder();
+    for (Iterator<String> it = strs.iterator(); it.hasNext(); ) {
+      String str = it.next();
+      result.append(str);
+      if (it.hasNext()) {
+        result.append('\n');
+      }
+    }
+    return result.toString();
   }
 }

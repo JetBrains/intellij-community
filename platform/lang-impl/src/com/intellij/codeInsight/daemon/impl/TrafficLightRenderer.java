@@ -66,7 +66,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
    * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
    * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
    */
-  private final int[] errorCount;
+  private int[] errorCount;
 
   public TrafficLightRenderer(Project project, Document document, PsiFile file) {
     myProject = project;
@@ -74,7 +74,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     myDocument = document;
     myFile = file;
     mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
-    errorCount = new int[mySeverityRegistrar.getSeverityMaxIndex()];
+    refresh();
 
     if (project != null) {
       MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -99,10 +99,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     }
   }
 
+  private void refresh() {
+    errorCount = new int[mySeverityRegistrar.getSeverityMaxIndex()];
+  }
+
   public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, Project project, Document document, PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
     if (renderer instanceof TrafficLightRenderer) {
+      ((TrafficLightRenderer)renderer).refresh();
       ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
     }
     else {

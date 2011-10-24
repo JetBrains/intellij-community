@@ -24,12 +24,10 @@ import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.android.run.AndroidRunningState;
 
+import java.util.Map;
+
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 30, 2009
- * Time: 5:18:19 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class AndroidTestListener implements ITestRunListener {
   private final AndroidRunningState myRunningState;
@@ -49,17 +47,14 @@ public class AndroidTestListener implements ITestRunListener {
     myRunningState = runningState;
   }
 
-  @Override
-  public void testRunStarted(int testCount) {
+  public void testRunStopped(long elapsedTime) {
     ProcessHandler handler = getProcessHandler();
-    handler.notifyTextAvailable("Test running started\n", ProcessOutputTypes.STDOUT);
-    ServiceMessageBuilder builder = new ServiceMessageBuilder("testCount");
-    builder.addAttribute("count", Integer.toString(testCount));
-    handler.notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
+    handler.notifyTextAvailable("Test running stopped\n", ProcessOutputTypes.STDOUT);
+    handler.destroyProcess();
   }
 
   @Override
-  public void testRunEnded(long elapsedTime) {
+  public void testRunEnded(long elapsedTime, Map<String, String> runMetrics) {
     if (myTestClassName != null) {
       testSuiteFinished();
     }
@@ -68,10 +63,13 @@ public class AndroidTestListener implements ITestRunListener {
     handler.destroyProcess();
   }
 
-  public void testRunStopped(long elapsedTime) {
+  @Override
+  public void testRunStarted(String runName, int testCount) {
     ProcessHandler handler = getProcessHandler();
-    handler.notifyTextAvailable("Test running stopped\n", ProcessOutputTypes.STDOUT);
-    handler.destroyProcess();
+    handler.notifyTextAvailable("Test running started\n", ProcessOutputTypes.STDOUT);
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testCount");
+    builder.addAttribute("count", Integer.toString(testCount));
+    handler.notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
   }
 
   public void testStarted(TestIdentifier test) {
@@ -85,7 +83,8 @@ public class AndroidTestListener implements ITestRunListener {
     ServiceMessageBuilder builder = new ServiceMessageBuilder("testStarted");
     builder.addAttribute("name", test.getTestName());
     builder
-      .addAttribute("locationHint", "android://" + myRunningState.getModule() + ':' + test.getClassName() + '.' + test.getTestName() + "()");
+      .addAttribute("locationHint",
+                    "android://" + myRunningState.getModule() + ':' + test.getClassName() + '.' + test.getTestName() + "()");
     getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
     myTestStartingTime = System.currentTimeMillis();
   }
@@ -106,14 +105,6 @@ public class AndroidTestListener implements ITestRunListener {
     myTestClassName = null;
   }
 
-  @Override
-  public void testEnded(TestIdentifier test) {
-    ServiceMessageBuilder builder = new ServiceMessageBuilder("testFinished");
-    builder.addAttribute("name", test.getTestName());
-    builder.addAttribute("duration", Long.toString(System.currentTimeMillis() - myTestStartingTime));
-    getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
-  }
-
   public void testFailed(TestFailure status, TestIdentifier test, String stackTrace) {
     ServiceMessageBuilder builder = new ServiceMessageBuilder("testFailed");
     builder.addAttribute("name", test.getTestName());
@@ -122,6 +113,14 @@ public class AndroidTestListener implements ITestRunListener {
     if (status == TestFailure.ERROR) {
       builder.addAttribute("error", "true");
     }
+    getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
+  }
+
+  @Override
+  public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testFinished");
+    builder.addAttribute("name", test.getTestName());
+    builder.addAttribute("duration", Long.toString(System.currentTimeMillis() - myTestStartingTime));
     getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
   }
 
