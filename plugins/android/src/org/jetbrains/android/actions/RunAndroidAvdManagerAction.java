@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,24 +30,26 @@ import java.io.File;
 /**
  * @author Eugene.Kudelevsky
  */
-public class RunAndroidSdkManagerAction extends AndroidRunSdkToolAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.RunAndroidSdkManagerAction");
+public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.RunAndroidAvdManagerAction");
 
-  @NonNls static final String ERROR_PATTERN = "Error: Expected verb after global parameters";
-
-  public RunAndroidSdkManagerAction() {
-    super(AndroidBundle.message("android.run.sdk.manager.action.text"));
+  public RunAndroidAvdManagerAction() {
+    super(AndroidBundle.message("android.run.avd.manager.action.text"));
   }
 
   @Override
-  protected void doRunTool(@NotNull final String sdkPath) {
+  protected void doRunTool(@NotNull String sdkPath) {
+    runAvdManager(sdkPath);
+  }
+
+  public static void runAvdManager(@NotNull final String sdkPath) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         final String toolPath = sdkPath + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName());
         GeneralCommandLine commandLine = new GeneralCommandLine();
         commandLine.setExePath(toolPath);
-        commandLine.addParameter("sdk");
+        commandLine.addParameter("avd");
 
         final StringBuilder messageBuilder = new StringBuilder();
         try {
@@ -62,7 +63,7 @@ public class RunAndroidSdkManagerAction extends AndroidRunSdkToolAction {
         }
 
         final String message = messageBuilder.toString();
-        if (message.contains(ERROR_PATTERN)) {
+        if (message.contains(RunAndroidSdkManagerAction.ERROR_PATTERN)) {
           commandLine = new GeneralCommandLine();
           commandLine.setExePath(toolPath);
           try {

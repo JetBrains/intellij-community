@@ -420,7 +420,14 @@ public class AndroidUtils {
     }
   }
 
-  public static boolean executeCommand(GeneralCommandLine commandLine, final StringBuilder messageBuilder) throws ExecutionException {
+  public static boolean executeCommand(GeneralCommandLine commandLine,
+                                       final StringBuilder messageBuilder) throws ExecutionException {
+    return executeCommand(commandLine, messageBuilder, null) == ExecutionStatus.SUCCESS;
+  }
+
+  public static ExecutionStatus executeCommand(GeneralCommandLine commandLine,
+                                               final StringBuilder messageBuilder,
+                                               @Nullable Integer timeout) throws ExecutionException {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
     handler.addProcessListener(new ProcessAdapter() {
@@ -430,15 +437,27 @@ public class AndroidUtils {
     });
     handler.startNotify();
     try {
-      handler.waitFor();
+      if (timeout != null) {
+        if (timeout > 0) {
+          handler.waitFor(timeout);
+        }
+      }
+      else {
+        handler.waitFor();
+      }
     }
     catch (ProcessCanceledException e) {
-      return false;
+      return ExecutionStatus.ERROR;
     }
+
+    if (!handler.isProcessTerminated()) {
+      return ExecutionStatus.TIMEOUT;
+    }
+
     String message = messageBuilder.toString();
     LOG.info(message);
     int exitCode = handler.getProcess().exitValue();
-    return exitCode == 0;
+    return exitCode == 0 ? ExecutionStatus.SUCCESS : ExecutionStatus.ERROR;
   }
 
   public static void runExternalToolInSeparateThread(@NotNull final Project project,
@@ -468,7 +487,7 @@ public class AndroidUtils {
     String result;
     boolean success = false;
     try {
-      success = executeCommand(commandLine, messageBuilder);
+      success = executeCommand(commandLine, messageBuilder, null) == ExecutionStatus.SUCCESS;
       result = messageBuilder.toString();
     }
     catch (ExecutionException e) {

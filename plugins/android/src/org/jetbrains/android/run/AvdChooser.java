@@ -19,12 +19,11 @@ package org.jetbrains.android.run;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.android.sdklib.internal.avd.AvdManager;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.util.AndroidBundle;
@@ -41,7 +40,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,11 +63,9 @@ public class AvdChooser extends DialogWrapper {
   private static final String[] COLUMN_TITLES = new String[]{"Name", "Target", "Platform", "API Level", "Valid", "Compatible"};
 
   @Nullable
-  private static String getAndroidToolPath(@NotNull AndroidFacet facet) {
+  private static String getSdkPath(@NotNull AndroidFacet facet) {
     AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
-    if (sdk == null) return null;
-    String androidCmd = SdkConstants.androidCmdName();
-    return sdk.getLocation() + File.separator + AndroidUtils.toolPath(androidCmd);
+    return sdk == null ? null : sdk.getLocation();
   }
 
   public AvdChooser(@NotNull final Project project,
@@ -110,13 +106,13 @@ public class AvdChooser extends DialogWrapper {
         }
       }
     });
-    final String androidToolPath = getAndroidToolPath(facet);
-    myStartAvdManagerButton.setEnabled(new File(androidToolPath).exists());
+    final String sdkPath = getSdkPath(facet);
+    myStartAvdManagerButton.setEnabled(sdkPath != null);
     myStartAvdManagerButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        GeneralCommandLine commandLine = new GeneralCommandLine();
-        commandLine.setExePath(androidToolPath);
-        AndroidUtils.runExternalToolInSeparateThread(project, commandLine);
+        if (sdkPath != null) {
+          RunAndroidAvdManagerAction.runAvdManager(sdkPath);
+        }
       }
     });
     updateTable();
