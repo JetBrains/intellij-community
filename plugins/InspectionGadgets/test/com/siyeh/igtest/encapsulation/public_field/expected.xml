@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>PublicField.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'public' field</problem_class>
+    <description>'public' field &lt;code&gt;s&lt;/code&gt; #loc</description>
+  </problem>
+</problems>
