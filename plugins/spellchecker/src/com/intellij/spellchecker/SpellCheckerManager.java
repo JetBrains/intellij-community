@@ -202,7 +202,7 @@ public class SpellCheckerManager {
 
 
   @NotNull
-  public List<String> getBundledDictionaries() {
+  public static List<String> getBundledDictionaries() {
     final ArrayList<String> dictionaries = new ArrayList<String>();
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
@@ -247,7 +247,7 @@ public class SpellCheckerManager {
   }
 
 
-  public void restartInspections() {
+  public static void restartInspections() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();

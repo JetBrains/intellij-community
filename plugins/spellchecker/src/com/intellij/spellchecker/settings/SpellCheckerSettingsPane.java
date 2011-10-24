@@ -221,7 +221,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     dictionariesFolders.clear();
     dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
     allDictionaries.clear();
-    for (String dictionary : manager.getBundledDictionaries()) {
+    for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
       allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
 
@@ -280,7 +280,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
 
     protected Object findItemToAdd() {
-      String word = Messages.showInputDialog(com.intellij.spellchecker.util.SpellCheckerBundle.message("enter.simple.word"),
+      String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {
         return null;
