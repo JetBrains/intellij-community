@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,15 +52,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
+import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -69,16 +76,14 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   private final GrIntroduceContext myContext;
   private JLabel myNameLabel;
-  private JCheckBox myReplaceAllOccurences;
+  private JCheckBox myReplaceAllOccurrences;
   private JPanel myPanel;
-  private JComboBox myTypeCombo;
+  private GrTypeComboBox myTypeCombo;
   private ReferenceEditorComboWithBrowseButton myTargetClassEditor;
   private ComboBox myNameComboBox;
   private JavaVisibilityPanel myJavaVisibilityPanel;
   private JPanel myTargetClassPanel;
   private JLabel myTargetClassLabel;
-  private JCheckBox mySpecifyType;
-  private Map<String, PsiType> myTypes = null;
   @Nullable private PsiClass myTargetClass;
   @Nullable private PsiClass myDefaultTargetClass;
 
@@ -89,23 +94,12 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myDefaultTargetClass = defaultTargetClass;
 
     setTitle(GrIntroduceConstantHandler.REFACTORING_NAME);
-//    myVPanel = new JavaVisibilityPanel(false, true);
-//    myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
-    init();
 
     myJavaVisibilityPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
-    //myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
 
-    mySpecifyType.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myTypeCombo.setEnabled(mySpecifyType.isSelected());
-      }
-    });
-    mySpecifyType.setSelected(context.expression == null ? context.var.getDeclaredType() != null : context.expression.getType() != null);
-    myTypeCombo.setEnabled(mySpecifyType.isSelected());
     updateVisibilityPanel();
     updateOkStatus();
+    init();
   }
 
   @Override
@@ -120,16 +114,15 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   @Override
   protected JComponent createNorthPanel() {
-    initializeTypeCombo();
     initializeName();
     initializeTargetClassEditor();
 
     if (myContext.var != null) {
-      myReplaceAllOccurences.setEnabled(false);
-      myReplaceAllOccurences.setSelected(true);
+      myReplaceAllOccurrences.setEnabled(false);
+      myReplaceAllOccurrences.setSelected(true);
     }
     else if (myContext.occurrences.length < 2) {
-      myReplaceAllOccurences.setVisible(false);
+      myReplaceAllOccurrences.setVisible(false);
     }
     return myPanel;
   }
@@ -201,7 +194,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       public void actionPerformed(ActionEvent e) {
         myNameComboBox.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     if (myContext.var != null) {
       myNameComboBox.addItem(myContext.var.getName());
@@ -227,31 +220,6 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         }
       }
     );
-  }
-
-
-  private void initializeTypeCombo() {
-    PsiType expressionType;
-    if (myContext.expression != null) {
-      expressionType = myContext.expression.getType();
-    }
-    else {
-      expressionType = myContext.var.getDeclaredType();
-    }
-    
-    if (expressionType instanceof PsiDisjunctionType) {
-      expressionType = ((PsiDisjunctionType)expressionType).getLeastUpperBound();
-    }
-    
-    if (expressionType != null) {
-      myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(expressionType);
-      for (String typeName : myTypes.keySet()) {
-        myTypeCombo.addItem(typeName);
-      }
-    }
-    else {
-      myTypeCombo.setEnabled(false);
-    }
   }
 
   @Override
@@ -288,22 +256,25 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   @Override
   public boolean replaceAllOccurrences() {
-    return myReplaceAllOccurences.isSelected();
+    return myReplaceAllOccurrences.isSelected();
   }
 
   @Override
   public PsiType getSelectedType() {
-    if (!myTypeCombo.isEnabled() || myTypeCombo.getItemCount() == 0) {
-      return null;
-    } else {
-      return myTypes.get(myTypeCombo.getSelectedItem());
-    }
+    return myTypeCombo.getSelectedType();
   }
 
   @NonNls private static final String RECENTS_KEY = "GrIntroduceConstantDialog.RECENTS_KEY";
 
   private void createUIComponents() {
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
+    if (myContext.expression == null) {
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType(),
+                                                                 GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY);
+    }
+    else {
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.expression);
+    }
   }
 
   private void targetClassChanged() {
@@ -320,7 +291,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
     else {
       UIUtil.setEnabled(myJavaVisibilityPanel, true, true);
-      // exclude all modifiers not visible from all occurences
+      // exclude all modifiers not visible from all occurrences
       final Set<String> visible = new THashSet<String>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);
@@ -423,6 +394,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
     RecentsManager.getInstance(myContext.project).registerRecentEntry(RECENTS_KEY, targetClassName);
 
+    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = getSelectedType() != null;
     super.doOKAction();
   }
 

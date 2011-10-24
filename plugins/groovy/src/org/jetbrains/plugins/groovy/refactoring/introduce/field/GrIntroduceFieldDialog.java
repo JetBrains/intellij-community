@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
@@ -32,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -50,6 +46,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -72,7 +69,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private JRadioButton myFieldDeclarationRadioButton;
   private JRadioButton myClassConstructorSRadioButton;
   private JCheckBox myDeclareFinalCheckBox;
-  private JCheckBox myReplaceAllOccurencesCheckBox;
+  private JCheckBox myReplaceAllOccurrencesCheckBox;
   private GrTypeComboBox myTypeComboBox;
   private JLabel myNameLabel;
   private JLabel myTypeLabel;
@@ -129,15 +126,15 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
     myInvokedOnLocalVar  = context.var == null ? getInvokedOnLocalVar(context.expression) : context.var.getName();
     if (myInvokedOnLocalVar != null) {
-      myReplaceAllOccurencesCheckBox.setText("Replace all occurences and remove variable '" + myInvokedOnLocalVar + "'");
+      myReplaceAllOccurrencesCheckBox.setText("Replace all occurrences and remove variable '" + myInvokedOnLocalVar + "'");
       if (context.var != null) {
-        myReplaceAllOccurencesCheckBox.setEnabled(false);
-        myReplaceAllOccurencesCheckBox.setSelected(true);
+        myReplaceAllOccurrencesCheckBox.setEnabled(false);
+        myReplaceAllOccurrencesCheckBox.setSelected(true);
       }
     }
     else if (context.occurrences.length == 1) {
-      myReplaceAllOccurencesCheckBox.setSelected(false);
-      myReplaceAllOccurencesCheckBox.setVisible(false);
+      myReplaceAllOccurrencesCheckBox.setSelected(false);
+      myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
 
     myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
@@ -162,7 +159,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     myFieldDeclarationRadioButton.addItemListener(l);
     myClassConstructorSRadioButton.addItemListener(l);
     myDeclareFinalCheckBox.addItemListener(l);
-    myReplaceAllOccurencesCheckBox.addItemListener(l);
+    myReplaceAllOccurrencesCheckBox.addItemListener(l);
     myTypeComboBox.addItemListener(l);
 
     isInvokedInAlwaysInvokedConstructor =
@@ -179,7 +176,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     if (myCurrentMethodRadioButton.isSelected() && myDeclareFinalCheckBox.isSelected() && !!isInvokedInAlwaysInvokedConstructor) {
       errors.add(GroovyRefactoringBundle.message("final.field.cant.be.initialized.in.cur.method"));
     }
-    if (myDeclareFinalCheckBox.isSelected() && myReplaceAllOccurencesCheckBox.isSelected() && myInvokedOnLocalVar != null && hasLHSUsages) {
+    if (myDeclareFinalCheckBox.isSelected() && myReplaceAllOccurrencesCheckBox.isSelected() && myInvokedOnLocalVar != null && hasLHSUsages) {
       errors.add(GroovyRefactoringBundle.message("Field.cannot.be.final.because.replaced.variable.has.lhs.usages"));
     }
     if (!myCanBeInitializedOutsideBlock) {
@@ -270,7 +267,15 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       possibleNames = arr;
     }
     myNameSuggestionsField = new NameSuggestionsField(possibleNames, myContext.project, GroovyFileType.GROOVY_FILE_TYPE);
-    myTypeComboBox = new GrTypeComboBox(myContext.expression == null ? myContext.var.getDeclaredType() : myContext.expression.getType());
+
+
+    if (myContext.expression == null) {
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType(),
+                                                                    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY);
+    }
+    else {
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.expression);
+    }
   }
 
   @Override
@@ -290,10 +295,10 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   @Override
   @NotNull
   public String getVisibilityModifier() {
-    if (myPrivateRadioButton.isSelected()) return GrModifier.PRIVATE;
-    if (myProtectedRadioButton.isSelected()) return GrModifier.PROTECTED;
-    if (myPublicRadioButton.isSelected()) return GrModifier.PUBLIC;
-    if (myPropertyRadioButton.isSelected()) return GrModifier.PACKAGE_LOCAL;
+    if (myPrivateRadioButton.isSelected()) return PsiModifier.PRIVATE;
+    if (myProtectedRadioButton.isSelected()) return PsiModifier.PROTECTED;
+    if (myPublicRadioButton.isSelected()) return PsiModifier.PUBLIC;
+    if (myPropertyRadioButton.isSelected()) return PsiModifier.PACKAGE_LOCAL;
     throw new IncorrectOperationException("no visibility selected");
   }
 
@@ -304,7 +309,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   public boolean removeLocalVar() {
-    return myInvokedOnLocalVar != null && myReplaceAllOccurencesCheckBox.isSelected();
+    return myInvokedOnLocalVar != null && myReplaceAllOccurrencesCheckBox.isSelected();
   }
 
   @Override
@@ -315,7 +320,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   public boolean replaceAllOccurrences() {
-    return myReplaceAllOccurencesCheckBox.isSelected();
+    return myReplaceAllOccurrencesCheckBox.isSelected();
   }
 
   @Override
@@ -380,14 +385,12 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   protected void doOKAction() {
     final GrTypeDefinition clazz = (GrTypeDefinition)myContext.scope;
     final String name = getName();
-    if (clazz.findFieldByName(name, true) != null) {
-      int answer =
-        showYesNoDialog(myContext.project, RefactoringBundle.message("field.exists", name, clazz.getQualifiedName()), REFACTORING_NAME,
-                        getWarningIcon());
-      if (answer != 0) {
-        return;
-      }
+    String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
+    if (clazz.findFieldByName(name, true) != null &&
+        showYesNoDialog(myContext.project, message, REFACTORING_NAME, getWarningIcon()) != 0) {
+      return;
     }
+    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = getSelectedType() != null;
     super.doOKAction();
   }
 }

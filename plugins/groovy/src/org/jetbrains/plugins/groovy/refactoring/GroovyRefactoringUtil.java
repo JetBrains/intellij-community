@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
@@ -721,5 +723,17 @@ public abstract class GroovyRefactoringUtil {
       expr = (GrExpression)statement;
     }
     return expr;
+  }
+
+  public static boolean isDiamondNewOperator(GrExpression expression) {
+    PsiElement element = skipParentheses(expression, false);
+    if (!(element instanceof GrNewExpression)) return false;
+    if (((GrNewExpression)element).getArrayCount() > 0) return false;
+
+    GrCodeReferenceElement referenceElement = ((GrNewExpression)element).getReferenceElement();
+    if (referenceElement == null) return false;
+
+    GrTypeArgumentList typeArgumentList = referenceElement.getTypeArgumentList();
+    return typeArgumentList != null && typeArgumentList.isDiamond();
   }
 }

@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.refactoring.ui;
 import com.intellij.psi.PsiDisjunctionType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.util.Map;
@@ -27,29 +29,31 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class GrTypeComboBox extends JComboBox {
-  private final PsiType myType;
 
-  public GrTypeComboBox(PsiType type) {
-    this(type, false);
+  public static GrTypeComboBox createTypeComboboxWithoutDefType(PsiType type) {
+    return new GrTypeComboBox(type, false, false);
+  }
+  
+  public static GrTypeComboBox createTypeComboBoxWithDefType(PsiType type, boolean selectDef) {
+    return new GrTypeComboBox(type, selectDef, true);
   }
 
-  public GrTypeComboBox(PsiType type, boolean selectType) {
-    super();
+  private GrTypeComboBox(PsiType type, boolean selectDef, boolean createDef) {
     if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
-    myType = type;
-    initialize();
-    if (selectType && getItemCount() > 1) {
-      setSelectedIndex(1);
-    }
-  }
 
-  private void initialize() {
-    addItem(new PsiTypeItem(null));
-    if (myType != null) {
-      final Map<String, PsiType> myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
+    if (createDef) {
+      addItem(new PsiTypeItem(null));
+    }
+
+    if (type != null) {
+      final Map<String, PsiType> myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(type);
       for (String typeName : myTypes.keySet()) {
         addItem(new PsiTypeItem(myTypes.get(typeName)));
       }
+    }
+
+    if (createDef && !selectDef && getItemCount() > 1) {
+      setSelectedIndex(1);
     }
   }
 
@@ -58,6 +62,17 @@ public class GrTypeComboBox extends JComboBox {
     final Object selected = getSelectedItem();
     assert selected instanceof PsiTypeItem;
     return ((PsiTypeItem)selected).getType();
+  }
+
+  public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression) {
+    PsiType type = expression.getType();
+
+    if (GroovyRefactoringUtil.isDiamondNewOperator(expression)) {
+      return createTypeComboboxWithoutDefType(type);
+    }
+    else {
+      return createTypeComboBoxWithDefType(type, GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY);
+    }
   }
 
   private static class PsiTypeItem {

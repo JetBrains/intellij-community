@@ -33,34 +33,31 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.event.*;
 import java.util.EventListener;
-import java.util.Map;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
+  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
 
   private final Project myProject;
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
   private final GrIntroduceVariableHandler.Validator myValidator;
-  private Map<String, PsiType> myTypeMap = null;
-  private final EventListenerList myListenerList = new EventListenerList();
 
-  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
+  private final EventListenerList myListenerList;
 
   private JPanel contentPane;
   private ComboBox myNameComboBox;
   private JCheckBox myCbIsFinal;
-  private JCheckBox myCbReplaceAllOccurences;
-  private JCheckBox myCbTypeSpec;
-  private JComboBox myTypeComboBox;
+  private JCheckBox myCbReplaceAllOccurrences;
+  private GrTypeComboBox myTypeComboBox;
   private JLabel myTypeLabel;
   private JLabel myNameLabel;
 
@@ -72,6 +69,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     myExpression = context.expression;
     myOccurrencesCount = context.occurrences.length;
     myValidator = validator;
+
+    myListenerList = new EventListenerList();
     setUpNameComboBox(possibleNames);
 
     setModal(true);
@@ -101,7 +100,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   protected boolean isReplaceAllOccurrences() {
-    return myCbReplaceAllOccurences.isSelected();
+    return myCbReplaceAllOccurrences.isSelected();
   }
 
   private boolean isDeclareFinal() {
@@ -110,59 +109,29 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   @Nullable
   private PsiType getSelectedType() {
-    if (!myCbTypeSpec.isSelected() || !myCbTypeSpec.isEnabled()) {
-      return null;
-    } else {
-      return myTypeMap.get(myTypeComboBox.getSelectedItem());
-    }
+    return myTypeComboBox.getSelectedType();
   }
 
   private void setUpDialog() {
 
-    myCbReplaceAllOccurences.setMnemonic(KeyEvent.VK_A);
-    myCbReplaceAllOccurences.setFocusable(false);
+    myCbReplaceAllOccurrences.setMnemonic(KeyEvent.VK_A);
+    myCbReplaceAllOccurrences.setFocusable(false);
     myCbIsFinal.setMnemonic(KeyEvent.VK_F);
     myCbIsFinal.setFocusable(false);
-    myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
-    myCbTypeSpec.setFocusable(false);
     myNameLabel.setLabelFor(myNameComboBox);
     myTypeLabel.setLabelFor(myTypeComboBox);
 
-    // Type specification
-    final PsiType exprType = myExpression.getType();
-    if (exprType == null) {
-      myCbTypeSpec.setSelected(false);
-      myCbTypeSpec.setEnabled(false);
-      myTypeComboBox.setEnabled(false);
-    }
-    else {
-      final boolean specifyVarTypeExplicitly = GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY;
-      myCbTypeSpec.setSelected(specifyVarTypeExplicitly);
-      myTypeComboBox.setEnabled(specifyVarTypeExplicitly);
-      myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(exprType);
-      for (String typeName : myTypeMap.keySet()) {
-        myTypeComboBox.addItem(typeName);
-      }
-    }
-
     myCbIsFinal.setSelected(GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
 
-    myCbTypeSpec.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent event) {
-        myTypeComboBox.setEnabled(myCbTypeSpec.isSelected());
-      }
-    });
-
-    // Replace occurences
+    // Replace occurrences
     if (myOccurrencesCount > 1) {
-      myCbReplaceAllOccurences.setSelected(false);
-      myCbReplaceAllOccurences.setEnabled(true);
-      myCbReplaceAllOccurences.setText(myCbReplaceAllOccurences.getText() + " (" + myOccurrencesCount + " occurrences)");
+      myCbReplaceAllOccurrences.setSelected(false);
+      myCbReplaceAllOccurrences.setEnabled(true);
+      myCbReplaceAllOccurrences.setText(myCbReplaceAllOccurrences.getText() + " (" + myOccurrencesCount + " occurrences)");
     } else {
-      myCbReplaceAllOccurences.setSelected(false);
-      myCbReplaceAllOccurences.setEnabled(false);
+      myCbReplaceAllOccurrences.setSelected(false);
+      myCbReplaceAllOccurrences.setEnabled(false);
     }
-
 
     contentPane.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -184,11 +153,11 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
 
     myNameComboBox.addItemListener(
-        new ItemListener() {
-          public void itemStateChanged(ItemEvent e) {
-            fireNameDataChanged();
-          }
+      new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          fireNameDataChanged();
         }
+      }
     );
 
     ((EditorTextField) myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
@@ -224,9 +193,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     if (!myValidator.isOK(this)) {
       return;
     }
-    if (myCbTypeSpec.isEnabled()) {
-      GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = myCbTypeSpec.isSelected();
-    }
+    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = getSelectedType() != null;
     if (myCbIsFinal.isEnabled()) {
       GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
     }
@@ -236,6 +203,10 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
+  }
+
+  private void createUIComponents() {
+    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression);
   }
 
   class DataChangedListener implements EventListener {

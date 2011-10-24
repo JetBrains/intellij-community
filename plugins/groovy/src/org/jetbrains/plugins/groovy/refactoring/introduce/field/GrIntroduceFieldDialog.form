@@ -156,12 +156,12 @@
           <text value="Declare &amp;final"/>
         </properties>
       </component>
-      <component id="ac577" class="javax.swing.JCheckBox" binding="myReplaceAllOccurencesCheckBox" default-binding="true">
+      <component id="ac577" class="javax.swing.JCheckBox" binding="myReplaceAllOccurrencesCheckBox" default-binding="true">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Replace &amp;all occurences"/>
+          <text value="Replace &amp;all occurrences"/>
         </properties>
       </component>
     </children>
