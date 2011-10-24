@@ -1,0 +1,3 @@
+Upper case sections and items
+
+One remote defined with upper case "REMOTE" section name and upper case "URL" and "FETCH".
