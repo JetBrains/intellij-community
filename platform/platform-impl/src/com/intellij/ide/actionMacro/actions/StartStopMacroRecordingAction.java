@@ -17,10 +17,12 @@ package com.intellij.ide.actionMacro.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacroManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author max
@@ -32,6 +34,12 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
     e.getPresentation().setText(isRecording
                                 ? IdeBundle.message("action.stop.macro.recording")
                                 : IdeBundle.message("action.start.macro.recording"));
+
+    if (ActionPlaces.STATUS_BAR_PLACE.equals(e.getPlace())) {
+      e.getPresentation().setIcon(isRecording ? IconLoader.getIcon("/actions/suspend.png") : IconLoader.getIcon("/general/run.png"));
+    } else {
+      e.getPresentation().setIcon(null);
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {

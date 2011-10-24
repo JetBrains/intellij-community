@@ -111,4 +111,6 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   void setReservePlaceAutoPopupIcon(final boolean reserve);
 
   void setSecondaryActionsTooltip(String secondaryActionsTooltip);
+
+  void setMiniMode(boolean minimalMode);
 }

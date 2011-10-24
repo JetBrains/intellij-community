@@ -17,6 +17,7 @@ package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -28,21 +29,29 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -52,6 +61,9 @@ import java.util.List;
  */
 public class ActionMacroManager implements ExportableApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actionMacro.ActionMacroManager");
+
+  private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWWWWWW";
+  private static final String RECORDED = "Recorded: ";
 
   private boolean myIsRecording;
   private final ActionManagerEx myActionManager;
@@ -65,7 +77,11 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private final IdeEventQueue.EventDispatcher myKeyProcessor;
 
   private Set<InputEvent> myLastActionInputEvent = new HashSet<InputEvent>();
+  private ActionMacroManager.Widget myWidget;
 
+  private String myLastTyping = new String();
+  private boolean myLastWasTyping;
+  
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;
     myActionManager.addAnActionListener(new AnActionListener() {
@@ -75,6 +91,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           //noinspection HardCodedStringLiteral
           if (id != null && !"StartStopMacroRecording".equals(id)) {
             myRecordingMacro.appendAction(id);
+            notifyUser("action " + id, false);
           }
 
           if (id != null) {
@@ -144,10 +161,166 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     LOG.assertTrue(!myIsRecording);
     myIsRecording = true;
     myRecordingMacro = new ActionMacro(macroName);
+
+    final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(null).getStatusBar();
+    myWidget = new Widget(statusBar);
+    statusBar.addWidget(myWidget);
+  }
+
+
+
+  private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
+
+    private AnimatedIcon myIcon = new AnimatedIcon("Macro recording") {
+      {
+        init(new Icon[] {IconLoader.getIcon("/ide/macroToolbar1.png"), IconLoader.getIcon("/ide/macroToolbar2.png")}, IconLoader.getIcon("/ide/macroToolbar1.png"), 800);
+      }
+    };
+    private StatusBar myStatusBar;
+    private final WidgetPresentation myPresentation;
+
+    private JPanel myBalloonComponent;
+    private Balloon myBalloon;
+    private final JLabel myText;
+
+    private Widget(StatusBar statusBar) {
+      myStatusBar = statusBar;
+      myPresentation = new WidgetPresentation() {
+        @Override
+        public String getTooltipText() {
+          return "Macro is being recorded now";
+        }
+
+        @Override
+        public Consumer<MouseEvent> getClickConsumer() {
+          return Widget.this;
+        }
+      };
+
+
+      new BaseButtonBehavior(myIcon) {
+        @Override
+        protected void execute(MouseEvent e) {
+          showBalloon();
+        }
+      };
+
+      myBalloonComponent = new NonOpaquePanel(new BorderLayout());
+
+      final AnAction stopAction = ActionManager.getInstance().getAction("StartStopMacroRecording");
+      final DefaultActionGroup group = new DefaultActionGroup();
+      group.add(stopAction);
+      final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.STATUS_BAR_PLACE, group, true);
+      tb.setMiniMode(true);
+
+      final NonOpaquePanel top = new NonOpaquePanel(new BorderLayout());
+      top.add(tb.getComponent(), BorderLayout.WEST);
+      myText = new JLabel(TYPING_SAMPLE, JLabel.LEFT);
+      final Dimension preferredSize = myText.getPreferredSize();
+      myText.setPreferredSize(preferredSize);
+      myText.setText("Macro recording started...");
+      myLastTyping = "";
+      top.add(myText, BorderLayout.CENTER);
+      myBalloonComponent.add(top, BorderLayout.CENTER);
+    }
+
+    private void showBalloon() {
+      if (myBalloon != null) {
+        Disposer.dispose(myBalloon);
+        return;
+      }
+      
+      myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(myBalloonComponent)
+        .setAnimationCycle(200)
+        .setCloseButtonEnabled(true)
+        .setHideOnAction(false)
+        .setHideOnClickOutside(false)
+        .setHideOnFrameResize(false)
+        .setHideOnKeyOutside(false)
+        .setSmallVariant(true)
+        .setShadow(true)
+        .createBalloon();
+
+      Disposer.register(myBalloon, new Disposable() {
+        @Override
+        public void dispose() {
+          myBalloon = null;
+        }
+      });
+
+      myBalloon.addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          if (myBalloon != null) {
+            Disposer.dispose(myBalloon);
+          }
+        }
+      });
+      
+      myBalloon.show(new PositionTracker<Balloon>(myIcon) {
+        @Override
+        public RelativePoint recalculateLocation(Balloon object) {
+          return new RelativePoint(myIcon, new Point(myIcon.getSize().width / 2, 4));
+        }
+      }, Balloon.Position.above);
+
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myIcon;
+    }
+
+    @NotNull
+    @Override
+    public String ID() {
+      return "MacroRecording";
+    }
+
+    @Override
+    public void consume(MouseEvent mouseEvent) {
+    }
+
+    @Override
+    public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+      return myPresentation;
+    }
+
+    @Override
+    public void install(@NotNull StatusBar statusBar) {
+      showBalloon();
+    }
+
+    @Override
+    public void dispose() {
+      myIcon.dispose();
+      if (myBalloon != null) {
+        Disposer.dispose(myBalloon);
+      }
+    }
+
+    public void delete() {
+      if (myBalloon != null) {
+        Disposer.dispose(myBalloon);
+      }
+      myStatusBar.removeWidget(ID());
+    }
+
+    public void notifyUser(String text) {
+      myText.setText(text);
+      myText.revalidate();
+      myText.repaint();
+    }
   }
 
   public void stopRecording(Project project) {
     LOG.assertTrue(myIsRecording);
+
+    if (myWidget != null) {
+      myWidget.delete();
+      myWidget = null;
+    }
+
     myIsRecording = false;
     myLastActionInputEvent.clear();
     String macroName;
@@ -372,7 +545,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
                  && e.getKeyCode() != KeyEvent.VK_SHIFT;
 
       if (e.getID() == KeyEvent.KEY_PRESSED && (plainType && !waiting) && !isEnter) {
-         myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
+        myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
+        notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
       } else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
         if ((!myLastActionInputEvent.contains(e) && !waiting) || isEnter) {
           final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
@@ -384,11 +558,34 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
           
           myRecordingMacro.appendShortcut(ready);
+          notifyUser(ready, false);
           if (!isEnter) {
             myLastActionInputEvent.remove(e);
           }
         }
       }
+    }
+  }
+  
+  private void notifyUser(String text, boolean typing) {
+    String actualText = text;
+    if (typing && myLastWasTyping) {
+      int maxLength = TYPING_SAMPLE.length() + RECORDED.length();
+      myLastTyping += text;
+      if (myLastTyping.length() > maxLength) {
+        myLastTyping = myLastTyping.substring(myLastTyping.length() - maxLength);
+      }
+      actualText = myLastTyping;
+    }
+    
+    if (myWidget != null) {
+      myWidget.notifyUser(RECORDED + actualText);
+    }
+    
+    myLastWasTyping = typing;
+
+    if (!typing) {
+      myLastTyping = "";
     }
   }
 }

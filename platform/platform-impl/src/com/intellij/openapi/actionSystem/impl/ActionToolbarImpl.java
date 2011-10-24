@@ -45,6 +45,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -63,7 +64,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
-  private Dimension myMinimumButtonSize;
+  private Dimension myMinimumButtonSize = new Dimension(0, 0);
   /**
    * @see ActionToolbar#getLayoutPolicy()
    */
@@ -81,6 +82,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private boolean myAdjustTheSameSize;
 
   private final ActionButtonLook myButtonLook = null;
+  private final ActionButtonLook myMinimalButtonLook = new InplaceActionButtonLook();
   private final DataManager myDataManager;
   protected final ActionManagerEx myActionManager;
 
@@ -90,6 +92,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Icon mySecondaryGroupIcon = IconLoader.getIcon("/general/secondaryGroup.png");
 
   private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
+  private boolean myMinimalMode;
 
   public ActionButton getSecondaryActionsButton() {
     return mySecondaryActionsButton;
@@ -126,9 +129,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myActionManager = actionManager;
     myKeymapManager = keymapManager;
     myPlace = place;
-    setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
-    setLayoutPolicy(AUTO_LAYOUT_POLICY);
-    setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    setMiniMode(false);
     myActionGroup = actionGroup;
     myPresentationFactory = new PresentationFactory();
     myKeymapManagerListener = new MyKeymapManagerListener();
@@ -256,7 +257,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private ActionButton createToolbarButton(final AnAction action) {
-    return createToolbarButton(action, myButtonLook, myPlace, myPresentationFactory.getPresentation(action), myMinimumButtonSize);
+    return createToolbarButton(action, myMinimalMode ? myMinimalButtonLook : myButtonLook, myPlace, myPresentationFactory.getPresentation(action), myMinimumButtonSize);
   }
 
   public void doLayout() {
@@ -1145,5 +1146,25 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     result.addAll(secondary);
 
     return result;
+  }
+
+  @Override
+  public void setMiniMode(boolean minimalMode) {
+    if (myMinimalMode == minimalMode) return;
+
+    myMinimalMode = minimalMode;
+    if (myMinimalMode) {
+      setMinimumButtonSize(new Dimension(0, 0));
+      setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
+      setBorder(new EmptyBorder(0, 0, 0, 0));
+      setOpaque(false);
+    } else {
+      setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
+      setLayoutPolicy(AUTO_LAYOUT_POLICY);
+      setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      setOpaque(true);
+    }
+
+    updateActions(false, false, true);
   }
 }

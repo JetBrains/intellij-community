@@ -26,6 +26,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private static final Icon myDropdownIcon = IconLoader.getIcon("/general/dropdown.png");
 
   private boolean myNoIconsInPopup = false;
+  private Insets myInsets;
 
   public ActionButton(
     final AnAction action,
@@ -61,6 +63,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     @NotNull final Dimension minimumSize
     ) {
     setMinimumButtonSize(minimumSize);
+    setIconInsets(null);
     myRollover = false;
     myMouseDown = false;
     myAction = action;
@@ -193,12 +196,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else {
       return new Dimension(
-        icon.getIconWidth() + ICON_INSETS.left + ICON_INSETS.right,
-        icon.getIconHeight() + ICON_INSETS.top + ICON_INSETS.bottom
+        icon.getIconWidth() + myInsets.left + myInsets.right,
+        icon.getIconHeight() + myInsets.top + myInsets.bottom
       );
     }
   }
 
+  
+  public void setIconInsets(@Nullable Insets insets) {
+    myInsets = insets != null ? insets : ICON_INSETS;
+  }
+  
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
