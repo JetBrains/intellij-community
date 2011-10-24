@@ -84,8 +84,8 @@ public abstract class PluginManagerMain implements Disposable {
                                                     "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
   @NonNls private static final String TEXT_SUFIX = "</body></html>";
 
-  @NonNls private static final String HTML_PREFIX = "<html><body><a href=\"";
-  @NonNls private static final String HTML_SUFIX = "</a></body></html>";
+  @NonNls private static final String HTML_PREFIX = "<a href=\"";
+  @NonNls private static final String HTML_SUFIX = "</a>";
 
   private boolean requireShutdown = false;
 
