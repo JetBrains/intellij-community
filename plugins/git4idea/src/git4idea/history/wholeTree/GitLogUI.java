@@ -140,6 +140,7 @@ public class GitLogUI implements Disposable {
   private boolean myThereAreFilters;
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
   private JLabel myOrderLabel;
+  private boolean myProjectScope;
   //private GitLogUI.MyTreeSettingsButton myMyTreeSettingsButton;
 
   public GitLogUI(Project project, final Mediator mediator) {
@@ -203,7 +204,9 @@ public class GitLogUI implements Disposable {
           activeRoots.add(vf);
         }
       }
-      myTableModel.setActiveRoots(activeRoots);
+      if (! activeRoots.isEmpty()) {
+        myTableModel.setActiveRoots(activeRoots);
+      }
     }
   }
 
@@ -734,7 +737,7 @@ public class GitLogUI implements Disposable {
     final JPanel wr2 = new JPanel(new BorderLayout());
     myOrderLabel = new JLabel();
     myOrderLabel.setForeground(UIUtil.getInactiveTextColor());
-    myOrderLabel.setBorder(new EmptyBorder(0,1,0,0));
+    myOrderLabel.setBorder(new EmptyBorder(0, 1, 0, 0));
     wr2.add(myOrderLabel, BorderLayout.WEST);
     wr2.add(treeSettings.getLabel(), BorderLayout.EAST);
     myEqualToHeadr.add(wr2, BorderLayout.CENTER);
@@ -1660,6 +1663,7 @@ public class GitLogUI implements Disposable {
   }
 
   public void setProjectScope(boolean projectScope) {
+    myProjectScope = projectScope;
     myRootsAction.setEnabled(! projectScope);
   }
 
@@ -1913,8 +1917,12 @@ public class GitLogUI implements Disposable {
                   iterator.remove();
                 }
               }
+              
+              if (myProjectScope) {
+                GitLogSettings.getInstance(myProject).setActiveRoots(paths);
+              }
+              
               myTableModel.setActiveRoots(set);
-              GitLogSettings.getInstance(myProject).setActiveRoots(paths);
               myGraphGutter.getComponent().revalidate();
               myGraphGutter.getComponent().repaint();
               SwingUtilities.invokeLater(new Runnable() {
