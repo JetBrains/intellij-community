@@ -238,9 +238,11 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   public void updateUI() {
     setUI(StripeButtonUI.createUI(this));
     Font font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+    /*
     if (font.getSize() % 2 == 1) { // that's a trick. Size of antialiased font isn't properly calculated for fonts with odd size
       font = font.deriveFont(font.getStyle(), font.getSize() - 1);
     }
+    */
     setFont(font);
   }
 
