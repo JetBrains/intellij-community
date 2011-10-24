@@ -18,6 +18,7 @@ package org.jetbrains.android.newProject;
 
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.SdkManager;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -394,7 +395,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       final SdkManager sdkManager = ((AndroidSdkImpl)sdkObject).getSdkManager();
       try {
         final AvdManager avdManager = new AvdManager(sdkManager, new MessageBuildingSdkLog());
-        final AvdManager.AvdInfo[] validAvds = avdManager.getValidAvds();
+        final AvdInfo[] validAvds = avdManager.getValidAvds();
 
         final String[] avdNames = new String[validAvds.length];
         for (int i = 0; i < validAvds.length; i++) {

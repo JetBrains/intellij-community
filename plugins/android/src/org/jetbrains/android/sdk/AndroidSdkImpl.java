@@ -16,10 +16,7 @@
 
 package org.jetbrains.android.sdk;
 
-import com.android.sdklib.AndroidVersion;
-import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
-import com.android.sdklib.SdkManager;
+import com.android.sdklib.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,6 +145,11 @@ public class AndroidSdkImpl extends AndroidSdk {
     }
 
     @Override
+    public String getShortClasspathName() {
+      return myWrapee.getShortClasspathName();
+    }
+
+    @Override
     public String getDescription() {
       return myWrapee.getDescription();
     }
@@ -184,6 +186,11 @@ public class AndroidSdkImpl extends AndroidSdk {
         return path;
       }
       return myWrapee.getPath(pathId);
+    }
+
+    @Override
+    public boolean hasRenderingLibrary() {
+      return myWrapee.hasRenderingLibrary();
     }
 
     @Override
@@ -232,13 +239,13 @@ public class AndroidSdkImpl extends AndroidSdk {
     }
 
     @Override
-    public String[] getAbiList() {
-      return myWrapee.getAbiList();
+    public ISystemImage[] getSystemImages() {
+      return myWrapee.getSystemImages();
     }
 
     @Override
-    public String getImagePath(String abiType) {
-      return myWrapee.getImagePath(abiType);
+    public ISystemImage getSystemImage(String abiType) {
+      return myWrapee.getSystemImage(abiType);
     }
 
     @Override

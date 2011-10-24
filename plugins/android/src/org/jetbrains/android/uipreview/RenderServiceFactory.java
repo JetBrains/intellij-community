@@ -156,10 +156,12 @@ public class RenderServiceFactory {
     return myLibrary.init(buildPropMap, new File(fontFolder.getPath()), myEnumMap, logger);
   }
 
-  private static FrameworkResources loadPlatformResources(File resFolder, ILogger log) throws IOException {
+  private static FrameworkResources loadPlatformResources(File resFolder, ILogger log) throws IOException, RenderingException {
     final FrameworkResources resources = new FrameworkResources();
     final FolderWrapper resFolderWrapper = new FolderWrapper(resFolder);
-    RenderUtil.loadResources(resources, resFolderWrapper);
+
+    RenderUtil.loadResources(resources);
+
     resources.loadPublicResources(resFolderWrapper, log);
     return resources;
   }

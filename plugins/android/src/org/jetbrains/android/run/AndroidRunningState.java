@@ -18,6 +18,7 @@ package org.jetbrains.android.run;
 import com.android.ddmlib.*;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.execution.DefaultExecutionResult;
@@ -347,7 +348,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private void chooseAvd() {
     IAndroidTarget buildTarget = myFacet.getConfiguration().getAndroidTarget();
     assert buildTarget != null;
-    AvdManager.AvdInfo[] avds = myFacet.getValidCompatibleAvds();
+    AvdInfo[] avds = myFacet.getValidCompatibleAvds();
     if (avds.length > 0) {
       myAvdName = avds[0].getName();
     }
@@ -376,7 +377,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           CreateAvdDialog dialog = new CreateAvdDialog(project, myFacet, finalManager, true, true);
           dialog.show();
           if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            AvdManager.AvdInfo createdAvd = dialog.getCreatedAvd();
+            AvdInfo createdAvd = dialog.getCreatedAvd();
             if (createdAvd != null) {
               myAvdName = createdAvd.getName();
             }
@@ -757,62 +758,23 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         return false;
       }
       service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
-
-      SyncService.SyncResult result = service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
-      int code = result.getCode();
-      switch (code) {
-        case SyncService.RESULT_OK:
-          return true;
-        case SyncService.RESULT_CANCELED:
-          errorMessage = "Command canceled";
-          break;
-        case SyncService.RESULT_CONNECTION_ERROR:
-          errorMessage = "Connection error";
-          break;
-        case SyncService.RESULT_CONNECTION_TIMEOUT:
-          errorMessage = "Connection timeout";
-          break;
-        case SyncService.RESULT_FILE_READ_ERROR:
-          errorMessage = "Cannot read the file";
-          break;
-        case SyncService.RESULT_FILE_WRITE_ERROR:
-          errorMessage = "Cannot write the file";
-          break;
-        case SyncService.RESULT_LOCAL_IS_DIRECTORY:
-          errorMessage = "Local is directory";
-          break;
-        case SyncService.RESULT_NO_DIR_TARGET:
-          errorMessage = "Target directory not found";
-          break;
-        case SyncService.RESULT_NO_LOCAL_FILE:
-          errorMessage = "Local file not found";
-          break;
-        case SyncService.RESULT_NO_REMOTE_OBJECT:
-          errorMessage = "No remote object";
-          break;
-        case SyncService.RESULT_REMOTE_IS_FILE:
-          errorMessage = "Remote is a file";
-          break;
-        case SyncService.RESULT_REMOTE_PATH_ENCODING:
-          errorMessage = "Incorrect remote path encoding";
-          break;
-        case SyncService.RESULT_REMOTE_PATH_LENGTH:
-          errorMessage = "Incorrect remote path length";
-          break;
-        case SyncService.RESULT_TARGET_IS_FILE:
-          errorMessage = "Target is a file";
-          break;
-        default:
-          errorMessage = "Can't upload file";
-      }
+      return true;
     }
     catch (TimeoutException e) {
+      LOG.info(e);
       exceptionMessage = e.getMessage();
       errorMessage = "Connection timeout";
     }
     catch (AdbCommandRejectedException e) {
+      LOG.info(e);
       exceptionMessage = e.getMessage();
       errorMessage = "ADB refused the command";
+    }
+    catch (SyncException e) {
+      LOG.info(e);
+      final SyncException.SyncError errorCode = e.getErrorCode();
+      errorMessage = errorCode.getMessage();
+      exceptionMessage = e.getMessage();
     }
     if (errorMessage.equals(exceptionMessage) || exceptionMessage == null) {
       message(errorMessage, STDERR);

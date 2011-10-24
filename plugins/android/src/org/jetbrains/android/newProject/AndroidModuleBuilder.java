@@ -69,7 +69,6 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import static com.android.sdklib.SdkConstants.FN_ANDROID_MANIFEST_XML;
-import static com.android.sdklib.SdkConstants.FN_DEFAULT_PROPERTIES;
 import static org.jetbrains.android.util.AndroidUtils.createChildDirectoryIfNotExist;
 
 /**
@@ -352,7 +351,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
       Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
       properties.setProperty("TARGET", platform.getTarget().hashString());
-      AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, "default.properties", FN_DEFAULT_PROPERTIES, properties);
+      AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.DEFAULT_PROPERTIES_TEMPLATE,
+                                                     SdkConstants.FN_PROJECT_PROPERTIES, properties);
     }
     catch (Exception e) {
       LOG.error(e);

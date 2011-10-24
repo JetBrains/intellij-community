@@ -54,8 +54,8 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
         final Module module = facet.getModule();
         AndroidSdkUtils.setupAndroidPlatformInNeccessary(module);
 
-        final String androidLibraryPropValue = AndroidUtils
-          .getPropertyValue(module, SdkConstants.FN_DEFAULT_PROPERTIES, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+        final String androidLibraryPropValue = AndroidUtils.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+          
         if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
           facet.getConfiguration().LIBRARY_PROJECT = true;
         }

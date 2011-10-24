@@ -2,7 +2,7 @@ package org.jetbrains.android.run;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
-import com.android.sdklib.internal.avd.AvdManager;
+import com.android.sdklib.internal.avd.AvdInfo;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -22,8 +22,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -115,7 +117,7 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
       if (myAddEmptyElement) {
         newAvdList.add("");
       }
-      for (AvdManager.AvdInfo avd : facet.getAllCompatibleAvds()) {
+      for (AvdInfo avd : facet.getAllCompatibleAvds()) {
         final String avdName = avd.getName();
         if (!filteringSet.contains(avdName)) {
           newAvdList.add(avdName);
