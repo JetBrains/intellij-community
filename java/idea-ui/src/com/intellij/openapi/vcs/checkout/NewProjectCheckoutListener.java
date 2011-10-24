@@ -27,7 +27,9 @@ import java.io.File;
  */
 public class NewProjectCheckoutListener implements CheckoutListener {
   public boolean processCheckedOutDirectory(final Project project, final File directory) {
-    int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt", directory.getAbsolutePath()),
+    int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt",
+                                                                 ProjectCheckoutListener.getProductNameWithArticle(),
+                                                                 directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == 0) {
       NewProjectUtil.createNewProject(project, directory.getAbsolutePath());

@@ -17,9 +17,12 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.PlatformUtils;
 import org.apache.oro.io.GlobFilenameFilter;
 
 import java.io.File;
@@ -32,8 +35,9 @@ public class ProjectCheckoutListener implements CheckoutListener {
   public boolean processCheckedOutDirectory(Project project, File directory) {
     File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*" + ProjectFileType.DOT_DEFAULT_EXTENSION));
     if (files != null && files.length > 0) {
-      int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", files[0].getPath()),
-                                        VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
+      int rc = Messages
+        .showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", getProductNameWithArticle(), files[0].getPath()),
+                         VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
       if (rc == 0) {
         ProjectUtil.openProject(files[0].getPath(), project, false);
       }
@@ -44,5 +48,14 @@ public class ProjectCheckoutListener implements CheckoutListener {
 
   @Override
   public void processOpenedProject(Project lastOpenedProject) {
+  }
+
+  static String getProductNameWithArticle() {
+    final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+    // example: "to create an IntelliJ IDEA project" (full product name is ok);
+    // "to create a JetBrains Astella project" (better use not full product name: "to create an Astella project")
+    final String productName = PlatformUtils.isIdea() ? namesInfo.getFullProductName() : namesInfo.getProductName();
+    final String article = StringUtil.isVowel(Character.toLowerCase(productName.charAt(0))) ? "an " : "a ";
+    return article + productName;
   }
 }

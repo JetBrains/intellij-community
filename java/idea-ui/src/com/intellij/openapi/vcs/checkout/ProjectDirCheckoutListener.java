@@ -16,8 +16,9 @@ public class ProjectDirCheckoutListener implements CheckoutListener {
   @Override
   public boolean processCheckedOutDirectory(Project project, File directory) {
     if (new File(directory, ".idea").exists()) {
-      int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.dir.prompt", directory.getPath()),
-                                        VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
+      int rc = Messages
+        .showYesNoDialog(project, VcsBundle.message("checkout.open.project.dir.prompt", ProjectCheckoutListener.getProductNameWithArticle(),
+                                                    directory.getPath()), VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
       if (rc == 0) {
         ProjectUtil.openProject(directory.getPath(), project, false);
       }
