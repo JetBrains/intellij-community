@@ -64,9 +64,6 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
     contributor.extend(CompletionType.BASIC, inArgumentListOfCall, instance);
     contributor.extend(CompletionType.BASIC, inLabel, instance);
-
-    contributor.extend(CompletionType.SMART, inArgumentListOfCall, instance);
-    contributor.extend(CompletionType.SMART, inLabel, instance);
   }
 
   @Override
@@ -92,9 +89,6 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
     if (map.isEmpty()) {
-      if (parameters.getCompletionType() == CompletionType.SMART) {
-        return;
-      }
       map = findOtherNamedArgumentsInFile(mapOrArgumentList);
     }
     
@@ -103,10 +97,6 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     for (Map.Entry<String, NamedArgumentDescriptor> entry : map.entrySet()) {
-      if (parameters.getCompletionType() == CompletionType.SMART && entry.getValue().getPriority() != Priority.ALWAYS_ON_TOP) {
-        continue;
-      }
-      
       LookupElementBuilder lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
         .setTailText(":");
