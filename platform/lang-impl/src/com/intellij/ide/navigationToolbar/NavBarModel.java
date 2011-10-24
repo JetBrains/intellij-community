@@ -186,7 +186,7 @@ public class NavBarModel {
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null &&
         (containingFile.getVirtualFile() == null || !containingFile.getViewProvider().isPhysical())) return; //non phisycal elements
-    psiElement = psiElement.getOriginalElement();
+    psiElement = getOriginalElement(psiElement);
     PsiElement resultElement = psiElement;
 
     for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
@@ -253,6 +253,11 @@ public class NavBarModel {
     }
 
     model.add(resultElement);
+  }
+
+  private static PsiElement getOriginalElement(PsiElement psiElement) {
+    final PsiElement originalElement = psiElement.getOriginalElement();
+    return !(psiElement instanceof PsiCompiledElement) && originalElement instanceof PsiCompiledElement ? psiElement : originalElement;
   }
 
 
