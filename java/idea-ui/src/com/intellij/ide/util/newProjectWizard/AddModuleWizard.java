@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.List;
 
 public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
@@ -107,12 +106,8 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
   private void appendSteps(@Nullable final StepSequence sequence) {
     if (sequence != null) {
-      final List<ModuleWizardStep> commonSteps = sequence.getCommonSteps();
-      for (ModuleWizardStep step : commonSteps) {
+      for (ModuleWizardStep step : sequence.getAllSteps()) {
         addStep(step);
-      }
-      for (String type : sequence.getTypes()) {
-        appendSteps(sequence.getSpecificSteps(type));
       }
     }
   }
@@ -263,7 +258,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     final StepSequence stepSequence = getMode().getSteps(myWizardContext, null);
     if (stepSequence != null) {
       if (myRootStep == mySteps.get(step)) {
-        return mySteps.indexOf(stepSequence.getCommonSteps().get(0));
+        return mySteps.indexOf(stepSequence.getFirstStep());
       }
       nextStep = stepSequence.getNextStep(mySteps.get(step));
       while (nextStep != null && !nextStep.isStepVisible()) {

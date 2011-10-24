@@ -43,13 +43,11 @@ public class ProjectNameStep extends ModuleWizardStep {
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
   protected final WizardContext myWizardContext;
-  protected final StepSequence mySequence;
   protected final WizardMode myMode;
   private final ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
 
-  public ProjectNameStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
+  public ProjectNameStep(WizardContext wizardContext, final WizardMode mode) {
     myWizardContext = wizardContext;
-    mySequence = sequence;
     myMode = mode;
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),

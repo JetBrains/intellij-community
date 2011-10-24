@@ -16,6 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -154,10 +155,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return deps;
   }
 
+  @NotNull
   public List<T> getSelectedEntries() {
     return myEntriesChooser.getSelectedElements();
   }
 
+  @NotNull
   public List<T> getChosenEntries() {
     return myEntriesChooser.getMarkedElements();
   }
@@ -260,12 +263,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           builder.append(")");
         }
 
-        final Set<File> sourceRoots = moduleDescriptor.getSourceRoots();
+        final Collection<? extends JavaModuleSourceRoot> sourceRoots = moduleDescriptor.getSourceRoots();
         if (sourceRoots.size() > 0) {
           builder.append(" [");
-          for (Iterator<File> it = sourceRoots.iterator(); it.hasNext();) {
-            File root = it.next();
-            builder.append(root.getName());
+          for (Iterator<? extends JavaModuleSourceRoot> it = sourceRoots.iterator(); it.hasNext();) {
+            JavaModuleSourceRoot root = it.next();
+            builder.append(root.getDirectory().getName());
             if (it.hasNext()) {
               builder.append(",");
             }

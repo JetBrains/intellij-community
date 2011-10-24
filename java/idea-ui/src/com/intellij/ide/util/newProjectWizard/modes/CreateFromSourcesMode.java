@@ -20,13 +20,16 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.DelegatingProgressIndicator;
-import com.intellij.ide.util.importProject.*;
+import com.intellij.ide.util.importProject.FrameworkDetectionStep;
+import com.intellij.ide.util.importProject.ModuleDescriptor;
+import com.intellij.ide.util.importProject.ProjectDescriptor;
+import com.intellij.ide.util.importProject.RootsDetectionStep;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
+import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.ProjectBundle;
@@ -36,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CreateFromSourcesMode extends WizardMode {
@@ -56,27 +60,31 @@ public class CreateFromSourcesMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    final ModuleInsight moduleInsight = new ModuleInsight(new DelegatingProgressIndicator());
-    final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder(moduleInsight);
+    final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder();
     myProjectBuilder = projectBuilder;
     
-    final ProjectWizardStepFactory factory = ProjectWizardStepFactory.getInstance();
     final StepSequence sequence = new StepSequence();
     final Icon icon = context.isCreatingNewProject() ? NEW_PROJECT_ICON : ICON;
-    sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
-    sequence.addCommonStep(factory.createSourcePathsStep(context, projectBuilder, icon, "reference.dialogs.new.project.fromCode.source"));
-    sequence.addCommonStep(new LibrariesDetectionStep(projectBuilder, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page1"));
-    sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page2"));
-    sequence.addCommonStep(factory.createProjectJdkStep(context));
+    sequence.addCommonStep(new ProjectNameStep(context, this));
+    sequence.addCommonStep(new RootsDetectionStep(projectBuilder, sequence, icon, "reference.dialogs.new.project.fromCode.source"));
+    for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
+      for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), context, icon)) {
+        sequence.addSpecificStep(detector.getClass().getName(), step);
+      }
+    }
 
     if (FrameworkDetectionStep.isEnabled()) {
       FrameworkDetectionStep frameworkDetectionStep = new FrameworkDetectionStep(icon, projectBuilder) {
         public List<ModuleDescriptor> getModuleDescriptors() {
-          return projectBuilder.getModules();
+          final List<ModuleDescriptor> moduleDescriptors = new ArrayList<ModuleDescriptor>();
+          for (ProjectDescriptor descriptor : projectBuilder.getSelectedDescriptors()) {
+            moduleDescriptors.addAll(descriptor.getModules());
+          }
+          return moduleDescriptors;
         }
       };
       projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
-      sequence.addCommonStep(frameworkDetectionStep);
+      sequence.addCommonFinishingStep(frameworkDetectionStep);
     }
 
     return sequence;

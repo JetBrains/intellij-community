@@ -946,6 +946,7 @@
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryPresentationProvider"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.groovy.griffon.GriffonModuleBuilder" id="griffonModuleBuilder"/>
     <wizardMode implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectBuilder" id="griffonWizzardMode"/>
+    <projectStructureDetector implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectStructureDetector"/>
     <programRunner implementation="org.jetbrains.plugins.groovy.griffon.GriffonDebuggerRunner"/>
     <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
     <toolWindow id="Griffon View" anchor="left" secondary="false" icon="/icons/griffon/griffon.png"

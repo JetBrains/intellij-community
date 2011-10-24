@@ -15,10 +15,12 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
+import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
+import com.intellij.ide.util.newProjectWizard.JavaProjectStructureDetector;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -30,22 +32,30 @@ import java.util.*;
  *         Date: Jan 6, 2004
  */
 public class LibrariesDetectionStep extends AbstractStepWithProgress<List<LibraryDescriptor>> {
+  private final JavaProjectStructureDetector myDetector;
   private final ProjectFromSourcesBuilder myBuilder;
+  private final ProjectDescriptor myProjectDescriptor;
   private final ModuleInsight myInsight;
   private final Icon myIcon;
   private final String myHelpId;
   private LibrariesLayoutPanel myLibrariesPanel;
 
-  public LibrariesDetectionStep(ProjectFromSourcesBuilder builder, final ModuleInsight insight, Icon icon, @NonNls String helpId) {
+  public LibrariesDetectionStep(JavaProjectStructureDetector detector,
+                                ProjectFromSourcesBuilder builder,
+                                ProjectDescriptor projectDescriptor, final ModuleInsight insight,
+                                Icon icon,
+                                @NonNls String helpId) {
     super("Stop library analysis?");
+    myDetector = detector;
     myBuilder = builder;
+    myProjectDescriptor = projectDescriptor;
     myInsight = insight;
     myIcon = icon;
     myHelpId = helpId;
   }
 
   public void updateDataModel() {
-    myBuilder.setLibraries(myLibrariesPanel.getChosenEntries());
+    myProjectDescriptor.setLibraries(myLibrariesPanel.getChosenEntries());
   }
 
   protected JComponent createResultsPanel() {
@@ -70,28 +80,27 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
 
   private int calcStateHashCode() {
     int hash = myBuilder.getContentEntryPath().hashCode();
-    for (Pair<String, String> pair : myBuilder.getSourcePaths()) {
-      hash = 31 * hash + pair.getFirst().hashCode();
-      hash = 31 * hash + pair.getSecond().hashCode();
+    for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
+      hash = 31 * hash + root.getDirectory().hashCode();
     }
     return hash;
   }
 
   protected List<LibraryDescriptor> calculate() {
-    // build sources array
-    final List<Pair<String,String>> sourcePaths = myBuilder.getSourcePaths();
-    final List<Pair<File,String>> _sourcePaths = new ArrayList<Pair<File, String>>();
-    for (Pair<String, String> path : sourcePaths) {
-      _sourcePaths.add(new Pair<File, String>(new File(path.first), path.second != null? path.second : ""));
+    final List<JavaModuleSourceRoot> sourceRoots = new ArrayList<JavaModuleSourceRoot>();
+    for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
+      if (root instanceof JavaModuleSourceRoot) {
+        sourceRoots.add((JavaModuleSourceRoot)root);
+      }
     }
-    // build ignored names set
+
     final HashSet<String> ignored = new HashSet<String>();
     final StringTokenizer tokenizer = new StringTokenizer(FileTypeManager.getInstance().getIgnoredFilesList(), ";", false);
     while (tokenizer.hasMoreTokens()) {
       ignored.add(tokenizer.nextToken());
     }
     
-    myInsight.setRoots(Collections.singletonList(new File(myBuilder.getContentEntryPath())), _sourcePaths, ignored);
+    myInsight.setRoots(Collections.singletonList(new File(myBuilder.getContentEntryPath())), sourceRoots, ignored);
     myInsight.scanLibraries();
     
     return myInsight.getSuggestedLibraries();

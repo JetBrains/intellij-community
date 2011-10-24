@@ -19,11 +19,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
+import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
@@ -39,11 +39,11 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -56,17 +56,16 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourcePathsBuilder {
-  private List<Pair<String, String>> mySourcePaths = Collections.emptyList();
+public class ProjectFromSourcesBuilder extends ProjectBuilder {
   private String myContentRootPath;
-  private List<LibraryDescriptor> myChosenLibraries = Collections.emptyList();
-  private Set<LibraryDescriptor> myChosenLibrariesSet;
-  private List<ModuleDescriptor> myChosenModules = Collections.emptyList();
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
-  private final ModuleInsight myModuleInsight;
+  private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<ProjectStructureDetector, ProjectDescriptor>();
+  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.EMPTY;
 
-  public ProjectFromSourcesBuilder(final ModuleInsight moduleInsight) {
-    myModuleInsight = moduleInsight;
+  public ProjectFromSourcesBuilder() {
+    for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
+      myProjectDescriptors.put(detector, new ProjectDescriptor());
+    }
   }
 
   public void setContentEntryPath(final String contentRootPath) {
@@ -77,19 +76,12 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     return myContentRootPath;
   }
 
-  public void addSourcePath(final Pair<String, String> sourcePathInfo) {
-    mySourcePaths.add(sourcePathInfo);
+  public void setProjectRoots(MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots) {
+    myRoots = roots;
   }
 
-  /**
-   * @param paths list of pairs [SourcePath, PackagePrefix]
-   */
-  public void setSourcePaths(List<Pair<String,String>> paths) {
-    mySourcePaths = paths;
-  }
-
-  public List<Pair<String, String>> getSourcePaths() {
-    return mySourcePaths;
+  public Collection<DetectedProjectRoot> getProjectRoots(ProjectStructureDetector detector) {
+    return myRoots.get(detector);
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
@@ -100,16 +92,18 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       AccessToken token = WriteAction.start();
       try {
         // create project-level libraries
-        for (LibraryDescriptor lib : myChosenLibraries) {
-          if (lib.getLevel() == LibraryDescriptor.Level.PROJECT) {
-            final Collection<File> files = lib.getJars();
-            final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
-            final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
-            for (File file : files) {
-              libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+        for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
+          for (LibraryDescriptor lib : projectDescriptor.getLibraries()) {
+            if (lib.getLevel() == LibraryDescriptor.Level.PROJECT) {
+              final Collection<File> files = lib.getJars();
+              final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
+              final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
+              for (File file : files) {
+                libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+              }
+              libraryModel.commit();
+              projectLibs.put(lib, projectLib);
             }
-            libraryModel.commit();
-            projectLibs.put(lib, projectLib);
           }
         }
       }
@@ -121,30 +115,28 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
     }
 
-    // create modules and set up dependencies
-    final Map<String, String> sourceRootToPrefixMap = new HashMap<String, String>();
-    for (Pair<String, String> pair : getSourcePaths()) {
-      sourceRootToPrefixMap.put(FileUtil.toSystemIndependentName(pair.getFirst()), pair.getSecond());
-    }
     final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<ModuleDescriptor, Module>();
 
     try {
       AccessToken token = WriteAction.start();
       try {
         final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
-        for (final ModuleDescriptor moduleDescriptor : myChosenModules) {
-          final Module module;
-          if (moduleDescriptor.isReuseExistingElement()) {
-            final ExistingModuleLoader moduleLoader =
-              ImportImlMode.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
-            module = moduleLoader.createModule(moduleModel);
+        for (ProjectDescriptor descriptor : getSelectedDescriptors()) {
+          for (final ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
+            final Module module;
+            if (moduleDescriptor.isReuseExistingElement()) {
+              final ExistingModuleLoader moduleLoader =
+                ImportImlMode.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
+              module = moduleLoader.createModule(moduleModel);
+            }
+            else {
+              module = createModule(descriptor, moduleDescriptor, projectLibs, moduleModel);
+            }
+            result.add(module);
+            descriptorToModuleMap.put(moduleDescriptor, module);
           }
-          else {
-            module = createModule(moduleDescriptor, sourceRootToPrefixMap, projectLibs, moduleModel);
-          }
-          result.add(module);
-          descriptorToModuleMap.put(moduleDescriptor, module);
         }
+
         moduleModel.commit();
       }
       finally {
@@ -159,23 +151,25 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     try {
       AccessToken token = WriteAction.start();
       try {
-        for (final ModuleDescriptor descriptor : myChosenModules) {
-          final Module module = descriptorToModuleMap.get(descriptor);
-          if (module == null) {
-            continue;
-          }
-          final Set<ModuleDescriptor> deps = descriptor.getDependencies();
-          if (deps.size() == 0) {
-            continue;
-          }
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          for (ModuleDescriptor dependentDescriptor : deps) {
-            final Module dependentModule = descriptorToModuleMap.get(dependentDescriptor);
-            if (dependentModule != null) {
-              rootModel.addModuleOrderEntry(dependentModule);
+        for (ProjectDescriptor data : getSelectedDescriptors()) {
+          for (final ModuleDescriptor descriptor : data.getModules()) {
+            final Module module = descriptorToModuleMap.get(descriptor);
+            if (module == null) {
+              continue;
             }
+            final Set<ModuleDescriptor> deps = descriptor.getDependencies();
+            if (deps.size() == 0) {
+              continue;
+            }
+            final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+            for (ModuleDescriptor dependentDescriptor : deps) {
+              final Module dependentModule = descriptorToModuleMap.get(dependentDescriptor);
+              if (dependentModule != null) {
+                rootModel.addModuleOrderEntry(dependentModule);
+              }
+            }
+            rootModel.commit();
           }
-          rootModel.commit();
         }
       }
       finally {
@@ -200,13 +194,17 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     return result;
   }
 
+  public Collection<ProjectDescriptor> getSelectedDescriptors() {
+    return myProjectDescriptors.values();
+  }
+
   public void addConfigurationUpdater(ProjectConfigurationUpdater updater) {
     myUpdaters.add(updater);
   }
 
   @NotNull
-  private Module createModule(final ModuleDescriptor descriptor, final Map<String, String> sourceRootToPrefixMap,
-                             final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel) 
+  private Module createModule(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor, final Map<LibraryDescriptor, Library> projectLibs,
+                              final ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
 
     final String moduleFilePath = descriptor.computeModuleFilePath();
@@ -214,12 +212,14 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
     final Module module = moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    setupRootModel(descriptor, modifiableModel, sourceRootToPrefixMap, projectLibs);
+    setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs);
+    descriptor.updateModuleConfiguration(module, modifiableModel);
     modifiableModel.commit();
     return module;
   }
 
-  private void setupRootModel(final ModuleDescriptor descriptor, final ModifiableRootModel rootModel, final Map<String, String> sourceRootToPrefixMap, final Map<LibraryDescriptor, Library> projectLibs) {
+  private void setupRootModel(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor, final ModifiableRootModel rootModel,
+                              final Map<LibraryDescriptor, Library> projectLibs) {
     final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setExcludeOutput(true);
     rootModel.inheritSdk();
@@ -230,28 +230,19 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.getPath()));
       if (moduleContentRoot != null) {
         final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
-        final Set<File> sourceRoots = descriptor.getSourceRoots(contentRoot);
-        for (File srcRoot : sourceRoots) {
-          final String srcpath = FileUtil.toSystemIndependentName(srcRoot.getPath());
+        final Collection<JavaModuleSourceRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
+        for (JavaModuleSourceRoot srcRoot : sourceRoots) {
+          final String srcpath = FileUtil.toSystemIndependentName(srcRoot.getDirectory().getPath());
           final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(srcpath);
           if (sourceRoot != null) {
-            final String packagePrefix = sourceRootToPrefixMap.get(srcpath);
-            if (packagePrefix == null || "".equals(packagePrefix)) {
-              contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot));
-            }
-            else {
-              contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot), packagePrefix);
-            }
+            contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.getDirectory()), srcRoot.getPackagePrefix());
           }
         }
       }
     }
     compilerModuleExtension.inheritCompilerOutputPath(true);
     final LibraryTable moduleLibraryTable = rootModel.getModuleLibraryTable();
-    for (LibraryDescriptor libDescriptor : myModuleInsight.getLibraryDependencies(descriptor)) {
-      if (!isLibraryChosen(libDescriptor)) {
-        continue;
-      }
+    for (LibraryDescriptor libDescriptor : ModuleInsight.getLibraryDependencies(descriptor, projectDescriptor.getLibraries())) {
       final Library projectLib = projectLibs.get(libDescriptor);
       if (projectLib != null) {
         rootModel.addLibraryEntry(projectLib);
@@ -270,6 +261,10 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
   }
 
+  public ProjectDescriptor getProjectDescriptor(ProjectStructureDetector detector) {
+    return myProjectDescriptors.get(detector);
+  }
+
   private static boolean shouldBeTestRoot(final File srcRoot) {
     if (isTestRootName(srcRoot.getName())) {
       return true;
@@ -286,30 +281,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
            "testSrc".equalsIgnoreCase(name);
   }
 
-  public void setLibraries(final List<LibraryDescriptor> libraries) {
-    myChosenLibraries = (libraries == null) ? Collections.<LibraryDescriptor>emptyList() : libraries;
-    myChosenLibrariesSet = null;
-  }
-
-  public List<LibraryDescriptor> getLibraries() {
-    return myChosenLibraries;
-  }
-
-  public void setModules(final List<ModuleDescriptor> modules) {
-    myChosenModules = (modules == null) ? Collections.<ModuleDescriptor>emptyList() : modules;
-  }
-
-  public List<ModuleDescriptor> getModules() {
-    return myChosenModules;
-  }
-  
-  public boolean isLibraryChosen(LibraryDescriptor lib) {
-    Set<LibraryDescriptor> available = myChosenLibrariesSet;
-    if (available == null) {
-      available = new HashSet<LibraryDescriptor>(myChosenLibraries);
-      myChosenLibrariesSet = available;
-    }
-    return available.contains(lib);
+  public List<LibraryDescriptor> getLibraries(ProjectStructureDetector detector) {
+    return myProjectDescriptors.get(detector).getLibraries();
   }
 
   public interface ProjectConfigurationUpdater {
@@ -318,9 +291,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
   @Override
   public boolean isSuitableSdk(final Sdk sdk) {
-    final List<ModuleDescriptor> suggestedModules = myModuleInsight.getSuggestedModules();
-    if (suggestedModules != null) {
-      for (ModuleDescriptor moduleDescriptor : suggestedModules) {
+    for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
+      for (ModuleDescriptor moduleDescriptor : projectDescriptor.getModules()) {
         try {
           final File file = new File(moduleDescriptor.computeModuleFilePath());
           if (file.exists()) {

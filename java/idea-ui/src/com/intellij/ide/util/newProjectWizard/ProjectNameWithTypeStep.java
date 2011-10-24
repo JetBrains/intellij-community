@@ -74,10 +74,12 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   private boolean myImlLocationChangedByUser = false;
   private boolean myImlLocationDocListenerEnabled = true;
+  private final StepSequence mySequence;
 
 
   public ProjectNameWithTypeStep(final WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
-    super(wizardContext, sequence, mode);
+    super(wizardContext, mode);
+    mySequence = sequence;
     myAdditionalContentPanel.add(myModulePanel,
                                  new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
                                                         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));

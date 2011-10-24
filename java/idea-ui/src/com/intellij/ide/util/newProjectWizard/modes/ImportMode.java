@@ -61,7 +61,7 @@ public class ImportMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    final StepSequence stepSequence = new StepSequence(null);
+    final StepSequence stepSequence = new StepSequence();
     final ProjectImportProvider[] providers = Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER);
     if (providers.length == 1) {
       myBuilder = providers[0].getBuilder();
@@ -76,11 +76,9 @@ public class ImportMode extends WizardMode {
       stepSequence.addCommonStep(new ImportChooserStep(providers, stepSequence, context));
       for (ProjectImportProvider provider : providers) {
         final ModuleWizardStep[] steps = provider.createSteps(context);
-        final StepSequence sequence = new StepSequence(stepSequence);
         for (ModuleWizardStep step : steps) {
-          sequence.addCommonStep(step);
+          stepSequence.addSpecificStep(provider.getId(), step);
         }
-        stepSequence.addSpecificSteps(provider.getId(), sequence);
       }
     }
     return stepSequence;

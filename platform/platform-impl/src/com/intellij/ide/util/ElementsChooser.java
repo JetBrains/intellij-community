@@ -346,6 +346,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     myTableModel.setMarked(getElementsRows(elements), true);
   }
 
+  @NotNull
   public List<T> getMarkedElements() {
     final int count = myTableModel.getRowCount();
     List<T> elements = new ArrayList<T>();

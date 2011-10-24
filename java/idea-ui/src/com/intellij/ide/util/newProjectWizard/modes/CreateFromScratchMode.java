@@ -54,7 +54,7 @@ public class CreateFromScratchMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    final StepSequence sequence = new StepSequence(null);
+    final StepSequence sequence = new StepSequence();
     sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, this));
     for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
       addModuleBuilder(builder, context, modulesProvider, sequence);
@@ -65,13 +65,9 @@ public class CreateFromScratchMode extends WizardMode {
 
   private void addModuleBuilder(ModuleBuilder builder, WizardContext context, ModulesProvider modulesProvider, StepSequence myStepSequence) {
     final String id = builder.getBuilderId();
-    final StepSequence sequence = new StepSequence(myStepSequence);
     myBuildersMap.put(id, builder);
     for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
-      sequence.addCommonStep(step);
-    }
-    if (!sequence.getCommonSteps().isEmpty()) {
-      myStepSequence.addSpecificSteps(id, sequence);
+      myStepSequence.addSpecificStep(id, step);
     }
   }
 
