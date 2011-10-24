@@ -58,7 +58,7 @@ public abstract class TestState implements Printable {
   public void update() {
   }
 
-  public void merge(@NotNull TestState state){}
+  public void merge(@NotNull TestState state, TestProxy parent){}
 
   public boolean isPassed() {
     return getMagnitude() == PoolOfTestStates.PASSED_INDEX;

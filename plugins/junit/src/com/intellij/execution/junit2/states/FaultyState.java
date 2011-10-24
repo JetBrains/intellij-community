@@ -18,9 +18,9 @@ package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.stacktrace.StackTraceLine;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -30,7 +30,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -64,13 +63,17 @@ public class FaultyState extends ReadableState {
   }
 
   @Override
-  public void merge(@NotNull TestState state) {
+  public void merge(@NotNull TestState state, TestProxy parent) {
     if (state instanceof FaultyState) {
-      myMessages = new ArrayList<String>(myMessages);
-      myMessages.addAll(0, ((FaultyState)state).myMessages);
-
-      myStackTraces = new ArrayList<String>(myStackTraces);
-      myStackTraces.addAll(0, ((FaultyState)state).myStackTraces);
+      while (parent != null) {
+        TestState parentState = parent.getState();
+        if (parentState instanceof SuiteState && !((SuiteState)parentState).isRunning()) {
+          parent.addLast(this);
+        } else {
+          break;
+        }
+        parent = parent.getParent();
+      }
     }
   }
 

@@ -71,7 +71,7 @@ public class TestProxy extends AbstractTestProxy {
         fireOnNewPrintable(state);
       }
       if (myState != null) {
-        state.merge(myState);
+        state.merge(myState, getParent());
       }
 
       myState = state;

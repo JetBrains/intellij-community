@@ -18,9 +18,6 @@ package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.TestProxyListener;
-import com.intellij.execution.junit2.states.CumulativeStatistics;
-import com.intellij.execution.junit2.states.Statistics;
-import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
@@ -96,6 +93,10 @@ public class SuiteState extends TestState {
 
   public void setRunning(boolean running) {
     myHasRunning = running;
+  }
+
+  public boolean isRunning() {
+    return myHasRunning;
   }
 
   public void updateMagnitude(int magnitude) {
