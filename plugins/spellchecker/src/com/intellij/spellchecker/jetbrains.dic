@@ -94,6 +94,7 @@ dumpfile
 dylib
 elseif
 elsif
+enqueue
 enum
 enums
 evex
