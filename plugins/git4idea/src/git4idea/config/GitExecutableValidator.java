@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Project service that is used to check whether currently set git executable is valid (just calls 'git version' and parses the output),
@@ -36,7 +37,7 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   private GitVcs myVcs;
 
-  public GitExecutableValidator(@NotNull Project project, @NotNull GitVcs vcs) {
+  public GitExecutableValidator(@NotNull Project project, @Nullable GitVcs vcs) {
     super(project,
           GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));
     myVcs = vcs;
@@ -44,7 +45,7 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   @Override
   protected String getCurrentExecutable() {
-    return myVcs.getAppSettings().getPathToGit();
+    return GitVcsApplicationSettings.getInstance().getPathToGit();
   }
 
   @NotNull
