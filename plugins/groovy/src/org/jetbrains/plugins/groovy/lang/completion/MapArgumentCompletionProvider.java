@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority;
 
 /**
  * @author peter
@@ -91,6 +92,9 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
     if (map.isEmpty()) {
+      if (parameters.getCompletionType() == CompletionType.SMART) {
+        return;
+      }
       map = findOtherNamedArgumentsInFile(mapOrArgumentList);
     }
     
@@ -99,11 +103,15 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     for (Map.Entry<String, NamedArgumentDescriptor> entry : map.entrySet()) {
+      if (parameters.getCompletionType() == CompletionType.SMART && entry.getValue().getPriority() != Priority.ALWAYS_ON_TOP) {
+        continue;
+      }
+      
       LookupElementBuilder lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
         .setTailText(":");
 
-      if (entry.getValue().getPriority() == NamedArgumentDescriptor.Priority.UNLIKELY) {
+      if (entry.getValue().getPriority() == Priority.UNLIKELY) {
         lookup.setItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
       }
       else {
