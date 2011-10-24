@@ -154,6 +154,18 @@ def foo(File f) {}
     assert target.text.contains("List l")
   }
 
+  public void testWrongProperty() throws Exception {
+myFixture.configureByText 'a.gpp', '''
+class ClassA {
+  def prop = 2
+  def bar() {
+    def t = new Object()
+    t.pr<caret>op
+  }
+}'''
+    assert !findReference().resolve()
+  }
+
   public void testCastClosureToOneMethodClass() throws Exception {
     myFixture.addClass """
 public abstract class Foo {

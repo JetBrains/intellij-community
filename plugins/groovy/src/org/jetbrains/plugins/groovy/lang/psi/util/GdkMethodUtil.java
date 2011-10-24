@@ -111,9 +111,7 @@ public class GdkMethodUtil {
           if (parameters.length == 0) return true;
           return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
         }
-        else {
-          return processor.execute(element, state);
-        }
+        return true;
       }
     };
     final ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext);
