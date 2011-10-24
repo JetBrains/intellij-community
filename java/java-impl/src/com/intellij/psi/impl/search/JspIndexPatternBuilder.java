@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -39,22 +39,29 @@ import com.intellij.psi.tree.TokenSet;
 public class JspIndexPatternBuilder implements IndexPatternBuilder {
   public Lexer getIndexingLexer(final PsiFile file) {
     if (JspPsiUtil.isInJspFile(file)) {
-      EditorHighlighter highlighter;
+      EditorHighlighter highlighter = null;
 
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-      EditorHighlighter cachedEditorHighlighter;
+      final EditorHighlighter cachedEditorHighlighter;
       boolean alreadyInitializedHighlighter = false;
 
       if ((cachedEditorHighlighter = EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document)) != null &&
-          IdTableBuilding.checkCanUseCachedEditorHighlighter(file.getText(), cachedEditorHighlighter)
-         ) {
+          IdTableBuilding.checkCanUseCachedEditorHighlighter(file.getText(), cachedEditorHighlighter)) {
         highlighter = cachedEditorHighlighter;
         alreadyInitializedHighlighter = true;
-      } else {
-        highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file.getProject(),file.getVirtualFile());
       }
-      return new LexerEditorHighlighterLexer(highlighter, alreadyInitializedHighlighter);
+      else {
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file.getProject(), virtualFile);
+        }
+      }
+
+      if (highlighter != null) {
+        return new LexerEditorHighlighterLexer(highlighter, alreadyInitializedHighlighter);
+      }
     }
+
     return null;
   }
 
