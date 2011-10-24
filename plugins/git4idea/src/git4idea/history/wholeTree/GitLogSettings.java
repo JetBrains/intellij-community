@@ -54,6 +54,7 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   public static class MyState {
     public List<String> myContainedLocalBranches = new ArrayList<String>();
     public List<String> myContainedRemoteBranches = new ArrayList<String>();
+    public Set<String> myActiveRoots = new HashSet<String>();
 
     public String mySelectedBranch = null;
     public List<String> myStructureFilterPaths = new ArrayList<String>();
@@ -72,6 +73,15 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   @Override
   public void loadState(MyState state) {
     myState = state;
+  }
+  
+  public Set<String> getActiveRoots() {
+    return myState.myActiveRoots;
+  }
+  
+  public void setActiveRoots(final Set<String> set) {
+    myState.myActiveRoots.clear();
+    myState.myActiveRoots.addAll(set);
   }
 
   public boolean isShowTree() {

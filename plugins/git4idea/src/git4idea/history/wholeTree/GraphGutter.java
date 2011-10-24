@@ -111,7 +111,7 @@ public class GraphGutter {
       }
       return (wireNumber + 1) * ourLineWidth + wireNumber * ourInterLineWidth + add + ourIndent;
     }
-    
+
     private void drawConnectorsFragment(final Graphics g,
                                         final int idxFrom,
                                         final int yOffset,
@@ -150,7 +150,8 @@ public class GraphGutter {
       if (commitsStarts != null) {
         for (int commitsStart : commitsStarts) {
           if (commitsStart == -1) continue;
-          final int wire = myModel.getCorrectedWire(myModel.getCommitAt(commitsStart));
+          final CommitI commitAt = myModel.getCommitAt(commitsStart);
+          final int wire = myModel.getCorrectedWire(commitAt);
           int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
           g.setColor(selected.contains(event.getCommitIdx()) ? UIUtil.getTableSelectionForeground() : myStyle.getColorForWire(wire));
           doubleLine(g, startXPoint, rowYOffset + myRowHeight, eventStartXPoint, rowYOffset + myRowHeight / 2);
@@ -257,7 +258,8 @@ public class GraphGutter {
         CommitI commitAt = myModel.getCommitAt(idx);
         final boolean contains = selected.contains(idx);
 
-        if (! commitAt.holdsDecoration()) {
+        final boolean isInActiveRoots = myModel.getActiveRoots().contains(commitAt.selectRepository(myModel.getRootsHolder().getRoots()));
+        if (! commitAt.holdsDecoration() && isInActiveRoots) {
           int correctedWire = myModel.getCorrectedWire(commitAt);
           int startXPoint = startPoint(correctedWire, wiresGroups);
           graphics.setColor(contains ? UIUtil.getTableSelectionForeground() : fill);
