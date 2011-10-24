@@ -75,6 +75,7 @@ public class LoadController implements Loader {
     final List<ByRootLoader> shortLoaders = new ArrayList<ByRootLoader>();
     final List<VirtualFile> roots = rootsHolder.getRoots();
     int i = 0;
+    final boolean topoOrder = filters.isEmpty() ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
     for (VirtualFile root : roots) {
       final LoaderAndRefresherImpl.MyRootHolder rootHolder = roots.size() == 1 ?
         new LoaderAndRefresherImpl.OneRootHolder(root) :
@@ -91,7 +92,7 @@ public class LoadController implements Loader {
         public void consume(final List<ChangesFilter.Filter> filters) {
           final LoaderAndRefresherImpl loaderAndRefresher =
           new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
-                                     loadGrowthController.getId(), haveStructureFilter);
+                                     loadGrowthController.getId(), haveStructureFilter, topoOrder);
           list.add(loaderAndRefresher);
         }
       }, true, root);

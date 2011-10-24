@@ -48,6 +48,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -491,6 +492,12 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           myConfiguration.SHORT_DIFF_HORISONTALLY = false;
           ensurePresentation();
         }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+        }
       };
       myNumbered = new AnAction("Left | Right") {
         @Override
@@ -498,6 +505,12 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
           myConfiguration.SHORT_DIFF_HORISONTALLY = true;
           ensurePresentation();
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? VcsUtil.ourDot : VcsUtil.ourNotDot);
         }
       };
       mySoftWrapsAction = new MyUseSoftWrapsAction(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);
@@ -512,6 +525,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       final DefaultActionGroup dag = new DefaultActionGroup();
       dag.add(myUsual);
       dag.add(myNumbered);
+      dag.add(new Separator());
       dag.add(mySoftWrapsAction);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, dag, e.getDataContext(),
                                                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

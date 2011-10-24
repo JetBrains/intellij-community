@@ -78,6 +78,10 @@ public class GraphGutter {
     myStarted = true;
   }
 
+  public PresentationStyle getStyle() {
+    return myStyle;
+  }
+
   public void setStyle(PresentationStyle style) {
     myStyle = style;
     myComponent.repaint();
