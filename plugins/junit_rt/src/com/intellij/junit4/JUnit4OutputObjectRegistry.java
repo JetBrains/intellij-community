@@ -25,6 +25,8 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import org.junit.runner.Description;
 
+import java.util.ArrayList;
+
 
 public class JUnit4OutputObjectRegistry extends OutputObjectRegistry {
 
@@ -60,4 +62,44 @@ public class JUnit4OutputObjectRegistry extends OutputObjectRegistry {
     }
   }
 
+  protected Object createObjectWrapper(Object object) {
+    return new ObjectWrapper(object);
+  }
+
+  private static class ObjectWrapper {
+    private Object myObject;
+
+    private ObjectWrapper(Object object) {
+      myObject = object;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ObjectWrapper that = (ObjectWrapper)o;
+      if (!myObject.equals(that.myObject)) return false;
+      if (myObject instanceof Description && that.myObject instanceof Description) {
+        final ArrayList children = ((Description)myObject).getChildren();
+        final ArrayList thatChildren = ((Description)that.myObject).getChildren();
+        if (children.size() != thatChildren.size()) return false;
+        for (int i = 0, childrenSize = children.size(); i < childrenSize; i++) {
+          if (!children.get(i).equals(thatChildren.get(i))) return false;
+        }
+      }
+
+      return true;
+    }
+
+    public int hashCode() {
+      int hash = myObject.hashCode();
+      if (myObject instanceof Description) {
+        final ArrayList children = ((Description)myObject).getChildren();
+        for (int i = 0, childrenSize = children.size(); i < childrenSize; i++) {
+          hash = 31 * hash + children.get(i).hashCode();
+        }
+      }
+      return hash;
+    }
+  }
 }
