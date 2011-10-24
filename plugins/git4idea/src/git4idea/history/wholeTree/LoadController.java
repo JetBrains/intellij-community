@@ -75,7 +75,7 @@ public class LoadController implements Loader {
     final List<ByRootLoader> shortLoaders = new ArrayList<ByRootLoader>();
     final List<VirtualFile> roots = rootsHolder.getRoots();
     int i = 0;
-    final boolean topoOrder = filters.isEmpty() ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
+    final boolean topoOrder = filters.isEmpty() && rootsHolder.getRoots().size() == 1 ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
     for (VirtualFile root : roots) {
       final LoaderAndRefresherImpl.MyRootHolder rootHolder = roots.size() == 1 ?
         new LoaderAndRefresherImpl.OneRootHolder(root) :

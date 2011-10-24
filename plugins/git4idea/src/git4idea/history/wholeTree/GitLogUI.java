@@ -205,12 +205,10 @@ public class GitLogUI implements Disposable {
       }
       myTableModel.setActiveRoots(activeRoots);
     }
-
-    setOrderText(settings);
   }
 
   private void setOrderText(GitLogSettings settings) {
-    myOrderLabel.setText(settings.isTopoOrder() ? "Topo Order" : "Date Order");
+    myOrderLabel.setText(myRootsUnderVcs.size() == 1 && settings.isTopoOrder() ? "Topo Order" : "Date Order");
   }
 
   private void initUiRefresh() {
@@ -993,6 +991,8 @@ public class GitLogUI implements Disposable {
     myTableModel.setActiveRoots(activeRoots);
     myDetailsCache.rootsChanged(rootsUnderVcs);
     
+    setOrderText(GitLogSettings.getInstance(myProject));
+
     if (myStarted) {
       reloadRequest();
     }
@@ -1851,9 +1851,11 @@ public class GitLogUI implements Disposable {
 
     private DefaultActionGroup createActionGroup() {
       final DefaultActionGroup dab = new DefaultActionGroup();
-      dab.add(myDateOrder);
-      dab.add(myTopoOrder);
-      dab.add(new Separator());
+      if (myRootsUnderVcs.size() == 1) {
+        dab.add(myDateOrder);
+        dab.add(myTopoOrder);
+        dab.add(new Separator());
+      }
       dab.add(myMultiColorAction);
       dab.add(myCalmAction);
       dab.add(new Separator());
