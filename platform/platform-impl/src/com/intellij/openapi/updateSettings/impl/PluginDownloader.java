@@ -134,8 +134,7 @@ public class PluginDownloader {
               return true;
             }
           });
-          final File file = new File(new File(new File(outputDir, myPluginId), "lib"), myPluginId +".jar");
-          descriptor = PluginManager.loadDescriptor(file, PluginManager.PLUGIN_XML);
+          descriptor = PluginManager.loadDescriptor(new File(outputDir, myPluginId), PluginManager.PLUGIN_XML);
         }
         finally {
           FileUtil.delete(outputDir);
@@ -174,30 +173,33 @@ public class PluginDownloader {
       StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(myOldFile);
       StartupActionScriptManager.addActionCommand(deleteOld);
     }
+    install(myFile, getPluginName());
+  }
 
+  public static void install(final File fromFile, final String pluginName) throws IOException {
     //noinspection HardCodedStringLiteral
-    if (myFile.getName().endsWith(".jar")) {
+    if (fromFile.getName().endsWith(".jar")) {
       // add command to copy file to the IDEA/plugins path
       StartupActionScriptManager.ActionCommand copyPlugin =
-        new StartupActionScriptManager.CopyCommand(myFile, new File(PathManager.getPluginsPath() + File.separator + myFile.getName()));
+        new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath() + File.separator + fromFile.getName()));
       StartupActionScriptManager.addActionCommand(copyPlugin);
     }
     else {
       // add command to unzip file to the IDEA/plugins path
       String unzipPath;
-      if (ZipUtil.isZipContainsFolder(myFile)) {
+      if (ZipUtil.isZipContainsFolder(fromFile)) {
         unzipPath = PathManager.getPluginsPath();
       }
       else {
-        unzipPath = PathManager.getPluginsPath() + File.separator + getPluginName();
+        unzipPath = PathManager.getPluginsPath() + File.separator + pluginName;
       }
 
-      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(myFile, new File(unzipPath));
+      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(fromFile, new File(unzipPath));
       StartupActionScriptManager.addActionCommand(unzip);
     }
 
     // add command to remove temp plugin file
-    StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(myFile);
+    StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(fromFile);
     StartupActionScriptManager.addActionCommand(deleteTemp);
   }
 
