@@ -21,15 +21,16 @@ public class ProjectResources extends ResourceRepository {
   // project resources are defined as 0x7FXX#### where XX is the resource type (layout, drawable,
   // etc...). Using FF as the type allows for 255 resource types before we get a collision
   // which should be fine.
-  private final static int DYNAMIC_ID_SEED_START = 0x7fff0000;
+  private static final int DYNAMIC_ID_SEED_START = 0x7fff0000;
 
-  private Map<ResourceType, TObjectIntHashMap<String>> mResourceValueMap;
-  private TIntObjectHashMap<Pair<ResourceType, String>> mResIdValueToNameMap;
-  private Map<IntArrayWrapper, String> mStyleableValueToNameMap;
+  private Map<ResourceType, TObjectIntHashMap<String>> myResourceValueMap;
+  private TIntObjectHashMap<Pair<ResourceType, String>> myResIdValueToNameMap;
+  private Map<IntArrayWrapper, String> myStyleableValueToNameMap;
 
-  private final TObjectIntHashMap<String> mDynamicIds = new TObjectIntHashMap<String>();
-  private final TIntObjectHashMap<String> mRevDynamicIds = new TIntObjectHashMap<String>();
-  private int mDynamicSeed = DYNAMIC_ID_SEED_START;
+  private final TObjectIntHashMap<String> myName2DynamicIdMap = new TObjectIntHashMap<String>();
+  private final TIntObjectHashMap<Pair<ResourceType, String>> myDynamicId2ResourceMap = 
+    new TIntObjectHashMap<Pair<ResourceType, String>>();
+  private int myDynamicSeed = DYNAMIC_ID_SEED_START;
 
   public ProjectResources() {
     super(false);
@@ -38,14 +39,14 @@ public class ProjectResources extends ResourceRepository {
   @Nullable
   public Pair<ResourceType, String> resolveResourceId(int id) {
     Pair<ResourceType, String> result = null;
-    if (mResIdValueToNameMap != null) {
-      result = mResIdValueToNameMap.get(id);
+    if (myResIdValueToNameMap != null) {
+      result = myResIdValueToNameMap.get(id);
     }
 
     if (result == null) {
-      String name = mRevDynamicIds.get(id);
-      if (name != null) {
-        result = Pair.of(ResourceType.ID, name);
+      final Pair<ResourceType, String> pair = myDynamicId2ResourceMap.get(id);
+      if (pair != null) {
+        result = pair;
       }
     }
 
@@ -54,9 +55,9 @@ public class ProjectResources extends ResourceRepository {
 
   @Nullable
   public String resolveStyleable(int[] id) {
-    if (mStyleableValueToNameMap != null) {
+    if (myStyleableValueToNameMap != null) {
       mWrapper.set(id);
-      return mStyleableValueToNameMap.get(mWrapper);
+      return myStyleableValueToNameMap.get(mWrapper);
     }
 
     return null;
@@ -64,21 +65,19 @@ public class ProjectResources extends ResourceRepository {
 
   @Nullable
   public Integer getResourceId(ResourceType type, String name) {
-    if (mResourceValueMap != null) {
-      final TObjectIntHashMap<String> map = mResourceValueMap.get(type);
-      if (map != null) {
-        if (!map.contains(name)) {
-          if (ResourceType.ID == type) {
-            return getDynamicId(name);
-          }
-          return null;
+    final TObjectIntHashMap<String> map = myResourceValueMap != null ? myResourceValueMap.get(type) : null;
+    if (map != null) {
+      if (!map.contains(name)) {
+        if (ResourceType.ID == type || ResourceType.LAYOUT == type) {
+          return getDynamicId(type, name);
         }
+        return null;
+      }
 
-        return map.get(name);
-      }
-      else if (ResourceType.ID == type) {
-        return getDynamicId(name);
-      }
+      return map.get(name);
+    }
+    else if (ResourceType.ID == type || ResourceType.LAYOUT == type) {
+      return getDynamicId(type, name);
     }
 
     return null;
@@ -89,14 +88,14 @@ public class ProjectResources extends ResourceRepository {
     return new ResourceItem(name);
   }
 
-  private int getDynamicId(String name) {
-    synchronized (mDynamicIds) {
-      if (mDynamicIds.containsKey(name)) {
-        return mDynamicIds.get(name);
+  private int getDynamicId(ResourceType type, String name) {
+    synchronized (myName2DynamicIdMap) {
+      if (myName2DynamicIdMap.containsKey(name)) {
+        return myName2DynamicIdMap.get(name);
       }
-      final int value = ++mDynamicSeed;
-      mDynamicIds.put(name, value);
-      mRevDynamicIds.put(value, name);
+      final int value = ++myDynamicSeed;
+      myName2DynamicIdMap.put(name, value);
+      myDynamicId2ResourceMap.put(value, Pair.of(type, name));
       return value;
     }
   }
@@ -104,9 +103,9 @@ public class ProjectResources extends ResourceRepository {
   void setCompiledResources(TIntObjectHashMap<Pair<ResourceType, String>> id2res,
                             Map<IntArrayWrapper, String> styleableid2name,
                             Map<ResourceType, TObjectIntHashMap<String>> res2id) {
-    mResourceValueMap = res2id;
-    mResIdValueToNameMap = id2res;
-    mStyleableValueToNameMap = styleableid2name;
+    myResourceValueMap = res2id;
+    myResIdValueToNameMap = id2res;
+    myStyleableValueToNameMap = styleableid2name;
     mergeIdResources();
   }
 
@@ -117,12 +116,12 @@ public class ProjectResources extends ResourceRepository {
   }
 
   private void mergeIdResources() {
-    if (mResourceValueMap == null) {
+    if (myResourceValueMap == null) {
       return;
     }
 
     List<ResourceItem> resources = mResourceMap.get(ResourceType.ID);
-    final TObjectIntHashMap<String> name2id = mResourceValueMap.get(ResourceType.ID);
+    final TObjectIntHashMap<String> name2id = myResourceValueMap.get(ResourceType.ID);
 
     if (name2id != null) {
       final TObjectIntHashMap<String> copy;
