@@ -742,6 +742,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       icon = IconDeferrer.getInstance().defer(settings.getConfiguration().getIcon(), Pair.create(myProject, settings), new Function<Pair<Project, RunnerAndConfigurationSettings>, Icon>() {
         @Override
         public Icon fun(Pair<Project, RunnerAndConfigurationSettings> projectRunnerAndConfigurationSettingsPair) {
+          if(myProject.isDisposed()) return null;
+
           Icon icon;
           try {
             settings.checkSettings();
