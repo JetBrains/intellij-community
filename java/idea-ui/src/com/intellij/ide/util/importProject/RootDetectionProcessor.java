@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;

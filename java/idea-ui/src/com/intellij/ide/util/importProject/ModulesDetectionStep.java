@@ -16,9 +16,9 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.JavaProjectStructureDetector;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;

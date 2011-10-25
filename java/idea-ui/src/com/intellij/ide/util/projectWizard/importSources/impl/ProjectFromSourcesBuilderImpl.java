@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;

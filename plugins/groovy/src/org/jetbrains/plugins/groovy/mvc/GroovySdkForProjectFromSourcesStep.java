@@ -17,9 +17,9 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.StdModuleTypes;
 

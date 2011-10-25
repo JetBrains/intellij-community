@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;

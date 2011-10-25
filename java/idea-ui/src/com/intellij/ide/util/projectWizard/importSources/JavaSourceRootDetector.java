@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.JavaUtil;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;

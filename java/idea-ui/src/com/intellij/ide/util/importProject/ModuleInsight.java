@@ -16,7 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.JavaUtil;
-import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;

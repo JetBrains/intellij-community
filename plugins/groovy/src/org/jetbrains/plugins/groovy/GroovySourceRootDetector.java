@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.ide.util.newProjectWizard.JavaSourceRootDetector;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
 
 /**
  * @author nik
  */
-public class GroovySourceRootDetector extends JavaSourceRootDetector  {
+public class GroovySourceRootDetector extends JavaSourceRootDetector {
   @Override
   protected String getLanguageName() {
     return "Groovy";

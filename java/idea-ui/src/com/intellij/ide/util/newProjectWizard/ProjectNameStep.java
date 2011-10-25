@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
