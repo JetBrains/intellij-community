@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.JavaUtil;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 
@@ -28,7 +28,7 @@ import java.util.List;
 public class JavaSourceRootFinder implements SourceRootFinder {
   @Override
   public List<Pair<File, String>> findRoots(File dir) {
-    return JavaUtil.suggestRoots(dir, StdFileTypes.JAVA);
+    return JavaSourceRootDetectionUtil.suggestRoots(dir, StdFileTypes.JAVA);
   }
 
   @Override

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.ide.util.JavaUtil;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.ide.util.newProjectWizard.SourceRootFinder;
 import com.intellij.openapi.util.Pair;
 
@@ -28,7 +28,7 @@ import java.util.List;
 public class GroovySourceRootFinder implements SourceRootFinder {
   @Override
   public List<Pair<File, String>> findRoots(File dir) {
-    return JavaUtil.suggestRoots(dir, GroovyFileType.GROOVY_FILE_TYPE);
+    return JavaSourceRootDetectionUtil.suggestRoots(dir, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   @Override

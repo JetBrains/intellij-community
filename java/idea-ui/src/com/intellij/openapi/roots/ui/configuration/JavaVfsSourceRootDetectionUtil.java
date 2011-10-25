@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util;
+package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -29,8 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class JavaUtilForVfs {
-  private JavaUtilForVfs() {}
+public class JavaVfsSourceRootDetectionUtil {
+  private JavaVfsSourceRootDetectionUtil() {}
 
   /**
    * Scan directory and detect java source roots within it. The source root is detected as the following:
@@ -122,7 +123,7 @@ public class JavaUtilForVfs {
 
     CharSequence chars = LoadTextUtil.loadText(javaFile);
 
-    String packageName = JavaUtil.getPackageStatement(chars);
+    String packageName = JavaSourceRootDetectionUtil.getPackageStatement(chars);
     if (packageName != null){
       VirtualFile root = javaFile.getParent();
       int index = packageName.length();

@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestCase;
@@ -57,7 +58,7 @@ public class JavaSourceRootDetectionTest extends PlatformTestCase {
     final String dirPath = JavaTestUtil.getJavaTestDataPath() + FileUtil.toSystemDependentName("/ide/sourceRootDetection/" + getTestName(true));
     final File dir = new File(dirPath);
     assertTrue(dir.isDirectory());
-    final List<Pair<File,String>> actual = JavaUtil.suggestRoots(dir, JavaFileType.INSTANCE);
+    final List<Pair<File,String>> actual = JavaSourceRootDetectionUtil.suggestRoots(dir, JavaFileType.INSTANCE);
     List<Pair<File, String>> expectedList = new ArrayList<Pair<File, String>>();
     for (int i = 0; i < expected.length / 2; i++) {
       expectedList.add(Pair.create(new File(dir, expected[2 * i]), expected[2 * i + 1]));

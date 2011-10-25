@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
-import com.intellij.ide.util.JavaUtil;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -94,7 +94,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
           public void run() {
             for (final File file : fileToEntryMap.keySet()) {
               progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
-              final List<Pair<File, String>> roots = JavaUtil.suggestRoots(file, StdFileTypes.JAVA);
+              final List<Pair<File, String>> roots = JavaSourceRootDetectionUtil.suggestRoots(file, StdFileTypes.JAVA);
               entryToRootMap.put(fileToEntryMap.get(file), roots);
             }
           }
