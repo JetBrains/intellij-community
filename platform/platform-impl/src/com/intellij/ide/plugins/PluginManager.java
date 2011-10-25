@@ -199,6 +199,7 @@ public class PluginManager {
     final ClassLoader parentLoader = callerClass.getClassLoader();
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
+    final HashMap<String, String> disabledPluginNames = new HashMap<String, String>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
         final List<String> modules = descriptor.getModules();
@@ -212,11 +213,12 @@ public class PluginManager {
       }
       else {
         descriptor.setEnabled(false);
+        disabledPluginNames.put(descriptor.getPluginId().getIdString(), descriptor.getName());
         initClassLoader(parentLoader, descriptor);
       }
     }
 
-    prepareLoadingPluginsErrorMessage(filterBadPlugins(result));
+    prepareLoadingPluginsErrorMessage(filterBadPlugins(result, disabledPluginNames));
 
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptorImpl>();
     for (final IdeaPluginDescriptorImpl descriptor : result) {
@@ -672,7 +674,7 @@ public class PluginManager {
   }
 
   @Nullable
-  private static String filterBadPlugins(List<IdeaPluginDescriptorImpl> result) {
+  private static String filterBadPlugins(List<IdeaPluginDescriptorImpl> result, final Map<String, String> disabledPluginNames) {
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptorImpl>();
     final StringBuffer message = new StringBuffer();
     boolean pluginsWithoutIdFound = false;
@@ -713,7 +715,16 @@ public class PluginManager {
               }
               final String name = pluginDescriptor.getName();
               final IdeaPluginDescriptorImpl descriptor = idToDescriptorMap.get(pluginId);
-              String pluginName = descriptor == null ? pluginId.getIdString() : descriptor.getName();
+              String pluginName;
+              if (descriptor == null) {
+                pluginName = pluginId.getIdString();
+                if (disabledPluginNames.containsKey(pluginName)) {
+                  pluginName = disabledPluginNames.get(pluginName);
+                }
+              }
+              else {
+                pluginName = descriptor.getName();
+              }
 
               message.append(getDisabledPlugins().contains(pluginId.getIdString())
                              ? IdeBundle.message("error.required.plugin.disabled", name, pluginName)
