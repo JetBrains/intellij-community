@@ -23,6 +23,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
@@ -51,7 +56,13 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     final Editor editor = context.getEditor();
 
     if (argumentList != null) {
-      if (context.getCompletionChar() == ':') {
+      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(context.getProject()).getCurrentSettings();
+      GroovyCodeStyleSettings codeStyleSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
+      CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+
+      boolean insertSpace = codeStyleSettings.SPACE_IN_NAMED_ARGUMENT;
+      
+      if (context.getCompletionChar() == ':' || (insertSpace && context.getCompletionChar() == ' ')) {
         context.setAddCompletionChar(false);
       }
       
@@ -61,8 +72,9 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       s = StringUtil.trimEnd(s, ")");
 
       if (s.trim().length() == 0) {
-        editor.getDocument().insertString(tailOffset, ":");
-        editor.getCaretModel().moveToOffset(tailOffset + 1);
+        String toInsert = insertSpace ? ": " : ":";
+        editor.getDocument().insertString(tailOffset, toInsert);
+        editor.getCaretModel().moveToOffset(tailOffset + toInsert.length());
       }
       else {
         if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
@@ -86,17 +98,29 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
         else {
           m = Pattern.compile("([ \\t]*)([\\n \\t]*)[\\],](.*)", Pattern.DOTALL).matcher(s);
           if (m.matches()) {
-            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), ":");
-            editor.getCaretModel().moveToOffset(tailOffset + 1);
+            String toInsert = insertSpace ? ": " : ":";
+            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), toInsert);
+            editor.getCaretModel().moveToOffset(tailOffset + toInsert.length());
           }
           else {
             m = Pattern.compile("([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
             if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
-            
-            String toInsert = m.group(2).startsWith("\n") ? ":," : ":, ";
-            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), toInsert);
-            editor.getCaretModel().moveToOffset(tailOffset + 1);
-            context.setTailOffset(tailOffset + 1);
+
+            StringBuilder sb = new StringBuilder(4);
+            sb.append(':');
+            int shiftCaret = 1;
+            if (insertSpace) {
+              sb.append(' ');
+              shiftCaret++;
+            }
+            sb.append(',');
+
+            if (!m.group(2).startsWith("\n") && commonCodeStyleSettings.SPACE_AFTER_COMMA) {
+              sb.append(' ');
+            }
+
+            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), sb);
+            editor.getCaretModel().moveToOffset(tailOffset + shiftCaret);
           }
         }
       }

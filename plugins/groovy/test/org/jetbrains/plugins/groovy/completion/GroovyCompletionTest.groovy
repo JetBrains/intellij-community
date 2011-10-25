@@ -22,6 +22,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
 
 /**
  * @author Maxim.Medvedev
@@ -288,6 +290,30 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     """
   }
 
+  public void testCompletionNamedArgumentWithoutSpace() {
+    def settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(GroovyCodeStyleSettings.class)
+    settings.SPACE_IN_NAMED_ARGUMENT = false
+
+    try {
+      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+  class A {
+   public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+   { m(arg11<caret>) }
+  }
+  """)
+      myFixture.completeBasic()
+      myFixture.checkResult """
+  class A {
+   public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+   { m(arg111:<caret>) }
+  }
+  """
+    }
+    finally {
+      settings.SPACE_IN_NAMED_ARGUMENT = true
+    }
+  }
+
   public void testCompletionNamedArgument1() {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
@@ -334,7 +360,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m arg111:<caret> }
+ { m arg111: <caret> }
 }
 """
   }
@@ -351,7 +377,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m (arg111:<caret>, zzz) }
+ { m (arg111: <caret>, zzz) }
 }
 """
   }
@@ -370,7 +396,7 @@ class A {
     myFixture.checkResult("""
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m (arg111:<caret>, {
+ { m (arg111: <caret>, {
       out << "asdasdas"
  } ) }
 }
@@ -389,7 +415,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m([arg111:<caret>])}
+ { m([arg111: <caret>])}
 }
 """
   }
@@ -406,7 +432,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111:<caret>)}
+ { m(arg111: <caret>)}
 }
 """
   }
@@ -423,7 +449,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111:<caret>,)}
+ { m(arg111: <caret>,)}
 }
 """
   }
@@ -441,7 +467,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111:<caret>)}
+ { m(arg111: <caret>)}
 }
 """
   }
@@ -526,7 +552,7 @@ class A {
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  {
-   m(arg111:<caret>,
+   m(arg111: <caret>,
      arg222: 222,
    )
  }
@@ -552,7 +578,7 @@ class A {
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  {
-   m(arg111:<caret>
+   m(arg111: <caret>
      , arg222: 222,
      arg333: 333,
    )
