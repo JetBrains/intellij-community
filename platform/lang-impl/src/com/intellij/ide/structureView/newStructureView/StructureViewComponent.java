@@ -591,18 +591,19 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
 
     protected boolean isAutoScrollMode() {
-      return myShouldAutoScroll && ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).getState().AUTOSCROLL_MODE;
+      return myShouldAutoScroll && !myProject.isDisposed()
+             && ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState().AUTOSCROLL_MODE;
     }
 
     protected void setAutoScrollMode(boolean state) {
-      ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).getState().AUTOSCROLL_MODE = state;
+      ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState().AUTOSCROLL_MODE = state;
     }
 
     protected void scrollToSource(Component tree) {
       if (myAbstractTreeBuilder == null) return;
       myAutoscrollFeedback = true;
 
-      Navigatable editSourceDescriptor = LangDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
+      Navigatable editSourceDescriptor = PlatformDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
       if (myFileEditor != null && editSourceDescriptor != null && editSourceDescriptor.canNavigateToSource()) {
         editSourceDescriptor.navigate(false);
       }
@@ -634,12 +635,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
 
     protected boolean isAutoScrollMode() {
-      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
+      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
       return structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE;
     }
 
     protected void setAutoScrollMode(boolean state) {
-      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
+      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
       structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors.length > 0 && state) {
