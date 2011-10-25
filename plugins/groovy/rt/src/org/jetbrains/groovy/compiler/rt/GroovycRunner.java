@@ -302,8 +302,6 @@ public class GroovycRunner {
       System.out.print(compiledOutputItem.getOutputPath());
       System.out.print(SEPARATOR);
       System.out.print(compiledOutputItem.getSourceFile());
-      System.out.print(SEPARATOR);
-      System.out.print(compiledOutputItem.getOutputRootDirectory());
       System.out.print(COMPILED_END);
       System.out.println();
     }

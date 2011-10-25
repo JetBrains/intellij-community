@@ -19,26 +19,27 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
+import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
  */
 public class GroovycOSProcessHandler extends OSProcessHandler {
-  private final List<TranslatingCompiler.OutputItem> myCompiledItems = new ArrayList<TranslatingCompiler.OutputItem>();
+  private final List<GroovyCompilerWrapper.OutputItem> myCompiledItems = new ArrayList<GroovyCompilerWrapper.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
@@ -102,7 +103,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         String outputPath = list.get(0);
         String sourceFile = list.get(1);
 
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(outputPath);
         ContainerUtil.addIfNotNull(getOutputItem(outputPath, sourceFile), myCompiledItems);
 
       }
@@ -169,23 +169,11 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   }
 
   @Nullable
-  private static TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
-
-    final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
-    if (sourceVirtualFile == null) return null; //the source might already have been deleted
-
-    return new TranslatingCompiler.OutputItem() {
-      public String getOutputPath() {
-        return outputPath;
-      }
-
-      public VirtualFile getSourceFile() {
-        return sourceVirtualFile;
-      }
-    };
+  private static GroovyCompilerWrapper.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
+    return new GroovyCompilerWrapper.OutputItem(outputPath, sourceFile);
   }
 
-  public List<TranslatingCompiler.OutputItem> getSuccessfullyCompiled() {
+  public List<GroovyCompilerWrapper.OutputItem> getSuccessfullyCompiled() {
     return myCompiledItems;
   }
 
