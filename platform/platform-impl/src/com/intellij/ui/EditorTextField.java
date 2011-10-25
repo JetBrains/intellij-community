@@ -408,7 +408,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       @Override
       public TextAttributes getAttributes(TextAttributesKey key) {
         final TextAttributes attributes = super.getAttributes(key);
-        if (!isEnabled()) {
+        if (!isEnabled() && attributes != null) {
           return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
         }
 
