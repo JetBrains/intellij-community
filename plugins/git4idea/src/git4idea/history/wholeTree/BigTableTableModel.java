@@ -421,13 +421,13 @@ public class BigTableTableModel extends AbstractTableModel {
       @Override
       protected String getGroup(CommitI commitI) {
         if (getCurrentGroup() == null) {
-          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myOrder));
+          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
           if (stashTop != null && (Comparing.equal(stashTop.getFirst(), commitI.getHash()))) {
             return STASH;
           }
         }
         if (STASH.equals(getCurrentGroup())) { // index on <branchname>: <short hash> <base commit description>
-          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myOrder));
+          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
           if (stashTop != null && (Comparing.equal(stashTop.getSecond(), commitI.getHash()))) {
             return STASH;
           }
