@@ -186,8 +186,8 @@ public class OpenFileDescriptor implements Navigatable {
     final int offset = getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
-    if (myLogicalLine != -1) {
-      LogicalPosition pos = new LogicalPosition(myLogicalLine, myLogicalColumn);
+    if (myLogicalLine >= 0) {
+      LogicalPosition pos = new LogicalPosition(myLogicalLine, Math.max(myLogicalColumn, 0));
       if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
         caretModel.moveToLogicalPosition(pos);
         caretMoved = true;
