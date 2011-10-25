@@ -17,33 +17,47 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
  * @author nik
  */
 public class RootDetectionProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.RootDetectionProcessor");
   private final File myBaseDir;
   private final ProjectStructureDetector[] myDetectors;
   private final List<DetectedProjectRoot>[] myDetectedRoots;
   private final FileTypeManager myTypeManager;
   private final ProgressIndicator myProgressIndicator;
 
-  public RootDetectionProcessor(File baseDir) {
-    myBaseDir = baseDir;
-    myDetectors = ProjectStructureDetector.EP_NAME.getExtensions();
+  public RootDetectionProcessor(File baseDir, final ProjectStructureDetector[] detectors) {
+    myBaseDir = getCanonicalDir(baseDir);
+    myDetectors = detectors;
     //noinspection unchecked
     myDetectedRoots = new List[myDetectors.length];
     myTypeManager = FileTypeManager.getInstance();
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
+  }
+
+  private static File getCanonicalDir(File baseDir) {
+    try {
+      return new File(FileUtil.resolveShortWindowsName(baseDir.getAbsolutePath()));
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return baseDir;
+    }
   }
 
 

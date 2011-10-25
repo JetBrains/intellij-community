@@ -1,34 +1,33 @@
 package org.jetbrains.android.importDependencies;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Trinity;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
 class ImportSourceRootsDialog extends DialogWrapper {
-  private final ElementsChooser<Trinity<String, String, Collection<String>>> mySourcePathsChooser;
+  private final ElementsChooser<JavaModuleSourceRoot> mySourcePathsChooser;
 
-  public ImportSourceRootsDialog(@NotNull Project project, @NotNull List<Trinity<String, String, Collection<String>>> sourceRoots) {
+  public ImportSourceRootsDialog(@NotNull Project project, @NotNull List<JavaModuleSourceRoot> sourceRoots) {
     super(project, false);
 
     setTitle(AndroidBundle.message("android.import.dependencies.source.roots.dialog.title"));
 
-    mySourcePathsChooser = new ElementsChooser<Trinity<String, String, Collection<String>>>(true) {
-      public String getItemText(@NotNull Trinity<String, String, Collection<String>> sourceRootTrinity) {
-        return sourceRootTrinity.second.length() > 0
-               ? sourceRootTrinity.first + " (" + sourceRootTrinity.second + ")"
-               : sourceRootTrinity.first;
+    mySourcePathsChooser = new ElementsChooser<JavaModuleSourceRoot>(true) {
+      public String getItemText(@NotNull JavaModuleSourceRoot sourceRoot) {
+        final String packagePrefix = sourceRoot.getPackagePrefix();
+        final String path = sourceRoot.getDirectory().getAbsolutePath();
+        return packagePrefix.length() > 0 ? path + " (" + packagePrefix + ")" : path;
       }
     };
     mySourcePathsChooser.setElements(sourceRoots, true);
@@ -45,7 +44,7 @@ class ImportSourceRootsDialog extends DialogWrapper {
     return panel;
   }
 
-  public List<Trinity<String, String, Collection<String>>> getMarkedElements() {
+  public List<JavaModuleSourceRoot> getMarkedElements() {
     return mySourcePathsChooser.getMarkedElements();
   }
 }

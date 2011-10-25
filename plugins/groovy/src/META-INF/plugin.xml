@@ -361,7 +361,6 @@
     <stacktrace.fold substring="at org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods." negate="true"/>
     <stacktrace.fold substring="at org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport." negate="true"/>
 
-    <sourceRootFinder implementation="org.jetbrains.plugins.groovy.GroovySourceRootFinder"/>
     <projectStructureDetector implementation="org.jetbrains.plugins.groovy.GroovySourceRootDetector"/>
 
     <generation.topLevelFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFactoryProvider" />

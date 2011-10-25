@@ -63,8 +63,13 @@ public class JavaModuleSourceRoot extends DetectedProjectRoot {
   @Override
   public DetectedProjectRoot combineWith(@NotNull DetectedProjectRoot root) {
     if (root instanceof JavaModuleSourceRoot) {
-      return new JavaModuleSourceRoot(getDirectory(), myPackagePrefix, ContainerUtil.concat(myLanguages, ((JavaModuleSourceRoot)root).myLanguages));
+      return combineWith((JavaModuleSourceRoot)root);
     }
     return null;
+  }
+
+  @NotNull
+  public JavaModuleSourceRoot combineWith(@NotNull JavaModuleSourceRoot root) {
+    return new JavaModuleSourceRoot(getDirectory(), myPackagePrefix, ContainerUtil.concat(myLanguages, root.myLanguages));
   }
 }

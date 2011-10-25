@@ -172,9 +172,10 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     if (baseProjectPath == null) {
       return Collections.emptyList();
     }
-    final File baseProjectFile = new File(baseProjectPath);
 
-    Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = new RootDetectionProcessor(baseProjectFile).findRoots();
+    final File baseProjectFile = new File(baseProjectPath);
+    Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = new RootDetectionProcessor(baseProjectFile,
+                                                                                                ProjectStructureDetector.EP_NAME.getExtensions()).findRoots();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setText2("Processing " + roots.values().size() + " project roots...");

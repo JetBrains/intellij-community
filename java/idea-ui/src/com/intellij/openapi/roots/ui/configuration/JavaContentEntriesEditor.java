@@ -16,8 +16,8 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +35,7 @@ import com.intellij.util.concurrency.SwingWorker;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +73,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
-    final HashMap<ContentEntry, List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, List<Pair<File, String>>>();
+    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<ContentEntry, Collection<JavaModuleSourceRoot>>();
     final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
     for (final ContentEntry contentEntry : contentEntries) {
       final VirtualFile file = contentEntry.getFile();
@@ -94,7 +94,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
           public void run() {
             for (final File file : fileToEntryMap.keySet()) {
               progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
-              final List<Pair<File, String>> roots = JavaSourceRootDetectionUtil.suggestRoots(file, StdFileTypes.JAVA);
+              final Collection<JavaModuleSourceRoot> roots = JavaSourceRootDetectionUtil.suggestRoots(file);
               entryToRootMap.put(fileToEntryMap.get(file), roots);
             }
           }
@@ -107,13 +107,13 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     final Runnable addSourcesRunnable = new Runnable() {
       public void run() {
         for (final ContentEntry contentEntry : contentEntries) {
-          final List<Pair<File, String>> suggestedRoots = entryToRootMap.get(contentEntry);
+          final Collection<JavaModuleSourceRoot> suggestedRoots = entryToRootMap.get(contentEntry);
           if (suggestedRoots != null) {
-            for (final Pair<File, String> suggestedRoot : suggestedRoots) {
-              final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.first);
+            for (final JavaModuleSourceRoot suggestedRoot : suggestedRoots) {
+              final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.getDirectory());
               final VirtualFile fileContent = contentEntry.getFile();
               if (sourceRoot != null && fileContent != null && VfsUtil.isAncestor(fileContent, sourceRoot, false)) {
-                contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getSecond());
+                contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getPackagePrefix());
               }
             }
           }
