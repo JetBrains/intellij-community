@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -22,10 +24,16 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class NonSerializableFieldInSerializableClassInspection
   extends SerializableInspection {
+
+  @SuppressWarnings({"PublicField"})
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
   @Override
   @NotNull
@@ -42,25 +50,28 @@ public class NonSerializableFieldInSerializableClassInspection
   }
 
   @Override
+  protected JComponent[] createAdditionalOptions() {
+    return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NonSerializableFieldInSerializableClassVisitor();
   }
 
-  private class NonSerializableFieldInSerializableClassVisitor
-    extends BaseInspectionVisitor {
+  private class NonSerializableFieldInSerializableClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (field.hasModifierProperty(PsiModifier.TRANSIENT)
-          || field.hasModifierProperty(PsiModifier.STATIC)) {
+      if (field.hasModifierProperty(PsiModifier.TRANSIENT) || field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       final PsiClass aClass = field.getContainingClass();
       if (aClass == null) {
         return;
       }
-      if (ignoreAnonymousInnerClasses &&
-          aClass instanceof PsiAnonymousClass) {
+      if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
         return;
       }
       if (!SerializationUtils.isSerializable(aClass)) {
@@ -69,12 +80,14 @@ public class NonSerializableFieldInSerializableClassInspection
       if (SerializationUtils.isProbablySerializable(field.getType())) {
         return;
       }
-      final boolean hasWriteObject =
-        SerializationUtils.hasWriteObject(aClass);
+      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
       if (hasWriteObject) {
         return;
       }
       if (isIgnoredSubclass(aClass)) {
+        return;
+      }
+      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
         return;
       }
       registerFieldError(field);
