@@ -32,7 +32,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -76,6 +78,7 @@ public class PluginManager {
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
   private static List<String> myPlugins2Disable = null;
+  private static LinkedHashSet<String> myPlugins2Enable = null;
   @NonNls public static final String CORE_PLUGIN_ID = "com.intellij";
 
   @NonNls public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -98,6 +101,9 @@ public class PluginManager {
 
   private static IdeaPluginDescriptorImpl[] ourPlugins;
   private static Map<String, PluginId> ourPluginClasses;
+  private static final String DISABLE = "disable";
+  private static final String ENABLE = "enable";
+  private static final String EDIT = "edit";
 
   /**
    * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
@@ -572,20 +578,30 @@ public class PluginManager {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             notification.expire();
-            if (myPlugins2Disable != null) {
-              final List<String> disabledPlugins = getDisabledPlugins();
+            final String description = event.getDescription();
+            if (EDIT.equals(description)) {
+              final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
+              final Project project = null;
+              ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+              return;
+            }
+            final List<String> disabledPlugins = getDisabledPlugins();
+            if (myPlugins2Disable != null && DISABLE.equals(description)) {
               for (String pluginId : myPlugins2Disable) {
                 if (!disabledPlugins.contains(pluginId)) {
                   disabledPlugins.add(pluginId);
                 }
               }
-              try {
-                saveDisabledPlugins(disabledPlugins, false);
-              }
-              catch (IOException ignore) {
-              }
-              myPlugins2Disable = null;
+            } else if (myPlugins2Enable != null && ENABLE.equals(description)) {
+              disabledPlugins.removeAll(myPlugins2Enable);
             }
+            try {
+              saveDisabledPlugins(disabledPlugins, false);
+            }
+            catch (IOException ignore) {
+            }
+            myPlugins2Enable = null;
+            myPlugins2Disable = null;
           }
         }));
       myPluginError = null;
@@ -685,9 +701,7 @@ public class PluginManager {
         pluginsWithoutIdFound = true;
       }
       if (idToDescriptorMap.containsKey(id)) {
-        if (message.length() > 0) {
-          message.append("\n");
-        }
+        message.append("<br>");
         message.append(IdeBundle.message("message.duplicate.plugin.id"));
         message.append(id);
         it.remove();
@@ -698,6 +712,7 @@ public class PluginManager {
     }
     addModulesAsDependents(idToDescriptorMap);
     final List<String> disabledPluginIds = new ArrayList<String>();
+    final LinkedHashSet<String> faultyDescriptors = new LinkedHashSet<String>();
     for (final Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptorImpl pluginDescriptor = it.next();
       checkDependants(pluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
@@ -709,10 +724,9 @@ public class PluginManager {
           if (!idToDescriptorMap.containsKey(pluginId)) {
             pluginDescriptor.setEnabled(false);
             if (!pluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX)) {
+              faultyDescriptors.add(pluginId.getIdString());
               disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
-              if (message.length() > 0) {
-                message.append("<br>");
-              }
+              message.append("<br>");
               final String name = pluginDescriptor.getName();
               final IdeaPluginDescriptorImpl descriptor = idToDescriptorMap.get(pluginId);
               String pluginName;
@@ -739,17 +753,14 @@ public class PluginManager {
     }
     if (!disabledPluginIds.isEmpty()) {
       myPlugins2Disable = disabledPluginIds;
-      if (message.length() > 0) {
-        message.append("<br>");
-      }
-      message.append("Would you like to <a href=\"disable\">disable</a> ")
-        .append(disabledPluginIds.size() == 1 ? "it" : "them")
-        .append(" too?");
+      myPlugins2Enable = faultyDescriptors;
+      message.append("<br>");
+      message.append("<br>").append("<a href=\"" + DISABLE + "\">Disable ").append(disabledPluginIds.size() == 1 ? disabledPluginNames.get(disabledPluginIds.iterator().next()) : "not loaded plugins").append("</a>");
+      message.append("<br>").append("<a href=\"" + ENABLE + "\">Enable ").append(faultyDescriptors.size() == 1 ? disabledPluginNames.get(faultyDescriptors.iterator().next()) : " all necessary plugins").append("</a>");
+      message.append("<br>").append("<a href=\"" + EDIT + "\">Open plugin manager</a>");
     }
     if (pluginsWithoutIdFound) {
-      if (message.length() > 0) {
-        message.append("<br>");
-      }
+      message.append("<br>");
       message.append(IdeBundle.message("error.plugins.without.id.found"));
     }
     if (message.length() > 0) {
