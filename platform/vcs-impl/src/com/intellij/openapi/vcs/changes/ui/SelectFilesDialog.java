@@ -19,9 +19,9 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,10 +30,12 @@ import java.util.List;
  */
 public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
 
+  private ChangesTreeList<VirtualFile> myFileList;
+
   public SelectFilesDialog(final Project project, List<VirtualFile> originalFiles, final String prompt,
-                           final VcsShowConfirmationOption confirmationOption) {
-    super(project, false, confirmationOption, prompt);
-    myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, true, true, null, null) {
+                           final VcsShowConfirmationOption confirmationOption, boolean selectableFiles, boolean showDoNotAskOption) {
+    super(project, false, confirmationOption, prompt, showDoNotAskOption);
+    myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, selectableFiles, true, null, null) {
       protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes, ChangeNodeDecorator changeNodeDecorator) {
         return new TreeModelBuilder(project, false).buildModelFromFiles(changes);
       }
@@ -51,11 +53,16 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
       }
     };
     myFileList.setChangesToDisplay(originalFiles);
-    myPanel.add(myFileList, BorderLayout.CENTER);
     init();
   }
 
   public Collection<VirtualFile> getSelectedFiles() {
     return myFileList.getIncludedChanges();
+  }
+
+  @NotNull
+  @Override
+  protected ChangesTreeList getFileList() {
+    return myFileList;
   }
 }

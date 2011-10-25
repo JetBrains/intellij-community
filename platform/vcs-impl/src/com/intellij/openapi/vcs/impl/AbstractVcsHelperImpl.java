@@ -148,7 +148,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return null;
     }
 
-    SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt, confirmationOption);
+    SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt, confirmationOption, true, true);
     dlg.setTitle(title);
     if (! confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);
