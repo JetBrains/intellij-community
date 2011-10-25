@@ -16,6 +16,7 @@
 
 package com.intellij.injected.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -45,11 +46,13 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
     myHostModel = editorMarkupModel;
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @Override
   @NotNull
   public RangeHighlighter addRangeHighlighter(final int startOffset,
                                               final int endOffset,
@@ -79,52 +82,57 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
     myHostModel.changeAttributesInBatch(highlighter, changeAttributesAction);
   }
 
+  @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
     int hostLine = myDocument.injectedToHostLine(line);
     return myHostModel.addLineHighlighter(hostLine, layer, textAttributes);
   }
 
+  @Override
   public void removeHighlighter(@NotNull final RangeHighlighter rangeHighlighter) {
     myHostModel.removeHighlighter(rangeHighlighter);
   }
 
+  @Override
   public void removeAllHighlighters() {
     myHostModel.removeAllHighlighters();
   }
 
+  @Override
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     return myHostModel.getAllHighlighters();
   }
 
+  @Override
   public void dispose() {
     myHostModel.dispose();
   }
 
+  @Override
   public RangeHighlighter addPersistentLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
     int hostLine = myDocument.injectedToHostLine(line);
     return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes);
   }
 
 
+  @Override
   public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
     return myHostModel.containsHighlighter(highlighter);
   }
 
-  public void addMarkupModelListener(@NotNull MarkupModelListener listener) {
-    myHostModel.addMarkupModelListener(listener);
+  @Override
+  public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener) {
+    myHostModel.addMarkupModelListener(parentDisposable, listener);
   }
 
-
-  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
-    myHostModel.removeMarkupModelListener(listener);
-  }
-
+  @Override
   public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
     myHostModel.setRangeHighlighterAttributes(highlighter, textAttributes);
   }
 
+  @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
     //todo
     return false;
@@ -143,6 +151,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
     return myHostModel.overlappingIterator(startOffset, endOffset);
   }
 
+  @Override
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
     // todo convert
     return myHostModel.sweep(start, end, sweepProcessor);

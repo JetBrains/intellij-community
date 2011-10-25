@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,6 +35,7 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
@@ -54,7 +56,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final List<MarkupModelListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final RangeHighlighterTree myHighlighterTree;
 
-  MarkupModelImpl(DocumentImpl document) {
+  MarkupModelImpl(@NotNull DocumentImpl document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myDocument = document;
     myHighlighterTree = new RangeHighlighterTree(myDocument, this);
@@ -185,8 +187,15 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return myDocument;
   }
 
-  public void addMarkupModelListener(@NotNull MarkupModelListener listener) {
+  @Override
+  public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull final MarkupModelListener listener) {
     myListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeMarkupModelListener(listener);
+      }
+    });
   }
 
   public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {

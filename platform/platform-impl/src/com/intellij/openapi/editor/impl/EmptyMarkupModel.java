@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -29,11 +30,13 @@ public class EmptyMarkupModel implements MarkupModelEx {
     myDocument = document;
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @Override
   @NotNull
   public RangeHighlighter addRangeHighlighter(int startOffset,
                                               int endOffset,
@@ -59,50 +62,59 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                       @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
   }
 
+  @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
     throw new ProcessCanceledException();
   }
 
+  @Override
   public void removeHighlighter(@NotNull RangeHighlighter rangeHighlighter) {
   }
 
+  @Override
   public void removeAllHighlighters() {
   }
 
+  @Override
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     return RangeHighlighter.EMPTY_ARRAY;
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     return null;
   }
 
+  @Override
   public boolean containsHighlighter(@NotNull RangeHighlighter highlighter) {
     return false;
   }
 
-  public void addMarkupModelListener(@NotNull MarkupModelListener listener) {
+  @Override
+  public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener) {
   }
 
-  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
-  }
-
+  @Override
   public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
 
   }
 
+  @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
     return false;
   }
@@ -118,6 +130,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
     return ContainerUtil.emptyIterator();
   }
 
+  @Override
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
     return false;
   }
