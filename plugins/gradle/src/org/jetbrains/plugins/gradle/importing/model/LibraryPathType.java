@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum LibraryPathType {
   
-  BINARY(OrderRootType.CLASSES), SOURCE(OrderRootType.SOURCES), JAVADOC(OrderRootType.DOCUMENTATION);
+  BINARY(OrderRootType.CLASSES), SOURCE(OrderRootType.SOURCES), DOC(OrderRootType.DOCUMENTATION);
 
   private final transient OrderRootType myRootType;
   
