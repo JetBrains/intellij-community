@@ -62,6 +62,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -1400,12 +1401,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Editor editor = consoleView.myEditor;
     final Document document = editor.getDocument();
     final int startOffset;
-
+    
+    String textToUse = StringUtil.convertLineSeparators(s);
     synchronized (consoleView.LOCK) {
       if (consoleView.myTokens.isEmpty()) return;
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
-      if (info.contentType != ConsoleViewContentType.USER_INPUT && !s.contains("\n")) {
-        consoleView.print(s, ConsoleViewContentType.USER_INPUT);
+      if (info.contentType != ConsoleViewContentType.USER_INPUT && !textToUse.contains("\n")) {
+        consoleView.print(textToUse, ConsoleViewContentType.USER_INPUT);
         consoleView.flushDeferredText(false);
         editor.getCaretModel().moveToOffset(document.getTextLength());
         editor.getSelectionModel().removeSelection();
@@ -1414,7 +1416,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       else if (info.contentType != ConsoleViewContentType.USER_INPUT) {
         insertUserText("temp", offset);
         final TokenInfo newInfo = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
-        replaceUserText(s, newInfo.startOffset, newInfo.endOffset);
+        replaceUserText(textToUse, newInfo.startOffset, newInfo.endOffset);
         return;
       }
 
@@ -1426,16 +1428,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         startOffset = Math.max(deferredOffset, Math.max(info.startOffset, offset));
       }
 
-      buffer.addUserText(startOffset - deferredOffset, s);
+      buffer.addUserText(startOffset - deferredOffset, textToUse);
 
-      int charCountToAdd = s.length();
+      int charCountToAdd = textToUse.length();
       info.endOffset += charCountToAdd;
       consoleView.myContentSize += charCountToAdd;
     }
 
-    document.insertString(startOffset, s);
+    document.insertString(startOffset, textToUse);
     // Math.max is needed when cyclic buffer is used
-    editor.getCaretModel().moveToOffset(Math.min(startOffset + s.length(), document.getTextLength()));
+    editor.getCaretModel().moveToOffset(Math.min(startOffset + textToUse.length(), document.getTextLength()));
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
