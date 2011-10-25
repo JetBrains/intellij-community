@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -41,6 +42,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
     myFramework = framework;
   }
 
+  @NotNull
   @Override
   public List<DetectedProjectRoot> detectRoots(File dir) {
     final List<DetectedProjectRoot> result = new ArrayList<DetectedProjectRoot>();
@@ -49,13 +51,14 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
       public boolean process(File file) {
         if (file.isDirectory() && new File(file, myFramework.getFrameworkName().toLowerCase() + "-app").isDirectory()) {
           result.add(new DetectedProjectRoot(file) {
+            @NotNull
             @Override
             public String getRootTypeName() {
               return myFramework.getDisplayName();
             }
 
             @Override
-            public boolean canContainRoot(DetectedProjectRoot root) {
+            public boolean canContainRoot(@NotNull DetectedProjectRoot root) {
               return false;
             }
           });
@@ -69,7 +72,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
   @Override
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
                                                   ProjectDescriptor projectDescriptor, WizardContext context,
-                                                  Icon icon) {
+                                                  Icon stepIcon) {
     final ModuleWizardStep groovySdkStep = new GroovySdkForProjectFromSourcesStep(this, builder, projectDescriptor, myFramework, context);
     final ModuleWizardStep javaSdkStep = ProjectWizardStepFactory.getInstance().createProjectJdkStep(context);
     return Arrays.asList(javaSdkStep, groovySdkStep);

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -25,7 +26,7 @@ import java.io.File;
 public abstract class DetectedProjectRoot {
   private final File myDirectory;
 
-  protected DetectedProjectRoot(File directory) {
+  protected DetectedProjectRoot(@NotNull File directory) {
     myDirectory = directory;
   }
 
@@ -33,14 +34,15 @@ public abstract class DetectedProjectRoot {
     return myDirectory;
   }
 
+  @NotNull
   public abstract String getRootTypeName();
 
   @Nullable
-  public DetectedProjectRoot combineWith(DetectedProjectRoot root) {
+  public DetectedProjectRoot combineWith(@NotNull DetectedProjectRoot root) {
     return null;
   }
 
-  public boolean canContainRoot(DetectedProjectRoot root) {
+  public boolean canContainRoot(@NotNull DetectedProjectRoot root) {
     return true;
   }
 }

@@ -90,8 +90,9 @@ public class ProjectNameStep extends ModuleWizardStep {
     myFormatPanel.updateData(myWizardContext);
     if (moduleBuilder instanceof ModuleBuilder) { // no SourcePathsBuilder here !
       ((ModuleBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
-    } else if (moduleBuilder instanceof ProjectFromSourcesBuilder) {
-      ((ProjectFromSourcesBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
+    }
+    else if (moduleBuilder instanceof ProjectFromSourcesBuilderImpl) {
+      ((ProjectFromSourcesBuilderImpl)moduleBuilder).setBaseProjectPath(projectFileDirectory);
     }
   }
 

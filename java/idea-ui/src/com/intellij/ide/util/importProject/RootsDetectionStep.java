@@ -16,11 +16,9 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
-import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
@@ -44,7 +42,8 @@ import java.util.List;
 public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRootData>> {
   private static final String ROOTS_FOUND_CARD = "roots_found";
   private static final String ROOTS_NOT_FOUND_CARD = "roots_not_found";
-  private final ProjectFromSourcesBuilder myBuilder;
+  private final ProjectFromSourcesBuilderImpl myBuilder;
+  private final WizardContext myContext;
   private final StepSequence mySequence;
   private final Icon myIcon;
   private final String myHelpId;
@@ -52,9 +51,14 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   private String myCurrentContentEntryPath = null;
   private JPanel myResultPanel;
 
-  public RootsDetectionStep(ProjectFromSourcesBuilder builder, StepSequence sequence, Icon icon, @NonNls String helpId) {
+  public RootsDetectionStep(ProjectFromSourcesBuilderImpl builder,
+                            WizardContext context,
+                            StepSequence sequence,
+                            Icon icon,
+                            @NonNls String helpId) {
     super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
     myBuilder = builder;
+    myContext = context;
     mySequence = sequence;
     myIcon = icon;
     myHelpId = helpId;
@@ -67,7 +71,6 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
       @Override
       public void selectionChanged() {
         updateSelectedTypes();
-        fireStateChanged();
       }
     });
     final String text = IdeBundle.message("label.project.roots.have.been.found");
@@ -116,14 +119,15 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   public void updateDataModel() {
     MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<ProjectStructureDetector, DetectedProjectRoot>();
     final List<DetectedRootData> selectedElements = myDetectedRootsChooser.getMarkedElements();
-    if (selectedElements.size() > 0) {
-      for (final DetectedRootData rootData : selectedElements) {
-        for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
-          roots.putValue(detector, rootData.getSelectedRoot());
-        }
+    for (final DetectedRootData rootData : selectedElements) {
+      for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
+        roots.putValue(detector, rootData.getSelectedRoot());
       }
     }
     myBuilder.setProjectRoots(roots);
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      detector.setupProjectStructure(roots.get(detector), myBuilder, myContext);
+    }
     updateSelectedTypes();
   }
 
@@ -135,6 +139,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
       }
     }
     mySequence.setTypes(selectedTypes);
+    myContext.requestWizardButtonsUpdate();
   }
 
   protected boolean shouldRunProgress() {
@@ -147,7 +152,6 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
       myCurrentContentEntryPath = getContentRootPath();
       myDetectedRootsChooser.setElements(foundRoots);
       updateSelectedTypes();
-      fireStateChanged();
       layout.show(myResultPanel, ROOTS_FOUND_CARD);
     }
     else {
@@ -233,7 +237,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
 
   @Nullable
   private String getContentRootPath() {
-    return myBuilder.getContentEntryPath();
+    return myBuilder.getBaseProjectPath();
   }
 
   protected String getProgressText() {

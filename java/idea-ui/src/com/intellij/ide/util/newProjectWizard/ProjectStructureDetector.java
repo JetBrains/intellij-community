@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,14 +33,15 @@ import java.util.List;
 public abstract class ProjectStructureDetector {
   public static final ExtensionPointName<ProjectStructureDetector> EP_NAME = ExtensionPointName.create("com.intellij.projectStructureDetector");
 
+  @NotNull
   public abstract List<DetectedProjectRoot> detectRoots(File dir);
 
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
                                                   ProjectDescriptor projectDescriptor, WizardContext context,
-                                                  Icon icon) {
+                                                  Icon stepIcon) {
     return Collections.emptyList();
   }
 
-  public void setupProjectStructure(@NotNull List<? extends DetectedProjectRoot> roots, @NotNull ProjectFromSourcesBuilder builder, @NotNull WizardContext context) {
+  public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots, @NotNull ProjectFromSourcesBuilder builder, @NotNull WizardContext context) {
   }
 }

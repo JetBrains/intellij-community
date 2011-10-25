@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
-import com.intellij.ide.util.newProjectWizard.JavaProjectStructureDetector;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NonNls;
@@ -79,7 +76,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
   }
 
   private int calcStateHashCode() {
-    int hash = myBuilder.getContentEntryPath().hashCode();
+    int hash = myBuilder.getBaseProjectPath().hashCode();
     for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
       hash = 31 * hash + root.getDirectory().hashCode();
     }
@@ -100,7 +97,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
       ignored.add(tokenizer.nextToken());
     }
     
-    myInsight.setRoots(Collections.singletonList(new File(myBuilder.getContentEntryPath())), sourceRoots, ignored);
+    myInsight.setRoots(Collections.singletonList(new File(myBuilder.getBaseProjectPath())), sourceRoots, ignored);
     myInsight.scanLibraries();
     
     return myInsight.getSuggestedLibraries();

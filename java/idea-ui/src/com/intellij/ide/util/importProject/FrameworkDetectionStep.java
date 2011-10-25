@@ -24,6 +24,7 @@ import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilderImpl;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -44,7 +45,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<? extends DetectedFrameworkDescription>>
-  implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
+  implements ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater {
   private final Icon myIcon;
   private List<File> myLastRoots = null;
   private final DetectedFrameworksComponent myDetectedFrameworksComponent;
@@ -64,7 +65,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
 
       @Override
       protected String getContentPath() {
-        return builder.getContentEntryPath();
+        return builder.getBaseProjectPath();
       }
     };
     myDetectedFrameworksComponent = new DetectedFrameworksComponent(myContext);
@@ -124,11 +125,6 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
 
   public Icon getIcon() {
     return myIcon;
-  }
-
-  @Override
-  public boolean isStepVisible() {
-    return !getModuleDescriptors().isEmpty();
   }
 
   public static boolean isEnabled() {

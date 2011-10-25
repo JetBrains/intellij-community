@@ -24,10 +24,7 @@ import com.intellij.ide.util.importProject.FrameworkDetectionStep;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.importProject.RootsDetectionStep;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
-import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
-import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -45,7 +42,7 @@ import java.util.List;
 public class CreateFromSourcesMode extends WizardMode {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
-  private ProjectFromSourcesBuilder myProjectBuilder;
+  private ProjectFromSourcesBuilderImpl myProjectBuilder;
 
   @NotNull
   public String getDisplayName(final WizardContext context) {
@@ -60,13 +57,13 @@ public class CreateFromSourcesMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder();
+    final ProjectFromSourcesBuilderImpl projectBuilder = new ProjectFromSourcesBuilderImpl();
     myProjectBuilder = projectBuilder;
     
     final StepSequence sequence = new StepSequence();
     final Icon icon = context.isCreatingNewProject() ? NEW_PROJECT_ICON : ICON;
     sequence.addCommonStep(new ProjectNameStep(context, this));
-    sequence.addCommonStep(new RootsDetectionStep(projectBuilder, sequence, icon, "reference.dialogs.new.project.fromCode.source"));
+    sequence.addCommonStep(new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"));
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), context, icon)) {
         sequence.addSpecificStep(detector.getClass().getName(), step);

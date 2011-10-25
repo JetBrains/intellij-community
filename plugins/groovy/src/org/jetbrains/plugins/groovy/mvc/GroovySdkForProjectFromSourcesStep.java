@@ -46,8 +46,8 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
   }
 
   @Override
-  protected String getContentEntryPath() {
-    return myBuilder.getContentEntryPath();
+  protected String getBasePath() {
+    return myBuilder.getBaseProjectPath();
   }
 
   @Override
@@ -55,8 +55,7 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
     super.updateDataModel();
     List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
     for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
-      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<JavaModuleSourceRoot>emptyList()
-      );
+      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<JavaModuleSourceRoot>emptyList());
       descriptor.addConfigurationUpdater(createModuleConfigurationUpdater());
       modules.add(descriptor);
     }

@@ -54,13 +54,14 @@ public class JavaModuleSourceRoot extends DetectedProjectRoot {
     return StringUtil.notNullize(myPackagePrefix);
   }
 
+  @NotNull
   @Override
   public String getRootTypeName() {
     return StringUtil.join(myLanguages, ", ");
   }
 
   @Override
-  public DetectedProjectRoot combineWith(DetectedProjectRoot root) {
+  public DetectedProjectRoot combineWith(@NotNull DetectedProjectRoot root) {
     if (root instanceof JavaModuleSourceRoot) {
       return new JavaModuleSourceRoot(getDirectory(), myPackagePrefix, ContainerUtil.concat(myLanguages, ((JavaModuleSourceRoot)root).myLanguages));
     }

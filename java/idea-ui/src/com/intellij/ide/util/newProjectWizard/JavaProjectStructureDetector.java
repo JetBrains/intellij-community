@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Trinity;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -35,6 +36,7 @@ import java.util.List;
  * @author nik
  */
 public class JavaProjectStructureDetector extends ProjectStructureDetector {
+  @NotNull
   @Override
   public List<DetectedProjectRoot> detectRoots(File dir) {
     final List<Trinity<String,String,Collection<String>>> trinities = SourcePathsStep.calculateSourceRoots(dir.getAbsolutePath());
@@ -48,11 +50,11 @@ public class JavaProjectStructureDetector extends ProjectStructureDetector {
   @Override
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
                                                   ProjectDescriptor projectDescriptor, WizardContext context,
-                                                  Icon icon) {
+                                                  Icon stepIcon) {
     final List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final ModuleInsight moduleInsight = new ModuleInsight(new DelegatingProgressIndicator());
-    steps.add(new LibrariesDetectionStep(this, builder, projectDescriptor, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page1"));
-    steps.add(new ModulesDetectionStep(this, builder, projectDescriptor, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page2"));
+    steps.add(new LibrariesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page1"));
+    steps.add(new ModulesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page2"));
     steps.add(ProjectWizardStepFactory.getInstance().createProjectJdkStep(context));
     return steps;
   }

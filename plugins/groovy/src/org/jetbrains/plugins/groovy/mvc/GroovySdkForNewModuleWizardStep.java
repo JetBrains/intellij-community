@@ -31,7 +31,7 @@ class GroovySdkForNewModuleWizardStep extends GroovySdkWizardStepBase {
   }
 
   @Override
-  protected String getContentEntryPath() {
+  protected String getBasePath() {
     return myModuleBuilder.getContentEntryPath();
   }
 }
