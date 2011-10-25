@@ -73,6 +73,7 @@ public class ConflictsDialog extends DialogWrapper{
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
+    setOKActionEnabled(myDoRefactoringRunnable != null);
     init();
   }
 
