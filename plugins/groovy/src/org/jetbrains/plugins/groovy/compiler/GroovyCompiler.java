@@ -46,6 +46,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
@@ -99,7 +100,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
     }
 
     context.getProgressIndicator().checkCanceled();
-    context.getProgressIndicator().setText(GROOVY_COMPILER_IN_OPERATION);
+    context.getProgressIndicator().setText(GroovycOSProcessHandler.GROOVY_COMPILER_IN_OPERATION);
 
     runGroovycCompiler(context, module, new ArrayList<VirtualFile>(allToCompile), false, getMainOutput(context, module, tests), sink, tests);
   }

@@ -39,6 +39,7 @@ import java.util.Set;
  * @date: 16.04.2007
  */
 public class GroovycOSProcessHandler extends BaseOSProcessHandler {
+  public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   private final List<GroovyCompilerWrapper.OutputItem> myCompiledItems = new ArrayList<GroovyCompilerWrapper.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();

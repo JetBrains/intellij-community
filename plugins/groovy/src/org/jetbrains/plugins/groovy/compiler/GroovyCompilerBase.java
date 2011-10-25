@@ -91,7 +91,6 @@ import java.util.*;
  */
 public abstract class GroovyCompilerBase implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase");
-  protected static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   protected final Project myProject;
 
   public GroovyCompilerBase(Project project) {
@@ -262,8 +261,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(outputItem.getOutputPath()));
           items.add(new OutputItemImpl(outputItem.getOutputPath(), sourceVirtualFile));
 
-          final String path = outputItem.getOutputPath();
-          final File classFile = new File(path);
+          final File classFile = new File(outputItem.getOutputPath());
           try {
             dependencyCache.reparseClassFile(classFile, FileUtil.loadFileBytes(classFile));
           }
