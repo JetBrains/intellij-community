@@ -30,8 +30,8 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   private String myWarnMessage;
   private BufferedImage myImage;
 
-  private final HyperlinkLabel myErrorLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
-  private final JBLabel myWarningLabel = new JBLabel();
+  private final HyperlinkLabel myHyperlinkMessageLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
+  private final JBLabel myMessageLabel = new JBLabel();
 
   private double myZoomFactor = 1.0;
   private boolean myZoomToFit = true;
@@ -64,7 +64,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     setOpaque(true);
     myImagePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY));
 
-    myErrorLabel.addHyperlinkListener(new HyperlinkListener() {
+    myHyperlinkMessageLabel.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         final Runnable quickFix = myErrorMessage.myQuickFix;
         if (quickFix != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -72,7 +72,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
         }
       }
     });
-    myErrorLabel.setOpaque(false);
+    myHyperlinkMessageLabel.setOpaque(false);
 
     myFileNameLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myFileNameLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
@@ -98,8 +98,8 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
 
     add(titlePanel);
-    add(myErrorLabel);
-    add(myWarningLabel);
+    add(myHyperlinkMessageLabel);
+    add(myMessageLabel);
 
     add(new MyImagePanelWrapper());
   }
@@ -139,24 +139,28 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   public void update() {
     myImagePanel.setVisible(true);
 
+    myHyperlinkMessageLabel.setVisible(false);
+    myMessageLabel.setVisible(false);
+
     if (myErrorMessage != null) {
-      myErrorLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
-                                    myErrorMessage.myLinkText,
-                                    myErrorMessage.myAfterLinkText);
-      myErrorLabel.setIcon(Messages.getErrorIcon());
-      myErrorLabel.setVisible(true);
-    }
-    else {
-      myErrorLabel.setVisible(false);
+      if (myErrorMessage.myLinkText.length() > 0 || myErrorMessage.myAfterLinkText.length() > 0) {
+        myHyperlinkMessageLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
+                                      myErrorMessage.myLinkText,
+                                      myErrorMessage.myAfterLinkText);
+        myHyperlinkMessageLabel.setIcon(Messages.getErrorIcon());
+        myHyperlinkMessageLabel.setVisible(true);
+      }
+      else {
+        myMessageLabel.setText("<html><body>" + myErrorMessage.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
+        myMessageLabel.setIcon(Messages.getErrorIcon());
+        myMessageLabel.setVisible(true);
+      }
     }
 
     if (myErrorMessage == null && myWarnMessage != null && myWarnMessage.length() > 0) {
-      myWarningLabel.setText("<html><body>" + myWarnMessage.replace("\n", "<br>") + "</body></html>");
-      myWarningLabel.setIcon(Messages.getWarningIcon());
-      myWarningLabel.setVisible(true);
-    }
-    else {
-      myWarningLabel.setVisible(false);
+      myMessageLabel.setText("<html><body>" + myWarnMessage.replace("\n", "<br>") + "</body></html>");
+      myMessageLabel.setIcon(Messages.getWarningIcon());
+      myMessageLabel.setVisible(true);
     }
 
     repaint();
