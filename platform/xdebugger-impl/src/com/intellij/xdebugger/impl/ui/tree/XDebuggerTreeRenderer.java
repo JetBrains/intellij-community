@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 
@@ -37,7 +36,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     node.getText().appendToComponent(this);
     final XDebuggerTreeNodeHyperlink link = node.getLink();
     if (link != null) {
-      append(link.getLinkText(), SimpleTextAttributes.GRAY_ATTRIBUTES, link);
+      append(link.getLinkText(), link.getTextAttributes(), link);
     }
     setIcon(node.getIcon());
   }
