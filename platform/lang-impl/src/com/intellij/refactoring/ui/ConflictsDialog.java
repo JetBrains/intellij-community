@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,13 @@ public class ConflictsDialog extends DialogWrapper{
   private Runnable myDoRefactoringRunnable;
   private String myCommandName;
 
-  public ConflictsDialog(Project project, MultiMap<PsiElement, String> conflictDescriptions) {
+  public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
     this(project, conflictDescriptions, null);
   }
 
-  public ConflictsDialog(Project project,
-                         MultiMap<PsiElement, String> conflictDescriptions,
-                         Runnable doRefactoringRunnable) {
+  public ConflictsDialog(@NotNull Project project,
+                         @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                         @Nullable Runnable doRefactoringRunnable) {
     super(project, true);
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
@@ -76,10 +76,12 @@ public class ConflictsDialog extends DialogWrapper{
     init();
   }
 
+  @SuppressWarnings("deprecation")
   @Deprecated
   public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
     this(project, ArrayUtil.toStringArray(conflictDescriptions));
   }
+
   @Deprecated
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
@@ -104,28 +106,26 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    @NonNls final String contentType = "text/html";
-    final JEditorPane messagePane = new JEditorPane(contentType, "");
-    messagePane.setEditable(false);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
-    scrollPane.setPreferredSize(new Dimension(500, 400));
-    panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
-    panel.add(scrollPane, BorderLayout.CENTER);
+    JPanel panel = new JPanel(new BorderLayout(0, 2));
 
-    @NonNls StringBuffer buf = new StringBuffer();
+    panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
+
+    @NonNls String contentType = "text/html";
+    @NonNls StringBuilder buf = new StringBuilder();
     for (String description : myConflictDescriptions) {
       buf.append(description);
       buf.append("<br><br>");
     }
-    messagePane.setText(buf.toString());
-    return panel;
-  }
+    JEditorPane messagePane = new JEditorPane(contentType, buf.toString());
+    messagePane.setEditable(false);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
+                                                                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setPreferredSize(new Dimension(500, 400));
+    panel.add(scrollPane, BorderLayout.CENTER);
 
-  protected JComponent createSouthPanel() {
-    JPanel panel = new JPanel(new BorderLayout(10, 0));
-    panel.add(super.createSouthPanel(), BorderLayout.CENTER);
-    panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.WEST);
+    panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+
     return panel;
   }
 
