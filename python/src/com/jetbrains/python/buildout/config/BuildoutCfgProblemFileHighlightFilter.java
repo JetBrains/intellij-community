@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class BuildoutCfgProblemFileHighlightFilter implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile virtualFile) {
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    final FileType fileType = virtualFile.getFileType();
     return fileType == BuildoutCfgFileType.INSTANCE;
   }
 }

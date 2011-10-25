@@ -112,7 +112,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           result.append(String.format(" \"%s\"", function.getName()));
         }
       }
-      if (originalElement instanceof PyExpression) {
+      if (originalElement instanceof PyExpression && originalElement.isValid()) {
         result.append("\n").append(describeExpressionType((PyExpression)originalElement));        
       }
       return result.toString();

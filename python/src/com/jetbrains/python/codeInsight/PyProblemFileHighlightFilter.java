@@ -12,7 +12,7 @@ import com.jetbrains.python.PythonFileType;
 public class PyProblemFileHighlightFilter implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile virtualFile) {
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    final FileType fileType = virtualFile.getFileType();
     return fileType == PythonFileType.INSTANCE;
   }
 }

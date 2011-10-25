@@ -48,7 +48,8 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
       for (PyStringFormatParser.FormatStringChunk chunk : chunks) {
         if (chunk instanceof PyStringFormatParser.ConstantChunk) {
           String text = stringValue.substring(chunk.getStartIndex(), chunk.getEndIndex());
-          consumer.consumeToken(element, text, valueTextRanges.get(0).getStartOffset() + chunk.getStartIndex(), splitter);
+          final int startOffset = valueTextRanges.get(0).getStartOffset() + chunk.getStartIndex();
+          consumer.consumeToken(element, text, false, startOffset, TextRange.allOf(text), splitter);
         }
       }
     }
