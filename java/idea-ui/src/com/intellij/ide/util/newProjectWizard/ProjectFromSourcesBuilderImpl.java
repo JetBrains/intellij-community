@@ -81,6 +81,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
     myRoots = roots;
   }
 
+  @NotNull
   @Override
   public Collection<DetectedProjectRoot> getProjectRoots(ProjectStructureDetector detector) {
     return myRoots.get(detector);
@@ -263,6 +264,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
 
   }
 
+  @NotNull
   @Override
   public ProjectDescriptor getProjectDescriptor(ProjectStructureDetector detector) {
     return myProjectDescriptors.get(detector);
