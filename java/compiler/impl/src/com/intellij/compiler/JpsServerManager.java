@@ -175,7 +175,11 @@ public class JpsServerManager implements ApplicationComponent{
       final int port = NetUtils.findAvailableSocketPort();
       final Process process = launchServer(port);
 
-      final OSProcessHandler processHandler = new OSProcessHandler(process, null);
+      final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+        protected boolean shouldDestroyProcessRecursively() {
+          return true;
+        }
+      };
       final Ref<String> serverStartMessage = new Ref<String>(null);
       final Semaphore semaphore  = new Semaphore();
       semaphore.down();
