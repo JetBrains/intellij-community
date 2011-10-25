@@ -20,6 +20,8 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +50,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   private final Icon myIcon;
   private final String myHelpId;
   private DetectedRootsChooser myDetectedRootsChooser;
-  private String myCurrentContentEntryPath = null;
+  private String myCurrentBaseProjectPath = null;
   private JPanel myResultPanel;
 
   public RootsDetectionStep(ProjectFromSourcesBuilderImpl builder,
@@ -143,47 +145,41 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
   protected boolean shouldRunProgress() {
-    return isContentEntryChanged();
+    final String baseProjectPath = getBaseProjectPath();
+    return myCurrentBaseProjectPath == null ? baseProjectPath != null : !myCurrentBaseProjectPath.equals(baseProjectPath);
   }
 
   protected void onFinished(final List<DetectedRootData> foundRoots, final boolean canceled) {
     final CardLayout layout = (CardLayout)myResultPanel.getLayout();
     if (foundRoots.size() > 0 && !canceled) {
-      myCurrentContentEntryPath = getContentRootPath();
+      myCurrentBaseProjectPath = getBaseProjectPath();
       myDetectedRootsChooser.setElements(foundRoots);
       updateSelectedTypes();
       layout.show(myResultPanel, ROOTS_FOUND_CARD);
     }
     else {
-      myCurrentContentEntryPath = null;
+      myCurrentBaseProjectPath = null;
       layout.show(myResultPanel, ROOTS_NOT_FOUND_CARD);
     }
     myResultPanel.revalidate();
   }
 
-  protected boolean isContentEntryChanged() {
-    final String contentEntryPath = getContentRootPath();
-    return myCurrentContentEntryPath == null ? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
-  }
-
   protected List<DetectedRootData> calculate() {
-    final String contentRootPath = getContentRootPath();
-    if (contentRootPath == null) {
+    final String baseProjectPath = getBaseProjectPath();
+    if (baseProjectPath == null) {
       return Collections.emptyList();
     }
-    final File entryFile = new File(contentRootPath);
-    if (!entryFile.exists()) {
-      return Collections.emptyList();
-    }
-    final File[] children = entryFile.listFiles();
-    if (children == null || children.length == 0) {
-      return Collections.emptyList();
+    final File baseProjectFile = new File(baseProjectPath);
+
+    Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = new RootDetectionProcessor(baseProjectFile).findRoots();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.setText2("Processing " + roots.values().size() + " project roots...");
     }
 
     Map<File, DetectedRootData> rootData = new LinkedHashMap<File, DetectedRootData>();
-    for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
-      final List<DetectedProjectRoot> detectedRoots = detector.detectRoots(entryFile);
-      for (DetectedProjectRoot detectedRoot : detectedRoots) {
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      for (DetectedProjectRoot detectedRoot : roots.get(detector)) {
         if (isUnderIncompatibleRoot(detectedRoot, rootData)) {
           continue;
         }
@@ -197,6 +193,10 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
         }
         removeIncompatibleRoots(detectedRoot, rootData);
       }
+    }
+
+    if (progressIndicator != null) {
+      progressIndicator.setText2("");
     }
     return new ArrayList<DetectedRootData>(rootData.values());
   }
@@ -236,12 +236,12 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
   @Nullable
-  private String getContentRootPath() {
+  private String getBaseProjectPath() {
     return myBuilder.getBaseProjectPath();
   }
 
   protected String getProgressText() {
-    final String root = getContentRootPath();
+    final String root = getBaseProjectPath();
     return IdeBundle.message("progress.searching.for.sources", root != null ? root.replace('/', File.separatorChar) : "");
   }
 

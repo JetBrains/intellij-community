@@ -60,7 +60,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<ProjectStructureDetector, ProjectDescriptor>();
-  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.EMPTY;
+  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.emptyInstance();
 
   public ProjectFromSourcesBuilderImpl() {
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
