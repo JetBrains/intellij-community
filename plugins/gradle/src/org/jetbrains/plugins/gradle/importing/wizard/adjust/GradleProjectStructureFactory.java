@@ -80,7 +80,9 @@ public class GradleProjectStructureFactory {
       public boolean validate() {
         return true;
       }
-
+      @Override
+      public void refresh() {
+      }
       @NotNull
       @Override
       public JComponent getComponent() {
@@ -120,7 +122,8 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        visit(dependency.getLibrary());
+        setupController(dependency, treeModel, treeNodes);
+        result.set(new GradleLibraryDependencySettings(dependency));
       }
     });
     return result.get();

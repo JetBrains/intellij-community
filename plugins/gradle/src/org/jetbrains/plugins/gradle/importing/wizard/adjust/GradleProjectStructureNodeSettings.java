@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
- * Defines contract for the entity that exposes settings of particular node of the 'project structure' view derived from gradle.
+ * Defines contract for the control that exposes settings of particular node of the 'project structure' view derived from gradle.
  * 
  * @author Denis Zhdanov
  * @since 8/12/11 2:50 PM
@@ -28,6 +28,11 @@ public interface GradleProjectStructureNodeSettings {
    * @return    <code>true</code> if everything is ok; <code>false</code> otherwise
    */
   boolean validate();
+
+  /**
+   * Asks current control to refresh, i.e. show values stored at the underlying model.  
+   */
+  void refresh();
   
   @NotNull
   JComponent getComponent();

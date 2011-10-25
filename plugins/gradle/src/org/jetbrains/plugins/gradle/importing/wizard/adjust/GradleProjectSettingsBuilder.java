@@ -20,8 +20,19 @@ import java.awt.*;
  */
 public class GradleProjectSettingsBuilder {
   
-  private static final int TOP_INSET = 15;
-  private static final int BOTTOM_INSET = 3;
+  public enum InsetSize {
+    NONE(0), SMALL(3), NORMAL(15);
+    
+    private final int myInsetValue;
+
+    InsetSize(int insetValue) {
+      myInsetValue = insetValue;
+    }
+
+    public int getValue() {
+      return myInsetValue;
+    }
+  }
   
   private final JPanel             myResult            = new JPanel(new GridBagLayout());
   private final GridBagConstraints myConstraint   = new GridBagConstraints();
@@ -33,13 +44,18 @@ public class GradleProjectSettingsBuilder {
     myConstraint.fill = GridBagConstraints.HORIZONTAL;
   }
 
+  public void add(@NotNull JComponent component) {
+    add(component, InsetSize.NORMAL);
+  }
+  
   /**
    * Instructs current builder to use given component for the target property management.
    * 
-   * @param component  component to use
+   * @param component   component to use
+   * @param insetSize   top insets to use
    */
-  public void add(@NotNull JComponent component) {
-    myConstraint.insets.top = TOP_INSET;
+  public void add(@NotNull JComponent component, @NotNull InsetSize insetSize) {
+    myConstraint.insets.top = insetSize.getValue();
     myResult.add(component, myConstraint);
   }
   
@@ -51,10 +67,10 @@ public class GradleProjectSettingsBuilder {
    * @param control   GUI control for managing target setting's value
    */
   public void add(@NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String labelKey, @NotNull JComponent control) {
-    myConstraint.insets.top = TOP_INSET;
+    myConstraint.insets.top = InsetSize.NORMAL.getValue();
     JLabel label = new JLabel(GradleBundle.message(labelKey));
     myResult.add(label, myConstraint);
-    myConstraint.insets.top = BOTTOM_INSET;
+    myConstraint.insets.top = InsetSize.SMALL.getValue();
     myResult.add(control, myConstraint);
   }
 
@@ -65,9 +81,9 @@ public class GradleProjectSettingsBuilder {
    * @param valueComponent  control that holds available property values and (possibly) allows to choose between them
    */
   public void add(@NotNull JComponent keyComponent, @NotNull JComponent valueComponent) {
-    myConstraint.insets.top = TOP_INSET;
+    myConstraint.insets.top = InsetSize.NORMAL.getValue();
     myResult.add(keyComponent, myConstraint);
-    myConstraint.insets.top = BOTTOM_INSET;
+    myConstraint.insets.top = InsetSize.SMALL.getValue();
     myResult.add(valueComponent, myConstraint);
   }
   
