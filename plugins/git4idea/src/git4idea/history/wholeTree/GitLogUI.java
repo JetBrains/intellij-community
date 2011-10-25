@@ -244,6 +244,11 @@ public class GitLogUI implements Disposable {
       }
 
       @Override
+      public void reportStash(VirtualFile root, @Nullable Pair<AbstractHash, AbstractHash> hash) {
+        myTableModel.stashFor(root, hash);
+      }
+
+      @Override
       public void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs) {
         myRefs.put(root, symbolicRefs);
 

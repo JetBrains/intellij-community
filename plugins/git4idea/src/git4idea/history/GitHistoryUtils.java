@@ -701,6 +701,53 @@ public class GitHistoryUtils {
   }
 
   @Nullable
+  public static Pair<AbstractHash, AbstractHash> getStashTop(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
+    GitLogParser parser = new GitLogParser(project, SHORT_HASH, SHORT_PARENTS);
+    h.setSilent(true);
+    h.setNoSSH(true);
+    h.addParameters("list");
+    h.addParameters("-n1");
+    h.addParameters(parser.getPretty());
+
+    String out;
+    h.setCharset(Charset.forName(GitConfigUtil.getLogEncoding(project, root)));
+    out = h.run();
+    final List<GitLogRecord> gitLogRecords = parser.parse(out);
+    for (GitLogRecord gitLogRecord : gitLogRecords) {
+      ProgressManager.checkCanceled();
+
+      GitSimpleHandler h1 = new GitSimpleHandler(project, root, GitCommand.LOG);
+      GitLogParser parser1 = new GitLogParser(project, SHORT_HASH, SHORT_PARENTS, SUBJECT);
+      h1.setSilent(true);
+      h1.setNoSSH(true);
+      h1.addParameters("-n1");
+      h1.addParameters(parser1.getPretty());
+      //h1.endOptions();
+      h1.addParameters(gitLogRecord.getShortHash());
+
+      String out1;
+      out1 = h1.run();
+      final List<GitLogRecord> gitLogRecords1 = parser1.parse(out1);
+      assert gitLogRecords1.size() == 1;
+      final GitLogRecord logRecord = gitLogRecords1.get(0);
+      final String[] parentsShortHashes = logRecord.getParentsShortHashes();
+      String indexCommit = null;
+      // heuristics
+      if (parentsShortHashes.length == 2) {
+        if (logRecord.getSubject().contains(parentsShortHashes[0])) {
+          indexCommit = parentsShortHashes[1];
+        }
+        if (logRecord.getSubject().contains(parentsShortHashes[1])) {
+          indexCommit = parentsShortHashes[0];
+        }
+      }
+      return new Pair<AbstractHash, AbstractHash>(AbstractHash.create(gitLogRecord.getShortHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
+    }
+    return null;
+  }
+
+  @Nullable
   public static List<Pair<String, GitCommit>> loadStashStackAsCommits(@NotNull Project project, @NotNull VirtualFile root,
                                                                       SymbolicRefs refs, final String... parameters) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);

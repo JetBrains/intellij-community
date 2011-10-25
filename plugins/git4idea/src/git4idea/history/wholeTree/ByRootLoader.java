@@ -75,8 +75,18 @@ public class ByRootLoader extends TaskDescriptor {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
     /*progress(pi, "Load stashed");
     loadStash();*/
+    reportStashHead();
     progress(pi, "Try to load by reference");
     loadByHashesAside(context);
+  }
+
+  private void reportStashHead() {
+    try {
+      myMediator.acceptStashHead(myTicket, myRootHolder.getRoot(), GitHistoryUtils.getStashTop(myProject, myRootHolder.getRoot()));
+    }
+    catch (VcsException e) {
+      myMediator.acceptException(e);
+    }
   }
 
   private void progress(final ProgressIndicator pi, final String progress) {
