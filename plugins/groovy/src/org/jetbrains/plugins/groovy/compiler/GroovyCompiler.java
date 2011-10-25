@@ -99,7 +99,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
     }
 
     context.getProgressIndicator().checkCanceled();
-    context.getProgressIndicator().setText(GroovycOSProcessHandler.GROOVY_COMPILER_IN_OPERATION);
+    context.getProgressIndicator().setText(GROOVY_COMPILER_IN_OPERATION);
 
     runGroovycCompiler(context, module, new ArrayList<VirtualFile>(allToCompile), false, getMainOutput(context, module, tests), sink, tests);
   }

@@ -90,13 +90,14 @@ import java.util.*;
  */
 public abstract class GroovyCompilerBase implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase");
+  protected static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   protected final Project myProject;
 
   public GroovyCompilerBase(Project project) {
     myProject = project;
   }
 
-  protected void runGroovycCompiler(CompileContext compileContext, final Module module,
+  protected void runGroovycCompiler(final CompileContext compileContext, final Module module,
                                     final List<VirtualFile> toCompile,
                                     boolean forStubs,
                                     VirtualFile outputDir,
@@ -182,7 +183,12 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, parameters, true);
-      processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
+      processHandler = new GroovycOSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
+        @Override
+        protected void updateStatus(@Nullable String status) {
+          compileContext.getProgressIndicator().setText(status == null ? GROOVY_COMPILER_IN_OPERATION : status);
+        }
+      };
 
       processHandler.startNotify();
       // tests run in awt

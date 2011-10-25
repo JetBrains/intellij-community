@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,14 +42,11 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
-  private final CompileContext myContext;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
-  public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
 
-  public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
+  public GroovycOSProcessHandler(Process process, String s) {
     super(process, s);
-    myContext = context;
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
@@ -75,16 +71,18 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
+  protected void updateStatus(@Nullable String status) { }
+
   private void parseOutput(String text) {
     final String trimmed = text.trim();
 
     if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
-      myContext.getProgressIndicator().setText(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
+      updateStatus(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
       return;
     }
 
     if (GroovycRunner.CLEAR_PRESENTABLE.equals(trimmed)) {
-      myContext.getProgressIndicator().setText(GROOVY_COMPILER_IN_OPERATION);
+      updateStatus(null);
       return;
     }
 
@@ -112,14 +110,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           toRecompileFiles.add(new File(url));
         }
       }
-
-      /* Cathegory
-      * Message
-      * Url
-      * Linenum
-      * Colomnnum
-      */
-
       else if (outputBuffer.indexOf(GroovycRunner.MESSAGES_START) != -1) {
         if (!(outputBuffer.indexOf(GroovycRunner.MESSAGES_END) != -1)) {
           return;
