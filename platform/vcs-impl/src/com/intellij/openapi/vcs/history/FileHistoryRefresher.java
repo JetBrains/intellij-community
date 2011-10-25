@@ -49,7 +49,7 @@ public class FileHistoryRefresher {
    */
   public void run(boolean isRefresh) {
     final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
-      myVcs.getProject(), myVcsHistoryProvider, myVcs.getDiffProvider());
+      myVcs, myVcsHistoryProvider, myVcs.getDiffProvider());
     proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache);
     myCanUseCache = false;
     myIsRefresh = isRefresh;

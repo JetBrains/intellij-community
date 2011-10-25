@@ -133,7 +133,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         try {
-          return GitHistoryUtils.getCurrentRevision(myProject, GitHistoryUtils.getLastCommitName(myProject, filePath), null);
+          return GitHistoryUtils.getCurrentRevision(myProject, filePath, "HEAD");
         }
         catch (VcsException e) {
           // likely the file is not under VCS anymore.
