@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.ide.util.importProject.LibrariesDetectionStep;
 import com.intellij.ide.util.importProject.ModuleInsight;
@@ -23,28 +24,24 @@ import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.util.Trinity;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class JavaProjectStructureDetector extends ProjectStructureDetector {
-  @NotNull
+public class JavaProjectStructureDetector extends JavaSourceRootDetector {
+
   @Override
-  public List<DetectedProjectRoot> detectRoots(File dir) {
-    final List<Trinity<String,String,Collection<String>>> trinities = SourcePathsStep.calculateSourceRoots(dir.getAbsolutePath());
-    final List<DetectedProjectRoot> roots = new ArrayList<DetectedProjectRoot>();
-    for (Trinity<String, String, Collection<String>> trinity : trinities) {
-      roots.add(new JavaModuleSourceRoot(new File(trinity.first), trinity.second, trinity.third));
-    }
-    return roots;
+  protected String getLanguageName() {
+    return "Java";
+  }
+
+  @Override
+  protected String getFileExtension() {
+    return JavaFileType.DEFAULT_EXTENSION;
   }
 
   @Override

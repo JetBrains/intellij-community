@@ -98,15 +98,9 @@ public class JavaUtil {
           if (progressIndicator != null && progressIndicator.isCanceled()) {
             return;
           }
-          Pair<File, String> root = suggestRootForJavaFile(child);
+          Pair<File, String> root = suggestRootForJavaFile(child, base);
           if (root != null) {
-            String packagePrefix = getPackagePrefix(base, root);
-            if (packagePrefix == null) {
-              foundDirectories.add(root);
-            }
-            else {
-              foundDirectories.add(Pair.create(base, packagePrefix));
-            }
+            foundDirectories.add(root);
             throw new PathFoundException(root.getFirst());
           }
           else {
@@ -130,21 +124,9 @@ public class JavaUtil {
     }
   }
 
-  @Nullable
-  private static String getPackagePrefix(File base, Pair<File,String> root) {
-    String result = "";
-    for (File parent = base; parent != null; parent = parent.getParentFile()) {
-      if (parent.equals(root.getFirst())) {
-        return root.getSecond() + (root.getSecond().length() > 0 && result.length() > 0 ? "." : "") + result;
-      }
-      result = parent.getName() + (result.length() > 0 ? "." : "") + result;
-    }
-    return null;
-  }
-
 
   @Nullable
-  private static Pair<File,String> suggestRootForJavaFile(File javaFile) {
+  public static Pair<File,String> suggestRootForJavaFile(File javaFile, File topmostPossibleRoot) {
     if (!javaFile.isFile()) return null;
 
     final CharSequence chars;
@@ -164,7 +146,7 @@ public class JavaUtil {
         String token = packageName.substring(index1 + 1, index);
         String dirName = root.getName();
         final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
-        if (!equalsToToken) {
+        if (!equalsToToken || root.equals(topmostPossibleRoot)) {
           return Pair.create(root, packageName.substring(0, index));
         }
         String parent = root.getParent();

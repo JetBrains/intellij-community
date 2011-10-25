@@ -36,10 +36,6 @@ public class ProjectDescriptor {
     return myLibraries;
   }
 
-  public Set<LibraryDescriptor> getLibrariesSet() {
-    return myLibrariesSet;
-  }
-
   public void setModules(List<ModuleDescriptor> modules) {
     myModules = modules;
   }

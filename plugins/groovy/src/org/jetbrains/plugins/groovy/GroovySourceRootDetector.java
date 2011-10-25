@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package org.jetbrains.plugins.groovy;
 
-import com.intellij.ide.util.importProject.ProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
+import com.intellij.ide.util.newProjectWizard.JavaSourceRootDetector;
 
 /**
  * @author nik
  */
-public interface ProjectFromSourcesBuilder {
-  @NotNull
-  Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector);
+public class GroovySourceRootDetector extends JavaSourceRootDetector  {
+  @Override
+  protected String getLanguageName() {
+    return "Groovy";
+  }
 
-  @NotNull
-  ProjectDescriptor getProjectDescriptor(@NotNull ProjectStructureDetector detector);
-
-  String getBaseProjectPath();
+  @Override
+  protected String getFileExtension() {
+    return GroovyFileType.DEFAULT_EXTENSION;
+  }
 }
