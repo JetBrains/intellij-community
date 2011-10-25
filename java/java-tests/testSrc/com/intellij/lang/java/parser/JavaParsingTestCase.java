@@ -120,24 +120,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
 
   private PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
     if (TEST_FILE_ELEMENT_TYPE == null) {
-      TEST_FILE_ELEMENT_TYPE = new IFileElementType("test.java.file", JavaLanguage.INSTANCE) {
-        @Override
-        public ASTNode parseContents(final ASTNode chameleon) {
-          final PsiBuilder builder = createBuilder(chameleon);
-
-          final PsiBuilder.Marker root = builder.mark();
-          TEST_PARSER.parse(builder);
-          if (!builder.eof()) {
-            final PsiBuilder.Marker unparsed = builder.mark();
-            while (!builder.eof()) builder.advanceLexer();
-            unparsed.error("Unparsed tokens");
-          }
-          root.done(this);
-
-          final ASTNode rootNode = builder.getTreeBuilt();
-          return rootNode.getFirstChildNode();
-        }
-      };
+      TEST_FILE_ELEMENT_TYPE = new MyIFileElementType();
     }
 
     TEST_PARSER = parser;
@@ -156,5 +139,28 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     builder.setDebugMode(true);
     return builder;
+  }
+
+  private static class MyIFileElementType extends IFileElementType {
+    public MyIFileElementType() {
+      super("test.java.file", JavaLanguage.INSTANCE);
+    }
+
+    @Override
+    public ASTNode parseContents(final ASTNode chameleon) {
+      final PsiBuilder builder = createBuilder(chameleon);
+
+      final PsiBuilder.Marker root = builder.mark();
+      TEST_PARSER.parse(builder);
+      if (!builder.eof()) {
+        final PsiBuilder.Marker unparsed = builder.mark();
+        while (!builder.eof()) builder.advanceLexer();
+        unparsed.error("Unparsed tokens");
+      }
+      root.done(this);
+
+      final ASTNode rootNode = builder.getTreeBuilt();
+      return rootNode.getFirstChildNode();
+    }
   }
 }
