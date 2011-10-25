@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -38,21 +39,26 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
 
   @NotNull
   @Override
-  public final Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
+  public final Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
     final Set<String> runConfigurationTypes = new HashSet<String>();
-    final RunManager runManager = RunManager.getInstance(project);
-    for (RunConfiguration runConfiguration : runManager.getAllConfigurations()) {
-      if ((runConfiguration != null) && isApplicable(runManager, runConfiguration)) {
-        final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
-        final ConfigurationType configurationType = configurationFactory.getType();
-        final StringBuilder keyBuilder = new StringBuilder();
-        keyBuilder.append(configurationType.getId());
-        if (configurationType.getConfigurationFactories().length > 1) {
-          keyBuilder.append(".").append(configurationFactory.getName());
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final RunManager runManager = RunManager.getInstance(project);
+        for (RunConfiguration runConfiguration : runManager.getAllConfigurations()) {
+          if ((runConfiguration != null) && isApplicable(runManager, runConfiguration)) {
+            final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
+            final ConfigurationType configurationType = configurationFactory.getType();
+            final StringBuilder keyBuilder = new StringBuilder();
+            keyBuilder.append(configurationType.getId());
+            if (configurationType.getConfigurationFactories().length > 1) {
+              keyBuilder.append(".").append(configurationFactory.getName());
+            }
+            runConfigurationTypes.add(keyBuilder.toString());
+          }
         }
-        runConfigurationTypes.add(keyBuilder.toString());
       }
-    }
+    });
     return ContainerUtil.map2Set(runConfigurationTypes, new Function<String, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(String runConfigurationType) {
