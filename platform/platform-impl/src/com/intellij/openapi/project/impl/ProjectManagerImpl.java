@@ -39,10 +39,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectReloadState;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -56,6 +53,9 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -221,10 +221,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }
 
+    ProjectImpl project = createProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode());
     try {
-      ProjectImpl project =
-        createAndInitProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode(),
-                             useDefaultProjectSettings ? getDefaultProject() : null);
+      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null
+      );
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -253,39 +253,44 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed,
-                                           @Nullable Project template) throws IOException {
-    final ProjectImpl project = isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
-                                new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
+  private static void initProject(ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
 
     try {
       if (template != null) {
-        project.getStateStore().loadProjectFromTemplate((ProjectImpl)template);
+        project.getStateStore().loadProjectFromTemplate(template);
       } else {
         project.getStateStore().load();
       }
+      project.loadProjectComponents();
+      project.init();
     }
     catch (IOException e) {
       scheduleDispose(project);
       throw e;
     }
-    catch (final StateStorageException e) {
+    catch (ProcessCanceledException e) {
       scheduleDispose(project);
       throw e;
     }
+  }
 
-    project.loadProjectComponents();
-    project.init();
-
-    return project;
+  private ProjectImpl createProject(@Nullable String projectName, @Nullable String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
+    return isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
+                                  new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
   }
 
   private static void scheduleDispose(final ProjectImpl project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        Disposer.dispose(project);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            if (!project.isDisposed()) {
+              Disposer.dispose(project);
+            }
+          }
+        });
       }
     });
   }
@@ -293,33 +298,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Nullable
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
     try {
-      return doLoadProject(filePath);
+      ProjectImpl project = createProject(null, filePath, false, false);
+      doLoadProject(filePath, project);
+      return project;
     }
     catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
   }
 
-  @Nullable
-  private Project doLoadProject(String filePath) throws IOException, StateStorageException {
+  private void doLoadProject(String filePath, ProjectImpl project) throws IOException, StateStorageException {
     filePath = canonicalize(filePath);
-    ProjectImpl project = null;
-    try {
-      final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-      if (indicator != null) {
-        indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
-        indicator.setIndeterminate(true);
-      }
-      project = createAndInitProject(null, filePath, false, false, null);
+    final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
+      indicator.setIndeterminate(true);
     }
-    catch (ProcessCanceledException e) {
-      if (project != null) {
-        scheduleDispose(project);
-      }
-      throw e;
-    }
-
-    return project;
+    initProject(project, null);
   }
 
   @NotNull
@@ -343,7 +338,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createAndInitProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode(), null);
+        myDefaultProject = createProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode());
+        initProject(myDefaultProject, null);
         myDefaultProjectRootElement = null;
       }
       catch (IOException e) {
@@ -456,12 +452,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
-    final Project project = convertAndLoadProject(filePath, new Ref<Boolean>());
+
+    final Project project = convertAndLoadProject(filePath);
     if (project == null) {
+      showWelcomeScreenIfNoProjectOpened();
       return null;
     }
 
     if (!openProject(project)) {
+      showWelcomeScreenIfNoProjectOpened();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           Disposer.dispose(project);
@@ -471,12 +470,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
+  private void showWelcomeScreenIfNoProjectOpened() {
+    if (getOpenProjects().length == 0) {
+      IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllFrames();
+      if (frames.length == 1) {
+        frames[0].showWelcomeScreen();
+      }
+    }
+  }
+  
   @Nullable
-  public Project convertAndLoadProject(String filePath, Ref<Boolean> cancelled) throws IOException {
+  public Project convertAndLoadProject(String filePath) throws IOException {
     final String fp = canonicalize(filePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
     if (conversionResult.openingIsCanceled()) {
-      cancelled.set(true);
       return null;
     }
 
@@ -497,27 +504,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Project loadProjectWithProgress(final @NotNull String filePath) throws IOException {
 
     refreshProjectFiles(filePath);
-    Project project = null;
+    final ProjectImpl project = createProject(null, canonicalize(filePath), false, false);
     try {
-      project = myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, Exception>() {
+      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
         @Nullable
-        public Project compute() throws Exception {
-          return doLoadProject(filePath);
+        public Project compute() throws IOException {
+          doLoadProject(filePath, project);
+          return project;
         }
-      }, ProjectBundle.message("project.load.progress"), true, null);
+      }, ProjectBundle.message("project.load.progress"), true, project);
     }
     catch (StateStorageException e) {
       throw new IOException(e);
     }
-    catch (IOException e) {
-      throw e;
-    }
-    catch (Exception ignore) {
-      // ignore
-    }
-
-    if (project == null) {
-      notifyProjectOpenFailed();
+    catch (ProcessCanceledException ignore) {
+      return null;
     }
 
     return project;
@@ -1063,7 +1064,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                      ApplicationNamesInfo.getInstance().getProductName());
-    return Messages.showDialog(project, msg, "Unsaved project!", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
+    return Messages.showDialog(project, msg, "Unsaved Project", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
                                Messages.getWarningIcon()) == 0;
   }
 

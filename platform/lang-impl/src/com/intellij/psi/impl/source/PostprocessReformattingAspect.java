@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,7 +52,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class PostprocessReformattingAspect implements PomModelAspect, Disposable {
+public class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformatingAspect");
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -90,10 +89,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
         }
       }
     };
-    ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
-  }
-
-  public void dispose() {
+    ApplicationManager.getApplication().addApplicationListener(applicationListener, project);
   }
 
   public void disablePostprocessFormattingInside(final Runnable runnable) {
