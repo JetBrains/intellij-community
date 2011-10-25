@@ -241,6 +241,9 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   }
 
   public void zoomActual() {
+    if (myImage == null) {
+      return;
+    }
     if (myZoomToFit && myImagePanel.getWidth() >= myImage.getWidth() && myImagePanel.getHeight() >= myImage.getHeight()) {
       return;
     }

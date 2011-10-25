@@ -41,7 +41,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;
 
-  protected RangeMarkerTree(Document document) {
+  protected RangeMarkerTree(@NotNull Document document) {
     myDocument = document;
     myListener = new PrioritizedDocumentListener() {
       public int getPriority() {

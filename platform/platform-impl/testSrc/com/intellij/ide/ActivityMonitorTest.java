@@ -21,6 +21,7 @@ import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ModalityStateEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.testFramework.UsefulTestCase;
@@ -43,7 +44,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
     super.setUp();
     myCurrentState = ModalityState.NON_MODAL;
     final ModalityStateEx any = new ModalityStateEx();
-
+    Extensions.registerAreaClass("IDEA_PROJECT", null);
     ApplicationManager.setApplication(new MockApplication(getTestRootDisposable()) {
       @NotNull
       @Override

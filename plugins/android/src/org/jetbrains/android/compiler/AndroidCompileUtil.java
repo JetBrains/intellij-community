@@ -284,7 +284,13 @@ public class AndroidCompileUtil {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
-            run[0] = ReadonlyStatusHandler.ensureFilesWritable(context.getProject(), files);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                final Project project = context.getProject();
+                run[0] = !project.isDisposed() && ReadonlyStatusHandler.ensureFilesWritable(project, files);
+              }
+            });
           }
         }, ModalityState.defaultModalityState());
       }

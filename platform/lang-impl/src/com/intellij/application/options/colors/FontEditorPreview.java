@@ -18,14 +18,16 @@ package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -57,8 +59,8 @@ public class FontEditorPreview implements PreviewPanel{
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^";
   }
 
-  static void installTrafficLights(EditorEx editor) {
-    ErrorStripeRenderer renderer = new TrafficLightRenderer(null, null,null){
+  static void installTrafficLights(@NotNull EditorEx editor) {
+    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null){
       protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
@@ -66,6 +68,7 @@ public class FontEditorPreview implements PreviewPanel{
         return status;
       }
     };
+    Disposer.register((Disposable)editor.getCaretModel(), renderer);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
   }

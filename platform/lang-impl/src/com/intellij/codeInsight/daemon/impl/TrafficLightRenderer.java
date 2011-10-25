@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -33,6 +34,7 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
@@ -49,7 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TrafficLightRenderer implements ErrorStripeRenderer {
+public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
   private static final Icon NO_ANALYSIS_ICON = IconLoader.getIcon("/general/noAnalysis.png");
   private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
@@ -78,7 +80,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
 
     if (project != null) {
       MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-      model.addMarkupModelListener(new MarkupModelListener() {
+      model.addMarkupModelListener(this, new MarkupModelListener() {
         @Override
         public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, 1);
@@ -100,10 +102,16 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   private void refresh() {
-    errorCount = new int[mySeverityRegistrar.getSeverityMaxIndex()];
+    int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
+    if (errorCount != null && maxIndex == errorCount.length) return;
+    int[] newErrors = new int[maxIndex];
+    if (errorCount != null) {
+      System.arraycopy(errorCount, 0, newErrors, 0, Math.min(errorCount.length, newErrors.length));
+    }
+    errorCount = newErrors;
   }
 
-  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, Project project, Document document, PsiFile file) {
+  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull Project project, Document document, PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
     if (renderer instanceof TrafficLightRenderer) {
@@ -112,10 +120,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     }
     else {
       renderer = new TrafficLightRenderer(project, document, file);
+      Disposer.register(project, (Disposable)renderer);
       editorMarkupModel.setErrorStripeRenderer(renderer);
     }
   }
-  
+
+  @Override
+  public void dispose() {
+  }
+
   private void incErrorCount(RangeHighlighter highlighter, int delta) {
     Object o = highlighter.getErrorStripeTooltip();
     if (!(o instanceof HighlightInfo)) return;

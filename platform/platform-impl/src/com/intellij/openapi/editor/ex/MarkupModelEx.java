@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -37,8 +38,7 @@ public interface MarkupModelEx extends MarkupModel {
   RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
-  void addMarkupModelListener(@NotNull MarkupModelListener listener);
-  void removeMarkupModelListener(@NotNull MarkupModelListener listener);
+  void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, TextAttributes textAttributes);
 

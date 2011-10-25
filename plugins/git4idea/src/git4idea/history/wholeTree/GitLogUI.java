@@ -75,6 +75,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -86,6 +87,7 @@ import java.util.List;
  */
 public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
+  static final Icon ourMarkIcon = IconLoader.getIcon("/general/toolWindowFavorites.png");
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, UIUtil.getTableForeground());
   public static final String GIT_LOG_TABLE_PLACE = "git log table";
@@ -140,7 +142,7 @@ public class GitLogUI implements Disposable {
   private JLabel myOrderLabel;
   private boolean myProjectScope;
   private ActionPopupMenu myContextMenu;
-  //private GitLogUI.MyTreeSettingsButton myMyTreeSettingsButton;
+  private final Set<AbstractHash> myMarked;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -153,6 +155,7 @@ public class GitLogUI implements Disposable {
     myDescriptionRenderer = new DescriptionRenderer();
     myCommentSearchContext.addHighlighter(myDescriptionRenderer.myInner.myWorker);
     myCommitsInRepositoryChangesBrowser = new ArrayList<CommitI>();
+    myMarked = new HashSet<AbstractHash>();
 
     mySelectionRequestsMerger = new RequestsMerger(new Runnable() {
       @Override
@@ -788,6 +791,10 @@ public class GitLogUI implements Disposable {
       group.add(myCherryPickAction);
       group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
       group.add(myMyShowTreeAction);
+      final MyToggleCommitMark toggleCommitMark = new MyToggleCommitMark();
+      toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myJBTable);
+      toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myGraphGutter.getComponent());
+      group.add(toggleCommitMark);
       group.add(myRefreshAction);
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
@@ -906,6 +913,7 @@ public class GitLogUI implements Disposable {
 
   private boolean adjustColumnSizes(JScrollPane scrollPane) {
     if (myJBTable.getWidth() <= 0) return false;
+    createContextMenu();
     //myJBTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     final TableColumnModel columnModel = myJBTable.getColumnModel();
     final FontMetrics metrics = myJBTable.getFontMetrics(myJBTable.getFont());
@@ -1158,10 +1166,15 @@ public class GitLogUI implements Disposable {
         myPanel.removeAll();
         final GitCommit commit = (GitCommit)value;
 
+        final boolean marked = myMarked.contains(commit.getShortHash());
         final int localSize = commit.getLocalBranches() == null ? 0 : commit.getLocalBranches().size();
         final int remoteSize = commit.getRemoteBranches() == null ? 0 : commit.getRemoteBranches().size();
         final int tagsSize = commit.getTags().size();
 
+        if (marked) {
+          myPanel.add(new JLabel(ourMarkIcon));
+          myCurrentWidth += ourMarkIcon.getIconWidth();
+        }
         if (localSize + remoteSize > 0) {
           final CommitI commitI = myTableModel.getCommitAt(row);
           final List<Trinity<String, Boolean, Color>> display = getBranchesToDisplay(commit, commitI);
@@ -1190,6 +1203,11 @@ public class GitLogUI implements Disposable {
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
           final String tag = commit.getTags().get(0);
           addTagIcon(table, value, isSelected, hasFocus, row, column, tag, tagsSize > 1);
+          return myPanel;
+        }
+        if (marked) {
+          myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          myPanel.add(myInner);
           return myPanel;
         }
       }
@@ -1232,7 +1250,7 @@ public class GitLogUI implements Disposable {
     }
 
     private void addOneIcon(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column, Icon icon) {
-      myCurrentWidth = icon.getIconWidth();
+      myCurrentWidth += icon.getIconWidth();
       //myPanel.removeAll();
       //myPanel.setBackground(getLogicBackground(isSelected, row));
       myPanel.add(new JLabel(icon));
@@ -1946,5 +1964,68 @@ public class GitLogUI implements Disposable {
       e.getPresentation().setEnabled(enabled);
       e.getPresentation().setVisible(enabled);
     }
+  }
+
+  public class MyToggleCommitMark extends AnAction {
+    public MyToggleCommitMark() {
+      super("Mark", "Mark", ourMarkIcon);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final Action action = checkSelection();
+      if (Action.disabled.equals(action)) return;
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (Action.unselect.equals(action)) {
+        for (int selectedRow : selectedRows) {
+          final CommitI commitAt = myTableModel.getCommitAt(selectedRow);
+          if (commitAt.holdsDecoration()) continue;
+          myMarked.remove(commitAt.getHash());
+        }
+      }
+      if (Action.select.equals(action)) {
+        for (int selectedRow : selectedRows) {
+          final CommitI commitAt = myTableModel.getCommitAt(selectedRow);
+          if (commitAt.holdsDecoration()) continue;
+          myMarked.add(commitAt.getHash());
+        }
+      }
+      myJBTable.repaint();
+      myGraphGutter.getComponent().repaint();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final Action action = checkSelection();
+      e.getPresentation().setEnabled(! Action.disabled.equals(action));
+      e.getPresentation().setVisible(! Action.disabled.equals(action));
+
+      e.getPresentation().setText(Action.select.equals(action) ? "Mark" : "Clear mark");
+    }
+
+    private Action checkSelection() {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (selectedRows.length == 0) return Action.disabled;
+      boolean haveSelected = false;
+      boolean haveUnSelected = false;
+      for (int selectedRow : selectedRows) {
+        final CommitI commitAt = myTableModel.getCommitAt(selectedRow);
+        if (commitAt.holdsDecoration()) continue;
+        if (myMarked.contains(commitAt.getHash())) {
+          haveSelected = true;
+        } else {
+          haveUnSelected = true;
+        }
+      }
+      if (! haveSelected && ! haveUnSelected) return Action.disabled;
+      if (haveSelected) return Action.unselect;
+      return Action.select;
+    }
+  }
+
+  private static enum Action {
+    disabled,
+    select,
+    unselect
   }
 }

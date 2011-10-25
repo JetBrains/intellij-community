@@ -16,12 +16,13 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -64,6 +65,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     setPreferredSize(getDimension());
 
     myErrorStripeRenderer = new DomElementsTrafficLightRenderer(DomUtil.getFile(domElements[0]));
+    Disposer.register(this, myErrorStripeRenderer);
 
     addUpdateRequest();
     domManager.addDomEventListener(new DomChangeAdapter() {

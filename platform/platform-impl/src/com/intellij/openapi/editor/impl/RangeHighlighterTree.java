@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   private final MarkupModelImpl myMarkupModel;
 
-  public RangeHighlighterTree(Document document, MarkupModelImpl markupModel) {
+  public RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelImpl markupModel) {
     super(document);
     myMarkupModel = markupModel;
   }
