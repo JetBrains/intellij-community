@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.compiler;
+package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -28,6 +28,7 @@ import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,16 +38,16 @@ import java.util.Set;
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
  */
-public class GroovycOSProcessHandler extends OSProcessHandler {
+public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private final List<GroovyCompilerWrapper.OutputItem> myCompiledItems = new ArrayList<GroovyCompilerWrapper.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
 
   public GroovycOSProcessHandler(Process process, String s) {
-    super(process, s);
+    super(process, s, Charset.forName("UTF-8"));
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
