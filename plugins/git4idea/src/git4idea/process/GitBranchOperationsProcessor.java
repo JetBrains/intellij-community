@@ -47,6 +47,7 @@ import git4idea.stash.GitChangesSaver;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.update.GitComplexProcess;
+import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,10 +149,11 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newTrackingBranch) {
-    final GitWouldBeOverwrittenByCheckoutDetector checkoutListener = new GitWouldBeOverwrittenByCheckoutDetector();
+    final GitMessageWithFilesDetector checkoutListener = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, myRoot);
     GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
+    GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRoot);
 
-    GitCommandResult result = Git.checkout(myRepository, reference, newTrackingBranch, checkoutListener, unmergedDetector);
+    GitCommandResult result = Git.checkout(myRepository, reference, newTrackingBranch, checkoutListener, unmergedDetector, untrackedOverwrittenByCheckout);
     if (result.success()) {
       refreshRoot();
       updateRepository();
@@ -163,11 +165,15 @@ public final class GitBranchOperationsProcessor {
         doCheckout(indicator, reference, newTrackingBranch);
       }
     }
-    else if (checkoutListener.isWouldBeOverwrittenError()) {
-      List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getAffectedFiles());
+    else if (checkoutListener.wasMessageDetected()) {
+      List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getRelativeFilePaths());
       if (GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges)) {
         smartCheckout(reference, newTrackingBranch, indicator);
       }
+    }
+    else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
+      LOG.info("doCheckout: untracked files would be overwritten by checkout");
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedOverwrittenByCheckout.getFiles(), "checkout");
     }
     else {
       showErrorMessage("Couldn't checkout " + reference, result.getErrorOutput());

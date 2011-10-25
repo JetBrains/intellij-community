@@ -33,7 +33,9 @@ import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
+import git4idea.process.GitMessageWithFilesDetector;
 import git4idea.ui.GitUIUtil;
+import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -69,6 +71,9 @@ public class GitMergeUpdater extends GitUpdater {
 
     final MergeLineListener mergeLineListener = new MergeLineListener();
     mergeHandler.addLineListener(mergeLineListener);
+    GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector = new GitMessageWithFilesDetector(
+      GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRoot);
+    mergeHandler.addLineListener(untrackedFilesWouldBeOverwrittenByMergeDetector);
 
     final GitTask mergeTask = new GitTask(myProject, mergeHandler, "Merging changes");
     mergeTask.setProgressIndicator(myProgressIndicator);
@@ -91,13 +96,16 @@ public class GitMergeUpdater extends GitUpdater {
     });
 
     if (failure.get()) {
-      updateResult.set(handleMergeFailure(mergeLineListener, merger, mergeHandler));
+      updateResult.set(handleMergeFailure(mergeLineListener, untrackedFilesWouldBeOverwrittenByMergeDetector, merger, mergeHandler));
     }
     return updateResult.get();
   }
 
   @NotNull
-  private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener, final GitMerger merger, GitLineHandler mergeHandler) {
+  private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
+                                             GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
+                                             final GitMerger merger,
+                                             GitLineHandler mergeHandler) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("doUpdate merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -115,10 +123,15 @@ public class GitMergeUpdater extends GitUpdater {
         }
       };
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           dialog.show();
         }
       });
+      return GitUpdateResult.ERROR;
+    } else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
+      LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge");
       return GitUpdateResult.ERROR;
     } else {
       GitUIUtil.notifyImportantError(myProject, "Error merging", GitUIUtil.stringifyErrors(mergeHandler.errors()));
