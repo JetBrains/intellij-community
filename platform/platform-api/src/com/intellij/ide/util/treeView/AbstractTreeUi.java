@@ -4272,7 +4272,7 @@ public class AbstractTreeUi {
 
         if (kidsToExpand.contains(eachElement)) {
           try {
-            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " path=" + kidsToExpand);
+            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " path=" + kidsToExpand + " tree structure=" + myTreeStructure);
           }
           catch (AssertionError e) {
           }
