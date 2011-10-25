@@ -52,10 +52,12 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     myPlaceholderText = placeholder;
   }
 
+  @Override
   public boolean isExpanded() {
     return myIsExpanded;
   }
 
+  @Override
   public void setExpanded(boolean expanded) {
     FoldingModelImpl foldingModel = (FoldingModelImpl)myEditor.getFoldingModel();
     if (myGroup == null) {
@@ -76,6 +78,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     }
   }
 
+  @Override
   public boolean isValid() {
     return super.isValid() && intervalStart() + 1 < intervalEnd();
   }
@@ -84,15 +87,18 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     myIsExpanded = toExpand;
   }
 
+  @Override
   @NotNull
   public String getPlaceholderText() {
     return myPlaceholderText;
   }
 
+  @Override
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   @Nullable
   public FoldingGroup getGroup() {
     return myGroup;

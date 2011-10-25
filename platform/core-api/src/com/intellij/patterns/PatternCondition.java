@@ -94,6 +94,7 @@ public abstract class PatternCondition<T> {
       String prevName;
       int prevOffset;
 
+      @Override
       public boolean process(String name, Object value) {
         count ++;
         if (count == 2) builder.insert(prevOffset, prevName +"=");

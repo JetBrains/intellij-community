@@ -45,20 +45,24 @@ public class AddTypeCastFix implements IntentionAction {
     myExpression = expression;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("add.typecast.text", myType.getCanonicalText());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.typecast.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     addTypeCast(project, myExpression, myType);
@@ -105,6 +109,7 @@ public class AddTypeCastFix implements IntentionAction {
     return typeCast;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

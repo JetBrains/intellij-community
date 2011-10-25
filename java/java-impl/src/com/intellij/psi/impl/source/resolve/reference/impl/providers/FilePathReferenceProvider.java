@@ -49,10 +49,12 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
     return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
+      @Override
       protected boolean isSoft() {
         return soft;
       }
 
+      @Override
       public boolean isAbsolutePathReference() {
         return true;
       }
@@ -68,11 +70,13 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
         return s != null && s.length() > 0 && s.charAt(0) == '/';
       }
 
+      @Override
       @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
         final Module module = ModuleUtil.findModuleForPsiElement(getElement());
         return getRoots(module, true);
       }
 
+      @Override
       public FileReference createFileReference(final TextRange range, final int index, final String text) {
         return FilePathReferenceProvider.this.createFileReference(this, range, index, text);
       }
@@ -80,6 +84,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
         return new Condition<PsiFileSystemItem>() {
+          @Override
           public boolean value(final PsiFileSystemItem element) {
             return isPsiElementAccepted(element);
           }
@@ -102,6 +107,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     return new FileReference(referenceSet, range, index, text);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     String text = null;

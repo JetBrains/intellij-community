@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavadocErrorFilter extends HighlightErrorFilter {
 
+  @Override
   public boolean shouldHighlightErrorElement(@NotNull final PsiErrorElement element) {
     return !value(element);
   }

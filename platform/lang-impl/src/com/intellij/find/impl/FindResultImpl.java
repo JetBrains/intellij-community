@@ -31,6 +31,7 @@ public class FindResultImpl extends FindResult {
     isStringFound = false;
   }
 
+  @Override
   public boolean isStringFound() {
     return isStringFound;
   }

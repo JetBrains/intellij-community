@@ -41,34 +41,42 @@ public class PsiArrayType extends PsiType {
     myComponentType = componentType;
   }
 
+  @Override
   public String getPresentableText() {
     return StringUtil.joinOrNull(myComponentType.getPresentableText(), "[]");
   }
 
+  @Override
   public String getCanonicalText() {
     return StringUtil.joinOrNull(myComponentType.getCanonicalText(), "[]");
   }
 
+  @Override
   public String getInternalCanonicalText() {
     return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), "[]");
   }
 
+  @Override
   public boolean isValid() {
     return myComponentType.isValid();
   }
 
+  @Override
   public boolean equalsToText(String text) {
     return text.endsWith("[]") && myComponentType.equalsToText(text.substring(0, text.length() - 2));
   }
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitArrayType(this);
   }
 
+  @Override
   public GlobalSearchScope getResolveScope() {
     return myComponentType.getResolveScope();
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     final PsiType[] superTypes = myComponentType.getSuperTypes();

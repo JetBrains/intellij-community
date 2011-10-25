@@ -29,6 +29,7 @@ public class MethodCallExpressionBlock extends AbstractJavaBlock{
     super(node, wrap, alignment, indent, settings);
   }
 
+  @Override
   protected List<Block> buildChildren() {
     return null;
   }

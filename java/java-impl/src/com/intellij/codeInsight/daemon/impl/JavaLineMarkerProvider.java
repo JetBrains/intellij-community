@@ -65,6 +65,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     myColorsManager = colorsManager;
   }
 
+  @Override
   @Nullable
   public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
@@ -137,6 +138,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     return 0;
   }
 
+  @Override
   public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -195,6 +197,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
     for (final PsiClass aClass : classes) {
       AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+        @Override
         public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
           ProgressManager.checkCanceled();
 

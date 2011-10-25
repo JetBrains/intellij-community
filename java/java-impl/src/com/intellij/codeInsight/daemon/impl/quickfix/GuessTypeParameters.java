@@ -209,11 +209,13 @@ public class GuessTypeParameters {
       myResolveScope = resolveScope;
     }
 
+    @Override
     public PsiType visitType(PsiType type) {
       if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 
+    @Override
     public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getUpperBound().accept(this);
     }

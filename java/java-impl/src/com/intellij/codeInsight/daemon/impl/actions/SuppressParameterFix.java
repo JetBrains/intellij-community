@@ -47,21 +47,25 @@ public class SuppressParameterFix extends SuppressIntentionAction {
     myID = ID;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Suppress for parameter";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     PsiParameter psiParameter = PsiTreeUtil.getParentOfType(context, PsiParameter.class, false);
     return psiParameter != null && SuppressManager.getInstance().canHave15Suppressions(psiParameter);
   }
 
+  @Override
   public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
     PsiParameter container = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
     assert container != null;

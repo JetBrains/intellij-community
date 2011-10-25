@@ -48,26 +48,31 @@ public class PermuteArgumentsFix implements IntentionAction {
     myPermutation = permutation;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
 
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("permute.arguments");
   }
 
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return !project.isDisposed() && myCall.isValid() && myCall.getManager().isInProject(myCall);
   }                               
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myCall.getArgumentList().replace(myPermutation.getArgumentList());

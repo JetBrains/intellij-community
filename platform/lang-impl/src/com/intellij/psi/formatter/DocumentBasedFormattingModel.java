@@ -74,16 +74,19 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myDocument = myDocumentModel.getDocument();
   }
 
+  @Override
   @NotNull
   public Block getRootBlock() {
     return myRootBlock;
   }
 
+  @Override
   @NotNull
   public FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
 
+  @Override
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
     boolean removesStartMarker;
     String marker;
@@ -133,11 +136,13 @@ public class DocumentBasedFormattingModel implements FormattingModel {
         CharArrayUtil.indexOf(whiteSpace, pattern, 0) < 0;
   }
 
+  @Override
   public TextRange shiftIndentInsideRange(TextRange range, int indent) {
     final int newLength = shiftIndentInside(range, indent);
     return new TextRange(range.getStartOffset(), range.getStartOffset() + newLength);
   }
 
+  @Override
   public void commitChanges() {
     CodeEditUtil.allowToMarkNodesForPostponedFormatting(false);
     try {

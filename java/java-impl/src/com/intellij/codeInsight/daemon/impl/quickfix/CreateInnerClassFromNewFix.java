@@ -33,14 +33,17 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     super(expr);
   }
 
+  @Override
   public String getText(String varName) {
     return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), varName);
   }
 
+  @Override
   protected boolean isAllowOuterTargetClass() {
     return true;
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     PsiNewExpression newExpression = getNewExpression();
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();

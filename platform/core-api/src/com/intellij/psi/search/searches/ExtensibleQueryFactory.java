@@ -43,9 +43,11 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
 
   protected ExtensibleQueryFactory(@NonNls final String epNamespace) {
     myPoint = new NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>>() {
+      @Override
       @NotNull
       protected SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>> compute() {
         return new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>(new SmartList<QueryExecutor<Result, Parameters>>()){
+          @Override
           @NotNull
           protected ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
             @NonNls String epName = ExtensibleQueryFactory.this.getClass().getName();
@@ -64,16 +66,19 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor, Disposable parentDisposable) {
     registerExecutor(queryExecutor);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         unregisterExecutor(queryExecutor);
       }
     });
   }
 
+  @Override
   public void registerExecutor(@NotNull final QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.getValue().addExplicitExtension(queryExecutor);
   }
 
+  @Override
   public void unregisterExecutor(@NotNull final QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.getValue().removeExplicitExtension(queryExecutor);
   }

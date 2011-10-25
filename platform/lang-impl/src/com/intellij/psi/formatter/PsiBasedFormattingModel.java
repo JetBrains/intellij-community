@@ -52,6 +52,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   }
 
+  @Override
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
     String whiteSpaceToUse
       = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), true).toString();
@@ -64,10 +65,12 @@ public class PsiBasedFormattingModel implements FormattingModel {
     }
   }
 
+  @Override
   public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
     return textRange; // TODO: Remove this method from here...
   }
 
+  @Override
   public void commitChanges() {
   }
 
@@ -122,11 +125,13 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return psiElement.getNode();
   }
 
+  @Override
   @NotNull
   public FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
 
+  @Override
   @NotNull
   public Block getRootBlock() {
     return myRootBlock;

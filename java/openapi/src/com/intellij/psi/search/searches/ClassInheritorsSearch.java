@@ -49,6 +49,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   static {
     INSTANCE.registerExecutor(new QueryExecutor<PsiClass, SearchParameters>() {
+      @Override
       public boolean execute(@NotNull final SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
         final PsiClass baseClass = parameters.getClassToProcess();
         final SearchScope searchScope = parameters.getScope();
@@ -161,15 +162,18 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return true;
 
     final String qname = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         return baseClass.getQualifiedName();
       }
     });
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
       return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
+        @Override
         public boolean process(final PsiClass aClass) {
           ProgressManager.checkCanceled();
           final String qname1 = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
             @Nullable
             public String compute() {
               return aClass.getQualifiedName();
@@ -187,12 +191,14 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final Set<PsiClass> processed = new THashSet<PsiClass>();   // processed classes without FQN (e.g. anonymous)
 
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
+      @Override
       public boolean process(final PsiClass candidate) {
         ProgressManager.checkCanceled();
 
         final Ref<Boolean> result = new Ref<Boolean>();
         final String[] fqn = new String[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             fqn[0] = candidate.getQualifiedName();
             if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
@@ -234,6 +240,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       final String fqn = pair.getSecond();
       if (psiClass == null) {
         psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          @Override
           public PsiClass compute() {
             return facade.findClass(fqn, projectScope);
           }
@@ -264,6 +271,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   private static boolean isFinal(@NotNull final PsiClass baseClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));
       }

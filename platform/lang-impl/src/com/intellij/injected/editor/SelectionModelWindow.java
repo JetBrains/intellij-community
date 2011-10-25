@@ -42,6 +42,7 @@ public class SelectionModelWindow implements SelectionModel {
     myHostModel = delegate.getSelectionModel();
   }
 
+  @Override
   public int getSelectionStart() {
     return myDocument.hostToInjected(myHostModel.getSelectionStart());
   }
@@ -52,6 +53,7 @@ public class SelectionModelWindow implements SelectionModel {
     return myHostModel.getSelectionStartPosition();
   }
 
+  @Override
   public int getSelectionEnd() {
     return myDocument.hostToInjected(myHostModel.getSelectionEnd());
   }
@@ -62,10 +64,12 @@ public class SelectionModelWindow implements SelectionModel {
     return myHostModel.getSelectionEndPosition();
   }
 
+  @Override
   public String getSelectedText() {
     return myHostModel.getSelectedText();
   }
 
+  @Override
   public int getLeadSelectionOffset() {
     return myDocument.hostToInjected(myHostModel.getLeadSelectionOffset());
   }
@@ -76,10 +80,12 @@ public class SelectionModelWindow implements SelectionModel {
     return myHostModel.getLeadSelectionPosition();
   }
 
+  @Override
   public boolean hasSelection() {
     return myHostModel.hasSelection();
   }
 
+  @Override
   public void setSelection(final int startOffset, final int endOffset) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     myHostModel.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset());
@@ -97,42 +103,52 @@ public class SelectionModelWindow implements SelectionModel {
     myHostModel.setSelection(startPosition, hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
   }
 
+  @Override
   public void removeSelection() {
     myHostModel.removeSelection();
   }
 
+  @Override
   public void addSelectionListener(final SelectionListener listener) {
     myHostModel.addSelectionListener(listener);
   }
 
+  @Override
   public void removeSelectionListener(final SelectionListener listener) {
     myHostModel.removeSelectionListener(listener);
   }
 
+  @Override
   public void selectLineAtCaret() {
     myHostModel.selectLineAtCaret();
   }
 
+  @Override
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
     myHostModel.selectWordAtCaret(honorCamelWordsSettings);
   }
 
+  @Override
   public void copySelectionToClipboard() {
     myHostModel.copySelectionToClipboard();
   }
 
+  @Override
   public void setBlockSelection(final LogicalPosition blockStart, final LogicalPosition blockEnd) {
     myHostModel.setBlockSelection(myInjectedEditor.injectedToHost(blockStart), myInjectedEditor.injectedToHost(blockEnd));
   }
 
+  @Override
   public void removeBlockSelection() {
     myHostModel.removeBlockSelection();
   }
 
+  @Override
   public boolean hasBlockSelection() {
     return myHostModel.hasBlockSelection();
   }
 
+  @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
     int[] result = myHostModel.getBlockSelectionStarts();
@@ -142,6 +158,7 @@ public class SelectionModelWindow implements SelectionModel {
     return result;
   }
 
+  @Override
   @NotNull
   public int[] getBlockSelectionEnds() {
     int[] result = myHostModel.getBlockSelectionEnds();
@@ -151,24 +168,29 @@ public class SelectionModelWindow implements SelectionModel {
     return result;
   }
 
+  @Override
   public LogicalPosition getBlockStart() {
     LogicalPosition hostBlock = myHostModel.getBlockStart();
     return hostBlock == null ? null : myInjectedEditor.hostToInjected(hostBlock);
   }
 
+  @Override
   public LogicalPosition getBlockEnd() {
     LogicalPosition hostBlock = myHostModel.getBlockEnd();
     return hostBlock == null ? null : myInjectedEditor.hostToInjected(hostBlock);
   }
 
+  @Override
   public boolean isBlockSelectionGuarded() {
     return myHostModel.isBlockSelectionGuarded();
   }
 
+  @Override
   public RangeMarker getBlockSelectionGuard() {
     return myHostModel.getBlockSelectionGuard();
   }
 
+  @Override
   public TextAttributes getTextAttributes() {
     return myHostModel.getTextAttributes();
   }

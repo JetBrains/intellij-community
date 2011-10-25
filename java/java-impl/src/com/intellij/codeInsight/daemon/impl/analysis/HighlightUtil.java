@@ -591,6 +591,7 @@ public class HighlightUtil {
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
+        @Override
         protected boolean check(final PsiVariable var, final ResolveState state) {
           return (var instanceof PsiLocalVariable || var instanceof PsiParameter) && super.check(var, state);
         }

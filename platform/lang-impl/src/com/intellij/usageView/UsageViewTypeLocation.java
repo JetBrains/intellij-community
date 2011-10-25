@@ -37,11 +37,13 @@ public class UsageViewTypeLocation extends ElementDescriptionLocation {
 
   public static final UsageViewTypeLocation INSTANCE = new UsageViewTypeLocation();
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
+    @Override
     public String getElementDescription(@NotNull final PsiElement psiElement, @NotNull final ElementDescriptionLocation location) {
       if (!(location instanceof UsageViewTypeLocation)) return null;
 

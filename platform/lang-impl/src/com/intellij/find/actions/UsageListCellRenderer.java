@@ -44,6 +44,7 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
     myProject = project;
   }
 
+  @Override
   protected void customizeCellRenderer(final JList list,
                                        final Object value,
                                        final int index,

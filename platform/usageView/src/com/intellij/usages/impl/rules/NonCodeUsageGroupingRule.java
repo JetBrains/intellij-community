@@ -36,11 +36,13 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class CodeUsageGroup implements UsageGroup {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getCodeUsagesString();
     }
 
+    @Override
     public void update() {
     }
 
@@ -49,18 +51,25 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       return "CodeUsages";
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) { return null; }
+    @Override
     public FileStatus getFileStatus() { return null; }
+    @Override
     public boolean isValid() { return true; }
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       if (usageGroup instanceof DynamicUsageGroup) {
         return -1;
       }
       return usageGroup == this ? 0 : 1;
     }
+    @Override
     public void navigate(boolean requestFocus) { }
+    @Override
     public boolean canNavigate() { return false; }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
@@ -69,11 +78,13 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class NonCodeUsageGroup implements UsageGroup {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }
 
+    @Override
     public void update() {
     }
 
@@ -81,13 +92,20 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       //noinspection HardCodedStringLiteral
       return "NonCodeUsages";
     }
+    @Override
     public Icon getIcon(boolean isOpen) { return null; }
+    @Override
     public FileStatus getFileStatus() { return null; }
+    @Override
     public boolean isValid() { return true; }
+    @Override
     public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
+    @Override
     public void navigate(boolean requestFocus) { }
+    @Override
     public boolean canNavigate() { return false; }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
@@ -97,6 +115,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public static final UsageGroup INSTANCE = new DynamicUsageGroup();
     @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       if (view == null) {
@@ -108,6 +127,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       }
     }
 
+    @Override
     public void update() {
     }
 
@@ -115,18 +135,26 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       //noinspection HardCodedStringLiteral
       return "DynamicUsages";
     }
+    @Override
     public Icon getIcon(boolean isOpen) { return null; }
+    @Override
     public FileStatus getFileStatus() { return null; }
+    @Override
     public boolean isValid() { return true; }
+    @Override
     public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
+    @Override
     public void navigate(boolean requestFocus) { }
+    @Override
     public boolean canNavigate() { return false; }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
   }
 
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof PsiElementUsage) {
       if (usage instanceof UsageInfo2UsageAdapter) {

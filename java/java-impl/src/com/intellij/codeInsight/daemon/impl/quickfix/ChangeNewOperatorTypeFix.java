@@ -43,16 +43,19 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     myExpression = expression;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("change.new.operator.type.text", new PsiExpressionTrimRenderer.RenderFunction().fun(myExpression), myType.getPresentableText(), myType instanceof PsiArrayType ? "" : "()");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.new.operator.type.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myType.isValid()
            && myExpression.isValid()
@@ -62,6 +65,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
       ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     changeNewOperatorType(myExpression, myType, editor);
@@ -114,6 +118,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -37,6 +37,7 @@ public class JavaFileElement extends FileElement {
     super(JavaStubElementTypes.JAVA_FILE, text);
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JavaElementType.CLASS) {
       PsiJavaFile file = SourceTreeToPsiMap.treeToPsiNotNull(this);
@@ -48,6 +49,7 @@ public class JavaFileElement extends FileElement {
     super.deleteChildInternal(child);
   }
 
+  @Override
   @Nullable
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
@@ -63,6 +65,7 @@ public class JavaFileElement extends FileElement {
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -80,6 +83,7 @@ public class JavaFileElement extends FileElement {
     }
   }
 
+  @Override
   public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
     if (newElement.getElementType() == JavaElementType.IMPORT_LIST) {
       LOG.assertTrue(child.getElementType() == JavaElementType.IMPORT_LIST);

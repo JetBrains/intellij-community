@@ -35,6 +35,7 @@ public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, F
     myAcceptNullValues = acceptNullValues;
   }
 
+  @Override
   @NotNull
   public final Map<Integer, V> map(FileContent inputData) {
     if (inputData == null) {

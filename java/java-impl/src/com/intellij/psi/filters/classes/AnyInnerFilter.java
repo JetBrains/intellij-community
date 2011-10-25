@@ -38,6 +38,7 @@ public class AnyInnerFilter implements ElementFilter{
     return myFilter;
   }
 
+  @Override
   public boolean isAcceptable(Object classElement, PsiElement place){
     if(classElement instanceof PsiClass){
       final PsiClass[] inners = ((PsiClass)classElement).getInnerClasses();
@@ -52,6 +53,7 @@ public class AnyInnerFilter implements ElementFilter{
     return false;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }

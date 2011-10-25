@@ -70,26 +70,31 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     }
   }
 
+  @Override
   @Nullable
   public VirtualFile getCompilerOutput() {
     if (myCompilerOutput == null) return null;
     return myCompilerOutput.getFile();
   }
 
+  @Override
   @Nullable
   public String getCompilerOutputUrl() {
     if (myCompilerOutput == null) return null;
     return myCompilerOutput.getUrl();
   }
 
+  @Override
   public VirtualFilePointer getCompilerOutputPointer() {
     return myCompilerOutput;
   }
 
+  @Override
   public void setCompilerOutputPointer(VirtualFilePointer pointer) {
     myCompilerOutput = pointer;
   }
 
+  @Override
   public void setCompilerOutputUrl(String compilerOutputUrl) {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
     setCompilerOutputPointer(pointer);
@@ -136,10 +141,12 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
       myProject = project;
     }
 
+    @Override
     public void readExternal(final Element element) throws InvalidDataException {
       getImpl(myProject).readExternal(element);
     }
 
+    @Override
     public void writeExternal(final Element element) throws WriteExternalException {
       getImpl(myProject).writeExternal(element);
     }
@@ -152,6 +159,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
       myProject = project;
     }
 
+    @Override
     @NotNull
     public Set<String> getRootsToWatch() {
       return getImpl(myProject).getRootsToWatch();

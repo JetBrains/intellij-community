@@ -38,6 +38,7 @@ public class PsiCachedValuesFactory implements CachedValuesFactory {
     myProject = manager.getProject();
   }
 
+  @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return trackValue ? new PsiCachedValueImpl<T>(myManager, provider) {
       @Override
@@ -47,6 +48,7 @@ public class PsiCachedValuesFactory implements CachedValuesFactory {
     } : new PsiCachedValueImpl<T>(myManager, provider);
   }
 
+  @Override
   public <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                               boolean trackValue) {
     return trackValue ? new PsiParameterizedCachedValue<T, P>(myManager, provider) {

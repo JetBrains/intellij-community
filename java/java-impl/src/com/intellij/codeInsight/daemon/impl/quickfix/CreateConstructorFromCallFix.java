@@ -43,6 +43,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     myConstructorCall = constructorCall;
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myConstructorCall.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -65,8 +66,10 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
+        @Override
         public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -111,6 +114,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   protected PsiElement getElement() {
     if (!myConstructorCall.isValid() || !myConstructorCall.getManager().isInProject(myConstructorCall)) return null;
 
@@ -126,6 +130,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     PsiConstructorCall constructorCall = (PsiConstructorCall)element;
     PsiMethod method = constructorCall.resolveConstructor();
@@ -135,6 +140,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     return !CreateFromUsageUtils.shouldCreateConstructor(targetClass, argumentList, method);
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     PsiElement element = getElement(myConstructorCall);
 
@@ -171,6 +177,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.from.new.family");

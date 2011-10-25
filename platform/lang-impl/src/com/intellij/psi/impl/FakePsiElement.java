@@ -36,104 +36,126 @@ import javax.swing.*;
  */
 public abstract class FakePsiElement extends PsiElementBase implements PsiNamedElement, ItemPresentation {
 
+  @Override
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return Language.ANY;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public PsiElement getFirstChild() {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getLastChild() {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getNextSibling() {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getPrevSibling() {
     return null;
   }
 
+  @Override
   @Nullable
   public TextRange getTextRange() {
     return null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return 0;
   }
 
+  @Override
   public int getTextLength() {
     return 0;
   }
 
+  @Override
   @Nullable
   public PsiElement findElementAt(int offset) {
     return null;
   }
 
+  @Override
   public int getTextOffset() {
     return 0;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getText() {
     return null;
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return new char[0];
   }
 
+  @Override
   public boolean textContains(char c) {
     return false;
   }
 
+  @Override
   @Nullable
   public ASTNode getNode() {
     return null;
   }
 
+  @Override
   public String getPresentableText() {
     return getName();
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     return null;
   }
 
+  @Override
   public final Icon getIcon(final int flags) {
     return super.getIcon(flags);
   }
 
+  @Override
   protected final Icon getElementIcon(final int flags) {
     return super.getElementIcon(flags);
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     return null;
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return null;
   }

@@ -39,6 +39,7 @@ public class TreeChangeImpl implements TreeChange {
     myParent = parent;
   }
 
+  @Override
   public void addChange(ASTNode child, @NotNull ChangeInfo changeInfo) {
     LOG.assertTrue(child.getTreeParent() == myParent);
 
@@ -168,6 +169,7 @@ public class TreeChangeImpl implements TreeChange {
     return false;
   }
 
+  @Override
   @NotNull
   public TreeElement[] getAffectedChildren() {
     final TreeElement[] treeElements = new TreeElement[myChanges.size()];
@@ -178,15 +180,18 @@ public class TreeChangeImpl implements TreeChange {
     return treeElements;
   }
 
+  @Override
   public ChangeInfo getChangeByChild(ASTNode child) {
     return myChanges.get(child);
   }
 
+  @Override
   public int getChildOffsetInNewTree(@NotNull ASTNode child) {
     return myParent.getStartOffset() + getNewOffset(child);
   }
 
 
+  @Override
   public void composite(@NotNull TreeChange treeChange) {
     final TreeChangeImpl change = (TreeChangeImpl)treeChange;
     final Set<Map.Entry<ASTNode,ChangeInfo>> entries = change.myChanges.entrySet();
@@ -195,14 +200,17 @@ public class TreeChangeImpl implements TreeChange {
     }
   }
 
+  @Override
   public boolean isEmpty() {
     return false;
   }
 
+  @Override
   public void removeChange(ASTNode beforeEqualDepth) {
     removeChangeInternal(beforeEqualDepth);
   }
 
+  @Override
   public void add(@NotNull final TreeChange value) {
     final TreeChangeImpl impl = (TreeChangeImpl)value;
     LOG.assertTrue(impl.myParent == myParent);
@@ -265,6 +273,7 @@ public class TreeChangeImpl implements TreeChange {
     }
   }
 
+  @Override
   public int getOldLength() {
     int oldLength = ((TreeElement)myParent).getNotCachedLength();
     for (final Map.Entry<ASTNode, ChangeInfo> entry : myChanges.entrySet()) {

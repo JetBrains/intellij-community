@@ -35,16 +35,19 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     super(JavaElementType.REFERENCE_PARAMETER_LIST);
   }
 
+  @Override
   @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
     return getChildrenAsPsiElements(ElementType.TYPES_BIT_SET, ElementType.PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeArguments() {
     return PsiImplUtil.typesByReferenceParameterList(this);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     IElementType i = child.getElementType();
     if (i == JavaElementType.TYPE) {
@@ -64,6 +67,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -88,6 +92,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before){
     if (first == last && first.getElementType() == JavaElementType.TYPE){
       if (getLastChildNode() != null && getLastChildNode().getElementType() == TokenType.ERROR_ELEMENT){
@@ -142,6 +147,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     return firstAdded;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JavaElementType.TYPE){
       ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
@@ -171,6 +177,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceParameterList(this);

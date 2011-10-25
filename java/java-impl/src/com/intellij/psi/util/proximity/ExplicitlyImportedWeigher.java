@@ -63,6 +63,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     }
   }
 
+  @Override
   public Integer weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     final PsiElement position = location.getPosition();
     if (position == null){

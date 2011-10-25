@@ -30,6 +30,7 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
     return getOrderRootType(JavadocOrderRootType.class);
   }
 
+  @Override
   public boolean collectFromDependentModules() {
     return true;
   }

@@ -47,6 +47,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CommonCodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
+  @Override
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
     Alignment childAlignment = createChildAlignment();
@@ -192,6 +193,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
 
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT})) {

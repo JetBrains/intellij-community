@@ -65,6 +65,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   public AdditionalIndexableFileSet() {
   }
 
+  @Override
   public boolean isInSet(VirtualFile file) {
     for (final VirtualFile root : getFiles()) {
       if (VfsUtil.isAncestor(root, file, false)) {
@@ -74,6 +75,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     return false;
   }
 
+  @Override
   public void iterateIndexableFilesIn(VirtualFile file, ContentIterator iterator) {
     if (!isInSet(file)) return;
 

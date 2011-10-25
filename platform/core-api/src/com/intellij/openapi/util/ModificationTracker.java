@@ -24,6 +24,7 @@ public interface ModificationTracker {
   ModificationTracker EVER_CHANGED = new ModificationTracker() {
     private long myCounter = 0;
 
+    @Override
     public long getModificationCount() {
       return myCounter++;
     }

@@ -33,10 +33,12 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
     super(THIS_EXPRESSION);
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getQualifier() {
     return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
+  @Override
   public PsiType getType() {
     PsiJavaCodeReferenceElement qualifier = getQualifier();
     if (qualifier != null){
@@ -61,6 +63,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
     return null;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -83,6 +86,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -100,6 +104,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitThisExpression(this);

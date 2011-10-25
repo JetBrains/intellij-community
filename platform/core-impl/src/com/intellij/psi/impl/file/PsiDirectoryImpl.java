@@ -68,33 +68,40 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     myFile = file;
   }
 
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
     return myFile;
   }
 
+  @Override
   public boolean isDirectory() {
     return true;
   }
 
+  @Override
   public boolean isValid() {
     return myFile.isValid();
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return Language.ANY;
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myFile.getName();
   }
 
+  @Override
   @NotNull
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
@@ -138,6 +145,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return this;
   }
 
+  @Override
   public void checkSetName(String name) throws IncorrectOperationException {
     //CheckUtil.checkIsIdentifier(name);
     CheckUtil.checkWritable(this);
@@ -151,12 +159,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   public PsiDirectory getParentDirectory() {
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) return null;
     return myManager.findDirectory(parentFile);
   }
 
+  @Override
   @NotNull
   public PsiDirectory[] getSubdirectories() {
     VirtualFile[] files = myFile.getChildren();
@@ -170,6 +180,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return dirs.toArray(new PsiDirectory[dirs.size()]);
   }
 
+  @Override
   @NotNull
   public PsiFile[] getFiles() {
     LOG.assertTrue(myFile.isValid());
@@ -184,18 +195,21 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return PsiUtilCore.toPsiFileArray(psiFiles);
   }
 
+  @Override
   public PsiDirectory findSubdirectory(@NotNull String name) {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findDirectory(childVFile);
   }
 
+  @Override
   public PsiFile findFile(@NotNull String name) {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findFile(childVFile);
   }
 
+  @Override
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
     ProgressIndicatorProvider.checkCanceled();
@@ -221,6 +235,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return true;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     checkValid();
@@ -228,6 +243,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     VirtualFile[] files = myFile.getChildren();
     final ArrayList<PsiElement> children = new ArrayList<PsiElement>(files.length);
     processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
+      @Override
       public boolean execute(@NotNull final PsiFileSystemItem element) {
         children.add(element);
         return true;
@@ -243,55 +259,68 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   public PsiDirectory getParent() {
     return getParentDirectory();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return null;
   }
 
+  @Override
   public TextRange getTextRange() {
     return null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return -1;
   }
 
+  @Override
   public int getTextLength() {
     return -1;
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     return null;
   }
 
+  @Override
   public int getTextOffset() {
     return -1;
   }
 
+  @Override
   public String getText() {
     return ""; // TODO throw new InsupportedOperationException()
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return false;
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return false;
   }
 
+  @Override
   public final boolean isWritable() {
     return myFile.isWritable();
   }
 
+  @Override
   public boolean isPhysical() {
     return !(myFile.getFileSystem() instanceof NonPhysicalFileSystem) && !(myFile.getFileSystem().getProtocol().equals("temp"));
   }
@@ -299,12 +328,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   /**
    * @not_implemented
    */
+  @Override
   public PsiElement copy() {
     LOG.error("not implemented");
     return null;
   }
 
 
+  @Override
   @NotNull
   public PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
     checkCreateSubdirectory(name);
@@ -320,6 +351,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   public void checkCreateSubdirectory(@NotNull String name) throws IncorrectOperationException {
     // TODO : another check?
     //CheckUtil.checkIsIdentifier(name);
@@ -330,6 +362,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   @NotNull
   public PsiFile createFile(@NotNull String name) throws IncorrectOperationException {
     checkCreateFile(name);
@@ -343,6 +376,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   @NotNull
   public PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
     checkCreateFile(newName);
@@ -389,6 +423,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
@@ -398,6 +433,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     checkAdd(element);
     if (element instanceof PsiDirectory) {
@@ -462,6 +498,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (element instanceof PsiDirectory) {
@@ -487,14 +524,17 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     checkDelete();
     //PsiDirectory parent = getParentDirectory();
@@ -523,6 +563,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     */
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     CheckUtil.checkDelete(myFile);
   }
@@ -530,11 +571,13 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   /**
    * @not_implemented
    */
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     LOG.error("not implemented");
     return null;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDirectory(this);
   }
@@ -543,10 +586,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return "PsiDirectory:" + myFile.getPresentableUrl();
   }
 
+  @Override
   public ASTNode getNode() {
     return null;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }
@@ -556,14 +601,17 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().navigateToDirectory(this, requestFocus);
   }
 
+  @Override
   protected Icon getElementIcon(final int flags) {
     return PlatformIcons.DIRECTORY_CLOSED_ICON;
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     info.put("fileName", getName());
   }

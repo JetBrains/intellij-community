@@ -128,12 +128,14 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     myTimer = UIUtil.createNamedTimer("Restart context menu", 500, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myDisposed) return;
 
         if (myTimer != null && myTimer.isRunning()) myTimer.stop();
 
         myTimer = UIUtil.createNamedTimer("Restart context menu now",50, new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             if (myShow) {
               if (myVisible) {
@@ -186,6 +188,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     myTimer.start();
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     myEditor = null;
@@ -212,6 +215,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     myTimer = UIUtil.createNamedTimer("Hide context menu",1500, new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myDisposed) return;
 

@@ -41,6 +41,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
    */
   public static void performAction(final Project project, final Runnable action) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(project, action, "test command", null);
       }
@@ -64,6 +65,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
     final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
     performAction(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
       }
@@ -106,6 +108,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     myFixture.getEditor().getSelectionModel().setSelection(0, 5);
     final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
     performAction(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         typedAction.actionPerformed(myFixture.getEditor(), '\'', ((EditorEx)myFixture.getEditor()).getDataContext());
       }
@@ -115,6 +118,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
 
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getLineStartOffset(3));
     performAction(myFixture.getProject(), new Runnable() {
+      @Override
       public void run() {
         typedAction.actionPerformed(myFixture.getEditor(), 'A', ((EditorEx)myFixture.getEditor()).getDataContext());
         typedAction.actionPerformed(myFixture.getEditor(), 'B', ((EditorEx)myFixture.getEditor()).getDataContext());

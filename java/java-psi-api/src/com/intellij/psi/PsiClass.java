@@ -39,6 +39,7 @@ public interface PsiClass
   @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
 
   ArrayFactory<PsiClass> ARRAY_FACTORY = new ArrayFactory<PsiClass>() {
+    @Override
     public PsiClass[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiClass[count];
     }
@@ -294,6 +295,7 @@ public interface PsiClass
    *
    * @return the name identifier, or null if the class is anonymous or synthetic jsp class
    */
+  @Override
   @Nullable
   PsiIdentifier getNameIdentifier();
 
@@ -338,6 +340,7 @@ public interface PsiClass
    *
    * @return the containing class, or null if the class is not an inner class.
    */
+  @Override
   @Nullable
   PsiClass getContainingClass();
 
@@ -351,5 +354,6 @@ public interface PsiClass
   @NotNull
   Collection<HierarchicalMethodSignature> getVisibleSignatures();
 
+  @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 }

@@ -37,6 +37,7 @@ public class TypeParameterExtendsBoundsListElement extends CompositeElement impl
     super(JavaElementType.EXTENDS_BOUND_LIST);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (first == last && first.getElementType() == JAVA_CODE_REFERENCE){
       if (getLastChildNode() != null && getLastChildNode().getElementType() == ERROR_ELEMENT){
@@ -75,6 +76,7 @@ public class TypeParameterExtendsBoundsListElement extends CompositeElement impl
     return firstAdded;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JAVA_CODE_REFERENCE){
       ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
@@ -93,6 +95,7 @@ public class TypeParameterExtendsBoundsListElement extends CompositeElement impl
     super.deleteChildInternal(child);
   }
 
+  @Override
   public int getChildRole(final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
 

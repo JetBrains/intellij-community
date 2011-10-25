@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor {
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
+    @Override
     public void elementFinished(@NotNull PsiElement element) {
       JavaRecursiveElementWalkingVisitor.this.elementFinished(element);
     }

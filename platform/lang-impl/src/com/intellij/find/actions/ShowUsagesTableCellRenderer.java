@@ -49,6 +49,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     myUsageView = usageView;
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable list, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     UsageNode usageNode = value instanceof UsageNode ? (UsageNode)value : null;
 

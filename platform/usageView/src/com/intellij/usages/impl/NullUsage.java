@@ -30,39 +30,48 @@ public class NullUsage implements Usage {
   private NullUsage() {
   }
 
+  @Override
   @NotNull
   public UsagePresentation getPresentation() {
     throw new IllegalAccessError();
   }
 
+  @Override
   public boolean isValid() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public FileEditorLocation getLocation() {
     return null;
   }
 
+  @Override
   public void selectInEditor() {
 
   }
 
+  @Override
   public void highlightInEditor() {
 
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
 
   }
 
+  @Override
   public boolean canNavigate() {
     return false;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }

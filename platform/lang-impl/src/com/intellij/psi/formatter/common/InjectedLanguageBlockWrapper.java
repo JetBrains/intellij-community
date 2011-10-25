@@ -50,15 +50,18 @@ public final class InjectedLanguageBlockWrapper implements Block {
     myIndent = indent;
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent != null ? myIndent : myOriginal.getIndent();
   }
 
+  @Override
   @Nullable
   public Alignment getAlignment() {
     return myOriginal.getAlignment();
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     TextRange range = myOriginal.getTextRange();
@@ -70,6 +73,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
     return TextRange.from(start, range.getLength());
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     if (myBlocks == null) {
@@ -107,11 +111,13 @@ public final class InjectedLanguageBlockWrapper implements Block {
     }
   }
 
+  @Override
   @Nullable
   public Wrap getWrap() {
     return myOriginal.getWrap();
   }
 
+  @Override
   @Nullable public Spacing getSpacing(final Block child1, final Block child2) {
     int shift = 0;
     Block child1ToUse = child1;
@@ -132,15 +138,18 @@ public final class InjectedLanguageBlockWrapper implements Block {
     return spacing;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return myOriginal.getChildAttributes(newChildIndex);
   }
 
+  @Override
   public boolean isIncomplete() {
     return myOriginal.isIncomplete();
   }
 
+  @Override
   public boolean isLeaf() {
     return myOriginal.isLeaf();
   }

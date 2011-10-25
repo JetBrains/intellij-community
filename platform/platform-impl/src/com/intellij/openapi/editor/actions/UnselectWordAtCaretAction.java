@@ -37,6 +37,7 @@ public class UnselectWordAtCaretAction extends EditorAction implements DumbAware
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
     }
   }

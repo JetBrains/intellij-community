@@ -111,6 +111,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return ASTFactory.leaf(myContentElementType, leafText);
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
@@ -154,14 +155,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
   }
 
+  @Override
   public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
     return true;
   }
 
+  @Override
   public boolean isValid() {
     final VirtualFile vFile = getViewProvider().getVirtualFile();
     if (!vFile.isValid()) return false;
@@ -182,6 +186,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return provider.getPsi(getLanguage()) == this || provider.getPsi(provider.getBaseLanguage()) == this;
   }
 
+  @Override
   public boolean isContentsLoaded() {
     return _getTreeElement() != null;
   }
@@ -233,6 +238,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return treeElement;
   }
 
+  @Override
   public ASTNode findTreeForStub(StubTree tree, StubElement<?> stub) {
     final Iterator<StubElement<?>> stubs = tree.getPlainList().iterator();
     final StubElement<?> root = stubs.next();
@@ -340,10 +346,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void clearCaches() {}
 
+  @Override
   public String getText() {
     return getViewProvider().getContents().toString();
   }
 
+  @Override
   public int getTextLength() {
     final ASTNode tree = _getTreeElement();
     if (tree != null) return tree.getTextLength();
@@ -351,22 +359,27 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getViewProvider().getContents().length();
   }
 
+  @Override
   public TextRange getTextRange() {
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   public PsiElement getNextSibling() {
     return SharedPsiElementImplUtil.getNextSibling(this);
   }
 
+  @Override
   public PsiElement getPrevSibling() {
     return SharedPsiElementImplUtil.getPrevSibling(this);
   }
 
+  @Override
   public long getModificationStamp() {
     return getViewProvider().getModificationStamp();
   }
 
+  @Override
   public void subtreeChanged() {
     doClearCaches();
     getViewProvider().rootChanged(this);
@@ -389,6 +402,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     clearCaches();
   }
 
+  @Override
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
   protected PsiFileImpl clone() {
     FileViewProvider viewProvider = getViewProvider();
@@ -420,29 +434,35 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return clone;
   }
 
+  @Override
   @NotNull public String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     doClearCaches();
     return PsiFileImplUtil.setName(this, name);
   }
 
+  @Override
   public void checkSetName(String name) throws IncorrectOperationException {
     if (!getViewProvider().isEventSystemEnabled()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
+  @Override
   public boolean isWritable() {
     return getViewProvider().getVirtualFile().isWritable() && !CacheUtil.isCopy(this);
   }
 
+  @Override
   public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
+  @Override
   @Nullable
   public PsiDirectory getContainingDirectory() {
     final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
@@ -450,16 +470,19 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getManager().findDirectory(parentFile);
   }
 
+  @Override
   @NotNull
   public PsiFile getContainingFile() {
     return this;
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     checkDelete();
     PsiFileImplUtil.doDelete(this);
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     if (!getViewProvider().isEventSystemEnabled()) {
       throw new IncorrectOperationException();
@@ -467,6 +490,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   @NotNull
   public PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
@@ -476,6 +500,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myOriginalFile = originalFile.getOriginalFile();
   }
 
+  @Override
   @NotNull
   public PsiFile[] getPsiRoots() {
     final FileViewProvider viewProvider = getViewProvider();
@@ -492,16 +517,19 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return roots;
   }
 
+  @Override
   public boolean isPhysical() {
     // TODO[ik] remove this shit with dummy file system
     return getViewProvider().isEventSystemEnabled();
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return myElementType.getLanguage();
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
@@ -511,14 +539,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myTreeElementPointer = element;
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     return getViewProvider().findElementAt(offset);
   }
 
+  @Override
   public PsiReference findReferenceAt(int offset) {
     return getViewProvider().findReferenceAt(offset);
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
@@ -545,10 +576,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return false;
   }
 
+  @Override
   public PsiElement getContext() {
     return FileContextUtil.getFileContext(this);
   }
 
+  @Override
   public void onContentReload() {
     subtreeChanged(); // important! otherwise cached information is not released
     if (isContentsLoaded()) {
@@ -556,6 +589,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  @Override
   public PsiFile cacheCopy(final FileContent content) {
     if (isContentsLoaded()) {
       return this;
@@ -587,6 +621,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
 
+  @Override
   @Nullable
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -669,14 +704,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myStubLock;
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   public PsiElement getNavigationElement() {
     return this;
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     return this;
   }
@@ -694,46 +732,57 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return calcTreeElement().getChildrenAsPsiElements(null, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public PsiElement getFirstChild() {
     return SharedImplUtil.getFirstChild(calcTreeElement());
   }
 
+  @Override
   public PsiElement getLastChild() {
     return SharedImplUtil.getLastChild(calcTreeElement());
   }
 
+  @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     SharedImplUtil.acceptChildren(visitor, calcTreeElement());
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return calcTreeElement().getStartOffsetInParent();
   }
+  @Override
   public int getTextOffset() {
     return calcTreeElement().getTextOffset();
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return calcTreeElement().textMatches(text);
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return calcTreeElement().textMatches(element);
   }
 
+  @Override
   public boolean textContains(char c) {
     return calcTreeElement().textContains(c);
   }
 
+  @Override
   public final PsiElement copy() {
     return clone();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -742,6 +791,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -750,6 +800,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -758,24 +809,29 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, null, null);
   }
 
+  @Override
   public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
 
+  @Override
   public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
   }
 
+  @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (first == null) {
@@ -790,20 +846,24 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     CodeEditUtil.removeChildren(treeElement, firstElement, lastElement);
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     CompositeElement treeElement = calcTreeElement();
     return SharedImplUtil.doReplace(this, treeElement, newElement);
   }
 
+  @Override
   public PsiReference getReference() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -811,22 +871,27 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return true;
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return getName();
       }
 
+      @Override
       public String getLocationString() {
         final PsiDirectory psiDirectory = getParent();
         if (psiDirectory != null) {
@@ -835,24 +900,29 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         return null;
       }
 
+      @Override
       public Icon getIcon(final boolean open) {
         return PsiFileImpl.this.getIcon(open ? ICON_FLAG_OPEN : ICON_FLAG_CLOSED);
       }
     };
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
@@ -861,10 +931,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return manager.getProject();
   }
 
+  @Override
   public FileASTNode getNode() {
     return calcTreeElement();
   }
 
+  @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;
   }
@@ -939,6 +1011,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (vFile != null && vFile.isValid()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
           if (doc != null) {
@@ -951,6 +1024,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     putInfo(this, info);
   }

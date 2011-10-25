@@ -40,17 +40,20 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     myClass = aClass;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("move.class.to.separate.file.text",
                                   myClass.getName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.class.to.separate.file.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if  (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
     PsiDirectory dir = file.getContainingDirectory();
@@ -65,6 +68,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
 
@@ -84,6 +88,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

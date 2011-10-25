@@ -56,6 +56,7 @@ public class ModifierFilter extends ClassFilter{
     myModifierRestrictions.add(new ModifierRestriction(mod, hasToBe));
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiModifierListOwner){
       final PsiModifierList list = ((PsiModifierListOwner)element).getModifierList();

@@ -49,6 +49,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public abstract boolean contains(VirtualFile file);
 
+  @Override
   public Project getProject() {
     return myProject;
   }
@@ -70,6 +71,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return isSearchInModuleContent(aModule);
   }
 
+  @Override
   public boolean accept(VirtualFile file) {
     return contains(file);
   }
@@ -111,6 +113,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, localScope2.isIgnoreInjectedPsi());
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof GlobalSearchScope) return uniteWith((GlobalSearchScope)scope);
@@ -166,6 +169,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
     return new DelegatingGlobalSearchScope(scope) {
+      @Override
       public boolean contains(final VirtualFile file) {
         return !myBaseScope.contains(file);
       }
@@ -272,6 +276,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return new IntersectionScope(this, scope, null);
     }
 
+    @Override
     public String getDisplayName() {
       if (myDisplayName == null) {
         return PsiBundle.message("psi.search.scope.intersection", myScope1.getDisplayName(), myScope2.getDisplayName());
@@ -279,10 +284,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return myDisplayName;
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       return myScope1.contains(file) && myScope2.contains(file);
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       int res1 = myScope1.compare(file1, file2);
       int res2 = myScope2.compare(file1, file2);
@@ -297,18 +304,22 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope1.isSearchInModuleContent(aModule) && myScope2.isSearchInModuleContent(aModule);
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
       return myScope1.isSearchInModuleContent(aModule, testSources) && myScope2.isSearchInModuleContent(aModule, testSources);
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return myScope1.isSearchInLibraries() && myScope2.isSearchInLibraries();
     }
     
+    @Override
     public boolean isSearchOutsideRootModel() {
       return myScope1.isSearchOutsideRootModel() && myScope2.isSearchOutsideRootModel();
     }
@@ -343,6 +354,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myDisplayName = displayName;
     }
 
+    @Override
     public String getDisplayName() {
       if (myDisplayName == null) {
         return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
@@ -350,6 +362,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return myDisplayName;
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       return myScope1.contains(file) || myScope2.contains(file);
     }
@@ -359,6 +372,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return myScope1.isSearchOutsideRootModel() || myScope2.isSearchOutsideRootModel();
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       int res1 = myScope1.contains(file1) && myScope1.contains(file2) ? myScope1.compare(file1, file2) : 0;
       int res2 = myScope2.contains(file1) && myScope2.contains(file2) ? myScope2.compare(file1, file2) : 0;
@@ -373,14 +387,17 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope1.isSearchInModuleContent(aModule) || myScope2.isSearchInModuleContent(aModule);
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
       return myScope1.isSearchInModuleContent(aModule, testSources) || myScope2.isSearchInModuleContent(aModule, testSources);
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return myScope1.isSearchInLibraries() || myScope2.isSearchInLibraries();
     }
@@ -418,6 +435,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myFileTypes = fileTypes;
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       if (!super.contains(file)) return false;
 
@@ -476,27 +494,33 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   private static class EmptyScope extends GlobalSearchScope {
+    @Override
     public boolean contains(VirtualFile file) {
       return false;
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return false;
     }
 
+    @Override
     @NotNull
     public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
       return this;
     }
 
+    @Override
     @NotNull
     public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
       return scope;
@@ -516,18 +540,22 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myModule = myVirtualFile != null ? fileIndex.getModuleForFile(myVirtualFile) : null;
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       return Comparing.equal(myVirtualFile, file);
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return aModule == myModule;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return myModule == null;
     }

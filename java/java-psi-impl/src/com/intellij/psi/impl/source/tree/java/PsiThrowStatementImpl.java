@@ -36,10 +36,12 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     super(THROW_STATEMENT);
   }
 
+  @Override
   public PsiExpression getException() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.EXCEPTION);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -57,6 +59,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -76,6 +79,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitThrowStatement(this);

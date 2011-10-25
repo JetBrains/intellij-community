@@ -40,6 +40,7 @@ class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContainer imple
     picoContainer.setWrapperContainer(this);
   }
 
+  @Override
   public MutablePicoContainer makeChildContainer() {
     throw new UnsupportedOperationException("Method makeChildContainer() is not implemented");
   }

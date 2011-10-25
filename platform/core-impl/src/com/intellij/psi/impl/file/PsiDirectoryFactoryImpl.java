@@ -32,10 +32,12 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   public PsiDirectoryFactoryImpl(final PsiManagerImpl manager) {
     myManager = manager;
   }
+  @Override
   public PsiDirectory createDirectory(@NotNull final VirtualFile file) {
     return new PsiDirectoryImpl(myManager, file);
   }
 
+  @Override
   @NotNull
   public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
     if (presentable) {
@@ -54,6 +56,7 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
     return false;
   }
 
+  @Override
   public boolean isValidPackageName(String name) {
     return true;
   }

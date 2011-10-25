@@ -37,6 +37,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     myNewValue = newValue;
   }
 
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
@@ -58,14 +59,17 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return "VfsEvent[property( " + myPropertyName + ") changed for '" + myFile + "': oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
   }
 
+  @Override
   public String getPath() {
     return myFile.getPath();
   }
 
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
+  @Override
   public boolean isValid() {
     return myFile.isValid();
   }

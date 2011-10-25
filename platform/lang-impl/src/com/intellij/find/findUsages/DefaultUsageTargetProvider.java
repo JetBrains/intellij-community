@@ -25,10 +25,12 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
 
 public class DefaultUsageTargetProvider implements UsageTargetProvider {
+  @Override
   public UsageTarget[] getTargets(Editor editor, PsiFile file) {
     return null;
   }
 
+  @Override
   public UsageTarget[] getTargets(PsiElement psiElement) {
     if (psiElement instanceof NavigationItem) {
       if (FindManager.getInstance(psiElement.getProject()).canFindUsages(psiElement)) {

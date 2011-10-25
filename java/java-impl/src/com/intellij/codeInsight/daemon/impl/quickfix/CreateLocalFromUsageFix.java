@@ -44,10 +44,12 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix");
 
+  @Override
   public String getText(String varName) {
     return QuickFixBundle.message("create.local.from.usage.text", varName);
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
@@ -56,6 +58,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
            scope instanceof PsiLocalVariable || scope instanceof PsiAnonymousClass;
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
       return;
@@ -126,6 +129,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
         final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiLocalVariable.class, false);
         if (localVariable != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               CodeStyleManager.getInstance(project).reformat(localVariable);
             }
@@ -135,6 +139,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     });
   }
 
+  @Override
   protected boolean isAllowOuterTargetClass() {
     return false;
   }
@@ -157,6 +162,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return statements[statements.length - 1];
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.local.from.usage.family");

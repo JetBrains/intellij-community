@@ -75,6 +75,7 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
     return myLanguageLevel;
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     final String languageLevel = element.getAttributeValue(LANGUAGE_LEVEL_ELEMENT_NAME);
     if (languageLevel != null) {
@@ -87,26 +88,31 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
     }
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     if (myLanguageLevel != null) {
       element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
     }
   }
 
+  @Override
   public ModuleExtension getModifiableModel(final boolean writable) {
     return new LanguageLevelModuleExtension(this, writable);
   }
 
+  @Override
   public void commit() {
     if (mySource != null && mySource.myLanguageLevel != myLanguageLevel) {
       mySource.myLanguageLevel = myLanguageLevel;
     }
   }
 
+  @Override
   public boolean isChanged() {
     return mySource != null && mySource.myLanguageLevel != myLanguageLevel;
   }
 
+  @Override
   public void dispose() {
     myModule = null;
     myLanguageLevel = null;

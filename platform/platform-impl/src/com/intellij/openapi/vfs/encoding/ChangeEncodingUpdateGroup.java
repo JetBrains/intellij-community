@@ -27,6 +27,7 @@ import com.intellij.pom.Navigatable;
  * @author cdr
  */
 public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
+  @Override
   public void update(final AnActionEvent e) {
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);

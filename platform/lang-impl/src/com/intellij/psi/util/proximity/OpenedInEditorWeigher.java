@@ -37,6 +37,7 @@ public class OpenedInEditorWeigher extends ProximityWeigher {
     }
   });
 
+  @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     if (location.getProject() == null){
       return null;

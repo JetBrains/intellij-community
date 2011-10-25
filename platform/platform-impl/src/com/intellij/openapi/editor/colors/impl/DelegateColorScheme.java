@@ -142,6 +142,7 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     return myDelegate.getName();
   }
 
+  @Override
   public Object clone() {
     return myDelegate.clone();
   }

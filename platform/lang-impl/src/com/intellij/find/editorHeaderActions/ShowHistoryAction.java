@@ -54,6 +54,7 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     getEditorSearchComponent().showHistory(e.getInputEvent() instanceof MouseEvent, getTextField());
   }

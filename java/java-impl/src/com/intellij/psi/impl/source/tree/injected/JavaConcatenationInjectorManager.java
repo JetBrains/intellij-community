@@ -46,15 +46,18 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
   public JavaConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
     final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
     concatPoint.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
+      @Override
       public void extensionAdded(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         registerConcatenationInjector(injector);
       }
 
+      @Override
       public void extensionRemoved(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         unregisterConcatenationInjector(injector);
       }
     });
     psiManagerEx.registerRunnableToRunOnAnyChange(new Runnable() {
+      @Override
       public void run() {
         myModificationCounter++; // clear caches even on non-physical changes
       }
@@ -65,11 +68,13 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
     return ServiceManager.getService(project, JavaConcatenationInjectorManager.class);
   }
 
+  @Override
   public long getModificationCount() {
     return myModificationCounter;
   }
 
   private static class ConcatenationPsiCachedValueProvider implements ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement> {
+    @Override
     public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement context) {
       Project project = context.getProject();
       Pair<PsiElement, PsiElement[]> pair = computeAnchorAndOperands(context);
@@ -132,6 +137,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
       myManager = getInstance(project);
     }
 
+    @Override
     public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
       if (myManager.myConcatenationInjectors.isEmpty()) return;
 
@@ -188,6 +194,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
       }
     }
 
+    @Override
     @NotNull
     public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
       return Arrays.asList(PsiLiteralExpression.class);

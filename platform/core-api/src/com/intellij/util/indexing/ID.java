@@ -95,6 +95,7 @@ public class ID<K, V> {
         final String[] names = new String[ourNameToIdRegistry.size()];
 
         ourNameToIdRegistry.forEachEntry(new TObjectIntProcedure<String>() {
+            @Override
             public boolean execute(final String key, final int value) {
               names[value - 1] = key;
               return true;

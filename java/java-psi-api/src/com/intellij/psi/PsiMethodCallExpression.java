@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * Represents a call of a Java method.
  */
 public interface PsiMethodCallExpression extends PsiCallExpression {
+  @Override
   @NotNull
   PsiExpressionList getArgumentList();
 

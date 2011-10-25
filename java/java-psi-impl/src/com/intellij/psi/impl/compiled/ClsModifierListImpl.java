@@ -35,43 +35,52 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     super(stub);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return getAnnotations();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     int flag = PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(name);
     assert flag != 0;
     return (getStub().getModifiersMask() & flag) != 0;
   }
 
+  @Override
   public boolean hasExplicitModifier(@NotNull String name) {
     return hasModifierProperty(name);
   }
 
+  @Override
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return getStub().getChildrenByType(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
@@ -84,6 +93,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
         || element instanceof PsiField;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     final PsiAnnotation[] annotations = getAnnotations();
     final boolean formattingAllowed = isAnnotationFormattingAllowed();
@@ -154,6 +164,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
 
@@ -165,6 +176,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitModifierList(this);

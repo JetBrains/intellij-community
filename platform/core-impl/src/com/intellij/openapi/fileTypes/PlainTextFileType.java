@@ -28,21 +28,25 @@ public class PlainTextFileType extends LanguageFileType {
     super(PlainTextLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "PLAIN_TEXT";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return FileTypesBundle.message("filetype.plaintext.description");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "txt";
   }
 
+  @Override
   public Icon getIcon() {
     return ICON;
   }

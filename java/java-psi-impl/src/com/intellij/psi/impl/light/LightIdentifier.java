@@ -28,14 +28,17 @@ public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJ
     myText = text;
   }
 
+  @Override
   public IElementType getTokenType() {
     return JavaTokenType.IDENTIFIER;
   }
 
+  @Override
   public String getText(){
     return myText;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitIdentifier(this);
@@ -45,6 +48,7 @@ public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJ
     }
   }
 
+  @Override
   public PsiElement copy(){
     return new LightIdentifier(getManager(), myText);
   }

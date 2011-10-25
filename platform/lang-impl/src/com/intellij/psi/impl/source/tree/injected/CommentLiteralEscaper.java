@@ -33,12 +33,14 @@ public class CommentLiteralEscaper extends LiteralTextEscaper<PsiCommentImpl> {
     super(host);
   }
 
+  @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     ProperTextRange.assertProperRange(rangeInsideHost);
     outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
     return true;
   }
 
+  @Override
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     int offset = offsetInDecoded + rangeInsideHost.getStartOffset();
     if (offset < rangeInsideHost.getStartOffset()) offset = rangeInsideHost.getStartOffset();
@@ -46,6 +48,7 @@ public class CommentLiteralEscaper extends LiteralTextEscaper<PsiCommentImpl> {
     return offset;
   }
 
+  @Override
   public boolean isOneLine() {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(myHost.getLanguage());
     if (commenter instanceof CodeDocumentationAwareCommenter) {

@@ -122,6 +122,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return model;
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("FindManager");
     final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
@@ -135,6 +136,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return element;
   }
 
+  @Override
   public void loadState(final Element state) {
     final Element findUsages = state.getChild(FIND_USAGES_MANAGER_ELEMENT);
     if (findUsages != null) {
@@ -147,8 +149,10 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
+  @Override
   public int showPromptDialog(final FindModel model, String title) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject) {
+      @Override
       @Nullable
       public Point getInitialLocation() {
         if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0){
@@ -172,9 +176,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return replacePromptDialog.getExitCode();
   }
 
+  @Override
   public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
     if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
       myFindDialog = new FindDialog(myProject, model, new Runnable(){
+        @Override
         public void run() {
           String stringToFind = model.getStringToFind();
           if (stringToFind.length() == 0){
@@ -208,11 +214,13 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     myFindDialog.show();
   }
 
+  @Override
   @NotNull
   public FindModel getFindInFileModel() {
     return myFindInFileModel;
   }
 
+  @Override
   @NotNull
   public FindModel getFindInProjectModel() {
     myFindInProjectModel.setFromCursor(false);
@@ -221,19 +229,23 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return myFindInProjectModel;
   }
 
+  @Override
   public boolean findWasPerformed() {
     return isFindWasPerformed;
   }
 
+  @Override
   public void setFindWasPerformed() {
     isFindWasPerformed = true;
     myFindUsagesManager.clearFindingNextUsageInFile();
   }
 
+  @Override
   public FindModel getFindNextModel() {
     return myFindNextModel;
   }
 
+  @Override
   public FindModel getFindNextModel(@NotNull final Editor editor) {
     if (myFindNextModel == null) return null;
 
@@ -252,11 +264,13 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return myFindNextModel;
   }
 
+  @Override
   public void setFindNextModel(FindModel findNextModel) {
     myFindNextModel = findNextModel;
     myBus.syncPublisher(FIND_MODEL_TOPIC).findNextModelChanged();
   }
 
+  @Override
   @NotNull
   public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model){
     return findString(text, offset, model, null);
@@ -388,6 +402,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       TokenSet tokensOfInterest = TokenSet.EMPTY;
       final Language finalLang = lang;
       Set<Language> relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
+        @Override
         public Set<Language> compute() {
           THashSet<Language> result = new THashSet<Language>();
 
@@ -535,6 +550,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return pattern == null ? null : pattern.matcher(text);
   }
 
+  @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException {
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
@@ -660,14 +676,17 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return buffer.toString();
   }
 
+  @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
     return element.isValid() && myFindUsagesManager.canFindUsages(element);
   }
 
+  @Override
   public void findUsages(@NotNull PsiElement element) {
     myFindUsagesManager.findUsages(element, null, null);
   }
 
+  @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
@@ -694,6 +713,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return false;
   }
 
+  @Override
   public boolean findNextUsageInEditor(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
@@ -713,6 +733,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return myFindUsagesManager.findNextUsageInFile(fileEditor);
   }
 
+  @Override
   public boolean findPreviousUsageInEditor(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;

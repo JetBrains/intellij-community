@@ -53,6 +53,7 @@ public class JavaTreeGenerator implements TreeGenerator {
     }
   };
 
+  @Override
   @Nullable
   public TreeElement generateTreeFor(PsiElement original, final CharTable table, final PsiManager manager) {
     if (original instanceof PsiKeyword || original instanceof PsiIdentifier) {

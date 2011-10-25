@@ -48,6 +48,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     return new AnnotationElement();
   }
 
+  @Override
   public PsiAnnotation createPsi(final PsiAnnotationStub stub) {
     if (isCompiled(stub)) {
       return new ClsAnnotationImpl(stub);
@@ -57,6 +58,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     }
   }
 
+  @Override
   public PsiAnnotation createPsi(final ASTNode node) {
     return new PsiAnnotationImpl(node);
   }  
@@ -67,14 +69,17 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     return new PsiAnnotationStubImpl(parentStub, text);
   }
 
+  @Override
   public void serialize(final PsiAnnotationStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeUTFFast(stub.getText());
   }
 
+  @Override
   public PsiAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiAnnotationStubImpl(parentStub, dataStream.readUTFFast());
   }
 
+  @Override
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {
     final String refText = getReferenceShortName(stub.getText());
     sink.occurrence(JavaStubIndexKeys.ANNOTATIONS, refText);

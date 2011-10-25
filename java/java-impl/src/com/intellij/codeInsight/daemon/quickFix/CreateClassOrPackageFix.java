@@ -104,6 +104,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     myPresentation = presentation;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message(
@@ -111,6 +112,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
       myPresentation);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -124,10 +126,12 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
                      @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {
+        @Override
         protected void run(Result result) throws Throwable {
           final PsiDirectory directory = chooseDirectory(project, file);
           if (directory == null) return;
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               doCreate(directory, startElement);
             }
@@ -221,6 +225,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

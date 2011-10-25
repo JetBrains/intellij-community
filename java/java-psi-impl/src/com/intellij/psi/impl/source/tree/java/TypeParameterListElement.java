@@ -35,6 +35,7 @@ public class TypeParameterListElement extends CompositeElement {
     super(JavaElementType.TYPE_PARAMETER_LIST);
   }
 
+  @Override
   public int getChildRole(final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType elType = child.getElementType();
@@ -55,6 +56,7 @@ public class TypeParameterListElement extends CompositeElement {
     }
   }
 
+  @Override
   public TreeElement addInternal(final TreeElement first, final ASTNode last, ASTNode anchor, Boolean before) {
     TreeElement lt = (TreeElement)findChildByRole(ChildRole.LT_IN_TYPE_LIST);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
@@ -103,6 +105,7 @@ public class TypeParameterListElement extends CompositeElement {
     return firstAdded;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (child.getElementType() == JavaElementType.TYPE_PARAMETER){
       final ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());

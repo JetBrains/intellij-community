@@ -33,6 +33,7 @@ public class HttpsFileSystem extends HttpFileSystemBase {
     return (HttpsFileSystem)VirtualFileManager.getInstance().getFileSystem(HTTPS_PROTOCOL);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "HttpsFileSystem";

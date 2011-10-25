@@ -35,6 +35,7 @@ import java.util.List;
  * @author ven
  */
 public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
@@ -47,6 +48,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
     final SearchScope scope = p.getScope();
 
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
+      @Override
       public boolean process(PsiClass inheritor) {
         //could be null if not java inheritor, TODO only JavaClassInheritors are needed
         PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);

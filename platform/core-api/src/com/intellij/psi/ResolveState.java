@@ -132,10 +132,12 @@ public class ResolveState {
       myValues.put(key, value);
     }
 
+    @Override
     public <T> ResolveState put(Key<T> key, T value) {
       return new ManyElementResolveState(this, key, value);
     }
 
+    @Override
     public <T> T get(Key<T> key) {
       final T value = (T)myValues.get(key);
       if (value == null && key instanceof KeyWithDefaultValue) {

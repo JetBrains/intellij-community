@@ -38,6 +38,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
 
     final VirtualFile finalRoot = root;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel m = getRootManager().getModifiableModel();
         m.addContentEntry(finalRoot);
@@ -61,6 +62,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     root.delete(null);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel m = getRootManager().getModifiableModel();
         m.addContentEntry(url);
@@ -80,6 +82,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     final String url = root.getUrl();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel m = getRootManager().getModifiableModel();
         m.addContentEntry(url);
@@ -93,6 +96,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
 
   public void testGettingMofifiableModelCorrectlySetsRootModelForContentEntries() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel m = getRootManager().getModifiableModel();
         m.addContentEntry(dir);

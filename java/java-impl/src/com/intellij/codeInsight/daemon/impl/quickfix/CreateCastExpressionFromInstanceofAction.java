@@ -44,6 +44,7 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -71,6 +72,7 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
     return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("cast.expression");

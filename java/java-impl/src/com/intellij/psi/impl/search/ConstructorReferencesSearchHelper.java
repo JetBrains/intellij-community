@@ -82,6 +82,7 @@ public class ConstructorReferencesSearchHelper {
 
     // search usages like "super(..)"
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
+      @Override
       public boolean process(PsiClass inheritor) {
         return processSuperOrThis(processor, (PsiClass)inheritor.getNavigationElement(), constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
                                   PsiKeyword.SUPER);
@@ -145,10 +146,12 @@ public class ConstructorReferencesSearchHelper {
     PsiClass superClass = containingClass.getSuperClass();
     if (myManager.areElementsEquivalent(constructor.getContainingClass(), superClass)) {
       processor.process(new LightMemberReference(myManager, usage, PsiSubstitutor.EMPTY) {
+        @Override
         public PsiElement getElement() {
           return usage;
         }
 
+        @Override
         public TextRange getRangeInElement() {
           if (usage instanceof PsiClass) {
             PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();

@@ -28,6 +28,7 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
     super(type, text);
   }
 
+  @Override
   public LeafElement findLeafElementAt(int offset) {
     return null;
   }

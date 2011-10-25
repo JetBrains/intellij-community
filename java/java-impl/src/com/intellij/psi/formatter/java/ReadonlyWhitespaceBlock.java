@@ -40,45 +40,54 @@ public class ReadonlyWhitespaceBlock implements Block {
     myIndent = indent;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myRange;
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     return Collections.emptyList();
   }
 
+  @Override
   @Nullable
   public Wrap getWrap() {
     return myWrap;
   }
 
+  @Override
   @Nullable
   public Indent getIndent() {
     return myIndent;
   }
 
+  @Override
   @Nullable
   public Alignment getAlignment() {
     return myAlignment;
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     return null;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
   }
 
+  @Override
   public boolean isIncomplete() {
     return false;
   }
 
+  @Override
   public boolean isLeaf() {
     return true;
   }

@@ -59,6 +59,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     myRef = ref;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myRef.isValid() && file.getManager().isInProject(file) && !getClassesToImport().isEmpty();
   }
@@ -148,6 +149,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         && !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        @Override
         public void run() {
           action.execute();
         }
@@ -179,6 +181,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
   protected abstract boolean isQualified(T reference);
 
+  @Override
   public boolean showHint(final Editor editor) {
     if (isQualified(myRef)) {
       return false;
@@ -187,16 +190,19 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     return result == Result.POPUP_SHOWN || result == Result.CLASS_AUTO_IMPORTED;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("import.class.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("import.class.fix");
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -227,9 +233,11 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     return offset == range.getEndOffset();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         List<PsiClass> classesToImport = getClassesToImport();
         PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);

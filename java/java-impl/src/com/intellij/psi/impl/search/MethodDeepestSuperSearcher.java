@@ -12,6 +12,7 @@ import java.util.Set;
  * @author peter
  */
 public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiMethod> {
+  @Override
   public boolean execute(@NotNull PsiMethod method, @NotNull Processor<PsiMethod> consumer) {
     final Set<PsiMethod> methods = new THashSet<PsiMethod>();
     methods.add(method);

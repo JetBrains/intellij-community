@@ -104,32 +104,40 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
+  @Override
   public void childAdded(final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
+      @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         insertString(document, event.getOffset(), event.getChild().getText());
       }
     });
   }
 
+  @Override
   public void childRemoved(final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
+      @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         deleteString(document, event.getOffset(), event.getOffset() + event.getOldLength());
       }
     });
   }
 
+  @Override
   public void childReplaced(final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
+      @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewChild().getText());
       }
     });
   }
 
+  @Override
   public void childrenChanged(final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
+      @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getParent().getText());
       }
@@ -188,6 +196,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       fakeEvent.setParent(changeScope);
       fakeEvent.setFile(changeScope.getContainingFile());
       doSync(fakeEvent, true, new DocSyncAction() {
+        @Override
         public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
           doCommitTransaction(document, documentChangeTransaction);
         }
@@ -260,6 +269,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   public static class DocumentChangeTransaction{
     private final Set<Pair<MutableTextRange,StringBuffer>> myAffectedFragments = new TreeSet<Pair<MutableTextRange, StringBuffer>>(new Comparator<Pair<MutableTextRange, StringBuffer>>() {
+      @Override
       public int compare(final Pair<MutableTextRange, StringBuffer> o1,
                          final Pair<MutableTextRange, StringBuffer> o2) {
         return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();

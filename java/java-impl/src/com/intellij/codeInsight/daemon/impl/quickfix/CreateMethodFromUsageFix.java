@@ -59,6 +59,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     myMethodCall = SmartPointerManager.getInstance(methodCall.getProject()).createSmartPsiElementPointer(methodCall);
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     final PsiMethodCallExpression call = getMethodCall();
     if (call == null || !call.isValid()) return false;
@@ -96,18 +97,21 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                                                      //strictly inside arg list
                                                      argRange.getStartOffset()+1,
                                                      argRange.getEndOffset()-1, new Processor<HighlightInfo>() {
+        @Override
         public boolean process(HighlightInfo info) {
           return !(info.getActualStartOffset() > argRange.getStartOffset() && info.getActualEndOffset() < argRange.getEndOffset());
         }
       });
   }
 
+  @Override
   protected PsiElement getElement() {
     final PsiMethodCallExpression call = getMethodCall();
     if (call == null || !call.getManager().isInProject(call)) return null;
     return call;
   }
 
+  @Override
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     List<PsiClass> targets = super.getTargetClasses(element);
@@ -122,6 +126,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return result;
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
@@ -233,8 +238,10 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     if (!shouldBeAbstract) {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
+        @Override
         public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
               final int offset = newEditor.getCaretModel().getOffset();
@@ -305,6 +312,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return targetClass.isInterface();
   }
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     PsiMethodCallExpression callExpression = (PsiMethodCallExpression) element;
     PsiReferenceExpression referenceExpression = callExpression.getMethodExpression();
@@ -312,6 +320,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return CreateFromUsageUtils.isValidMethodReference(referenceExpression, callExpression);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");

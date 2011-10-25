@@ -53,10 +53,12 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return "MigrationClass:" + myQualifiedName;
   }
 
+  @Override
   public String getText() {
     return "class " + myName + " {}";
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClass(this);
@@ -66,207 +68,253 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     }
   }
 
+  @Override
   public PsiElement copy() {
     return new MigrationClassImpl(myMigration, myQualifiedName);
   }
 
+  @Override
   public boolean isValid() {
     return myMigration.isValid();
   }
 
+  @Override
   public String getQualifiedName() {
     return myQualifiedName;
   }
 
+  @Override
   public boolean isInterface() {
     return false;
   }
 
+  @Override
   public boolean isAnnotationType() {
     return false;
   }
 
+  @Override
   public boolean isEnum() {
     return false;
   }
 
+  @Override
   public PsiReferenceList getExtendsList() {
     return null;
   }
 
 
+  @Override
   public PsiReferenceList getImplementsList() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiClass getSuperClass() {
     return JavaPsiFacade.getInstance(myManager.getProject())
       .findClass("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
   }
 
+  @Override
   public PsiClass[] getInterfaces() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getSupers() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return Collections.emptySet();
   }
 
+  @Override
   @NotNull
   public PsiField[] getFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassInitializer[] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiField[] getAllFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getAllMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiField findFieldByName(String name, boolean checkBases) {
     return null;
   }
 
+  @Override
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
     return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
   }
 
+  @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
   }
 
+  @Override
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
     return null;
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return null;
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return false;
   }
 
+  @Override
   public PsiJavaToken getLBrace() {
     return null;
   }
 
+  @Override
   public PsiJavaToken getRBrace() {
     return null;
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return null;
   }
 
   // very special method!
+  @Override
   public PsiElement getScope() {
     return null;
   }
 
+  @Override
   public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
+  @Override
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return null;
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return PsiModifier.PUBLIC.equals(name);
   }
 
+  @Override
   public PsiDocComment getDocComment() {
     return null;
   }
 
+  @Override
   public boolean isDeprecated() {
     return false;
   }
@@ -275,6 +323,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return null;
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }
@@ -284,6 +333,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);

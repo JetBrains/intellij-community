@@ -343,16 +343,19 @@ public class AnnotationsHighlightUtil {
       return Boolean.FALSE;
     }
 
+    @Override
     public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
       return PsiType.VOID.equals(primitiveType) || PsiType.NULL.equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
     }
 
+    @Override
     public Boolean visitArrayType(PsiArrayType arrayType) {
       if (arrayType.getArrayDimensions() != 1) return Boolean.FALSE;
       PsiType componentType = arrayType.getComponentType();
       return componentType.accept(this);
     }
 
+    @Override
     public Boolean visitClassType(PsiClassType classType) {
       if (classType.getParameters().length > 0) {
         PsiClassType rawType = classType.rawType();

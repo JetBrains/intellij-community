@@ -27,10 +27,12 @@ import com.intellij.psi.PsiElement;
 public class FalseFilter implements ElementFilter{
   public static final FalseFilter INSTANCE = new FalseFilter();
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return false;
   }

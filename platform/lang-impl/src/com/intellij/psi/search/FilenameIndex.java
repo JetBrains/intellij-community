@@ -39,26 +39,32 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   private final MyInputFilter myInputFilter = new MyInputFilter();
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
+  @Override
   public ID<String,Void> getName() {
     return NAME;
   }
 
+  @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
+  @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return false;
   }
 
+  @Override
   public int getVersion() {
     return 0;
   }
@@ -87,6 +93,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
+    @Override
     @NotNull
     public Map<String, Void> map(final FileContent inputData) {
       return Collections.singletonMap(inputData.getFileName(), null);
@@ -94,6 +101,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return true;
     }

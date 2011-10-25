@@ -48,16 +48,19 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     myManager = manager;
   }
 
+  @Override
   @NotNull
   public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                     long modificationStamp, final boolean physical) {
     return createFileFromText(name, fileType, text, modificationStamp, physical, true);
   }
 
+  @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) {
     return createFileFromText(name, language, text, true, true);
   }
 
+  @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text, boolean physical,
                                     final boolean markAsCopy) {
     return createFileFromText(name, language, text, physical, markAsCopy, false);
@@ -77,6 +80,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
   }
 
+  @Override
   @NotNull
   public PsiFile createFileFromText(@NotNull String name,
                                     @NotNull FileType fileType,
@@ -149,11 +153,13 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return plainTextFile;
   }
 
+  @Override
   @NotNull
   public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text) {
     return createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), false);
   }
 
+  @Override
   @NotNull
   public PsiFile createFileFromText(@NotNull String name, @NotNull String text){
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(name);
@@ -164,6 +170,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return createFileFromText(name, type, text);
   }
 
+  @Override
   public PsiFile createFileFromText(FileType fileType, final String fileName, CharSequence chars, int startOffset, int endOffset) {
     LOG.assertTrue(!fileType.isBinary());
     final CharSequence text = startOffset == 0 && endOffset == chars.length()?chars:new CharSequenceSubSequence(chars, startOffset, endOffset);

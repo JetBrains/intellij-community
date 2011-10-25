@@ -26,16 +26,19 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 
 public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("enable.optimize.imports.on.the.fly");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return file.getManager().isInProject(file)
            && file instanceof PsiJavaFile
@@ -43,11 +46,13 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
       ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

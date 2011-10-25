@@ -31,10 +31,12 @@ class SortMembersAlphabeticallyAction extends RuleAction {
     super(usageView, UsageViewBundle.message("sort.alphabetically.action.text"), ICON);
   }
 
+  @Override
   protected boolean getOptionValue() {
     return UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY;
   }
 
+  @Override
   protected void setOptionValue(final boolean value) {
     UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY = value;
   }

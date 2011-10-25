@@ -45,14 +45,17 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     super(JavaElementType.METHOD_CALL_EXPRESSION);
   }
 
+  @Override
   public PsiType getType() {
     return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
   }
 
+  @Override
   public PsiMethod resolveMethod() {
     return (PsiMethod)getMethodExpression().resolve();
   }
 
+  @Override
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     return getMethodExpression().advancedResolve(false);
@@ -66,6 +69,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     super.removeChild(child);
   }
 
+  @Override
   @NotNull
   public PsiReferenceParameterList getTypeArgumentList() {
     PsiReferenceExpression expression = getMethodExpression();
@@ -75,16 +79,19 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     return result;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeArguments() {
     return getMethodExpression().getTypeParameters();
   }
 
+  @Override
   @NotNull
   public PsiReferenceExpression getMethodExpression() {
     return (PsiReferenceExpression)findChildByRoleAsPsiElement(ChildRole.METHOD_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
@@ -93,6 +100,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     return list;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -107,6 +115,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -121,6 +130,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethodCallExpression(this);
@@ -137,6 +147,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   private static final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
   private static class TypeEvaluator implements Function<PsiMethodCallExpression, PsiType> {
+    @Override
     @Nullable
     public PsiType fun(final PsiMethodCallExpression call) {
       PsiReferenceExpression methodExpression = call.getMethodExpression();

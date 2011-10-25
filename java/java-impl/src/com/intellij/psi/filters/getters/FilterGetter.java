@@ -39,6 +39,7 @@ public class FilterGetter implements ContextGetter{
     myFilter = filter;
   }
 
+  @Override
   public Object[] get(PsiElement context, CompletionContext completionContext){
     final List results = new ArrayList();
     final Object[] elements = myBaseGetter.get(context, completionContext);

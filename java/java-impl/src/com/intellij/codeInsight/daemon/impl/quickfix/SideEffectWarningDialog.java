@@ -54,6 +54,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   }
 
+  @Override
   protected Action[] createActions() {
     List<AbstractAction> actions = new ArrayList<AbstractAction>();
     myRemoveAllAction = new AbstractAction() {
@@ -62,6 +63,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
         putValue(DEFAULT_ACTION, this);
       }
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         close(DELETE_ALL);
       }
@@ -74,6 +76,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
           UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.transform"), this);
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
           close(MAKE_STATEMENT);
         }
@@ -86,6 +89,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
         UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.cancel"), this);
       }
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         doCancelAction();
       }
@@ -95,18 +99,22 @@ public class SideEffectWarningDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @Override
   protected Action getCancelAction() {
     return myCancelAllAction;
   }
 
+  @Override
   protected Action getOKAction() {
     return myRemoveAllAction;
   }
 
+  @Override
   public void doCancelAction() {
     close(CANCEL);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final String text = sideEffectsDescription();

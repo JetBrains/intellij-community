@@ -26,6 +26,7 @@ public class CommentInstruction extends SimpleInstruction {
     return ";  " + myText;
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitCommentInstruction(this, offset, nextOffset);
   }

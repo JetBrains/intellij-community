@@ -56,6 +56,7 @@ public abstract class NamedObjectProviderBinding<Provider> implements ProviderBi
     }
   }
 
+  @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List list,
                                               PsiReferenceService.Hints hints) {
     String name = getName(position);
@@ -65,6 +66,7 @@ public abstract class NamedObjectProviderBinding<Provider> implements ProviderBi
     }
   }
 
+  @Override
   public void unregisterProvider(final Provider provider) {
     for (final CopyOnWriteArrayList<Trinity<Provider, ElementPattern, Double>> list : myNamesToProvidersMap.values()) {
       for (final Trinity<Provider, ElementPattern, Double> trinity : new ArrayList<Trinity<Provider, ElementPattern, Double>>(list)) {

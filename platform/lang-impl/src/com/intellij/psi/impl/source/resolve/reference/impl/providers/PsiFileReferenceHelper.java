@@ -38,10 +38,12 @@ import java.util.*;
  */
 public class PsiFileReferenceHelper extends FileReferenceHelper {
 
+  @Override
   public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
     return FileReferenceQuickFixProvider.registerQuickFix(info, reference);
   }
 
+  @Override
   public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile contentRootForFile = index.getSourceRootForFile(file);
@@ -53,11 +55,13 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
     return getContextsForModule(module, "", module.getModuleWithDependenciesScope());
   }
 
+  @Override
   @NotNull
   public Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file) {
     final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
@@ -102,11 +106,13 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return Collections.emptyList();
   }
 
+  @Override
   public boolean isMine(final Project project, @NotNull final VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return index.isInSourceContent(file);
   }
 
+  @Override
   @NotNull
   public String trimUrl(@NotNull String url) {
     return url.trim();

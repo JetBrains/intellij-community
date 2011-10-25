@@ -47,9 +47,11 @@ import java.util.*;
  */
 public class SliceLeafAnalyzer {
   public static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
+    @Override
     public int computeHashCode(final PsiElement element) {
       if (element == null) return 0;
       String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
         public String compute() {
           PsiElement elementToCompare = element;
           if (element instanceof PsiJavaReference) {
@@ -65,8 +67,10 @@ public class SliceLeafAnalyzer {
       return Comparing.hashcode(text);
     }
 
+    @Override
     public boolean equals(final PsiElement o1, final PsiElement o2) {
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
         public Boolean compute() {
           return o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2);
         }
@@ -111,6 +115,7 @@ public class SliceLeafAnalyzer {
 
     for (final PsiElement leafExpression : leaves) {
       SliceNode newNode = filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
+        @Override
         public SliceNode fun(SliceNode oldNode) {
           if (oldNode.getDuplicate() != null) return null;
           if (!node(oldNode, map).contains(leafExpression)) return null;
@@ -118,6 +123,7 @@ public class SliceLeafAnalyzer {
           return oldNode.copy();
         }
       }, new PairProcessor<SliceNode, List<SliceNode>>() {
+        @Override
         public boolean process(SliceNode node, List<SliceNode> children) {
           if (!children.isEmpty()) return true;
           PsiElement element = node.getValue().getElement();
@@ -140,6 +146,7 @@ public class SliceLeafAnalyzer {
     final Map<SliceNode, Collection<PsiElement>> map = createMap();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         Collection<PsiElement> l = calcLeafExpressions(root, treeStructure, map);
         leafExpressions.set(l);
@@ -193,6 +200,7 @@ public class SliceLeafAnalyzer {
       myTreeStructure = treeStructure;
     }
 
+    @Override
     public SliceNode getNextSibling(@NotNull SliceNode element) {
       AbstractTreeNode parent = element.getParent();
       if (parent == null) return null;
@@ -200,17 +208,20 @@ public class SliceLeafAnalyzer {
       return element.getNext((List)parent.getChildren());
     }
 
+    @Override
     public SliceNode getPrevSibling(@NotNull SliceNode element) {
       AbstractTreeNode parent = element.getParent();
       if (parent == null) return null;
       return element.getPrev((List)parent.getChildren());
     }
 
+    @Override
     public SliceNode getFirstChild(@NotNull SliceNode element) {
       Object[] children = myTreeStructure.getChildElements(element);
       return children.length == 0 ? null : (SliceNode)children[0];
     }
 
+    @Override
     public SliceNode getParent(@NotNull SliceNode element) {
       AbstractTreeNode parent = element.getParent();
       return parent instanceof SliceNode ? (SliceNode)parent : null;
@@ -240,6 +251,7 @@ public class SliceLeafAnalyzer {
           Collection<? extends AbstractTreeNode> children = element.getChildren();
           if (children.isEmpty()) {
             PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+              @Override
               public PsiElement compute() {
                 return sliceUsage.getElement();
               }

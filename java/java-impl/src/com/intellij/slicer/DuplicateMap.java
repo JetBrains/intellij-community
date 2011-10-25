@@ -29,12 +29,14 @@ import java.util.Map;
 */ // rehash map on each PSI modification since SmartPsiPointer's hashCode() and equals() are changed
 public class DuplicateMap {
   private static final TObjectHashingStrategy<SliceUsage> USAGE_INFO_EQUALITY = new TObjectHashingStrategy<SliceUsage>() {
+    @Override
     public int computeHashCode(SliceUsage object) {
       UsageInfo info = object.getUsageInfo();
       TextRange range = info.getRangeInElement();
       return range == null ? 0 : range.hashCode();
     }
 
+    @Override
     public boolean equals(SliceUsage o1, SliceUsage o2) {
       return o1.getUsageInfo().equals(o2.getUsageInfo());
     }
@@ -43,6 +45,7 @@ public class DuplicateMap {
 
   public SliceNode putNodeCheckDupe(final SliceNode node) {
     return ApplicationManager.getApplication().runReadAction(new Computable<SliceNode>() {
+      @Override
       public SliceNode compute() {
         SliceUsage usage = node.getValue();
         SliceNode eq = myDuplicates.get(usage);

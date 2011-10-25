@@ -30,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassFileDecompiler implements BinaryFileDecompiler {
+  @Override
   @NotNull
   public CharSequence decompile(final VirtualFile file) {
     assert file.getFileType() == StdFileTypes.CLASS;

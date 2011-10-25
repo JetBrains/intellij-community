@@ -27,6 +27,7 @@ public class PsiEmptyStatementImpl extends CompositePsiElement implements PsiEmp
     super(Constants.EMPTY_STATEMENT);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitEmptyStatement(this);

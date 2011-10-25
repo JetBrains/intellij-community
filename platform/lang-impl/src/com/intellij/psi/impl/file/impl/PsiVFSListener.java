@@ -68,8 +68,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(PsiVFSListener.this));
         myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
         myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+          @Override
           public void beforeFileTypesChanged(FileTypeEvent event) {}
 
+          @Override
           public void fileTypesChanged(FileTypeEvent e) {
             myFileManager.processFileTypesChanged();
           }
@@ -85,15 +87,18 @@ public class PsiVFSListener extends VirtualFileAdapter {
     return parent == null ? null : myFileManager.getCachedDirectory(parent);
   }
 
+  @Override
   public void contentsChanged(final VirtualFileEvent event) {
     // handled by FileDocumentManagerListener
   }
 
+  @Override
   public void fileCreated(VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
+        @Override
         public void run() {
           VirtualFile parent = vFile.getParent();
           PsiDirectory parentDir = getCachedDirectory(parent);
@@ -124,6 +129,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     );
   }
 
+  @Override
   public void beforeFileDeletion(VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
@@ -133,6 +139,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
+        @Override
         public void run() {
           if (!vFile.isDirectory()) {
             PsiFile psiFile = myFileManager.getCachedPsiFile(vFile);
@@ -157,6 +164,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     );
   }
 
+  @Override
   public void fileDeleted(final VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
@@ -169,6 +177,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
       if (parentDir != null) {
         ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
+          @Override
           public void run() {
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
             treeEvent.setParent(parentDir);
@@ -185,6 +194,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
         if (parentDir != null) {
           ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
+            @Override
             public void run() {
               PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
               treeEvent.setParent(parentDir);
@@ -197,6 +207,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     }
   }
 
+  @Override
   public void beforePropertyChange(final VirtualFilePropertyEvent event) {
     final VirtualFile vFile = event.getFile();
     final String propertyName = event.getPropertyName();
@@ -207,6 +218,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
+        @Override
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setParent(parentDir);
@@ -292,6 +304,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     return false;
   }
 
+  @Override
   public void propertyChanged(final VirtualFilePropertyEvent event) {
     final String propertyName = event.getPropertyName();
     final VirtualFile vFile = event.getFile();
@@ -321,6 +334,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     }
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
+        @Override
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setParent(parentDir);
@@ -411,6 +425,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     );
   }
 
+  @Override
   public void beforeFileMovement(VirtualFileMoveEvent event) {
     final VirtualFile vFile = event.getFile();
 
@@ -421,6 +436,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
+        @Override
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
 
@@ -462,6 +478,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     );
   }
 
+  @Override
   public void fileMoved(VirtualFileMoveEvent event) {
     final VirtualFile vFile = event.getFile();
 
@@ -489,6 +506,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
+        @Override
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           if (oldElement == null) {
@@ -550,11 +568,13 @@ public class PsiVFSListener extends VirtualFileAdapter {
   private class MyModuleRootListener implements ModuleRootListener {
     private VirtualFile[] myOldContentRoots = null;
     private volatile int depthCounter = 0;
+    @Override
     public void beforeRootsChange(final ModuleRootEvent event) {
       if (!myFileManager.isInitialized()) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {
+          @Override
           public void run() {
             depthCounter++;
             if (depthCounter > 1) return;
@@ -571,6 +591,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
       );
     }
 
+    @Override
     public void rootsChanged(final ModuleRootEvent event) {
       myFileManager.dispatchPendingEvents();
 
@@ -578,6 +599,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {
+          @Override
           public void run() {
             depthCounter--;
             assert depthCounter >= 0 : depthCounter;
@@ -600,11 +622,13 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
+    @Override
     public void fileWithNoDocumentChanged(VirtualFile file) {
       final PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
       if (psiFile != null) {
         ApplicationManager.getApplication().runWriteAction(
           new ExternalChangeAction() {
+            @Override
             public void run() {
               myFileManager.reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
             }

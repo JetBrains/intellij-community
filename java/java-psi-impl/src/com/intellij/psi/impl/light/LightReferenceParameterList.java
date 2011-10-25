@@ -52,10 +52,12 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
     return "PsiReferenceParameterList";
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceParameterList(this);
@@ -65,6 +67,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
     }
   }
 
+  @Override
   public PsiElement copy() {
     final PsiTypeElement[] elements = new PsiTypeElement[myTypeElements.length];
     for (int i = 0; i < myTypeElements.length; i++) {
@@ -74,11 +77,13 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
     return new LightReferenceParameterList(myManager, elements);
   }
 
+  @Override
   @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
     return myTypeElements;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeArguments() {
     return PsiImplUtil.typesByTypeElements(myTypeElements);

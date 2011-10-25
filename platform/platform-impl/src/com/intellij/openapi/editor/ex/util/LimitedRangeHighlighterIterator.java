@@ -35,34 +35,42 @@ public class LimitedRangeHighlighterIterator implements HighlighterIterator {
     myEndOffset = endOffset;
   }
 
+  @Override
   public TextAttributes getTextAttributes() {
     return myOriginal.getTextAttributes();
   }
 
+  @Override
   public int getStart() {
     return Math.max(myOriginal.getStart(), myStartOffset);
   }
 
+  @Override
   public int getEnd() {
     return Math.min(myOriginal.getEnd(), myEndOffset);
   }
 
+  @Override
   public IElementType getTokenType() {
     return myOriginal.getTokenType();
   }
 
+  @Override
   public void advance() {
     myOriginal.advance();
   }
 
+  @Override
   public void retreat() {
     myOriginal.retreat();
   }
 
+  @Override
   public boolean atEnd() {
     return myOriginal.atEnd() || myOriginal.getStart() >= myEndOffset || myOriginal.getEnd() <= myStartOffset;
   }
 
+  @Override
   public Document getDocument() {
     return myOriginal.getDocument();
   }

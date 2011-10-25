@@ -85,6 +85,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
         final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
         assertNotNull("Package anotherBla not found", aPackage);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             aPackage.getDirectories()[0].delete();
           }

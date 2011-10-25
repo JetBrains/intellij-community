@@ -38,19 +38,23 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     myOuterElementType = outerElementType;
   }
 
+  @Override
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBaseLexer.start(buffer, startOffset, endOffset, initialState);
     setupTemplateToken();
   }
 
+  @Override
   public CharSequence getBufferSequence() {
     return myBaseLexer.getBufferSequence();
   }
 
+  @Override
   public int getState() {
     return myBaseLexer.getState();
   }
 
+  @Override
   @Nullable
   public IElementType getTokenType() {
     IElementType tokenType = myBaseLexer.getTokenType();
@@ -59,6 +63,7 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     return tokenType == myTemplateElementType ? myTemplateElementType : myOuterElementType;
   }
 
+  @Override
   public int getTokenStart() {
     IElementType tokenType = myBaseLexer.getTokenType();
     if (tokenType == myTemplateElementType) {
@@ -69,6 +74,7 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     }
   }
 
+  @Override
   public int getTokenEnd() {
     IElementType tokenType = myBaseLexer.getTokenType();
     if (tokenType == myTemplateElementType) {
@@ -79,6 +85,7 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     }
   }
 
+  @Override
   public void advance() {
     IElementType tokenType = myBaseLexer.getTokenType();
     if (tokenType == myTemplateElementType) {
@@ -113,6 +120,7 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
       myBasePosition = jspPosition;
     }
 
+    @Override
     public int getOffset() {
       return Math.max(myBasePosition.getOffset(), myTemplatePosition.getOffset());
     }
@@ -125,15 +133,18 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
       return myBasePosition;
     }
 
+    @Override
     public int getState() {
       throw new UnsupportedOperationException("Method getState is not yet implemented in " + getClass().getName());
     }
   }
 
+  @Override
   public LexerPosition getCurrentPosition() {
     return new Position(myTemplateLexer.getCurrentPosition(), myBaseLexer.getCurrentPosition());
   }
 
+  @Override
   public void restore(LexerPosition position) {
     final Position p = (Position)position;
     myBaseLexer.restore(p.getBasePosition());
@@ -146,6 +157,7 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     }
   }
 
+  @Override
   public int getBufferEnd() {
     return myBaseLexer.getBufferEnd();
   }

@@ -30,6 +30,7 @@ public class AfterElementFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;
     PsiElement currentChild = getOwnerChild(scope, (PsiElement) element);

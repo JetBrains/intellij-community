@@ -60,28 +60,34 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
                                 mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myTextRange;
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     return mySubBlocks;
   }
 
+  @Override
   public Wrap getWrap() {
     return myWrap;
   }
 
+  @Override
   public Indent getIndent() {
     return myIndentContent;
   }
 
+  @Override
   public Alignment getAlignment() {
     return myAlignment;
   }
 
+  @Override
   public Spacing getSpacing(Block child1, Block child2) {
     return JavaSpacePropertyProcessor.getSpacing(AbstractJavaBlock.getTreeNode(child2), mySettings);
   }
@@ -113,6 +119,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     return getClass().getName() + ": " + textRange;
   }
 
+  @Override
   public ASTNode getFirstTreeNode() {
     ASTNode result = AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
     assert result != null;
@@ -123,6 +130,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     myChildAttributes = childAttributes;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myChildAttributes != null) {
@@ -132,11 +140,13 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     }
   }
 
+  @Override
   public boolean isIncomplete() {
     if (myIsIncomplete) return true;
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
 
+  @Override
   public boolean isLeaf() {
     return false;
   }

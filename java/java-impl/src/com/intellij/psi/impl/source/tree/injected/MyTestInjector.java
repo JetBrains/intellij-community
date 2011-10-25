@@ -73,6 +73,7 @@ public class MyTestInjector {
   private static void registerForParameterValue(Disposable parent, final Project project, final Language language, final String paramName) {
     if (language == null) return;
     final ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
+      @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {
         PsiElement operand = operands[0];
         if (!(operand instanceof PsiLiteralExpression)) return;
@@ -95,6 +96,7 @@ public class MyTestInjector {
     };
     JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(injector);
         assert b;
@@ -110,6 +112,7 @@ public class MyTestInjector {
                                                       @NonNls final String suffix) {
     if (language == null) return;
     final ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
+      @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {
         PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
         if (variable == null) return;
@@ -142,6 +145,7 @@ public class MyTestInjector {
     };
     JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(injector);
         assert b;
@@ -156,6 +160,7 @@ public class MyTestInjector {
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");
 
     final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
+      @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         XmlAttributeValue value = (XmlAttributeValue)context;
         PsiElement parent = value.getParent();
@@ -176,6 +181,7 @@ public class MyTestInjector {
         }
       }
 
+      @Override
       @NotNull
       public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
         return Arrays.asList(XmlAttributeValue.class);
@@ -183,12 +189,14 @@ public class MyTestInjector {
     };
     InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(myMultiHostInjector);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         InjectedLanguageManager.getInstance(psiManager.getProject()).unregisterMultiHostInjector(myMultiHostInjector);
       }
     });
 
     final LanguageInjector myInjector = new LanguageInjector() {
+      @Override
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
         if (host instanceof XmlAttributeValue) {
           XmlAttributeValue value = (XmlAttributeValue)host;

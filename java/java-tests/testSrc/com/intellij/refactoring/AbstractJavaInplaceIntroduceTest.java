@@ -59,12 +59,14 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
     return JavaSdkImpl.getMockJdk17();
   }
 
+  @Override
   protected String getExtension() {
     return ".java";
   }
 
   protected abstract MyIntroduceHandler createIntroduceHandler();
 
+  @Override
   protected AbstractInplaceIntroducer invokeRefactoring() {
     final MyIntroduceHandler introduceHandler = createIntroduceHandler();
     final PsiExpression expression = getExpressionFromEditor();

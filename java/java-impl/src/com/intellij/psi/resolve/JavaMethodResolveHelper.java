@@ -50,6 +50,7 @@ public class JavaMethodResolveHelper {
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(argumentList);
     final PsiConflictResolver resolver = parameterTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, parameterTypes);
     myProcessor = new MethodResolverProcessor(argumentList, new PsiConflictResolver[]{resolver}) {
+      @Override
       protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
                                                         final boolean accessible) {
@@ -109,6 +110,7 @@ public class JavaMethodResolveHelper {
 
   public Collection<JavaMethodCandidateInfo> getMethods() {
     return ContainerUtil.mapNotNull(myProcessor.getResult(), new Function<JavaResolveResult, JavaMethodCandidateInfo>() {
+      @Override
       public JavaMethodCandidateInfo fun(final JavaResolveResult javaResolveResult) {
         return new JavaMethodCandidateInfo((PsiMethod)javaResolveResult.getElement(), javaResolveResult.getSubstitutor());
       }

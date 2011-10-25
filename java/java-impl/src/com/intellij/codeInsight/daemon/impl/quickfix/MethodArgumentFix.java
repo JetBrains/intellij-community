@@ -43,6 +43,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
     myToType = toType instanceof PsiEllipsisType ? ((PsiEllipsisType) toType).toArrayType() : toType;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         myToType != null
@@ -53,10 +54,12 @@ public abstract class MethodArgumentFix implements IntentionAction {
         && myArgList.getExpressions()[myIndex].isValid();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiExpression expression = myArgList.getExpressions()[myIndex];
@@ -72,6 +75,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
   }
 
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.argument.family");

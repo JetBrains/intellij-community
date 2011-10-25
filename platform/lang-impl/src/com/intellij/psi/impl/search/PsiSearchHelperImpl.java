@@ -62,6 +62,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
+  @Override
   @NotNull
   public SearchScope getUseScope(@NotNull PsiElement element) {
     SearchScope scope = element.getUseScope();
@@ -79,16 +80,19 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager = manager;
   }
 
+  @Override
   @NotNull
   public PsiFile[] findFilesWithTodoItems() {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
   }
 
+  @Override
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file) {
     return findTodoItems(file, 0, file.getTextLength());
   }
 
+  @Override
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
     final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
@@ -132,12 +136,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processTodoOccurences(startOffset, endOffset, occurrences);
   }
 
+  @Override
   public int getTodoItemsCount(@NotNull PsiFile file) {
     int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }
 
+  @Override
   public int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern) {
     int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
     if (count != -1) return count;
@@ -149,10 +155,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return count;
   }
 
+  @Override
   @NotNull
   public PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
     processCommentsContainingIdentifier(identifier, searchScope, new Processor<PsiElement>() {
+      @Override
       public boolean process(PsiElement element) {
         synchronized (results) {
           results.add(element);
@@ -165,10 +173,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
+  @Override
   public boolean processCommentsContainingIdentifier(@NotNull String identifier,
                                                      @NotNull SearchScope searchScope,
                                                      @NotNull final Processor<PsiElement> processor) {
     TextOccurenceProcessor occurrenceProcessor = new TextOccurenceProcessor() {
+      @Override
       public boolean execute(PsiElement element, int offsetInElement) {
         if (CommentUtil.isCommentTextElement(element)) {
           if (element.findReferenceAt(offsetInElement) == null) {
@@ -181,6 +191,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processElementsWithWord(occurrenceProcessor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
   }
 
+  @Override
   public boolean processElementsWithWord(@NotNull final TextOccurenceProcessor processor,
                                          @NotNull SearchScope searchScope,
                                          @NotNull final String text,
@@ -204,6 +215,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
       return JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false, new Processor<PsiElement>() {
+        @Override
         public boolean process(PsiElement scopeElement) {
           return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi, progress);
         }
@@ -218,6 +230,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                final boolean ignoreInjectedPsi,
                                                                final ProgressIndicator progress) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         StringSearcher searcher = new StringSearcher(word, caseSensitive, true);
 
@@ -247,6 +260,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     try {
       return processPsiFileRoots(fileSet, new Processor<PsiElement>() {
+        @Override
         public boolean process(PsiElement psiRoot) {
           return LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, true, progress);
         }
@@ -270,8 +284,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       final int size = files.size();
       boolean completed = JobUtil.invokeConcurrentlyUnderProgress(files, progress, false, new Processor<VirtualFile>() {
+        @Override
         public boolean process(final VirtualFile vfile) {
           final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            @Override
             public PsiFile compute() {
               return myManager.findFile(vfile);
             }
@@ -279,6 +295,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           if (file != null && !(file instanceof PsiBinaryFile)) {
             file.getViewProvider().getContents(); // load contents outside readaction
             ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
               public void run() {
                 try {
                   if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
@@ -330,6 +347,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     try {
       final List<VirtualFile> result = new ArrayList<VirtualFile>();
       boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, new Processor<PsiFile>() {
+                                               @Override
                                                public boolean process(PsiFile file) {
                                                  result.add(file.getViewProvider().getVirtualFile());
                                                  return true;
@@ -352,6 +370,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     List<String> words = StringUtil.getWordsIn(text);
     if (words.isEmpty()) return true;
     Collections.sort(words, new Comparator<String>() {
+      @Override
       public int compare(String o1, String o2) {
         return o2.length() - o1.length();
       }
@@ -384,6 +403,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       fileSet = null;
     }
     return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(new Processor<PsiFile>() {
+      @Override
       public boolean process(PsiFile psiFile) {
         if (fileSet != null && !fileSet.contains(psiFile)) {
           return true;
@@ -393,6 +413,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }, words.get(words.size() - 1), searchContext, scope, caseSensitively);
   }
 
+  @Override
   @NotNull
   public PsiFile[] findFilesWithPlainTextWords(@NotNull String word) {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(word,
@@ -402,12 +423,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
 
+  @Override
   public void processUsagesInNonJavaFiles(@NotNull String qName,
                                           @NotNull PsiNonJavaFileReferenceProcessor processor,
                                           @NotNull GlobalSearchScope searchScope) {
     processUsagesInNonJavaFiles(null, qName, processor, searchScope);
   }
 
+  @Override
   public void processUsagesInNonJavaFiles(@Nullable final PsiElement originalElement,
                                           @NotNull String qName,
                                           @NotNull final PsiNonJavaFileReferenceProcessor processor,
@@ -426,6 +449,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     final GlobalSearchScope theSearchScope = searchScope;
     PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+      @Override
       public PsiFile[] compute() {
         return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true);
       }
@@ -439,6 +463,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     final SearchScope useScope = new ReadAction<SearchScope>() {
+      @Override
       protected void run(final Result<SearchScope> result) {
         if (originalElement != null) {
           result.setResult(getUseScope(originalElement));
@@ -454,6 +479,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final PsiFile psiFile = files[i];
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           CharSequence text = psiFile.getViewProvider().getContents();
           for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress); index >= 0;) {
@@ -481,19 +507,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
+  @Override
   public void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively) {
     CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_CODE, scope, caseSensitively);
   }
 
+  @Override
   public void processAllFilesWithWordInText(@NotNull final String word, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiFile> processor,
                                             final boolean caseSensitively) {
     CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_PLAIN_TEXT, scope, caseSensitively);
   }
 
+  @Override
   public void processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
     CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
   }
 
+  @Override
   public void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
     CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
@@ -529,6 +559,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
+  @Override
   public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
     Map<SearchRequestCollector, Processor<PsiReference>> collectors = CollectionFactory.hashMap();
     collectors.put(collector, processor);
@@ -626,6 +657,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
 
       return processPsiFileRoots(new ArrayList<VirtualFile>(candidateFiles.keySet()), new Processor<PsiElement>() {
+                                   @Override
                                    public boolean process(PsiElement psiRoot) {
                                      final VirtualFile vfile = psiRoot.getContainingFile().getVirtualFile();
                                      for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
@@ -652,6 +684,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
     final RequestResultProcessor wrapped = singleRequest.processor;
     return new TextOccurenceProcessor() {
+      @Override
       public boolean execute(PsiElement element, int offsetInElement) {
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
 
@@ -719,9 +752,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                                      final ProgressIndicator progress) {
     final MultiMap<VirtualFile, RequestWithProcessor> local = createMultiMap();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         if (progress != null) progress.checkCanceled();
         FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
+            @Override
             public boolean process(VirtualFile file, Integer value) {
               if (progress != null) progress.checkCanceled();
 
@@ -788,12 +823,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processElementsWithWord(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext, single.caseSensitive);
   }
 
+  @Override
   public SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                                 @NotNull GlobalSearchScope scope,
                                                 @Nullable final PsiFile fileToIgnoreOccurencesIn,
                                                 @Nullable ProgressIndicator progress) {
     final int[] count = {0};
     if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new Processor<PsiFile>() {
+      @Override
       public boolean process(PsiFile file) {
         if (file == fileToIgnoreOccurencesIn) return true;
         synchronized (count) {

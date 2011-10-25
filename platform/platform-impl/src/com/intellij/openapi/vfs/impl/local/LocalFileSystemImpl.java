@@ -94,20 +94,24 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
     }
 
+    @Override
     @NotNull
     public String getRootPath() {
       return myRootPath;
     }
 
+    @Override
     @NotNull
     public String getFileSystemRootPath() {
       return myFSRootPath;
     }
 
+    @Override
     public boolean isToWatchRecursively() {
       return myToWatchRecursively;
     }
 
+    @Override
     public boolean dominates(WatchRequest other) {
       if (myToWatchRecursively) {
         return other.getRootPath().startsWith(myRootPath);
@@ -130,15 +134,18 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     myNativeFileSystem = null;
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
   @TestOnly
   public void cleanupForNextTest(Set<VirtualFile> survivors) throws IOException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
       }
@@ -270,6 +277,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     if (myWatcher.isOperational()) {
       application.runReadAction(new Runnable() {
+        @Override
         public void run() {
           WRITE_LOCK.lock();
           try {
@@ -306,6 +314,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       setDaemon(true);
     }
 
+    @Override
     public void run() {
       while (true) {
         final Application application = ApplicationManager.getApplication();
@@ -322,11 +331,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "LocalFileSystem";
   }
 
+  @Override
   public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
     if (rootPath.length() == 0 || !FileWatcher.getInstance().isOperational()) return null;
 
@@ -367,6 +378,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return false;
   }
 
+  @Override
   @NotNull
   public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
     if (!FileWatcher.getInstance().isOperational()) return Collections.emptySet();
@@ -409,6 +421,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return result;
   }
 
+  @Override
   public void removeWatchedRoot(@NotNull final WatchRequest watchRequest) {
     WRITE_LOCK.lock();
     try {
@@ -422,6 +435,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
+  @Override
   public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
     WRITE_LOCK.lock();
     try {
@@ -435,6 +449,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
@@ -445,8 +460,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
 
+  @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     Runnable heavyRefresh = new Runnable() {
+      @Override
       public void run() {
         for (VirtualFile root : ManagingFS.getInstance().getRoots(LocalFileSystemImpl.this)) {
           ((NewVirtualFile)root).markDirtyRecursively();
@@ -464,16 +481,19 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
+  @Override
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     if (myNativeFileSystem == null) return super.exists(fileOrDirectory);
     else return myNativeFileSystem.exists(fileOrDirectory);
   }
 
+  @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.getTimeStamp(file);
     else return myNativeFileSystem.getTimeStamp(file);
   }
 
+  @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.isDirectory(file);
     else return myNativeFileSystem.isDirectory(file);
@@ -485,11 +505,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return realPath != null ? findFileByPath(realPath) : null;
   }
 
+  @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.isWritable(file);
     else return myNativeFileSystem.isWritable(file);
   }
 
+  @Override
   @NotNull
   public String[] list(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.list(file);

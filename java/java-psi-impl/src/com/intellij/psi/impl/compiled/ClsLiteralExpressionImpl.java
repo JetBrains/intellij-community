@@ -37,35 +37,43 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     myParent = parent;
   }
 
+  @Override
   public PsiType getType() {
     return myType;
   }
 
+  @Override
   public Object getValue() {
     return myValue;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public String getParsingError() {
     return null;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, JavaElementType.LITERAL_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
@@ -74,6 +82,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     return "PsiLiteralExpression:" + getText();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitLiteralExpression(this);

@@ -104,6 +104,7 @@ public class FileInfoManager implements Disposable {
     return builder;
   }
 
+  @Override
   public void dispose() {
     myFileType2InfoProvider.clear();
   }

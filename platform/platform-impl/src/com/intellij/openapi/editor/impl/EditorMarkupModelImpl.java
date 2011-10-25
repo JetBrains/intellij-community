@@ -205,6 +205,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int startOffset = yPositionToOffset(y -getMinHeight(), true);
     int endOffset = yPositionToOffset(y +getMinHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      @Override
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
@@ -240,6 +241,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     fireErrorMarkerClicked(marker, e);
   }
 
+  @Override
   public void setErrorStripeVisible(boolean val) {
     if (val) {
       myEditor.getVerticalScrollBar().setPersistentUI(new MyErrorPanel());
@@ -253,6 +255,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return ui instanceof MyErrorPanel ? (MyErrorPanel)ui : null;
   }
 
+  @Override
   public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MyErrorPanel errorPanel = getErrorPanel();
@@ -261,20 +264,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  @Override
   public void setErrorStripTooltipRendererProvider(@NotNull final ErrorStripTooltipRendererProvider provider) {
     myTooltipRendererProvider = provider;
   }
 
+  @Override
   @NotNull
   public ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider() {
     return myTooltipRendererProvider;
   }
 
+  @Override
   @NotNull
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   public void setErrorStripeRenderer(ErrorStripeRenderer renderer) {
     assertIsDispatchThread();
     if (myErrorStripeRenderer instanceof Disposable)  {
@@ -291,10 +298,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
   }
 
+  @Override
   public ErrorStripeRenderer getErrorStripeRenderer() {
     return myErrorStripeRenderer;
   }
 
+  @Override
   public void dispose() {
     myErrorStripeRenderer = null;
     super.dispose();
@@ -454,11 +463,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {
       final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
+        @Override
         public int compare(PositionedStripe o1, PositionedStripe o2) {
           return o1.yEnd - o2.yEnd;
         }
       });
       final Queue<PositionedStripe> wideEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
+        @Override
         public int compare(PositionedStripe o1, PositionedStripe o2) {
           return o1.yEnd - o2.yEnd;
         }
@@ -470,6 +481,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
       markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+        @Override
         public boolean process(RangeHighlighterEx highlighter) {
           Color color = highlighter.getErrorStripeMarkColor();
           if (color == null) return true;
@@ -589,8 +601,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     // mouse events
+    @Override
     public void mouseClicked(final MouseEvent e) {
       CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
+          @Override
           public void run() {
             doMouseClicked(e);
           }
@@ -599,9 +613,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       );
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
     }
 
@@ -618,6 +634,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       doClick(e, getWidth());
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
@@ -669,13 +686,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
       cancelMyToolTips(e, true);
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
       cancelMyToolTips(e, true);
     }
@@ -715,11 +735,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  @Override
   public void addErrorMarkerListener(@NotNull ErrorStripeListener listener) {
     myCachedErrorMarkerListeners = null;
     myErrorMarkerListeners.add(listener);
   }
 
+  @Override
   public void removeErrorMarkerListener(@NotNull ErrorStripeListener listener) {
     myCachedErrorMarkerListeners = null;
     boolean success = myErrorMarkerListeners.remove(listener);
@@ -744,11 +766,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     dimensionsAreValid = false;
   }
 
+  @Override
   public void setMinMarkHeight(final int minMarkHeight) {
     myMinMarkHeight = minMarkHeight;
   }
 
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+    @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;
       //do not show same tooltip twice
@@ -775,10 +799,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return bigRenderer;
     }
 
+    @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
       return new LineTooltipRenderer(text, new Object[] {text});
     }
 
+    @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
       return new LineTooltipRenderer(text, width, new Object[] {text});
     }

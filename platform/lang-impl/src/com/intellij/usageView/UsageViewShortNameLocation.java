@@ -33,11 +33,13 @@ public class UsageViewShortNameLocation extends ElementDescriptionLocation {
 
   public static final UsageViewShortNameLocation INSTANCE = new UsageViewShortNameLocation();
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
+    @Override
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (!(location instanceof UsageViewShortNameLocation)) return null;
 

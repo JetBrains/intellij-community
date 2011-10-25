@@ -49,6 +49,7 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
     return new TypeParameterElement();
   }
 
+  @Override
   public PsiTypeParameter createPsi(final PsiTypeParameterStub stub) {
     if (isCompiled(stub)) {
       return new ClsTypeParameterImpl(stub);
@@ -58,6 +59,7 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
     }
   }
 
+  @Override
   public PsiTypeParameter createPsi(final ASTNode node) {
     return new PsiTypeParameterImpl(node);
   }
@@ -69,16 +71,19 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
     return new PsiTypeParameterStubImpl(parentStub, StringRef.fromString(name));
   }
 
+  @Override
   public void serialize(final PsiTypeParameterStub stub, final StubOutputStream dataStream) throws IOException {
     String name = stub.getName();
     dataStream.writeName(name);
   }
 
+  @Override
   public PsiTypeParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
+  @Override
   public void indexStub(final PsiTypeParameterStub stub, final IndexSink sink) {
   }
 }

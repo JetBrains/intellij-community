@@ -42,6 +42,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final PsiElementArrayConstructor<PsiDocTag> PSI_TAG_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiDocTag>() {
+    @Override
     public PsiDocTag[] newPsiElementArray(int length) {
       return length == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[length];
     }
@@ -55,6 +56,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     super(JavaDocElementType.DOC_COMMENT, text);
   }
 
+  @Override
   public PsiDocCommentOwner getOwner() {
     final PsiElement parent = getParent();
     if (parent instanceof PsiDocCommentOwner) {
@@ -67,6 +69,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return null;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getDescriptionElements() {
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
@@ -80,11 +83,13 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return PsiUtilCore.toPsiElementArray(array);
   }
 
+  @Override
   @NotNull
   public PsiDocTag[] getTags() {
     return getChildrenAsPsiElements(TAG_BIT_SET, PSI_TAG_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public PsiDocTag findTagByName(String name) {
     if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) {
       if (getFirstChildNode().getText().indexOf(name) < 0) return null;
@@ -104,6 +109,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return null;
   }
 
+  @Override
   @NotNull
   public PsiDocTag[] findTagsByName(String name) {
     ArrayList<PsiDocTag> array = new ArrayList<PsiDocTag>();
@@ -117,10 +123,12 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return array.toArray(new PsiDocTag[array.size()]);
   }
 
+  @Override
   public IElementType getTokenType() {
     return getElementType();
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -167,6 +175,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     tag.addInternal(commentData, commentData, leadingWhitespaceAnchor, Boolean.TRUE);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     boolean needToAddNewline = false;
     if (first == last && first.getElementType() == DOC_TAG) {
@@ -233,6 +242,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     }
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == DOC_TAG) {
       if (child.getTreeNext() == null || child.getTreeNext().getElementType() != DOC_TAG) {
@@ -280,6 +290,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     super.deleteChildInternal(child);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -303,6 +314,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocComment(this);

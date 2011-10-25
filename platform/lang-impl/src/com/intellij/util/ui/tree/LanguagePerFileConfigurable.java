@@ -65,6 +65,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     myLabel.setText(caption);
   }
 
+  @Override
   public JComponent createComponent() {
     myTreeView = new MyTreeTable();
     myTreePanel.setViewportView(myTreeView);
@@ -82,20 +83,24 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     return t == null? myMappings.getDefaultMapping(file) : t;
   }
 
+  @Override
   public boolean isModified() {
     Map<VirtualFile, T> mapping = myMappings.getMappings();
     boolean same = myTreeView.getValues().equals(mapping);
     return !same;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myMappings.setMappings(myTreeView.getValues());
   }
 
+  @Override
   public void reset() {
     myTreeView.reset(myMappings.getMappings());
  }
 
+  @Override
   public void disposeUIResources() {
   }
 
@@ -113,11 +118,13 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     return myTreeView;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getDisplayName();
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
@@ -131,21 +138,25 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
         {
           delegate = new EditorDelegate() {
+            @Override
             public void setValue(Object value) {
               getTableModel().setValueAt(value, new DefaultMutableTreeNode(myVirtualFile), -1);
             }
 
+            @Override
             public Object getCellEditorValue() {
               return getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
             }
           };
         }
 
+        @Override
         public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, int row, int column) {
           final Object o = table.getModel().getValueAt(row, 0);
           myVirtualFile = o instanceof Project ? null : (VirtualFile)o;
 
           final ChooseSomethingAction changeAction = new ChooseSomethingAction(myVirtualFile) {
+            @Override
             public void update(final AnActionEvent e) {
               boolean enabled = isValueEditableForFile(myVirtualFile);
               if (myVirtualFile != null) {
@@ -155,6 +166,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
               e.getPresentation().setEnabled(enabled);
             }
 
+            @Override
             protected void chosen(final VirtualFile virtualFile, final T charset) {
               getValueColumn().getCellEditor().stopCellEditing();
               if (clearSubdirectoriesOnDemandOrCancel(virtualFile, myOverrideQuestion, myOverrideTitle)) {
@@ -185,6 +197,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
         }
       });
       getValueColumn().setCellRenderer(new ColoredTableCellRenderer() {
+        @Override
         protected void customizeCellRenderer(final JTable table,
                                              final Object value,
                                              final boolean selected,
@@ -239,6 +252,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
       myVirtualFile = virtualFile;
     }
 
+    @Override
     @NotNull
     protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
       return createGroup(true);
@@ -246,6 +260,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
     private ChangeSomethingAction createChooseAction(final VirtualFile virtualFile, final T t) {
       return new ChangeSomethingAction(virtualFile, t){
+        @Override
         protected void chosen(final VirtualFile file, final T t) {
           ChooseSomethingAction.this.chosen(file, t);
         }
@@ -261,6 +276,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
       }
       final List<T> values = new ArrayList<T>(myMappings.getAvailableValues(myVirtualFile));
       Collections.sort(values, new Comparator<T>() {
+        @Override
         public int compare(final T o1, final T o2) {
           return visualize(o1).compareTo(visualize(o2));
         }
@@ -286,6 +302,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
         myDialect = t;
       }
 
+      @Override
       public void actionPerformed(final AnActionEvent e) {
         chosen(myFile, myDialect);
       }

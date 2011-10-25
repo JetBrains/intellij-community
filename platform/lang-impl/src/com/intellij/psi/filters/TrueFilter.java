@@ -27,10 +27,12 @@ import com.intellij.psi.PsiElement;
  */
 public class TrueFilter implements ElementFilter{
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return true;
   }

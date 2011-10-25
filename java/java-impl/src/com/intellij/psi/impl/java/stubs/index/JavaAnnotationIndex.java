@@ -36,10 +36,12 @@ public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation>
     return ourInstance;
   }
 
+  @Override
   public StubIndexKey<String, PsiAnnotation> getKey() {
     return JavaStubIndexKeys.ANNOTATIONS;
   }
 
+  @Override
   public Collection<PsiAnnotation> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }

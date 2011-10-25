@@ -42,11 +42,13 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     myTypeElement = new ClsTypeElementImpl(this, canonicalClassText, ClsTypeElementImpl.VARIANCE_NONE);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     myTypeElement.appendMirrorText(0, buffer);
     buffer.append(CLASS_ENDING);
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -54,15 +56,18 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
       ((ClsElementImpl)getOperand()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getOperand()));
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myTypeElement};
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClassObjectAccessExpression(this);
@@ -72,21 +77,25 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     }
   }
 
+  @Override
   @NotNull
   public PsiTypeElement getOperand() {
     return myTypeElement;
   }
 
+  @Override
   public PsiType getType() {
     return PsiImplUtil.getType(this);
   }
 
+  @Override
   public String getText() {
     final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon rowIcon = ElementBase.createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);
     rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);

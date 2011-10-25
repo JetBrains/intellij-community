@@ -48,6 +48,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     }
   }
 
+  @Override
   @NotNull
   public PsiType getType() throws TypeSyntaxException, NoTypeException {
     class MyTypeSyntaxException extends RuntimeException {
@@ -81,6 +82,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     return type;
   }
 
+  @Override
   public boolean isVoidValid() {
     return getOriginalFile().getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null;
   }

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters p, @NotNull final Processor<PsiMethod> consumer) {
     final PsiMethod method = p.getMethod();
     final SearchScope scope = p.getScope();
@@ -31,8 +32,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     });
     assert parentClass != null;
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
+      @Override
       public boolean process(final PsiClass inheritor) {
         PsiMethod found = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>() {
+          @Override
           @Nullable
           public PsiMethod compute() {
             return findOverridingMethod(inheritor, parentClass, method);

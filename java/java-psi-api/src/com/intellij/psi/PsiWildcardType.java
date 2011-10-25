@@ -69,6 +69,7 @@ public class PsiWildcardType extends PsiType {
     return new PsiWildcardType(type.myManager, type.myIsExtending, newBound);
   }
 
+  @Override
   public String getPresentableText() {
     if (myBound == null) return "?";
     if (myIsExtending) {
@@ -80,6 +81,7 @@ public class PsiWildcardType extends PsiType {
     }
   }
 
+  @Override
   public String getCanonicalText() {
     if (myBound == null) return "?";
     if (myIsExtending) {
@@ -91,6 +93,7 @@ public class PsiWildcardType extends PsiType {
     }
   }
 
+  @Override
   public String getInternalCanonicalText() {
     if (myBound == null) return "?";
     if (myIsExtending) {
@@ -102,6 +105,7 @@ public class PsiWildcardType extends PsiType {
     }
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     if (myBound != null) {
@@ -113,11 +117,13 @@ public class PsiWildcardType extends PsiType {
     return GlobalSearchScope.allScope(myManager.getProject());
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     return new PsiType[]{getExtendsBound()};
   }
 
+  @Override
   public boolean equalsToText(String text) {
     if (myBound == null) return "?".equals(text);
     if (myIsExtending) {
@@ -159,10 +165,12 @@ public class PsiWildcardType extends PsiType {
     return myBound;
   }
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitWildcardType(this);
   }
 
+  @Override
   public boolean isValid() {
     return myBound == null || myBound.isValid();
   }

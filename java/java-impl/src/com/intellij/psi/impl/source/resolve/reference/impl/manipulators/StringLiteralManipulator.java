@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author ven
  */
 public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
+  @Override
   public PsiLiteralExpression handleContentChange(PsiLiteralExpression expr, TextRange range, String newContent) throws IncorrectOperationException {
     final Object value = expr.getValue();
     if (!(value instanceof String)) throw new IncorrectOperationException("cannot handle content change for: "+ value+", expr: "+expr);
@@ -37,6 +38,7 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
 
+  @Override
   public TextRange getRangeInElement(final PsiLiteralExpression element) {
     return getValueRange(element);
   }

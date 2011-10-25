@@ -46,6 +46,7 @@ public class PackageScope extends GlobalSearchScope {
     myIncludeLibraries = includeLibraries;
   }
 
+  @Override
   public boolean contains(VirtualFile file) {
     for (VirtualFile scopeDir : myDirs) {
       boolean inDir = myIncludeSubpackages
@@ -56,14 +57,17 @@ public class PackageScope extends GlobalSearchScope {
     return false;
   }
 
+  @Override
   public int compare(VirtualFile file1, VirtualFile file2) {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return myIncludeLibraries;
   }

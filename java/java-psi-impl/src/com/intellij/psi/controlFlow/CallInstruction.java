@@ -40,6 +40,7 @@ public class CallInstruction extends GoToInstruction {
     }
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitCallInstruction(this, offset, nextOffset);
   }

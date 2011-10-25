@@ -39,6 +39,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     if (myAttributes.length != 0) {
       buffer.append("(");
@@ -51,6 +52,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -62,15 +64,18 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return myAttributes;
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotationParameterList(this);
@@ -80,6 +85,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @Override
   @NotNull
   public PsiNameValuePair[] getAttributes() {
     return myAttributes;

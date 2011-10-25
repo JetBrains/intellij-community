@@ -36,10 +36,12 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;
   }
 
+  @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return myFactory.createCachedValue(provider, trackValue);
   }
 
+  @Override
   public <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
     return myFactory.createParameterizedCachedValue(provider, trackValue);
   }

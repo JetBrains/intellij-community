@@ -71,6 +71,7 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType,
 
   TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
   PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeElement>() {
+    @Override
     public PsiTypeElement[] newPsiElementArray(int length) {
       return length > 0 ? new PsiTypeElement[length] : PsiTypeElement.EMPTY_ARRAY;
     }

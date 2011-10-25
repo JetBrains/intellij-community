@@ -69,6 +69,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @NonNls public static final String HTML_EXTENSION = ".html";
   @NonNls public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
 
+  @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
@@ -99,6 +100,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return substitutor;
   }
 
+  @Override
   public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return getExternalJavaDocUrl(element);
   }
@@ -376,6 +378,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
+  @Override
   public PsiComment findExistingDocComment(final PsiComment comment) {
     if (comment instanceof PsiDocComment) {
       final PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
@@ -386,6 +389,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
+  @Override
   public String generateDocumentationContentStub(PsiComment _comment) {
     final PsiDocCommentOwner commentOwner = ((PsiDocComment)_comment).getOwner();
     final Project project = commentOwner.getProject();
@@ -474,6 +478,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
+  @Override
   public String generateDoc(final PsiElement element, final PsiElement originalElement) {
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
@@ -484,6 +489,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return generateExternalJavadoc(element);
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
     return null;
   }
@@ -676,10 +682,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
+  @Override
   public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
     return fetchExternalJavadoc(element, project, docUrls);
   }

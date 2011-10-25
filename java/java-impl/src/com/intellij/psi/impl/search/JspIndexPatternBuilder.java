@@ -37,6 +37,7 @@ import com.intellij.psi.tree.TokenSet;
  * @author yole
  */
 public class JspIndexPatternBuilder implements IndexPatternBuilder {
+  @Override
   public Lexer getIndexingLexer(final PsiFile file) {
     if (JspPsiUtil.isInJspFile(file)) {
       EditorHighlighter highlighter = null;
@@ -65,6 +66,7 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
     return null;
   }
 
+  @Override
   public TokenSet getCommentTokenSet(final PsiFile file) {
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
     TokenSet commentTokens = TokenSet.orSet(JavaIndexPatternBuilder.XML_COMMENT_BIT_SET, StdTokenSets.COMMENT_BIT_SET);
@@ -76,10 +78,12 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
     return commentTokens;
   }
 
+  @Override
   public int getCommentStartDelta(final IElementType tokenType) {
     return tokenType == JspTokenType.JSP_COMMENT ? "<%--".length() : 0;
   }
 
+  @Override
   public int getCommentEndDelta(final IElementType tokenType) {
     return tokenType == JspTokenType.JSP_COMMENT ? "--%>".length() : 0;
   }

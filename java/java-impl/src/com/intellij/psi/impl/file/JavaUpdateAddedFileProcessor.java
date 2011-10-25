@@ -25,10 +25,12 @@ import com.intellij.util.IncorrectOperationException;
  *         Time: 3:33:07 PM
  */
 public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
+  @Override
   public boolean canProcessElement(final PsiFile file) {
     return file instanceof PsiClassOwner;
   }
 
+  @Override
   public void update(final PsiFile element, PsiFile originalElement) throws IncorrectOperationException {
     if (element.getViewProvider() instanceof TemplateLanguageFileViewProvider) return;
 

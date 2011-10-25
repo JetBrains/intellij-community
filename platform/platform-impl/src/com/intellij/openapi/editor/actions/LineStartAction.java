@@ -34,6 +34,7 @@ public class LineStartAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineStart(editor, false);
     }

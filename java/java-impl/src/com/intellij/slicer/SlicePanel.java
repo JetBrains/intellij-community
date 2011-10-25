@@ -69,10 +69,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private final JTree myTree;
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+    @Override
     protected boolean isAutoScrollMode() {
       return isAutoScroll();
     }
 
+    @Override
     protected void setAutoScrollMode(final boolean state) {
       setAutoScroll(state);
     }
@@ -87,9 +89,11 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     myToolWindow = toolWindow;
     final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
       ToolWindowAnchor myAnchor = toolWindow.getAnchor();
+      @Override
       public void toolWindowRegistered(@NotNull String id) {
       }
 
+      @Override
       public void stateChanged() {
         if (!project.isOpen()) return;
         if (toolWindow.getAnchor() != myAnchor) {
@@ -100,6 +104,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     };
     ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(listener);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         ToolWindowManagerEx.getInstanceEx(project).removeToolWindowManagerListener(listener);
       }
@@ -115,10 +120,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     Disposer.register(this, myBuilder);
 
     myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), new Runnable() {
+      @Override
       public void run() {
         if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
         final SliceNode rootNode = myBuilder.getRootSliceNode();
         myBuilder.expand(rootNode, new Runnable() {
+          @Override
           public void run() {
             if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
             myBuilder.select(rootNode.myCachedChildren.get(0)); //first there is ony one child
@@ -163,6 +170,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     revalidate();
   }
 
+  @Override
   public void dispose() {
     if (myUsagePreviewPanel != null) {
       UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
@@ -176,6 +184,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final Tree tree = new Tree(new DefaultTreeModel(root)){
+      @Override
       protected void paintComponent(Graphics g) {
         DuplicateNodeRenderer.paintDuplicateNodesBackground(g, this);
         super.paintComponent(g);
@@ -204,12 +213,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     myAutoScrollToSourceHandler.install(tree);
 
     tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(final TreeSelectionEvent e) {
         treeSelectionChanged();
       }
     });
 
     tree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
           List<Navigatable> navigatables = getNavigatables();
@@ -231,9 +242,11 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     });
 
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
+      @Override
       public void treeWillCollapse(TreeExpansionEvent event) {
       }
 
+      @Override
       public void treeWillExpand(TreeExpansionEvent event) {
         TreePath path = event.getPath();
         SliceNode node = fromPath(path);
@@ -246,6 +259,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   private void treeSelectionChanged() {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (isDisposed) return;
         List<UsageInfo> infos = getSelectedUsageInfos();
@@ -282,6 +296,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     return result;
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
       List<Navigatable> navigatables = getNavigatables();
@@ -318,10 +333,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(new CloseAction());
     actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", IconLoader.getIcon("/actions/preview.png")) {
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return isPreview();
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         setPreview(state);
         layoutPanel();
@@ -347,6 +364,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   public abstract void setPreview(boolean preview);
 
   private class CloseAction extends CloseTabToolbarAction {
+    @Override
     public final void actionPerformed(final AnActionEvent e) {
       close();
     }
@@ -365,12 +383,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       registerShortcutOn(tree);
     }
 
+    @Override
     public final void actionPerformed(final AnActionEvent e) {
       SliceNode rootNode = (SliceNode)myBuilder.getRootNode().getUserObject();
       rootNode.setChanged();
       myBuilder.addSubtreeToUpdate(myBuilder.getRootNode());
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(true);

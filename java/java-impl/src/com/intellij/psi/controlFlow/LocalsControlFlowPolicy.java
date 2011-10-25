@@ -25,6 +25,7 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     myCodeFragment = codeFragment;
   }
 
+  @Override
   public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
     if (refExpr.isQualified()) return null;
 
@@ -53,10 +54,12 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     return (PsiVariable)refElement;
   }
 
+  @Override
   public boolean isParameterAccepted(PsiParameter psiParameter) {
     return checkCodeFragment(psiParameter) != null;
   }
 
+  @Override
   public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
     return checkCodeFragment(psiVariable) != null;
   }

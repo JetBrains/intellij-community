@@ -113,6 +113,7 @@ public class FileWatcher {
       new WatchForChangesThread().start();
 
       Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+        @Override
         public void run() {
           isShuttingDown = true;
           shutdownProcess();
@@ -325,6 +326,7 @@ public class FileWatcher {
       super("WatchForChangesThread");
     }
 
+    @Override
     public void run() {
       try {
         while (true) {

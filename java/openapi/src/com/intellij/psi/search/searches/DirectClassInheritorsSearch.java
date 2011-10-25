@@ -89,6 +89,7 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
 
     if (!includeAnonymous) {
       return new FilteredQuery<PsiClass>(raw, new Condition<PsiClass>() {
+        @Override
         public boolean value(final PsiClass psiClass) {
           return !(psiClass instanceof PsiAnonymousClass);
         }

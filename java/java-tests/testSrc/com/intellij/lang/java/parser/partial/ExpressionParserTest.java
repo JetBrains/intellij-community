@@ -77,7 +77,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testNew15() { doParserTest("new C<?>.B()"); }
   public void testNew16() {
     withLevel(LanguageLevel.JDK_1_7,
-              new Runnable() { public void run() { doParserTest("new C<>()"); } });
+              new Runnable() { @Override
+                               public void run() { doParserTest("new C<>()"); } });
   }
 
   public void testExprList0() { doParserTest("f(1,2)"); }
@@ -117,11 +118,13 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testChainedThisObjectAccess() { doParserTest("A.this.B.this"); }
 
   private void doParserTest(@NonNls final String text) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        ExpressionParser.parse(builder);
-      }
-    });
+    doParserTest(text, new MyTestParser());
+  }
+
+  private static class MyTestParser implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ExpressionParser.parse(builder);
+    }
   }
 }

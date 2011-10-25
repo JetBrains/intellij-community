@@ -422,6 +422,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
       public VirtualFile compute() throws IOException {
         getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
         return VirtualFile.this;
@@ -439,6 +440,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
       public VirtualFile compute() throws IOException {
         return getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName);
       }
@@ -611,6 +613,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return getName();
   }
 
+  @Override
   public long getModificationCount() {
     return isValid() ? getTimeStamp() : -1;
   }

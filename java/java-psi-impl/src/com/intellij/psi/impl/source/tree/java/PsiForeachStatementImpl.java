@@ -36,28 +36,34 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     super(FOREACH_STATEMENT);
   }
 
+  @Override
   @NotNull
   public PsiParameter getIterationParameter() {
     return (PsiParameter) findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
   }
 
+  @Override
   public PsiExpression getIteratedValue() {
     return (PsiExpression) findChildByRoleAsPsiElement(ChildRole.FOR_ITERATED_VALUE);
   }
 
+  @Override
   public PsiStatement getBody() {
     return (PsiStatement) findChildByRoleAsPsiElement(ChildRole.LOOP_BODY);
   }
 
+  @Override
   @NotNull
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }
 
+  @Override
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
 
@@ -88,6 +94,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
 
@@ -124,6 +131,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     return "PsiForeachStatement";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null || lastParent.getParent() != this || lastParent == getIteratedValue())
@@ -133,6 +141,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     return processor.execute(getIterationParameter(), state);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitForeachStatement(this);

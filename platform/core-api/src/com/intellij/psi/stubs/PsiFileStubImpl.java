@@ -32,18 +32,22 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     myFile = file;
   }
 
+  @Override
   public T getPsi() {
     return myFile;
   }
 
+  @Override
   public void setPsi(final T psi) {
     myFile = psi;
   }
 
+  @Override
   public IStubElementType getStubType() {
     return null;
   }
 
+  @Override
   public IStubFileElementType getType() {
     return TYPE;
   }

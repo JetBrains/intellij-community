@@ -35,6 +35,7 @@ public class ScrollToCenterAction extends InactiveEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }

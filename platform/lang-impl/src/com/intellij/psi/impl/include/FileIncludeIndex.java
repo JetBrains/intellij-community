@@ -46,6 +46,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
     final List<FileIncludeInfoImpl> result = new ArrayList<FileIncludeInfoImpl>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
+      @Override
       public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
         result.addAll(value);
         return true;
@@ -57,6 +58,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, GlobalSearchScope scope) {
     final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<VirtualFile, FileIncludeInfoImpl>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
+      @Override
       public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
         result.put(file, value);
         return true;
@@ -65,12 +67,15 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return result;
   }
 
+  @Override
   public ID<Key, List<FileIncludeInfoImpl>> getName() {
     return INDEX_ID;
   }
 
+  @Override
   public DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent> getIndexer() {
     return new DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent>() {
+      @Override
       @NotNull
       public Map<Key, List<FileIncludeInfoImpl>> map(FileContent inputData) {
 
@@ -98,21 +103,26 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @Override
   public KeyDescriptor<Key> getKeyDescriptor() {
     return new KeyDescriptor<Key>() {
+      @Override
       public int getHashCode(Key value) {
         return value.hashCode();
       }
 
+      @Override
       public boolean isEqual(Key val1, Key val2) {
         return val1.equals(val2);
       }
 
+      @Override
       public void save(DataOutput out, Key value) throws IOException {
         out.writeBoolean(value.isInclude());
         value.writeValue(out);
       }
 
+      @Override
       public Key read(DataInput in) throws IOException {
         boolean isInclude = in.readBoolean();
         return isInclude ? new IncludeKey(in.readUTF()) : new FileKey(in.readInt());
@@ -120,8 +130,10 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @Override
   public DataExternalizer<List<FileIncludeInfoImpl>> getValueExternalizer() {
     return new DataExternalizer<List<FileIncludeInfoImpl>>() {
+      @Override
       public void save(DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
         out.writeInt(value.size());
         for (FileIncludeInfoImpl info : value) {
@@ -132,6 +144,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         }
       }
 
+      @Override
       public List<FileIncludeInfoImpl> read(DataInput in) throws IOException {
         int size = in.readInt();
         ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
@@ -143,8 +156,10 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
+      @Override
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
@@ -159,10 +174,12 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public int getVersion() {
     return 1;
   }
@@ -180,10 +197,12 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       myFileName = fileName;
     }
 
+    @Override
     public boolean isInclude() {
       return true;
     }
 
+    @Override
     public void writeValue(DataOutput out) throws IOException {
       out.writeUTF(myFileName);
     }
@@ -210,10 +229,12 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       myFileId = FileBasedIndex.getFileId(file);
     }
 
+    @Override
     public boolean isInclude() {
       return false;
     }
 
+    @Override
     public void writeValue(DataOutput out) throws IOException {
       out.writeInt(myFileId);
     }

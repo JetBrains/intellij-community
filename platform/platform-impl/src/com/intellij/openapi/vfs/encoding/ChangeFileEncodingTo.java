@@ -49,6 +49,7 @@ class ChangeFileEncodingTo extends AnAction implements DumbAware {
     getTemplatePresentation().setDescription(description);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     chosen(myFile, myCharset);
   }

@@ -31,6 +31,7 @@ public class FindAllAction extends EditorHeaderAction implements DumbAware {
                               editorSearchComponent.getSearchField());
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     super.update(e);
     Editor editor = getEditorSearchComponent().getEditor();
@@ -41,6 +42,7 @@ public class FindAllAction extends EditorHeaderAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     Editor editor = getEditorSearchComponent().getEditor();
     Project project = editor.getProject();

@@ -44,6 +44,7 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
     myOptions.put(key,value);
   }
   
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     myProvider.setOptions(myOptions);
@@ -52,10 +53,12 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
     return referencesByElement;
   }
 
+  @Override
   public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
     myOptions = options;  // merge ?
   }
 
+  @Override
   @Nullable
   public Map<CustomizationKey, Object> getOptions() {
     return myOptions;

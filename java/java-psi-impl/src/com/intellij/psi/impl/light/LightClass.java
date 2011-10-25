@@ -46,87 +46,105 @@ public class LightClass extends LightElement implements PsiClass {
     myDelegate = delegate;
   }
 
+  @Override
   @NonNls
   @Nullable
   public String getName() {
     return myDelegate.getName();
   }
 
+  @Override
   @Nullable
   public PsiModifierList getModifierList() {
     return myDelegate.getModifierList();
   }
 
+  @Override
   public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
     return myDelegate.hasModifierProperty(name);
   }
 
+  @Override
   @Nullable
   public PsiDocComment getDocComment() {
     return null;
   }
 
+  @Override
   public boolean isDeprecated() {
     return myDelegate.isDeprecated();
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return PsiImplUtil.hasTypeParameters(this);
   }
 
+  @Override
   @Nullable
   public PsiTypeParameterList getTypeParameterList() {
     return myDelegate.getTypeParameterList();
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myDelegate.getTypeParameters();
   }
 
+  @Override
   @NonNls
   @Nullable
   public String getQualifiedName() {
     return myDelegate.getQualifiedName();
   }
 
+  @Override
   public boolean isInterface() {
     return myDelegate.isInterface();
   }
 
+  @Override
   public boolean isAnnotationType() {
     return myDelegate.isAnnotationType();
   }
 
+  @Override
   public boolean isEnum() {
     return myDelegate.isEnum();
   }
 
+  @Override
   @Nullable
   public PsiReferenceList getExtendsList() {
     return myDelegate.getExtendsList();
   }
 
+  @Override
   @Nullable
   public PsiReferenceList getImplementsList() {
     return myDelegate.getImplementsList();
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassImplUtil.getImplementsListTypes(this);
   }
 
+  @Override
   @Nullable
   public PsiClass getSuperClass() {
     return myDelegate.getSuperClass();
   }
 
+  @Override
   public PsiClass[] getInterfaces() {
     return myDelegate.getInterfaces();
   }
@@ -137,36 +155,43 @@ public class LightClass extends LightElement implements PsiClass {
     return myDelegate.getNavigationElement();
   }
 
+  @Override
   @NotNull
   public PsiClass[] getSupers() {
     return myDelegate.getSupers();
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getSuperTypes() {
     return myDelegate.getSuperTypes();
   }
 
+  @Override
   @NotNull
   public PsiField[] getFields() {
     return myDelegate.getFields();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethods() {
     return myDelegate.getMethods();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getConstructors() {
     return myDelegate.getConstructors();
   }
 
+  @Override
   @NotNull
   public PsiClass[] getInnerClasses() {
     return myDelegate.getInnerClasses();
   }
 
+  @Override
   @NotNull
   public PsiClassInitializer[] getInitializers() {
     return myDelegate.getInitializers();
@@ -180,93 +205,112 @@ public class LightClass extends LightElement implements PsiClass {
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
   }
 
+  @Override
   @NotNull
   public PsiField[] getAllFields() {
     return myDelegate.getAllFields();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getAllMethods() {
     return myDelegate.getAllMethods();
   }
 
+  @Override
   @NotNull
   public PsiClass[] getAllInnerClasses() {
     return myDelegate.getAllInnerClasses();
   }
 
+  @Override
   @Nullable
   public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
+  @Override
   @Nullable
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
+  @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
+  @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiMethod.class);
   }
 
+  @Override
   @Nullable
   public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
     return myDelegate.findInnerClassByName(name, checkBases);
   }
 
+  @Override
   @Nullable
   public PsiElement getLBrace() {
     return myDelegate.getLBrace();
   }
 
+  @Override
   @Nullable
   public PsiElement getRBrace() {
     return myDelegate.getRBrace();
   }
 
+  @Override
   @Nullable
   public PsiIdentifier getNameIdentifier() {
     return myDelegate.getNameIdentifier();
   }
 
+  @Override
   public PsiElement getScope() {
     return myDelegate.getScope();
   }
 
+  @Override
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return myDelegate.isInheritor(baseClass, checkDeep);
   }
 
+  @Override
   public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
     return myDelegate.isInheritorDeep(baseClass, classToByPass);
   }
 
+  @Override
   @Nullable
   public PsiClass getContainingClass() {
     return myDelegate.getContainingClass();
   }
 
+  @Override
   @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return myDelegate.getVisibleSignatures();
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return myDelegate.setName(name);
   }
@@ -276,10 +320,12 @@ public class LightClass extends LightElement implements PsiClass {
     return "PsiClass:" + getName();
   }
 
+  @Override
   public String getText() {
     return myDelegate.getText();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClass(this);
@@ -288,6 +334,7 @@ public class LightClass extends LightElement implements PsiClass {
     }
   }
 
+  @Override
   public PsiElement copy() {
     return new LightClass(this);
   }

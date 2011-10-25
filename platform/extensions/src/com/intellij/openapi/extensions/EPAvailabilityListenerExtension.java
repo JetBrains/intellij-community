@@ -49,6 +49,7 @@ public class EPAvailabilityListenerExtension implements PluginAware {
     myListenerClass = listenerClass;
   }
 
+  @Override
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }

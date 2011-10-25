@@ -73,6 +73,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
             createSetter(false);
           }
 
+          @Override
           @NotNull
           public String getName() {
             return QuickFixBundle.message("create.writable.property", myPropertyName);
@@ -83,11 +84,13 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     return new CreateBeanPropertyFix[] {
         new CreateBeanPropertyFix(propertyName, psiClass, type) {
 
+          @Override
           @NotNull
           public String getName() {
             return QuickFixBundle.message("create.readable.writable.property.with.field", myPropertyName);
           }
 
+          @Override
           protected void doFix() throws IncorrectOperationException {
             createField();
             createSetter(true);
@@ -95,6 +98,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
           }
         },
         new CreateBeanPropertyFix(propertyName, psiClass, type) {
+          @Override
           protected void doFix() throws IncorrectOperationException {
             if (createSetter) {
               createSetter(false);
@@ -104,12 +108,14 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
             }
           }
 
+          @Override
           @NotNull
           public String getName() {
             return QuickFixBundle.message(createSetter ? "create.writable.property" : "create.readable.property", myPropertyName);
           }
         },
         new CreateBeanPropertyFix(propertyName, psiClass, type) {
+          @Override
           protected void doFix() throws IncorrectOperationException {
             createField();
             if (createSetter) {
@@ -120,6 +126,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
             }
           }
 
+          @Override
           @NotNull
           public String getName() {
             return QuickFixBundle.message(createSetter ? "create.writable.property.with.field" : "create.readable.property.with.field", myPropertyName);
@@ -135,17 +142,20 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     myType = type;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     applyFix(project);
   }
 
   private void applyFix(final Project project) {
     new WriteCommandAction.Simple(project, getName(), myPsiClass.getContainingFile()) {
+      @Override
       protected void run() throws Throwable {
         try {
           doFix();
@@ -157,19 +167,23 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     }.execute();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return getName();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     applyFix(project);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

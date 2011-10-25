@@ -62,6 +62,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   private boolean myAllowEmpty;
 
   private ParameterizedCachedValueProvider<List<PsiElement>, Project> myProvider = new ParameterizedCachedValueProvider<List<PsiElement>, Project>() {
+      @Override
       public CachedValueProvider.Result<List<PsiElement>> compute(Project project) {
         final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
         final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
@@ -98,6 +99,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     return getReferencesByElement(element);
@@ -118,6 +120,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return new JavaClassReferenceSet(str, position, offsetInPosition, allowDollars, this).getAllReferences();
   }
 
+  @Override
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     if (position == null) return;
@@ -135,6 +138,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   private static Collection<PsiPackage> getSubPackages(final PsiPackage defaultPackage) {
     return ContainerUtil.mapNotNull(defaultPackage.getSubPackages(), new NullableFunction<PsiPackage, PsiPackage>() {
+      @Override
       public PsiPackage fun(final PsiPackage psiPackage) {
         final String packageName = psiPackage.getName();
         return JavaPsiFacade.getInstance(psiPackage.getProject()).getNameHelper()
@@ -143,10 +147,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     });
   }
 
+  @Override
   public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
     myOptions = options;
   }
 
+  @Override
   @Nullable
   public Map<CustomizationKey, Object> getOptions() {
     return myOptions;

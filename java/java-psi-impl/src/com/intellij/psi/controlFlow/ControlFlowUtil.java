@@ -178,6 +178,7 @@ public class ControlFlowUtil {
         neededBelow[offset] |= needed;
       }
 
+      @Override
       public Boolean getResult() {
         return neededBelow[offset];
       }
@@ -295,6 +296,7 @@ public class ControlFlowUtil {
         }
       }
 
+      @Override
       public Object getResult() {
         return null;
       }
@@ -501,6 +503,7 @@ public class ControlFlowUtil {
       myVisitor = visitor;
     }
 
+    @Override
     public void visitGoToInstruction(final GoToInstruction instruction, final int offset, final int nextOffset) {
       super.visitGoToInstruction(instruction, offset, nextOffset);
 
@@ -555,6 +558,7 @@ public class ControlFlowUtil {
       isNormalCompletion[offset] |= isNormal;
     }
 
+    @Override
     public Boolean getResult() {
       return !isNormalCompletion[0];
     }
@@ -629,6 +633,7 @@ public class ControlFlowUtil {
         isNormalCompletion[offset] |= isNormal;
       }
 
+      @Override
       public Boolean getResult() {
         return !isNormalCompletion[startOffset];
       }
@@ -716,6 +721,7 @@ public class ControlFlowUtil {
         checkInstruction(offset, nextOffset, false);
       }
 
+      @Override
       public Boolean getResult() {
         return canCompleteNormally[startOffset];
       }
@@ -740,6 +746,7 @@ public class ControlFlowUtil {
       myFlow = flow;
     }
 
+    @Override
     public PsiElement getResult() {
       for (int i = 0; i < processedInstructions.length; i++) {
         if (!processedInstructions[i]) {
@@ -844,6 +851,7 @@ public class ControlFlowUtil {
         maybeUnassigned[offset] |= unassigned;
       }
 
+      @Override
       public Boolean getResult() {
         return !maybeUnassigned[0];
       }
@@ -887,6 +895,7 @@ public class ControlFlowUtil {
         maybeAssigned[offset] |= assigned;
       }
 
+      @Override
       public Boolean getResult() {
         return !maybeAssigned[0];
       }
@@ -919,6 +928,7 @@ public class ControlFlowUtil {
         }
       }
 
+      @Override
       public Integer getResult() {
         int minOffset = flow.getSize();
         int maxExitPoints = 0;
@@ -1209,6 +1219,7 @@ public class ControlFlowUtil {
       }
     }
 
+    @Override
     public List<PsiReferenceExpression> getResult() {
       List<PsiReferenceExpression> problemsFound = new ArrayList<PsiReferenceExpression>();
       CopyOnWriteList topReadVariables = readVariables[0];
@@ -1254,6 +1265,7 @@ public class ControlFlowUtil {
         normalCompletion[offset] |= normal;
       }
 
+      @Override
       public Integer getResult() {
         return (returnCalled[offset] ? RETURN_COMPLETION_REASON : 0) | (normalCompletion[offset] ? NORMAL_COMPLETION_REASON : 0);
       }
@@ -1342,6 +1354,7 @@ public class ControlFlowUtil {
       merge(offset, writeTwiceVars, writtenTwiceVariables);
     }
 
+    @Override
     @NotNull
     public Collection<VariableInfo> getResult() {
       CopyOnWriteList writtenTwiceVariable = writtenTwiceVariables[myStartOffset];
@@ -1361,6 +1374,7 @@ public class ControlFlowUtil {
         if (nextOffset == instructionOffset) reachable = true;
       }
 
+      @Override
       public Boolean getResult() {
         return reachable;
       }

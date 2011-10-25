@@ -36,10 +36,12 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     super(RETURN_STATEMENT);
   }
 
+  @Override
   public PsiExpression getReturnValue() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.RETURN_VALUE);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -57,6 +59,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -76,6 +79,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReturnStatement(this);

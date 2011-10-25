@@ -26,6 +26,7 @@ class CompositeInstructionClientVisitor extends InstructionClientVisitor<Object[
     myVisitors = visitors;
   }
 
+  @Override
   public Object[] getResult() {
     Object[] result = new Object[myVisitors.length];
     for (int i = 0; i < myVisitors.length; i++) {

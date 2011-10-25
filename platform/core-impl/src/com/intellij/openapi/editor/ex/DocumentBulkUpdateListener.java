@@ -29,7 +29,9 @@ public interface DocumentBulkUpdateListener {
   void updateFinished(Document doc);
 
   abstract class Adapter implements DocumentBulkUpdateListener {
+    @Override
     public void updateFinished(final Document doc) {}
+    @Override
     public void updateStarted(final Document doc) {}
   }
 }

@@ -46,6 +46,7 @@ public final class LanguageUtil {
   @NotNull
   public static Language[] getLanguageDialects(final Language base) {
     final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
+      @Override
       public boolean value(final Language language) {
         return language.getBaseLanguage() == base;
       }

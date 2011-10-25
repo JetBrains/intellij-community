@@ -32,10 +32,12 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
     super(epName);
   }
 
+  @Override
   protected String keyToString(final Class key) {
     return key.getName();
   }
 
+  @Override
   protected List<T> buildExtensions(final String key, final Class classKey) {
     final Set<String> allSupers = new THashSet<String>();
     collectSupers(classKey, allSupers);

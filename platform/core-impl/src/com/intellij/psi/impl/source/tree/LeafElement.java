@@ -46,14 +46,17 @@ public abstract class LeafElement extends TreeElement {
     return clone;
   }
 
+  @Override
   public int getTextLength() {
     return myText.length();
   }
 
+  @Override
   public CharSequence getChars() {
     return myText;
   }
 
+  @Override
   public String getText() {
     return myText.toString();
   }
@@ -70,6 +73,7 @@ public abstract class LeafElement extends TreeElement {
     return start + length;
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     final char[] buffer = new char[myText.length()];
@@ -77,6 +81,7 @@ public abstract class LeafElement extends TreeElement {
     return buffer;
   }
 
+  @Override
   public boolean textContains(char c) {
     CharSequence text = myText;
     for (int i = 0; i < text.length(); i++) {
@@ -86,6 +91,7 @@ public abstract class LeafElement extends TreeElement {
     return false;
   }
 
+  @Override
   protected int textMatches(@NotNull CharSequence buffer, int start) {
     assert start >= 0 : start;
     final CharSequence text = myText;
@@ -121,10 +127,12 @@ public abstract class LeafElement extends TreeElement {
     return newLeaf;
   }
 
+  @Override
   public LeafElement findLeafElementAt(int offset) {
     return this;
   }
 
+  @Override
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public boolean textMatches(@NotNull final CharSequence buf, int start, int end) {
     final CharSequence text = getChars();
@@ -144,24 +152,29 @@ public abstract class LeafElement extends TreeElement {
     return true;
   }
 
+  @Override
   public void acceptTree(TreeElementVisitor visitor) {
     visitor.visitLeaf(this);
   }
 
+  @Override
   public ASTNode findChildByType(IElementType type) {
     return null;
   }
 
+  @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet) {
     return null;
   }
 
+  @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor) {
     return null;
   }
 
+  @Override
   public int hc() {
     return leafHC(getChars());
   }
@@ -177,10 +190,12 @@ public abstract class LeafElement extends TreeElement {
     return hc;
   }
 
+  @Override
   public TreeElement getFirstChildNode() {
     return null;
   }
 
+  @Override
   public TreeElement getLastChildNode() {
     return null;
   }
@@ -190,46 +205,57 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
+  @Override
   public int getCachedLength() {
     return getNotCachedLength();
   }
 
+  @Override
   public ASTNode[] getChildren(TokenSet filter) {
     return EMPTY_ARRAY;
   }
 
+  @Override
   public void addChild(@NotNull ASTNode child, ASTNode anchorBefore) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void addChild(@NotNull ASTNode child) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void removeChild(@NotNull ASTNode child) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void replaceAllChildrenToChildrenOf(ASTNode anotherParent) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  @Override
   public PsiElement getPsi() {
     return null;
   }

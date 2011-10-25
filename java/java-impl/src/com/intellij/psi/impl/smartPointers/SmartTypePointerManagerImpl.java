@@ -50,6 +50,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public SmartTypePointer createSmartTypePointer(@NotNull PsiType type) {
     return type.accept(new SmartTypeCreatingVisitor());
@@ -62,6 +63,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       myType = type;
     }
 
+    @Override
     public PsiType getType() {
       return myType;
     }
@@ -151,6 +153,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       myTypeRef = new SoftReference<T>(type);
     }
 
+    @Override
     public T getType() {
       Reference<T> typeRef = myTypeRef;
       T myType = typeRef == null ? null : typeRef.get();

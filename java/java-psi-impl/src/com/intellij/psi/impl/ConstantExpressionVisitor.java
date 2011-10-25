@@ -584,10 +584,12 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     if (result instanceof Double && ((Double) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
   }
 
+  @Override
   public Object computeExpression(final PsiExpression expression, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
   }
 
+  @Override
   public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
     throw new AssertionError("should not be called");
   }

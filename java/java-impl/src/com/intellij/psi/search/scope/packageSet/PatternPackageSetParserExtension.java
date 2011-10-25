@@ -26,6 +26,7 @@ import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 
 public class PatternPackageSetParserExtension implements PackageSetParserExtension {
 
+  @Override
   public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
     /*if (scope == PatternPackageSet.SCOPE_ANY && modulePattern == null) {
       error(AnalysisScopeBundle.message("error.packageset.common.expectations"), lexer);
@@ -40,6 +41,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
     return new PatternPackageSet(parseAspectJPattern(lexer), scope, modulePattern);
   }
 
+  @Override
   public String parseScope(final Lexer lexer) {
     if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
     String id = getTokenText(lexer);

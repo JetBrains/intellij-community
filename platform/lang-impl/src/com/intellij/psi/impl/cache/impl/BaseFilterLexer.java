@@ -99,6 +99,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
     return todoScanningData;
   }
 
+  @Override
   public final void run(CharSequence chars, int start, int end) {
     myOccurrenceConsumer.addOccurrence(chars, start, end, myOccurenceMask);
   }

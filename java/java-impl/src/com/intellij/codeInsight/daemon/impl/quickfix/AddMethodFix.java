@@ -83,6 +83,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.method.family");

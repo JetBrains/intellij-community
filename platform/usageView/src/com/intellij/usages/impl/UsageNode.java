@@ -40,6 +40,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return myUsage.toString();
   }
 
+  @Override
   public String tree2string(int indent, String lineSeparator) {
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
@@ -47,6 +48,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return result.toString();
   }
 
+  @Override
   public int compareTo(UsageNode usageNode) {
     return UsageViewImpl.USAGE_COMPARATOR.compare(myUsage, usageNode.getUsage());
   }
@@ -56,30 +58,37 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return myUsage;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     myUsage.navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return myUsage.isValid() && myUsage.canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myUsage.isValid() && myUsage.canNavigate();
   }
 
+  @Override
   protected boolean isDataValid() {
     return myUsage.isValid();
   }
 
+  @Override
   protected boolean isDataReadOnly() {
     return myUsage.isReadOnly();
   }
 
+  @Override
   protected boolean isDataExcluded() {
     return myUsageExcluded;
   }
 
+  @Override
   protected String getText(final UsageView view) {
     try {
       return myUsage.getPresentation().getPlainText();

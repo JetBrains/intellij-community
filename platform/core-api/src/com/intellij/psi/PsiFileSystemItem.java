@@ -29,12 +29,14 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatablePsiElement {
   boolean isDirectory();
 
+  @Override
   @Nullable
   PsiFileSystemItem getParent();
 
   @Nullable
   VirtualFile getVirtualFile();
 
+  @Override
   @NotNull @NonNls
   String getName();
 

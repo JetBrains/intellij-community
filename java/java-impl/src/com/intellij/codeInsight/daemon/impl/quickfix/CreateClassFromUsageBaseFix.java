@@ -100,6 +100,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     return Character.isUpperCase(name.charAt(0));
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null ||
@@ -121,6 +122,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     return false;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.class.from.usage.family");

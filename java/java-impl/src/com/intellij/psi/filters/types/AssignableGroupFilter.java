@@ -37,6 +37,7 @@ public class AssignableGroupFilter extends OrFilter implements InitializableFilt
     init(classes);
   }
 
+  @Override
   public void init(Object[] classes){
     for (Object aClass : classes) {
       if (aClass instanceof PsiClass) {

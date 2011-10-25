@@ -78,6 +78,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     final Module moduleB = createModule("b.iml", StdModuleTypes.JAVA);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         VirtualFile rootB = myFixture.findOrCreateDir("b");
         VirtualFile outB = myFixture.findOrCreateDir("out");
@@ -187,6 +188,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     final VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(m).getModifiableModel();
         final Library library = model.getModuleLibraryTable().createLibrary("l");

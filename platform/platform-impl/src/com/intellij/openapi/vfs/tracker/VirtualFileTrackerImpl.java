@@ -37,6 +37,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
 
   public VirtualFileTrackerImpl(VirtualFileManager virtualFileManager) {
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
+      @Override
       public void propertyChanged(final VirtualFilePropertyEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -46,6 +47,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void contentsChanged(final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -55,6 +57,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void fileCreated(final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -64,6 +67,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void fileDeleted(final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -73,6 +77,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void fileMoved(final VirtualFileMoveEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -82,6 +87,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void fileCopied(final VirtualFileCopyEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -91,6 +97,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void beforePropertyChange(final VirtualFilePropertyEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -100,6 +107,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void beforeContentsChange(final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -109,6 +117,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void beforeFileDeletion(final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -118,6 +127,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
         }
       }
 
+      @Override
       public void beforeFileMovement(final VirtualFileMoveEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
@@ -129,6 +139,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
     });
   }
 
+  @Override
   public void addTracker(
     @NotNull final String fileUrl,
     @NotNull final VirtualFileListener listener,
@@ -142,6 +153,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
     }
 
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeListener(fileUrl, listener, myAllTrackers);
 

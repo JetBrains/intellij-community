@@ -97,6 +97,7 @@ public class LayeredIcon implements Icon {
     }
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     for(int i = 0; i < myIcons.length; i++){
       Icon icon = myIcons[i];
@@ -113,10 +114,12 @@ public class LayeredIcon implements Icon {
     myDisabledLayers[layer] = !enabled;
   }
 
+  @Override
   public int getIconWidth() {
     return myWidth;
   }
 
+  @Override
   public int getIconHeight() {
     return myHeight;
   }

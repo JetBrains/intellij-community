@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 public class JavaAwareModuleTypeManagerImpl extends ModuleTypeManagerImpl{
   @NonNls private static final String JAVA_MODULE_ID_OLD = "JAVA";
 
+  @Override
   public ModuleType getDefaultModuleType() {
     return StdModuleTypes.JAVA;
   }

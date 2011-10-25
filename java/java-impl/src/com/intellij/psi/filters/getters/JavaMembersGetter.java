@@ -99,6 +99,7 @@ public class JavaMembersGetter extends MembersGetter {
     return null;
   }
 
+  @Override
   @Nullable
   protected LookupElement createFieldElement(PsiField field) {
     if (!myExpectedType.isAssignableFrom(field.getType())) {
@@ -108,6 +109,7 @@ public class JavaMembersGetter extends MembersGetter {
     return new VariableLookupItem(field, false);
   }
 
+  @Override
   @Nullable
   protected LookupElement createMethodElement(PsiMethod method) {
     PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, myExpectedType);

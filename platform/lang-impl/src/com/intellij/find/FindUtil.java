@@ -189,6 +189,7 @@ public class FindUtil {
     model.setFindAllEnabled(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
 
     findManager.showFindDialog(model, new Runnable() {
+      @Override
       public void run() {
         if (model.isFindAll()) {
           findManager.setFindNextModel(model);
@@ -388,6 +389,7 @@ public class FindUtil {
     model.setReplaceState(true);
 
     findManager.showFindDialog(model, new Runnable() {
+      @Override
       public void run() {
         if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
           int offset = model.isForward()
@@ -553,6 +555,7 @@ public class FindUtil {
         CharSequence text = document.getCharsSequence();
         final StringBuilder newText = new StringBuilder(document.getTextLength());
         Collections.sort(rangesToChange, new Comparator<Pair<TextRange, String>>() {
+          @Override
           public int compare(Pair<TextRange, String> o1, Pair<TextRange, String> o2) {
             return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();
           }
@@ -578,8 +581,10 @@ public class FindUtil {
         }
         final int finalCaretOffset = caretOffset;
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 document.setText(newText);
                 editor.getCaretModel().moveToOffset(finalCaretOffset);
@@ -640,6 +645,7 @@ public class FindUtil {
         scrollingModel.scrollToCaret(scrollType);
         scrollingModel.runActionOnScrollingFinished(
           new Runnable() {
+            @Override
             public void run() {
               scrollingModel.scrollTo(editor.offsetToLogicalPosition(result.getStartOffset()), scrollType);
               scrollingModel.scrollTo(editor.offsetToLogicalPosition(result.getEndOffset()), scrollType);
@@ -682,6 +688,7 @@ public class FindUtil {
       mySegmentHighlighter = segmentHighlighter;
     }
 
+    @Override
     public void caretPositionChanged(CaretEvent e) {
       removeAll();
     }
@@ -739,6 +746,7 @@ public class FindUtil {
         }
       }
       CaretListener listener = new CaretListener() {
+        @Override
         public void caretPositionChanged(CaretEvent e) {
           editor.putUserData(KEY, null);
           editor.getCaretModel().removeCaretListener(this);
@@ -805,8 +813,10 @@ public class FindUtil {
                                final String stringToReplace) {
     final String converted = StringUtil.convertLineSeparators(stringToReplace);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             //[ven] I doubt converting is a good solution to SCR 21224
             document.replaceString(startOffset, endOffset, converted);

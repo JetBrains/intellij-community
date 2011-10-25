@@ -44,16 +44,19 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("surround.with.try.catch.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("surround.with.try.catch.fix");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myStatement != null &&
            myStatement.isValid() &&
@@ -61,6 +64,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
             !HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression()));
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -93,6 +97,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

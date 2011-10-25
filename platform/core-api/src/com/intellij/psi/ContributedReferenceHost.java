@@ -26,6 +26,7 @@ public interface ContributedReferenceHost extends PsiElement {
    * {@link com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)}
    * @return {@link com.intellij.psi.PsiReferenceService#getContributedReferences(PsiElement)}
    */
+  @Override
   @NotNull
   PsiReference[] getReferences();
 }

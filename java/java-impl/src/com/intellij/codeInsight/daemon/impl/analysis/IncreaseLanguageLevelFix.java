@@ -46,11 +46,13 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     myLevel = targetLevel;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("set.language.level.to.0", myLevel.getPresentableText());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("set.language.level");
@@ -63,6 +65,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return version != null && version.getMaxLanguageLevel().isAtLeast(level);
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
@@ -74,6 +77,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return isJdkSupportsLevel(getRelevantJdk(project, module), level);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
@@ -83,6 +87,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           rootModel.commit();
         }
@@ -100,6 +105,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return moduleJdk == null ? projectJdk : moduleJdk;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

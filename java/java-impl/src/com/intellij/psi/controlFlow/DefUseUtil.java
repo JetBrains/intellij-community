@@ -255,18 +255,22 @@ public class DefUseUtil {
       RefsDefs refsDefs = new RefsDefs(body) {
         private final InstructionState[] states = getStates(instructions);
 
+        @Override
         protected int nNext(int index) {
           return states[index].getBackwardTraces().size();
         }
 
+        @Override
         protected int getNext(int index, int no) {
           return states[index].getBackwardTraces().get(no);
         }
 
+        @Override
         protected boolean defs() {
           return true;
         }
 
+        @Override
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
@@ -305,18 +309,22 @@ public class DefUseUtil {
   public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
+        @Override
         protected int nNext(int index) {
           return instructions.get(index).nNext();
         }
 
+        @Override
         protected int getNext(int index, int no) {
           return instructions.get(index).getNext(index, no);
         }
 
+        @Override
         protected boolean defs() {
           return false;
         }
 
+        @Override
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
@@ -452,6 +460,7 @@ public class DefUseUtil {
   }
 
   private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
+    @Override
     public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
       if (refExpr.isQualified()) return null;
 
@@ -463,10 +472,12 @@ public class DefUseUtil {
       return null;
     }
 
+    @Override
     public boolean isParameterAccepted(PsiParameter psiParameter) {
       return true;
     }
 
+    @Override
     public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
       return true;
     }

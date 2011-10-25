@@ -39,11 +39,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     super(name, parent, id);
   }
 
+  @Override
   @Nullable
   public NewVirtualFile findChild(@NotNull @NonNls final String name) {
     return null;
   }
 
+  @Override
   public Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }
@@ -53,6 +55,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return ContainerUtil.emptyIterable();
   }
 
+  @Override
   @NotNull
   public NewVirtualFileSystem getFileSystem() {
     final VirtualFileSystemEntry parent = getParent();
@@ -61,29 +64,35 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return parent.getFileSystem();
   }
 
+  @Override
   @Nullable
   public NewVirtualFile refreshAndFindChild(final String name) {
     return null;
   }
 
+  @Override
   @Nullable
   public NewVirtualFile findChildIfCached(final String name) {
     return null;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   @NotNull
   public InputStream getInputStream() throws IOException {
     return VfsUtilCore.inputStreamSkippingBOM(ourPersistence.getInputStream(this),this);
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     return contentsToByteArray(true);
@@ -95,15 +104,18 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return ourPersistence.contentsToByteArray(this, cacheContent);
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp),this);
   }
 
+  @Override
   public NewVirtualFile findChildById(int id) {
     return null;
   }
 
+  @Override
   public NewVirtualFile findChildByIdIfCached(int id) {
     return null;
   }

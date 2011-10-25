@@ -67,6 +67,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     myAccessClass = access;
   }
 
+  @Override
   public final void handleEvent(PsiScopeProcessor.Event event, Object associated) {
     super.handleEvent(event, associated);
     if(event == JavaScopeProcessorEvent.START_STATIC){
@@ -77,16 +78,19 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     }
   }
 
+  @Override
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     final boolean staticProblem = myStaticScopeFlag && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC);
     add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
     if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName, myPlace))) {
       super.execute(element, state);

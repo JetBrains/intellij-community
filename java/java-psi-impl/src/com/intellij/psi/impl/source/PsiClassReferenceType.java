@@ -55,30 +55,36 @@ public class PsiClassReferenceType extends PsiClassType {
     myReference = reference;
   }
 
+  @Override
   public boolean isValid() {
     return myReference.isValid();
   }
 
+  @Override
   public boolean equalsToText(String text) {
     return Comparing.equal(text, getCanonicalText());
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return myReference.getResolveScope();
   }
 
+  @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
     if (myLanguageLevel != null) return myLanguageLevel;
     return PsiUtil.getLanguageLevel(myReference);
   }
 
+  @Override
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
     return new PsiClassReferenceType(myReference,languageLevel,getAnnotations());
   }
 
+  @Override
   public PsiClass resolve() {
     return resolveGenerics().getElement();
   }
@@ -90,42 +96,51 @@ public class PsiClassReferenceType extends PsiClassType {
       myDelegate = delegate;
     }
 
+    @Override
     public PsiSubstitutor getSubstitutor() {
       return myDelegate.getSubstitutor();
     }
 
+    @Override
     public boolean isValidResult() {
       return myDelegate.isValidResult();
     }
 
+    @Override
     public boolean isAccessible() {
       return myDelegate.isAccessible();
     }
 
+    @Override
     public boolean isStaticsScopeCorrect() {
       return myDelegate.isStaticsScopeCorrect();
     }
 
+    @Override
     public PsiElement getCurrentFileResolveScope() {
       return myDelegate.getCurrentFileResolveScope();
     }
 
+    @Override
     public boolean isPackagePrefixPackageReference() {
       return myDelegate.isPackagePrefixPackageReference();
     }
 
+    @Override
     public PsiClass getElement() {
       final PsiElement element = myDelegate.getElement();
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
   }
 
+  @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
     final JavaResolveResult result = myReference.advancedResolve(false);
     return new DelegatingClassResolveResult(result);
   }
 
+  @Override
   @NotNull
   public PsiClassType rawType() {
     PsiElement resolved = myReference.resolve();
@@ -144,10 +159,12 @@ public class PsiClassReferenceType extends PsiClassType {
     return new PsiClassReferenceType(reference, null,getAnnotations());
   }
 
+  @Override
   public String getClassName() {
     return myReference.getReferenceName();
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     return myReference.getTypeParameters();
@@ -159,14 +176,17 @@ public class PsiClassReferenceType extends PsiClassType {
     return new PsiImmediateClassType(resolveResult.getElement(), resolveResult.getSubstitutor());
   }
 
+  @Override
   public String getPresentableText() {
     return getAnnotationsTextPrefix() + PsiNameHelper.getPresentableText(myReference);
   }
 
+  @Override
   public String getCanonicalText() {
     return myReference.getCanonicalText();
   }
 
+  @Override
   public String getInternalCanonicalText() {
     return getAnnotationsTextPrefix() + getCanonicalText();
   }

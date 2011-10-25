@@ -28,6 +28,7 @@ public class LanguageTokenSeparatorGenerators extends LanguageExtension<TokenSep
 
   private LanguageTokenSeparatorGenerators() {
     super("com.intellij.lang.tokenSeparatorGenerator", new TokenSeparatorGenerator() {
+      @Override
       public ASTNode generateWhitespaceBetweenTokens(ASTNode left, ASTNode right) {
         Language l = PsiUtilCore.getNotAnyLanguage(left);
         final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);

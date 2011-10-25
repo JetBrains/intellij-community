@@ -33,35 +33,43 @@ public class DelegateLexer extends LexerBase {
     return myDelegate;
   }
 
+  @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myDelegate.start(buffer, startOffset, endOffset, initialState);
   }
 
+  @Override
   public int getState() {
     return myDelegate.getState();
   }
 
+  @Override
   @Nullable
   public IElementType getTokenType() {
     return myDelegate.getTokenType();
   }
 
+  @Override
   public int getTokenStart() {
     return myDelegate.getTokenStart();
   }
 
+  @Override
   public int getTokenEnd() {
     return myDelegate.getTokenEnd();
   }
 
+  @Override
   public void advance() {
     myDelegate.advance();
   }
 
+  @Override
   public final CharSequence getBufferSequence() {
     return myDelegate.getBufferSequence();
   }
 
+  @Override
   public int getBufferEnd() {
     return myDelegate.getBufferEnd();
   }

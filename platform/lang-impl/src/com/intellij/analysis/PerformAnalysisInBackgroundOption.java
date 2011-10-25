@@ -15,10 +15,12 @@ public class PerformAnalysisInBackgroundOption implements PerformInBackgroundOpt
     myUIOptions = AnalysisUIOptions.getInstance(project);
   }
 
+  @Override
   public boolean shouldStartInBackground() {
     return myUIOptions.ANALYSIS_IN_BACKGROUND;
   }
 
+  @Override
   public void processSentToBackground() {
     myUIOptions.ANALYSIS_IN_BACKGROUND = true;
   }

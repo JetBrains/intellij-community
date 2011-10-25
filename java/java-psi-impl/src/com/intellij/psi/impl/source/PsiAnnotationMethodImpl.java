@@ -41,14 +41,17 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
     super(node);
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return PsiModifier.ABSTRACT.equals(name) || PsiModifier.PUBLIC.equals(name) || super.hasModifierProperty(name);
   }
 
+  @Override
   protected void dropCached() {
     myCachedDefaultValue = null;
   }
 
+  @Override
   public PsiAnnotationMemberValue getDefaultValue() {
     final PsiMethodStub stub = getStub();
     if (stub != null) {
@@ -81,6 +84,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
     return "PsiAnnotationMethod:" + getName();
   }
 
+  @Override
   public final void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotationMethod(this);

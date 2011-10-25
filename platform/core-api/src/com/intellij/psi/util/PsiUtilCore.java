@@ -40,189 +40,233 @@ import java.util.Collection;
 public class PsiUtilCore {
   @SuppressWarnings("ConstantConditions")
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
+    @Override
     @NotNull
     public Project getProject() {
       throw new PsiInvalidElementAccessException(this);
     }
 
+    @Override
     @NotNull
     public Language getLanguage() {
       throw new IllegalAccessError(this.toString());
     }
 
+    @Override
     public PsiManager getManager() {
       return null;
     }
 
+    @Override
     @NotNull
     public PsiElement[] getChildren() {
       return new PsiElement[0];
     }
 
+    @Override
     public PsiElement getParent() {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getFirstChild() {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getLastChild() {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getNextSibling() {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getPrevSibling() {
       return null;
     }
 
+    @Override
     public PsiFile getContainingFile() {
       throw new PsiInvalidElementAccessException(this);
     }
 
+    @Override
     public TextRange getTextRange() {
       return null;
     }
 
+    @Override
     public int getStartOffsetInParent() {
       return 0;
     }
 
+    @Override
     public int getTextLength() {
       return 0;
     }
 
+    @Override
     public PsiElement findElementAt(int offset) {
       return null;
     }
 
+    @Override
     @Nullable
     public PsiReference findReferenceAt(int offset) {
       return null;
     }
 
+    @Override
     public int getTextOffset() {
       return 0;
     }
 
+    @Override
     public String getText() {
       return null;
     }
 
+    @Override
     @NotNull
     public char[] textToCharArray() {
       return new char[0];
     }
 
+    @Override
     public PsiElement getNavigationElement() {
       return null;
     }
 
+    @Override
     public PsiElement getOriginalElement() {
       return null;
     }
 
+    @Override
     public boolean textMatches(@NotNull CharSequence text) {
       return false;
     }
 
+    @Override
     public boolean textMatches(@NotNull PsiElement element) {
       return false;
     }
 
+    @Override
     public boolean textContains(char c) {
       return false;
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
 
     }
 
+    @Override
     public void acceptChildren(@NotNull PsiElementVisitor visitor) {
 
     }
 
+    @Override
     public PsiElement copy() {
       return null;
     }
 
+    @Override
     public PsiElement add(@NotNull PsiElement element) {
       return null;
     }
 
+    @Override
     public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
       return null;
     }
 
+    @Override
     public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
       return null;
     }
 
+    @Override
     public void checkAdd(@NotNull PsiElement element) {
 
     }
 
+    @Override
     public PsiElement addRange(PsiElement first, PsiElement last) {
       return null;
     }
 
+    @Override
     public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
       return null;
     }
 
+    @Override
     public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
       return null;
     }
 
+    @Override
     public void delete() {
 
     }
 
+    @Override
     public void checkDelete() {
 
     }
 
+    @Override
     public void deleteChildRange(PsiElement first, PsiElement last) {
 
     }
 
+    @Override
     public PsiElement replace(@NotNull PsiElement newElement) {
       return null;
     }
 
+    @Override
     public boolean isValid() {
       return false;
     }
 
+    @Override
     public boolean isWritable() {
       return false;
     }
 
+    @Override
     @Nullable
     public PsiReference getReference() {
       return null;
     }
 
+    @Override
     @NotNull
     public PsiReference[] getReferences() {
       return new PsiReference[0];
     }
 
+    @Override
     public <T> T getCopyableUserData(Key<T> key) {
       return null;
     }
 
+    @Override
     public <T> void putCopyableUserData(Key<T> key, T value) {
 
     }
 
+    @Override
     public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                        @NotNull ResolveState state,
                                        PsiElement lastParent,
@@ -230,40 +274,49 @@ public class PsiUtilCore {
       return false;
     }
 
+    @Override
     public PsiElement getContext() {
       return null;
     }
 
+    @Override
     public boolean isPhysical() {
       return false;
     }
 
+    @Override
     @NotNull
     public GlobalSearchScope getResolveScope() {
       return GlobalSearchScope.EMPTY_SCOPE;
     }
 
+    @Override
     @NotNull
     public SearchScope getUseScope() {
       return GlobalSearchScope.EMPTY_SCOPE;
     }
 
+    @Override
     public ASTNode getNode() {
       return null;
     }
 
+    @Override
     public <T> T getUserData(@NotNull Key<T> key) {
       return null;
     }
 
+    @Override
     public <T> void putUserData(@NotNull Key<T> key, T value) {
 
     }
 
+    @Override
     public Icon getIcon(int flags) {
       return null;
     }
 
+    @Override
     public boolean isEquivalentTo(final PsiElement another) {
       return this == another;
     }

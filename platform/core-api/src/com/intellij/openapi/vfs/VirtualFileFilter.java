@@ -19,6 +19,7 @@ public interface VirtualFileFilter {
   boolean accept(VirtualFile file);
 
   VirtualFileFilter ALL = new VirtualFileFilter() {
+    @Override
     public boolean accept(VirtualFile file) {
       return true;
     }
@@ -29,6 +30,7 @@ public interface VirtualFileFilter {
   };
 
   VirtualFileFilter NONE = new VirtualFileFilter() {
+    @Override
     public boolean accept(VirtualFile file) {
       return false;
     }

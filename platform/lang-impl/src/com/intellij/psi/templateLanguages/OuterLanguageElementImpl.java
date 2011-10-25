@@ -28,6 +28,7 @@ public class OuterLanguageElementImpl extends LeafPsiElement implements OuterLan
     super(type, text);
   }
 
+  @Override
   public void accept(@NotNull final PsiElementVisitor visitor) {
     visitor.visitOuterLanguageElement(this);
   }

@@ -49,6 +49,7 @@ public class ServiceManager {
    */
   public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), new NotNullFunction<Project, T>() {
+      @Override
       @NotNull
       public T fun(Project project) {
         return getService(project, serviceClass);

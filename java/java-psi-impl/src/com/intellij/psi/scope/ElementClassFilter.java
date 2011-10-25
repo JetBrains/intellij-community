@@ -36,6 +36,7 @@ public class ElementClassFilter implements ElementFilter {
     myKind = kind;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     switch (myKind) {
       case CLASS:
@@ -60,6 +61,7 @@ public class ElementClassFilter implements ElementFilter {
     return false;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }

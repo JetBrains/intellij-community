@@ -35,6 +35,7 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
     super(Constants.DOC_TAG_VALUE_TOKEN);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocTagValue(this);
@@ -44,6 +45,7 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
     }
   }
 
+  @Override
   public PsiReference getReference() {
     PsiDocTag docTag = PsiTreeUtil.getParentOfType(this, PsiDocTag.class);
     if (docTag == null) {

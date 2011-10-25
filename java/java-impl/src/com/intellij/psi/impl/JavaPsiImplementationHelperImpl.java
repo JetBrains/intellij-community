@@ -68,10 +68,12 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     if (fqn == null) return psiClass;
 
     PsiClass original = JavaPsiFacade.getInstance(project).findClass(fqn, new GlobalSearchScope(project) {
+      @Override
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
       }
 
+      @Override
       public boolean contains(VirtualFile file) {
         // order for file and vFile has non empty intersection.
         List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
@@ -83,10 +85,12 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
         return false;
       }
 
+      @Override
       public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return false;
       }
 
+      @Override
       public boolean isSearchInLibraries() {
         return true;
       }

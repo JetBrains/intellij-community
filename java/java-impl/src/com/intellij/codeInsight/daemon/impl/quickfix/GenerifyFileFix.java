@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
   private String myFileName;
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("generify.text", myFileName);
@@ -45,6 +46,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("generify.family");
@@ -58,6 +60,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
     if (isAvailable(project, null, file)) {
       myFileName = file.getName();
       new WriteCommandAction(project) {
+        @Override
         protected void run(Result result) throws Throwable {
           invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
         }
@@ -65,6 +68,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (file != null && file.isValid()) {
       myFileName = file.getName();
@@ -75,11 +79,13 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     new TypeCookAction().getHandler().invoke(project, editor, file, null);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

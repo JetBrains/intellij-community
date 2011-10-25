@@ -38,6 +38,7 @@ public class VFileContentChangeEvent extends VFileEvent {
     myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
   }
 
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
@@ -55,14 +56,17 @@ public class VFileContentChangeEvent extends VFileEvent {
     return "VfsEvent[update: " + myFile.getUrl() + "]";
   }
 
+  @Override
   public String getPath() {
     return myFile.getPath();
   }
 
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
+  @Override
   public boolean isValid() {
     return myFile.isValid() && myFile.getModificationStamp() == myOldModificationStamp;
   }

@@ -31,6 +31,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
     myFileType = viewProvider.getBaseLanguage() != PlainTextLanguage.INSTANCE ? PlainTextFileType.INSTANCE : viewProvider.getVirtualFile().getFileType();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitPlainTextFile(this);
   }
@@ -39,11 +40,13 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
     return "PsiFile(plain text):" + getName();
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return myFileType;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this,PsiPlainTextFile.class);

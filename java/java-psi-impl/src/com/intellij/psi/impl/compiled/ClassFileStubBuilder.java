@@ -26,6 +26,7 @@ import com.intellij.util.cls.ClsFormatException;
  * @author max
  */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
+  @Override
   public boolean acceptsFile(final VirtualFile file) {
     return !isInner(file.getNameWithoutExtension(), new ParentDirectory(file));
   }
@@ -43,6 +44,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     return endIndex > 0 && directory.contains(name.substring(0, endIndex));
   }
 
+  @Override
   public StubElement buildStubTree(final VirtualFile file, final byte[] content, final Project project) {
     try {
       return ClsStubBuilder.build(file, content);
@@ -52,6 +54,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     }
   }
 
+  @Override
   public int getStubVersion() {
     return JavaFileElementType.STUB_VERSION + 3;
   }
@@ -70,6 +73,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       myExtension = file.getExtension();
     }
 
+    @Override
     public boolean contains(final String name) {
       final String fullName = myExtension == null ? name : name + "." + myExtension;
       return myDirectory != null && myDirectory.findChild(fullName) != null;

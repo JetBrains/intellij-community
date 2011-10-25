@@ -40,6 +40,7 @@ public class SliceHandler implements CodeInsightActionHandler {
     myDataFlowToThis = dataFlowToThis;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
     PsiElement expression = getExpressionAtCaret(editor, file);
@@ -52,6 +53,7 @@ public class SliceHandler implements CodeInsightActionHandler {
     sliceManager.slice(expression,myDataFlowToThis, this);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

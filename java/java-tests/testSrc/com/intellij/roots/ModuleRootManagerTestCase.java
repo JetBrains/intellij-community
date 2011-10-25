@@ -72,6 +72,7 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   protected VirtualFile setModuleOutput(final Module module, final boolean test) throws IOException {
     final VirtualFile output = getVirtualFile(createTempDir(module.getName() + (test ? "Test" : "Prod") + "Output"));
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
@@ -96,6 +97,7 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   protected void addLibraryDependency(final Module module, final Library dependency, final DependencyScope scope, final boolean exported) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         final LibraryOrderEntry entry = model.addLibraryEntry(dependency);
@@ -112,6 +114,7 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   protected void addModuleDependency(final Module module, final Module dependency, final DependencyScope scope, final boolean exported) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         final ModuleOrderEntry entry = model.addModuleOrderEntry(dependency);

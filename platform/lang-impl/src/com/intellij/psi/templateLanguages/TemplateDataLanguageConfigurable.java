@@ -53,22 +53,26 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
     return false;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return LangBundle.message("template.data.language.configurable");
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableFileTypes.png");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settingsdialog.project.template.languages";
   }
 
+  @Override
   protected String visualize(@NotNull final Language language) {
     return language.getDisplayName();
   }

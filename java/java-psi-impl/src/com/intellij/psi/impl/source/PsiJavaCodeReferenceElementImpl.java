@@ -69,6 +69,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     super(JavaElementType.JAVA_CODE_REFERENCE);
   }
 
+  @Override
   public int getTextOffset() {
     final ASTNode refName = getReferenceNameNode();
     return refName != null ? refName.getStartOffset() : super.getTextOffset();
@@ -190,6 +191,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return type == TokenType.CODE_FRAGMENT || type instanceof ICodeFragmentElementType;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
       final ASTNode dot = findChildByRole(ChildRole.DOT);
@@ -202,6 +204,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   public final ASTNode findChildByRole(final int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -246,6 +249,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   public final int getChildRole(final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType i = child.getElementType();
@@ -266,6 +270,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     switch (getKind()) {
@@ -311,10 +316,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   public final PsiElement resolve() {
     return advancedResolve(false).getElement();
   }
@@ -337,6 +344,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return result;
     }
 
+    @Override
     public JavaResolveResult[] resolve(final PsiJavaReference ref, final boolean incompleteCode) {
       final JavaResolveResult[] result = _resolve(ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
@@ -354,6 +362,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(final boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
@@ -361,6 +370,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return JavaResolveResult.EMPTY;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManagerEx manager = getManager();
@@ -472,6 +482,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return JavaResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
   public final PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
     final PsiElement oldIdentifier = getReferenceNameElement();
     if (oldIdentifier == null) {
@@ -483,6 +494,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
 
+  @Override
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (isReferenceTo(element)) return this;
@@ -605,6 +617,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return ref;
   }
 
+  @Override
   public boolean isReferenceTo(final PsiElement element) {
     switch (getKind()) {
       case CLASS_NAME_KIND:
@@ -672,6 +685,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return whiteSpaceAndComments;
   }
 
+  @Override
   public String getClassNameText() {
     String cachedQName = myCachedQName;
     if (cachedQName == null) {
@@ -680,6 +694,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return cachedQName;
   }
 
+  @Override
   public void fullyQualify(final PsiClass targetClass) {
     final int kind = getKind();
     if (kind != CLASS_NAME_KIND && kind != CLASS_OR_PACKAGE_NAME_KIND && kind != CLASS_IN_QUALIFIED_NEW_KIND) {
@@ -689,20 +704,24 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     JavaSourceUtil.fullyQualifyReference(this, targetClass);
   }
 
+  @Override
   public boolean isQualified() {
     return getChildRole(getFirstChildNode()) != ChildRole.REFERENCE_NAME;
   }
 
+  @Override
   public PsiElement getQualifier() {
     return SourceTreeToPsiMap.treeElementToPsi(findChildByRole(ChildRole.QUALIFIER));
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCachedQName = null;
     myCachedTextSkipWhiteSpaceAndComments = null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final ElementFilter filter;
@@ -737,10 +756,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return PsiImplUtil.getReferenceVariantsByFilter(this, filter);
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public void processVariants(final PsiScopeProcessor processor) {
     final OrFilter filter = new OrFilter();
     if (isInCode()) {
@@ -822,6 +843,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return SourceTreeToPsiMap.treeElementToPsi(getReferenceNameNode());
   }
@@ -832,10 +854,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     return (PsiReferenceParameterList)findChildByRoleAsPsiElement(ChildRole.REFERENCE_PARAMETER_LIST);
   }
 
+  @Override
   public String getQualifiedName() {
     switch (getKind()) {
       case CLASS_NAME_KIND:
@@ -870,12 +894,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   }
 
+  @Override
   public String getReferenceName() {
     final ASTNode childByRole = getReferenceNameNode();
     if (childByRole == null) return null;
     return childByRole.getText();
   }
 
+  @Override
   public final TextRange getRangeInElement() {
     final TreeElement nameChild = (TreeElement)getReferenceNameNode();
     if (nameChild == null) return new TextRange(0, getTextLength());
@@ -883,6 +909,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
@@ -891,10 +918,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   }
 
+  @Override
   public final PsiElement getElement() {
     return this;
   }
 
+  @Override
   public final void accept(@NotNull final PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceElement(this);

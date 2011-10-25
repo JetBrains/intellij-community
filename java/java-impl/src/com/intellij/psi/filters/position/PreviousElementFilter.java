@@ -33,6 +33,7 @@ public class PreviousElementFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     if((element = FilterUtil.getPreviousElement((PsiElement) element, true)) != null){

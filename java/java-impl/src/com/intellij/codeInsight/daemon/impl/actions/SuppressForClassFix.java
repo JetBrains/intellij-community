@@ -38,6 +38,7 @@ public class SuppressForClassFix extends SuppressFix {
    super(id);
   }
 
+  @Override
   @Nullable protected PsiDocCommentOwner getContainer(final PsiElement element) {
     PsiDocCommentOwner container = super.getContainer(element);
     if (container == null || container instanceof PsiClass){
@@ -53,6 +54,7 @@ public class SuppressForClassFix extends SuppressFix {
     return container;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("suppress.inspection.class");

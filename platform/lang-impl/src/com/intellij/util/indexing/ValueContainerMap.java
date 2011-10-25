@@ -51,6 +51,7 @@ public class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueC
         }
 
         appendData(key, new PersistentHashMap.ValueDataAppender() {
+          @Override
           public void append(final DataOutput out) throws IOException {
             out.write(bytes.getInternalBuffer(), 0, bytes.size());
           }
@@ -70,6 +71,7 @@ public class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueC
       myExternalizer = externalizer;
     }
 
+    @Override
     public void save(final DataOutput out, final ValueContainer<T> container) throws IOException {
       saveImpl(out, container, false);
     }
@@ -102,6 +104,7 @@ public class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueC
       }
     }
 
+    @Override
     public ValueContainerImpl<T> read(final DataInput in) throws IOException {
       DataInputStream stream = (DataInputStream)in;
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();

@@ -42,16 +42,19 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     this.myIdentifier = identifier;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("reuse.variable.declaration.family");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("reuse.variable.declaration.text", myVariable.getName());
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiVariable previousVariable = findPreviousVariable();
     return myVariable != null &&
@@ -64,6 +67,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
            myVariable.getManager().isInProject(myVariable);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiVariable refVariable = findPreviousVariable();
     if (refVariable == null) return;
@@ -96,6 +100,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     return proc.size() > 0 ? proc.getResult(0) : null;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

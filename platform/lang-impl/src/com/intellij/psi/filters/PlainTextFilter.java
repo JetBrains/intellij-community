@@ -43,10 +43,12 @@ public class PlainTextFilter implements ElementFilter, InitializableFilter {
     myValue[1] = value2;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element != null) {
       for (final String value : myValue) {
@@ -78,6 +80,7 @@ public class PlainTextFilter implements ElementFilter, InitializableFilter {
     return ret;
   }
 
+  @Override
   public void init(Object[] fromGetter){
     try{
       myValue = new String[fromGetter.length];

@@ -96,6 +96,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       @Override
       public void fileContentLoaded(final VirtualFile virtualFile, Document document) {
         PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
           public PsiFile compute() {
             return getCachedPsiFile(virtualFile);
           }
@@ -117,22 +118,28 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     documentCommitThread.enable("project open");
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "PsiDocumentManager";
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   @Nullable
   public PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
@@ -160,6 +167,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public static void cachePsi(@NotNull Document document, @NotNull PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
   }
+  @Override
   public PsiFile getCachedPsiFile(@NotNull Document document) {
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
     if(userData != null) return userData;
@@ -186,6 +194,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return ((PsiManagerEx)myPsiManager).getFileManager().findFile(virtualFile);
   }
 
+  @Override
   public Document getDocument(@NotNull PsiFile file) {
     if (file instanceof PsiBinaryFile) return null;
 
@@ -214,12 +223,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return document;
   }
 
+  @Override
   public Document getCachedDocument(@NotNull PsiFile file) {
     if(!file.isPhysical()) return null;
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
 
+  @Override
   public void commitAllDocuments() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myUncommittedDocuments.isEmpty()) return;
@@ -309,6 +320,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
+  @Override
   public void commitDocument(@NotNull final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (!isCommitted(document)) {
@@ -386,6 +398,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private void doCommit(@NotNull final Document document, final PsiFile excludeFile) {
     assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
         if (getSynchronizer().isDocumentAffectedByTransactions(document) && excludeFile == null) return;
@@ -432,6 +445,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider != null && viewProvider.getAllFiles().size() > 1) {
       PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
+        @Override
         public void run() {
           doCommit(document, psiFile);
         }
@@ -439,9 +453,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
+  @Override
   public <T> T commitAndRunReadAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
     commitAndRunReadAction(new Runnable() {
+      @Override
       public void run() {
         ref.set(computation.compute());
       }
@@ -449,6 +465,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return ref.get();
   }
 
+  @Override
   public void commitAndRunReadAction(@NotNull final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
     if (SwingUtilities.isEventDispatchThread()){
@@ -464,6 +481,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
       application.runReadAction(
         new Runnable() {
+          @Override
           public void run() {
             if (myUncommittedDocuments.isEmpty()){
               runnable.run();
@@ -473,6 +491,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
               s1.down();
               s2.down();
               final Runnable commitRunnable = new Runnable() {
+                @Override
                 public void run() {
                   commitAllDocuments();
                   s1.up();
@@ -495,6 +514,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         s1.waitFor();
         application.runReadAction(
           new Runnable() {
+            @Override
             public void run() {
               s2.up();
               runnable.run();
@@ -505,19 +525,23 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
+  @Override
   public void addListener(@NotNull Listener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeListener(@NotNull Listener listener) {
     myListeners.remove(listener);
   }
 
+  @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
     return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);
   }
 
+  @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
     if (doc instanceof DocumentWindow) doc = ((DocumentWindow)doc).getDelegate();
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
@@ -537,11 +561,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
+  @Override
   @NotNull
   public Document[] getUncommittedDocuments() {
     return myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
   }
 
+  @Override
   public boolean isUncommited(@NotNull Document document) {
     return !isCommitted(document);
   }
@@ -552,6 +578,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return !((DocumentEx)document).isInEventsHandling() && !myUncommittedDocuments.contains(document);
   }
 
+  @Override
   public boolean hasUncommitedDocuments() {
     return !myIsCommitInProgress && !myUncommittedDocuments.isEmpty();
   }
@@ -561,6 +588,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
   }
 
+  @Override
   public void beforeDocumentChange(DocumentEvent event) {
     final Document document = event.getDocument();
 
@@ -605,6 +633,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
+  @Override
   public void documentChanged(DocumentEvent event) {
     final Document document = event.getDocument();
     final FileViewProvider viewProvider = getCachedViewProvider(document);
@@ -731,6 +760,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
 
+  @Override
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
     commitAllDocuments();

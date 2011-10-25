@@ -56,6 +56,7 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
     return createDownloader(description.getFiles(), project, parent, description.getName());
   }
 
+  @Override
   @NotNull
   public FileDownloader createDownloader(final List<? extends DownloadableFileDescription> fileDescriptions,
                                          final @Nullable Project project,

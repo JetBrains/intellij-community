@@ -22,10 +22,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiExpressionEvaluator implements ConstantExpressionEvaluator {
 
+  @Override
   public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
     return expression instanceof PsiExpression ? JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)expression, throwExceptionOnOverflow) : null;
   }
 
+  @Override
   public Object computeExpression(PsiElement expression, boolean throwExceptionOnOverflow, @Nullable PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     return expression instanceof PsiExpression ? JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)expression, null, throwExceptionOnOverflow, auxEvaluator) : null;
   }

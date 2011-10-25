@@ -36,6 +36,7 @@ import java.util.List;
 public class DumpLookupElementWeights extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpLookupElementWeights");
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     dumpLookupElementWeights((LookupImpl)LookupManager.getActiveLookup(editor));

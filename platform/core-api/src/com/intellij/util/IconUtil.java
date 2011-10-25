@@ -111,6 +111,7 @@ public class IconUtil {
 
     return IconDeferrer.getInstance()
       .defer(lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
+        @Override
         public Icon fun(final FileIconKey key) {
           VirtualFile file = key.getFile();
           int flags = key.getFlags();

@@ -46,6 +46,7 @@ public class PsiDisjunctionType extends PsiType {
 
     final CachedValuesManager cacheManager = CachedValuesManager.getManager(psiManager.getProject());
     myLubCache = cacheManager.createCachedValue(new CachedValueProvider<PsiType>() {
+      @Override
       public Result<PsiType> compute() {
         PsiType lub = myTypes.get(0);
         for (int i = 1; i < myTypes.size(); i++) {

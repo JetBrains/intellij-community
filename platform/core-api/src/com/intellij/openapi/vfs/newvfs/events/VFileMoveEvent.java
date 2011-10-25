@@ -35,6 +35,7 @@ public class VFileMoveEvent extends VFileEvent {
     myOldParent = file.getParent();
   }
 
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
@@ -52,14 +53,17 @@ public class VFileMoveEvent extends VFileEvent {
     return "VfsEvent[move " + myFile.getName() +" from " + myOldParent + " to " + myNewParent + "]";
   }
 
+  @Override
   public String getPath() {
     return myFile.getPath();
   }
 
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
+  @Override
   public boolean isValid() {
     return myFile.isValid() && myFile.getParent() == myOldParent && myOldParent.isValid();
   }

@@ -49,20 +49,24 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     super(CATCH_SECTION);
   }
 
+  @Override
   public PsiParameter getParameter() {
     return (PsiParameter)findChildByRoleAsPsiElement(ChildRole.PARAMETER);
   }
 
+  @Override
   public PsiCodeBlock getCatchBlock() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.CATCH_BLOCK);
   }
 
+  @Override
   public PsiType getCatchType() {
     PsiParameter parameter = getParameter();
     if (parameter == null) return null;
     return parameter.getType();
   }
 
+  @Override
   @NotNull
   public List<PsiType> getPreciseCatchTypes() {
     final PsiParameter parameter = getParameter();
@@ -142,21 +146,25 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     return result[0];
   }
 
+  @Override
   @NotNull
   public PsiTryStatement getTryStatement() {
     return (PsiTryStatement)getParent();
   }
 
+  @Override
   @Nullable
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken)findChildByRole(ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH);
   }
 
+  @Override
   @Nullable
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken)findChildByRole(ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitCatchSection(this);
@@ -170,6 +178,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     return "PsiCatchSection";
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     switch(role) {
       default:
@@ -192,6 +201,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -210,6 +220,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     return ChildRoleBase.NONE;
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,

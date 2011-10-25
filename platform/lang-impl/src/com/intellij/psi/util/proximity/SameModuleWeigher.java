@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class SameModuleWeigher extends ProximityWeigher {
 
+  @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     final Module elementModule = ModuleUtil.findModuleForPsiElement(element);
     if (location.getPositionModule() == elementModule) {

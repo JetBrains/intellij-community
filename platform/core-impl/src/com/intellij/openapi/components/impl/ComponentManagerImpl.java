@@ -69,6 +69,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private Boolean myHeadless;
   protected ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private final Condition myDisposedCondition = new Condition() {
+    @Override
     public boolean value(final Object o) {
       return isDisposed();
     }
@@ -84,6 +85,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     initComponents();
   }
 
+  @Override
   public MessageBus getMessageBus() {
     assert !myDisposeCompleted && !myDisposed : "Already disposed";
     assert myMessageBus != null : "Not initialized yet";
@@ -188,11 +190,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
+  @Override
   public <T> T getComponent(Class<T> interfaceClass) {
     assert !myDisposeCompleted : "Already disposed: "+this;
     return getComponent(interfaceClass, null);
   }
 
+  @Override
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
     final T fromContainer = getComponentFromContainer(interfaceClass);
     if (fromContainer != null) return fromContainer;
@@ -229,6 +233,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return progressManager != null ? progressManager.getProgressIndicator() : null;
   }
 
+  @Override
   public void initializeComponent(Object component, boolean service) {
   }
 
@@ -237,6 +242,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     LOG.error(ex);
   }
 
+  @Override
   @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
   public synchronized void registerComponent(final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
     if (!config.prepareClasses(isHeadless())) return;
@@ -250,6 +256,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myInitializedComponents.remove(componentKey);
   }
 
+  @Override
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
     return myComponentsRegistry.containsInterface(interfaceClass);
   }
@@ -265,12 +272,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ArrayUtil.toObjectArray(components);
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   @NotNull
   public synchronized <T> T[] getComponents(Class<T> baseClass) {
     return myComponentsRegistry.getComponentsByType(baseClass);
   }
 
+  @Override
   @NotNull
   public MutablePicoContainer getPicoContainer() {
     assert !myDisposeCompleted : "Already disposed";
@@ -290,6 +299,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return result;
   }
 
+  @Override
   public synchronized BaseComponent getComponent(String name) {
     return myComponentsRegistry.getComponentByName(name);
   }
@@ -302,6 +312,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option)).booleanValue();
   }
 
+  @Override
   public synchronized void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myDisposeCompleted = true;
@@ -316,6 +327,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myPicoContainer = null;
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed || temporarilyDisposed;
   }
@@ -364,6 +376,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
 
+  @Override
   public void registerComponent(final ComponentConfig config) {
     registerComponent(config, null);
   }
@@ -382,6 +395,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsRegistry.getConfig(componentImplementation);
   }
 
+  @Override
   @NotNull
   public Condition getDisposed() {
     return myDisposedCondition;
@@ -549,22 +563,27 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myConfig = config;
     }
 
+    @Override
     public Object getComponentKey() {
       return myConfig.getInterfaceClass();
     }
 
+    @Override
     public Class getComponentImplementation() {
       return getDelegate().getComponentImplementation();
     }
 
+    @Override
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
       return getDelegate().getComponentInstance(container);
     }
 
+    @Override
     public void verify(final PicoContainer container) throws PicoIntrospectionException {
       getDelegate().verify(container);
     }
 
+    @Override
     public void accept(final PicoVisitor visitor) {
       visitor.visitComponentAdapter(this);
       getDelegate().accept(visitor);
@@ -603,6 +622,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         assert implementationClass != null;
 
         myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true)) {
+            @Override
             public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
               Object componentInstance = null;
               try {

@@ -39,11 +39,13 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
     super(kind, refElement);
   }
 
+  @Override
   public String getText(String varName) {
     return QuickFixBundle.message("create.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
   }
 
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     assert element != null;
@@ -54,6 +56,7 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           PsiJavaCodeReferenceElement refElement = element;
           try {
@@ -73,6 +76,7 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
     );
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

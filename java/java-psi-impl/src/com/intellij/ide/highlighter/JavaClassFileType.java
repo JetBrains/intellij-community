@@ -39,33 +39,40 @@ public class JavaClassFileType implements FileType {
   private JavaClassFileType() {
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "CLASS";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.class");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "class";
   }
 
+  @Override
   public Icon getIcon() {
     return ICON.getValue();
   }
 
+  @Override
   public boolean isBinary() {
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return null;
   }

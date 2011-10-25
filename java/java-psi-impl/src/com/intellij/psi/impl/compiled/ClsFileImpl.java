@@ -85,56 +85,67 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     this(manager, viewProvider, false);
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
   }
 
+  @Override
   public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
     return true;
   }
 
+  @Override
   public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
+  @Override
   public PsiDirectory getContainingDirectory() {
     VirtualFile parentFile = getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
   }
 
+  @Override
   public PsiFile getContainingFile() {
     if (!isValid()) throw new PsiInvalidElementAccessException(this);
     return this;
   }
 
+  @Override
   public boolean isValid() {
     if (myIsForDecompiling) return true;
     VirtualFile vFile = getVirtualFile();
     return vFile.isValid();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getVirtualFile().getName();
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return getClasses(); // TODO : package statement?
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClasses() {
     final PsiClassHolderFileStub fileStub = getStub();
     return fileStub != null ? fileStub.getClasses() : PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiPackageStatement getPackageStatement() {
     getStub(); // Make sure myPackageStatement initializes.
 
@@ -143,34 +154,41 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return statement.getPackageName() != null ? statement : null;
   }
 
+  @Override
   @NotNull
   public String getPackageName() {
     PsiPackageStatement statement = getPackageStatement();
     return statement == null ? "" : statement.getPackageName();
   }
 
+  @Override
   public void setPackageName(final String packageName) throws IncorrectOperationException {
     throw new IncorrectOperationException("Cannot set package name for compiled files");
   }
 
+  @Override
   public PsiImportList getImportList() {
     return null;
   }
 
+  @Override
   public boolean importClass(PsiClass aClass) {
     throw new UnsupportedOperationException("Cannot add imports to compiled classes");
   }
 
+  @Override
   @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getImplicitlyImportedPackages() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -181,33 +199,40 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return Collections.singleton(getVirtualFile().getNameWithoutExtension());
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
     return null;
   }
 
+  @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
     final List stubs = getStub().getChildrenStubs();
     return stubs.size() > 0 ? ((PsiClassStub<?>)stubs.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public void checkSetName(String name) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(PsiBundle.message("psi.decompiled.text.header"));
     goNextLine(indentLevel, buffer);
@@ -226,6 +251,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(element);
     if (mirrorFile instanceof PsiJavaFile) {
@@ -256,6 +282,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     myMirrorFileElement = element;
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     return JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(this);
@@ -291,10 +318,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   }
 
+  @Override
   public long getModificationStamp() {
     return getVirtualFile().getModificationStamp();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitJavaFile(this);
@@ -308,26 +337,31 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return "PsiFile:" + getName();
   }
 
+  @Override
   @NotNull
   public PsiFile getOriginalFile() {
     return this;
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return JavaClassFileType.INSTANCE;
   }
 
+  @Override
   @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }
 
+  @Override
   public void subtreeChanged() {
   }
 
@@ -355,6 +389,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return FileContextUtil.getFileContext(this);
   }
 
+  @Override
   @NotNull
   public PsiClassHolderFileStub getStub() {
     return (PsiClassHolderFileStub)getStubTree().getRoot();
@@ -362,6 +397,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   private final Object lock = new Object();
 
+  @Override
   @NotNull
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -413,14 +449,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   }
 
+  @Override
   public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
     return null;
   }
 
+  @Override
   public boolean isContentsLoaded() {
     return myStub != null;
   }
 
+  @Override
   public void onContentReload() {
     SoftReference<StubTree> stub = myStub;
     StubTree stubHolder = stub == null ? null : stub.get();
@@ -437,14 +476,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   }
 
+  @Override
   public PsiFile cacheCopy(final FileContent content) {
     return this;
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     PsiFileImpl.putInfo(this, info);
   }
 
+  @Override
   public FileASTNode getNode() {
     return null;
   }

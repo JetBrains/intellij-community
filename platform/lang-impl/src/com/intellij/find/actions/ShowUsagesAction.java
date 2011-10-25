@@ -79,6 +79,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   private static final int USAGES_PAGE_SIZE = 100;
   private static final Comparator<Object> USAGE_COMPARATOR = new Comparator<Object>() {
+    @Override
     public int compare(Object c1, Object c2) {
       if (!(c1 instanceof UsageNode)) return 1;
       if (!(c2 instanceof UsageNode)) return -1;
@@ -104,6 +105,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
   };
   private static final Runnable HIDE_HINTS_ACTION = new Runnable() {
+    @Override
     public void run() {
       hideHints();
     }
@@ -136,6 +138,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
@@ -149,6 +152,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
+        @Override
         public boolean execute(@NotNull final PsiElement element) {
           startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
           return false;
@@ -193,6 +197,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
 
     Disposer.register(usageView, new Disposable() {
+      @Override
       public void dispose() {
         myUsageViewSettings.loadState(usageViewSettings);
         usageViewSettings.loadState(savedGlobalSettings);
@@ -203,6 +208,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
     Processor<Usage> collect = new Processor<Usage>() {
       private final UsageTarget[] myUsageTarget = {new PsiElement2UsageTargetAdapter(handler.getPsiElement())};
+      @Override
       public boolean process(@NotNull Usage usage) {
         synchronized (usages) {
           if (visibleNodes.size() > maxUsages) return false;
@@ -276,8 +282,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
     return new InplaceButton("Options..." + shortcutText, IconLoader.getIcon("/general/ideOptions.png"), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
           }
@@ -355,6 +363,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     setModel(table, visibleNodes, usageView, data, filtered);
 
     final Runnable navigateRunnable = new Runnable() {
+      @Override
       public void run() {
         int[] selected = table.getSelectedRows();
         for (int i : selected) {
@@ -372,6 +381,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     };
 
     SpeedSearchBase<JTable> speedSearch = new SpeedSearchBase<JTable>(table) {
+      @Override
       protected int getSelectedIndex() {
         return table.getSelectedRow();
       }
@@ -381,10 +391,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         return table.convertRowIndexToModel(viewIndex);
       }
 
+      @Override
       protected Object[] getAllElements() {
         return ArrayUtil.toObjectArray(data);
       }
 
+      @Override
       protected String getElementText(Object element) {
         if (!(element instanceof UsageNode)) return element.toString();
         UsageNode node = (UsageNode)element;
@@ -394,6 +406,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         return usage.getPresentation().getPlainText() + group.toString();
       }
 
+      @Override
       protected void selectElement(Object element, String selectedText) {
         int i = data.indexOf(element);
         if (i == -1) return;
@@ -419,9 +432,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     builder.setItemChoosenCallback(navigateRunnable);
     final JBPopup[] popup = new JBPopup[1];
     ActionListener editSettings = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         popup[0].cancel();
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
           }
@@ -435,6 +450,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, new Runnable() {
+      @Override
       public void run() {
         popup[0].cancel();
       }
@@ -478,6 +494,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     final MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
+      @Override
       public void run() {
         rebuildPopup(usageView, usages, table, popup[0]);
       }
@@ -528,14 +545,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     data.addAll(visibleNodes);
     Collections.sort(data, USAGE_COMPARATOR);
     AbstractTableModel model = new AbstractTableModel() {
+      @Override
       public int getRowCount() {
         return data.size();
       }
 
+      @Override
       public int getColumnCount() {
         return !data.isEmpty() && data.get(0) instanceof UsageNode ? 3 : 1;
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
         return data.get(rowIndex);
       }
@@ -596,6 +616,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private int myWidth;
   private void rebuildPopup(final UsageViewImpl usageView, final List<Usage> usages, final JTable table, final JBPopup popup) {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         JComponent content = popup.getContent();
         Window window = SwingUtilities.windowForComponent(content);
@@ -644,6 +665,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e){
     FindUsagesInFileAction.updateFindUsagesAction(e);
   }
@@ -658,11 +680,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Project project = handler.getProject();
     //opening editor is performing in invokeLater
     IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+      @Override
       public void run() {
         newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+          @Override
           public void run() {
             // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
             IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+              @Override
               public void run() {
                 if (newEditor.getComponent().isShowing()) {
                   showHint(hint, newEditor, popupPosition, handler, maxUsages);
@@ -687,6 +712,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       return true;
     }
 
+    @Override
     public Object getData(@NonNls String dataId) {
       if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();

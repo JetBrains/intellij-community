@@ -33,6 +33,7 @@ public class DumpConfigurationTypesAction extends AnAction implements DumbAware 
     super("Dump Configurations");
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final ConfigurationType[] factories =
@@ -42,6 +43,7 @@ public class DumpConfigurationTypesAction extends AnAction implements DumbAware 
     }
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
   }

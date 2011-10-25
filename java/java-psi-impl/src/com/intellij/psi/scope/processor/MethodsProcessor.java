@@ -81,6 +81,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myStaticScopeFlag;
   }
 
+  @Override
   public void handleEvent(Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.START_STATIC) {
       myStaticScopeFlag = true;
@@ -123,6 +124,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return super.getHint(hintKey);
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     return kind == DeclarationKind.METHOD;
   }

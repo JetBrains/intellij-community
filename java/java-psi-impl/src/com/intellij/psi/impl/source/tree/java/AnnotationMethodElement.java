@@ -27,6 +27,7 @@ public class AnnotationMethodElement extends MethodElement {
     super(ANNOTATION_METHOD);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     if (role == ChildRole.ANNOTATION_DEFAULT_VALUE) {
       return findChildByType(ANNOTATION_MEMBER_VALUE_BIT_SET);
@@ -37,6 +38,7 @@ public class AnnotationMethodElement extends MethodElement {
     return super.findChildByRole(role);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     if (child.getElementType() == DEFAULT_KEYWORD) {
       return ChildRole.DEFAULT_KEYWORD;

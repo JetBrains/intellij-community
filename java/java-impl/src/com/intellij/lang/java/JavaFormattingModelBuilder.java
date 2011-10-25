@@ -46,6 +46,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaFormattingModelBuilder");
 
+  @Override
   @NotNull
     public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));

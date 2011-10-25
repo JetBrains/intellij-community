@@ -134,6 +134,7 @@ public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
      * @since 5.0.2
      */
     VisibilityChecker EVERYTHING_VISIBLE = new VisibilityChecker() {
+      @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
         return Visibility.VISIBLE;
       }

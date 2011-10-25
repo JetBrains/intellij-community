@@ -44,6 +44,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     super(JavaElementType.CODE_BLOCK, text);
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myVariablesSet = null;
@@ -51,11 +52,13 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     myConflict = false;
   }
 
+  @Override
   @NotNull
   public PsiStatement[] getStatements() {
     return PsiImplUtil.getChildStatements(this);
   }
 
+  @Override
   public PsiElement getFirstBodyElement() {
     final PsiJavaToken lBrace = getLBrace();
     if (lBrace == null) return null;
@@ -63,6 +66,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return nextSibling == getRBrace() ? null : nextSibling;
   }
 
+  @Override
   public PsiElement getLastBodyElement() {
     final PsiJavaToken rBrace = getRBrace();
     if (rBrace != null) {
@@ -72,10 +76,12 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return getLastChild();
   }
 
+  @Override
   public PsiJavaToken getLBrace() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.LBRACE);
   }
 
+  @Override
   public PsiJavaToken getRBrace() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RBRACE);
   }
@@ -95,6 +101,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       final Set<String> classesSet = new THashSet<String>();
       final Ref<Boolean> conflict = new Ref<Boolean>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
+        @Override
         public boolean execute(PsiElement element, ResolveState state) {
           if (element instanceof PsiLocalVariable) {
             final PsiLocalVariable variable = (PsiLocalVariable)element;
@@ -125,6 +132,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return wasConflict ? null : Pair.create(set1, set2);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (anchor == null){
       if (before == null || before.booleanValue()){
@@ -158,6 +166,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return psi instanceof PsiStatement && psi.getLanguage() != JavaLanguage.INSTANCE;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -172,6 +181,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -186,6 +196,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitCodeBlock(this);
@@ -200,6 +211,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null) {
@@ -227,6 +239,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return true;
   }
 
+  @Override
   public boolean shouldChangeModificationCount(PsiElement place) {
     PsiElement parent = getParent();
     return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);

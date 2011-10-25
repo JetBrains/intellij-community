@@ -35,6 +35,7 @@ public class RevealingSpaceComboboxEditor extends StringComboboxEditor {
     super(project, FileTypes.PLAIN_TEXT, comboBox);
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         Editor editor = getEditor();
         if (editor != null) {
@@ -44,6 +45,7 @@ public class RevealingSpaceComboboxEditor extends StringComboboxEditor {
     });
   }
 
+  @Override
   public void setItem(Object anObject) {
     super.setItem(anObject);
     Editor editor = getEditor();

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 
 public class AnalysisScopeRule implements GetDataRule {
+  @Override
   public Object getData(final DataProvider dataProvider) {
     final Object psiFile = dataProvider.getData(LangDataKeys.PSI_FILE.getName());
     if (psiFile instanceof PsiJavaFile) {

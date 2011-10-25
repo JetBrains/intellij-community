@@ -35,6 +35,7 @@ public class MoveUpWithSelectionAndScrollAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretRelativelyAndScroll(editor, 0, -1, true);
     }

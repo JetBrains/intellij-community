@@ -43,6 +43,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     super(referenceElement);
   }
 
+  @Override
   protected String getText(String varName) {
     return QuickFixBundle.message("create.field.from.usage.text", varName);
   }
@@ -51,6 +52,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -129,6 +131,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);
         if (psiField != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               CodeStyleManager.getInstance(project).reformat(psiField);
             }
@@ -138,6 +141,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     });
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.field.from.usage.family");

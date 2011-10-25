@@ -68,6 +68,7 @@ public class AddImportAction implements QuestionAction {
     myEditor = editor;
   }
 
+  @Override
   public boolean execute() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -156,12 +157,14 @@ public class AddImportAction implements QuestionAction {
 
   public static void excludeFromImport(final Project project, final String prefix) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (project.isDisposed()) return;
 
         final AutoImportOptionsConfigurable configurable = new AutoImportOptionsConfigurable();
         ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-          public void run() {                 
+          @Override
+          public void run() {
             final JavaAutoImportOptions options = ContainerUtil.findInstance(configurable.getConfigurables(), JavaAutoImportOptions.class);
             options.addExcludePackage(prefix);
           }
@@ -184,8 +187,10 @@ public class AddImportAction implements QuestionAction {
   private void addImport(final PsiReference ref, final PsiClass targetClass) {
     StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             _addImport(ref, targetClass);
           }
@@ -233,6 +238,7 @@ public class AddImportAction implements QuestionAction {
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!myProject.isDisposed() && myProject.isOpen()) {
           DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);

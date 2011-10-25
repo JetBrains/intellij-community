@@ -234,20 +234,24 @@ public abstract class PsiType implements PsiAnnotationOwner {
   @NotNull
   public abstract PsiType[] getSuperTypes();
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return myAnnotations;
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return null; //todo
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
@@ -256,6 +260,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
   protected String getAnnotationsTextPrefix() {
     PsiAnnotation[] annotations = getAnnotations();
     return StringUtil.join(annotations, new Function<PsiAnnotation, String>() {
+      @Override
       public String fun(PsiAnnotation annotation) {
         return "@"+annotation.getQualifiedName();
       }

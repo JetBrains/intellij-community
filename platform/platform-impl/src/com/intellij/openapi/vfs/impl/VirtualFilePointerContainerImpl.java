@@ -54,6 +54,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     myListener = listener;
   }
 
+  @Override
   public void readExternal(@NotNull final Element rootChild, @NotNull final String childElements) throws InvalidDataException {
     final List urls = rootChild.getChildren(childElements);
     for (Object url : urls) {
@@ -64,6 +65,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     }
   }
 
+  @Override
   public void writeExternal(@NotNull final Element element, @NotNull final String childElementName) {
     for (int i = 0; i < getList().size(); i++) {
       String url = getList().get(i).getUrl();
@@ -73,6 +75,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     }
   }
 
+  @Override
   public void moveUp(@NotNull String url) {
     int index = indexOf(url);
     if (index <= 0) return;
@@ -80,6 +83,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     ContainerUtil.swapElements(myList, index - 1, index);
   }
 
+  @Override
   public void moveDown(@NotNull String url) {
     int index = indexOf(url);
     if (index < 0 || index + 1 >= myList.size()) return;
@@ -98,10 +102,12 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return -1;
   }
 
+  @Override
   public void killAll() {
     myList.clear();
   }
 
+  @Override
   public void add(@NotNull VirtualFile file) {
     assert !myDisposed;
     dropCaches();
@@ -109,6 +115,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     myList.add(pointer);
   }
 
+  @Override
   public void add(@NotNull String url) {
     assert !myDisposed;
     dropCaches();
@@ -116,6 +123,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     myList.add(pointer);
   }
 
+  @Override
   public void remove(@NotNull VirtualFilePointer pointer) {
     assert !myDisposed;
     dropCaches();
@@ -123,12 +131,14 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     LOG.assertTrue(result);
   }
 
+  @Override
   @NotNull
   public List<VirtualFilePointer> getList() {
       assert !myDisposed;
     return myReadOnlyList;
   }
 
+  @Override
   public void addAll(@NotNull VirtualFilePointerContainer that) {
     assert !myDisposed;
     dropCaches();
@@ -146,6 +156,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private String[] myCachedUrls;
+  @Override
   @NotNull
   public String[] getUrls() {
     assert !myDisposed;
@@ -165,6 +176,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private VirtualFile[] myCachedFiles;
+  @Override
   @NotNull
   public VirtualFile[] getFiles() {
     assert !myDisposed;
@@ -186,6 +198,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getDirectories() {
     assert !myDisposed;
@@ -208,6 +221,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
   @Nullable
   public VirtualFilePointer findByUrl(@NotNull String url) {
     assert !myDisposed;
@@ -217,15 +231,18 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return null;
   }
 
+  @Override
   public void clear() {
     dropCaches();
     killAll();
   }
 
+  @Override
   public int size() {
     return myList.size();
   }
 
+  @Override
   public Object get(int index) {
     return myList.get(index);
   }
@@ -260,11 +277,13 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return "VFPContainer: "+myList/*+"; parent:"+myParent*/;
   }
 
+  @Override
   @NotNull
   public VirtualFilePointerContainer clone(@NotNull Disposable parent) {
     return clone(parent, null);
   }
 
+  @Override
   @NotNull
   public VirtualFilePointerContainer clone(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     assert !myDisposed;
@@ -275,6 +294,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return clone;
   }
 
+  @Override
   public void dispose() {
     assert !myDisposed;
     myDisposed = true;

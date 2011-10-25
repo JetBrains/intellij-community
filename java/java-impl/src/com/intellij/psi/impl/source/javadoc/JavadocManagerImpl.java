@@ -78,6 +78,7 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(info);
   }
 
+  @Override
   @NotNull
   public JavadocTagInfo[] getTagInfos(PsiElement context) {
     List<JavadocTagInfo> result = new ArrayList<JavadocTagInfo>();
@@ -91,6 +92,7 @@ public class JavadocManagerImpl implements JavadocManager {
     return result.toArray(new JavadocTagInfo[result.size()]);
   }
 
+  @Override
   @Nullable
   public JavadocTagInfo getTagInfo(String name) {
     for (JavadocTagInfo info : myInfos) {

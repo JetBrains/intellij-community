@@ -191,6 +191,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
 
+  @Override
   public boolean isSoftWrappingEnabled() {
     if (!myUseSoftWraps || myEditor.isOneLineMode()) {
       return false;
@@ -215,6 +216,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     return visibleArea.width > 0 && visibleArea.height > 0;
   }
 
+  @Override
   @Nullable
   public SoftWrap getSoftWrap(int offset) {
     if (!isSoftWrappingEnabled()) {
@@ -391,6 +393,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
 
+  @Override
   @NotNull
   public VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual) {
     if (myUpdateInProgress || !prepareToMapping()) {

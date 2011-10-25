@@ -79,6 +79,7 @@ public class LocateLibraryDialog extends DialogWrapper {
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     final ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateButtons();
       }
@@ -90,6 +91,7 @@ public class LocateLibraryDialog extends DialogWrapper {
     myAddThisFileRadioButton.setSelected(true);
 
     myCopyToDir.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         updateButtons();
       }
@@ -109,16 +111,19 @@ public class LocateLibraryDialog extends DialogWrapper {
     setOKActionEnabled(! copyEnabled || myCopyToDir.getText().length() != 0 );
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "#org.jetbrains.codeInsight.daemon.impl.quickfix.LocateLibraryDialog";
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
       myResultingLibraryPath = getResultingPath();

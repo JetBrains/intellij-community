@@ -37,22 +37,26 @@ public class InsertNewFix implements IntentionAction {
     myClass = aClass;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("insert.new.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethodCall != null
     && myMethodCall.isValid()
     && myMethodCall.getManager().isInProject(myMethodCall);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethodCall.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();
@@ -67,6 +71,7 @@ public class InsertNewFix implements IntentionAction {
     myMethodCall.replace(newExpression);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

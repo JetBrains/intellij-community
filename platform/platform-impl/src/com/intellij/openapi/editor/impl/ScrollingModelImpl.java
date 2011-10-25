@@ -66,6 +66,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     myEditor.getScrollPane().getViewport().addChangeListener(new ChangeListener() {
       private Rectangle myLastViewRect;
 
+      @Override
       public void stateChanged(ChangeEvent event) {
         Rectangle viewRect = getVisibleArea();
         VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(myEditor, myLastViewRect, viewRect);
@@ -77,6 +78,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     });
 
     myDocumentListener = new DocumentAdapter() {
+      @Override
       public void beforeDocumentChange(DocumentEvent e) {
         cancelAnimatedScrolling(true);
       }
@@ -84,6 +86,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     myEditor.getDocument().addDocumentListener(myDocumentListener);
   }
 
+  @Override
   public Rectangle getVisibleArea() {
     assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) {
@@ -92,6 +95,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     return myEditor.getScrollPane().getViewport().getViewRect();
   }
 
+  @Override
   public Rectangle getVisibleAreaOnScrollingFinished() {
     assertIsDispatchThread();
     if (myCurrentAnimationRequest != null) {
@@ -102,6 +106,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     }
   }
 
+  @Override
   public void scrollToCaret(ScrollType scrollType) {
     assertIsDispatchThread();
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
@@ -109,6 +114,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     scrollTo(caretPosition, scrollType);
   }
 
+  @Override
   public void scrollTo(LogicalPosition pos, ScrollType scrollType) {
     assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return;
@@ -124,6 +130,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
   }
 
+  @Override
   public void runActionOnScrollingFinished(Runnable action) {
     assertIsDispatchThread();
 
@@ -135,10 +142,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     action.run();
   }
 
+  @Override
   public void disableAnimation() {
     myAnimationDisabled = true;
   }
 
+  @Override
   public void enableAnimation() {
     myAnimationDisabled = false;
   }
@@ -225,10 +234,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     return myEditor.getScrollPane().getHorizontalScrollBar();
   }
 
+  @Override
   public int getVerticalScrollOffset() {
     return getOffset(getVerticalScrollBar());
   }
 
+  @Override
   public int getHorizontalScrollOffset() {
     return getOffset(getHorizontalScrollBar());
   }
@@ -241,6 +252,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     return scrollBar == null ? 0 : scrollBar.getModel().getExtent();
   }
 
+  @Override
   public void scrollVertically(int scrollOffset) {
     scrollToOffsets(getHorizontalScrollOffset(), scrollOffset);
   }
@@ -261,6 +273,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     //System.out.println("scrolled vertically to: " + scrollOffset);
   }
 
+  @Override
   public void scrollHorizontally(int scrollOffset) {
     scrollToOffsets(scrollOffset, getVerticalScrollOffset());
   }
@@ -328,10 +341,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     }
   }
 
+  @Override
   public void addVisibleAreaListener(VisibleAreaListener listener) {
     myVisibleAreaListeners.add(listener);
   }
 
+  @Override
   public void removeVisibleAreaListener(VisibleAreaListener listener) {
     boolean success = myVisibleAreaListeners.remove(listener);
     LOG.assertTrue(success);

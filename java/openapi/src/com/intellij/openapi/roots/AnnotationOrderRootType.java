@@ -38,6 +38,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     super("ANNOTATIONS", "annotationsPath", "annotation-paths", null);
   }
 
+  @Override
   public boolean skipWriteIfEmpty() {
     return true;
   }
@@ -45,16 +46,19 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
   public static VirtualFile[] getFiles(OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
+      @Override
       public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
       }
 
+      @Override
       public List<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
       }
 
+      @Override
       public List<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootModel().getRootPaths(getInstance()));
@@ -68,16 +72,19 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
   public static String[] getUrls(OrderEntry entry) {
     List<String> result = new ArrayList<String>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
+      @Override
       public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;
       }
 
+      @Override
       public List<String> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;
       }
 
+      @Override
       public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<String> value) {
         Collections.addAll(value, orderEntry.getRootModel().getRootUrls(getInstance()));

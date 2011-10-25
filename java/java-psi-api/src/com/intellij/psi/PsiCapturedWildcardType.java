@@ -46,35 +46,43 @@ public class PsiCapturedWildcardType extends PsiType {
     return new PsiCapturedWildcardType(existential, context);
   }
 
+  @Override
   public String getPresentableText() {
     return myExistential.getPresentableText();
   }
 
+  @Override
   public String getCanonicalText() {
     return myExistential.getCanonicalText();
   }
 
+  @Override
   public String getInternalCanonicalText() {
     //noinspection HardCodedStringLiteral
     return "capture<" + myExistential.getInternalCanonicalText() + '>';
   }
 
+  @Override
   public boolean isValid() {
     return myExistential.isValid();
   }
 
+  @Override
   public boolean equalsToText(String text) {
     return false;
   }
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitCapturedWildcardType(this);
   }
 
+  @Override
   public GlobalSearchScope getResolveScope() {
     return myExistential.getResolveScope();
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     return myExistential.getSuperTypes();

@@ -26,14 +26,17 @@ import org.jdom.Element;
  * @author Alexander Kireyev
  */
 class ElementConverter implements Converter {
+  @Override
   public boolean canConvert(Class aClass) {
     return Element.class.isAssignableFrom(aClass);
   }
 
+  @Override
   public void marshal(Object object, HierarchicalStreamWriter hierarchicalStreamWriter, MarshallingContext marshallingContext) {
     throw new UnsupportedOperationException("This method is not yet implemented");
   }
 
+  @Override
   public Object unmarshal(HierarchicalStreamReader hierarchicalStreamReader, UnmarshallingContext unmarshallingContext) {
     //return hierarchicalStreamReader.peekUnderlyingNode();
     throw new UnsupportedOperationException("This method is not yet implemented");

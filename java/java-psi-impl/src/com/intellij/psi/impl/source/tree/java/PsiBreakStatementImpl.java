@@ -36,10 +36,12 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     super(BREAK_STATEMENT);
   }
 
+  @Override
   public PsiIdentifier getLabelIdentifier() {
     return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL);
   }
 
+  @Override
   public PsiStatement findExitedStatement() {
     PsiIdentifier label = getLabelIdentifier();
     if (label == null){
@@ -69,6 +71,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     return null;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -86,6 +89,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -103,6 +107,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitBreakStatement(this);
@@ -112,6 +117,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     }
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiReference[] references = getReferences();
     if (references != null && references.length > 0)
@@ -119,6 +125,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     if (getLabelIdentifier() == null)

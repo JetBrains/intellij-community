@@ -33,22 +33,27 @@ public class UsageTargetNode extends Node {
     setUserObject(target);
   }
 
+  @Override
   public String tree2string(int indent, String lineSeparator) {
     return myTarget.getName();
   }
 
+  @Override
   protected boolean isDataValid() {
     return myTarget.isValid();
   }
 
+  @Override
   protected boolean isDataReadOnly() {
     return myTarget.isReadOnly();
   }
 
+  @Override
   protected boolean isDataExcluded() {
     return false;
   }
 
+  @Override
   protected String getText(final UsageView view) {
     return myTarget.getPresentation().getPresentableText();
   }
@@ -57,6 +62,7 @@ public class UsageTargetNode extends Node {
     return myTarget;
   }
 
+  @Override
   protected void updateNotify() {
     super.updateNotify();
     myTarget.update();

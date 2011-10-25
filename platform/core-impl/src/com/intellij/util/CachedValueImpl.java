@@ -40,6 +40,7 @@ public abstract class CachedValueImpl<T> extends CachedValueBase<T> implements C
     return myProvider.compute();
   }
 
+  @Override
   public CachedValueProvider<T> getValueProvider() {
     return myProvider;
   }

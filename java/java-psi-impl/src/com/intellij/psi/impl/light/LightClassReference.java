@@ -76,6 +76,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     mySubstitutor = substitutor;
   }
 
+  @Override
   public PsiElement resolve() {
     if (myClassName != null) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -91,6 +92,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     }
   }
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     final PsiElement resolved = resolve();
@@ -108,6 +110,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return new CandidateInfo(resolved, substitutor);
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
@@ -115,14 +118,17 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return JavaResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
   public void processVariants(PsiScopeProcessor processor){
     throw new RuntimeException("Variants are not available for light references");
   }
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return null;
   }
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     if (myParameterList == null) {
       myParameterList = new LightReferenceParameterList(myManager, PsiTypeElement.EMPTY_ARRAY);
@@ -130,6 +136,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return myParameterList;
   }
 
+  @Override
   public String getQualifiedName() {
     if (myClassName != null) {
       if (myContext != null) {
@@ -143,6 +150,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return myRefClass.getQualifiedName();
   }
 
+  @Override
   public String getReferenceName() {
     if (myClassName != null){
       return PsiNameHelper.getShortClassName(myClassName);
@@ -157,14 +165,17 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     }
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     String name = getQualifiedName();
@@ -184,6 +195,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return buf.toString();
   }
 
+  @Override
   public PsiElement copy() {
     if (myClassName != null) {
       if (myContext != null) {
@@ -198,16 +210,19 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     }
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     //TODO?
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     //TODO?
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceElement(this);
@@ -221,40 +236,49 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return "LightClassReference:" + myText;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return element instanceof PsiClass && getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for light references");
   }
 
+  @Override
   public boolean isSoft(){
     return false;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public boolean isValid() {
     return myRefClass == null || myRefClass.isValid();
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getQualifier() {
     return null;
   }
 
+  @Override
   public boolean isQualified() {
     return false;
   }

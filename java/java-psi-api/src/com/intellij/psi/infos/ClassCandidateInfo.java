@@ -35,6 +35,7 @@ public class ClassCandidateInfo extends CandidateInfo{
     super(candidate, substitutor, false, false);
   }
 
+  @Override
   public PsiClass getElement(){
     return (PsiClass)super.getElement();
   }

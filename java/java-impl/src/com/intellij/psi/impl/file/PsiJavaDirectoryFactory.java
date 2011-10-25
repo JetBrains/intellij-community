@@ -33,10 +33,12 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
     myManager = manager;
   }
 
+  @Override
   public PsiDirectory createDirectory(@NotNull final VirtualFile file) {
     return new PsiJavaDirectoryImpl(myManager, file);
   }
 
+  @Override
   @NotNull
   public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);

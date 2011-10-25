@@ -47,14 +47,17 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     }
   }
 
+  @Override
   public StubElement getParentStub() {
     return myParent;
   }
 
+  @Override
   public List<StubElement> getChildrenStubs() {
     return myChildren;
   }
 
+  @Override
   @Nullable
   public <P extends PsiElement> StubElement<P> findChildStubByType(final IStubElementType<?, P> elementType) {
     final List<StubElement> childrenStubs = getChildrenStubs();
@@ -77,6 +80,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return myPsi;
   }
 
+  @Override
   public T getPsi() {
     T psi = myPsi;
     if (psi != null) return psi;
@@ -92,6 +96,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
   }
 
 
+  @Override
   public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, E[] array) {
     final int count = countChildren(elementType);
 
@@ -102,6 +107,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return array;
   }
 
+  @Override
   public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, E[] array) {
     final int count = countChildren(filter);
 
@@ -112,6 +118,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return array;
   }
 
+  @Override
   public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final ArrayFactory<E> f) {
     int count = countChildren(elementType);
 
@@ -167,6 +174,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     assert count == result.length;
   }
 
+  @Override
   public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final ArrayFactory<E> f) {
     final int count = countChildren(filter);
 
@@ -178,6 +186,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return array;
   }
 
+  @Override
   @Nullable
   public <E extends PsiElement> E getParentStubOfType(final Class<E> parentClass) {
     StubElement parent = myParent;
@@ -192,6 +201,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return null;
   }
 
+  @Override
   public IStubElementType getStubType() {
     return myElementType;
   }

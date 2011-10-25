@@ -35,14 +35,17 @@ public class TodoOccurrenceConsumer implements BaseFilterLexer.OccurrenceConsume
     }
   }
   
+  @Override
   public void addOccurrence(final CharSequence charSequence, final int start, final int end, final int occurrenceMask) {
     // empty
   }
 
+  @Override
   public void incTodoOccurrence(final IndexPattern pattern) {
     myTodoOccurrences.adjustValue(pattern, 1);
   }
 
+  @Override
   public boolean canConsumeTodoOccurrences() {
     return true;
   }

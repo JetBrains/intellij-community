@@ -32,6 +32,7 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
     return "COND_GOTO " + sRole + " " + offset;
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitConditionalGoToInstruction(this, offset, nextOffset);
   }

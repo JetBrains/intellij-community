@@ -58,6 +58,7 @@ public class SuppressFix extends SuppressIntentionAction {
     myID = ID;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myText == null ? "Suppress for member" : myText;
@@ -84,11 +85,13 @@ public class SuppressFix extends SuppressIntentionAction {
     return (PsiDocCommentOwner)container;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     PsiDocCommentOwner container = getContainer(context);
     boolean isValid = container != null && !(container instanceof JspHolderMethod);
@@ -101,6 +104,7 @@ public class SuppressFix extends SuppressIntentionAction {
     return true;
   }
 
+  @Override
   public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer(element);
     assert container != null;

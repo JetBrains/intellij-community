@@ -56,10 +56,12 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return myRootPsiElement;
   }
 
+  @Override
   public Object getRootElement() {
     return myRootElement;
   }
 
+  @Override
   public Object[] getChildElements(final Object element) {
     if (myRootElement == element) {
       if (myRootPsiElement == null) {
@@ -70,6 +72,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     final Object[][] children = new Object[1][];
     children[0] = ArrayUtil.EMPTY_OBJECT_ARRAY;
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         final Object[] result;
         if (myShowTreeNodes) {
@@ -125,6 +128,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return children[0];
   }
 
+  @Override
   public Object getParentElement(Object element) {
     if (element == myRootElement) {
       return null;
@@ -138,20 +142,25 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return element instanceof Inject ? ((Inject)element).getParent() :((PsiElement)element).getContext();
   }
 
+  @Override
   public void commit() {
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new NodeDescriptor(myProject, null) {
+        @Override
         public boolean update() {
           return false;
         }
+        @Override
         public Object getElement() {
           return myRootElement;
         }

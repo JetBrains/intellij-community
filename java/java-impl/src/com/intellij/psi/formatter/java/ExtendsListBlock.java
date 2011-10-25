@@ -37,6 +37,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     super(node, wrap, alignmentStrategy, Indent.getNoneIndent(), settings);
   }
 
+  @Override
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> elementsExceptKeyword = new ArrayList<Block>();

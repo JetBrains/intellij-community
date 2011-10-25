@@ -41,15 +41,18 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   private volatile TreeElement myMirror = null;
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
+  @Override
   public PsiManager getManager() {
     return getParent().getManager();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     PsiElement parent = getParent();
     if (parent == null) {
@@ -59,47 +62,58 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return parent.getContainingFile();
   }
 
+  @Override
   public final boolean isWritable() {
     return false;
   }
 
+  @Override
   public boolean isPhysical() {
     return true;
   }
 
+  @Override
   public boolean isValid() {
     PsiElement parent = getParent();
     return parent != null && parent.isValid();
   }
 
+  @Override
   public PsiElement copy() {
     return this;
   }
 
+  @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
@@ -119,6 +133,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   public abstract void setMirror(@NotNull TreeElement element);
 
+  @Override
   public PsiElement getMirror() {
     TreeElement mirror = myMirror;
     if (mirror == null) {
@@ -128,16 +143,19 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return SourceTreeToPsiMap.treeElementToPsi(mirror);
   }
 
+  @Override
   public final TextRange getTextRange() {
     PsiElement mirror = getMirror();
     return mirror != null ? mirror.getTextRange() : TextRange.EMPTY_RANGE;
   }
 
+  @Override
   public final int getStartOffsetInParent() {
     PsiElement mirror = getMirror();
     return mirror != null ? mirror.getStartOffsetInParent() : -1;
   }
 
+  @Override
   public int getTextLength() {
     String text = getText();
     if (text == null){
@@ -147,6 +165,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return text.length();
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     PsiElement mirrorAt = getMirror().findElementAt(offset);
     while(true){
@@ -171,6 +190,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     */
   }
 
+  @Override
   public PsiReference findReferenceAt(int offset) {
     PsiReference mirrorRef = getMirror().findReferenceAt(offset);
     if (mirrorRef == null) return null;
@@ -198,29 +218,35 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return null;
   }
 
+  @Override
   public final int getTextOffset() {
     PsiElement mirror = getMirror();
     return mirror != null ? mirror.getTextOffset() : -1;
   }
 
+  @Override
   public String getText() {
     PsiElement mirror = getMirror();
     return mirror != null ? mirror.getText() : null;
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return getMirror().textToCharArray();
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return getText().equals(text.toString());
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return getText().equals(element.getText());
   }
 
+  @Override
   public ASTNode getNode() {
     return null;
   }

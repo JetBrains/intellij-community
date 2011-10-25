@@ -50,6 +50,7 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
     super("Dump inspection descriptions");
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent event) {
     final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
     final InspectionProfileEntry[] tools = profile.getInspectionTools(null);

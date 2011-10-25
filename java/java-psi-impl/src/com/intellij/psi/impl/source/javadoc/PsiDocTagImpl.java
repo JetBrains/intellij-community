@@ -53,32 +53,39 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     super(DOC_TAG);
   }
 
+  @Override
   public PsiDocComment getContainingComment() {
     return (PsiDocComment)SourceTreeToPsiMap.treeElementToPsi(getTreeParent());
   }
 
+  @Override
   public PsiElement getNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.DOC_TAG_NAME);
   }
 
+  @Override
   public PsiDocTagValue getValueElement() {
     return (PsiDocTagValue)findChildByRoleAsPsiElement(ChildRole.DOC_TAG_VALUE);
   }
 
+  @Override
   public PsiElement[] getDataElements() {
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public String getName() {
     if (getNameElement() == null) return "";
     return getNameElement().getText().substring(1);
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameElement(), name);
     return this;
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     assert (child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -102,11 +109,13 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     }
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiDocTag.class);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocTag(this);

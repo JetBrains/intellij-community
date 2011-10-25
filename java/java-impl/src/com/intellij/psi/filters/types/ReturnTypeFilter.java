@@ -36,6 +36,7 @@ public class ReturnTypeFilter implements ElementFilter{
   public ReturnTypeFilter(ElementFilter filter){
     myFilter = filter;
   }
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiVariable.class, hintClass) || ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
            ReflectionCache.isAssignable(PsiExpression.class, hintClass) || ReflectionCache.isAssignable(Template.class, hintClass) ||
@@ -43,6 +44,7 @@ public class ReturnTypeFilter implements ElementFilter{
 
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return myFilter.isAcceptable(element, context);
   }

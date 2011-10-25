@@ -85,6 +85,7 @@ public class PomModelEvent extends EventObject {
   }
 
 
+  @Override
   public PomModel getSource() {
     return (PomModel)super.getSource();
   }

@@ -31,20 +31,24 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
     myStub = stub;
   }
 
+  @Override
   public IStubElementType getElementType() {
     return myStub.getStubType();
   }
 
+  @Override
   public PsiElement getParent() {
     return myStub.getParentStub().getPsi();
   }
 
+  @Override
   public PsiManager getManager() {
     final PsiFile file = getContainingFile();
     if (file == null) throw new PsiInvalidElementAccessException(this);
     return file.getManager();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     StubElement p = myStub;
     while (!(p instanceof PsiFileStub)) {
@@ -53,10 +57,12 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
     return (PsiFile)p.getPsi();
   }
 
+  @Override
   public T getStub() {
     return myStub;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     final List stubs = getStub().getChildrenStubs();
@@ -67,18 +73,21 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
     return children;
   }
 
+  @Override
   public PsiElement getFirstChild() {
     final List<StubElement> children = getStub().getChildrenStubs();
     if (children.isEmpty()) return null;
     return children.get(0).getPsi();
   }
 
+  @Override
   public PsiElement getLastChild() {
     final List<StubElement> children = getStub().getChildrenStubs();
     if (children.isEmpty()) return null;
     return children.get(children.size() - 1).getPsi();
   }
 
+  @Override
   public PsiElement getNextSibling() {
     final PsiElement[] psiElements = getParent().getChildren();
     final int i = ArrayUtil.indexOf(psiElements, this);
@@ -89,6 +98,7 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   }
 
 
+  @Override
   public PsiElement getPrevSibling() {
     final PsiElement[] psiElements = getParent().getChildren();
     final int i = ArrayUtil.indexOf(psiElements, this);

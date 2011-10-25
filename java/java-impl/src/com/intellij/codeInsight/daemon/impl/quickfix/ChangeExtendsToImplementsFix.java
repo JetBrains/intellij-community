@@ -39,6 +39,7 @@ public class ChangeExtendsToImplementsFix extends ExtendsListFix {
                                     myClassToExtendFrom.getQualifiedName());
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myName;

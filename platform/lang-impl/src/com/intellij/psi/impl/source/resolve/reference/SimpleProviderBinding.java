@@ -43,6 +43,7 @@ public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider
     myProviderPairs.add(Trinity.create(provider, pattern, priority));
   }
 
+  @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List list,
                                               PsiReferenceService.Hints hints) {
     for(Trinity<Provider,ElementPattern,Double> trinity:myProviderPairs) {
@@ -66,6 +67,7 @@ public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider
     }
   }
 
+  @Override
   public void unregisterProvider(final Provider provider) {
     for (final Trinity<Provider, ElementPattern, Double> trinity : new ArrayList<Trinity<Provider, ElementPattern, Double>>(myProviderPairs)) {
       if (trinity.first.equals(provider)) {

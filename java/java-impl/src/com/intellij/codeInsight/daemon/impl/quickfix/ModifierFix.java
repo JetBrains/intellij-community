@@ -104,6 +104,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.modifiers.family");
@@ -145,6 +146,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiModifierList modifierList;
     if (variable != null && variable.isValid()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           try {
             variable.normalizeDeclaration();
@@ -167,6 +169,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
       OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
+          @Override
           public boolean execute(@NotNull PsiMethod inheritor) {
             PsiModifierList list = inheritor.getModifierList();
             if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
@@ -185,6 +188,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                                    QuickFixBundle.message("change.inheritors.visibility.warning.title"),
                                    Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             if (!CodeInsightUtilBase.preparePsiElementsForWrite(modifierLists)) {
               return;
@@ -199,6 +203,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         changeModifierList(modifierList);
         UndoUtil.markPsiFileForUndo(containingFile);
@@ -206,6 +211,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     });
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

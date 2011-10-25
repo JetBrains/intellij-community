@@ -44,12 +44,15 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   protected RangeMarkerTree(@NotNull Document document) {
     myDocument = document;
     myListener = new PrioritizedDocumentListener() {
+      @Override
       public int getPriority() {
         return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
       }
 
+      @Override
       public void beforeDocumentChange(DocumentEvent event) {}
 
+      @Override
       public void documentChanged(DocumentEvent e) {
         updateMarkersOnChange(e);
       }
@@ -312,12 +315,14 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
     final Queue<T> ends = new PriorityQueue<T>(5, new Comparator<T>() {
+      @Override
       public int compare(T o1, T o2) {
         return o1.getEndOffset() - o2.getEndOffset();
       }
     });
     final List<T> starts = new ArrayList<T>();
     if (!generator.generate(new Processor<T>() {
+      @Override
       public boolean process(T marker) {
         // decide whether previous marker ends here or new marker begins
         int start = marker.getStartOffset();

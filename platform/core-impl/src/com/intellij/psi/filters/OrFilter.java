@@ -49,6 +49,7 @@ public class OrFilter implements ElementFilter{
     return myFilters;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if (myFilters.isEmpty()) return true;
     for (ElementFilter elementFilter : myFilters) {
@@ -59,6 +60,7 @@ public class OrFilter implements ElementFilter{
     return false;
   }
 
+  @Override
   public boolean isClassAcceptable(Class elementClass){
     if (myFilters.isEmpty()) return true;
     for (ElementFilter elementFilter : myFilters) {

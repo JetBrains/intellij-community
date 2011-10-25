@@ -49,13 +49,20 @@ public interface JavaResolveResult extends ResolveResult {
 
 
   JavaResolveResult EMPTY = new JavaResolveResult(){
+    @Override
     public PsiElement getElement(){return null;}
+    @Override
     public PsiSubstitutor getSubstitutor(){return PsiSubstitutor.EMPTY;}
+    @Override
     public boolean isValidResult(){return false;}
+    @Override
     public boolean isAccessible(){return false;}
+    @Override
     public boolean isStaticsScopeCorrect(){return false;}
+    @Override
     public PsiElement getCurrentFileResolveScope() { return null; }
 
+    @Override
     public boolean isPackagePrefixPackageReference() { return false; }
   };
 }

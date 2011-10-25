@@ -153,6 +153,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
         ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
         myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
         myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
+          @Override
           public void extensionAdded(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
             synchronized (lock) {
               if (bean.getKey() == null) {
@@ -169,6 +170,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
             }
           }
 
+          @Override
           public void extensionRemoved(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
             synchronized (lock) {
               myCache.remove(bean.getKey());
@@ -178,6 +180,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
             }
           }
 
+          @Override
           public void areaReplaced(final ExtensionsArea area) {
             resetAreaListener();
           }

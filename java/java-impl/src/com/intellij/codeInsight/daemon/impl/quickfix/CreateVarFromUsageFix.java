@@ -35,11 +35,13 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
     myReferenceExpression = referenceElement;
   }
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     PsiReferenceExpression expression = (PsiReferenceExpression) element;
     return CreateFromUsageUtils.isValidReference(expression, false);
   }
 
+  @Override
   protected PsiElement getElement() {
     if (!myReferenceExpression.isValid() || !myReferenceExpression.getManager().isInProject(myReferenceExpression)) return null;
 
@@ -56,6 +58,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     if (CreateFromUsageUtils.shouldShowTag(offset, myReferenceExpression.getReferenceNameElement(), myReferenceExpression)) {
       setText(getText(myReferenceExpression.getReferenceName()));

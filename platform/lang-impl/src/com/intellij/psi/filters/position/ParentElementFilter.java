@@ -45,6 +45,7 @@ public class ParentElementFilter extends PositionElementFilter{
 
   public ParentElementFilter(){}
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;
     PsiElement context = (PsiElement)element;

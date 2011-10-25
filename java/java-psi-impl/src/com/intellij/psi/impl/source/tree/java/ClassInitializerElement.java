@@ -30,6 +30,7 @@ public class ClassInitializerElement extends CompositeElement implements Constan
     super(CLASS_INITIALIZER);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -44,6 +45,7 @@ public class ClassInitializerElement extends CompositeElement implements Constan
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();

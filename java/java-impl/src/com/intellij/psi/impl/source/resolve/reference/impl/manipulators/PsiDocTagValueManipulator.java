@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDocTag> {
 
+  @Override
   public PsiDocTag handleContentChange(PsiDocTag tag, TextRange range, String newContent) throws IncorrectOperationException {
     final StringBuilder replacement = new StringBuilder( tag.getText() );
 
@@ -39,6 +40,7 @@ public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDoc
     return (PsiDocTag)tag.replace(JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(replacement.toString()));
   }
 
+  @Override
   public TextRange getRangeInElement(final PsiDocTag tag) {
     final PsiElement[] elements = tag.getDataElements();
     if (elements.length == 0) {

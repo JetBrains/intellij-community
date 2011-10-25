@@ -140,6 +140,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
 
   protected void readJdomExternalizables(final ModuleImpl module) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ProjectImpl project = (ProjectImpl)myProject;
         project.setOptimiseTestLoadSpeed(false);

@@ -43,14 +43,17 @@ class SeeDocTagInfo implements JavadocTagInfo {
     myInline = isInline;
   }
 
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     if (place instanceof PsiDocToken) {
       PsiDocToken token = (PsiDocToken) place;
@@ -114,6 +117,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
     return targetContext;
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     if (myInline && myName.equals(LINKPLAIN_TAG))
       return PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_4) >= 0;
@@ -121,10 +125,12 @@ class SeeDocTagInfo implements JavadocTagInfo {
     return true;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public boolean isInline() {
     return myInline;
   }

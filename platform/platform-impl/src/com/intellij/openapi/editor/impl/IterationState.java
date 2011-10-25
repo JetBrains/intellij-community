@@ -476,6 +476,7 @@ public final class IterationState {
 
   private static class LayerComparator implements Comparator<RangeHighlighterEx> {
     private static final LayerComparator INSTANCE = new LayerComparator();
+    @Override
     public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
       int layerDiff = o2.getLayer() - o1.getLayer();
       if (layerDiff != 0) {

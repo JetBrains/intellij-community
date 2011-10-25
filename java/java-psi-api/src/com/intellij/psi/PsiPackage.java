@@ -35,6 +35,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
    *
    * @return the full-qualified name, or an empty string for the default package.
    */
+  @Override
   @NotNull
   String getQualifiedName();
 
@@ -104,6 +105,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
    */
   VirtualFile[] occursInPackagePrefixes();
 
+  @Override
   @Nullable("default package")
   @NonNls
   String getName();

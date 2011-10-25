@@ -36,6 +36,7 @@ import java.util.List;
 public class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTreeLoaderImpl");
 
+  @Override
   @Nullable
   public StubTree readOrBuild(Project project, final VirtualFile vFile) {
     final StubTree fromIndices = readFromVFile(project, vFile);
@@ -62,6 +63,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     return null;
   }
 
+  @Override
   @Nullable
   public StubTree readFromVFile(Project project, final VirtualFile vFile) {
     if (DumbService.getInstance(project).isDumb()) {
@@ -82,6 +84,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         LOG.error("Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id);
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
             if (doc != null) {

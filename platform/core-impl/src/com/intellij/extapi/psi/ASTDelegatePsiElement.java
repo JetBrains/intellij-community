@@ -54,12 +54,14 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   private static final List EMPTY = Collections.emptyList();
 
+  @Override
   public PsiManagerEx getManager() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     return (PsiManagerEx)parent.getManager();
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     PsiElement psiChild = getFirstChild();
@@ -75,70 +77,86 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
+  @Override
   public PsiElement getFirstChild() {
     return SharedImplUtil.getFirstChild(getNode());
   }
 
+  @Override
   public PsiElement getLastChild() {
     return SharedImplUtil.getLastChild(getNode());
   }
 
+  @Override
   public PsiElement getNextSibling() {
     return SharedImplUtil.getNextSibling(getNode());
   }
 
+  @Override
   public PsiElement getPrevSibling() {
     return SharedImplUtil.getPrevSibling(getNode());
   }
 
+  @Override
   public TextRange getTextRange() {
     return getNode().getTextRange();
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return getNode().getStartOffset() - getNode().getTreeParent().getStartOffset();
   }
 
+  @Override
   public int getTextLength() {
     return getNode().getTextLength();
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     ASTNode treeElement = getNode().findLeafElementAt(offset);
     return SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
+  @Override
   public int getTextOffset() {
     return getNode().getStartOffset();
   }
 
+  @Override
   public String getText() {
     return getNode().getText();
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return getNode().getText().toCharArray();
   }
 
+  @Override
   public boolean textContains(char c) {
     return getNode().textContains(c);
   }
 
+  @Override
   public <T> T getCopyableUserData(Key<T> key) {
     return getNode().getCopyableUserData(key);
   }
 
+  @Override
   public <T> void putCopyableUserData(Key<T> key, T value) {
     getNode().putCopyableUserData(key, value);
   }
 
+  @Override
   @NotNull
   public abstract ASTNode getNode();
 
   public void subtreeChanged() {
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return getNode().getElementType().getLanguage();
@@ -193,6 +211,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   protected <T extends PsiElement> T[] findChildrenByType(IElementType elementType, Class<T> arrayClass) {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, new Function<ASTNode, T>() {
+      @Override
       public T fun(final ASTNode s) {
         return (T)s.getPsi();
       }
@@ -232,20 +251,24 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
     return (T[])ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, new Function<ASTNode, PsiElement>() {
+      @Override
       public PsiElement fun(final ASTNode s) {
         return s.getPsi();
       }
     });
   }
 
+  @Override
   public PsiElement copy() {
     return getNode().copyElement().getPsi();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     return addInnerBefore(element, null);
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     return addInnerBefore(element, anchor);
   }
@@ -263,6 +286,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     throw new IncorrectOperationException("Element cannot be added");
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);

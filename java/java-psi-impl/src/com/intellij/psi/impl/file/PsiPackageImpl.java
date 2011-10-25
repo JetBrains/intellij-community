@@ -52,9 +52,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     super(manager, qualifiedName);
   }
 
+  @Override
   protected Collection<PsiDirectory> getAllDirectories() {
     if (myDirectories == null) {
       myDirectories = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
+        @Override
         public Result<Collection<PsiDirectory>> compute() {
           final CommonProcessors.CollectProcessor<PsiDirectory> processor = new CommonProcessors.CollectProcessor<PsiDirectory>();
           getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor);
@@ -71,10 +73,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().findPackage(qName);
   }
 
+  @Override
   public void handleQualifiedNameChange(@NotNull final String newQualifiedName) {
     PsiPackageImplementationHelper.getInstance().handleQualifiedNameChange(this, newQualifiedName);
   }
 
+  @Override
   public VirtualFile[] occursInPackagePrefixes() {
     return PsiPackageImplementationHelper.getInstance().occursInPackagePrefixes(this);
   }
@@ -90,17 +94,20 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return new PsiPackageImpl(myManager, qName);
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
+  @Override
   public boolean isValid() {
     final CommonProcessors.FindFirstProcessor<PsiDirectory> processor = new CommonProcessors.FindFirstProcessor<PsiDirectory>();
     getFacade().processPackageDirectories(this, allScope(), processor);
     return processor.getFoundValue() != null || PsiPackageImplementationHelper.getInstance().packagePrefixExists(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPackage(this);
@@ -114,6 +121,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return "PsiPackage:" + getQualifiedName();
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClasses() {
     return getClasses(allScope());
@@ -123,11 +131,13 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return PsiPackageImplementationHelper.getInstance().adjustAllScope(this, GlobalSearchScope.allScope(getProject()));
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClasses(@NotNull GlobalSearchScope scope) {
     return getFacade().getClasses(this, scope);
   }
 
+  @Override
   @Nullable
   public PsiModifierList getAnnotationList() {
     if (myAnnotationList == null) {
@@ -136,11 +146,13 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return myAnnotationList.getValue();
   }
 
+  @Override
   @NotNull
   public PsiPackage[] getSubPackages() {
     return getSubPackages(allScope());
   }
 
+  @Override
   @NotNull
   public PsiPackage[] getSubPackages(@NotNull GlobalSearchScope scope) {
     return getFacade().getSubPackages(this, scope);
@@ -183,6 +195,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return aPackage;
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -250,6 +263,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return true;
   }
 
+  @Override
   public boolean canNavigate() {
     return isValid();
   }
@@ -259,6 +273,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
   }
@@ -266,6 +281,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
     private final Object[] OOCB_DEPENDENCY = { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
 
+    @Override
     public Result<PsiModifierList> compute() {
       List<PsiModifierList> list = new ArrayList<PsiModifierList>();
       for(PsiDirectory directory: getDirectories()) {
@@ -290,15 +306,18 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
   }
 
+  @Override
   @Nullable
   public PsiModifierList getModifierList() {
     return getAnnotationList();
   }
 
+  @Override
   public boolean hasModifierProperty(@NonNls @NotNull final String name) {
     return false;
   }
 
+  @Override
   public PsiQualifiedNamedElement getContainer() {
     return getParentPackage();
   }

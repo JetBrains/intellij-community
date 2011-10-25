@@ -32,11 +32,13 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
+  @Override
   public EditorHighlighter createEditorHighlighter(SyntaxHighlighter highlighter, final EditorColorsScheme colors) {
     if (highlighter == null) highlighter = new PlainSyntaxHighlighter();
     return new LexerEditorHighlighter(highlighter, colors);
   }
 
+  @Override
   public EditorHighlighter createEditorHighlighter(final FileType fileType, final EditorColorsScheme settings, final Project project) {
     if (fileType instanceof LanguageFileType) {
       return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, null, settings);
@@ -46,10 +48,12 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
     return createEditorHighlighter(highlighter, settings);
   }
 
+  @Override
   public EditorHighlighter createEditorHighlighter(final Project project, final FileType fileType) {
     return createEditorHighlighter(fileType, EditorColorsManager.getInstance().getGlobalScheme(), project);
   }
 
+  @Override
   public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, final EditorColorsScheme settings, final Project project) {
     final FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
@@ -94,14 +98,17 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
     return null;
   }
 
+  @Override
   public EditorHighlighter createEditorHighlighter(final Project project, final VirtualFile file) {
     return createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
   }
 
+  @Override
   public EditorHighlighter createEditorHighlighter(final Project project, final String fileName) {
     return createEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(), fileName, project);
   }
 
+  @Override
   public EditorHighlighter createEditorHighlighter(final EditorColorsScheme settings, final String fileName, final Project project) {
     return createEditorHighlighter(new LightVirtualFile(fileName), settings, project);
   }

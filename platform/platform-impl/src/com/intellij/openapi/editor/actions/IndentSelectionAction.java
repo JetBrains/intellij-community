@@ -43,12 +43,14 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       indentSelection(editor, project);
     }
   }
 
+  @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
     presentation.setEnabled(isEnabled(editor));
   }

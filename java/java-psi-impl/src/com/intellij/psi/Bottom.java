@@ -28,22 +28,27 @@ public class Bottom extends PsiType {
     super(PsiAnnotation.EMPTY_ARRAY);
   }
 
+  @Override
   public String getPresentableText() {
     return "_";
   }
 
+  @Override
   public String getCanonicalText() {
     return "_";
   }
 
+  @Override
   public String getInternalCanonicalText() {
     return getCanonicalText();
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public boolean equalsToText(String text) {
     return text.equals("_");
   }
@@ -56,6 +61,7 @@ public class Bottom extends PsiType {
     return false;
   }
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     if (visitor instanceof PsiTypeVisitorEx) {
       return ((PsiTypeVisitorEx<A>)visitor).visitBottom(this);
@@ -63,11 +69,13 @@ public class Bottom extends PsiType {
     return visitor.visitType(this);
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public GlobalSearchScope getResolveScope() {
     return null;
   }

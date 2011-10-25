@@ -51,6 +51,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     super(psiFile);
   }
 
+  @Override
   @NotNull
   public AnalysisScope getNarrowedComplementaryScope(Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
@@ -85,12 +86,14 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   
 
+  @Override
   public String getShortenName() {
     if (myType == PACKAGE)
        return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
     return super.getShortenName();
   }
 
+  @Override
   public String getDisplayName() {
     if (myType == PACKAGE) {
       return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
@@ -98,6 +101,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     return super.getDisplayName();
   }
 
+  @Override
   protected void initFilesSet() {
     if (myType == PACKAGE) {
       myFilesSet = new HashSet<VirtualFile>();
@@ -118,11 +122,13 @@ public class JavaAnalysisScope extends AnalysisScope {
     return shouldHighlight;
   }
 
+  @Override
   protected void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
     if (myElement instanceof PsiPackage) {
       final PsiPackage pack = (PsiPackage)myElement;
       final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
         }

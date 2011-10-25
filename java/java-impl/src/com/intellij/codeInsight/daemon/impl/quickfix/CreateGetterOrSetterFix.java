@@ -47,6 +47,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     myPropertyName = PropertyUtil.suggestPropertyName(project, field);
   }
 
+  @Override
   @NotNull
   public String getText() {
     @NonNls final String what;
@@ -66,11 +67,13 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     return QuickFixBundle.message(what, myField.getName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.accessor.for.unused.field.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myField.isValid()) return false;
     PsiClass aClass = myField.getContainingClass();
@@ -86,6 +89,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myField)) return;
     PsiClass aClass = myField.getContainingClass();
@@ -97,6 +101,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

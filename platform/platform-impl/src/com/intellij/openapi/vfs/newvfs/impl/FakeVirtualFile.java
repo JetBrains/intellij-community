@@ -33,17 +33,20 @@ public class FakeVirtualFile extends StubVirtualFile {
     myParent = parent;
   }
 
+  @Override
   @Nullable
   public VirtualFile getParent() {
     return myParent;
   }
 
+  @Override
   public String getPath() {
     final String basePath = myParent.getPath();
     if (basePath.endsWith("/")) return basePath + myName;
     return basePath + '/' + myName;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getName() {

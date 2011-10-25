@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
  * To change this template use Options | File Templates.
  */
 public class ThrowsListGetter implements ContextGetter{
+  @Override
   public PsiType[] get(PsiElement context, CompletionContext completionContext){
     final PsiMethod method = PsiTreeUtil.getContextOfType(context, PsiMethod.class, true);
     if(method != null){

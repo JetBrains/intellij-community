@@ -35,23 +35,28 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
     myHostRegion = hostRegion;
   }
 
+  @Override
   public boolean isExpanded() {
     return myHostRegion.isExpanded();
   }
 
+  @Override
   public void setExpanded(boolean expanded) {
     myHostRegion.setExpanded(expanded);
   }
 
+  @Override
   @NotNull
   public String getPlaceholderText() {
     return myHostRegion.getPlaceholderText();
   }
 
+  @Override
   public Editor getEditor() {
     return myEditorWindow;
   }
 
+  @Override
   public FoldingGroup getGroup() {
     return myHostRegion.getGroup();
   }
@@ -61,6 +66,7 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
     return false;
   }
 
+  @Override
   public FoldRegionImpl getDelegate() {
     return myHostRegion;
   }

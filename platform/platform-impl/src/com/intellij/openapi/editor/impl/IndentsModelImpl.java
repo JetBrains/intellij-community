@@ -38,6 +38,7 @@ public class IndentsModelImpl implements IndentsModel {
     myEditor = editor;
   }
 
+  @Override
   public IndentGuideDescriptor getCaretIndentGuide() {
     final LogicalPosition pos = myEditor.getCaretModel().getLogicalPosition();
     final int column = pos.column;
@@ -58,6 +59,7 @@ public class IndentsModelImpl implements IndentsModel {
     return myIndentsByLines.get(new IntPair(startLine, endLine));
   }
 
+  @Override
   public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
     myIndents = descriptors;
     myIndentsByLines.clear();

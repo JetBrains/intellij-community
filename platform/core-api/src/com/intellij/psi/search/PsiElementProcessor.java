@@ -61,6 +61,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return myCollection.toArray(array);
     }
 
+    @Override
     public boolean execute(@NotNull T element) {
       myCollection.add(element);
       return true;
@@ -79,6 +80,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myFilter = filter;
     }
 
+    @Override
     public boolean execute(@NotNull T element) {
       return !myFilter.isAccepted(element) || super.execute(element);
     }
@@ -98,6 +100,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myLimit = limit;
     }
 
+    @Override
     public boolean execute(@NotNull T element) {
       if (myCount.get() == myLimit){
         myOverflow = true;
@@ -128,6 +131,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return false;
     }
 
+    @Override
     public boolean execute(@NotNull T element) {
       return setFound(element);
     }
@@ -140,6 +144,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myFilter = filter;
     }
 
+    @Override
     public boolean execute(@NotNull T element) {
       return !myFilter.isAccepted(element) || super.execute(element);
     }

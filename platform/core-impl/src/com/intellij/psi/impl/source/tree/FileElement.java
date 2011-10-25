@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class FileElement extends LazyParseableElement implements FileASTNode {
   private volatile CharTable myCharTable = new CharTableImpl();
 
+  @Override
   @NotNull
   public CharTable getCharTable() {
     return myCharTable;
@@ -42,11 +43,13 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
     super(type, null);
   }
 
+  @Override
   public PsiManagerEx getManager() {
     if (getTreeParent() != null) return getTreeParent().getManager();
     return (PsiManagerEx)getPsi().getManager(); //TODO: cache?
   }
 
+  @Override
   public ASTNode copyElement() {
     PsiFileImpl psiElement = (PsiFileImpl)getPsi();
     PsiFileImpl psiElementCopy = (PsiFileImpl)psiElement.copy();

@@ -35,6 +35,7 @@ public interface FileType extends Scheme {
    * @return The file type name.
    */
 
+  @Override
   @NotNull
   @NonNls
   String getName();

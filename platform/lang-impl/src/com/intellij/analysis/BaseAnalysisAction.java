@@ -51,6 +51,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     myAnalysisNoon = analysisNoon;
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
@@ -59,6 +60,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     presentation.setEnabled(!dumbMode && getInspectionScope(dataContext) != null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -83,16 +85,19 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                 module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
                                                                   .getModuleNameInReadAction(module) : null,
                                                                 rememberScope, AnalysisUIOptions.getInstance(project), element){
+      @Override
       @Nullable
       protected JComponent getAdditionalActionSettings(final Project project) {
         return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
       }
 
 
+      @Override
       protected void doHelpAction() {
         HelpManager.getInstance().invokeHelp(getHelpTopic());
       }
 
+      @Override
       protected Action[] createActions() {
         return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
       }

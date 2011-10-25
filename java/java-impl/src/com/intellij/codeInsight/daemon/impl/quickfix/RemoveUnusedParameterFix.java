@@ -49,6 +49,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
     return QuickFixBundle.message("remove.unused.parameter.text", myName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.unused.parameter.family");

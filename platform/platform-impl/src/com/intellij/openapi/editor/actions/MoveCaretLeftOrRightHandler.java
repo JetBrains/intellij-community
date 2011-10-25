@@ -35,6 +35,7 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
     myDirection = direction;
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();

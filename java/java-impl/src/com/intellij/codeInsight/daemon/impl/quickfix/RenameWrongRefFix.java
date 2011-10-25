@@ -58,16 +58,19 @@ public class RenameWrongRefFix implements IntentionAction {
     myUnresolvedOnly = unresolvedOnly;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("rename.wrong.reference.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("rename.wrong.reference.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myRefExpr.isValid() || !myRefExpr.getManager().isInProject(myRefExpr)) return false;
     int offset = editor.getCaretModel().getOffset();
@@ -84,6 +87,7 @@ public class RenameWrongRefFix implements IntentionAction {
 
   private class ReferenceNameExpression extends Expression {
     class HammingComparator implements Comparator<LookupElement> {
+      @Override
       public int compare(LookupElement lookupItem1, LookupElement lookupItem2) {
         String s1 = lookupItem1.getLookupString();
         String s2 = lookupItem2.getLookupString();
@@ -108,6 +112,7 @@ public class RenameWrongRefFix implements IntentionAction {
     LookupElement[] myItems;
     private final String myOldReferenceName;
 
+    @Override
     public Result calculateResult(ExpressionContext context) {
       if (myItems == null || myItems.length == 0) {
         return new TextResult(myOldReferenceName);
@@ -115,10 +120,12 @@ public class RenameWrongRefFix implements IntentionAction {
       return new TextResult(myItems[0].getLookupString());
     }
 
+    @Override
     public Result calculateQuickResult(ExpressionContext context) {
       return null;
     }
 
+    @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       if (myItems == null || myItems.length == 1) return null;
       return myItems;
@@ -152,6 +159,7 @@ public class RenameWrongRefFix implements IntentionAction {
           }
         }
 
+        @Override
         public boolean execute(PsiElement element, ResolveState state) {
           if (element instanceof PsiNamedElement
               && element instanceof PsiModifierListOwner
@@ -179,6 +187,7 @@ public class RenameWrongRefFix implements IntentionAction {
     return items.toArray(new LookupElement[items.size()]);
   }
 
+  @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
@@ -212,6 +221,7 @@ public class RenameWrongRefFix implements IntentionAction {
     EditorUtil.setVerticalScrollProportion(editor, proportion);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -25,22 +25,27 @@ public class LightPackageReferenceExpression extends LightPackageReference imple
     super(manager, refPackage);
   }
 
+  @Override
   public PsiExpression getQualifierExpression(){
     return null;
   }
 
+  @Override
   public PsiElement bindToElementViaStaticImport(@NotNull PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
     throw new IncorrectOperationException("This method should not be called for light elements");
   }
 
+  @Override
   public PsiType getType(){
     return null;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return getManager().areElementsEquivalent(resolve(), element);
   }

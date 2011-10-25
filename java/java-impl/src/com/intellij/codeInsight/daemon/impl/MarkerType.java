@@ -50,6 +50,7 @@ import java.util.Comparator;
 
 public class MarkerType {
   public static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+    @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return null;
@@ -73,6 +74,7 @@ public class MarkerType {
       return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
     }
   }, new LineMarkerNavigator(){
+    @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
@@ -88,6 +90,7 @@ public class MarkerType {
   });
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for overriding methods";
   public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+    @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return null;
@@ -113,6 +116,7 @@ public class MarkerType {
       return GutterIconTooltipHelper.composeText(overridings, start, pattern);
     }
   }, new LineMarkerNavigator(){
+    @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
@@ -125,6 +129,7 @@ public class MarkerType {
       final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
         new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
         }
@@ -144,6 +149,7 @@ public class MarkerType {
   });
   public static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for overridden methods";
   public static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
+    @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return null;
@@ -170,6 +176,7 @@ public class MarkerType {
       return GutterIconTooltipHelper.composeText(subclasses, start, pattern);
     }
   }, new LineMarkerNavigator(){
+    @Override
     public void browse(MouseEvent e, PsiElement element) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return;
@@ -182,6 +189,7 @@ public class MarkerType {
       final PsiClass aClass = (PsiClass)parent;
       final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2, new THashSet<PsiClass>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
         }
@@ -204,6 +212,7 @@ public class MarkerType {
   public MarkerType(Function<PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
+      @Override
       public void navigate(MouseEvent e, PsiElement elt) {
         navigator.browse(e, elt);
       }

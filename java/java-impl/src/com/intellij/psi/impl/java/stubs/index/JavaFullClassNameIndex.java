@@ -37,10 +37,12 @@ public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
     return ourInstance;
   }
 
+  @Override
   public StubIndexKey<Integer, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_FQN;
   }
 
+  @Override
   public Collection<PsiClass> get(final Integer integer, final Project project, @NotNull final GlobalSearchScope scope) {
     Collection<PsiClass> result = super.get(integer, project, new JavaSourceFilterScope(scope));
     if (DEBUG) {

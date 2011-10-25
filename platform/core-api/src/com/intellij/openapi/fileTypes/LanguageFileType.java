@@ -47,14 +47,17 @@ public abstract class LanguageFileType implements FileType{
     return myLanguage;
   }
 
+  @Override
   public final boolean isBinary() {
     return false;
   }
 
+  @Override
   public final boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return null;
   }

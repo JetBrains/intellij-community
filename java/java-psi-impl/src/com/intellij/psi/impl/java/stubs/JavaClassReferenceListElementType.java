@@ -48,6 +48,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     super(id, true);
   }
 
+  @Override
   public PsiReferenceList createPsi(final PsiClassReferenceListStub stub) {
     if (isCompiled(stub)) {
       return new ClsReferenceListImpl(stub);
@@ -61,6 +62,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
+  @Override
   public PsiReferenceList createPsi(final ASTNode node) {
     if (node.getElementType() == JavaStubElementTypes.EXTENDS_BOUND_LIST) {
       return new PsiTypeParameterExtendsBoundsListImpl(node);
@@ -110,6 +112,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     return texts;
   }
 
+  @Override
   public void serialize(final PsiClassReferenceListStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(encodeRole(stub.getRole()));
     final String[] names = stub.getReferencedNames();
@@ -119,6 +122,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
+  @Override
   public PsiClassReferenceListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte role = dataStream.readByte();
     int len = dataStream.readVarInt();
@@ -155,6 +159,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
+  @Override
   public void indexStub(final PsiClassReferenceListStub stub, final IndexSink sink) {
     final PsiReferenceList.Role role = stub.getRole();
     if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {

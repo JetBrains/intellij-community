@@ -47,9 +47,11 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     super(manager, virtualFile, physical, Language.ANY);
   }
 
+  @Override
   @NotNull
   public abstract Language getBaseLanguage();
 
+  @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
     final List<PsiFile> roots = new ArrayList<PsiFile>();
@@ -69,6 +71,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     myRoots.remove(language);
   }
 
+  @Override
   protected PsiFile getPsiInner(final Language target) {
     PsiFile file = myRoots.get(target);
     if (file == null) {
@@ -94,10 +97,12 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   }
 
 
+  @Override
   public PsiFile getCachedPsi(Language target) {
     return myRoots.get(target);
   }
 
+  @Override
   public FileElement[] getKnownTreeRoots() {
     List<FileElement> files = new ArrayList<FileElement>(myRoots.size());
     for (PsiFile file : myRoots.values()) {
@@ -132,6 +137,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   protected abstract MultiplePsiFilesPerDocumentFileViewProvider cloneInner(VirtualFile fileCopy);
 
+  @Override
   @Nullable
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
     final PsiFile mainRoot = getPsi(getBaseLanguage());
@@ -150,11 +156,13 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     return ret;
   }
 
+  @Override
   @Nullable
   public PsiElement findElementAt(int offset) {
     return findElementAt(offset, Language.class);
   }
 
+  @Override
   @Nullable
   public PsiReference findReferenceAt(int offset) {
     TextRange minRange = new TextRange(0, getContents().length());

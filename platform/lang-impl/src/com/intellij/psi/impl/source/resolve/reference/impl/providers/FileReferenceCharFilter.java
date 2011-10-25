@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
  * @author peter
  */
 public class FileReferenceCharFilter extends CharFilter{
+  @Override
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final PsiFile file = lookup.getPsiFile();
     if (file == null) {

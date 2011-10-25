@@ -30,6 +30,7 @@ import com.intellij.usages.UsageTargetProvider;
 import org.jetbrains.annotations.Nullable;
 
 public class ThrowsUsageTargetProvider implements UsageTargetProvider {
+  @Override
   @Nullable
   public UsageTarget[] getTargets(Editor editor, final PsiFile file) {
     if (editor == null || file == null) return null;
@@ -49,6 +50,7 @@ public class ThrowsUsageTargetProvider implements UsageTargetProvider {
     return null;
   }
 
+  @Override
   public UsageTarget[] getTargets(PsiElement psiElement) {
     return null;
   }

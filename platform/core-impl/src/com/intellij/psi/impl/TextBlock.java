@@ -67,6 +67,7 @@ public class TextBlock extends DocumentAdapter {
     return myPsiEndOffset;
   }
 
+  @Override
   public void documentChanged(DocumentEvent e) {
     myDocument = e.getDocument();
 

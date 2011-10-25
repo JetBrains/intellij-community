@@ -33,6 +33,7 @@ public class PsiModifierListStubImpl extends StubBase<PsiModifierList> implement
     myMask = mask;
   }
 
+  @Override
   public int getModifiersMask() {
     return myMask;
   }

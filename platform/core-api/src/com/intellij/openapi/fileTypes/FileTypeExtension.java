@@ -29,6 +29,7 @@ public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
     super(epName);
   }
 
+  @Override
   protected String keyToString(final FileType key) {
     return key.getName();
   }

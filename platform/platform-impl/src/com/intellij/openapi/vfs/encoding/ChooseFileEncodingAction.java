@@ -55,6 +55,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     myVirtualFile = virtualFile;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     Pair<String, Boolean> result = update(myVirtualFile);
 
@@ -109,6 +110,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     return EncodingManager.getInstance().getCachedCharsetFromContent(document);
   }
 
+  @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
     return createGroup(true);
@@ -117,6 +119,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private void fillCharsetActions(DefaultActionGroup group, final VirtualFile virtualFile, List<Charset> charsets) {
     for (Charset slave : charsets) {
       ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave){
+        @Override
         protected void chosen(final VirtualFile file, final Charset charset) {
           ChooseFileEncodingAction.this.chosen(file, charset);
         }
@@ -179,20 +182,24 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       myFile = file;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       chosen(myFile, NO_ENCODING);
     }
   }
 
   public static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
+    @Override
     public boolean contains(final Charset cs) {
       return false;
     }
 
+    @Override
     public CharsetDecoder newDecoder() {
       return null;
     }
 
+    @Override
     public CharsetEncoder newEncoder() {
       return null;
     }

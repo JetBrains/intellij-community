@@ -60,6 +60,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return newNode;
   }
 
+  @Override
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
@@ -69,6 +70,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     }
     final Collection[] nodes = new Collection[1];
     ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+      @Override
       public void run() {
         nodes[0] = getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator());
       }
@@ -92,8 +94,10 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     final List<SliceNode> children = new ArrayList<SliceNode>();
     final SliceManager manager = SliceManager.getInstance(getProject());
     manager.runInterruptibly(new Runnable() {
+      @Override
       public void run() {
         Processor<SliceUsage> processor = new Processor<SliceUsage>() {
+          @Override
           public boolean process(SliceUsage sliceUsage) {
             manager.checkCanceled();
             SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
@@ -108,6 +112,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         getValue().processChildren(processor);
       }
     }, new Runnable(){
+      @Override
       public void run() {
         changed = true;
         //SwingUtilities.invokeLater(new Runnable() {
@@ -146,6 +151,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     };
   }
 
+  @Override
   protected void update(PresentationData presentation) {
     if (presentation != null) {
       if (duplicate != null) {
@@ -165,35 +171,42 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     }
   }
 
+  @Override
   public SliceNode getDuplicate() {
     return duplicate;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     SliceUsage sliceUsage = getValue();
     sliceUsage.navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return getValue().canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return getValue().canNavigateToSource();
   }
 
   public boolean isValid() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         return getValue().isValid();
       }
     });
   }
 
+  @Override
   public boolean expandOnDoubleClick() {
     return false;
   }
 
+  @Override
   public void customizeCellRenderer(SliceUsageCellRenderer renderer, JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     renderer.setIcon(getPresentation().getIcon(expanded));
     if (isValid()) {

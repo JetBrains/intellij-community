@@ -30,6 +30,7 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
     myLibraryName = element.getAttributeValue(NAME_ATTRIBUTE);
   }
 
+  @Override
   public String getPresentableName() {
     return myLibraryName;
   }
@@ -40,21 +41,25 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
     element.setAttribute(LEVEL_ATTRIBUTE, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
+  @Override
   public Library getLibrary() {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     return libraryTable.getLibraryByName(myLibraryName);
   }
 
+  @Override
   public String getLibraryName() {
     return myLibraryName;
   }
 
+  @Override
   public void serialize(Element element) throws IOException {
     element.setAttribute(NAME_ATTRIBUTE, myLibraryName);
     //todo[nik,greg] remote later. this is needed only for forward compatibility with version before 8
     element.setAttribute(LEVEL_ATTRIBUTE, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
+  @Override
   public List<String> getClassesRootUrls() {
     final Library library = getLibrary();
     if (library != null) {

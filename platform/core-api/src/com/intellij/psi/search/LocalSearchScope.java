@@ -79,6 +79,7 @@ public class LocalSearchScope extends SearchScope {
     return myIgnoreInjectedPsi;
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName == null ? super.getDisplayName() : myDisplayName;
   }
@@ -166,6 +167,7 @@ public class LocalSearchScope extends SearchScope {
     return "LocalSearchScope:" + result;
   }
 
+  @Override
   @NotNull
   public SearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof LocalSearchScope) return union((LocalSearchScope)scope);

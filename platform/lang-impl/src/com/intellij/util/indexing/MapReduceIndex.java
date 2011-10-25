@@ -58,6 +58,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return myStorage;
   }
 
+  @Override
   public void clear() throws StorageException {
     try {
       getWriteLock().lock();
@@ -84,6 +85,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  @Override
   public void flush() throws StorageException{
     try {
       getReadLock().lock();
@@ -110,6 +112,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  @Override
   public void dispose() {
     final Lock lock = getWriteLock();
     try {
@@ -136,20 +139,24 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  @Override
   public Lock getReadLock() {
     return myLock.readLock();
   }
 
+  @Override
   public Lock getWriteLock() {
     return myLock.writeLock();
   }
 
+  @Override
   public Collection<Key> getAllKeys() throws StorageException {
     Set<Key> allKeys = new HashSet<Key>();
     processAllKeys(new CommonProcessors.CollectProcessor<Key>(allKeys));
     return allKeys;
   }
 
+  @Override
   public boolean processAllKeys(Processor<Key> processor) throws StorageException {
     final Lock lock = getReadLock();
     try {
@@ -161,6 +168,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  @Override
   @NotNull
   public ValueContainer<Value> getData(final Key key) throws StorageException {
     final Lock lock = getReadLock();
@@ -194,12 +202,14 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return null;
   }
 
+  @Override
   public final void update(final int inputId, @Nullable Input content) throws StorageException {
     assert myInputsIndex != null;
 
     final Map<Key, Value> data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
     updateWithMap(inputId, data, new Callable<Collection<Key>>() {
+      @Override
       public Collection<Key> call() throws Exception {
         final Collection<Key> oldKeys = myInputsIndex.get(inputId);
         return oldKeys == null? Collections.<Key>emptyList() : oldKeys;

@@ -36,10 +36,12 @@ public class FieldElement extends CompositeElement{
     super(type);
   }
 
+  @Override
   public int getTextOffset() {
     return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
       ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
@@ -50,6 +52,7 @@ public class FieldElement extends CompositeElement{
     super.deleteChildInternal(child);
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     assert (ChildRole.isUnique(role));
     switch(role){
@@ -79,6 +82,7 @@ public class FieldElement extends CompositeElement{
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     assert (child.getTreeParent() == this);
     IElementType i = child.getElementType();

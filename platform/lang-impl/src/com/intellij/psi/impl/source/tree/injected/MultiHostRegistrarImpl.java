@@ -105,6 +105,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     return myContextElement;
   }
 
+  @Override
   @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
     escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
@@ -138,6 +139,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
   }
 
+  @Override
   @NotNull
   public MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
                                      @NonNls @Nullable String suffix,
@@ -191,6 +193,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     return this;
   }
 
+  @Override
   public void doneInjecting() {
     try {
       if (shreds.isEmpty()) {
@@ -419,6 +422,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
         assert shreds.isValid();
         oldViewProvider.performNonPhysically(new Runnable() {
+          @Override
           public void run() {
             //todo
             final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator());

@@ -73,27 +73,33 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public String getText() {
     return PsiNameHelper.getPresentableText(this);
   }
 
+  @Override
   public int getTextLength() {
     return getText().length();
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myCanonicalText;
@@ -102,6 +108,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private static class Resolver implements ResolveCache.PolyVariantResolver<ClsJavaCodeReferenceElementImpl> {
     public static final Resolver INSTANCE = new Resolver();
 
+    @Override
     public JavaResolveResult[] resolve(ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
       final JavaResolveResult resolveResult = ref.advancedResolveImpl();
       return resolveResult.getElement() == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
@@ -130,6 +137,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
@@ -137,6 +145,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return JavaResolveResult.EMPTY;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
@@ -144,6 +153,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return (JavaResolveResult[])results;
   }
 
+  @Override
   public PsiElement resolve() {
     return advancedResolve(false).getElement();
   }
@@ -188,34 +198,42 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return classes[0];
   }
 
+  @Override
   public void processVariants(PsiScopeProcessor processor) {
     throw new RuntimeException("Variants are not available for light references");
   }
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return null;
   }
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     return null;
   }
 
+  @Override
   public String getQualifiedName() {
     return getCanonicalText();
   }
 
+  @Override
   public String getReferenceName() {
     return PsiNameHelper.getShortClassName(myCanonicalText);
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     PsiClass aClass = (PsiClass)element;
@@ -223,23 +241,28 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
            || getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for references to compiled code");
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getCanonicalText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, JavaElementType.JAVA_CODE_REFERENCE);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceElement(this);
@@ -254,14 +277,17 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return "PsiJavaCodeReferenceElement:" + getText();
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     PsiType[] cachedTypes = myTypeParametersCachedTypes;
@@ -275,10 +301,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return cachedTypes;
   }
 
+  @Override
   public boolean isQualified() {
     return false;
   }
 
+  @Override
   public PsiElement getQualifier() {
     return null;
   }

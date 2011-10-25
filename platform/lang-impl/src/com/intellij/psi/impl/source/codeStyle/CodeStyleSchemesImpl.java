@@ -58,18 +58,22 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
+      @Override
       public CodeStyleSchemeImpl readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
 
+      @Override
       public Document writeScheme(final CodeStyleSchemeImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 
+      @Override
       public boolean shouldBeSaved(final CodeStyleSchemeImpl scheme) {
         return !scheme.isDefault();
       }
 
+      @Override
       public void initScheme(final CodeStyleSchemeImpl scheme) {
         scheme.init(CodeStyleSchemesImpl.this);
       }
@@ -82,21 +86,25 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     setCurrentScheme(getDefaultScheme());
   }
 
+  @Override
   public CodeStyleScheme[] getSchemes() {
     final Collection<CodeStyleScheme> schemes = mySchemesManager.getAllSchemes();
     return schemes.toArray(new CodeStyleScheme[schemes.size()]);
   }
 
+  @Override
   public CodeStyleScheme getCurrentScheme() {
     return mySchemesManager.getCurrentScheme();
   }
 
+  @Override
   public void setCurrentScheme(CodeStyleScheme scheme) {
     String schemeName = scheme == null ? null : scheme.getName();
     mySchemesManager.setCurrentSchemeName(schemeName);
     CURRENT_SCHEME_NAME = schemeName;
   }
 
+  @Override
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
     String name;
     if (preferredName == null) {
@@ -121,6 +129,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     return new CodeStyleSchemeImpl(name, false, parentScheme);
   }
 
+  @Override
   public void deleteScheme(CodeStyleScheme scheme) {
     if (scheme.isDefault()) {
       throw new IllegalArgumentException("Unable to delete default scheme!");
@@ -136,14 +145,17 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     mySchemesManager.removeScheme(scheme);
   }
 
+  @Override
   public CodeStyleScheme getDefaultScheme() {
     return findSchemeByName(DEFAULT_SCHEME_NAME);
   }
 
+  @Override
   public CodeStyleScheme findSchemeByName(String name) {
     return mySchemesManager.findSchemeByName(name);
   }
 
+  @Override
   public void addScheme(CodeStyleScheme scheme) {
     mySchemesManager.addNewScheme(scheme, true);
   }
@@ -152,6 +164,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     mySchemesManager.removeScheme(scheme);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     init();
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -167,15 +180,18 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     mySchemesManager.loadSchemes();
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{getDir(true), PathManager.getDefaultOptionsFile()};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return PsiBundle.message("codestyle.export.display.name");

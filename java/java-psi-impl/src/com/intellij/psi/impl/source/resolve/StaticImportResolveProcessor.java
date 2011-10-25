@@ -37,6 +37,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
     myName = myReference.getReferenceName();
   }
 
+  @Override
   public boolean execute(final PsiElement candidate, final ResolveState state) {
     if (candidate instanceof PsiMember && ((PsiModifierListOwner)candidate).hasModifierProperty(PsiModifier.STATIC)) {
       if (candidate instanceof PsiField) {
@@ -83,6 +84,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
     return Domination.EQUAL;
   }
 
+  @Override
   public String getName(final ResolveState state) {
     return myName;
   }

@@ -118,6 +118,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               psiMethods[random.nextInt(psiMethods.length)].delete();
             }

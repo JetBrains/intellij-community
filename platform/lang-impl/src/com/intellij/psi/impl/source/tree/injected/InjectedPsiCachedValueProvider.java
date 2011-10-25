@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
 */
 class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement> {
+  @Override
   public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement element) {
     PsiFile hostPsiFile = element.getContainingFile();
     if (hostPsiFile == null) return null;
@@ -66,6 +67,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
       myHostPsiFile = hostPsiFile;
     }
 
+    @Override
     public boolean process(PsiElement element, MultiHostInjector injector) {
       if (hostRegistrar == null) {
         hostRegistrar = new MultiHostRegistrarImpl(myProject, myHostPsiFile, element);

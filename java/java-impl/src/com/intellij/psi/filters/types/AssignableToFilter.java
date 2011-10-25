@@ -42,6 +42,7 @@ public class AssignableToFilter implements InitializableFilter{
 
   public AssignableToFilter(){}
 
+  @Override
   public void init(Object[] type){
     myFilter = new OrFilter();
     final List<ElementFilter> filters = new ArrayList<ElementFilter>();
@@ -61,10 +62,12 @@ public class AssignableToFilter implements InitializableFilter{
     myFilter = new OrFilter(filters.toArray(new ElementFilter[filters.size()]));
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(myType != null){
       if(element == null) return false;

@@ -56,11 +56,13 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     }
   }
 
+  @Override
   public void calcFindUsagesOptions(FindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
     calcFindUsagesOptions((T)options);
   }
 
+  @Override
   protected void doOKAction() {
     if (shouldDoOkAction()) {
       if (myIncludeOverloadedMethodsAvailable) {
@@ -73,6 +75,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     super.doOKAction();
   }
 
+  @Override
   protected void addUsagesOptions(JPanel optionsPanel) {
     super.addUsagesOptions(optionsPanel);
     if (myIncludeOverloadedMethodsAvailable) {
@@ -82,11 +85,13 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     }
   }
 
+  @Override
   protected boolean isInFileOnly() {
     return super.isInFileOnly() ||
            myPsiElement != null && PsiSearchHelper.SERVICE.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement)instanceof LocalSearchScope;
   }
 
+  @Override
   public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");
@@ -97,6 +102,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     return myPsiElement;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
   }

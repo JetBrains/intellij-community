@@ -45,10 +45,12 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     myFindVariableOptions = new JavaVariableFindUsagesOptions(project);
   }
 
+  @Override
   public boolean canFindUsages(@NotNull final PsiElement element) {
     return new JavaFindUsagesProvider().canFindUsagesFor(element);
   }
 
+  @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, final boolean forHighlightUsages) {
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);

@@ -41,10 +41,12 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     this(null, StringRef.fromString(packageName), compiled);
   }
 
+  @Override
   public String getPackageName() {
     return StringRef.toString(myPackageName);
   }
 
+  @Override
   public boolean isCompiled() {
     return myCompiled;
   }
@@ -53,6 +55,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     myPackageName = StringRef.fromString(packageName);
   }
 
+  @Override
   public IStubFileElementType getType() {
     return JavaStubElementTypes.JAVA_FILE;
   }
@@ -62,6 +65,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     return "PsiJavaFileStub [" + myPackageName + "]";
   }
 
+  @Override
   public PsiClass[] getClasses() {
     return getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
   }

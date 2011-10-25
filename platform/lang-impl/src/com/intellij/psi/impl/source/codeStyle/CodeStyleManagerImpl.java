@@ -69,16 +69,19 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException {
     return reformat(element, false);
   }
 
+  @Override
   @NotNull
   public PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
@@ -111,6 +114,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   }
 
+  @Override
   public PsiElement reformatRange(@NotNull PsiElement element,
                                   int startOffset,
                                   int endOffset,
@@ -118,6 +122,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return reformatRangeImpl(element, startOffset, endOffset, canChangeWhiteSpacesOnly);
   }
 
+  @Override
   public PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
     return reformatRangeImpl(element, startOffset, endOffset, false);
@@ -130,6 +135,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
 
+  @Override
   public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -231,6 +237,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
 
+  @Override
   public void reformatNewlyAddedElement(@NotNull final ASTNode parent, @NotNull final ASTNode addedElement) throws IncorrectOperationException {
 
     LOG.assertTrue(addedElement.getTreeParent() == parent, "addedElement must be added to parent");
@@ -259,8 +266,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     adjustLineIndent(containingFile, textRange);
   }
 
+  @Override
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
     return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
+      @Override
       public Integer compute() {
         return doAdjustLineIndentByOffset(file, offset);
       }
@@ -282,8 +291,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return bottomost;
   }
 
+  @Override
   public int adjustLineIndent(@NotNull final Document document, final int offset) {
     return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
+      @Override
       public Integer compute() {
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         documentManager.commitDocument(document);
@@ -315,6 +326,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }.perform(file, offset, null, offset);
   }
 
+  @Override
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
     new CodeStyleManagerRunnable<Object>(this) {
       @Override
@@ -325,6 +337,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }.perform(file, -1, rangeToAdjust, null);
   }
 
+  @Override
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
     return new CodeStyleManagerRunnable<String>(this) {
@@ -340,6 +353,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }.perform(file, offset, null, null);
   }
 
+  @Override
   @Nullable
   public String getLineIndent(@NotNull Document document, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -348,6 +362,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return getLineIndent(file, offset);
   }
 
+  @Override
   public boolean isLineToBeIndented(@NotNull PsiFile file, int offset) {
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return false;
@@ -594,6 +609,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return new Pair<PsiElement, CharTable>(elementAt, charTable);
   }
   
+  @Override
   public Indent getIndent(String text, FileType fileType) {
     int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
     int indenLevel = indent / IndentHelperImpl.INDENT_FACTOR;
@@ -601,6 +617,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return new IndentImpl(getSettings(), indenLevel, spaceCount, fileType);
   }
 
+  @Override
   public String fillIndent(Indent indent, FileType fileType) {
     IndentImpl indent1 = (IndentImpl)indent;
     int indentLevel = indent1.getIndentLevel();
@@ -625,6 +642,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return IndentHelperImpl.fillIndent(myProject, fileType, indentLevel * IndentHelperImpl.INDENT_FACTOR + spaceCount);
   }
 
+  @Override
   public Indent zeroIndent() {
     return new IndentImpl(getSettings(), 0, 0, null);
   }

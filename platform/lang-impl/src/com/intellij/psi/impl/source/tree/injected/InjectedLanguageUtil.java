@@ -52,6 +52,7 @@ public class InjectedLanguageUtil {
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
       }
     });
@@ -83,6 +84,7 @@ public class InjectedLanguageUtil {
     final PsiElement inTree = loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
     enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
           if (place.host == inTree) {
@@ -297,6 +299,7 @@ public class InjectedLanguageUtil {
   private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile hostFile, final int hostOffset, @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<PsiElement>();
     enumerate(element, hostFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
           TextRange hostRange = place.host.getTextRange();
@@ -347,6 +350,7 @@ public class InjectedLanguageUtil {
       final DocumentWindow[] stillInjectedDocument = {null};
       // it is here where the reparse happens and old file contents replaced
       enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
           PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
@@ -466,6 +470,7 @@ public class InjectedLanguageUtil {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         result.set(true);
       }

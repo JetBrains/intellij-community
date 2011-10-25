@@ -40,6 +40,7 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
   protected Module createModule(final String name) {
     final Module module = super.createModule(name);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();

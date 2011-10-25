@@ -33,6 +33,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     myInputIdMapping = new HashMap<Value, Object>(16, 0.98f);
   }
   
+  @Override
   public void addValue(int inputId, Value value) {
     final Object input = myInputIdMapping.get(value);
     if (input == null) {
@@ -53,10 +54,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
+  @Override
   public int size() {
     return myInputIdMapping.size();
   }
 
+  @Override
   public void removeAllValues(int inputId) {
     final List<Value> toRemove= new ArrayList<Value>();
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
@@ -70,6 +73,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
+  @Override
   public boolean removeValue(int inputId, Value value) {
     final Object input = myInputIdMapping.get(value);
     if (input == null) {
@@ -94,10 +98,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return true;
   }
 
+  @Override
   public Iterator<Value> getValueIterator() {
     return Collections.unmodifiableSet(myInputIdMapping.keySet()).iterator();
   }
 
+  @Override
   public List<Value> toValueList() {
     if (myInputIdMapping.isEmpty()) {
       return Collections.emptyList();
@@ -105,6 +111,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return new ArrayList<Value>(myInputIdMapping.keySet());
   }
 
+  @Override
   public int[] getInputIds(final Value value) {
     final Object input = myInputIdMapping.get(value);
     final int[] idSet;
@@ -120,6 +127,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return idSet;
   }
 
+  @Override
   public boolean isAssociated(final Value value, final int inputId) {
     final Object input = myInputIdMapping.get(value);
     if (input instanceof TIntHashSet) {
@@ -131,6 +139,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return false;
   }
 
+  @Override
   public IntIterator getInputIdsIterator(final Value value) {
     final Object input = myInputIdMapping.get(value);
     final IntIterator it;
@@ -146,6 +155,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return it;
   }
 
+  @Override
   public ValueContainerImpl<Value> clone() {
     try {
       final ValueContainerImpl clone = (ValueContainerImpl)super.clone();
@@ -158,14 +168,17 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   public static final IntIterator EMPTY_ITERATOR = new IntIterator() {
+    @Override
     public boolean hasNext() {
       return false;
     }
 
+    @Override
     public int next() {
       return 0;
     }
 
+    @Override
     public int size() {
       return 0;
     }
@@ -179,10 +192,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       myValue = value;
     }
 
+    @Override
     public boolean hasNext() {
       return !myValueRead;
     }
 
+    @Override
     public int next() {
       try {
         return myValue;
@@ -192,6 +207,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       }
     }
 
+    @Override
     public int size() {
       return 1;
     }
@@ -206,14 +222,17 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       mySize = set.size();
     }
 
+    @Override
     public boolean hasNext() {
       return mySetIterator.hasNext();
     }
 
+    @Override
     public int next() {
       return mySetIterator.next();
     }
 
+    @Override
     public int size() {
       return mySize;
     }
@@ -239,6 +258,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       super(initialCapacity, loadFactor);
     }
 
+    @Override
     public void compact() {
       if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
         super.compact();

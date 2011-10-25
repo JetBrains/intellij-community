@@ -30,6 +30,7 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
     return myDeclarationScope;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitParameter(this);
@@ -40,15 +41,18 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
     return "Light Parameter";
   }
 
+  @Override
   public boolean isVarArgs() {
     return myVarArgs;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;

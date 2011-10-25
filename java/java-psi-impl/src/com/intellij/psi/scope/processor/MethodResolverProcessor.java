@@ -42,6 +42,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
     super(place, resolvers, new SmartList<CandidateInfo>());
   }
 
+  @Override
   public void handleEvent(Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
       if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
@@ -49,6 +50,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
     super.handleEvent(event, associated);
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
   }

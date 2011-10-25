@@ -31,6 +31,7 @@ import java.util.List;
  * @author yole
  */
 public class JavaReferenceImporter implements ReferenceImporter {
+  @Override
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
     return autoImportReferenceAtCursor(editor, file, false);
   }

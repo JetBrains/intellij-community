@@ -33,6 +33,7 @@ public class ModifierListElement extends CompositeElement {
     super(Constants.MODIFIER_LIST);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (before == null){
       if (first == last && ElementType.KEYWORD_BIT_SET.contains(first.getElementType())){
@@ -44,6 +45,7 @@ public class ModifierListElement extends CompositeElement {
     return super.addInternal(first, last, anchor, before);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == JavaElementType.ANNOTATION) return ChildRole.ANNOTATION;

@@ -27,22 +27,27 @@ import com.intellij.util.ArrayUtil;
  * @author mike
  */
 class ReturnDocTagInfo implements JavadocTagInfo {
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public String getName() {
     return "return";
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     if (!(element instanceof PsiMethod)) return false;
     PsiMethod method = (PsiMethod)element;
@@ -51,6 +56,7 @@ class ReturnDocTagInfo implements JavadocTagInfo {
     return type != PsiType.VOID;
   }
 
+  @Override
   public boolean isInline() {
     return false;
   }

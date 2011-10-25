@@ -39,6 +39,7 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
     super(node);
   }
 
+  @Override
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, PsiSyntheticClass.class);
@@ -50,19 +51,23 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
     return cc != null ? cc : super.getContext();
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
+  @Override
   @NotNull
   public PsiCodeBlock getBody(){
     return (PsiCodeBlock)((CompositeElement)getNode()).findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClassInitializer(this);
@@ -76,11 +81,13 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
     return "PsiClassInitializer";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     return lastParent == null || PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
   }
 
+  @Override
   public Icon getElementIcon(int flags) {
     return ElementPresentationUtil.createLayeredIcon(PlatformIcons.CLASS_INITIALIZER, this, false);
   }

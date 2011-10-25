@@ -62,6 +62,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
                                   myParameterType.getCanonicalText() );
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.parameter.type.family");

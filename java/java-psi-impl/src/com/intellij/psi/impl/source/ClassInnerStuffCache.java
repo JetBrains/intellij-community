@@ -61,6 +61,7 @@ public class ClassInnerStuffCache {
       final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
       myConstructorsCache = cache = manager.createCachedValue(new CachedValueProvider<PsiMethod[]>() {
+        @Override
         public Result<PsiMethod[]> compute() {
           return Result.create(PsiImplUtil.getConstructors(myClass), dependencies);
         }
@@ -79,6 +80,7 @@ public class ClassInnerStuffCache {
       final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
       myFieldsCache = cache = manager.createCachedValue(new CachedValueProvider<PsiField[]>() {
+        @Override
         public Result<PsiField[]> compute() {
           return Result.create(getAllFields(), dependencies);
         }
@@ -96,6 +98,7 @@ public class ClassInnerStuffCache {
       final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
       myMethodsCache = cache = manager.createCachedValue(new CachedValueProvider<PsiMethod[]>() {
+        @Override
         public Result<PsiMethod[]> compute() {
           return Result.create(getAllMethods(), dependencies);
         }
@@ -113,6 +116,7 @@ public class ClassInnerStuffCache {
       final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
       myInnerClassesCache = cache = manager.createCachedValue(new CachedValueProvider<PsiClass[]>() {
+        @Override
         public Result<PsiClass[]> compute() {
           return Result.create(getAllInnerClasses(), dependencies);
         }
@@ -131,6 +135,7 @@ public class ClassInnerStuffCache {
         final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
         myFieldsMapCache = cache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiField>>() {
+          @Override
           public Result<Map<String, PsiField>> compute() {
             return Result.create(getFieldsMap(), dependencies);
           }
@@ -151,6 +156,7 @@ public class ClassInnerStuffCache {
         final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
         myMethodsMapCache = cache = manager.createCachedValue(new CachedValueProvider<Map<String, List<PsiMethod>>>() {
+          @Override
           public Result<Map<String, List<PsiMethod>>> compute() {
             return Result.create(getMethodsMap(), dependencies);
           }
@@ -177,6 +183,7 @@ public class ClassInnerStuffCache {
         final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
 
         myInnerClassesMapCache = cache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiClass>>() {
+          @Override
           public Result<Map<String, PsiClass>> compute() {
             return Result.create(getInnerClassesMap(), dependencies);
           }
@@ -262,6 +269,7 @@ public class ClassInnerStuffCache {
 
   private static class MyModificationTracker implements ModificationTracker {
     private long myCount = 0;
+    @Override
     public long getModificationCount() {
       return myCount;
     }

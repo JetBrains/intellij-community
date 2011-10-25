@@ -36,10 +36,12 @@ public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
     return ourInstance;
   }
 
+  @Override
   public StubIndexKey<String, PsiMethod> getKey() {
     return JavaStubIndexKeys.METHODS;
   }
 
+  @Override
   public Collection<PsiMethod> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }

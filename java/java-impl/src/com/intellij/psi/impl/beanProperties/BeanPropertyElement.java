@@ -55,59 +55,72 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
     return myMethod;
   }
 
+  @Override
   public PsiElement getNavigationElement() {
     return myMethod;
   }
 
+  @Override
   public PsiManager getManager() {
     return myMethod.getManager();
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return this;
   }
 
+  @Override
   @NonNls
   public String getName(PsiElement context) {
     return getName();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public void init(PsiElement element) {
 
   }
 
+  @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean flags) {
     return BeanProperty.ICON;
   }
 
+  @Override
   public PsiElement getParent() {
     return myMethod;
   }
 
+  @Override
   @Nullable
   public PsiMetaData getMetaData() {
     return this;
   }
 
+  @Override
   public String getTypeName() {
     return IdeBundle.message("bean.property");
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return getIcon(0);
   }
 
+  @Override
   public TextRange getTextRange() {
     return TextRange.from(0, 0);
   }

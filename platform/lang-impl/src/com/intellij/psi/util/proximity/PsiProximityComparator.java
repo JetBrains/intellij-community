@@ -54,6 +54,7 @@ public class PsiProximityComparator implements Comparator<Object> {
     myContext = context;
   }
 
+  @Override
   public int compare(final Object o1, final Object o2) {
     PsiElement element1 = o1 instanceof PsiElement ? (PsiElement)o1 : null;
     PsiElement element2 = o2 instanceof PsiElement ? (PsiElement)o2 : null;

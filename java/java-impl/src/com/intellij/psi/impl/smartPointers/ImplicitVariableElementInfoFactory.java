@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplicitVariableElementInfoFactory implements SmartPointerElementInfoFactory {
+  @Override
   @Nullable
   public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
     if (element instanceof ImplicitVariable && element.isValid()) {
@@ -46,17 +47,20 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
       myProject = project;
     }
 
+    @Override
     public PsiElement restoreElement() {
       PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
       if (psiIdentifier == null || psiIdentifier.isValid()) return myVar;
       return null;
     }
 
+    @Override
     @Nullable
     public Document getDocumentToSynchronize() {
       return null;
     }
 
+    @Override
     public void documentAndPsiInSync() {
     }
 

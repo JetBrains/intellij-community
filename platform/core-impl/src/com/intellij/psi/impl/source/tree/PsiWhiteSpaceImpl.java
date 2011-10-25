@@ -29,6 +29,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
     super(TokenType.WHITE_SPACE, text);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitWhiteSpace(this);
   }
@@ -37,6 +38,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
     return "PsiWhiteSpace";
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     PsiElement master = getNextSibling();

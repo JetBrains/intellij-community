@@ -183,6 +183,7 @@ public class ResolveClassTest extends ResolveTestCase {
   @SuppressWarnings({"ConstantConditions"})
   private void configureDependency() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
         Module module = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA);

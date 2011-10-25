@@ -28,6 +28,7 @@ public abstract class SimpleSmartExtensionPoint<T> extends SmartExtensionPoint<T
     super(explicitExtensions);
   }
 
+  @Override
   @NotNull
   protected T getExtension(@NotNull final T t) {
     return t;

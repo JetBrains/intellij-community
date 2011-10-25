@@ -36,6 +36,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     this(element, element.getIcon(0));
   }
 
+  @Override
   public Icon getIcon(boolean isOpen) {
     return myIcon;
   }
@@ -44,37 +45,45 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     return (T)myElementPointer.getElement();
   }
 
+  @Override
   @NotNull
   public String getText(UsageView view) {
     return myName;
   }
 
+  @Override
   public FileStatus getFileStatus() {
     return isValid() ? NavigationItemFileStatus.get(getElement()) : null;
   }
 
+  @Override
   public boolean isValid() {
     final T element = getElement();
     return element != null && element.isValid();
   }
 
+  @Override
   public void navigate(boolean focus) throws UnsupportedOperationException {
     if (canNavigate()) {
       getElement().navigate(focus);
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return isValid();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
+  @Override
   public void update() {
   }
 
+  @Override
   public int compareTo(final UsageGroup o) {
     String name;
     if (o instanceof NamedPresentably) {
@@ -111,6 +120,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     }
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return myName;

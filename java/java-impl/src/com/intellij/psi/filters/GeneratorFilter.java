@@ -37,6 +37,7 @@ public class GeneratorFilter implements ElementFilter{
     myGetter = getter;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     final ElementFilter filter = getFilter();
     return filter == null || filter.isClassAcceptable(hintClass);
@@ -60,6 +61,7 @@ public class GeneratorFilter implements ElementFilter{
     return filter;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element == null) return false;
     final ElementFilter filter = getFilter(context);

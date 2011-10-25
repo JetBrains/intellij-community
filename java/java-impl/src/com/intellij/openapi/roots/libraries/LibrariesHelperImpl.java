@@ -45,11 +45,13 @@ public class LibrariesHelperImpl extends LibrariesHelper {
     return null;
   }
 
+  @Override
   public boolean isClassAvailableInLibrary(Library library, String fqn) {
     final String[] urls = library.getUrls(OrderRootType.CLASSES);
     return isClassAvailable(urls, fqn);
   }
 
+  @Override
   public boolean isClassAvailable(final String[] urls, String fqn) {
     for (String url : urls) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);

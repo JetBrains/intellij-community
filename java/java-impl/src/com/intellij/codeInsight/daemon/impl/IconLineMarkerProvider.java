@@ -55,6 +55,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   //TODO: remove old unused icons from the cache
   private final HashMap<String, Pair<Long, Icon>> iconsCache = new HashMap<String, Pair<Long, Icon>>();
 
+  @Override
   public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
     if (! DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER) return null;
 
@@ -151,6 +152,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
         if (icon != null) {
           final Ref<VirtualFile> f = Ref.create(file);
           final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
+            @Override
             public void navigate(MouseEvent e, PsiElement elt) {
               FileEditorManager.getInstance(project).openFile(f.get(), true);
             }
@@ -168,6 +170,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     return extension != null && ICON_EXTS.contains(extension.toLowerCase());
   }
 
+  @Override
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
   }
 

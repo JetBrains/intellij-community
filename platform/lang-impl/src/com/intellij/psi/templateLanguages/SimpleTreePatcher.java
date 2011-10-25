@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.CharTable;
 
 public class SimpleTreePatcher implements TreePatcher {
+  @Override
   public void insert(CompositeElement parent, TreeElement anchorBefore, OuterLanguageElement toInsert) {
     if(anchorBefore != null) {
       anchorBefore.rawInsertBeforeMe((TreeElement)toInsert);
@@ -29,6 +30,7 @@ public class SimpleTreePatcher implements TreePatcher {
     else parent.rawAddChildren((TreeElement)toInsert);
   }
 
+  @Override
   public LeafElement split(LeafElement leaf, int offset, final CharTable table) {
     final CharSequence chars = leaf.getChars();
     final LeafElement leftPart = ASTFactory.leaf(leaf.getElementType(), table.intern(chars, 0, offset));

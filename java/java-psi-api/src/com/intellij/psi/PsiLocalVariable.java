@@ -36,6 +36,7 @@ public interface PsiLocalVariable extends PsiVariable {
   /**
    * {@inheritDoc}
    */
+  @Override
   @NotNull
   PsiTypeElement getTypeElement();
 }

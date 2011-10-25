@@ -157,6 +157,7 @@ public abstract class PsiAnchor {
       myLanguage = language;
     }
 
+    @Override
     @Nullable
     public PsiElement retrieve() {
       PsiFile psiFile = getFile();
@@ -174,14 +175,17 @@ public abstract class PsiAnchor {
       return element;
     }
 
+    @Override
     public PsiFile getFile() {
       return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
     }
 
+    @Override
     public int getStartOffset() {
       return myStartOffset;
     }
 
+    @Override
     public int getEndOffset() {
       return myEndOffset;
     }
@@ -215,18 +219,22 @@ public abstract class PsiAnchor {
       myElement = element;
     }
 
+    @Override
     public PsiElement retrieve() {
       return myElement;
     }
 
+    @Override
     public PsiFile getFile() {
       return myElement.getContainingFile();
     }
 
+    @Override
     public int getStartOffset() {
       return myElement.getTextRange().getStartOffset();
     }
 
+    @Override
     public int getEndOffset() {
       return myElement.getTextRange().getEndOffset();
     }
@@ -255,18 +263,22 @@ public abstract class PsiAnchor {
       myProject = project;
     }
 
+    @Override
     public PsiElement retrieve() {
       return getFile();
     }
 
+    @Override
     public PsiFile getFile() {
       return SelfElementInfo.restoreFileFromVirtual(myFile, myProject);
     }
 
+    @Override
     public int getStartOffset() {
       return 0;
     }
 
+    @Override
     public int getEndOffset() {
       return (int)myFile.getLength();
     }
@@ -290,14 +302,17 @@ public abstract class PsiAnchor {
       assert file.isDirectory() : file;
     }
 
+    @Override
     public PsiElement retrieve() {
       return SelfElementInfo.restoreDirectoryFromVirtual(myFile, myProject);
     }
 
+    @Override
     public PsiFile getFile() {
       return null;
     }
 
+    @Override
     public int getEndOffset() {
       return -1;
     }
@@ -353,6 +368,7 @@ public abstract class PsiAnchor {
       myIndex = index;
     }
 
+    @Override
     @Nullable
     public PsiFile getFile() {
       if (myProject.isDisposed() || !myVirtualFile.isValid()) {
@@ -368,8 +384,10 @@ public abstract class PsiAnchor {
       return file.getViewProvider().getPsi(myLanguage);
     }
 
+    @Override
     public PsiElement retrieve() {
       return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
+        @Override
         public PsiElement compute() {
           return restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType);
         }
@@ -406,12 +424,14 @@ public abstract class PsiAnchor {
              '}';
     }
 
+    @Override
     public int getStartOffset() {
       final PsiElement resolved = retrieve();
       if (resolved == null) throw new PsiInvalidElementAccessException(null);
       return resolved.getTextRange().getStartOffset();
     }
 
+    @Override
     public int getEndOffset() {
       final PsiElement resolved = retrieve();
       if (resolved == null) throw new PsiInvalidElementAccessException(null);

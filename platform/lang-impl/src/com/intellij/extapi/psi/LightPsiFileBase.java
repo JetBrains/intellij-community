@@ -29,10 +29,12 @@ public abstract class LightPsiFileBase extends LightPsiFileImpl {
     super(provider, language);
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }

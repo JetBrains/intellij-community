@@ -93,6 +93,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     mySyncEndOffset = range.getEndOffset();
   }
 
+  @Override
   public Document getDocumentToSynchronize() {
     RangeMarker marker = getMarker();
     if (marker != null) {
@@ -158,9 +159,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   // commit
+  @Override
   public void documentAndPsiInSync() {
   }
 
+  @Override
   public PsiElement restoreElement() {
     if (!mySyncMarkerIsValid) return null;
     PsiFile file = restoreFile();
@@ -213,6 +216,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     if (virtualFile == null) return null;
 
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
       public PsiFile compute() {
         VirtualFile child;
         if (virtualFile.isValid()) {
@@ -237,6 +241,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     if (virtualFile == null) return null;
 
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+      @Override
       public PsiDirectory compute() {
         VirtualFile child;
         if (virtualFile.isValid()) {

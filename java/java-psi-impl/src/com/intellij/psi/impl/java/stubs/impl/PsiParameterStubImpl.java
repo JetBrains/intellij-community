@@ -47,16 +47,19 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     myIsEllipsis = isEllipsis;
   }
 
+  @Override
   public boolean isParameterTypeEllipsis() {
     return myIsEllipsis;
   }
 
+  @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
     if (!doResolve) return myType;
     return PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myType);
   }
 
+  @Override
   public PsiModifierListStub getModList() {
     for (StubElement child : getChildrenStubs()) {
       if (child instanceof PsiModifierListStub) {
@@ -66,6 +69,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     return null;
   }
 
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }

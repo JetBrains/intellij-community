@@ -60,29 +60,35 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     myAnnotations = annotations;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message(myMemberType == PropertyMemberType.FIELD ? "create.field.text":"create.property.text", myName);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     applyFixInner(project);
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     applyFixInner(project);
   }
@@ -92,6 +98,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     final Editor editor = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass.getLBrace());
     if (editor != null) {
       new WriteCommandAction(project, file) {
+        @Override
         protected void run(Result result) throws Throwable {
           generateMembers(project, editor, file);
         }
@@ -112,6 +119,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
       final PsiElement scope = prototypes.get(0).getPsiMember().getContext();
       assert scope != null;
       final Expression expression = new EmptyExpression() {
+        @Override
         public com.intellij.codeInsight.template.Result calculateResult(final ExpressionContext context) {
           return new TextResult(myType.getCanonicalText());
         }
@@ -138,6 +146,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

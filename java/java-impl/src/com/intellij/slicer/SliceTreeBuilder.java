@@ -37,6 +37,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public volatile boolean analysisInProgress;
 
   public static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = new Comparator<NodeDescriptor>() {
+    @Override
     public int compare(NodeDescriptor o1, NodeDescriptor o2) {
       if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
         return AlphaComparator.INSTANCE.compare(o1, o2);
@@ -74,6 +75,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     return (SliceNode)getTreeStructure().getRootElement();
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return false;
   }
@@ -81,6 +83,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public void switchToSplittedNodes(final AbstractTreeStructure treeStructure) {
     analysisInProgress = true;
     SliceLeafAnalyzer.startAnalyzeValues(getTreeStructure(), new Runnable(){
+      @Override
       public void run() {
         analysisInProgress = false;
       }
@@ -91,6 +94,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public void switchToLeafNulls() {
     analysisInProgress = true;
     SliceNullnessAnalyzer.startAnalyzeNullness(getTreeStructure(), new Runnable(){
+      @Override
       public void run() {
         analysisInProgress = false;
       }

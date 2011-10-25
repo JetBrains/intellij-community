@@ -90,6 +90,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return myNode.getTreeParent().getElementType() == JavaElementType.SWITCH_STATEMENT;
   }
 
+  @Override
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
     Alignment childAlignment = createChildAlignment();
@@ -179,6 +180,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                     final Wrap childWrap) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap) {
+      @Override
       @NotNull
       public ChildAttributes getChildAttributes(final int newChildIndex) {
         IElementType prevElementType = null;

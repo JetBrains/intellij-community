@@ -24,12 +24,14 @@ import com.intellij.util.ReflectionCache;
  * @author dsl
  */
 public class TypeCodeFragmentIsVoidEnabledFilter implements ElementFilter {
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     return context instanceof PsiTypeCodeFragment &&
             ((PsiTypeCodeFragment)context).isVoidValid();
   }
 
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return ReflectionCache.isAssignable(hintClass, PsiTypeCodeFragment.class);
   }

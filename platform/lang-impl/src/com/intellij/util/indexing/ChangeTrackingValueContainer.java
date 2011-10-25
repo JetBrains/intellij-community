@@ -55,6 +55,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   //  System.out.println("*[" + (myMerged != null ? myMerged.dumpInputIdMapping() : "null") + "] ");
   //}
 
+  @Override
   public void addValue(int inputId, Value value) {
     if (myMerged != null) {
       myMerged.addValue(inputId, value);
@@ -64,6 +65,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     }
   }
 
+  @Override
   public void removeAllValues(int inputId) {
     if (myMerged != null) {
       myMerged.removeAllValues(inputId);
@@ -73,6 +75,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     myInvalidated.add(inputId);
   }
 
+  @Override
   public boolean removeValue(int inputId, Value value) {
     if (myMerged != null) {
       myMerged.removeValue(inputId, value);
@@ -85,26 +88,32 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     return true;
   }
 
+  @Override
   public int size() {
     return getMergedData().size();
   }
 
+  @Override
   public Iterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
   }
 
+  @Override
   public List<Value> toValueList() {
     return getMergedData().toValueList();
   }
 
+  @Override
   public int[] getInputIds(final Value value) {
     return getMergedData().getInputIds(value);
   }
 
+  @Override
   public boolean isAssociated(final Value value, final int inputId) {
     return getMergedData().isAssociated(value, inputId);
   }
 
+  @Override
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);
   }
@@ -125,11 +134,13 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       final ValueContainer<Value> fromDisk = myInitializer.compute();
 
       final ContainerAction<Value> addAction = new ContainerAction<Value>() {
+        @Override
         public void perform(final int id, final Value value) {
           newMerged.addValue(id, value);
         }
       };
       final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
+        @Override
         public void perform(final int id, final Value value) {
           newMerged.removeValue(id, value);
         }
@@ -137,6 +148,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
       fromDisk.forEach(addAction);
       myInvalidated.forEach(new TIntProcedure() {
+        @Override
         public boolean execute(int inputId) {
           newMerged.removeAllValues(inputId);
           return true;

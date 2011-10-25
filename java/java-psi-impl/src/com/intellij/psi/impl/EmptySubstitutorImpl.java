@@ -25,36 +25,44 @@ import java.util.Map;
  *  @author dsl
  */
 public final class EmptySubstitutorImpl extends EmptySubstitutor {
+  @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter){
     return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }
 
+  @Override
   public PsiType substitute(PsiType type){
     return type;
   }
 
+  @Override
   public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
     return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }
 
+  @Override
   public PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping){
     return new PsiSubstitutorImpl(classParameter, mapping);
   }
 
+  @Override
   public PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings){
     if(!parentClass.hasTypeParameters()) return this;
     return new PsiSubstitutorImpl(parentClass, mappings);
   }
 
+  @Override
   public PsiSubstitutor putAll(PsiSubstitutor another) {
     return another;
   }
 
+  @Override
   @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return Collections.emptyMap();
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }

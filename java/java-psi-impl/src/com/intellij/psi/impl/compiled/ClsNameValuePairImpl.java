@@ -37,6 +37,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     myMemberValue = ClsParsingUtil.getMemberValue(value, this);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     if (myNameIdentifier.getText() != null) {
       myNameIdentifier.appendMirrorText(0, buffer);
@@ -45,6 +46,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     ((ClsElementImpl)myMemberValue).appendMirrorText(0, buffer);
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -56,15 +58,18 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     ((ClsElementImpl)getValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myNameIdentifier, myMemberValue};
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitNameValuePair(this);
@@ -74,18 +79,22 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     }
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
 
+  @Override
   public String getName() {
     return myNameIdentifier.getText();
   }
 
+  @Override
   public PsiAnnotationMemberValue getValue() {
     return myMemberValue;
   }
 
+  @Override
   @NotNull
   public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);

@@ -49,6 +49,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     super(aClassToExtend, parameterClass, true);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.parameter.class.family");
@@ -77,6 +78,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           invokeImpl(myClass);
         }
@@ -89,9 +91,11 @@ public class ChangeParameterClassFix extends ExtendsListFix {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
+            @Override
             public void run() {
               Collection<PsiMethodMember> members =
                 ContainerUtil.map2List(toImplement, new Function<CandidateInfo, PsiMethodMember>() {
+                  @Override
                   public PsiMethodMember fun(final CandidateInfo s) {
                     return new PsiMethodMember(s);
                   }
@@ -141,6 +145,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -39,6 +39,7 @@ public class AnnotationParameterFilter implements ElementFilter{
     myParameterName = parameterName;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     final PsiElement parent = ((PsiElement)element).getParent();
     if (parent instanceof PsiNameValuePair) {
@@ -59,6 +60,7 @@ public class AnnotationParameterFilter implements ElementFilter{
     return false;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return ReflectionCache.isAssignable(myClass, hintClass);
   }

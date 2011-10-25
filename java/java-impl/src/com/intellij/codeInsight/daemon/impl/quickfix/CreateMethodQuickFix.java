@@ -45,6 +45,7 @@ public class CreateMethodQuickFix implements LocalQuickFix {
     myBody = body;
   }
 
+  @Override
   @NotNull
   public String getName() {
 
@@ -54,17 +55,20 @@ public class CreateMethodQuickFix implements LocalQuickFix {
     return QuickFixBundle.message("create.method.from.usage.text", signature);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
       PsiMethod method = createMethod(project);
     List<Pair<PsiExpression, PsiType>> arguments =
       ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
+        @Override
         public Pair<PsiExpression, PsiType> fun(PsiParameter psiParameter) {
           return Pair.create(null, psiParameter.getType());
         }

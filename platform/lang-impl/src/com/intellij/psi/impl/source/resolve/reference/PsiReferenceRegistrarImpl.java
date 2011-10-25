@@ -74,6 +74,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     registerReferenceProvider(PlatformPatterns.psiElement(scope).and(new FilterPattern(elementFilter)), provider, priority);
   }
 
+  @Override
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
                                                                @NotNull PsiReferenceProvider provider,
                                                                double priority) {
@@ -138,6 +139,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
     if (providerBinding == null) {
       providerBinding = ConcurrencyUtil.cacheOrGet(myNamedBindingsMap, scopeClass, new NamedObjectProviderBinding() {
+        @Override
         protected String getName(final PsiElement position) {
           return nameCondition.getPropertyValue(position);
         }

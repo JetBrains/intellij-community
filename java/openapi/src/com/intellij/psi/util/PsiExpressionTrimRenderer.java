@@ -221,6 +221,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   public static class RenderFunction implements Function<PsiExpression, String> {
+    @Override
     public String fun(PsiExpression psiExpression) {
       return render(psiExpression);
     }

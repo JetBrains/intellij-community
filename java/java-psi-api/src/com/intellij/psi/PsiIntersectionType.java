@@ -78,14 +78,17 @@ public class PsiIntersectionType extends PsiType {
     return myConjuncts;
   }
 
+  @Override
   public String getPresentableText() {
     return myConjuncts[0].getPresentableText();
   }
 
+  @Override
   public String getCanonicalText() {
     return myConjuncts[0].getCanonicalText();
   }
 
+  @Override
   public String getInternalCanonicalText() {
     StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < myConjuncts.length; i++) {
@@ -95,6 +98,7 @@ public class PsiIntersectionType extends PsiType {
     return buffer.toString();
   }
 
+  @Override
   public boolean isValid() {
     for (PsiType conjunct : myConjuncts) {
       if (!conjunct.isValid()) return false;
@@ -102,18 +106,22 @@ public class PsiIntersectionType extends PsiType {
     return true;
   }
 
+  @Override
   public boolean equalsToText(String text) {
     return false;
   }
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return myConjuncts[0].accept(visitor);
   }
 
+  @Override
   public GlobalSearchScope getResolveScope() {
     return myConjuncts[0].getResolveScope();
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     return myConjuncts;

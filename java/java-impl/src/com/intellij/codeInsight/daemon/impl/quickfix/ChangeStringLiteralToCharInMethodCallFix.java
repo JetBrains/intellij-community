@@ -41,6 +41,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     myCall = methodCall;
   }
 
+  @Override
   @NotNull
   public String getText() {
     final String convertedValue = convertedValue();
@@ -49,15 +50,18 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
                                   quote(convertedValue, ! isString), isString ? PsiType.CHAR.getCanonicalText() : "String");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.single.character.string.to.char.literal.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myCall.isValid() && myLiteral.isValid() && myCall.getManager().isInProject(myCall);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -71,6 +75,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

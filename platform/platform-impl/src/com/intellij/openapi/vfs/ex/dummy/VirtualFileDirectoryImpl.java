@@ -32,32 +32,39 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
     super(fileSystem, parent, name);
   }
 
+  @Override
   public boolean isDirectory() {
     return true;
   }
 
+  @Override
   public long getLength() {
     return 0;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new IOException(VfsBundle.message("file.write.error", getUrl()));
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
+  @Override
   public long getModificationStamp() {
     return -1;
   }

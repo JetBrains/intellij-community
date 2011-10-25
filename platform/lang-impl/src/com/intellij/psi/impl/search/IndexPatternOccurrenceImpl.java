@@ -38,16 +38,19 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
     myPattern = pattern;
   }
 
+  @Override
   @NotNull
   public PsiFile getFile() {
     return myFile;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
+  @Override
   @NotNull
   public IndexPattern getPattern() {
     return myPattern;

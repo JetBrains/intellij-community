@@ -64,6 +64,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     return myType;
   }
 
+  @Override
   @NotNull
   public String getLookupString() {
     return myPresentableText;

@@ -32,6 +32,7 @@ public class JDClassComment extends JDParamListOwnerComment {
   private ArrayList authorsList;
   private String version;
 
+  @Override
   protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
     super.generateSpecial(prefix, sb);
     if (!isNull(authorsList)) {

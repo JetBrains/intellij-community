@@ -43,20 +43,24 @@ public class SliceDereferenceUsage extends SliceUsage {
     final UsagePresentation presentation = super.getPresentation();
 
     return new UsagePresentation() {
+      @Override
       @NotNull
       public TextChunk[] getText() {
         return presentation.getText();
       }
 
+      @Override
       @NotNull
       public String getPlainText() {
         return presentation.getPlainText();
       }
 
+      @Override
       public Icon getIcon() {
         return presentation.getIcon();
       }
 
+      @Override
       public String getTooltipText() {
         return "Variable dereferenced";
       }

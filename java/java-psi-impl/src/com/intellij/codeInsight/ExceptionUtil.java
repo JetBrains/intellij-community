@@ -337,6 +337,7 @@ public class ExceptionUtil {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
     final PsiSubstitutor substitutor = ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
+      @Override
       public PsiSubstitutor compute() {
         return result.getSubstitutor();
       }
@@ -447,6 +448,7 @@ public class ExceptionUtil {
     if (aClass == null) return false;
     final PsiClass runtimeExceptionClass = ApplicationManager.getApplication().runReadAction(
         new NullableComputable<PsiClass>() {
+          @Override
           public PsiClass compute() {
             return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.RuntimeException", searchScope);
           }
@@ -459,6 +461,7 @@ public class ExceptionUtil {
 
     final PsiClass errorClass = ApplicationManager.getApplication().runReadAction(
       new NullableComputable<PsiClass>() {
+        @Override
         public PsiClass compute() {
           return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Error", searchScope);
         }

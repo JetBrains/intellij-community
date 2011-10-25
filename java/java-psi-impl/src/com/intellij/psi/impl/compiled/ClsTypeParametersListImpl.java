@@ -37,6 +37,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
     super(stub);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     final PsiTypeParameter[] params = getTypeParameters();
     if (params.length != 0) {
@@ -50,6 +51,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -64,6 +66,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
   }
 
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeParameterList(this);
@@ -73,10 +76,12 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
     }
   }
 
+  @Override
   public PsiTypeParameter[] getTypeParameters() {
     return getStub().getChildrenByType(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.ARRAY_FACTORY);
   }
 
+  @Override
   public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
     LOG.assertTrue(typeParameter.getParent() == this);
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);

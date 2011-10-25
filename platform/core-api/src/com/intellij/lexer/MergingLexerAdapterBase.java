@@ -28,31 +28,37 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     myMergeFunction = mergeFunction;
   }
 
+  @Override
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     myTokenType = null;
   }
 
+  @Override
   public int getState(){
     locateToken();
     return myState;
   }
 
+  @Override
   public IElementType getTokenType(){
     locateToken();
     return myTokenType;
   }
 
+  @Override
   public int getTokenStart(){
     locateToken();
     return myTokenStart;
   }
 
+  @Override
   public int getTokenEnd(){
     locateToken();
     return super.getTokenStart();
   }
 
+  @Override
   public void advance(){
     myTokenType = null;
   }
@@ -75,6 +81,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     return getDelegate();
   }
 
+  @Override
   public void restore(LexerPosition position) {
     MyLexerPosition pos = (MyLexerPosition)position;
 
@@ -84,6 +91,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     myState = pos.getOldState();
   }
 
+  @Override
   public LexerPosition getCurrentPosition() {
     return new MyLexerPosition(myTokenStart, myTokenType, getDelegate().getCurrentPosition(), myState);
   }
@@ -101,10 +109,12 @@ public class MergingLexerAdapterBase extends DelegateLexer {
       myOldState = oldState;
     }
 
+    @Override
     public int getOffset() {
       return myOffset;
     }
 
+    @Override
     public int getState() {
       return myOriginalPosition.getState();
     }

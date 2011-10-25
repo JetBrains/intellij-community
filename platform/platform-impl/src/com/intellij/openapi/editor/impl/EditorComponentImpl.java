@@ -53,6 +53,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   }
 
 
+  @Override
   public Object getData(String dataId) {
     if (myEditor.isRendererMode()) return null;
 
@@ -90,6 +91,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }
 
+  @Override
   protected void processInputMethodEvent(InputMethodEvent e) {
     super.processInputMethodEvent(e);
     if (!e.isConsumed()) {
@@ -106,6 +108,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     }
   }
 
+  @Override
   public ActionCallback type(final String text) {
     final ActionCallback result = new ActionCallback();
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -117,10 +120,12 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     return result;
   }
 
+  @Override
   public InputMethodRequests getInputMethodRequests() {
     return IdeEventQueue.getInstance().isInputMethodEnabled() ? myEditor.getInputMethodRequests() : null;
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
@@ -144,10 +149,12 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   }
 
   //--implementation of Scrollable interface--------------------------------------
+  @Override
   public Dimension getPreferredScrollableViewportSize() {
     return myEditor.getPreferredSize();
   }
 
+  @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.VERTICAL) {
       return myEditor.getLineHeight();
@@ -157,6 +164,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     }
   }
 
+  @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.VERTICAL) {
       int lineHeight = myEditor.getLineHeight();
@@ -174,14 +182,17 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     }
   }
 
+  @Override
   public boolean getScrollableTracksViewportWidth() {
     return getParent()instanceof JViewport && getParent().getWidth() > getPreferredSize().width;
   }
 
+  @Override
   public boolean getScrollableTracksViewportHeight() {
     return getParent()instanceof JViewport && getParent().getHeight() > getPreferredSize().height;
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     myEditor.putInfo(info);
   }

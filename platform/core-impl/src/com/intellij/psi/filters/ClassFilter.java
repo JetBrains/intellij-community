@@ -40,6 +40,7 @@ public class ClassFilter implements ElementFilter{
     myAcceptableFlag = acceptableFlag;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return myAcceptableFlag ? filterMatches(hintClass) : !filterMatches(hintClass);
   }
@@ -48,6 +49,7 @@ public class ClassFilter implements ElementFilter{
     return ReflectionCache.isAssignable(myFilter, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element == null){
       return false;

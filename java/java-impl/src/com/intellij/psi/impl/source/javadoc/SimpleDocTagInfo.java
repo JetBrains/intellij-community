@@ -40,10 +40,12 @@ class SimpleDocTagInfo implements JavadocTagInfo {
     myLanguageLevel = level;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     if (PsiUtil.getLanguageLevel(element).compareTo(myLanguageLevel) < 0) {
       return false;
@@ -52,18 +54,22 @@ class SimpleDocTagInfo implements JavadocTagInfo {
     return myContext.isInstance(element);
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public boolean isInline() {
     return myInline;
   }

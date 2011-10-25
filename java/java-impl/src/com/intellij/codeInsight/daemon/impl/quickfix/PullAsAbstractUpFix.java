@@ -45,11 +45,13 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     myName = name;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Pull up";

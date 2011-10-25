@@ -151,11 +151,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   private static final Key<Reference<SmartPsiElementPointer>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
+  @Override
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
     PsiFile containingFile = element.getContainingFile();
     return createSmartPsiElementPointer(element, containingFile);
   }
+  @Override
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
@@ -214,6 +216,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
 
+  @Override
   @NotNull
   @Deprecated
   public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {

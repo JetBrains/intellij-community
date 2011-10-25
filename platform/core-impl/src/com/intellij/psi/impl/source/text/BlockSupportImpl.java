@@ -54,12 +54,14 @@ public class BlockSupportImpl extends BlockSupport {
 
   public BlockSupportImpl(Project project) {
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+      @Override
       public void updateStarted(final Document doc) {
         doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
       }
     });
   }
 
+  @Override
   public void reparseRange(PsiFile file, int startOffset, int endOffset, CharSequence newTextS) throws IncorrectOperationException {
     LOG.assertTrue(file.isValid());
     final PsiFileImpl psiFile = (PsiFileImpl)file;
@@ -69,6 +71,7 @@ public class BlockSupportImpl extends BlockSupport {
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
   }
 
+  @Override
   @NotNull
   public DiffLog reparseRange(@NotNull final PsiFile file,
                               final int startOffset,

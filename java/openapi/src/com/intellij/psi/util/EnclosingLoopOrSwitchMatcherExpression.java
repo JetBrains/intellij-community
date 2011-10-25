@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 public class EnclosingLoopOrSwitchMatcherExpression implements PsiMatcherExpression {
   public static final PsiMatcherExpression INSTANCE = new EnclosingLoopOrSwitchMatcherExpression();
 
+  @Override
   public Boolean match(PsiElement element) {
     if (element instanceof PsiForStatement) return Boolean.TRUE;
     if (element instanceof PsiForeachStatement) return Boolean.TRUE;

@@ -28,10 +28,12 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
     super(Constants.IDENTIFIER, text);
   }
 
+  @Override
   public IElementType getTokenType() {
     return JavaTokenType.IDENTIFIER;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitIdentifier(this);

@@ -51,6 +51,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   public static final int FLAGS_LOCKED = 0x800;
   private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = new NullableFunction<ElementIconRequest, Icon>() {
+    @Override
     public Icon fun(ElementIconRequest request) {
       final PsiElement element = request.getElement();
       if (element == null || !element.isValid()) return null;
@@ -76,6 +77,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
   };
 
+  @Override
   @Nullable
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;

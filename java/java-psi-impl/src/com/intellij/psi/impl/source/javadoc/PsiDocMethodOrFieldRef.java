@@ -52,6 +52,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     super(DOC_METHOD_OR_FIELD_REF);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocTagValue(this);
@@ -61,6 +62,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiClass scope = getScope();
     final PsiElement element = getNameElement();
@@ -118,6 +120,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       if (!method.getName().equals(name) ||
           (methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY)))) continue;
       return new MyReference(method) {
+        @Override
         @NotNull
         public PsiElement[] getVariants() {
           final List<PsiMethod> lst = new ArrayList<PsiMethod>();
@@ -146,6 +149,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return result.toArray(new PsiMethod[result.size()]);
   }
 
+  @Override
   public int getTextOffset() {
     final PsiElement element = getNameElement();
     return element != null ? element.getTextRange().getStartOffset() : getTextRange().getEndOffset();
@@ -217,10 +221,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       myReferredElement = referredElement;
     }
 
+    @Override
     public PsiElement resolve() {
       return myReferredElement;
     }
 
+    @Override
     public void processVariants(PsiScopeProcessor processor) {
       for (final PsiElement element : getVariants()) {
         if (!processor.execute(element, ResolveState.initial())) {
@@ -229,18 +235,21 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
 
+    @Override
     @NotNull
     public JavaResolveResult advancedResolve(boolean incompleteCode) {
       return myReferredElement == null ? JavaResolveResult.EMPTY
                                   : new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY);
     }
 
+    @Override
     @NotNull
     public JavaResolveResult[] multiResolve(boolean incompleteCode) {
       return myReferredElement == null ? JavaResolveResult.EMPTY_ARRAY
                                   : new JavaResolveResult[]{new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY)};
     }
 
+    @Override
     @NotNull
     public PsiElement[] getVariants(){
       final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
@@ -252,10 +261,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return vars.toArray(new PsiModifierListOwner[vars.size()]);
     }
 
+    @Override
     public boolean isSoft(){
       return false;
     }
 
+    @Override
     @NotNull
     public String getCanonicalText() {
       final PsiElement nameElement = getNameElement();
@@ -263,6 +274,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return nameElement.getText();
     }
 
+    @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       final PsiElement nameElement = getNameElement();
       assert nameElement != null;
@@ -273,6 +285,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return SourceTreeToPsiMap.treeToPsiNotNull(newToken);
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       if (isReferenceTo(element)) return PsiDocMethodOrFieldRef.this;
       final PsiElement nameElement = getNameElement();
@@ -355,10 +368,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return replace(ref);
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element) {
       return getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @Override
     public TextRange getRangeInElement() {
       final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
       if (sharp == null) return new TextRange(0, getTextLength());
@@ -383,6 +398,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return new TextRange(getTextLength(), getTextLength());
     }
 
+    @Override
     public PsiElement getElement() {
       return PsiDocMethodOrFieldRef.this;
     }

@@ -69,6 +69,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     putAllInternal(parentClass, mappings);
   }
 
+  @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter) {
     if (containsInMap(typeParameter)) {
       return getFromMap(typeParameter);
@@ -90,12 +91,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap.get(typeParameter);
   }
 
+  @Override
   public PsiType substitute(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myAddingBoundsSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type);
   }
 
+  @Override
   public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
     return addBounds(substitute(typeParameter), typeParameter);
   }
@@ -226,6 +229,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
     private final SubstituteKind myKind;
 
+    @Override
     public PsiType visitClassType(PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
@@ -328,14 +332,17 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
     if (substituted == null) {
       return original.accept(new PsiTypeVisitor<PsiType>() {
+        @Override
         public PsiType visitArrayType(PsiArrayType arrayType) {
           return new PsiArrayType(arrayType.getComponentType().accept(this));
         }
 
+        @Override
         public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
           return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
         }
 
+        @Override
         public PsiType visitClassType(PsiClassType classType) {
           PsiClass aClass = classType.resolve();
           if (aClass != null) {
@@ -351,6 +358,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
 
+        @Override
         public PsiType visitType(PsiType type) {
           LOG.error(type.getInternalCanonicalText());
           return null;
@@ -365,6 +373,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(mySubstitutionMap);
   }
 
+  @Override
   public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     PsiSubstitutorImpl ret = clone();
     ret.mySubstitutionMap.put(typeParameter, mapping);
@@ -386,12 +395,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
   }
 
+  @Override
   public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
     PsiSubstitutorImpl substitutor = clone();
     substitutor.putAllInternal(parentClass, mappings);
     return substitutor;
   }
 
+  @Override
   public PsiSubstitutor putAll(PsiSubstitutor another) {
     if (another instanceof EmptySubstitutorImpl) return this;
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
@@ -434,6 +445,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(map);
   }
 
+  @Override
   public boolean isValid() {
     Collection<PsiType> substitutorValues = mySubstitutionMap.values();
     for (PsiType type : substitutorValues) {
@@ -442,6 +454,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return true;
   }
 
+  @Override
   @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return Collections.unmodifiableMap(mySubstitutionMap);

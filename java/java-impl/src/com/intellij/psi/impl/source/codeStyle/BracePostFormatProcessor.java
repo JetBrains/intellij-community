@@ -21,10 +21,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.util.TextRange;
 
 public class BracePostFormatProcessor implements PostFormatProcessor {
+  @Override
   public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
     return new BraceEnforcer(settings).process(source);
   }
 
+  @Override
   public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
     return new BraceEnforcer(settings).processText(source, rangeToReformat);
   }

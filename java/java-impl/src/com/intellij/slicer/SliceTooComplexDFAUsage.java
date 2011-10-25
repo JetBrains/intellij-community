@@ -45,6 +45,7 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
   public UsagePresentation getPresentation() {
     final UsagePresentation presentation = super.getPresentation();
     return new UsagePresentation() {
+      @Override
       @NotNull
       public TextChunk[] getText() {
         return new TextChunk[]{
@@ -52,15 +53,18 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
         };
       }
 
+      @Override
       @NotNull
       public String getPlainText() {
         return presentation.getPlainText();
       }
 
+      @Override
       public Icon getIcon() {
         return presentation.getIcon();
       }
 
+      @Override
       public String getTooltipText() {
         return "Too complex to analyze, analysis stopped here";
       }

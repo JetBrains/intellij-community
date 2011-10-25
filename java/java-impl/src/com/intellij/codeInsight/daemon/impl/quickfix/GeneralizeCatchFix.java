@@ -37,6 +37,7 @@ public class GeneralizeCatchFix implements IntentionAction {
     myUnhandledException = unhandledException;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("generalize.catch.text",
@@ -44,11 +45,13 @@ public class GeneralizeCatchFix implements IntentionAction {
                                   HighlightUtil.formatType(myUnhandledException));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("generalize.catch.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(myElement != null
           && myElement.isValid()
@@ -78,6 +81,7 @@ public class GeneralizeCatchFix implements IntentionAction {
     return myCatchParameter != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
@@ -85,6 +89,7 @@ public class GeneralizeCatchFix implements IntentionAction {
     myCatchParameter.getTypeElement().replace(type);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

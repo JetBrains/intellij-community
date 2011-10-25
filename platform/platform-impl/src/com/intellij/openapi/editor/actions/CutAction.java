@@ -36,6 +36,7 @@ public class CutAction extends EditorAction {
   }
 
   public static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       if(!editor.getSelectionModel().hasSelection()) {
         editor.getSelectionModel().selectLineAtCaret();

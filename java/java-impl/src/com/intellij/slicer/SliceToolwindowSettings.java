@@ -49,10 +49,12 @@ public class SliceToolwindowSettings implements PersistentStateComponent<SliceTo
     isAutoScroll = autoScroll;
   }
 
+  @Override
   public SliceToolwindowSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(SliceToolwindowSettings state) {
     isAutoScroll = state.isAutoScroll();
     isPreview = state.isPreview();

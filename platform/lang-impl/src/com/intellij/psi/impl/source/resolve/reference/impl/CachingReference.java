@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class CachingReference implements PsiReference, EmptyResolveMessageProvider {
+  @Override
   public PsiElement resolve(){
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
@@ -34,10 +35,12 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
   @Nullable
   public abstract PsiElement resolveInner();
 
+  @Override
   public boolean isReferenceTo(final PsiElement element) {
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @Override
   public boolean isSoft(){
     return false;
   }
@@ -49,6 +52,7 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
 
   private static class MyResolver implements ResolveCache.Resolver {
     private static final MyResolver INSTANCE = new MyResolver();
+    @Override
     @Nullable
     public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
       return ((CachingReference)ref).resolveInner();

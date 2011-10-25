@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class PlainFileManipulator extends AbstractElementManipulator<PsiPlainTextFile> {
+  @Override
   public PsiPlainTextFile handleContentChange(PsiPlainTextFile file, TextRange range, String newContent)
   throws IncorrectOperationException {
     final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());

@@ -70,12 +70,14 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     return myQualifiedName;
   }
 
+  @Override
   @NotNull
   public PsiDirectory[] getDirectories() {
     final Collection<PsiDirectory> collection = getAllDirectories();
     return ContainerUtil.toArray(collection, new PsiDirectory[collection.size()]);
   }
 
+  @Override
   @NotNull
   public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
     List<PsiDirectory> result = null;
@@ -89,10 +91,12 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(new PsiDirectory[result.size()]);
   }
 
+  @Override
   public RowIcon getElementIcon(final int elementFlags) {
     return createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
   }
 
+  @Override
   public String getName() {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -107,6 +111,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
+  @Override
   @Nullable
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
@@ -136,86 +141,105 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     LOG.error("method not implemented");
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public PsiElement getParent() {
     return getParentPackage();
   }
 
+  @Override
   @Nullable
   public PsiFile getContainingFile() {
     return null;
   }
 
+  @Override
   @Nullable
   public TextRange getTextRange() {
     return null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return -1;
   }
 
+  @Override
   public int getTextLength() {
     return -1;
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     return null;
   }
 
+  @Override
   public int getTextOffset() {
     return -1;
   }
 
+  @Override
   @Nullable
   public String getText() {
     return null;
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return false;
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return false;
   }
 
+  @Override
   public PsiElement copy() {
     LOG.error("method not implemented");
     return null;
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     checkDelete();
     PsiDirectory[] dirs = getDirectories();
@@ -224,16 +248,19 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     for (PsiDirectory dir : getDirectories()) {
       dir.checkDelete();
     }
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public boolean isWritable() {
     PsiDirectory[] dirs = getDirectories();
     for (PsiDirectory dir : dirs) {
@@ -242,6 +269,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     return true;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitElement(this);
   }
@@ -250,22 +278,27 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     return "PsiPackageBase:" + getQualifiedName();
   }
 
+  @Override
   public boolean canNavigate() {
     return isValid();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }
 
+  @Override
   public boolean isPhysical() {
     return true;
   }
 
+  @Override
   public ASTNode getNode() {
     return null;
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     info.put("packageName", getName());
     info.put("packageQualifiedName", getQualifiedName());

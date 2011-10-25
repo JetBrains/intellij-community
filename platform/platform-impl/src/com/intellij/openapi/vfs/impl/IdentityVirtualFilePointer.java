@@ -31,25 +31,30 @@ class IdentityVirtualFilePointer implements VirtualFilePointer {
     myUrl = url;
   }
 
+  @Override
   @NotNull
   public String getFileName() {
     return getUrl();
   }
 
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @Override
   @NotNull
   public String getUrl() {
     return myUrl;
   }
 
+  @Override
   @NotNull
   public String getPresentableUrl() {
     return getUrl();
   }
 
+  @Override
   public boolean isValid() {
     return myFile == null || myFile.isValid();
   }

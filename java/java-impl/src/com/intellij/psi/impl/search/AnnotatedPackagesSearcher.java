@@ -39,6 +39,7 @@ import java.util.Collection;
 public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, AnnotatedPackagesSearch.Parameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedPackagesSearcher");
 
+  @Override
   public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<PsiPackage> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
@@ -87,6 +88,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
 
     final boolean[] wantmore = new boolean[]{true};
     helper.processAllFilesWithWord(annotationShortName, infoFiles, new Processor<PsiFile>() {
+      @Override
       public boolean process(final PsiFile psiFile) {
         PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(psiFile, PsiPackageStatement.class);
         if (stmt == null) return true;
@@ -110,18 +112,22 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
   }
 
   private static class PackageInfoFilesOnly extends GlobalSearchScope {
+    @Override
     public int compare(final VirtualFile file1, final VirtualFile file2) {
       return 0;
     }
 
+    @Override
     public boolean contains(final VirtualFile file) {
       return "package-info.java".equals(file.getName());
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return false;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull final Module aModule) {
       return true;
     }

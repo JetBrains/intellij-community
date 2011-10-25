@@ -39,6 +39,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     myEvent = new TreeChangeEventImpl(modelAspect, fileImpl.getTreeElement());
   }
 
+  @Override
   public void nodeReplaced(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     if (oldNode instanceof FileElement && newNode instanceof FileElement) {
     }
@@ -50,10 +51,12 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     }
   }
 
+  @Override
   public void nodeDeleted(@NotNull ASTNode parent, @NotNull final ASTNode child) {
     myEvent.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
   }
 
+  @Override
   public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull ASTNode newNode, final int pos) {
     myEvent.addElementaryChange(newNode, ChangeInfoImpl.create(ChangeInfo.ADD, newNode));
   }

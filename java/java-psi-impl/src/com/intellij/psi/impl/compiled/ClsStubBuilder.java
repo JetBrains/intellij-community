@@ -125,6 +125,7 @@ public class ClsStubBuilder {
       return myResult;
     }
 
+    @Override
     public void visit(final int version,
                       final int access,
                       final String name,
@@ -301,24 +302,30 @@ public class ClsStubBuilder {
       return flags;
     }
 
+    @Override
     public void visitSource(final String source, final String debug) {
       ((PsiClassStubImpl)myResult).setSourceFileName(source);
     }
 
+    @Override
     public void visitOuterClass(final String owner, final String name, final String desc) {
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
+        @Override
         public void callback(final String text) {
           new PsiAnnotationStubImpl(myModList, text);
         }
       });
     }
 
+    @Override
     public void visitAttribute(final Attribute attr) {
     }
 
+    @Override
     public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
       if ((access & Opcodes.ACC_SYNTHETIC) != 0) return;
       if (!isCorrectName(innerName)) return;
@@ -349,6 +356,7 @@ public class ClsStubBuilder {
       return myLexer.getTokenType() == null;
     }
 
+    @Override
     @Nullable
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
@@ -384,6 +392,7 @@ public class ClsStubBuilder {
       return new TypeInfo(StringRef.fromString(getTypeText(type)), (byte)dim, false, Collections.<PsiAnnotationStub>emptyList()); //todo read annos from .class file
     }
 
+    @Override
     @Nullable
     public MethodVisitor visitMethod(final int access,
                                      final String name,
@@ -524,6 +533,7 @@ public class ClsStubBuilder {
       return returnType;
     }
 
+    @Override
     public void visitEnd() {
     }
   }
@@ -543,11 +553,13 @@ public class ClsStubBuilder {
       }
     }
 
+    @Override
     public void visit(final String name, final Object value) {
       valuePairPrefix(name);
       myBuilder.append(constToString(value));
     }
 
+    @Override
     public void visitEnum(final String name, final String desc, final String value) {
       valuePairPrefix(name);
       myBuilder.append(getTypeText(Type.getType(desc))).append(".").append(value);
@@ -568,25 +580,30 @@ public class ClsStubBuilder {
       }
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(final String name, final String desc) {
       valuePairPrefix(name);
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
+        @Override
         public void callback(final String text) {
           myBuilder.append(text);
         }
       });
     }
 
+    @Override
     public AnnotationVisitor visitArray(final String name) {
       valuePairPrefix(name);
       myBuilder.append("{");
       return new AnnotationTextCollector(null, new AnnotationResultCallback() {
+        @Override
         public void callback(final String text) {
           myBuilder.append(text).append('}');
         }
       });
     }
 
+    @Override
     public void visitEnd() {
       if (hasParams && myDesc != null) {
         myBuilder.append(')');
@@ -604,25 +621,31 @@ public class ClsStubBuilder {
       myModList = modList;
     }
 
+    @Override
     public AnnotationVisitor visitAnnotationDefault() {
       return new AnnotationTextCollector(null, new AnnotationResultCallback() {
+        @Override
         public void callback(final String text) {
           ((PsiMethodStubImpl)myOwner).setDefaultValueText(text);
         }
       });
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
+        @Override
         public void callback(final String text) {
           new PsiAnnotationStubImpl(myModList, text);
         }
       });
     }
 
+    @Override
     @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
+        @Override
         public void callback(final String text) {
           new PsiAnnotationStubImpl(((PsiMethodStub)myOwner).findParameter(parameter).getModList(), text);
         }
@@ -671,6 +694,7 @@ public class ClsStubBuilder {
       }
     }
 
+    @Override
     @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
       return (parameter < myParamIgnoreCount) ? null : super.visitParameterAnnotation(parameter - myParamIgnoreCount, desc, visible);

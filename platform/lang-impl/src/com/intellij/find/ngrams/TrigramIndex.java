@@ -37,27 +37,33 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(VirtualFile file) {
       return !file.getFileType().isBinary();
     }
   };
   private static final FileBasedIndex.InputFilter NO_FILES = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(VirtualFile file) {
       return false;
     }
   };
 
+  @Override
   public ID<Integer, Void> getName() {
     return INDEX_ID;
   }
 
+  @Override
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
     return new DataIndexer<Integer, Void, FileContent>() {
+      @Override
       @NotNull
       public Map<Integer, Void> map(FileContent inputData) {
         final Map<Integer, Void> result = new THashMap<Integer, Void>();
         TIntHashSet built = TrigramBuilder.buildTrigram(inputData.getContentAsText());
         built.forEach(new TIntProcedure() {
+          @Override
           public boolean execute(int value) {
             result.put(value, null);
             return true;
@@ -68,10 +74,12 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
     };
   }
 
+  @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return new EnumeratorIntegerDescriptor();
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     if (ENABLED) {
       return INPUT_FILTER;
@@ -81,10 +89,12 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
     }
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public int getVersion() {
     return ENABLED ? 2 : 1;
   }

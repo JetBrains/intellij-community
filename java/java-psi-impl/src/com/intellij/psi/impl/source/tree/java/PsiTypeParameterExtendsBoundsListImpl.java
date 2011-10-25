@@ -35,12 +35,14 @@ public class PsiTypeParameterExtendsBoundsListImpl extends JavaStubPsiElement<Ps
     super(node);
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return calcTreeElement().getChildrenAsPsiElements(Constants.JAVA_CODE_REFERENCE_BIT_SET,
                                                       Constants.PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     final PsiClassReferenceListStub stub = getStub();
@@ -49,6 +51,7 @@ public class PsiTypeParameterExtendsBoundsListImpl extends JavaStubPsiElement<Ps
     return createTypes(getReferenceElements());
   }
 
+  @Override
   public Role getRole() {
     return Role.EXTENDS_BOUNDS_LIST;
   }
@@ -62,6 +65,7 @@ public class PsiTypeParameterExtendsBoundsListImpl extends JavaStubPsiElement<Ps
     return types;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceList(this);

@@ -39,6 +39,7 @@ public class ViewerTreeBuilder extends AbstractTreeBuilder {
     initRootNode();
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();

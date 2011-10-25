@@ -37,6 +37,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     super(JavaElementType.POLYADIC_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     return ((PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN)).getTokenType();
@@ -52,10 +53,12 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     return null;
   }
 
+  @Override
   public PsiType getType() {
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
   private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiPolyadicExpressionImpl, PsiType>() {
+    @Override
     public PsiType fun(PsiPolyadicExpressionImpl expression) {
       return doGetType(expression);
     }
@@ -78,6 +81,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   }
 
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -89,6 +93,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (OUR_OPERATIONS_BIT_SET.contains(child.getElementType())) {
@@ -104,6 +109,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
                     JavaTokenType.PERC);
 
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPolyadicExpression(this);

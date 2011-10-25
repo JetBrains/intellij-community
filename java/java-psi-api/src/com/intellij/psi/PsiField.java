@@ -30,6 +30,7 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
   PsiField[] EMPTY_ARRAY = new PsiField[0];
 
   ArrayFactory<PsiField> ARRAY_FACTORY = new ArrayFactory<PsiField>() {
+    @Override
     public PsiField[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiField[count];
     }
@@ -45,5 +46,6 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
    */
   void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;
 
+  @Override
   @NotNull PsiIdentifier getNameIdentifier();
 }

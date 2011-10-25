@@ -82,6 +82,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     super(node);
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     final PsiModifierListStub stub = getStub();
     if (stub != null) {
@@ -190,12 +191,14 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     return getNode().findChildByType(type) != null;
   }
 
+  @Override
   public boolean hasExplicitModifier(@NotNull String name) {
     final CompositeElement tree = (CompositeElement)getNode();
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
     return tree.findChildByType(type) != null;
   }
 
+  @Override
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     checkSetModifierProperty(name, value);
 
@@ -270,19 +273,23 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     }
   }
 
+  @Override
   public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     final String[] fields = PsiAnnotationImpl.getApplicableElementTypeFields(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
+      @Override
       public boolean value(PsiAnnotation annotation) {
         return PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, fields);
       }
@@ -291,15 +298,18 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     return filtered.toArray(new PsiAnnotation[filtered.size()]);
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     return (PsiAnnotation)addAfter(JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText("@" + qualifiedName, this), null);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitModifierList(this);

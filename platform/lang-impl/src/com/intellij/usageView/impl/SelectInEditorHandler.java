@@ -28,6 +28,7 @@ import java.awt.event.KeyEvent;
 public class SelectInEditorHandler {
   public static void installKeyListener(final JComponent component) {
     component.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) selectInEditor(component);
       }

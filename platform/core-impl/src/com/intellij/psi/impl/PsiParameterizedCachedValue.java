@@ -43,6 +43,7 @@ public abstract class PsiParameterizedCachedValue<T,P> extends PsiCachedValue<T>
     return getValueWithLock(param);
   }
 
+  @Override
   public ParameterizedCachedValueProvider<T,P> getValueProvider() {
     return myProvider;
   }

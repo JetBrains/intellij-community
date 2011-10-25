@@ -97,16 +97,19 @@ public class PsiManagerImpl extends PsiManagerEx {
     });
   }
 
+  @Override
   public boolean isDisposed() {
     return myIsDisposed;
   }
 
+  @Override
   public void dropResolveCaches() {
     ((FileManagerImpl)myFileManager).processQueue();
     beforeChange(true);
     beforeChange(false);
   }
 
+  @Override
   public boolean isInProject(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
@@ -138,20 +141,24 @@ public class PsiManagerImpl extends PsiManagerEx {
     myAssertOnFileLoadingFilter = filter;
   }
 
+  @Override
   public boolean isAssertOnFileLoading(@NotNull VirtualFile file) {
     return myAssertOnFileLoadingFilter.accept(file);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public FileManager getFileManager() {
     return myFileManager;
   }
 
+  @Override
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
@@ -163,10 +170,12 @@ public class PsiManagerImpl extends PsiManagerEx {
     return element1.equals(element2) || element1.isEquivalentTo(element2) || element2.isEquivalentTo(element1);
   }
 
+  @Override
   public PsiFile findFile(@NotNull VirtualFile file) {
     return myFileManager.findFile(file);
   }
 
+  @Override
   @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     return myFileManager.findViewProvider(file);
@@ -197,29 +206,35 @@ public class PsiManagerImpl extends PsiManagerEx {
     return psiFile;
   }
 
+  @Override
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
 
     return myFileManager.findDirectory(file);
   }
 
+  @Override
   public void reloadFromDisk(@NotNull PsiFile file) {
     myFileManager.reloadFromDisk(file);
   }
 
+  @Override
   public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
     myTreeChangeListeners.add(listener);
   }
 
+  @Override
   public void addPsiTreeChangeListener(@NotNull final PsiTreeChangeListener listener, Disposable parentDisposable) {
     addPsiTreeChangeListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removePsiTreeChangeListener(listener);
       }
     });
   }
 
+  @Override
   public void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
     myTreeChangeListeners.remove(listener);
   }
@@ -236,6 +251,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     fireEvent(event);
   }
 
+  @Override
   public void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event) {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REMOVAL);
@@ -248,6 +264,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     fireEvent(event);
   }
 
+  @Override
   public void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event) {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT);
@@ -454,6 +471,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     }
   }
 
+  @Override
   public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
     myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -467,6 +485,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     });
   }
 
+  @Override
   public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
     myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -480,6 +499,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     });
   }
 
+  @Override
   public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
     myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -503,20 +523,24 @@ public class PsiManagerImpl extends PsiManagerEx {
     myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical);
   }
 
+  @Override
   @NotNull
   public PsiModificationTracker getModificationTracker() {
     return PsiModificationTracker.SERVICE.getInstance(myProject);
   }
 
+  @Override
   public void startBatchFilesProcessingMode() {
     myBatchFilesProcessingModeCount.incrementAndGet();
   }
 
+  @Override
   public void finishBatchFilesProcessingMode() {
     myBatchFilesProcessingModeCount.decrementAndGet();
     LOG.assertTrue(myBatchFilesProcessingModeCount.get() >= 0);
   }
 
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return myBatchFilesProcessingModeCount.get() > 0;
   }

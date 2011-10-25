@@ -121,6 +121,7 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
     return myName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return myFamilyName;

@@ -31,6 +31,7 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
   PsiTypeParameter[] EMPTY_ARRAY = new PsiTypeParameter[0];
 
   ArrayFactory<PsiTypeParameter> ARRAY_FACTORY = new ArrayFactory<PsiTypeParameter>() {
+    @Override
     public PsiTypeParameter[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiTypeParameter[count];
     }
@@ -41,6 +42,7 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
    *
    * @return the extends list. For this particular kind of classes it never returns null.
    */
+  @Override
   @NotNull
   PsiReferenceList getExtendsList();
 

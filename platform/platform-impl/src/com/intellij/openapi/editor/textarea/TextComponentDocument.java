@@ -40,6 +40,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     myTextComponent = textComponent;
   }
 
+  @Override
   public String getText() {
     try {
       final javax.swing.text.Document document = myTextComponent.getDocument();
@@ -62,36 +63,44 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @Override
   @NotNull
   public CharSequence getCharsSequence() {
     return getText();
   }
 
+  @Override
   @NotNull
   public char[] getChars() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public int getTextLength() {
     return myTextComponent.getDocument().getLength();
   }
 
+  @Override
   public int getLineCount() {
     return 1;
   }
 
+  @Override
   public int getLineNumber(final int offset) {
     return 0;
   }
 
+  @Override
   public int getLineStartOffset(final int line) {
     return 0;
   }
 
+  @Override
   public int getLineEndOffset(final int line) {
     return getTextLength();
   }
 
+  @Override
   public void insertString(final int offset, @NotNull final CharSequence s) {
     try {
       myTextComponent.getDocument().insertString(offset, s.toString(), null);
@@ -101,6 +110,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @Override
   public void deleteString(final int startOffset, final int endOffset) {
     try {
       myTextComponent.getDocument().remove(startOffset, endOffset - startOffset);
@@ -110,6 +120,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @Override
   public void replaceString(final int startOffset, final int endOffset, @NotNull final CharSequence s) {
     final javax.swing.text.Document document = myTextComponent.getDocument();
     try {
@@ -121,35 +132,43 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     }
   }
 
+  @Override
   public boolean isWritable() {
     return true;
   }
 
+  @Override
   public long getModificationStamp() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void fireReadOnlyModificationAttempt() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void addDocumentListener(@NotNull final DocumentListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull final Disposable parentDisposable) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removeDocumentListener(@NotNull final DocumentListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
     throw new UnsupportedOperationException("Not implemented");
@@ -160,56 +179,69 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void setReadOnly(final boolean isReadOnly) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removeGuardedBlock(@NotNull final RangeMarker block) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @Nullable
   public RangeMarker getOffsetGuard(final int offset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @Nullable
   public RangeMarker getRangeGuard(final int start, final int end) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void startGuardedBlockChecking() {
   }
 
+  @Override
   public void stopGuardedBlockChecking() {
   }
 
+  @Override
   public void setCyclicBufferSize(final int bufferSize) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void setText(@NotNull final CharSequence text) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public int getLineSeparatorLength(final int line) {
     return 0;
   }

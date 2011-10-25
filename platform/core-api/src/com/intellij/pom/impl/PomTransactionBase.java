@@ -33,10 +33,12 @@ public abstract class PomTransactionBase implements PomTransaction{
     myAccumulatedEvent = new PomModelEvent(PomManager.getModel(scope.getProject()));
   }
 
+  @Override
   public PomModelEvent getAccumulatedEvent() {
     return myAccumulatedEvent;
   }
 
+  @Override
   public void run() throws IncorrectOperationException {
     // override accumulated event because transaction should construct full model event in its aspect
     final PomModelEvent event = runInner();
@@ -51,10 +53,12 @@ public abstract class PomTransactionBase implements PomTransaction{
   @Nullable
   public abstract PomModelEvent runInner() throws IncorrectOperationException;
 
+  @Override
   public PsiElement getChangeScope() {
     return myScope;
   }
 
+  @Override
   public PomModelAspect getTransactionAspect() {
     return myAspect;
   }

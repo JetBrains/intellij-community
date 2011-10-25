@@ -41,12 +41,14 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, true, Pass.POST_UPDATE_ALL);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "PostHighlightingPassFactory";
   }
 
+  @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);

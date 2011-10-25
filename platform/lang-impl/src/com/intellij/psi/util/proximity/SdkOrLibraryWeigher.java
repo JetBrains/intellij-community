@@ -32,6 +32,7 @@ import java.util.List;
 */
 public class SdkOrLibraryWeigher extends ProximityWeigher {
 
+  @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     Project project = location.getProject();
     return project == null ? null : isJdkElement(element, project);

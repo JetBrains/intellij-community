@@ -31,6 +31,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
     super(list, i, toType, factory);
   }
 
+  @Override
   @NotNull
   public String getText() {
     if (myArgList.getExpressions().length == 1) {
@@ -41,10 +42,12 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
+    @Override
     public AddTypeArgumentsFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
       return new AddTypeArgumentsFix(list, i, toType, this);
     }
 
+    @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
@@ -99,6 +102,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
       return null;
     }
 
+    @Override
     public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context) {
       return !(exprType instanceof PsiPrimitiveType) &&
              !(parameterType instanceof PsiPrimitiveType);

@@ -37,6 +37,7 @@ public class SameLogicalRootWeigher extends ProximityWeigher {
     }
   });
 
+  @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     if (location.getPosition() == null){
       return null;

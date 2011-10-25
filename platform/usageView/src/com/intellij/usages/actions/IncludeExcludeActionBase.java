@@ -33,10 +33,12 @@ public abstract class IncludeExcludeActionBase extends AnAction {
     return usages == null ? Usage.EMPTY_ARRAY : usages;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(getUsages(e).length > 0);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
   }

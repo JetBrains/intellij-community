@@ -32,6 +32,7 @@ public class InsideElementFilter extends PositionElementFilter{
 
   public InsideElementFilter(){}
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;
     PsiElement currentChild = getOwnerChild(scope, (PsiElement) element);

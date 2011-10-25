@@ -36,11 +36,13 @@ public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
 
   public static final UsageViewNodeTextLocation INSTANCE = new UsageViewNodeTextLocation();
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
+    @Override
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (!(location instanceof UsageViewNodeTextLocation)) return null;
 

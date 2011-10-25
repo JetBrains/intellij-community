@@ -39,14 +39,17 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
+      @Override
       public void enteredDumbMode() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             incCounter();
           }
         });
       }
 
+      @Override
       public void exitDumbMode() {
         enteredDumbMode();
       }
@@ -64,6 +67,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher.modificationCountChanged();
   }
 
+  @Override
   public void treeChanged(PsiTreeChangeEventImpl event) {
     myModificationCount.getAndIncrement();
     if (event.getParent() instanceof PsiDirectory) {
@@ -73,14 +77,17 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher.modificationCountChanged();
   }
 
+  @Override
   public long getModificationCount() {
     return myModificationCount.get();
   }
 
+  @Override
   public long getOutOfCodeBlockModificationCount() {
     return myOutOfCodeBlockModificationCount.get();
   }
 
+  @Override
   public long getJavaStructureModificationCount() {
     return myJavaStructureModificationCount.get();
   }

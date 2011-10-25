@@ -36,6 +36,7 @@ public class ToggleInsertStateAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorEx editorex = (EditorEx) editor;
       editorex.setInsertMode(!editorex.isInsertMode());

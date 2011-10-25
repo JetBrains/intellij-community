@@ -52,9 +52,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
       public void before(final List<? extends VFileEvent> events) {
       }
 
+      @Override
       public void after(final List<? extends VFileEvent> events) {
         final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
 
@@ -82,6 +84,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         if (!rootsToRefresh.isEmpty()) {
           final Application app = ApplicationManager.getApplication();
           Runnable runnable = new Runnable() {
+            @Override
             public void run() {
               if (app.isDisposed()) return;
               for (VirtualFile root : rootsToRefresh) {
@@ -119,11 +122,13 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return null;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "JarFileSystem";
   }
 
+  @Override
   public void initComponent() {
     //We want to prevent Platform from copying its own jars when running from dist to save system resources
     final boolean isRunningFromDist = new File(PathManager.getLibPath() + File.separatorChar + "openapi.jar").exists();
@@ -132,9 +137,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     }
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void setNoCopyJarForPath(String pathInJar) {
     int index = pathInJar.indexOf(JAR_SEPARATOR);
     if (index < 0) return;
@@ -146,6 +153,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     myNoCopyJarPaths.add(path);
   }
 
+  @Override
   @Nullable
   public VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
     if (entryVFile == null) return null;
@@ -157,6 +165,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return LocalFileSystem.getInstance().findFileByPath(localPath);
   }
 
+  @Override
   public ZipFile getJarFile(VirtualFile entryVFile) throws IOException {
     JarHandler handler = getHandler(entryVFile);
 
@@ -190,6 +199,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (freshHandler != null) {
       // Refresh must be outside of the lock, since it potentially requires write action.
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           freshHandler.refreshLocalFileForJar();
         }
@@ -199,11 +209,13 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return handler;
   }
 
+  @Override
   @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
 
+  @Override
   public String extractPresentableUrl(@NotNull String path) {
     if (path.endsWith(JAR_SEPARATOR)) {
       path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
@@ -212,34 +224,41 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return path;
   }
 
+  @Override
   public String extractRootPath(@NotNull final String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
     assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
     return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
   }
 
+  @Override
   public boolean isCaseSensitive() {
     return true;
   }
 
+  @Override
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return getHandler(fileOrDirectory).exists(fileOrDirectory);
   }
 
+  @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     return getHandler(file).getInputStream(file);
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     return getHandler(file).contentsToByteArray(file);
   }
 
+  @Override
   public long getLength(@NotNull final VirtualFile file) {
     return getHandler(file).getLength(file);
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
     throws IOException {
@@ -261,59 +280,73 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return true;
   }
 
+  @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
     return getHandler(file).getTimeStamp(file);
   }
 
+  @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return getHandler(file).isDirectory(file);
   }
 
+  @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
     return false;
   }
 
+  @Override
   @NotNull
   public String[] list(@NotNull final VirtualFile file) {
     return getHandler(file).list(file);
   }
 
+  @Override
   public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
     getHandler(file).setTimeStamp(file, modstamp);
   }
 
+  @Override
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
     getHandler(file).setWritable(file, writableFlag);
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }
 
+  @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }
 
+  @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
   }
 
+  @Override
   public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
+  @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
+  @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
+  @Override
   public int getRank() {
     return 2;
   }
 
+  @Override
   public void refresh(final boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }

@@ -32,6 +32,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class JavaVariableConflictResolver implements PsiConflictResolver{
+  @Override
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     final int size = conflicts.size();
     if(size == 1){

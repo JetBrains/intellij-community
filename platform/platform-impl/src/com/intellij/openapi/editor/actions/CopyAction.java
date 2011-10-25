@@ -35,6 +35,7 @@ public class CopyAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       if (!editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection()) {
         editor.getSelectionModel().selectLineAtCaret();

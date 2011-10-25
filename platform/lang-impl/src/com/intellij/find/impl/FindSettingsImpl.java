@@ -55,10 +55,12 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   private static final int MAX_RECENT_SIZE = 30;
 
 
+  @Override
   public boolean isSearchOverloadedMethods() {
     return SEARCH_OVERLOADED_METHODS;
   }
 
+  @Override
   public void setSearchOverloadedMethods(boolean search) {
     SEARCH_OVERLOADED_METHODS = search;
   }
@@ -92,6 +94,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings({"WeakerAccess"}) @NonNls public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
 
 
+  @Override
   public void loadState(final Element state) {
     try {
       DefaultJDOMExternalizer.readExternal(this, state);
@@ -115,6 +118,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     try {
@@ -126,90 +130,112 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     return element;
   }
 
+  @Override
   public boolean isSkipResultsWithOneUsage(){
     return SKIP_RESULTS_WHEN_ONE_USAGE;
   }
 
+  @Override
   public void setSkipResultsWithOneUsage(boolean skip){
     SKIP_RESULTS_WHEN_ONE_USAGE = skip;
   }
 
+  @Override
   public String getDefaultScopeName() {
     return SEARCH_SCOPE;
   }
 
+  @Override
   public void setDefaultScopeName(String scope) {
     SEARCH_SCOPE = scope;
   }
 
+  @Override
   public boolean isForward(){
     return FIND_DIRECTION_FORWARD.equals(FIND_DIRECTION);
   }
 
+  @Override
   public void setForward(boolean findDirectionForward){
     FIND_DIRECTION = findDirectionForward ? FIND_DIRECTION_FORWARD : FIND_DIRECTION_BACKWARD;
   }
 
+  @Override
   public boolean isFromCursor(){
     return FIND_ORIGIN_FROM_CURSOR.equals(FIND_ORIGIN);
   }
 
+  @Override
   public void setFromCursor(boolean findFromCursor){
     FIND_ORIGIN = findFromCursor ? FIND_ORIGIN_FROM_CURSOR : FIND_ORIGIN_ENTIRE_SCOPE;
   }
 
+  @Override
   public boolean isGlobal(){
     return FIND_SCOPE_GLOBAL.equals(FIND_SCOPE);
   }
 
+  @Override
   public void setGlobal(boolean findGlobalScope){
     FIND_SCOPE = findGlobalScope ? FIND_SCOPE_GLOBAL : FIND_SCOPE_SELECTED;
   }
 
+  @Override
   public boolean isCaseSensitive(){
     return CASE_SENSITIVE_SEARCH;
   }
 
+  @Override
   public void setCaseSensitive(boolean caseSensitiveSearch){
     CASE_SENSITIVE_SEARCH = caseSensitiveSearch;
   }
 
+  @Override
   public boolean isLocalCaseSensitive() {
     return LOCAL_CASE_SENSITIVE_SEARCH;
   }
 
+  @Override
   public boolean isLocalWholeWordsOnly() {
     return LOCAL_WHOLE_WORDS_ONLY;
   }
 
+  @Override
   public void setLocalCaseSensitive(final boolean caseSensitiveSearch) {
     LOCAL_CASE_SENSITIVE_SEARCH = caseSensitiveSearch;
   }
 
+  @Override
   public void setLocalWholeWordsOnly(final boolean wholeWordsOnly) {
     LOCAL_WHOLE_WORDS_ONLY = wholeWordsOnly;
   }
 
+  @Override
   public boolean isPreserveCase() {
     return PRESERVE_CASE_REPLACE;
   }
 
+  @Override
   public void setPreserveCase(boolean preserveCase) {
     PRESERVE_CASE_REPLACE = preserveCase;
   }
 
+  @Override
   public boolean isWholeWordsOnly(){
     return WHOLE_WORDS_ONLY;
   }
 
+  @Override
   public void setWholeWordsOnly(boolean wholeWordsOnly){
     WHOLE_WORDS_ONLY = wholeWordsOnly;
   }
 
+  @Override
   public boolean isRegularExpressions(){
     return REGULAR_EXPRESSIONS;
   }
 
+  @Override
   public void setRegularExpressions(boolean regularExpressions){
     REGULAR_EXPRESSIONS = regularExpressions;
   }
@@ -224,6 +250,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     LOCAL_REGULAR_EXPRESSIONS = regularExpressions;
   }
 
+  @Override
   public void setWithSubdirectories(boolean b){
     WITH_SUBDIRECTORIES = b;
   }
@@ -232,6 +259,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     return WITH_SUBDIRECTORIES;
   }
 
+  @Override
   public void initModelBySetings(FindModel model){
     model.setCaseSensitive(isCaseSensitive());
     model.setForward(isForward());
@@ -257,6 +285,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     }
   }
 
+  @Override
   public void addStringToFind(String s){
     if (s == null || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
       return;
@@ -264,6 +293,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     addStringToList(s, RECENT_FIND_STRINGS, MAX_RECENT_SIZE);
   }
 
+  @Override
   public void addStringToReplace(String s) {
     if (s == null || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
       return;
@@ -271,6 +301,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     addStringToList(s, RECENT_REPLACE_STRINGS, MAX_RECENT_SIZE);
   }
 
+  @Override
   public void addDirectory(String s) {
     if (s == null || s.length() == 0){
       return;
@@ -278,26 +309,32 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     addStringToList(s, RECENT_DIR_STRINGS, MAX_RECENT_SIZE);
   }
 
+  @Override
   public String[] getRecentFindStrings(){
     return ArrayUtil.toStringArray(RECENT_FIND_STRINGS);
   }
 
+  @Override
   public String[] getRecentReplaceStrings(){
     return ArrayUtil.toStringArray(RECENT_REPLACE_STRINGS);
   }
 
+  @Override
   public String[] getRecentFileMasks() {
     return ArrayUtil.toStringArray(RECENT_FILE_MASKS);
   }
 
+  @Override
   public ArrayList<String> getRecentDirectories(){
     return new ArrayList<String>(RECENT_DIR_STRINGS);
   }
 
+  @Override
   public String getFileMask() {
     return FILE_MASK;
   }
 
+  @Override
   public void setFileMask(String _fileMask) {
     FILE_MASK = _fileMask;
     if (_fileMask != null && _fileMask.length() > 0) {
@@ -305,6 +342,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     }
   }
 
+  @Override
   public String getCustomScope() {
     return SEARCH_SCOPE;
   }
@@ -329,6 +367,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     STRING_LITERALS_ONLY = selected;
   }
 
+  @Override
   public void setCustomScope(final String SEARCH_SCOPE) {
     this.SEARCH_SCOPE = SEARCH_SCOPE;
   }

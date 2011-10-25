@@ -31,6 +31,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     myFileIndex = fileIndex;
   }
 
+  @Override
   public boolean contains(VirtualFile file) {
     if (file instanceof VirtualFileWindow) return true;
 
@@ -39,18 +40,22 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     return myFileIndex.isInContent(file);
   }
 
+  @Override
   public int compare(VirtualFile file1, VirtualFile file2) {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return false;
   }
 
+  @Override
   public String getDisplayName() {
     return PsiBundle.message("psi.search.scope.project");
   }

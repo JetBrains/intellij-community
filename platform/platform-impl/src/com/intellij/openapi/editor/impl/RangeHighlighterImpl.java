@@ -74,10 +74,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   // delegates
+  @Override
   public TextAttributes getTextAttributes() {
     return getData().getTextAttributes();
   }
 
+  @Override
   public void setTextAttributes(TextAttributes textAttributes) {
     getData().setTextAttributes(textAttributes);
   }
@@ -86,67 +88,83 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return getData().changeAttributesInBatch(change);
   }
 
+  @Override
   public int getLayer() {
     RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
     return node == null ? -1 : node.myLayer;
   }
 
+  @Override
   public HighlighterTargetArea getTargetArea() {
     return getData().getTargetArea();
   }
 
+  @Override
   public LineMarkerRenderer getLineMarkerRenderer() {
     return getData().getLineMarkerRenderer();
   }
 
+  @Override
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
     getData().setLineMarkerRenderer(renderer);
   }
 
+  @Override
   public CustomHighlighterRenderer getCustomRenderer() {
     return getData().getCustomRenderer();
   }
 
+  @Override
   public void setCustomRenderer(CustomHighlighterRenderer renderer) {
     getData().setCustomRenderer(renderer);
   }
 
+  @Override
   public GutterIconRenderer getGutterIconRenderer() {
     return getData().getGutterIconRenderer();
   }
 
+  @Override
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
     getData().setGutterIconRenderer(renderer);
   }
 
+  @Override
   public Color getErrorStripeMarkColor() {
     return getData().getErrorStripeMarkColor();
   }
 
+  @Override
   public void setErrorStripeMarkColor(Color color) {
     getData().setErrorStripeMarkColor(color);
   }
 
+  @Override
   public Object getErrorStripeTooltip() {
     return getData().getErrorStripeTooltip();
   }
 
+  @Override
   public void setErrorStripeTooltip(Object tooltipObject) {
     getData().setErrorStripeTooltip(tooltipObject);
   }
 
+  @Override
   public boolean isThinErrorStripeMark() {
     return getData().isThinErrorStripeMark();
   }
 
+  @Override
   public void setThinErrorStripeMark(boolean value) {
     getData().setThinErrorStripeMark(value);
   }
 
+  @Override
   public Color getLineSeparatorColor() {
     return getData().getLineSeparatorColor();
   }
 
+  @Override
   public void setLineSeparatorColor(Color color) {
     getData().setLineSeparatorColor(color);
   }
@@ -161,35 +179,43 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return getData().getLineSeparatorRenderer();
   }
 
+  @Override
   public SeparatorPlacement getLineSeparatorPlacement() {
     return getData().getLineSeparatorPlacement();
   }
 
+  @Override
   public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
     getData().setLineSeparatorPlacement(placement);
   }
 
+  @Override
   public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
     getData().setEditorFilter(filter);
   }
 
+  @Override
   @NotNull
   public MarkupEditorFilter getEditorFilter() {
     return getData().getEditorFilter();
   }
 
+  @Override
   public boolean isAfterEndOfLine() {
     return getData().isAfterEndOfLine();
   }
 
+  @Override
   public void setAfterEndOfLine(boolean afterEndOfLine) {
     getData().setAfterEndOfLine(afterEndOfLine);
   }
 
+  @Override
   public int getAffectedAreaStartOffset() {
     return getData().getAffectedAreaStartOffset();
   }
 
+  @Override
   public int getAffectedAreaEndOffset() {
     return getData().getAffectedAreaEndOffset();
   }

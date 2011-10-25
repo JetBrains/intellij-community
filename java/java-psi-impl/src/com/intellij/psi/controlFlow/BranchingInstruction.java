@@ -34,6 +34,7 @@ public abstract class BranchingInstruction extends InstructionBase {
     this.role = role;
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitBranchingInstruction(this, offset, nextOffset);
   }

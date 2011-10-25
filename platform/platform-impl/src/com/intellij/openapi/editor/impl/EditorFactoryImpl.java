@@ -56,8 +56,10 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+      @Override
       public void projectClosed(final Project project) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             validateEditorsAreReleased(project);
           }
@@ -66,13 +68,16 @@ public class EditorFactoryImpl extends EditorFactory {
     });
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "EditorFactory";
   }
 
+  @Override
   public void initComponent() {
     ModalityStateListener myModalityStateListener = new ModalityStateListener() {
+      @Override
       public void beforeModalityStateChanged(boolean entering) {
         for (Editor editor : myEditors) {
           ((EditorImpl)editor).beforeModalityStateChanged();
@@ -109,14 +114,17 @@ public class EditorFactoryImpl extends EditorFactory {
     }
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   @NotNull
   public Document createDocument(@NotNull char[] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
+  @Override
   @NotNull
   public Document createDocument(@NotNull CharSequence text) {
     DocumentImpl document = new DocumentImpl(text);
@@ -131,34 +139,41 @@ public class EditorFactoryImpl extends EditorFactory {
     return document;
   }
 
+  @Override
   public void refreshAllEditors() {
     for (Editor editor : myEditors) {
       ((EditorEx)editor).reinitSettings();
     }
   }
 
+  @Override
   public Editor createEditor(@NotNull Document document) {
     return createEditor(document, false, null);
   }
 
+  @Override
   public Editor createViewer(@NotNull Document document) {
     return createEditor(document, true, null);
   }
 
+  @Override
   public Editor createEditor(@NotNull Document document, Project project) {
     return createEditor(document, false, project);
   }
 
+  @Override
   public Editor createViewer(@NotNull Document document, Project project) {
     return createEditor(document, true, project);
   }
 
+  @Override
   public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
     Editor editor = createEditor(document, isViewer, project);
     ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType));
     return editor;
   }
 
+  @Override
   public Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer) {
     Editor editor = createEditor(document, isViewer, project);
     ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
@@ -183,6 +198,7 @@ public class EditorFactoryImpl extends EditorFactory {
     return editor;
   }
 
+  @Override
   public void releaseEditor(@NotNull Editor editor) {
     editor.putUserData(EDITOR_CREATOR, null);
     ((EditorImpl)editor).release();
@@ -195,6 +211,7 @@ public class EditorFactoryImpl extends EditorFactory {
     }
   }
 
+  @Override
   @NotNull
   public Editor[] getEditors(@NotNull Document document, Project project) {
     List<Editor> list = null;
@@ -208,16 +225,19 @@ public class EditorFactoryImpl extends EditorFactory {
     return list == null ? Editor.EMPTY_ARRAY : list.toArray(new Editor[list.size()]);
   }
 
+  @Override
   @NotNull
   public Editor[] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
 
+  @Override
   @NotNull
   public Editor[] getAllEditors() {
     return myEditors.toArray(new Editor[myEditors.size()]);
   }
 
+  @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.addListener(listener);
   }
@@ -227,10 +247,12 @@ public class EditorFactoryImpl extends EditorFactory {
     myEditorFactoryEventDispatcher.addListener(listener,parentDisposable);
   }
 
+  @Override
   public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.removeListener(listener);
   }
 
+  @Override
   @NotNull
   public EditorEventMulticaster getEventMulticaster() {
     return myEditorEventMulticaster;

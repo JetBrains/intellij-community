@@ -42,10 +42,12 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
 
   protected abstract void setOptionValue(boolean value);
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     return myState;
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     setOptionValue(state);
     myState = state;

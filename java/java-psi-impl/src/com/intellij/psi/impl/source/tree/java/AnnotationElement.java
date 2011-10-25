@@ -34,6 +34,7 @@ public class AnnotationElement extends CompositeElement implements Constants {
     super(ANNOTATION);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
 
@@ -49,6 +50,7 @@ public class AnnotationElement extends CompositeElement implements Constants {
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {

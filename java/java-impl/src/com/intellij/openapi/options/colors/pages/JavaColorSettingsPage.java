@@ -111,30 +111,36 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.java.display.name");
   }
 
+  @Override
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ourDescriptors;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return
@@ -174,6 +180,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "}";
   }
 
+  @Override
   public Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourTags;
   }

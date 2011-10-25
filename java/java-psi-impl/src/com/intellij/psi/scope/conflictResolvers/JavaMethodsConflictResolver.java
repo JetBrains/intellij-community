@@ -56,6 +56,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     myActualParameterTypes = actualParameterTypes;
   }
 
+  @Override
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);

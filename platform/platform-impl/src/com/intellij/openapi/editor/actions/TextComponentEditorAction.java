@@ -33,6 +33,7 @@ public abstract class TextComponentEditorAction extends EditorAction {
     super(defaultHandler);
   }
 
+  @Override
   @Nullable
   protected Editor getEditor(final DataContext dataContext) {
     return getEditorFromContext(dataContext);

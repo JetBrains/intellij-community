@@ -108,6 +108,7 @@ public class ReplaceInProjectManager {
     FindUtil.initStringToFindWithSelection(findModel, editor);
 
     findManager.showFindDialog(findModel, new Runnable() {
+      @Override
       public void run() {
         final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
         if (!findModel.isProjectScope() &&
@@ -148,14 +149,17 @@ public class ReplaceInProjectManager {
 
     manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind())},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
+        @Override
         public void usageViewCreated(UsageView usageView) {
           context[0] = new ReplaceContext(usageView, findModelCopy);
           addReplaceActions(context[0]);
         }
 
+        @Override
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && findManager.getFindInProjectModel().isPromptOnReplace()) {
             SwingUtilities.invokeLater(new Runnable() {
+              @Override
               public void run() {
                 replaceWithPrompt(context[0]);
               }
@@ -187,10 +191,12 @@ public class ReplaceInProjectManager {
       if (!psiFile.isWritable()) continue;
 
       Runnable selectOnEditorRunnable = new Runnable() {
+        @Override
         public void run() {
           final VirtualFile virtualFile = psiFile.getVirtualFile();
 
           if (virtualFile != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            @Override
             public Boolean compute() {
               return virtualFile.isValid() ? Boolean.TRUE : Boolean.FALSE;
             }
@@ -219,6 +225,7 @@ public class ReplaceInProjectManager {
       final int currentNumber = i;
       if (result == FindManager.PromptResult.OK) {
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
             replaceContext.getUsageView().removeUsage(usage);
@@ -235,6 +242,7 @@ public class ReplaceInProjectManager {
         final int[] nextNumber = new int[1];
 
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             int j = currentNumber;
 
@@ -266,6 +274,7 @@ public class ReplaceInProjectManager {
 
       if (result == FindManager.PromptResult.ALL_FILES) {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          @Override
           public void run() {
             doReplace(replaceContext, _usages);
             replaceContext.getUsageView().close();
@@ -278,6 +287,7 @@ public class ReplaceInProjectManager {
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
     final Runnable replaceRunnable = new Runnable() {
+      @Override
       public void run() {
         doReplace(replaceContext, replaceContext.getUsageView().getUsages());
       }
@@ -286,6 +296,7 @@ public class ReplaceInProjectManager {
                                                             FindBundle.message("find.replace.all.action.description"));
 
     final Runnable replaceSelectedRunnable = new Runnable() {
+      @Override
       public void run() {
         doReplaceSelected(replaceContext);
       }
@@ -309,6 +320,7 @@ public class ReplaceInProjectManager {
 
   public void doReplace(@NotNull final Usage usage, @NotNull final FindModel findModel, @NotNull final Set<Usage> excludedSet) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         if (excludedSet.contains(usage)) {
           return;
@@ -383,6 +395,7 @@ public class ReplaceInProjectManager {
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         doReplace(replaceContext, selectedUsages);
         for (final Usage selectedUsage : selectedUsages) {
@@ -415,9 +428,11 @@ public class ReplaceInProjectManager {
       myPsiDirectory = psiDirectory;
     }
 
+    @Override
     public UsageSearcher create() {
       return new UsageSearcher() {
 
+        @Override
         public void generate(final Processor<Usage> processor) {
           try {
             myIsFindInProgress = true;

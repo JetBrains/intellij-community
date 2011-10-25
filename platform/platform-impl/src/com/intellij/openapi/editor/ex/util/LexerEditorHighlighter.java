@@ -88,16 +88,19 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myLexer;
   }
 
+  @Override
   public void setEditor(HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
   }
 
+  @Override
   public void setColorScheme(EditorColorsScheme scheme) {
     myScheme = scheme;
     myAttributesMap.clear();
   }
 
+  @Override
   public HighlighterIterator createIterator(int startOffset) {
     synchronized (this) {
       final Document document = getDocument();
@@ -133,6 +136,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return IElementType.find((short)Math.abs(data));
   }
 
+  @Override
   public synchronized void documentChanged(DocumentEvent e) {
     final Document document = e.getDocument();
 
@@ -262,9 +266,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myEditor.repaint(startOffset, repaintEnd);
   }
 
+  @Override
   public void beforeDocumentChange(DocumentEvent event) {
   }
 
+  @Override
   public int getPriority() {
     return EditorDocumentPriorities.LEXER_EDITOR;
   }
@@ -279,6 +285,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor;
   }
 
+  @Override
   public void setText(CharSequence text) {
     synchronized (this) {
       doSetText(text);
@@ -312,6 +319,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
     if(myEditor != null) {
       UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
+        @Override
         public void run() {
           myEditor.repaint(0, text.length());
         }
@@ -355,34 +363,42 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       return mySegmentIndex;
     }
 
+    @Override
     public TextAttributes getTextAttributes() {
       return getAttributes(getTokenType());
     }
 
+    @Override
     public int getStart() {
       return mySegments.getSegmentStart(mySegmentIndex);
     }
 
+    @Override
     public int getEnd() {
       return mySegments.getSegmentEnd(mySegmentIndex);
     }
 
+    @Override
     public IElementType getTokenType(){
       return unpackToken(mySegments.getSegmentData(mySegmentIndex));
     }
 
+    @Override
     public void advance() {
       mySegmentIndex++;
     }
 
+    @Override
     public void retreat(){
       mySegmentIndex--;
     }
 
+    @Override
     public boolean atEnd() {
       return mySegmentIndex >= mySegments.getSegmentCount() || mySegmentIndex < 0;
     }
 
+    @Override
     public Document getDocument() {
       return LexerEditorHighlighter.this.getDocument();
     }

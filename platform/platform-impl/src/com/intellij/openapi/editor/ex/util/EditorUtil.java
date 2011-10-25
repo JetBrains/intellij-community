@@ -183,6 +183,7 @@ public class EditorUtil {
     final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
     if (filler.length() > 0) {
       new WriteAction(){
+        @Override
         protected void run(final Result result) throws Throwable {
           editor.getDocument().insertString(offset, filler);
           editor.getCaretModel().moveToOffset(offset + filler.length());

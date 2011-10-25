@@ -49,6 +49,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     myProject = project;
   }
 
+  @Override
   @Nullable
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof UsageInFile) {
@@ -73,6 +74,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
     private final VirtualFile myDir;
 
+    @Override
     public void update() {
     }
 
@@ -80,23 +82,28 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
       myDir = dir;
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return isOpen ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myDir.getPresentableUrl();
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return isValid() ? FileStatusManager.getInstance(myProject).getStatus(myDir) : null;
     }
 
+    @Override
     public boolean isValid() {
       return myDir.isValid();
     }
 
+    @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
       final PsiDirectory directory = getDirectory();
       if (directory != null && directory.canNavigate()) {
@@ -107,15 +114,18 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     private PsiDirectory getDirectory() {
       return PsiManager.getInstance(myProject).findDirectory(myDir);
     }
+    @Override
     public boolean canNavigate() {
       final PsiDirectory directory = getDirectory();
       return directory != null && directory.canNavigate();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
@@ -130,6 +140,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
       return myDir.hashCode();
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
       if (PlatformDataKeys.VIRTUAL_FILE == key) {

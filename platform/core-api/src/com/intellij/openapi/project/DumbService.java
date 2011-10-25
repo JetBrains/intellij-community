@@ -70,6 +70,7 @@ public abstract class DumbService {
    */
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         runWhenSmart(runnable);
       }
@@ -78,6 +79,7 @@ public abstract class DumbService {
 
   public void smartInvokeLater(@NotNull final Runnable runnable, ModalityState modalityState) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         runWhenSmart(runnable);
       }
@@ -113,10 +115,12 @@ public abstract class DumbService {
   public void makeDumbAware(@NotNull final JComponent component, @NotNull Disposable disposable) {
     component.setEnabled(!isDumb());
     getProject().getMessageBus().connect(disposable).subscribe(DUMB_MODE, new DumbModeListener() {
+      @Override
       public void enteredDumbMode() {
         component.setEnabled(false);
       }
 
+      @Override
       public void exitDumbMode() {
         component.setEnabled(true);
       }

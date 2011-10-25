@@ -81,8 +81,10 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
    *
    * @return the variable name identifier.
    */
+  @Override
   @Nullable PsiIdentifier getNameIdentifier();
 
+  @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
   PsiType getTypeNoResolve();

@@ -35,6 +35,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     myPackageName = index < 0 ? null : className.substring(0, index);
   }
 
+  @Override
   public PsiElement getParent() {
     return myFile;
   }
@@ -42,6 +43,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   /**
    * @not_implemented
    */
+  @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
     LOG.error("method not implemented");
     return null;
@@ -50,6 +52,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   /**
    * @not_implemented
    */
+  @Override
   public PsiModifierList getAnnotationList() {
     LOG.error("method not implemented");
     return null;
@@ -58,26 +61,31 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   /**
    * @not_implemented
    */
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     LOG.error("method not implemented");
     return null;
   }
 
+  @Override
   public String getPackageName() {
     return myPackageName;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("package ");
     buffer.append(getPackageName());
     buffer.append(";");
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, ElementType.PACKAGE_STATEMENT);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPackageStatement(this);

@@ -24,6 +24,7 @@ public class Utils {
                                           final JTextComponent textField) {
 
     final Runnable callback = new Runnable() {
+      @Override
       public void run() {
         String selectedValue = (String)list.getSelectedValue();
         if (selectedValue != null) {

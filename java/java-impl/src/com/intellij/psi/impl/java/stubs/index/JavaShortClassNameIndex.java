@@ -36,10 +36,12 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
     return ourInstance;
   }
 
+  @Override
   public StubIndexKey<String, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_SHORT_NAMES;
   }
 
+  @Override
   public Collection<PsiClass> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }

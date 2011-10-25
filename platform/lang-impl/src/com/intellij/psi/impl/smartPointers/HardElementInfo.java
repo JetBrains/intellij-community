@@ -37,10 +37,12 @@ class HardElementInfo implements SmartPointerElementInfo {
     myProject = project;
   }
 
+  @Override
   public Document getDocumentToSynchronize() {
     return null;
   }
 
+  @Override
   public void documentAndPsiInSync() {
   }
 
@@ -52,6 +54,7 @@ class HardElementInfo implements SmartPointerElementInfo {
   public void unfastenBelt(int offset) {
   }
 
+  @Override
   public PsiElement restoreElement() {
     return myElement;
   }

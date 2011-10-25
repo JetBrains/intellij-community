@@ -78,10 +78,12 @@ public class FileManagerImpl implements FileManager {
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
+      @Override
       public void enteredDumbMode() {
         recalcAllViewProviders();
       }
 
+      @Override
       public void exitDumbMode() {
         recalcAllViewProviders();
       }
@@ -100,6 +102,7 @@ public class FileManagerImpl implements FileManager {
 
   private void recalcAllViewProviders() {
     handleFileTypesChange(new FileTypesChanged() {
+      @Override
       protected void updateMaps() {
         for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
           if (!provider.getVirtualFile().isValid()) {
@@ -118,6 +121,7 @@ public class FileManagerImpl implements FileManager {
     });
   }
 
+  @Override
   public void dispose() {
     if (myInitialized) {
       myConnection.disconnect();
@@ -125,6 +129,7 @@ public class FileManagerImpl implements FileManager {
     myDisposed = true;
   }
 
+  @Override
   @TestOnly
   public void cleanupForNextTest() {
     myVFileToViewProviderMap.clear();
@@ -132,6 +137,7 @@ public class FileManagerImpl implements FileManager {
     processQueue();
   }
 
+  @Override
   @NotNull
   public FileViewProvider findViewProvider(@NotNull final VirtualFile file) {
     FileViewProvider viewProvider = getFromInjected(file);
@@ -143,6 +149,7 @@ public class FileManagerImpl implements FileManager {
     return viewProvider;
   }
 
+  @Override
   public FileViewProvider findCachedViewProvider(@NotNull final VirtualFile file) {
     FileViewProvider viewProvider = getFromInjected(file);
     if (viewProvider != null) return viewProvider;
@@ -160,6 +167,7 @@ public class FileManagerImpl implements FileManager {
     return null;
   }
 
+  @Override
   public void setViewProvider(@NotNull final VirtualFile virtualFile, final FileViewProvider fileViewProvider) {
     if (!(virtualFile instanceof VirtualFileWindow)) {
       if (fileViewProvider == null) {
@@ -171,6 +179,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @Override
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean physical) {
     Language language = getLanguage(file);
@@ -213,6 +222,7 @@ public class FileManagerImpl implements FileManager {
 
   void processFileTypesChanged() {
     handleFileTypesChange(new FileTypesChanged() {
+      @Override
       protected void updateMaps() {
         removeInvalidFilesAndDirs(true);
       }
@@ -222,6 +232,7 @@ public class FileManagerImpl implements FileManager {
   private abstract class FileTypesChanged implements Runnable {
     protected abstract void updateMaps();
 
+    @Override
     public void run() {
       PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
       event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
@@ -289,6 +300,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @Override
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
@@ -306,6 +318,7 @@ public class FileManagerImpl implements FileManager {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
+  @Override
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -320,6 +333,7 @@ public class FileManagerImpl implements FileManager {
     return getCachedPsiFileInner(vFile);
   }
 
+  @Override
   @Nullable
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     LOG.assertTrue(myInitialized, "Access to psi files should be performed only after startup activity");
@@ -385,6 +399,7 @@ public class FileManagerImpl implements FileManager {
            ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
+  @Override
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
@@ -455,6 +470,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToViewProviderMap.putAll(fileToPsiFileMap);
   }
 
+  @Override
   public void reloadFromDisk(@NotNull PsiFile file) {
     reloadFromDisk(file, false);
   }

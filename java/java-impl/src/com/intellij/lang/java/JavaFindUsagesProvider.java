@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaFindUsagesProvider implements FindUsagesProvider {
   public static final String DEFAULT_PACKAGE_NAME = UsageViewBundle.message("default.package.presentable.name");
 
+  @Override
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
@@ -55,6 +56,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() != null;
   }
 
+  @Override
   public String getHelpId(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) {
       return HelpID.FIND_PACKAGE_USAGES;
@@ -71,6 +73,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return HelpID.FIND_OTHER_USAGES;
   }
 
+  @Override
   @NotNull
   public String getType(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
@@ -131,6 +134,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
+  @Override
   @NotNull
   public String getDescriptiveName(@NotNull final PsiElement element) {
     if (ThrowSearchUtil.isSearchable(element)) {
@@ -209,6 +213,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
   }
 
+  @Override
   @NotNull
   public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof PsiDirectory) {
@@ -358,6 +363,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return DEFAULT_PACKAGE_NAME;
   }
 
+  @Override
   public WordsScanner getWordsScanner() {
     return null;
   }

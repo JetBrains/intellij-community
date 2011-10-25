@@ -26,6 +26,7 @@ import com.intellij.psi.filters.ElementFilter;
  * To change this template use Options | File Templates.
  */
 public class ExcludeSillyAssignment implements ElementFilter {
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     if(!(element instanceof PsiElement)) return true;
 
@@ -57,6 +58,7 @@ public class ExcludeSillyAssignment implements ElementFilter {
     return true;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }

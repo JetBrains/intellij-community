@@ -39,24 +39,29 @@ class EmptyFileManager implements FileManager {
     myManager = manager;
   }
 
+  @Override
   public void dispose() {
   }
 
   public void runStartupActivity() {
   }
 
+  @Override
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     return null;
   }
 
+  @Override
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     return null;
   }
 
+  @Override
   public void reloadFromDisk(@NotNull PsiFile file)
   {
   }
 
+  @Override
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     return null;
   }
@@ -71,22 +76,27 @@ class EmptyFileManager implements FileManager {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
 
+  @Override
   public void cleanupForNextTest() {
   }
 
+  @Override
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     return myVFileToViewProviderMap.get(file);
   }
 
+  @Override
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
     return myVFileToViewProviderMap.get(file);
   }
 
+  @Override
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean physical) {
     return new SingleRootFileViewProvider(myManager, file, physical);
   }
 
+  @Override
   public void setViewProvider(@NotNull final VirtualFile virtualFile, final FileViewProvider singleRootFileViewProvider) {
     if (!(virtualFile instanceof VirtualFileWindow)) {
       if (singleRootFileViewProvider == null) {
@@ -98,6 +108,7 @@ class EmptyFileManager implements FileManager {
     }
   }
 
+  @Override
   public List<PsiFile> getAllCachedFiles() {
     return Collections.emptyList();
   }

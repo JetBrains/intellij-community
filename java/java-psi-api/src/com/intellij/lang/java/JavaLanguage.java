@@ -28,10 +28,12 @@ public class JavaLanguage extends Language {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
   }
 
+  @Override
   public String getDisplayName() {
     return "Java";
   }
 
+  @Override
   public boolean isCaseSensitive() {
     return true;
   }

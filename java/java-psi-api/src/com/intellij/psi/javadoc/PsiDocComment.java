@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiDocComment extends PsiComment, PsiDocCommentBase {
+  @Override
   @Nullable
   PsiDocCommentOwner getOwner();
 

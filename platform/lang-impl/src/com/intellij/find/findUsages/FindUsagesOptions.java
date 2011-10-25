@@ -61,6 +61,7 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
     this.searchScope = searchScope;
   }
 
+  @Override
   public FindUsagesOptions clone() {
     return (FindUsagesOptions)super.clone();
   }

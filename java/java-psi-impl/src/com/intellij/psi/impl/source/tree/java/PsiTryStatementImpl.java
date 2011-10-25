@@ -40,15 +40,18 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     super(TRY_STATEMENT);
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCachedCatchParameters = null;
   }
 
+  @Override
   public PsiCodeBlock getTryBlock() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.TRY_BLOCK);
   }
 
+  @Override
   @NotNull
   public PsiCodeBlock[] getCatchBlocks() {
     ASTNode tryBlock = SourceTreeToPsiMap.psiElementToTree(getTryBlock());
@@ -65,6 +68,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return PsiCodeBlock.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiParameter[] getCatchBlockParameters() {
     PsiParameter[] catchParameters = myCachedCatchParameters;
@@ -83,11 +87,13 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return catchParameters;
   }
 
+  @Override
   @NotNull
   public PsiCatchSection[] getCatchSections() {
     return getChildrenAsPsiElements(CATCH_SECTION_BIT_SET, PSI_CATCH_SECTION_ARRAYS_CONSTRUCTOR);
   }
 
+  @Override
   public PsiCodeBlock getFinallyBlock() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.FINALLY_BLOCK);
   }
@@ -97,6 +103,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return PsiTreeUtil.getChildOfType(this, PsiResourceList.class);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -126,6 +133,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -150,6 +158,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTryStatement(this);

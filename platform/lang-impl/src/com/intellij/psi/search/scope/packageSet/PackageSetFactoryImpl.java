@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl");
 
+  @Override
   public PackageSet compile(String text) throws ParsingException {
     Lexer lexer = new ScopesLexer();
     lexer.start(text);

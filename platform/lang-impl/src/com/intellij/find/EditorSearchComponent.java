@@ -154,6 +154,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     this(editor, project, createDefaultFindModel(project, editor));
   }
 
+  @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
     if (PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
@@ -303,6 +304,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), SwingConstants.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(final MouseEvent e) {
         close();
       }
@@ -319,6 +321,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     Utils.setSmallerFont(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (StringUtil.isEmpty(mySearchField.getText())) {
           close();
@@ -334,6 +337,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     final String initialText = myFindModel.getStringToFind();
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         setInitialText(initialText);
       }
@@ -622,10 +626,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     editorTextField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
 
     editorTextField.addFocusListener(new FocusListener() {
+      @Override
       public void focusGained(final FocusEvent e) {
         editorTextField.repaint();
       }
 
+      @Override
       public void focusLost(final FocusEvent e) {
         editorTextField.repaint();
       }
@@ -683,6 +689,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     component.setOpaque(false);
   }
 
+  @Override
   public void requestFocus() {
     mySearchField.setSelectionStart(0);
     mySearchField.setSelectionEnd(mySearchField.getText().length());
@@ -708,6 +715,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   private void initLivePreview() {
     myDocumentListener = new DocumentAdapter() {
+      @Override
       public void documentChanged(final DocumentEvent e) {
         if (!mySuppressUpdate) {
           myLivePreview.inSmartUpdate();
@@ -732,6 +740,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myLivePreviewController.updateInBackground(myFindModel, false);
   }
 
+  @Override
   public void removeNotify() {
     super.removeNotify();
 

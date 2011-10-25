@@ -42,10 +42,12 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
     }
   }
 
+  @Override
   public boolean isAccessedForWriting() {
     return myAccessedForWriting;
   }
 
+  @Override
   public boolean isAccessedForReading() {
     return myAccessedForReading;
   }

@@ -54,6 +54,7 @@ public class WrapExpressionFix implements IntentionAction {
     return null;
   }
 
+  @Override
   @NotNull
   public String getText() {
     final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null ? findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) : null;
@@ -84,11 +85,13 @@ public class WrapExpressionFix implements IntentionAction {
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myExpression.isValid()
            && myExpression.getManager().isInProject(myExpression)
@@ -98,6 +101,7 @@ public class WrapExpressionFix implements IntentionAction {
            && findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected);
@@ -112,6 +116,7 @@ public class WrapExpressionFix implements IntentionAction {
     myExpression.replace(call);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

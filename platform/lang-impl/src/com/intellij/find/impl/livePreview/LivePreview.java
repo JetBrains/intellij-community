@@ -123,10 +123,12 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     myDelegate.performReplaceAll(mySearchResults.getEditor());
   }
 
+  @Override
   public boolean isExcluded(LiveOccurrence occurrence) {
     return mySearchResults.isExcluded(occurrence);
   }
 
+  @Override
   public void exclude(LiveOccurrence occurrence) {
     mySearchResults.exclude(occurrence);
     myDelegate.getFocusBack();
@@ -180,6 +182,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     updateCursorHighlighting(toChangeSelection);
   }
 
+  @Override
   public void editorChanged(SearchResults sr, Editor oldEditor) {
     removeFromEditor();
     oldEditor.getDocument().removeDocumentListener(this);

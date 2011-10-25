@@ -81,6 +81,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
     final Editor editor = myEditor;
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         highlight(infos, editor);
@@ -151,6 +152,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     return editor;
   }
 
+  @Override
   public void dispose() {
     isDisposed = true;
     releaseEditor();
@@ -170,6 +172,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
   public void updateLayout(final List<UsageInfo> infos) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         if (infos == null) {

@@ -30,15 +30,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaStructureViewBuilderFactory implements PsiStructureViewFactory {
+  @Override
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     if (!(psiFile instanceof PsiJavaFile)) return null;
     return new TreeBasedStructureViewBuilder() {
+      @Override
       @NotNull
       public StructureViewModel createStructureViewModel() {
         return new JavaFileTreeModel((PsiJavaFile)psiFile);
       }
 
+      @Override
       public boolean isRootNodeShown() {
         return false;
       }

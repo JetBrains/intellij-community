@@ -32,6 +32,7 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
   private LocalsOrMyInstanceFieldsControlFlowPolicy() {
   }
 
+  @Override
   public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression) {
@@ -43,10 +44,12 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
     return null;
   }
 
+  @Override
   public boolean isParameterAccepted(PsiParameter psiParameter) {
     return true;
   }
 
+  @Override
   public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
     return true;
   }

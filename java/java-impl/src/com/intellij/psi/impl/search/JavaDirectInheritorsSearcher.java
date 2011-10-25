@@ -33,17 +33,20 @@ import java.util.Map;
  * @author max
  */
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters p, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass aClass = p.getClassToProcess();
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(aClass.getProject());
 
     final SearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
       public SearchScope compute() {
         return aClass.getUseScope();
       }
     });
 
     final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         return aClass.getQualifiedName();
       }
@@ -54,6 +57,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
 
       return AllClassesSearch.search(scope, aClass.getProject()).forEach(new Processor<PsiClass>() {
+        @Override
         public boolean process(final PsiClass psiClass) {
           if (psiClass.isInterface()) {
             return consumer.process(psiClass);
@@ -79,6 +83,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiReferenceList> candidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiReferenceList>>() {
+      @Override
       public Collection<PsiReferenceList> compute() {
         return JavaSuperClassNameOccurenceIndex.getInstance().get(searchKey, psiManager.getProject(), scope);
       }
@@ -92,6 +97,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       if (!checkInheritance(p, aClass, candidate)) continue;
 
       String fqn = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
         public String compute() {
           return candidate.getQualifiedName();
         }
@@ -110,6 +116,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     if (p.includeAnonymous()) {
       Collection<PsiAnonymousClass> anonymousCandidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiAnonymousClass>>() {
+        @Override
         public Collection<PsiAnonymousClass> compute() {
           return JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(searchKey, psiManager.getProject(), scope);
         }
@@ -125,6 +132,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       if (aClass.isEnum()) {
         // abstract enum can be subclassed in the body
         PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
+          @Override
           public PsiField[] compute() {
             return aClass.getFields();
           }
@@ -133,6 +141,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           if (field instanceof PsiEnumConstant) {
             PsiEnumConstantInitializer initializingClass =
               ApplicationManager.getApplication().runReadAction(new Computable<PsiEnumConstantInitializer>() {
+                @Override
                 public PsiEnumConstantInitializer compute() {
                   return ((PsiEnumConstant)field).getInitializingClass();
                 }

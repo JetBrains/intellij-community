@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class KnownElementWeigher extends ProximityWeigher {
 
+  @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     for (ForcedElementWeigher weigher : Extensions.getExtensions(ForcedElementWeigher.EP_NAME)) {
       final Comparable weigh = weigher.getForcedWeigh(element);

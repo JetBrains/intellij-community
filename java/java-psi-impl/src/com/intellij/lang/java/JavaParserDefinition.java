@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
+  @Override
   @NotNull
   public Lexer createLexer(final Project project) {
     final LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
@@ -50,30 +51,36 @@ public class JavaParserDefinition implements ParserDefinition {
     return new JavaLexer(languageLevel);
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return JavaStubElementTypes.JAVA_FILE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return ElementType.JAVA_WHITESPACE_BIT_SET;
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return ElementType.JAVA_COMMENT_BIT_SET;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiParser createParser(final Project project) {
     throw new UnsupportedOperationException("Should not be called directly");
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(final ASTNode node) {
     final IElementType type = node.getElementType();
@@ -84,10 +91,12 @@ public class JavaParserDefinition implements ParserDefinition {
     throw new IllegalStateException("Incorrect node for JavaParserDefinition: " + node + " (" + type + ")");
   }
 
+  @Override
   public PsiFile createFile(final FileViewProvider viewProvider) {
     return new PsiJavaFileImpl(viewProvider);
   }
 
+  @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final PsiFile containingFile = left.getTreeParent().getPsi().getContainingFile();
     final Lexer lexer;

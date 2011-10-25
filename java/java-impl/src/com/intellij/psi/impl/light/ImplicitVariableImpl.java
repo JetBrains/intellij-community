@@ -30,6 +30,7 @@ public abstract class ImplicitVariableImpl extends LightVariableBase implements 
     super(manager, nameIdentifier, type, writable, scope);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitImplicitVariable(this);
@@ -43,10 +44,12 @@ public abstract class ImplicitVariableImpl extends LightVariableBase implements 
     return "Implicit variable:" + getName();
   }
 
+  @Override
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());

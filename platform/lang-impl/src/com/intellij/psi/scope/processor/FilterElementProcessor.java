@@ -56,6 +56,7 @@ public class FilterElementProcessor implements PsiElementProcessor{
     this(filter, null, new ArrayList());
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element){
     if(myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(element, element.getParent())){
       if(myProcessor != null){

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PlainTextASTFactory extends ASTFactory {
 
+  @Override
   @Nullable
   public LeafElement createLeaf(final IElementType type, CharSequence text) {
     if (type == PlainTextTokenTypes.PLAIN_TEXT) {

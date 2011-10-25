@@ -68,11 +68,13 @@ public class IdTableBuilding {
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
+    @Override
     @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final IdDataConsumer consumer = new IdDataConsumer();
       final CharSequence chars = inputData.getContentAsText();
       scanWords(new ScanWordProcessor() {
+        @Override
         public void run(final CharSequence chars11, final int start, final int end) {
           consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
         }
@@ -82,6 +84,7 @@ public class IdTableBuilding {
   }
 
   public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+    @Override
     @NotNull
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
       final CharSequence chars = inputData.getContentAsText();
@@ -241,12 +244,14 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
 
+    @Override
     @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final CharSequence chars = inputData.getContentAsText();
       final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
       final IdDataConsumer consumer = new IdDataConsumer();
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
+        @Override
         public boolean process(final WordOccurrence t) {
           if (charsArray != null && t.getBaseText() == chars) {
             consumer.addOccurrence(charsArray, t.getStart(), t.getEnd(), convertToMask(t.getKind()));
@@ -305,6 +310,7 @@ public class IdTableBuilding {
       myFile = file;
     }
 
+    @Override
     @NotNull
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
       if (IndexPatternUtil.getIndexPatternCount() > 0) {

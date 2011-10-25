@@ -39,12 +39,15 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private static final int CONNECT_TIMEOUT = 60 * 1000;
   private static final int READ_TIMEOUT = 60 * 1000;
 
+  @Override
   public boolean canProvideContent(@NotNull final String url) {
     return true;
   }
 
+  @Override
   public void saveContent(final String url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         downloadContent(url, file, callback);
       }
@@ -120,6 +123,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     }
   }
 
+  @Override
   public boolean isUpToDate(@NotNull final String url, @NotNull final VirtualFile local) {
     return false;
   }

@@ -31,15 +31,18 @@ public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K,
 
   public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = new VoidDataExternalizer();
 
+  @Override
   public final DataExternalizer<Void> getValueExternalizer() {
     return VOID_DATA_EXTERNALIZER;
   }
 
   private static class VoidDataExternalizer implements DataExternalizer<Void> {
 
+    @Override
     public void save(final DataOutput out, final Void value) throws IOException {
     }
 
+    @Override
     @Nullable
     public Void read(final DataInput in) throws IOException {
       return null;

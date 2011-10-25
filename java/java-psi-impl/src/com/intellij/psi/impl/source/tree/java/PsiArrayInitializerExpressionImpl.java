@@ -32,11 +32,13 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     super(ARRAY_INITIALIZER_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpression[] getInitializers(){
     return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public PsiType getType(){
     if (getTreeParent() instanceof PsiNewExpression){
       if (getTreeParent().getChildRole(this) == ChildRole.ARRAY_INITIALIZER){
@@ -59,6 +61,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     return null;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -73,6 +76,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -93,6 +97,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitArrayInitializerExpression(this);
@@ -106,6 +111,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     return "PsiArrayInitializerExpression:" + getText();
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (anchor == null){
       if (before == null || before.booleanValue()){

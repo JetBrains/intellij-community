@@ -68,11 +68,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     myPhysical = isPhysical;
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return getContentElementType().getLanguage();
   }
 
+  @Override
   protected PsiCodeFragmentImpl clone() {
     final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl((FileElement)calcTreeElement().clone());
     clone.myPhysical = false;
@@ -90,23 +92,27 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
   private FileViewProvider myViewProvider = null;
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
+  @Override
   public boolean isValid() {
     if (!super.isValid()) return false;
     if (myContext != null && !myContext.isValid()) return false;
     return true;
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return StdFileTypes.JAVA;
   }
 
+  @Override
   public PsiElement getContext() {
     return myContext;
   }
@@ -115,26 +121,32 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     myContext = context;
   }
 
+  @Override
   public PsiType getThisType() {
     return myThisType;
   }
 
+  @Override
   public void setThisType(PsiType psiType) {
     myThisType = psiType;
   }
 
+  @Override
   public PsiType getSuperType() {
     return mySuperType;
   }
 
+  @Override
   public void setSuperType(final PsiType superType) {
     mySuperType = superType;
   }
 
+  @Override
   public String importsToString() {
     return StringUtil.join(myPseudoImports.values(), ",");
   }
 
+  @Override
   public void addImportsFromString(String imports) {
     StringTokenizer tokenizer = new StringTokenizer(imports, ",");
     while (tokenizer.hasMoreTokens()) {
@@ -144,18 +156,22 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
   }
 
+  @Override
   public void setVisibilityChecker(VisibilityChecker checker) {
     myVisibilityChecker = checker;
   }
 
+  @Override
   public VisibilityChecker getVisibilityChecker() {
     return myVisibilityChecker;
   }
 
+  @Override
   public boolean isPhysical() {
     return myPhysical;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitCodeFragment(this);
@@ -165,6 +181,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -216,6 +233,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     return "PsiCodeFragment:" + getName();
   }
 
+  @Override
   public boolean importClass(PsiClass aClass) {
     final String className = aClass.getName();
     final String qName = aClass.getQualifiedName();
@@ -250,41 +268,50 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
       myPseudoImports = pseudoImportsMap;
     }
 
+    @Override
     public void undo() {
       myPseudoImports.remove(myClassName);
     }
 
+    @Override
     public void redo() {
       myPseudoImports.put(myClassName, myQName);
     }
   }
 
+  @Override
   public ExceptionHandler getExceptionHandler() {
     return myExceptionHandler;
   }
 
+  @Override
   public void setIntentionActionsFilter(final IntentionActionsFilter filter) {
     myIntentionActionsFilter = filter;
   }
 
+  @Override
   public IntentionActionsFilter getIntentionActionsFilter() {
     return myIntentionActionsFilter;
   }
 
+  @Override
   public void forceResolveScope(GlobalSearchScope scope) {
     myResolveScope = scope;
   }
 
+  @Override
   public GlobalSearchScope getForcedResolveScope() {
     return myResolveScope;
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     if (myResolveScope != null) return myResolveScope;
     return super.getResolveScope();
   }
 
+  @Override
   public void setExceptionHandler(final ExceptionHandler exceptionHandler) {
     myExceptionHandler = exceptionHandler;
   }

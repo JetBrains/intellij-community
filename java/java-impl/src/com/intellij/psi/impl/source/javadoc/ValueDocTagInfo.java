@@ -29,22 +29,27 @@ import com.intellij.psi.util.PsiUtil;
  * @author yole
  */
 public class ValueDocTagInfo implements JavadocTagInfo {
+  @Override
   public String getName() {
     return "value";
   }
 
+  @Override
   public boolean isInline() {
     return true;
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     return true;
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     return null;
   }
 
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     boolean hasReference = (value != null && value.getFirstChild() != null);
     if (hasReference) {
@@ -76,6 +81,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
     return null;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
   }

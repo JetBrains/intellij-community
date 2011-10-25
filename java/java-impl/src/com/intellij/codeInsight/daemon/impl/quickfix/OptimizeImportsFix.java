@@ -30,20 +30,24 @@ import org.jetbrains.annotations.NotNull;
 public class OptimizeImportsFix implements IntentionAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.OptimizeImportsFix");
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("optimize.imports.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("optimize.imports.fix");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return file.getManager().isInProject(file) && file instanceof PsiJavaFile;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
@@ -56,6 +60,7 @@ public class OptimizeImportsFix implements IntentionAction{
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

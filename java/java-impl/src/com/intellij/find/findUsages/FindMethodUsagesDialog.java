@@ -36,11 +36,13 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedControl() {
     return myHasFindWhatPanel ? myCbUsages : null;
   }
 
+  @Override
   public void calcFindUsagesOptions(JavaMethodFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
@@ -54,6 +56,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     options.isCheckDeepInheritance = true;
   }
 
+  @Override
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
     findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group"), false, true, true));
@@ -98,6 +101,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     }*/
   }
 
+  @Override
   protected void update() {
     if (!myHasFindWhatPanel) {
       setOKActionEnabled(true);

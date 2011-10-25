@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 
 public class JavaIndentHelper extends IndentHelperImpl {
+  @Override
   protected int getIndentInner(Project project,
                                FileType fileType,
                                final ASTNode element,

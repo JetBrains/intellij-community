@@ -41,6 +41,7 @@ abstract class FoldRegionsTree {
   int myCachedLastIndex = -1;
   private ArrayList<FoldRegion> myRegions = CollectionFactory.arrayList();  //sorted in tree left-to-right topdown traversal order
   private static final Comparator<FoldRegion> BY_END_OFFSET = new Comparator<FoldRegion>() {
+    @Override
     public int compare(FoldRegion r1, FoldRegion r2) {
       int end1 = r1.getEndOffset();
       int end2 = r2.getEndOffset();

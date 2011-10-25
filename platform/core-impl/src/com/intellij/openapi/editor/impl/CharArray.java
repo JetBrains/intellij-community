@@ -336,6 +336,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return str;
   }
 
+  @Override
   public final int length() {
     final int result = myCount + myDeferredShift;
     if (myDebugDeferredProcessing && isDeferredChangeMode()) {
@@ -347,6 +348,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return result;
   }
 
+  @Override
   public final char charAt(int i) {
     if (i < 0 || i >= length()) {
       throw new IndexOutOfBoundsException("Wrong offset: " + i + "; count:" + length());
@@ -379,6 +381,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return result;
   }
 
+  @Override
   public CharSequence subSequence(int start, int end) {
     if (start == 0 && end == length()) return this;
     if (myOriginalSequence != null) {
@@ -412,6 +415,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return myEnd >= 0;
   }
   
+  @Override
   public char[] getChars() {
     if (myOriginalSequence != null) {
       if (myArray == null) {
@@ -431,6 +435,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return myArray;
   }
 
+  @Override
   public void getChars(final char[] dst, final int dstOffset) {
     flushDeferredChanged(myDeferredChangesStorage.get());
     if (myOriginalSequence != null) {

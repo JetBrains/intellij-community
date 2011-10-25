@@ -27,6 +27,7 @@ class DirElementInfo extends FileElementInfo {
     super(directory.getProject(), directory.getVirtualFile());
   }
 
+  @Override
   public PsiElement restoreElement() {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }

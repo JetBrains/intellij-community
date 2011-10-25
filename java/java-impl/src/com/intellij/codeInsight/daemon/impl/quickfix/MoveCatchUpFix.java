@@ -38,6 +38,7 @@ public class MoveCatchUpFix implements IntentionAction {
         myMoveBeforeSection = moveBeforeSection;
     }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("move.catch.up.text",
@@ -45,11 +46,13 @@ public class MoveCatchUpFix implements IntentionAction {
                                   HighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.catch.up.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myCatchSection != null
            && myCatchSection.isValid()
@@ -65,6 +68,7 @@ public class MoveCatchUpFix implements IntentionAction {
                   PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()));
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myCatchSection.getContainingFile())) return;
     try {
@@ -77,6 +81,7 @@ public class MoveCatchUpFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

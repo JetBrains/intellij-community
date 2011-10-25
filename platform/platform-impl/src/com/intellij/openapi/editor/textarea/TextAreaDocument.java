@@ -29,10 +29,12 @@ public class TextAreaDocument extends TextComponentDocument {
     myTextArea = textComponent;
   }
 
+  @Override
   public int getLineCount() {
     return myTextArea.getLineCount();
   }
 
+  @Override
   public int getLineNumber(final int offset) {
     try {
       return myTextArea.getLineOfOffset(offset);
@@ -42,6 +44,7 @@ public class TextAreaDocument extends TextComponentDocument {
     }
   }
 
+  @Override
   public int getLineStartOffset(final int line) {
     try {
       return myTextArea.getLineStartOffset(line);
@@ -51,6 +54,7 @@ public class TextAreaDocument extends TextComponentDocument {
     }
   }
 
+  @Override
   public int getLineEndOffset(final int line) {
     try {
       return myTextArea.getLineEndOffset(line) - getLineSeparatorLength(line);
@@ -60,6 +64,7 @@ public class TextAreaDocument extends TextComponentDocument {
     }
   }
 
+  @Override
   public int getLineSeparatorLength(final int line) {
     if (line == myTextArea.getLineCount()-1) {
       return 0;

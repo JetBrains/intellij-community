@@ -93,6 +93,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       return true;
     }
 
+    @Override
     public boolean hasAliveKey(boolean purgeDead) {
       boolean hasAliveInterval = false;
       for (int i = intervals.size() - 1; i >= 0; i--) {
@@ -341,6 +342,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return (IntervalNode<T>)root;
   }
 
+  @Override
   public boolean process(@NotNull Processor<? super T> processor) {
     try {
       l.readLock().lock();
@@ -366,6 +368,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     });
   }
 
+  @Override
   public boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor) {
     try {
       l.readLock().lock();
@@ -449,6 +452,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
 
+  @Override
   public boolean processContaining(int offset, @NotNull Processor<? super T> processor) {
     try {
       l.readLock().lock();

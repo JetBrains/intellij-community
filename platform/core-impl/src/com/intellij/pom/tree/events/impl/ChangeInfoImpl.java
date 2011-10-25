@@ -41,6 +41,7 @@ public class ChangeInfoImpl implements ChangeInfo {
     myOldLength = type != ADD ? ((TreeElement)changed).getNotCachedLength() : 0;
   }
 
+  @Override
   public int getChangeType(){
     return type;
   }
@@ -75,6 +76,7 @@ public class ChangeInfoImpl implements ChangeInfo {
     }
   }
 
+  @Override
   public int getOldLength(){
     return myOldLength;
   }

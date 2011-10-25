@@ -22,6 +22,7 @@ import com.intellij.usages.UsageView;
  * @author max
  */
 public class IncludeUsageAction extends IncludeExcludeActionBase {
+  @Override
   protected void process(Usage[] usages, UsageView usageView) {
     usageView.includeUsages(usages);
   }

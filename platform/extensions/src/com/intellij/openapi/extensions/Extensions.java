@@ -71,6 +71,7 @@ public class Extensions {
     ourRootArea = newArea;
     oldRootArea.notifyAreaReplaced();
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         ourRootArea = oldRootArea;
         newArea.notifyAreaReplaced();
@@ -218,28 +219,34 @@ public class Extensions {
   }
 
   public static class SimpleLogProvider implements LogProvider {
+    @Override
     public void error(String message) {
       new Throwable(message).printStackTrace();
     }
 
+    @Override
     public void error(String message, Throwable t) {
       System.err.println(message);
       t.printStackTrace();
     }
 
+    @Override
     public void error(Throwable t) {
       t.printStackTrace();
     }
 
+    @Override
     public void warn(String message) {
       System.err.println(message);
     }
 
+    @Override
     public void warn(String message, Throwable t) {
       System.err.println(message);
       t.printStackTrace();
     }
 
+    @Override
     public void warn(Throwable t) {
       t.printStackTrace();
     }

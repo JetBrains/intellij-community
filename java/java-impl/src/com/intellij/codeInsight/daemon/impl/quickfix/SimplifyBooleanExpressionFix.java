@@ -47,16 +47,19 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     mySubExpressionValue = subExpressionValue;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("simplify.boolean.expression.text", mySubExpression.getText(), mySubExpressionValue);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return mySubExpression.isValid()
            && mySubExpression.getManager().isInProject(mySubExpression)
@@ -64,6 +67,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!isAvailable(project, editor, file)) return;
     LOG.assertTrue(mySubExpression.isValid());
@@ -354,6 +358,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

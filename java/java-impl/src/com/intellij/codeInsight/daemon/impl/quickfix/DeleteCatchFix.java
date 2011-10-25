@@ -31,22 +31,26 @@ public class DeleteCatchFix implements IntentionAction {
     this.myCatchParameter = myCatchParameter;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("delete.catch.text", HighlightUtil.formatType(myCatchParameter.getType()));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("delete.catch.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myCatchParameter != null
            && myCatchParameter.isValid()
            && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myCatchParameter.getContainingFile())) return;
 
@@ -97,6 +101,7 @@ public class DeleteCatchFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

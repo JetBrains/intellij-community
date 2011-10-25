@@ -38,16 +38,19 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
+  @Override
   protected void init () {
     // Kludge: myRoots used in super.init, which caller from constructor
     myRoots = ThrowSearchUtil.getSearchRoots(myPsiElement);
     super.init ();
   }
 
+  @Override
   public JComponent getPreferredFocusedControl() {
     return myHasFindWhatPanel ? myCbUsages : null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final JComponent panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -63,11 +66,13 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
     return panel;
   }
 
+  @Override
   public void calcFindUsagesOptions(final JavaThrowFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
   }
 
+  @Override
   protected JPanel createFindWhatPanel() {
     final JPanel findWhatPanel = new JPanel();
     findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group"), false, true, true));
@@ -85,11 +90,13 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
     return findWhatPanel;
   }
 
+  @Override
   protected void doOKAction() {
     myFindUsagesOptions.putUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY, (ThrowSearchUtil.Root)myCbExns.getSelectedItem());
     super.doOKAction();
   }
 
+  @Override
   protected void update(){
     if (!myHasFindWhatPanel){
       setOKActionEnabled(true);

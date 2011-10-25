@@ -39,12 +39,14 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
     myIsClassesAccepted = isClassesAccepted;
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getReferenceElement() {
     final CompositeElement treeElement = calcTreeElement();
     LOG.assertTrue (treeElement.getFirstChildNode().getElementType() == ElementType.JAVA_CODE_REFERENCE);
     return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(treeElement.getFirstChildNode());
   }
 
+  @Override
   public boolean isClassesAccepted() {
     return myIsClassesAccepted;
   }

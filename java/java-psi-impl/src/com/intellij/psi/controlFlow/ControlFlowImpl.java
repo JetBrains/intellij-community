@@ -64,14 +64,17 @@ class ControlFlowImpl implements ControlFlow {
     myElementToEndOffsetMap.put(element, myInstructions.size());
   }
 
+  @Override
   @NotNull
   public List<Instruction> getInstructions() {
     return myInstructions;
   }
+  @Override
   public int getSize() {
     return myInstructions.size();
   }
 
+  @Override
   public int getStartOffset(@NotNull PsiElement element) {
     int value = myElementToStartOffsetMap.get(element);
     if (value == 0){
@@ -80,6 +83,7 @@ class ControlFlowImpl implements ControlFlow {
     return value;
   }
 
+  @Override
   public int getEndOffset(@NotNull PsiElement element) {
     int value = myElementToEndOffsetMap.get(element);
     if (value == 0){
@@ -88,10 +92,12 @@ class ControlFlowImpl implements ControlFlow {
     return value;
   }
 
+  @Override
   public PsiElement getElement(int offset) {
     return myElementsForInstructions.get(offset);
   }
 
+  @Override
   public boolean isConstantConditionOccurred() {
     return myConstantConditionOccurred;
   }

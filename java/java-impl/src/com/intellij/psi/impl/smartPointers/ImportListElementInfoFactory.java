@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImportListElementInfoFactory implements SmartPointerElementInfoFactory {
+  @Override
   @Nullable
   public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiImportList) {
@@ -35,6 +36,7 @@ public class ImportListElementInfoFactory implements SmartPointerElementInfoFact
       super(file);
     }
 
+    @Override
     public PsiElement restoreElement() {
       PsiElement element = super.restoreElement();
       if (!(element instanceof PsiJavaFile)) return null;

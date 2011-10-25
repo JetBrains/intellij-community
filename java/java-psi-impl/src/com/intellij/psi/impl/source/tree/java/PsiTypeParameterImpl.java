@@ -48,6 +48,7 @@ import java.util.List;
  */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   private final LightEmptyImplementsList myLightEmptyImplementsList = new LightEmptyImplementsList(null) {
+    @Override
     public PsiManager getManager() {
       return PsiTypeParameterImpl.this.getManager();
     }
@@ -61,85 +62,104 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     super(node);
   }
 
+  @Override
   public String getQualifiedName() {
     return null;
   }
 
+  @Override
   public boolean isInterface() {
     return false;
   }
 
+  @Override
   public boolean isAnnotationType() {
     return false;
   }
 
+  @Override
   public boolean isEnum() {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiField[] getFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @Override
   public PsiField findFieldByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
+  @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
+  @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiMethod.class);
   }
 
+  @Override
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findInnerByName(this, name, checkBases);
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return null;
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return false;
   }
 
   // very special method!
+  @Override
   public PsiElement getScope() {
     return getParent().getParent();
   }
 
+  @Override
   public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
+  @Override
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
+  @Override
   public PsiTypeParameterListOwner getOwner() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
@@ -153,6 +173,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
 
+  @Override
   public int getIndex() {
     final PsiTypeParameterStub stub = getStub();
     if (stub != null) {
@@ -170,15 +191,18 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return ret;
   }
 
+  @Override
   @NotNull
   public PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier) calcTreeElement().findChildByRole(ChildRole.NAME);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
   }
 
+  @Override
   public String getName() {
     final PsiTypeParameterStub stub = getStub();
     if (stub != null) {
@@ -188,116 +212,141 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return getNameIdentifier().getText();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiDocComment getDocComment() {
     return null;
   }
 
+  @Override
   public boolean isDeprecated() {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiReferenceList getExtendsList() {
     return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST);
   }
 
+  @Override
   public PsiReferenceList getImplementsList() {
     return myLightEmptyImplementsList;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiField[] getAllFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getAllMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassInitializer[] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiClass getSuperClass() {
     return PsiClassImplUtil.getSuperClass(this);
   }
 
+  @Override
   public PsiClass[] getInterfaces() {
     return PsiClassImplUtil.getInterfaces(this);
   }
 
+  @Override
   @NotNull
   public PsiClass[] getSupers() {
     return PsiClassImplUtil.getSupers(this);
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return null;
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return false;
   }
 
+  @Override
   public PsiJavaToken getLBrace() {
     return null;
   }
 
+  @Override
   public PsiJavaToken getRBrace() {
     return null;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeParameter(this);
@@ -316,6 +365,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return MetaRegistry.getMeta(this);
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }
@@ -325,24 +375,29 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return getStubOrPsiChildren(ElementType.ANNOTATIONS, PsiAnnotation.ARRAY_FACTORY);
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();

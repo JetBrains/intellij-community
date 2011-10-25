@@ -45,6 +45,7 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     super(id);
   }
 
+  @Override
   public PsiImportStatementBase createPsi(final PsiImportStatementStub stub) {
     assert !isCompiled(stub);
     if (stub.isStatic()) {
@@ -55,6 +56,7 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     }
   }
 
+  @Override
   public PsiImportStatementBase createPsi(final ASTNode node) {
     if (node instanceof ImportStaticStatementElement) {
       return new PsiImportStaticStatementImpl(node);
@@ -64,6 +66,7 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     }
   }
 
+  @Override
   public PsiImportStatementStub createStub(final LighterAST tree,
                                            final LighterASTNode node,
                                            final StubElement parentStub) {
@@ -84,17 +87,20 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 
+  @Override
   public void serialize(final PsiImportStatementStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiImportStatementStubImpl)stub).getFlags());
     dataStream.writeName(stub.getImportReferenceText());
   }
 
+  @Override
   public PsiImportStatementStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     final byte flags = dataStream.readByte();
     final StringRef refText = dataStream.readName();
     return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 
+  @Override
   public void indexStub(final PsiImportStatementStub stub, final IndexSink sink) {
   }
 }

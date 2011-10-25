@@ -30,6 +30,7 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
     myModificationTracker = (PsiModificationTrackerImpl) modificationTracker;
   }
 
+  @Override
   public void treeChanged(final PsiTreeChangeEventImpl event) {
     switch (event.getCode()) {
       case BEFORE_CHILDREN_CHANGE:

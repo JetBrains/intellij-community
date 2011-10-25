@@ -114,6 +114,7 @@ public class FileDownloaderImpl implements FileDownloader {
     final File ioDir = VfsUtil.virtualToIoFile(dir);
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         try {
@@ -201,6 +202,7 @@ public class FileDownloaderImpl implements FileDownloader {
         FileUtil.rename(pair.getSecond(), toFile);
       }
       VirtualFile file = new WriteAction<VirtualFile>() {
+        @Override
         protected void run(final Result<VirtualFile> result) {
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(toFile);
@@ -214,6 +216,7 @@ public class FileDownloaderImpl implements FileDownloader {
 
     for (final File file : existingFiles) {
       VirtualFile libraryRootFile = new WriteAction<VirtualFile>() {
+        @Override
         protected void run(final Result<VirtualFile> result) {
           final String url = VfsUtil.getUrlForLibraryRoot(file);
           result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));

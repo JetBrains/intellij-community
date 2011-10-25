@@ -34,10 +34,12 @@ public class TypeFilter implements ElementFilter{
     myType = type;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return element.equals(myType);
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiType.class, hintClass);
   }

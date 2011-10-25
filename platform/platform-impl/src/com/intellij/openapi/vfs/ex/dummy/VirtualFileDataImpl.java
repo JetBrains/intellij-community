@@ -31,25 +31,31 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     super(fileSystem, parent, name);
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public long getLength() {
     return myContents.length;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return null;
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(myContents, this);
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
+      @Override
       public void close() {
         final DummyFileSystem fs = (DummyFileSystem)getFileSystem();
         fs.fireBeforeContentsChange(requestor, VirtualFileDataImpl.this);
@@ -61,11 +67,13 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     },this);
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     return myContents;
   }
 
+  @Override
   public long getModificationStamp() {
     return myModificationStamp;
   }

@@ -52,6 +52,7 @@ public class VFileCreateEvent extends VFileEvent {
     return "VfsEvent[create " + (isDirectory() ? "dir " : "file ") + myChildName +  " in " + myParent.getUrl() + "]";
   }
 
+  @Override
   public String getPath() {
     return myParent.getPath() + "/" + myChildName;
   }
@@ -61,10 +62,12 @@ public class VFileCreateEvent extends VFileEvent {
     return myParent.findChild(myChildName);
   }
 
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myParent.getFileSystem();
   }
 
+  @Override
   public boolean isValid() {
     return myParent.isValid() && myParent.findChild(myChildName) == null;
   }

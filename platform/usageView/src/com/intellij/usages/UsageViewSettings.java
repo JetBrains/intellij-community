@@ -106,10 +106,12 @@ public class UsageViewSettings implements PersistentStateComponent<UsageViewSett
     EXPORT_FILE_NAME = s;
   }
 
+  @Override
   public UsageViewSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final UsageViewSettings object) {
     XmlSerializerUtil.copyBean(object, this);
   }

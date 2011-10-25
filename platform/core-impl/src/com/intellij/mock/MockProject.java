@@ -121,6 +121,7 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
+  @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }

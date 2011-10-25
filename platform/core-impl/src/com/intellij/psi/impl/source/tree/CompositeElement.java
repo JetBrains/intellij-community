@@ -63,6 +63,7 @@ public class CompositeElement extends TreeElement {
     return myModificationsCount;
   }
 
+  @Override
   public CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
@@ -99,6 +100,7 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  @Override
   public void clearCaches() {
     if (ASSERT_THREADING) {
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
@@ -142,10 +144,12 @@ public class CompositeElement extends TreeElement {
       !psiFile.isPhysical();
   }
 
+  @Override
   public void acceptTree(TreeElementVisitor visitor) {
     visitor.visitComposite(this);
   }
 
+  @Override
   public LeafElement findLeafElementAt(int offset) {
     TreeElement element = this;
     startFind:
@@ -183,6 +187,7 @@ public class CompositeElement extends TreeElement {
     return node == null ? null : node.getPsi();
   }
 
+  @Override
   public ASTNode findChildByType(IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -194,6 +199,7 @@ public class CompositeElement extends TreeElement {
     return null;
   }
 
+  @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
@@ -205,6 +211,7 @@ public class CompositeElement extends TreeElement {
     return null;
   }
 
+  @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
     ASTNode child = anchor;
@@ -215,15 +222,18 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  @Override
   @NotNull
   public String getText() {
     return new String(textToCharArray());
   }
 
+  @Override
   public CharSequence getChars() {
     return new CharArrayCharSequence(textToCharArray());
   }
 
+  @Override
   public int getNotCachedLength() {
     final int[] result = {0};
 
@@ -240,6 +250,7 @@ public class CompositeElement extends TreeElement {
     return result[0];
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     int startStamp = myModificationsCount;
@@ -314,6 +325,7 @@ public class CompositeElement extends TreeElement {
     return msg;
   }
 
+  @Override
   public boolean textContains(char c) {
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.textContains(c)) return true;
@@ -321,6 +333,7 @@ public class CompositeElement extends TreeElement {
     return false;
   }
 
+  @Override
   protected int textMatches(@NotNull CharSequence buffer, int start) {
     int curOffset = start;
     for (TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -388,6 +401,7 @@ public class CompositeElement extends TreeElement {
     return 0; //ChildRole.NONE;
   }
 
+  @Override
   public ASTNode[] getChildren(TokenSet filter) {
     int count = countChildren(filter);
     if (count == 0) {
@@ -506,6 +520,7 @@ public class CompositeElement extends TreeElement {
     CodeEditUtil.replaceChild(this, child, newElement);
   }
 
+  @Override
   public int getTextLength() {
     int cachedLength = myCachedLength;
     if (cachedLength >= 0) return cachedLength;
@@ -527,6 +542,7 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  @Override
   public int hc() {
     int hc = myHC;
     if (hc == -1) {
@@ -541,6 +557,7 @@ public class CompositeElement extends TreeElement {
     return hc;
   }
 
+  @Override
   public int getCachedLength() {
     return myCachedLength;
   }
@@ -606,10 +623,12 @@ public class CompositeElement extends TreeElement {
     return null;
   }
 
+  @Override
   public TreeElement getFirstChildNode() {
     return firstChild;
   }
 
+  @Override
   public TreeElement getLastChildNode() {
     return lastChild;
   }
@@ -623,6 +642,7 @@ public class CompositeElement extends TreeElement {
     this.lastChild = lastChild;
   }
 
+  @Override
   public void addChild(@NotNull ASTNode child, @Nullable final ASTNode anchorBefore) {
     LOG.assertTrue(anchorBefore == null || ((TreeElement)anchorBefore).getTreeParent() == this, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
     TreeUtil.ensureParsed(getFirstChildNode());
@@ -633,6 +653,7 @@ public class CompositeElement extends TreeElement {
     removeChildrenInner(first, last);
 
     ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
+      @Override
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         if (anchorBefore != null) {
           insertBefore(destinationTreeChange, (TreeElement)anchorBefore, first);
@@ -644,6 +665,7 @@ public class CompositeElement extends TreeElement {
     }, this);
   }
 
+  @Override
   public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
     FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
     final LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
@@ -653,18 +675,22 @@ public class CompositeElement extends TreeElement {
     addChild(leaf, anchorBefore);
   }
 
+  @Override
   public void addChild(@NotNull ASTNode child) {
     addChild(child, null);
   }
 
+  @Override
   public void removeChild(@NotNull ASTNode child) {
     removeChildInner((TreeElement)child);
   }
 
+  @Override
   public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
     removeChildrenInner((TreeElement)first, (TreeElement)firstWhichStayInTree);
   }
 
+  @Override
   public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     LOG.assertTrue(((TreeElement)oldChild).getTreeParent() == this);
     final TreeElement oldChild1 = (TreeElement)oldChild;
@@ -676,6 +702,7 @@ public class CompositeElement extends TreeElement {
     removeChildrenInner(newChild1, newChildNext);
 
     ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
+      @Override
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         replace(destinationTreeChange, oldChild1, newChild1);
         repairRemovedElement(CompositeElement.this, oldChild1);
@@ -683,11 +710,13 @@ public class CompositeElement extends TreeElement {
     }, this);
   }
 
+  @Override
   public void replaceAllChildrenToChildrenOf(final ASTNode anotherParent) {
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
     final ASTNode firstChild = anotherParent.getFirstChildNode();
     ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
+      @Override
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         destinationTreeChange.addElementaryChange(anotherParent, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, anotherParent));
         ((CompositeElement)anotherParent).rawRemoveAllChildren();
@@ -696,6 +725,7 @@ public class CompositeElement extends TreeElement {
 
     if (firstChild != null) {
       ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
+        @Override
         public void makeChange(TreeChangeEvent destinationTreeChange) {
           if(getTreeParent() != null){
             final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, CompositeElement.this);
@@ -725,6 +755,7 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  @Override
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     while (firstChild != lastChild) {
       final ASTNode next1 = firstChild.getTreeNext();
@@ -733,6 +764,7 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  @Override
   public final PsiElement getPsi() {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
@@ -891,6 +923,7 @@ public class CompositeElement extends TreeElement {
     final FileElement fileElement = TreeUtil.getFileElement(first);
     if (fileElement != null) {
       ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction() {
+        @Override
         public void makeChange(TreeChangeEvent destinationTreeChange) {
           remove(destinationTreeChange, first, last);
           repairRemovedElement(fileElement, first);

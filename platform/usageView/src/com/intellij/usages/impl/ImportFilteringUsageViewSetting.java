@@ -38,10 +38,12 @@ public class ImportFilteringUsageViewSetting implements PersistentStateComponent
 
   public boolean SHOW_IMPORTS = true;
 
+  @Override
   public ImportFilteringUsageViewSetting getState() {
     return this;
   }
 
+  @Override
   public void loadState(final ImportFilteringUsageViewSetting state) {
     XmlSerializerUtil.copyBean(state, this);
   }

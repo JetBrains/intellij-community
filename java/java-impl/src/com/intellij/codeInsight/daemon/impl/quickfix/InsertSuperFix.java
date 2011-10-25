@@ -37,16 +37,19 @@ public class InsertSuperFix implements IntentionAction {
     myConstructor = constructor;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("insert.super.constructor.call.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("insert.super.constructor.call.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myConstructor.isValid()
         && myConstructor.getBody() != null
@@ -55,6 +58,7 @@ public class InsertSuperFix implements IntentionAction {
     ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myConstructor.getContainingFile())) return;
     try {
@@ -79,6 +83,7 @@ public class InsertSuperFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -56,11 +56,13 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameterList == null ? PsiTypeParameter.EMPTY_ARRAY : typeParameterList.getTypeParameters();
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameterTypes() {
     return myParameterTypes;
   }
 
+  @Override
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myTypeParameters;
@@ -98,6 +100,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return s;
   }
 
+  @Override
   @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;

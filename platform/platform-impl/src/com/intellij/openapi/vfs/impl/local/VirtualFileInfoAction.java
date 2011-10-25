@@ -39,6 +39,7 @@ public class VirtualFileInfoAction extends AnAction implements DumbAware {
     SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG, SimpleDateFormat.LONG);
 
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     String pathToFile = Messages.showInputDialog("Path to file: ",
                                  "Virtual File Info",

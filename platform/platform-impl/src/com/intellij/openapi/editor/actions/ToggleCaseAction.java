@@ -37,6 +37,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final SelectionModel selectionModel = editor.getSelectionModel();
 

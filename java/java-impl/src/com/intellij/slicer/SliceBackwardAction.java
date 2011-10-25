@@ -24,6 +24,7 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 public class SliceBackwardAction extends CodeInsightAction{
   private final SliceHandler myHandler = new SliceHandler(true);
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return myHandler;
   }

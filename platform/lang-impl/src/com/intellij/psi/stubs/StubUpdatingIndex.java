@@ -51,16 +51,19 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final int VERSION = 20;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
+    @Override
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
       v.write(out);
     }
 
+    @Override
     public SerializedStubTree read(final DataInput in) throws IOException {
       return new SerializedStubTree(in);
     }
   };
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return canHaveStub(file);
     }
@@ -94,21 +97,26 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new IntInlineKeyDescriptor();
 
+  @Override
   public ID<Integer, SerializedStubTree> getName() {
     return INDEX_ID;
   }
 
+  @Override
   public int getCacheSize() {
     return 5; // no need to cache many serialized trees
   }
 
+  @Override
   public DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
     return new DataIndexer<Integer, SerializedStubTree, FileContent>() {
+      @Override
       @NotNull
       public Map<Integer, SerializedStubTree> map(final FileContent inputData) {
         final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             final StubElement rootStub = StubTreeBuilder.buildStubTree(inputData);
             if (rootStub == null) return;
@@ -126,22 +134,27 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     };
   }
 
+  @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return DATA_DESCRIPTOR;
   }
 
+  @Override
   public DataExternalizer<SerializedStubTree> getValueExternalizer() {
     return KEY_EXTERNALIZER;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public int getVersion() {
     return getCumulativeVersion();
   }
@@ -169,14 +182,17 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return version;
   }
 
+  @Override
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final ID<Integer, SerializedStubTree> indexId, final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
       memStorage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
+        @Override
         public void bufferingStateChanged(final boolean newState) {
           ((StubIndexImpl)StubIndexImpl.getInstance()).setDataBufferingEnabled(newState);
         }
 
+        @Override
         public void memoryStorageCleared() {
           ((StubIndexImpl)StubIndexImpl.getInstance()).cleanupMemoryStorage();
         }
@@ -232,6 +248,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
+    @Override
     protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> newData, Callable<Collection<Integer>> oldKeysGetter)
       throws StorageException {
 
@@ -329,6 +346,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
+    @Override
     public void clear() throws StorageException {
       final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
       try {
@@ -353,6 +371,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
+    @Override
     public void dispose() {
       try {
         super.dispose();

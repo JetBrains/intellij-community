@@ -52,15 +52,18 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     super(node);
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
+  @Override
   public PsiElement getParent() {
     return getParentByStub();
   }
 
+  @Override
   public int getTextOffset() {
     return calcTreeElement().getTextOffset();
   }
@@ -69,6 +72,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     return (CompositeElement)getNode();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -77,6 +81,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -85,6 +90,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -93,24 +99,29 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, null, null);
   }
 
+  @Override
   public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
 
+  @Override
   public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     ASTNode treeElement = calcTreeElement();
     LOG.assertTrue(treeElement.getTreeParent() != null);
@@ -118,6 +129,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     ((CompositeElement)treeElement.getTreeParent()).deleteChildInternal(treeElement);
   }
 
+  @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (first == null) {
@@ -132,11 +144,13 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     CodeEditUtil.removeChildren(treeElement, firstElement, lastElement);
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     CompositeElement treeElement = calcTreeElement();
     return SharedImplUtil.doReplace(this, treeElement, newElement);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     final Navigatable navigatable = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (navigatable != null) {
@@ -144,18 +158,22 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
+  @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     SharedImplUtil.acceptChildren(visitor, calcTreeElement());
   }
 
+  @Override
   protected Object clone() {
     CompositeElement treeElement = calcTreeElement();
     CompositeElement treeElementClone
@@ -175,12 +193,14 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     return clone;
   }
 
+  @Override
   public void subtreeChanged() {
     final CompositeElement compositeElement = calcTreeElement();
     if (compositeElement != null) compositeElement.clearCaches();
     super.subtreeChanged();
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     PsiElement psiChild = getFirstChild();

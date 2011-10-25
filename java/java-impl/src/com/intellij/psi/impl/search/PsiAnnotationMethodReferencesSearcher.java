@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     if (refElement instanceof PsiAnnotationMethod) {
@@ -27,6 +28,7 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
 
   public static ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(final Processor<PsiReference> consumer) {
     return new ReadActionProcessor<PsiReference>() {
+      @Override
       public boolean processInReadAction(final PsiReference reference) {
         if (reference instanceof PsiJavaCodeReferenceElement) {
           PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;

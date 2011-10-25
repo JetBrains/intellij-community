@@ -33,6 +33,7 @@ public class ParentSkipReferenceElementFilter extends PositionElementFilter{
 
   public ParentSkipReferenceElementFilter(){}
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;
     final PsiElement context = ((PsiElement)element).getContext();

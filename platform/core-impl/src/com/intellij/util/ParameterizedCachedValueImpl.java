@@ -36,10 +36,12 @@ public abstract class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<
     myProvider = provider;
   }
 
+  @Override
   public T getValue(P param) {
     return getValueWithLock(param);
   }
 
+  @Override
   public ParameterizedCachedValueProvider<T,P> getValueProvider() {
     return myProvider;
   }

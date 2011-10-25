@@ -69,6 +69,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       .registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
 
     ApplicationListener applicationListener = new ApplicationAdapter() {
+      @Override
       public void writeActionStarted(final Object action) {
         final CommandProcessor processor = CommandProcessor.getInstance();
         if (processor != null) {
@@ -79,6 +80,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
       }
 
+      @Override
       public void writeActionFinished(final Object action) {
         final CommandProcessor processor = CommandProcessor.getInstance();
         if (processor != null) {
@@ -94,6 +96,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void disablePostprocessFormattingInside(final Runnable runnable) {
     disablePostprocessFormattingInside(new NullableComputable<Object>() {
+      @Override
       public Object compute() {
         runnable.run();
         return null;
@@ -116,6 +119,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void postponeFormattingInside(final Runnable runnable) {
     postponeFormattingInside(new NullableComputable<Object>() {
+      @Override
       public Object compute() {
         runnable.run();
         return null;
@@ -141,6 +145,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
       else {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             doPostponedFormatting();
           }
@@ -153,8 +158,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     ProgressManager.getInstance().executeNonCancelableSection(r);
   }
 
+  @Override
   public void update(final PomModelEvent event) {
     atomic(new Runnable() {
+      @Override
       public void run() {
         if (isDisabled() || myPostponedCounter == 0 && !ApplicationManager.getApplication().isUnitTestMode()) return;
         final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
@@ -178,6 +185,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
               case ChangeInfo.CONTENTS_CHANGED:
                 if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
                   ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+                    @Override
                     protected void visitNode(TreeElement element) {
                       if (CodeEditUtil.isNodeGenerated(element) && CodeEditUtil.isSuspendedNodesReformattingAllowed()) {
                         postponeFormatting(viewProvider, element);
@@ -197,6 +205,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void doPostponedFormatting() {
     atomic(new Runnable() {
+      @Override
       public void run() {
         if (isDisabled()) return;
         try {
@@ -225,11 +234,13 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   private void postponedFormattingImpl(final FileViewProvider viewProvider, final boolean check) {
     atomic(new Runnable() {
+      @Override
       public void run() {
         if (isDisabled() || check && !myUpdatedProviders.contains(viewProvider)) return;
 
         try {
           disablePostprocessFormattingInside(new Runnable() {
+            @Override
             public void run() {
               doPostponedFormattingInner(viewProvider);
             }
@@ -482,6 +493,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       ((TreeElement)node).acceptTree(new RecursiveTreeElementVisitor() {
         boolean inGeneratedContext = !isGenerated;
 
+        @Override
         protected boolean visitNode(TreeElement element) {
           if (nodesToProcess.contains(element)) return false;
           if (CodeEditUtil.isPostponedFormattingDisabled(element)) return false;
@@ -528,6 +540,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
     for (final FileElement fileElement : ((SingleRootFileViewProvider)key).getKnownTreeRoots()) {
       fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+        @Override
         protected void visitNode(TreeElement element) {
           if (CodeEditUtil.isMarkedToReformatBefore(element)) {
             CodeEditUtil.markToReformatBefore(element, false);
@@ -592,6 +605,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       myRange = rangeMarker;
     }
 
+    @Override
     public int compareTo(PostprocessFormattingTask o) {
       RangeMarker o1 = myRange;
       RangeMarker o2 = o.myRange;
@@ -610,10 +624,12 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       return myRange;
     }
 
+    @Override
     public int getStartOffset() {
       return myRange.getStartOffset();
     }
 
+    @Override
     public int getEndOffset() {
       return myRange.getEndOffset();
     }
@@ -655,6 +671,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       myRanges = ranges;
     }
 
+    @Override
     public void execute(FileViewProvider viewProvider) {
       final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
       codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty(), false);
@@ -668,6 +685,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       myRangesToReindent.add(new Pair<Integer, RangeMarker>(oldIndent, rangeMarker));
     }
 
+    @Override
     public void execute(FileViewProvider viewProvider) {
       final Document document = viewProvider.getDocument();
       final PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());

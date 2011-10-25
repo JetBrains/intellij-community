@@ -52,10 +52,12 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     super(stub);
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return null;
   }
 
+  @Override
   public String getName() {
     if (myName == null) {
       if (DumbService.getInstance(getProject()).isDumb()) {
@@ -76,11 +78,13 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return myName;
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   @NotNull
   public PsiTypeElement getTypeElement() {
     if (myType == null) {
@@ -94,11 +98,13 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return myType;
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return getTypeElement().getType();
   }
 
+  @Override
   @NotNull
   public PsiModifierList getModifierList() {
     final StubElement<PsiModifierList> child = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
@@ -106,25 +112,31 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return child.getPsi();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return null;
   }
 
+  @Override
   public boolean hasInitializer() {
     return false;
   }
 
+  @Override
   public Object computeConstantValue() {
     return null;
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     PsiAnnotation[] annotations = getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
@@ -201,6 +213,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -209,6 +222,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
       ((ClsElementImpl)getTypeElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeElement()));
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitParameter(this);
@@ -222,6 +236,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return "PsiParameter";
   }
 
+  @Override
   @NotNull
   public PsiElement getDeclarationScope() {
     // only method parameters exist in compiled code
@@ -233,12 +248,14 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return stub.getParentStub().getChildrenStubs().indexOf(stub);
   }
 
+  @Override
   public boolean isVarArgs() {
     final PsiParameterList paramList = (PsiParameterList)getParent();
     final PsiMethod method = (PsiMethod)paramList.getParent();
     return method.isVarArgs() && getIndex() == paramList.getParametersCount() - 1;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return getModifierList().getAnnotations();
@@ -249,16 +266,19 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return true;
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(this, PlatformIcons.PARAMETER_ICON, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
   }
 
+  @Override
   public PsiType getTypeNoResolve() {
     return getType();
   }

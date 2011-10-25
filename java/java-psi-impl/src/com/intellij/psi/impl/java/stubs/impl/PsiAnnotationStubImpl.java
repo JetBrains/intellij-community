@@ -41,10 +41,12 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
     myText = text;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public CompositeElement getTreeElement() {
     if (myParsedFromRepository != null) {
       CompositeElement parsed = myParsedFromRepository.get();

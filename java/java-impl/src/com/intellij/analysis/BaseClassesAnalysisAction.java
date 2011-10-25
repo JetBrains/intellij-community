@@ -38,10 +38,12 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
 
   protected abstract void analyzeClasses(final Project project, final AnalysisScope scope, ProgressIndicator indicator);
 
+  @Override
   protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(AnalysisScopeBundle.message("checking.class.files"));
@@ -50,6 +52,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
         final boolean upToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject));
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (!upToDate) {
               final int i = Messages.showYesNoCancelDialog(getProject(), AnalysisScopeBundle.message("recompile.confirmation.message"),
@@ -75,11 +78,13 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
 
   private void doAnalyze(final Project project, final AnalysisScope scope) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
+      @Override
       @Nullable
       public NotificationInfo getNotificationInfo() {
         return new NotificationInfo("Analysis",  "\"" + getTitle() + "\" Analysis Finished", "");
       }
 
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         analyzeClasses(project, scope, indicator);
       }
@@ -89,9 +94,11 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
   private void compileAndAnalyze(final Project project, final AnalysisScope scope) {
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+      @Override
       public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
         if (aborted || errors != 0) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             doAnalyze(project, scope);
           }

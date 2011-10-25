@@ -71,22 +71,27 @@ public class CandidateInfo implements JavaResolveResult {
     myAccessProblem = candidate.myAccessProblem;
   }
 
+  @Override
   public boolean isValidResult(){
     return isAccessible() && isStaticsScopeCorrect();
   }
 
+  @Override
   public boolean isPackagePrefixPackageReference() {
     return myPackagePrefixPackageReference;
   }
 
+  @Override
   public PsiElement getElement(){
     return myCandidate;
   }
 
+  @Override
   public PsiSubstitutor getSubstitutor(){
     return mySubstitutor;
   }
 
+  @Override
   public boolean isAccessible(){
     if(myAccessProblem == null){
       boolean accessProblem = false;
@@ -100,10 +105,12 @@ public class CandidateInfo implements JavaResolveResult {
     return !myAccessProblem.booleanValue();
   }
 
+  @Override
   public boolean isStaticsScopeCorrect(){
     return !myStaticsProblem;
   }
 
+  @Override
   public PsiElement getCurrentFileResolveScope() {
     return myCurrentFileResolveContext;
   }

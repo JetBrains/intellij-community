@@ -41,49 +41,60 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
+  @Override
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||
            element instanceof PsiPackage || element instanceof PsiLocalVariable;
   }
 
+  @Override
   public RefactoringActionHandler getIntroduceConstantHandler() {
     return new IntroduceConstantHandler();
   }
 
+  @Override
   public RefactoringActionHandler getIntroduceFieldHandler() {
     return new IntroduceFieldHandler();
   }
 
+  @Override
   public boolean isInplaceRenameAvailable(final PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
   }
 
+  @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
   }
 
+  @Override
   @Nullable
   public RefactoringActionHandler getExtractMethodHandler() {
     return new ExtractMethodHandler();
   }
 
+  @Override
   public RefactoringActionHandler getIntroduceParameterHandler() {
     return new IntroduceParameterHandler();
   }
 
+  @Override
   public RefactoringActionHandler getPullUpHandler() {
     return new JavaPullUpHandler();
   }
 
+  @Override
   public RefactoringActionHandler getPushDownHandler() {
     return new JavaPushDownHandler();
   }
 
+  @Override
   public RefactoringActionHandler getExtractInterfaceHandler() {
     return new ExtractInterfaceHandler();
   }
 
+  @Override
   public RefactoringActionHandler getExtractSuperClassHandler() {
     return new ExtractSuperclassHandler();
   }

@@ -31,10 +31,12 @@ class PreviewUsageAction extends RuleAction {
     super(usageView, UsageViewBundle.message("preview.usages.action.text"), PREVIEW_ICON);
   }
 
+  @Override
   protected boolean getOptionValue() {
     return UsageViewSettings.getInstance().IS_PREVIEW_USAGES;
   }
 
+  @Override
   protected void setOptionValue(final boolean value) {
     UsageViewSettings.getInstance().IS_PREVIEW_USAGES = value;
   }

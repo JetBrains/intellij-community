@@ -65,11 +65,13 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
 
+  @Override
   @NotNull
   public String getText() {
     return myName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.extends.list.family");

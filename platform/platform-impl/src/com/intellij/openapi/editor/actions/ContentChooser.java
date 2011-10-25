@@ -74,10 +74,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     init();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myList = new JBList();
     final int selectionMode = myAllowMultipleSelections ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION 
@@ -87,6 +89,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     rebuildListContent();
 
     myList.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(MouseEvent e) {
         if (e.isConsumed() || e.getClickCount() != 2 || e.isPopupTrigger()) return;
         close(OK_EXIT_CODE);
@@ -100,6 +103,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
 
     myList.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           int newSelectionIndex = -1;
@@ -139,6 +143,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     updateViewerForSelection();
 
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateViewerForSelection();
       }
@@ -152,6 +157,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   protected abstract void removeContentAt(final Data content);
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.openapi.editor.actions.MultiplePasteAction.Chooser";
   }
@@ -190,6 +196,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     mySplitter.revalidate();
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     if (myViewer != null) {
@@ -260,6 +267,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
   
   private static class MyListCellRenderer extends ColoredListCellRenderer {
+    @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       // Fix GTK background
       if (UIUtil.isUnderGTKLookAndFeel()){

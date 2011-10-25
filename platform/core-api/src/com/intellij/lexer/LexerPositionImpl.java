@@ -24,10 +24,12 @@ class LexerPositionImpl implements LexerPosition {
     myState = state;
   }
 
+  @Override
   public int getOffset() {
     return myOffset;
   }
 
+  @Override
   public int getState() {
     return myState;
   }

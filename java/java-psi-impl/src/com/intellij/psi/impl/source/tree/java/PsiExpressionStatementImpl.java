@@ -32,6 +32,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     super(JavaElementType.EXPRESSION_STATEMENT);
   }
 
+  @Override
   @NotNull
   public PsiExpression getExpression() {
     PsiExpression expression = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(findChildByType(ElementType.EXPRESSION_BIT_SET));
@@ -40,6 +41,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     return null;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -54,6 +56,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -68,6 +71,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitExpressionStatement(this);
@@ -81,6 +85,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     return "PsiExpressionStatement";
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.EXPRESSION) {
       getTreeParent().deleteChildInternal(this);

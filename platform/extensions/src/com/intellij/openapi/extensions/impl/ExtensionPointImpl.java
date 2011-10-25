@@ -72,14 +72,17 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myDescriptor = descriptor;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public AreaInstance getArea() {
     return myArea;
   }
 
+  @Override
   public String getBeanClassName() {
     return myClassName;
   }
@@ -94,6 +97,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return myKind;
   }
 
+  @Override
   public void registerExtension(@NotNull T extension) {
     registerExtension(extension, LoadingOrder.ANY);
   }
@@ -102,6 +106,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return myDescriptor;
   }
 
+  @Override
   public synchronized void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
     assert myExtensions.size() == myLoadedAdapters.size();
 
@@ -155,6 +160,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  @Override
   @NotNull
   public T[] getExtensions() {
     T[] result = myExtensionsCache;
@@ -191,6 +197,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return result;
   }
 
+  @Override
   public boolean hasAnyExtensions() {
     final T[] cache = myExtensionsCache;
     if (cache != null) {
@@ -222,6 +229,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  @Override
   @Nullable
   public T getExtension() {
     T[] extensions = getExtensions();
@@ -230,11 +238,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return extensions[0];
   }
 
+  @Override
   public synchronized boolean hasExtension(@NotNull T extension) {
     processAdapters();
     return myExtensions.contains(extension);
   }
 
+  @Override
   public synchronized void unregisterExtension(@NotNull final T extension) {
     final int index = getExtensionIndex(extension);
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
@@ -300,6 +310,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     });
   }
 
+  @Override
   public synchronized void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     processAdapters();
     if (myEPListeners.add(listener)) {
@@ -314,6 +325,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  @Override
   public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
       try {
@@ -329,6 +341,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     assert success;
   }
 
+  @Override
   public synchronized void reset() {
     myOwner.removeAllComponents(myExtensionAdapters);
     myExtensionAdapters.clear();
@@ -337,6 +350,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  @Override
   public Class<T> getExtensionClass() {
     // racy single-check: we don't care whether the access to 'myExtensionClass' is thread-safe
     // but initial store in a local variable is crucial to prevent instruction reordering
@@ -413,19 +427,23 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadingOrder = loadingOrder;
     }
 
+    @Override
     public Object getExtension() {
       return myExtension;
     }
 
+    @Override
     public LoadingOrder getOrder() {
       return myLoadingOrder;
     }
 
+    @Override
     @Nullable
     public String getOrderId() {
       return null;
     }
 
+    @Override
     @NonNls
     public Element getDescribingElement() {
       return new Element("RuntimeExtension: " + myExtension);

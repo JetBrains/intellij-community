@@ -46,15 +46,18 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return ApplicationManager.getApplication().getComponent(TempFileSystem.class);
   }
 
+  @Override
   public boolean isCaseSensitive() {
     return true;
   }
 
+  @Override
   protected String extractRootPath(@NotNull final String path) {
     //return path.startsWith("/") ? "/" : "";
     return "/";
   }
 
+  @Override
   public int getRank() {
     return 1;
   }
@@ -71,11 +74,13 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return parentItem.findChild(file.getName());
   }
 
+  @Override
   public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName)
       throws IOException {
     return VfsUtilCore.copyFile(requestor, file, newParent, copyName);
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     final FSItem fsItem = convert(parent);
@@ -94,6 +99,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return new FakeVirtualFile(parent, dir);
   }
 
+  @Override
   public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final FSItem fsItem = convert(parent);
     if (fsItem == null) {
@@ -110,6 +116,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return new FakeVirtualFile(parent, file);
   }
 
+  @Override
   public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) {
@@ -119,6 +126,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     fsItem.getParent().removeChild(fsItem);
   }
 
+  @Override
   public void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null: "failed to move file " + file.getPath();
@@ -133,6 +141,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     ((FSDir) newParentItem).addChild(fsItem);
   }
 
+  @Override
   public void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
@@ -140,15 +149,18 @@ public class TempFileSystem extends NewVirtualFileSystem {
     fsItem.setName(newName);
   }
 
+  @Override
   @NotNull
   public String getProtocol() {
     return "temp";
   }
 
+  @Override
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return convert(fileOrDirectory) != null;
   }
 
+  @Override
   @NotNull
   public String[] list(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
@@ -157,10 +169,12 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return fsItem.list();
   }
 
+  @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return convert(file) instanceof FSDir;
   }
 
+  @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null: "cannot find item for path " + file.getPath();
@@ -168,6 +182,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return fsItem.myTimestamp;
   }
 
+  @Override
   public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
@@ -175,6 +190,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     fsItem.myTimestamp = timeStamp > 0 ? timeStamp : LocalTimeCounter.currentTime();
   }
 
+  @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
@@ -182,6 +198,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return fsItem.myWritable;
   }
 
+  @Override
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
@@ -189,6 +206,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     fsItem.myWritable = writableFlag;
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
@@ -199,15 +217,18 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return ((FSFile)fsItem).myContent;
   }
 
+  @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     return new BufferExposingByteArrayInputStream(contentsToByteArray(file));
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
       throws IOException {
     return new ByteArrayOutputStream() {
+      @Override
       public void close() throws IOException {
         super.close();
         final FSItem fsItem = convert(file);
@@ -219,6 +240,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     };
   }
 
+  @Override
   public void refresh(final boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }
@@ -238,6 +260,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
+  @Override
   public long getLength(@NotNull final VirtualFile file) {
     try {
       return contentsToByteArray(file).length;
@@ -292,6 +315,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
       super(parent, name);
     }
 
+    @Override
     @Nullable
     public FSItem findChild(final String name) {
       for (FSItem child : myChildren) {
@@ -303,6 +327,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
       return null;
     }
 
+    @Override
     public boolean isDirectory() {
       return true;
     }
@@ -318,6 +343,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
       myChildren.remove(fsItem);
     }
 
+    @Override
     public String[] list() {
       String[] names = ArrayUtil.newStringArray(myChildren.size());
       for (int i = 0; i < names.length; i++) {
@@ -334,6 +360,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
     private byte[] myContent = new byte[0];
 
+    @Override
     public boolean isDirectory() {
       return false;
     }

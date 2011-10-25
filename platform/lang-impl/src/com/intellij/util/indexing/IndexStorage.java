@@ -46,5 +46,6 @@ public interface IndexStorage<Key, Value> extends Flushable {
 
   void close() throws StorageException;
 
+  @Override
   void flush() throws IOException;
 }

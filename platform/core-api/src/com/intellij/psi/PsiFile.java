@@ -40,6 +40,7 @@ public interface PsiFile extends PsiFileSystemItem {
    *
    * @return the virtual file, or null if the file exists only in memory.
    */
+  @Override
   @Nullable VirtualFile getVirtualFile();
 
   /**
@@ -49,6 +50,7 @@ public interface PsiFile extends PsiFileSystemItem {
    */
   @Nullable PsiDirectory getContainingDirectory();
 
+  @Override
   @Nullable PsiDirectory getParent();
 
   /**
@@ -88,6 +90,7 @@ public interface PsiFile extends PsiFileSystemItem {
 
   @NotNull FileViewProvider getViewProvider();
 
+  @Override
   FileASTNode getNode();
 
   void subtreeChanged();

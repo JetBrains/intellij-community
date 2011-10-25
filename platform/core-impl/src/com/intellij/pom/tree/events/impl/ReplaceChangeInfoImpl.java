@@ -32,6 +32,7 @@ public class ReplaceChangeInfoImpl extends ChangeInfoImpl implements ReplaceChan
     myNewNode = newNode;
   }
 
+  @Override
   public ASTNode getReplaced(){
     return myOldNode;
   }

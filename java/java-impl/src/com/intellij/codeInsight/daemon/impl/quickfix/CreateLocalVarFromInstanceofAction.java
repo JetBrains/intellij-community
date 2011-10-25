@@ -53,6 +53,7 @@ import java.util.Set;
 public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction");
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     if (instanceOfExpression == null) return false;
@@ -169,6 +170,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return editor.getDocument().getLineNumber(condition.getTextOffset()) == line;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -189,8 +191,10 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
       CreateFromUsageBaseFix.startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
+        @Override
         public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
@@ -346,14 +350,17 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     final Result result = uniqueNames.isEmpty() ? null : new TextResult(uniqueNames.get(0));
 
     Expression expr = new Expression() {
+      @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         return lookupItems.length > 1 ? lookupItems : null;
       }
 
+      @Override
       public Result calculateResult(ExpressionContext context) {
         return result;
       }
 
+      @Override
       public Result calculateQuickResult(ExpressionContext context) {
         return result;
       }
@@ -363,6 +370,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return template;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.local.from.instanceof.usage.family");

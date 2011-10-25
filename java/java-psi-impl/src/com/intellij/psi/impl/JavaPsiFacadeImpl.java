@@ -78,6 +78,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       bus.connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
         private long lastTimeSeen = -1L;
 
+        @Override
         public void modificationCountChanged() {
           final long now = modificationTracker.getJavaStructureModificationCount();
           if (lastTimeSeen != now) {
@@ -95,10 +96,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   /**
    * @deprecated
    */
+  @Override
   public PsiClass findClass(@NotNull String qualifiedName) {
     return findClass(qualifiedName, GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
@@ -149,6 +152,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return foundClasses;
   }
 
+  @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     if (DumbService.getInstance(getProject()).isDumb()) {
@@ -165,11 +169,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return classes.toArray(new PsiClass[classes.size()]);
   }
 
+  @Override
   @NotNull
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
     return myConstantEvaluationHelper;
   }
 
+  @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
     PsiPackage aPackage = myPackageCache.get(qualifiedName);
     if (aPackage != null) {
@@ -192,16 +198,19 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiJavaParserFacade getParserFacade() {
     return getElementFactory(); // TODO: lighter implementation which doesn't mark all the elements as generated.
   }
 
+  @Override
   @NotNull
   public PsiResolveHelper getResolveHelper() {
     return PsiResolveHelper.SERVICE.getInstance(myProject);
   }
 
+  @Override
   @NotNull
   public PsiNameHelper getNameHelper() {
     return myNameHelper;
@@ -246,19 +255,23 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   private class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
+    @Override
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       return myFileManager.findClass(qualifiedName, scope);
     }
 
+    @Override
     @NotNull
     public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       return myFileManager.findClasses(qualifiedName, scope);
     }
 
+    @Override
     public PsiPackage findPackage(@NotNull String qualifiedName) {
       return myFileManager.findPackage(qualifiedName);
     }
 
+    @Override
     @NotNull
     public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
@@ -280,6 +293,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return packagesMap.values().toArray(new PsiPackage[packagesMap.size()]);
     }
 
+    @Override
     @NotNull
     public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       List<PsiClass> list = null;
@@ -323,6 +337,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope, final Processor<PsiDirectory> consumer) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
       PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), false).forEach(new ReadActionProcessor<VirtualFile>() {
+        @Override
         public boolean processInReadAction(final VirtualFile dir) {
           if (!scope.contains(dir)) return true;
           PsiDirectory psiDir = psiManager.findDirectory(dir);
@@ -335,6 +350,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
 
+  @Override
   public boolean isPartOfPackagePrefix(String packageName) {
     final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
     for (final String subpackageName : packagePrefixes) {
@@ -348,6 +364,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
            subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
   }
 
+  @Override
   public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
     final PsiFile file = FileContextUtil.getContextFile(element);
     if (file instanceof JavaDummyHolder) {
@@ -360,6 +377,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return false;
   }
 
+  @Override
   public boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     PsiFile file1 = FileContextUtil.getContextFile(element1);
     PsiFile file2 = FileContextUtil.getContextFile(element2);
@@ -377,15 +395,18 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return Comparing.equal(package1, package2);
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public PsiElementFactory getElementFactory() {
     return PsiElementFactory.SERVICE.getInstance(myProject);
   }
 
+  @Override
   public void setAssertOnFileLoadingFilter(final VirtualFileFilter filter) {
     ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter);
   }

@@ -27,10 +27,12 @@ public class IdentityCharTable implements CharTable {
 
   public static final IdentityCharTable INSTANCE = new IdentityCharTable();
 
+  @Override
   public CharSequence intern(final CharSequence text) {
     return text;
   }
 
+  @Override
   public CharSequence intern(CharSequence baseText, int startOffset, int endOffset) {
     if (endOffset - startOffset == baseText.length()) return baseText.toString();
     return baseText.subSequence(startOffset, endOffset);

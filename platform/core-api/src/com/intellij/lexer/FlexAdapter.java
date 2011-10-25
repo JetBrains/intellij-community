@@ -38,6 +38,7 @@ public class FlexAdapter extends LexerBase {
     return myFlex;
   }
 
+  @Override
   public void start(final CharSequence buffer, int startOffset, int endOffset, final int initialState) {
     myText = buffer;
     myEnd = endOffset;
@@ -45,35 +46,42 @@ public class FlexAdapter extends LexerBase {
     myTokenType = null;
   }
 
+  @Override
   public int getState() {
     locateToken();
     return myState;
   }
 
+  @Override
   public IElementType getTokenType() {
     locateToken();
     return myTokenType;
   }
 
+  @Override
   public int getTokenStart() {
     locateToken();
     return myFlex.getTokenStart();
   }
 
+  @Override
   public int getTokenEnd() {
     locateToken();
     return myFlex.getTokenEnd();
   }
 
+  @Override
   public void advance() {
     locateToken();
     myTokenType = null;
   }
 
+  @Override
   public CharSequence getBufferSequence() {
     return myText;
   }
 
+  @Override
   public int getBufferEnd() {
     return myEnd;
   }

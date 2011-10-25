@@ -38,26 +38,32 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     myName = name;
   }
 
+  @Override
   public void processVariants(PsiScopeProcessor processor) {
     throw new RuntimeException("Variants are not available for light references");
   }
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return null;
   }
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     return null;
   }
 
+  @Override
   public String getQualifiedName() {
     return myName;
   }
 
+  @Override
   public String getReferenceName() {
     return myName;
   }
 
+  @Override
   public PsiElement resolve() {
     LOG.assertTrue(myParent.isValid());
     PsiElement parent = myParent;
@@ -82,11 +88,13 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return null;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     return new CandidateInfo(resolve(), PsiSubstitutor.EMPTY);
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
@@ -94,76 +102,93 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return JavaResolveResult.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getQualifier() {
     return null;
   }
 
+  @Override
   public boolean isQualified() {
     return false;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myName;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof ClsTypeParameterImpl)) return false;
 
     return element == resolve();
   }
 
+  @Override
   public String getText() {
     return myName;
   }
 
+  @Override
   public int getTextLength() {
     return getText().length();
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren(){
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getParent(){
     return myParent;
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for references to compiled code");
   }
 
+  @Override
   public boolean isSoft(){
     return false;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
     buffer.append(getCanonicalText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element){
     setMirrorCheckingType(element, ElementType.JAVA_CODE_REFERENCE);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceElement(this);
@@ -177,11 +202,13 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return "PsiJavaCodeReferenceElement:" + getText();
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final PsiElement mirror = getMirror();
     return mirror != null ? mirror.getTextRange() : new TextRange(0, getTextLength());
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }

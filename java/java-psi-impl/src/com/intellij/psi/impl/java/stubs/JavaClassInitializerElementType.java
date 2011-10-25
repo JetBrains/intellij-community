@@ -44,11 +44,13 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
     return new ClassInitializerElement();
   }
 
+  @Override
   public PsiClassInitializer createPsi(final PsiClassInitializerStub stub) {
     assert !isCompiled(stub);
     return new PsiClassInitializerImpl(stub);
   }
 
+  @Override
   public PsiClassInitializer createPsi(final ASTNode node) {
     return new PsiClassInitializerImpl(node);
   }
@@ -60,13 +62,16 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
     return new PsiClassInitializerStubImpl(parentStub);
   }
 
+  @Override
   public void serialize(final PsiClassInitializerStub stub, final StubOutputStream dataStream) throws IOException {
   }
 
+  @Override
   public PsiClassInitializerStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiClassInitializerStubImpl(parentStub);
   }
 
+  @Override
   public void indexStub(final PsiClassInitializerStub stub, final IndexSink sink) {
   }
 }

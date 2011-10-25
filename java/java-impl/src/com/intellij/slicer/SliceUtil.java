@@ -179,6 +179,7 @@ public class SliceUtil {
           // do not look for returns there
         }
 
+        @Override
         public void visitReturnStatement(final PsiReturnStatement statement) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
@@ -204,6 +205,7 @@ public class SliceUtil {
     }
     SearchScope searchScope = parent.getScope().toSearchScope();
     return ReferencesSearch.search(field, searchScope).forEach(new Processor<PsiReference>() {
+      @Override
       public boolean process(final PsiReference reference) {
         SliceManager.getInstance(field.getProject()).checkCanceled();
         PsiElement element = reference.getElement();
@@ -259,6 +261,7 @@ public class SliceUtil {
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
     for (final PsiMethod superMethod : superMethods) {
       if (!MethodReferencesSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(final PsiReference reference) {
           SliceManager.getInstance(parameter.getProject()).checkCanceled();
           synchronized (processed) {

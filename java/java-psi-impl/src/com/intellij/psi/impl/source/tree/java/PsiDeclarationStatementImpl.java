@@ -30,6 +30,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     super(JavaElementType.DECLARATION_STATEMENT);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getDeclaredElements() {
     return getChildrenAsPsiElements(DECLARED_ELEMENT_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
@@ -37,11 +38,13 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
 
   private static final TokenSet DECLARED_ELEMENT_BIT_SET = TokenSet.create(JavaElementType.LOCAL_VARIABLE, JavaElementType.CLASS);
 
+  @Override
   public int getChildRole(ASTNode child) {
     if (child.getElementType() == JavaTokenType.COMMA) return ChildRole.COMMA;
     return super.getChildRole(child);
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (DECLARED_ELEMENT_BIT_SET.contains(child.getElementType())) {
       PsiElement[] declaredElements = getDeclaredElements();
@@ -81,6 +84,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     if (prev != null && prev.getElementType() == JavaTokenType.COMMA) deleteChildInternal(prev);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDeclarationStatement(this);
@@ -94,6 +98,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     return "PsiDeclarationStatement";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     PsiElement[] decls = getDeclaredElements();

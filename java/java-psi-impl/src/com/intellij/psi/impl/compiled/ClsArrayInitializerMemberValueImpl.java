@@ -34,12 +34,14 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     myInitializers = initializers;
   }
 
+  @Override
   public String getText() {
     final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append('{');
     for (int i = 0; i < myInitializers.length; i++) {
@@ -49,6 +51,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     buffer.append('}');
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -61,15 +64,18 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return myInitializers;
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotationArrayInitializer(this);
@@ -79,6 +85,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     }
   }
 
+  @Override
   @NotNull
   public PsiAnnotationMemberValue[] getInitializers() {
     return myInitializers;

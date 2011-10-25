@@ -47,6 +47,7 @@ public class PluginException extends RuntimeException {
     return myPluginId;
   }
 
+  @Override
   public String getMessage() {
     @NonNls String message = super.getMessage();
 

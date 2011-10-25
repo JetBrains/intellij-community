@@ -32,22 +32,27 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
     super(SWITCH_STATEMENT);
   }
 
+  @Override
   public PsiExpression getExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.SWITCH_EXPRESSION);
   }
 
+  @Override
   public PsiCodeBlock getBody() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.SWITCH_BODY);
   }
 
+  @Override
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }
 
+  @Override
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -71,6 +76,7 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -96,6 +102,7 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitSwitchStatement(this);

@@ -31,6 +31,7 @@ public class InactiveEditorAction extends EditorAction {
     super(defaultHandler);
   }
 
+  @Override
   @Nullable
   protected Editor getEditor(final DataContext dataContext) {
     return PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);

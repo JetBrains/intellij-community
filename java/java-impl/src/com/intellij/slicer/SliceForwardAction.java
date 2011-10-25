@@ -24,6 +24,7 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 public class SliceForwardAction extends CodeInsightAction{
   private final SliceHandler myHandler = new SliceForwardHandler();
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return myHandler;
   }

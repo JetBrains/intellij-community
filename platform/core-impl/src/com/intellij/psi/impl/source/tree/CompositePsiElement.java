@@ -53,21 +53,25 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return clone;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return getChildrenAsPsiElements(null, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public PsiElement getFirstChild() {
     ASTNode node = getFirstChildNode();
     return node != null ? node.getPsi() : null;
   }
 
+  @Override
   public PsiElement getLastChild() {
     ASTNode node = getLastChildNode();
     return node != null ? node.getPsi() : null;
   }
 
+  @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -76,66 +80,80 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     }
   }
 
+  @Override
   public PsiElement getParent() {
     final CompositeElement parentNode = getTreeParent();
     return parentNode != null ? parentNode.getPsi() : null;
   }
 
+  @Override
   public PsiElement getNextSibling() {
     ASTNode node = getTreeNext();
     return node != null ? node.getPsi() : null;
   }
 
+  @Override
   public PsiElement getPrevSibling() {
     ASTNode node = getTreePrev();
     return node != null ? node.getPsi() : null;
   }
 
+  @Override
   public PsiFile getContainingFile() {
     PsiFile file = SharedImplUtil.getContainingFile(this);
     if (file == null) throw new PsiInvalidElementAccessException(this);
     return file;
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     ASTNode leaf = findLeafElementAt(offset);
     return SourceTreeToPsiMap.treeElementToPsi(leaf);
   }
 
+  @Override
   public PsiReference findReferenceAt(int offset) {
     return SharedPsiElementImplUtil.findReferenceAt(this, offset);
   }
 
+  @Override
   public PsiElement copy() {
     ASTNode elementCopy = copyElement();
     return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
+  @Override
   public boolean isValid() {
     return SharedImplUtil.isValid(this);
   }
 
+  @Override
   public boolean isWritable() {
     return SharedImplUtil.isWritable(this);
   }
 
+  @Override
   public PsiReference getReference() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     return addInnerBefore(element, null);
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     return addInnerBefore(element, anchor);
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -144,24 +162,29 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   }
 
+  @Override
   public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   public final PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, null, null);
   }
 
+  @Override
   public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
 
+  @Override
   public final PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     LOG.assertTrue(getTreeParent() != null, "Parent not found for " + this);
     CheckUtil.checkWritable(this);
@@ -169,10 +192,12 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     invalidate();
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     ASTNode firstElement = SourceTreeToPsiMap.psiElementToTree(first);
@@ -182,14 +207,17 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     CodeEditUtil.removeChildren(this, firstElement, lastElement);
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     return SharedImplUtil.doReplace(this, this, newElement);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) { //TODO: remove this method!!
     visitor.visitElement(this);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -201,54 +229,66 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return "PsiElement" + "(" + getElementType().toString() + ")";
   }
 
+  @Override
   public PsiElement getContext() {
     return getParent();
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     return this;
   }
 
+  @Override
   public boolean isPhysical() {
     PsiFile file = getContainingFile();
     return file != null && file.isPhysical();
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return null;
   }
 
+  @Override
   public String getName() {
     return null;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
@@ -257,11 +297,13 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return manager.getProject();
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return getElementType().getLanguage();
   }
 
+  @Override
   @NotNull
   public ASTNode getNode() {
     return this;
@@ -275,6 +317,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     throw new IncorrectOperationException("Element cannot be added");
   }
 
+  @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;
   }
