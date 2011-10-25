@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -101,7 +102,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
     final MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyAndroidPlatformListener());
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyAndroidPlatformListener(project));
 
     LocalFileSystem.getInstance().addVirtualFileListener(myListener);
     Disposer.register(project, new Disposable() {
@@ -494,6 +495,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
   private class MyAndroidPlatformListener implements ModuleRootListener {
     private final Map<Module, Sdk> myModule2Sdk = new HashMap<Module, Sdk>();
+    private final Project myProject;
+
+    private MyAndroidPlatformListener(@NotNull Project project) {
+      myProject = project;
+      updateMap();
+    }
 
     @Override
     public void beforeRootsChange(ModuleRootEvent event) {
@@ -511,7 +518,6 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (module != null) {
           final Sdk prevSdk = myModule2Sdk.get(module);
           final Sdk newSdk = ModuleRootManager.getInstance(module).getSdk();
-          myModule2Sdk.put(module, newSdk);
           if (newSdk != null &&
               (newSdk.getSdkType() instanceof AndroidSdkType || prevSdk.getSdkType() instanceof AndroidSdkType) &&
               !newSdk.equals(prevSdk)) {
@@ -524,6 +530,15 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
             render();
           }
         }
+      }
+
+      updateMap();
+    }
+
+    private void updateMap() {
+      myModule2Sdk.clear();
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        myModule2Sdk.put(module, ModuleRootManager.getInstance(module).getSdk());
       }
     }
   }
