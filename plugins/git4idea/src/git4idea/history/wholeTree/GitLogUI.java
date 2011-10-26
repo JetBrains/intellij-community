@@ -68,6 +68,7 @@ import git4idea.history.browser.*;
 import git4idea.process.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.ui.branch.GitBranchPopup;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -146,6 +147,7 @@ public class GitLogUI implements Disposable {
   private boolean myProjectScope;
   private ActionPopupMenu myContextMenu;
   private final Set<AbstractHash> myMarked;
+  private final Runnable myRefresh;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -177,6 +179,12 @@ public class GitLogUI implements Disposable {
     initUiRefresh();
     myAuthorRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myMyShowTreeAction = new MyShowTreeAction();
+    myRefresh = new Runnable() {
+      @Override
+      public void run() {
+        reloadRequest();
+      }
+    };
   }
   
   public void initFromSettings() {
@@ -795,13 +803,15 @@ public class GitLogUI implements Disposable {
       group.add(myCherryPickAction);
       group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
       group.add(new MyCheckoutRevisionAction());
+      group.add(new MyCheckoutNewBranchAction());
 
       group.add(new Separator());
       group.add(myCopyHashAction);
       group.add(myMyShowTreeAction);
       final MyToggleCommitMark toggleCommitMark = new MyToggleCommitMark();
       toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myJBTable);
-      toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myGraphGutter.getComponent());
+      toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)),
+                                                 myGraphGutter.getComponent());
       group.add(toggleCommitMark);
       group.add(new Separator());
 
@@ -823,13 +833,7 @@ public class GitLogUI implements Disposable {
         reloadRequest();
       }
     });
-    final Runnable reloadCallback = new Runnable() {
-      @Override
-      public void run() {
-        reloadRequest();
-      }
-    };
-    myUserFilterI = new MyFilterUi(reloadCallback);
+    myUserFilterI = new MyFilterUi(myRefresh);
     myUsersFilterAction = new UsersFilterAction(myProject, myUserFilterI);
     group.add(new MyTextFieldAction());
     group.add(myBranchSelectorAction);
@@ -840,7 +844,7 @@ public class GitLogUI implements Disposable {
         return myRootsUnderVcs;
       }
     };
-    myStructureFilter = new MyStructureFilter(reloadCallback, rootsGetter);
+    myStructureFilter = new MyStructureFilter(myRefresh, rootsGetter);
     myStructureFilterAction = new StructureFilterAction(myProject, myStructureFilter);
     group.add(myStructureFilterAction);
     myCherryPickAction = new MyCherryPick();
@@ -2062,12 +2066,34 @@ public class GitLogUI implements Disposable {
       final GitRepository repository =
         GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
-      new GitBranchOperationsProcessor(myProject, repository).checkout(commitAt.getHash().getString(), new Runnable() {
-        @Override
-        public void run() {
-          reloadRequest();
-        }
-      });
+      new GitBranchOperationsProcessor(myProject, repository).checkout(commitAt.getHash().getString(), myRefresh);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      e.getPresentation().setEnabled(selectedRows.length == 1 &&
+                                     ! myTableModel.getCommitAt(selectedRows[0]).holdsDecoration() &&
+                                     ! myTableModel.isStashed(myTableModel.getCommitAt(selectedRows[0])));
+    }
+  }
+
+  private class MyCheckoutNewBranchAction extends DumbAwareAction {
+    private MyCheckoutNewBranchAction() {
+      super("New Branch");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (selectedRows.length != 1) return;
+      final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+      if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
+
+      final GitRepository repository =
+        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+      if (repository == null) return;
+      new GitBranchPopup.NewBranchAction(myProject, repository, commitAt.getHash().getString(), myRefresh).actionPerformed(e);
     }
 
     @Override

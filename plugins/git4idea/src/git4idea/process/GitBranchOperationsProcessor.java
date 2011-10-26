@@ -82,25 +82,29 @@ public final class GitBranchOperationsProcessor {
    * Doesn't check the name of new branch for validity - do this before calling this method, otherwise a standard error dialog will be shown.
    *
    * @param name Name of the new branch to check out.
+   * @param reference
    */
-  public void checkoutNewBranch(@NotNull final String name) {
+  public void checkoutNewBranch(@NotNull final String name, final String reference, final Runnable callInAwtAfterExecution) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doCheckoutNewBranch(name);
+        doCheckoutNewBranch(name, reference);
+        if (callInAwtAfterExecution != null) {
+          SwingUtilities.invokeLater(callInAwtAfterExecution);
+        }
       }
     }.runInBackground();
   }
 
-  private void doCheckoutNewBranch(@NotNull final String name) {
+  private void doCheckoutNewBranch(@NotNull final String name, String reference) {
     GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
-    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector);
+    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector, reference);
     if (result.success()) {
       updateRepository();
       notifySuccess(String.format("Branch <b><code>%s</code></b> was created", name));
     } else if (unmergedDetector.hasHappened()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
       if (gitConflictResolver.merge()) { // try again to checkout
-        doCheckoutNewBranch(name);
+        doCheckoutNewBranch(name, reference);
       }
     } else { // other error
       showErrorMessage("Couldn't create new branch " + name, result.getErrorOutput());

@@ -143,10 +143,13 @@ public class Git {
    * {@code git checkout -b &lt;branchName&gt;}
    */
   public static GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
-                                                   @Nullable GitLineHandlerListener listener) {
+                                                   @Nullable GitLineHandlerListener listener, String reference) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.addParameters("-b");
     h.addParameters(branchName);
+    if (reference != null && ! reference.isEmpty()) {
+      h.addParameters(reference);
+    }
     if (listener != null) {
       h.addLineListener(listener);
     }
