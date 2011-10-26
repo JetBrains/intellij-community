@@ -14,7 +14,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.SkipAutopopupInStrings;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,11 +21,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -43,21 +42,18 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
 
-    if (!GppTypeConverter.hasTypedContext(position)) {
-      return ThreeState.NO;
-    }
-
     if (position.getParent() instanceof GrReferenceExpression) {
       final GrReferenceExpression ref = (GrReferenceExpression)position.getParent();
       final GrExpression expression = ref.getQualifierExpression();
       if (expression == null) {
         if (isPossibleClosureParameter(ref)) return ThreeState.NO;
 
-        return ThreeState.YES;
-      }
+        GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(ref);
+        if (runtimeQualifier != null && runtimeQualifier.getType() == null) {
+          return ThreeState.NO;
+        }
 
-      if (parameters.getOffset() == position.getTextRange().getStartOffset()) {
-        return ThreeState.NO; //after one dot a second dot might be expected to form a range
+        return ThreeState.YES;
       }
 
       if (expression.getType() == null) {

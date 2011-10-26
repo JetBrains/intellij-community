@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public class GroovyReferenceCharFilter extends CharFilter {
   @Nullable
-  public Result acceptChar(char c, int pefixLength, Lookup lookup) {
+  public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final PsiFile psiFile = lookup.getPsiFile();
     if (psiFile != null && !psiFile.getViewProvider().getLanguages().contains(GroovyFileType.GROOVY_LANGUAGE)) return null;
 
@@ -42,6 +42,12 @@ public class GroovyReferenceCharFilter extends CharFilter {
     }
 
     if ((c == '[' || c == '<' || c == '.' || c == ' ') && JavaCharFilter.isNonImportedClassEntered((LookupImpl)lookup)) {
+      return Result.HIDE_LOOKUP;
+    }
+
+    int caret = lookup.getEditor().getCaretModel().getOffset();
+    if (c == '.' && prefixLength == 0 && !lookup.isSelectionTouched() && caret > 0 &&
+        lookup.getEditor().getDocument().getCharsSequence().charAt(caret - 1) == '.') {
       return Result.HIDE_LOOKUP;
     }
 
