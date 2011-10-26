@@ -68,7 +68,7 @@ import git4idea.history.browser.*;
 import git4idea.process.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.branch.GitBranchPopup;
+import git4idea.ui.branch.GitBranchUiUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -2078,7 +2078,7 @@ public class GitLogUI implements Disposable {
 
   private class MyCheckoutNewBranchAction extends DumbAwareAction {
     private MyCheckoutNewBranchAction() {
-      super("New Branch");
+      super("New Branch", "Create new branch starting from the selected commit", IconLoader.getIcon("/general/add.png"));
     }
 
     @Override
@@ -2091,7 +2091,12 @@ public class GitLogUI implements Disposable {
       final GitRepository repository =
         GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
-      new GitBranchPopup.NewBranchAction(myProject, repository, commitAt.getHash().getString(), myRefresh).actionPerformed(e);
+
+      String reference = commitAt.getHash().getString();
+      final String name = GitBranchUiUtil.getNewBranchNameFromUser(repository, "Checkout New Branch From " + reference);
+      if (name != null) {
+        new GitBranchOperationsProcessor(myProject, repository).checkoutNewBranchStartingFrom(name, reference, myRefresh);
+      }
     }
 
     @Override

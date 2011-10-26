@@ -121,17 +121,17 @@ public class Git {
 
   /**
    * {@code git checkout &lt;reference&gt;} <br/>
-   * {@code git checkout -b &lt;trackedBranch&gt; &lt;reference&gt;}
+   * {@code git checkout -b &lt;newBranch&gt; &lt;reference&gt;}
    */
   public static GitCommandResult checkout(@NotNull GitRepository repository,
                                           @NotNull String reference,
-                                          @Nullable String newTrackingBranch,
+                                          @Nullable String newBranch,
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
-    if (newTrackingBranch == null) { // simply checkout
+    if (newBranch == null) { // simply checkout
       h.addParameters(reference);
     } else { // checkout reference as new branch
-      h.addParameters("-b", newTrackingBranch, reference);
+      h.addParameters("-b", newBranch, reference);
     }
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
@@ -143,13 +143,10 @@ public class Git {
    * {@code git checkout -b &lt;branchName&gt;}
    */
   public static GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
-                                                   @Nullable GitLineHandlerListener listener, String reference) {
+                                                   @Nullable GitLineHandlerListener listener) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.addParameters("-b");
     h.addParameters(branchName);
-    if (reference != null && ! reference.isEmpty()) {
-      h.addParameters(reference);
-    }
     if (listener != null) {
       h.addLineListener(listener);
     }

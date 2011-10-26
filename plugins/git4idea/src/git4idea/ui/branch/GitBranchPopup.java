@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -32,7 +31,7 @@ import git4idea.GitBranch;
 import git4idea.process.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.validators.GitRefNameValidator;
+import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ import java.util.*;
  * 
  * @author Kirill Likhodedov
  */
-public class GitBranchPopup  {
+class GitBranchPopup  {
 
   private static final Logger LOG = Logger.getInstance(GitBranchPopup.class);
   
@@ -126,31 +125,21 @@ public class GitBranchPopup  {
     }
   }
 
-  public static class NewBranchAction extends DumbAwareAction {
+  private static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
     private final GitRepository myRepository;
-    private final String myReference;
-    private final Runnable myCallInAwtAfterExecution;
 
-    public NewBranchAction(Project project, GitRepository repository) {
-      this(project, repository, null, null);
-    }
-    
-    public NewBranchAction(Project project, GitRepository repository, final String reference, final Runnable callInAwtAfterExecution) {
+    private NewBranchAction(Project project, GitRepository repository) {
       super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
       myProject = project;
       myRepository = repository;
-      myReference = reference;
-      myCallInAwtAfterExecution = callInAwtAfterExecution;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = Messages.showInputDialog(myProject, "Enter the name of new branch",
-                                                   myReference == null ? "Checkout New Branch" : "Checkout New Branch On " + myReference,
-                                                   Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepository));
+      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myRepository, "Create New Branch");
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name, myReference, myCallInAwtAfterExecution);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
       }
     }
 
@@ -317,7 +306,7 @@ public class GitBranchPopup  {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepository));
         if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewTrackingBranch(name, myRemoteBranchName);
+          new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranchStartingFrom(name, myRemoteBranchName, null);
         }
       }
 
@@ -367,68 +356,4 @@ public class GitBranchPopup  {
       e.getPresentation().setVisible(false);
     }
   }
-
-
-  /**
-   * In addition to {@link GitRefNameValidator} checks that the entered branch name doesn't conflict with any existing local
-   * or remote branch.
-   */
-  private static class GitNewBranchNameValidator implements InputValidatorEx {
-    
-    private final GitRepository myRepository;
-    private String myErrorText;
-    private Set<String> myLocalNames = new HashSet<String>();
-    private Set<String> myRemoteNames = new HashSet<String>();
-
-    private GitNewBranchNameValidator(GitRepository repository) {
-      myRepository = repository;
-      cacheBranchNames();
-    }
-
-    private void cacheBranchNames() {
-      for (GitBranch branch : myRepository.getBranches().getLocalBranches()) {
-        myLocalNames.add(branch.getName());
-      }
-      for (GitBranch branch : myRepository.getBranches().getRemoteBranches()) {
-        myRemoteNames.add(branch.getName());
-      }
-    }
-
-    static GitNewBranchNameValidator newInstance(GitRepository repository) {
-      return new GitNewBranchNameValidator(repository);
-    }
-
-    @Override
-    public boolean checkInput(String inputString) {
-      if (!GitRefNameValidator.getInstance().checkInput(inputString)){
-        myErrorText = "Invalid name for branch";
-        return false;
-      } 
-      return checkBranchConflict(inputString); 
-    }
-
-    private boolean checkBranchConflict(String inputString) {
-      if (myLocalNames.contains(inputString)) {
-        myErrorText = "Branch " + inputString + " already exists";
-        return false;
-      }
-      if (myRemoteNames.contains(inputString)) {
-        myErrorText = "Branch name " + inputString + " clashes with remote branch with the same name";
-        return false;
-      }
-      myErrorText = null;
-      return true;
-    }
-
-    @Override
-    public boolean canClose(String inputString) {
-      return checkInput(inputString);
-    }
-
-    @Override
-    public String getErrorText(String inputString) {
-      return myErrorText;
-    }
-  }
-
 }

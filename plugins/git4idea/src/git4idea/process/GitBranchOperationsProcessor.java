@@ -82,15 +82,11 @@ public final class GitBranchOperationsProcessor {
    * Doesn't check the name of new branch for validity - do this before calling this method, otherwise a standard error dialog will be shown.
    *
    * @param name Name of the new branch to check out.
-   * @param reference
    */
-  public void checkoutNewBranch(@NotNull final String name, final String reference, final Runnable callInAwtAfterExecution) {
+  public void checkoutNewBranch(@NotNull final String name) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doCheckoutNewBranch(name, reference);
-        if (callInAwtAfterExecution != null) {
-          SwingUtilities.invokeLater(callInAwtAfterExecution);
-        }
+        doCheckoutNewBranch(name);
       }
     }.runInBackground();
   }
@@ -106,16 +102,16 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
-  private void doCheckoutNewBranch(@NotNull final String name, String reference) {
+  private void doCheckoutNewBranch(@NotNull final String name) {
     GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
-    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector, reference);
+    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector);
     if (result.success()) {
       updateRepository();
       notifySuccess(String.format("Branch <b><code>%s</code></b> was created", name));
     } else if (unmergedDetector.hasHappened()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
       if (gitConflictResolver.merge()) { // try again to checkout
-        doCheckoutNewBranch(name, reference);
+        doCheckoutNewBranch(name);
       }
     } else { // other error
       showErrorMessage("Couldn't create new branch " + name, result.getErrorOutput());
@@ -130,14 +126,19 @@ public final class GitBranchOperationsProcessor {
   }
 
   /**
-   * Checks out remote branch as a new local branch.
-   * Provides the "smart checkout" procedure the same as in {@link #checkout(String)}.
+   * Creates and checks out a new local branch starting from the given reference:
+   * {@code git checkout -b <branchname> <start-point>}. <br/>
+   * If the reference is a remote branch, and the tracking is wanted, pass {@code true} in the "track" parameter.
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, Runnable)}.
    *
    * @param newBranchName     Name of new local branch.
-   * @param trackedBranchName Name of the remote branch being checked out.
+   * @param startPoint        Reference to checkout.
+   * @param callInAwtAfterExecution
    */
-  public void checkoutNewTrackingBranch(@NotNull String newBranchName, @NotNull String trackedBranchName) {
-    commonCheckout(trackedBranchName, newBranchName, null);
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                            @NotNull String startPoint,
+                                            Runnable callInAwtAfterExecution) {
+    commonCheckout(startPoint, newBranchName, callInAwtAfterExecution);
   }
 
   /**
@@ -156,10 +157,10 @@ public final class GitBranchOperationsProcessor {
     commonCheckout(reference, null, callInAwtAfterCompleted);
   }
 
-  private void commonCheckout(@NotNull final String reference, @Nullable final String newTrackingBranch, final Runnable callInAwtAfterCompleted) {
+  private void commonCheckout(@NotNull final String reference, @Nullable final String newBranch, final Runnable callInAwtAfterCompleted) {
     new CommonBackgroundTask(myProject, "Checking out " + reference) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doCheckout(indicator, reference, newTrackingBranch);
+        doCheckout(indicator, reference, newBranch);
         if (callInAwtAfterCompleted != null) {
           SwingUtilities.invokeLater(callInAwtAfterCompleted);
         }
@@ -167,12 +168,12 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
-  private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newTrackingBranch) {
+  private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
     final GitMessageWithFilesDetector checkoutListener = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, myRoot);
     GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
     GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRoot);
 
-    GitCommandResult result = Git.checkout(myRepository, reference, newTrackingBranch, checkoutListener, unmergedDetector, untrackedOverwrittenByCheckout);
+    GitCommandResult result = Git.checkout(myRepository, reference, newBranch, checkoutListener, unmergedDetector, untrackedOverwrittenByCheckout);
     if (result.success()) {
       refreshRoot();
       updateRepository();
@@ -181,13 +182,13 @@ public final class GitBranchOperationsProcessor {
     else if (unmergedDetector.hasHappened()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
       if (gitConflictResolver.merge()) { // try again to checkout
-        doCheckout(indicator, reference, newTrackingBranch);
+        doCheckout(indicator, reference, newBranch);
       }
     }
     else if (checkoutListener.wasMessageDetected()) {
       List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getRelativeFilePaths());
       if (GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges)) {
-        smartCheckout(reference, newTrackingBranch, indicator);
+        smartCheckout(reference, newBranch, indicator);
       }
     }
     else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
@@ -200,14 +201,14 @@ public final class GitBranchOperationsProcessor {
   }
 
   // stash - checkout - unstash
-  private void smartCheckout(@NotNull final String reference, @Nullable final String newTrackingBranch, @NotNull ProgressIndicator indicator) {
+  private void smartCheckout(@NotNull final String reference, @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     final GitChangesSaver saver = configureSaver(reference, indicator);
 
     GitComplexProcess.Operation checkoutOperation = new GitComplexProcess.Operation() {
       @Override public void run(ContinuationContext context) {
         if (saveOrNotify(saver)) {
           try {
-            checkoutOrNotify(reference, newTrackingBranch);
+            checkoutOrNotify(reference, newBranch);
           } finally {
             saver.restoreLocalChanges(context);
           }
@@ -271,8 +272,8 @@ public final class GitBranchOperationsProcessor {
   /**
    * Checks out or shows an error message.
    */
-  private boolean checkoutOrNotify(@NotNull String reference, @Nullable String newTrackingBranch) {
-    GitCommandResult checkoutResult = Git.checkout(myRepository, reference, newTrackingBranch);
+  private boolean checkoutOrNotify(@NotNull String reference, @Nullable String newBranch) {
+    GitCommandResult checkoutResult = Git.checkout(myRepository, reference, newBranch);
     if (checkoutResult.success()) {
       return true;
     }

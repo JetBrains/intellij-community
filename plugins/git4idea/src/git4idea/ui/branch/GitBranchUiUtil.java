@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
+import git4idea.validators.GitNewBranchNameValidator;
 import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +62,16 @@ public class GitBranchUiUtil {
       String currentRevision = repository.getCurrentRevision();
       return currentRevision != null ? currentRevision : "";
     }
+  }
+
+  /**
+   * Shows a message dialog to enter the name of new branch.
+   * @return name of new branch or {@code null} if user has cancelled the dialog.
+   */
+  @Nullable
+  public static String getNewBranchNameFromUser(GitRepository repository, @NotNull String dialogTitle) {
+    return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch", dialogTitle, Messages.getQuestionIcon(), "",
+                                    GitNewBranchNameValidator.newInstance(repository));
   }
 
   /**
