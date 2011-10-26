@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
@@ -29,6 +28,8 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.InspectDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
@@ -39,6 +40,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
@@ -60,16 +62,16 @@ import java.awt.*;
  */
 public class ValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
-  private PsiExpression myCurrentExpression = null;
+  private PsiElement myCurrentExpression = null;
   private Value myValueToShow = null;
 
-  private ValueHint(Project project, Editor editor, Point point, ValueHintType type, final PsiExpression selectedExpression, final TextRange textRange) {
+  private ValueHint(Project project, Editor editor, Point point, ValueHintType type, final PsiElement selectedExpression, final TextRange textRange) {
     super(project, editor, point, type, textRange);
     myCurrentExpression = selectedExpression;
   }
 
   public static ValueHint createValueHint(Project project, Editor editor, Point point, ValueHintType type) {
-    Trinity<PsiExpression, TextRange, Value> trinity = getSelectedExpression(project, editor, point, type);
+    Trinity<PsiElement, TextRange, Value> trinity = getSelectedExpression(project, editor, point, type);
     final ValueHint hint = new ValueHint(project, editor, point, type, trinity.getFirst(), trinity.getSecond());
     hint.myValueToShow = trinity.getThird();
     return hint;
@@ -79,6 +81,22 @@ public class ValueHint extends AbstractValueHint {
     return myCurrentExpression != null;
   }
 
+
+  @Nullable
+  private ExpressionEvaluator getExpressionEvaluator(DebuggerContextImpl debuggerContext) throws EvaluateException {
+    if (myCurrentExpression instanceof PsiExpression) {
+      return EvaluatorBuilderImpl.getInstance().build(myCurrentExpression, debuggerContext.getSourcePosition());
+    }
+
+    CodeFragmentFactory factory = DebuggerUtilsEx.getEffectiveCodeFragmentFactory(myCurrentExpression);
+    TextWithImportsImpl textWithImports = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
+    if (factory == null) return null;
+    JavaCodeFragment codeFragment = factory.createCodeFragment(textWithImports, myCurrentExpression.getContext(), getProject());
+    codeFragment.forceResolveScope(GlobalSearchScope.allScope(getProject()));
+    return factory.getEvaluatorBuilder().build(codeFragment, debuggerContext.getSourcePosition());
+  }
+
+
   protected void evaluateAndShowHint() {
     final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
 
@@ -86,7 +104,9 @@ public class ValueHint extends AbstractValueHint {
     if(debuggerSession == null || !debuggerSession.isPaused()) return;
 
     try {
-      final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(myCurrentExpression, debuggerContext.getSourcePosition());
+
+      final ExpressionEvaluator evaluator = getExpressionEvaluator(debuggerContext);
+      if (evaluator == null) return;
 
       debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         public Priority getPriority() {
@@ -201,57 +221,16 @@ public class ValueHint extends AbstractValueHint {
   }
 
   @Nullable
-  private static Pair<PsiExpression, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
-    if (!(element instanceof PsiIdentifier || element instanceof PsiKeyword)) {
-      return null;
-    }
-
-    PsiElement expression = null;
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiVariable) {
-      expression = element;
-    }
-    else if (parent instanceof PsiReferenceExpression) {
-      final PsiElement pparent = parent.getParent();
-      if (pparent instanceof PsiMethodCallExpression) {
-        parent = pparent;
-      }
-      if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
-        expression = parent;
-      }
-    }
-    else if (parent instanceof PsiThisExpression) {
-      expression = parent;
-    }
-    
-    if (expression != null) {
-      try {
-        PsiElement context = element;
-        if(parent instanceof PsiParameter) {
-          try {
-            context = ((PsiMethod)((PsiParameter)parent).getDeclarationScope()).getBody();
-          }
-          catch (Throwable ignored) {
-          }
-        } 
-        else {
-          while(context != null  && !(context instanceof PsiStatement) && !(context instanceof PsiClass)) {
-            context = context.getParent();
-          }
-        }
-        TextRange textRange = expression.getTextRange();
-        PsiExpression psiExpression = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(expression.getText(), context);
-        return Pair.create(psiExpression, textRange);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.debug(e);
-      }
+  private static Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
+    final EditorTextProvider textProvider = EditorTextProvider.EP.forLanguage(element.getLanguage());
+    if (textProvider != null) {
+      return textProvider.findExpression(element, allowMethodCalls);
     }
     return null;
   }
 
-  private static Trinity<PsiExpression, TextRange, Value> getSelectedExpression(final Project project, final Editor editor, final Point point, final ValueHintType type) {
-    final Ref<PsiExpression> selectedExpression = Ref.create(null);
+  private static Trinity<PsiElement, TextRange, Value> getSelectedExpression(final Project project, final Editor editor, final Point point, final ValueHintType type) {
+    final Ref<PsiElement> selectedExpression = Ref.create(null);
     final Ref<TextRange> currentRange = Ref.create(null);
     final Ref<Value> preCalculatedValue = Ref.create(null);
 
@@ -273,7 +252,7 @@ public class ValueHint extends AbstractValueHint {
           try {
             String text = editor.getSelectionModel().getSelectedText();
             if(text != null && ctx != null) {
-              selectedExpression.set(JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(text, ctx));
+              selectedExpression.set(JVMElementFactories.getFactory(ctx.getLanguage(), project).createExpressionFromText(text, ctx));
               currentRange.set(new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd()));
             }
           } catch (IncorrectOperationException e) {
@@ -286,7 +265,7 @@ public class ValueHint extends AbstractValueHint {
           if (elementAtCursor == null) {
             return;
           }
-          Pair<PsiExpression, TextRange> pair = findExpression(elementAtCursor, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
+          Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
           if (pair == null) {
             if (type == ValueHintType.MOUSE_OVER_HINT) {
               final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
@@ -295,7 +274,7 @@ public class ValueHint extends AbstractValueHint {
                 if (lastExecuted != null) {
                   final Method method = lastExecuted.getFirst();
                   if (method != null) {
-                    final Pair<PsiExpression, TextRange> expressionPair = findExpression(elementAtCursor, true);
+                    final Pair<PsiElement, TextRange> expressionPair = findExpression(elementAtCursor, true);
                     if (expressionPair != null && expressionPair.getFirst() instanceof PsiMethodCallExpression) {
                       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expressionPair.getFirst();
                       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
@@ -311,7 +290,7 @@ public class ValueHint extends AbstractValueHint {
                         }
                       }
                     }
-                  }                                                                                      
+                  }
                 }
               }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,18 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.EditorTextProvider;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -36,7 +39,7 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
   @Override
   public TextWithImports getEditorText(PsiElement elementAtCaret) {
     String result = "";
-    PsiElement element = findExpression(elementAtCaret);
+    PsiElement element = findExpressionInner(elementAtCaret, false);
     if (element != null) {
       if (element instanceof GrReferenceExpression) {
         final GrReferenceExpression reference = (GrReferenceExpression)element;
@@ -59,18 +62,31 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
   }
 
   @Nullable
-  private static PsiElement findExpression(PsiElement element) {
+  private static PsiElement findExpressionInner(PsiElement element, boolean allowMethodCalls) {
     PsiElement parent = element.getParent();
     if (parent instanceof GrVariable && element == ((GrVariable)parent).getNameIdentifierGroovy()) {
       return element;
     }
-    if (parent instanceof GrReferenceExpression) {
-      if (parent.getParent() instanceof GrCall) return parent.getParent();
-      return parent;
+    else if (parent instanceof GrReferenceExpression) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrCall) {
+        parent = pparent;
+      }
+      if (allowMethodCalls || !GroovyRefactoringUtil.hasSideEffect((GroovyPsiElement)parent)) {
+        return parent;
+      }
     }
+
     if (parent instanceof GrThisReferenceExpression) {
       return parent;
     }
     return null;
+  }
+
+  @Override
+  public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
+    PsiElement expression = findExpressionInner(element, allowMethodCalls);
+    if (expression == null) return null;
+    return new Pair<PsiElement, TextRange>(expression, expression.getTextRange());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,8 +143,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public GrExpression createExpressionFromText(String text, PsiElement context) {
     GroovyFileImpl file = (GroovyFileImpl)createGroovyFile(text, false, context);
-    assert file.getTopStatements()[0] instanceof GrExpression;
-    return (GrExpression) file.getTopStatements()[0];
+    GrTopStatement[] topStatements = file.getTopStatements();
+    if (topStatements.length == 0 || !(topStatements[0] instanceof GrExpression)) {
+      throw new IncorrectOperationException("incorrect expression = '" + text + "'");
+    }
+    return (GrExpression) topStatements[0];
   }
 
   public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
