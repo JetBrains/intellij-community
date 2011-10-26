@@ -151,7 +151,7 @@ public final class AnnotateCommand extends AbstractCommand {
       cvsArguments.append("-f ");
     }
     if (isAnnotateBinary()) {
-      cvsArguments.append("-F");
+      cvsArguments.append("-F ");
     }
     return cvsArguments.toString();
   }
