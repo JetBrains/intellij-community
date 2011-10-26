@@ -87,7 +87,7 @@ import java.util.List;
  */
 public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
-  static final Icon ourMarkIcon = IconLoader.getIcon("/general/toolWindowFavorites.png");
+  static final Icon ourMarkIcon = IconLoader.getIcon("/icons/star.png");
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, UIUtil.getTableForeground());
   public static final String GIT_LOG_TABLE_PLACE = "git log table";
@@ -707,6 +707,11 @@ public class GitLogUI implements Disposable {
       public SymbolicRefs convert(VirtualFile o) {
         return myRefs.get(o);
       }
+    }, new Processor<AbstractHash>() {
+      @Override
+      public boolean process(AbstractHash hash) {
+        return myMarked.contains(hash);
+      }
     });
     final JPanel borderWrapper = new JPanel(new BorderLayout());
     borderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
@@ -1164,6 +1169,7 @@ public class GitLogUI implements Disposable {
       myCurrentWidth = 0;
       if (value instanceof GitCommit) {
         myPanel.removeAll();
+        myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
         final GitCommit commit = (GitCommit)value;
 
         final boolean marked = myMarked.contains(commit.getShortHash());
@@ -1992,6 +1998,9 @@ public class GitLogUI implements Disposable {
       }
       myJBTable.repaint();
       myGraphGutter.getComponent().repaint();
+      myDetailsPanel.redrawBranchLabels();
+      myDetailsPanel.getComponent().revalidate();
+      myDetailsPanel.getComponent().repaint();
     }
 
     @Override
