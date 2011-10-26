@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
@@ -28,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,6 +103,9 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
 
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
     final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+    if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
+      debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
+    }
     return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
   }
 
