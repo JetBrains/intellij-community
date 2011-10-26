@@ -548,7 +548,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               if (!noMerged) {
                 showContextInterruptedError();
               } else {
-                // trigger next update; for CVS when updating from several branvhes simultaneously
+                // trigger next update; for CVS when updating from several branches simultaneously
                 reset();
                 ProgressManager.getInstance().run(Updater.this);
               }
