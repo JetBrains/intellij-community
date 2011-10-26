@@ -176,7 +176,6 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     myBuilder.initRootNode();
 
     myTree.setDragEnabled(false);
-    myTree.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight());
 
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
