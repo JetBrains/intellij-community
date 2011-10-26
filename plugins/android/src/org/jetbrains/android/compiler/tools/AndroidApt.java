@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,10 @@ import java.util.Map;
  */
 public final class AndroidApt {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidApt");
-  
+
+  @NonNls private static final String COMMAND_CRUNCH = "crunch";
+  @NonNls private static final String COMMAND_PACKAGE = "package";
+
   private AndroidApt() {
   }
 
@@ -49,7 +53,10 @@ public final class AndroidApt {
                                                                    @Nullable String assertsDir,
                                                                    @Nullable String customPackage) throws IOException {
     List<String> args = new ArrayList<String>();
+
+    //noinspection deprecation
     Collections.addAll(args, target.getPath(IAndroidTarget.AAPT), "package", "-m", "-J", outDir, "-M", manifestPath);
+
     if (resourceDirs.length > 1) {
       args.add("--auto-add-overlay");
     }
@@ -69,26 +76,84 @@ public final class AndroidApt {
     return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
   }
 
-  @NotNull
+  public static Map<CompilerMessageCategory, List<String>> crunch(@NotNull IAndroidTarget target,
+                                                                  @NotNull List<String> resPaths,
+                                                                  @NotNull String outputPath) throws IOException {
+    final ArrayList<String> args = new ArrayList<String>();
+
+    //noinspection deprecation
+    args.add(target.getPath(IAndroidTarget.AAPT));
+
+    args.add(COMMAND_CRUNCH);
+
+    for (String path : resPaths) {
+      args.add("-S");
+      args.add(path);
+    }
+
+    args.add("-C");
+    args.add(outputPath);
+
+    LOG.info(AndroidUtils.command2string(args));
+    return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
+  }
+
   public static Map<CompilerMessageCategory, List<String>> packageResources(@NotNull IAndroidTarget target,
                                                                             @NotNull String manifestPath,
-                                                                            @NotNull String[] resourceDirs,
-                                                                            @Nullable String assetsDir,
-                                                                            @NotNull String outputPath) throws IOException {
-    List<String> args = new ArrayList<String>();
-    Collections.addAll(args, target.getPath(IAndroidTarget.AAPT), "package", "-f",     // force overwrite of existing files
-                       "-M", manifestPath);
-    if (resourceDirs.length > 1) {
+                                                                            @NotNull String[] resPaths,
+                                                                            @Nullable String osAssetsPath,
+                                                                            @NotNull String outputPath,
+                                                                            @Nullable String configFilter,
+                                                                            boolean debugMode,
+                                                                            int versionCode) throws IOException {
+    final ArrayList<String> args = new ArrayList<String>();
+
+    //noinspection deprecation
+    args.add(target.getPath(IAndroidTarget.AAPT));
+
+    args.add(COMMAND_PACKAGE);
+
+    for (String path : resPaths) {
+      args.add("-S");
+      args.add(path);
+    }
+
+    args.add("-f");
+    args.add("--no-crunch");
+
+    if (resPaths.length > 1) {
       args.add("--auto-add-overlay");
     }
-    for (String resourceDir : resourceDirs) {
-      args.add("-S");
-      args.add(resourceDir);
+
+    if (debugMode) {
+      args.add("--debug-mode");
     }
-    if (assetsDir != null) {
-      Collections.addAll(args, "-A", assetsDir);
+
+    if (versionCode > 0) {
+      args.add("--version-code");
+      args.add(Integer.toString(versionCode));
     }
-    Collections.addAll(args, "-I", target.getPath(IAndroidTarget.ANDROID_JAR), "-F", outputPath);
+
+    if (configFilter != null) {
+      args.add("-c");
+      args.add(configFilter);
+    }
+
+    args.add("-M");
+    args.add(manifestPath);
+
+    if (osAssetsPath != null) {
+      args.add("-A");
+      args.add(osAssetsPath);
+    }
+
+    args.add("-I");
+    args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
+
+    args.add("-F");
+    args.add(outputPath);
+
+    LOG.info(AndroidUtils.command2string(args));
     return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
   }
 }

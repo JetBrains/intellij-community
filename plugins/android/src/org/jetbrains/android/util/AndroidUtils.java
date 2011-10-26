@@ -141,6 +141,7 @@ public class AndroidUtils {
   public static final String RECEIVER_CLASS_NAME = "android.content.BroadcastReceiver";
   public static final String PROVIDER_CLASS_NAME = "android.content.ContentProvider";
   @NonNls public static final String DEFAULT_PROPERTIES_FILE_NAME = "default.properties";
+  @NonNls public static final String PNG_EXTENSION = "png";
 
   private AndroidUtils() {
   }

@@ -257,7 +257,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             continue;
           }
 
-          String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet);
+          String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet, false);
           if (resPaths.length <= 0) {
             continue;
           }
