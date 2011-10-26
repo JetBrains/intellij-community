@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -48,6 +49,8 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 class GitBranchPopup  {
+
+  private static final Logger LOG = Logger.getInstance(GitBranchPopup.class);
   
   private final Project myProject;
   private final GitRepository myRepository;
@@ -312,7 +315,7 @@ class GitBranchPopup  {
       private String guessBranchName() {
         // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
         int slashPosition = myRemoteBranchName.indexOf("/");
-        assert slashPosition > 0 : "remote branch name should have a slash separator";
+        LOG.assertTrue(slashPosition > 0, "Remote branch name should have a slash separator: [" + myRemoteBranchName + "]");
         return myRemoteBranchName.substring(slashPosition+1);
       }
     }
