@@ -134,7 +134,7 @@ public class GradleApiFacadeManager {
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
         
         // It may take a while for gradle api to resolve external dependencies. Default RMI timeout
-        // is 15 seconds (http://download.oracle.com/javase/1.4.2/docs/guide/rmi/sunrmiproperties.html#connectionTimeout),
+        // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(
           "-Dsun.rmi.transport.connectionTimeout=" + String.valueOf(TimeUnit.HOURS.toMillis(1))
