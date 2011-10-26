@@ -157,4 +157,9 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("stringBuffer", "buffer");
   }
 
+  public void testDuplicateSuggestionsFromUsage() {
+    configureByFile(FILE_PREFIX + getTestName(false) + ".java");
+    assertStringItems("preferencePolicy", "policy");
+  }
+
 }
