@@ -105,9 +105,14 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
   }
 
   private void fileChanged(@NotNull final VirtualFileEvent e) {
+    VirtualFile file = e.getFile();
+    if (!file.isValid()) {
+      return;
+    }
+
     VirtualFile parent = e.getParent();
     VirtualFile gp = parent != null ? parent.getParent() : null;
-    VirtualFile file = e.getFile();
+
     if (file.getFileType() == AndroidIdlFileType.ourFileType ||
         file.getFileType() == AndroidRenderscriptFileType.INSTANCE ||
         getManifestFileName().equals(file.getName()) ||
