@@ -16,10 +16,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.navigation.AnonymousElementProvider;
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,16 +28,21 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
   @Override
   public PsiElement[] getAnonymousElements(PsiElement parent) {
     if (parent instanceof PsiClass) {
-      final List<PsiElement> elements = new ArrayList<PsiElement>();
-      new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
-          elements.add(aClass);
-        }
-      }.visitElement(parent);
+      if (parent instanceof PsiCompiledElement) {
+        parent = parent.getNavigationElement();
+      }
+      if (parent instanceof PsiClass && !(parent instanceof PsiCompiledElement)) {
+        final List<PsiElement> elements = new ArrayList<PsiElement>();
+        new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitAnonymousClass(PsiAnonymousClass aClass) {
+            elements.add(aClass);
+          }
+        }.visitElement(parent);
 
-      if (! elements.isEmpty()) {
-        return elements.toArray(new PsiElement[elements.size()]);
+        if (! elements.isEmpty()) {
+          return elements.toArray(new PsiElement[elements.size()]);
+        }
       }
     }
     return PsiElement.EMPTY_ARRAY;
