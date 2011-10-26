@@ -46,10 +46,6 @@ class SettingsXmlFile {
     return myFile;
   }
 
-  public Document getDocument() {
-    return myDocument;
-  }
-
   public Element getRootElement() {
     return myRootElement;
   }

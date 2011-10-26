@@ -38,11 +38,6 @@ public class ComponentManagerSettingsImpl implements ComponentManagerSettings {
   }
 
   @NotNull
-  public Document getDocument() {
-    return mySettingsFile.getDocument();
-  }
-
-  @NotNull
   public Element getRootElement() {
     return mySettingsFile.getRootElement();
   }
