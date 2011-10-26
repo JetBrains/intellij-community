@@ -87,7 +87,6 @@ public class FindUsagesManager implements JDOMExternalizable {
   private final Project myProject;
   private final com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = false;
-  private final List<FindUsagesHandlerFactory> myHandlers = new ArrayList<FindUsagesHandlerFactory>();
 
   public static class SearchData {
     public SmartPsiElementPointer[] myElements = null;
@@ -118,28 +117,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     myAnotherManager = anotherManager;
   }
 
-  /**
-   * @deprecated
-   * @see FindUsagesHandlerFactory#EP_NAME
-   */
-  public void registerFindUsagesHandler(FindUsagesHandlerFactory handler) {
-    myHandlers.add(0, handler);
-  }
-
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    for (FindUsagesHandlerFactory factory : myHandlers) {
-      try {
-        if (factory.canFindUsages(element)) {
-          return true;
-        }
-      }
-      catch (IndexNotReadyException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       try {
         if (factory.canFindUsages(element)) {
@@ -239,15 +217,6 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : myHandlers) {
-      if (factory.canFindUsages(element)) {
-        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
-        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
-        if (handler != null) {
-          return handler;
-        }
-      }
-    }
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
