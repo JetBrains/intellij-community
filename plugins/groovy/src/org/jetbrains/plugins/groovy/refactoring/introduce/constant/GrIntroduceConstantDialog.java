@@ -269,8 +269,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private void createUIComponents() {
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
     if (myContext.expression == null) {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType(),
-                                                                 GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY);
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType()
+      );
     }
     else {
       myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.expression);

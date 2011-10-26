@@ -270,8 +270,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
 
     if (myContext.expression == null) {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType(),
-                                                                    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY);
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType()
+      );
     }
     else {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.expression);

@@ -35,12 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -48,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -574,33 +571,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     PsiElement parent = getParent();
     if (!(parent instanceof GrNewExpression)) return PsiType.EMPTY_ARRAY;
 
-    PsiElement pparent = PsiUtil.skipParentheses(parent.getParent(), true);
-
-    PsiType ltype = null;
-    if (pparent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), parent, false)) {
-      GrExpression lValue = ((GrAssignmentExpression)pparent).getLValue();
-      if (PsiUtil.mightBeLValue(lValue)) {
-        ltype = lValue.getNominalType();
-      }
-    }
-    else if (pparent instanceof GrVariable && ((GrVariable)pparent).getInitializerGroovy() == parent) {
-      ltype = ((GrVariable)pparent).getDeclaredType();
-    }
-    else if (pparent instanceof GrListOrMap) {
-      PsiElement ppparent = PsiUtil.skipParentheses(pparent.getParent(), true);
-
-      if (ppparent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)ppparent).getRValue(), pparent, false)) {
-        PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)ppparent).getLValue(), false);
-        if (lValue instanceof GrTupleExpression) {
-          GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
-          int index = ArrayUtil.find(initializers, parent);
-          GrExpression[] expressions = ((GrTupleExpression)lValue).getExpressions();
-          if (index < expressions.length) {
-            ltype = expressions[index].getNominalType();
-          }
-        }
-      }
-    }
+    PsiType ltype = PsiImplUtil.inferExpectedTypeForDiamond((GrNewExpression)parent);
 
     if (ltype instanceof PsiClassType) {
       return ((PsiClassType)ltype).getParameters();

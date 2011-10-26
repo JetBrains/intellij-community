@@ -181,29 +181,6 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  // todo add type hierarchy
-  public static Map<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
-    if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
-    Map<String, PsiType> map = new LinkedHashMap<String, PsiType>();
-    final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
-    if (unboxed != null) type = unboxed;
-    final Set<PsiType> set = new LinkedHashSet<PsiType>();
-    set.add(type);
-    while (!set.isEmpty()) {
-      PsiType cur = set.iterator().next();
-      set.remove(cur);
-      if (!map.containsValue(cur)) {
-        map.put(cur.getPresentableText(), cur);
-        for (PsiType superType : cur.getSuperTypes()) {
-          if (!map.containsValue(superType)) {
-            set.add(superType);
-          }
-        }
-      }
-    }
-    return map;
-  }
-
   public static boolean isAppropriateContainerForIntroduceVariable(PsiElement tempContainer) {
     return tempContainer instanceof GrOpenBlock ||
         tempContainer instanceof GrClosableBlock ||

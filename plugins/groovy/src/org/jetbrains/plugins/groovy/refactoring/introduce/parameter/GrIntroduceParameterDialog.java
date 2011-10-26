@@ -224,7 +224,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
   private void createUIComponents() {
     if (myContext.var != null) {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType(), true);
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.var.getDeclaredType());
     }
     else {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.expression);
