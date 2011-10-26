@@ -187,7 +187,6 @@ public class PluginHostsConfigurable extends BaseConfigurable implements Searcha
 
   public static class HostMessages extends Messages {
     public static class InputHostDialog extends InputDialog {
-      private final Component myParentComponent;
 
       public InputHostDialog(Component parentComponent,
                              String message,
@@ -196,7 +195,6 @@ public class PluginHostsConfigurable extends BaseConfigurable implements Searcha
                              String initialValue,
                              InputValidator validator) {
         super(parentComponent, message, title, icon, initialValue, validator);
-        myParentComponent = parentComponent;
       }
 
       protected Action[] createActions() {
@@ -205,14 +203,14 @@ public class PluginHostsConfigurable extends BaseConfigurable implements Searcha
           public void actionPerformed(final ActionEvent e) {
             try {
               if (UpdateChecker.checkPluginsHost(getTextField().getText(), new ArrayList<PluginDownloader>())) {
-                showInfoMessage(myParentComponent, "Plugins Host was successfully checked", "Check Plugins Host");
+                showInfoMessage(myField, "Plugins Host was successfully checked", "Check Plugins Host");
               }
               else {
-                showErrorDialog(myParentComponent, "Plugin descriptions contain some errors. Please, check idea.log for details.");
+                showErrorDialog(myField, "Plugin descriptions contain some errors. Please, check idea.log for details.");
               }
             }
             catch (Exception e1) {
-              showErrorDialog(myParentComponent, "Connection failed: " + e1.getMessage());
+              showErrorDialog(myField, "Connection failed: " + e1.getMessage());
             }
           }
         });
