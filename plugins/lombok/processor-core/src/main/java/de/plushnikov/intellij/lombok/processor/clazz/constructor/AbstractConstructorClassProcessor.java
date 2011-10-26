@@ -1,5 +1,14 @@
 package de.plushnikov.intellij.lombok.processor.clazz.constructor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -18,13 +27,6 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Base lombok processor class for constructor processing
@@ -103,9 +105,15 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
 
   @NotNull
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params) {
+    final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);
+
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, params, staticName);
+  }
+
+  @NotNull
+  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params, @Nullable String staticName) {
     final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties", String.class);
 
-    final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);
     final boolean staticConstrRequired = !StringUtil.isEmptyOrSpaces(staticName);
 
     final String constrVisibility = staticConstrRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;

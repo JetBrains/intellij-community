@@ -1,5 +1,10 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -16,10 +21,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Plushnikov Michail
@@ -74,7 +75,9 @@ public class DataProcessor extends AbstractLombokClassProcessor {
       target.addAll((Collection<? extends Psi>) new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, RequiredArgsConstructor.class)) {
-      target.addAll((Collection<? extends Psi>) new RequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation));
+      final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticConstructor", String.class);
+      target.addAll((Collection<? extends Psi>) new RequiredArgsConstructorProcessor().createRequiredArgsConstructor(
+          psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
     }
   }
 

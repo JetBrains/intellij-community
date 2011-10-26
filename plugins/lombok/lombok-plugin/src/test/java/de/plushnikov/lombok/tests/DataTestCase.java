@@ -1,7 +1,8 @@
 package de.plushnikov.lombok.tests;
 
-import de.plushnikov.lombok.LombokParsingTestCase;
 import org.junit.Test;
+
+import de.plushnikov.lombok.LombokParsingTestCase;
 
 public class DataTestCase extends LombokParsingTestCase {
   public DataTestCase() {
@@ -39,6 +40,12 @@ public class DataTestCase extends LombokParsingTestCase {
 
   @Test
   public void testDataWithGetterNone() {
+    doTest();
+  }
+
+  @Test
+  public void testDataStaticConstructor() {
+    // Test for issue #9
     doTest();
   }
 }

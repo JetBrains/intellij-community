@@ -1,5 +1,12 @@
 package de.plushnikov.intellij.lombok.processor.clazz.constructor;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,11 +18,6 @@ import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Plushnikov Michail
@@ -31,15 +33,16 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
-      target.addAll((Collection<? extends Psi>) createRequiredArgsConstructor(psiClass, methodVisibility, psiAnnotation));
+      final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
+      target.addAll((Collection<? extends Psi>) createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allReqFields));
     }
   }
 
   @NotNull
-  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
-    Collection<PsiField> allReqFields = getRequiredFields(psiClass);
+  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @Nullable String staticName) {
+    final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
 
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allReqFields);
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allReqFields, staticName);
   }
 
   @NotNull
