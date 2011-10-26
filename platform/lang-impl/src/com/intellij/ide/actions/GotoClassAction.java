@@ -21,17 +21,22 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.lang.Language;
+import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(AnActionEvent e) {
@@ -58,7 +63,8 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         if (element instanceof PsiElement) {
-          NavigationUtil.activateFileWithPsiElement((PsiElement)element, !popup.isOpenInCurrentWindowRequested());
+          final PsiElement psiElement = getElement(((PsiElement)element), popup);
+          NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
         }
         else {
           EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
@@ -67,8 +73,45 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     }, "Classes matching pattern");
   }
 
+  private static PsiElement getElement(PsiElement element, ChooseByNamePopup popup) {
+    final String path = popup.getPathToAnonymous();    
+    if (path != null) {
+      
+        final String[] classes = path.split("\\$");
+        List<Integer> indexes = new ArrayList<Integer>();
+        for (String cls : classes) {
+          if (cls.isEmpty()) continue;
+          try {
+            indexes.add(Integer.parseInt(cls) - 1);
+          } catch (Exception e) {
+            return element;
+          }            
+        }
+        PsiElement current = element;
+        for (int index : indexes) {
+          final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+          if (anonymousClasses.length > index) {
+            current = anonymousClasses[index];
+          } else {
+            return current;
+          }
+        }
+        return current;
+    }
+    return element;
+  }
+
+  static PsiElement[] getAnonymousClasses(PsiElement element) {
+    for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {
+      final PsiElement[] elements = provider.getAnonymousElements(element);
+      if (elements != null && elements.length > 0) {
+        return elements;
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
+  }
+
   protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
   }
-
 }

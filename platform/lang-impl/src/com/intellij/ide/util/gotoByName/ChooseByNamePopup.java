@@ -257,14 +257,24 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,|#)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+  private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("(\\w+)((\\$\\d)*(\\$)?)");
 
   public String getNamePattern(String pattern) {
+    Pattern regex = null;
     if (pattern.indexOf(':') != -1 ||
         pattern.indexOf(',') != -1 ||
         pattern.indexOf(';') != -1 ||
         pattern.indexOf('#') != -1 ||
         pattern.indexOf('@') != -1) { // quick test if reg exp should be used
-      final Matcher matcher = patternToDetectLinesAndColumns.matcher(pattern);
+      regex = patternToDetectLinesAndColumns;
+    }
+
+    if (pattern.indexOf('$') != -1) {
+      regex = patternToDetectAnonymousClasses;
+    }
+
+    if (regex != null) {
+      final Matcher matcher = regex.matcher(pattern);
       if (matcher.matches()) {
         pattern = matcher.group(1);
       }
@@ -292,6 +302,23 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
 
     return -1;
+  }
+  
+  @Nullable
+  public String getPathToAnonymous() {
+    final Matcher matcher = patternToDetectAnonymousClasses.matcher(getEnteredText());
+    if (matcher.matches()) {
+      String path = matcher.group(2);
+      if (path != null) {
+        path = path.trim();
+        if (path.endsWith("$")) {
+          path = path.substring(0, path.length() - 2);
+        }
+        if (!path.isEmpty()) return path;
+      }
+    }
+
+    return null;    
   }
 
   public int getColumnPosition() {
