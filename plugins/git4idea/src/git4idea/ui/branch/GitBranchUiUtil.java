@@ -60,7 +60,7 @@ public class GitBranchUiUtil {
       return currentBranch.getName();
     } else {
       String currentRevision = repository.getCurrentRevision();
-      return currentRevision != null ? currentRevision : "";
+      return currentRevision != null ? currentRevision.substring(0, 7) : "";
     }
   }
 
