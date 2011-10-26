@@ -361,10 +361,17 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
   }
 
   private static void addLookupItems(Set<LookupElement> lookupElements, @Nullable final SuggestedNameInfo callback, PrefixMatcher matcher, String... strings) {
+    outer:
     for (int i = 0; i < strings.length; i++) {
       String name = strings[i];
       if (!matcher.prefixMatches(name)) {
         continue;
+      }
+
+      for (LookupElement lookupElement : lookupElements) {
+        if (lookupElement.getAllLookupStrings().contains(name)) {
+          continue outer;
+        }
       }
       
       LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
