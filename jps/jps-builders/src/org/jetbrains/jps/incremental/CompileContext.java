@@ -152,8 +152,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
+  public boolean hasRemovedSources() {
+    final Set<File> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
+    return removed != null && !removed.isEmpty();
+  }
+
   // delete all class files that according to mappings correspond to given sources
-  public void deleteCorrespondingClasses(Set<File> sources) {
+  public void deleteCorrespondingClasses(Collection<File> sources) {
     if (isMake() && !sources.isEmpty()) {
       final Mappings mappings = getMappings();
       for (File file : sources) {

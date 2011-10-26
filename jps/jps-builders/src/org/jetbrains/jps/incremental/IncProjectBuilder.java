@@ -203,6 +203,11 @@ public class IncProjectBuilder {
       throw new ProjectBuildException(e);
     }
     finally {
+      for (BuilderCategory category : BuilderCategory.values()) {
+        for (Builder builder : myBuilderRegistry.getBuilders(category)) {
+          builder.cleanupResources(context, chunk);
+        }
+      }
       context.clearFileCache();
       Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
     }

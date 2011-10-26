@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.Module;
@@ -18,12 +20,14 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 import org.jetbrains.jps.server.ClasspathBootstrap;
+import org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,6 +42,7 @@ public class GroovyBuilder extends Builder {
   }
 
   public Builder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+    ExitCode exitCode = ExitCode.OK;
     final List<File> toCompile = new ArrayList<File>();
     try {
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
@@ -52,18 +57,16 @@ public class GroovyBuilder extends Builder {
       });
 
       if (toCompile.isEmpty()) {
-        return Builder.ExitCode.OK;
+        return exitCode;
       }
 
-      List<String> cp = new ArrayList<String>();
+      final List<String> cp = new ArrayList<String>();
       for (File file : context.getProjectPaths().getCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake())) {
         cp.add(FileUtil.toSystemIndependentName(file.getPath()));
       }
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath()); //groovy_rt.jar
 
-      //Mappings delta = new Mappings();
-
-      File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
+      final File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
 
       List<String> cmd = new ArrayList<String>();
       cmd.add(SystemProperties.getJavaHome() + "/bin/java"); //todo module jdk path
@@ -78,59 +81,78 @@ public class GroovyBuilder extends Builder {
       assert dir != null;
       fillFileWithGroovycParameters(tempFile, dir.getPath(), toCompile);
 
-      Process process = Runtime.getRuntime().exec(cmd.toArray(new String[cmd.size()]));
-      GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, null) {
-        @Override
-        protected void updateStatus(@Nullable String status) {
-          context.processMessage(new ProgressMessage(status == null ? GROOVY_COMPILER_IN_OPERATION : status));
+      context.deleteCorrespondingClasses(toCompile);
+
+      List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
+      try {
+        final Process process = Runtime.getRuntime().exec(cmd.toArray(new String[cmd.size()]));
+        GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, null) {
+          @Override
+          protected void updateStatus(@Nullable String status) {
+            context.processMessage(new ProgressMessage(status == null ? GROOVY_COMPILER_IN_OPERATION : status));
+          }
+        };
+        handler.startNotify();
+        handler.waitFor();
+
+        successfullyCompiled = handler.getSuccessfullyCompiled();
+
+        final List<CompilerMessage> messages = handler.getCompilerMessages();
+        for (CompilerMessage message : messages) {
+          BuildMessage.Kind kind = message.getCategory().equals(CompilerMessage.ERROR)
+                                   ? BuildMessage.Kind.ERROR
+                                   : message.getCategory().equals(CompilerMessage.WARNING)
+                                     ? BuildMessage.Kind.WARNING
+                                     : BuildMessage.Kind.INFO;
+          context.processMessage(
+            new org.jetbrains.jps.incremental.messages.CompilerMessage(
+              BUILDER_NAME, kind, message.getMessage(), message.getUrl(), -1, -1, -1, message.getLineNum(), message.getColumnNum())
+          );
         }
-      };
-      handler.startNotify();
-      handler.waitFor();
 
-      List<CompilerMessage> messages = handler.getCompilerMessages();
-      for (CompilerMessage message : messages) {
-        BuildMessage.Kind kind = message.getCategory().equals(CompilerMessage.ERROR)
-                                 ? BuildMessage.Kind.ERROR
-                                 : message.getCategory().equals(CompilerMessage.WARNING)
-                                   ? BuildMessage.Kind.WARNING
-                                   : BuildMessage.Kind.INFO;
-        context.processMessage(
-          new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, kind, message.getMessage(), message.getUrl(), -1, -1, -1,
-                                                                     message.getLineNum(), message.getColumnNum()));
+        boolean hasMessages = !messages.isEmpty();
+
+        final StringBuffer unparsedBuffer = handler.getStdErr();
+        if (unparsedBuffer.length() != 0) {
+          context.processMessage(
+            new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, unparsedBuffer.toString())
+          );
+          hasMessages = true;
+        }
+
+        final int exitValue = handler.getProcess().exitValue();
+        if (!hasMessages && exitValue != 0) {
+          context.processMessage(new org.jetbrains.jps.incremental.messages.CompilerMessage(
+            BUILDER_NAME, BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue
+          ));
+        }
+      }
+      finally {
+        final Mappings delta = new Mappings();
+        final List<File> successfullyCompiledFiles = new ArrayList<File>();
+
+        if (!successfullyCompiled.isEmpty()) {
+          final Callbacks.Backend callback = delta.getCallback();
+          final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
+
+          for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
+            final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
+            final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
+            storage.update(outputPath, sourcePath);
+
+            callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFile(new File(outputPath))));
+
+            successfullyCompiledFiles.add(new File(sourcePath));
+          }
+        }
+
+        final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
+        if (needSecondPass) {
+          exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
+        }
       }
 
-      boolean hasMessages = !messages.isEmpty();
-
-      StringBuffer unparsedBuffer = handler.getStdErr();
-      if (unparsedBuffer.length() != 0) {
-        context.processMessage(
-          new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, unparsedBuffer.toString()));
-        hasMessages = true;
-      }
-
-      final int exitCode = handler.getProcess().exitValue();
-      if (!hasMessages && exitCode != 0) {
-        context.processMessage(new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                                                          "Internal groovyc error: code " + exitCode));
-      }
-
-      OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
-      for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
-        String src = item.sourcePath;
-        storage.update(item.outputPath, src);
-        /* todo
-        final File classFile = new File(item.outputPath);
-        Callbacks.Backend callback = delta.getCallback();
-        callback.associate(item.getOutputPath(), Callbacks.getDefaultLookup(FileUtil.toSystemIndependentName(src)),
-                            new ClassReader(FileUtil.loadFile(classFile)));
-        */
-        tsStorage.saveStamp(new File(src));
-      }
-
-      //todo context.getMappings().differentiate(delta, Collections.<String>emptyList(), )
-
-      return ExitCode.OK;
+      return exitCode;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
