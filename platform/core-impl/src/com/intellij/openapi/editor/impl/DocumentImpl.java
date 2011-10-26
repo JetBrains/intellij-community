@@ -606,7 +606,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void removeDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
-    LOG.assertTrue(success);
+    if (!success) {
+      LOG.error(String.format("Can't remove given document listener (%s). Registered listeners: %s", listener, myDocumentListeners));
+    }
   }
 
   public int getLineNumber(int offset) {
