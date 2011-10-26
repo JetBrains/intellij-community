@@ -453,4 +453,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @NotNull
   PsiCatchSection createCatchSection(@NotNull PsiType exceptionType, @NotNull String exceptionName, @Nullable PsiElement context) throws IncorrectOperationException;
+  
+  @NotNull 
+  PsiExpression createExpressionFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException;
 }

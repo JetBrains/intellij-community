@@ -152,7 +152,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   protected void close(final boolean isOk) {
-    if (myDisposedFlag){
+    if (checkDisposed()){
       return;
     }
 
@@ -198,7 +198,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
 
-    myDisposedFlag = true;
+    setDisposed(true);
     myAlarm.cancelAllRequests();
     myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
 

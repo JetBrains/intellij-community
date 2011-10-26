@@ -141,7 +141,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createReferenceExpressionFromText(text);
   }
 
-  public GrExpression createExpressionFromText(String text, PsiElement context) {
+  @NotNull
+  public GrExpression createExpressionFromText(@NotNull String text, PsiElement context) {
     GroovyFileImpl file = (GroovyFileImpl)createGroovyFile(text, false, context);
     GrTopStatement[] topStatements = file.getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrExpression)) {

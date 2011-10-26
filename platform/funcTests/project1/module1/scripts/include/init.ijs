@@ -4,5 +4,6 @@
 
 %set ide.mac.message.dialogs.as.sheets=false
 %set ide.mac.filechooser.native=false
+%set ide.debug.minProgressTime=1000
 
 %cd {script.dir}/../../../..
