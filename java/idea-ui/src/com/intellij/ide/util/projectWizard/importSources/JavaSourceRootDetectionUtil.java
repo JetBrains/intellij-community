@@ -27,6 +27,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -77,7 +78,7 @@ public class JavaSourceRootDetectionUtil {
 
 
   @Nullable
-  public static Pair<File,String> suggestRootForJavaFile(File javaFile, File topmostPossibleRoot) {
+  public static Pair<File,String> suggestRootForJavaFile(File javaFile, File topmostPossibleRoot, NullableFunction<CharSequence, String> packageNameFetcher) {
     if (!javaFile.isFile()) return null;
 
     final CharSequence chars;
@@ -88,7 +89,7 @@ public class JavaSourceRootDetectionUtil {
       return null;
     }
 
-    String packageName = getPackageStatement(chars);
+    String packageName = packageNameFetcher.fun(chars);
     if (packageName != null) {
       File root = javaFile.getParentFile();
       int index = packageName.length();
@@ -114,7 +115,7 @@ public class JavaSourceRootDetectionUtil {
   }
 
   @Nullable
-  public static String getPackageStatement(CharSequence text) {
+  public static String getPackageName(CharSequence text) {
     Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);

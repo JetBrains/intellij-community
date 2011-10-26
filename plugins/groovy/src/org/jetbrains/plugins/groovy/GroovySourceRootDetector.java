@@ -15,19 +15,35 @@
  */
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
+import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class GroovySourceRootDetector extends JavaSourceRootDetector {
+  @NotNull
   @Override
   protected String getLanguageName() {
     return "Groovy";
   }
 
+  @NotNull
   @Override
   protected String getFileExtension() {
     return GroovyFileType.DEFAULT_EXTENSION;
+  }
+
+  @NotNull
+  protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
+    return new NullableFunction<CharSequence, String>() {
+      @Override
+      public String fun(CharSequence charSequence) {
+        //todo[nik] implement groovy-specific package name parsing?
+        return JavaSourceRootDetectionUtil.getPackageName(charSequence);
+      }
+    };
   }
 }

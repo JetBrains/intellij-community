@@ -28,20 +28,50 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Override this class to provide automatic detection of modules and libraries for 'Create from existing sources' mode of
+ * the new project/module wizard.
+ *
+ * <p>
+ * The implementation should be registered in your {@code plugin.xml}:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;projectStructureDetector implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ *
  * @author nik
  */
 public abstract class ProjectStructureDetector {
   public static final ExtensionPointName<ProjectStructureDetector> EP_NAME = ExtensionPointName.create("com.intellij.projectStructureDetector");
 
+  /**
+   * This methods is called recursively for all directories under the selected root directory.
+   * @param dir current directory
+   * @param children its children
+   * @param base the root directory in which project files are detected. All detected roots must be located under this directory.
+   * @param result list of detected roots
+   * @return
+   *   <li>{@link DirectoryProcessingResult#PROCESS_CHILDREN} if children of {@code dir} need to be processed by this detector</li>
+   *   <li>{@link DirectoryProcessingResult#SKIP_CHILDREN} to skip all children of {@code dir} from processing</li>
+   *   <li><code>{@link DirectoryProcessingResult#skipChildrenAndParentsUpTo}(parent)</code> to skip all directories under {@code parent} from processing.
+   *   {@code parent} must be an ancestor of {@code dir} or {@code dir} itself
+   *   </li>
+   */
   @NotNull
   public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
                                                         @NotNull List<DetectedProjectRoot> result);
 
+  /**
+   * Return additional wizard steps which will be shown if some roots are detected by this detector
+   */
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder, ProjectDescriptor projectDescriptor, Icon stepIcon) {
     return Collections.emptyList();
   }
 
-  public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots,
+  /**
+   * Setup modules and libraries for the selected roots
+   */
+  public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots, @NotNull ProjectDescriptor projectDescriptor,
                                     @NotNull ProjectFromSourcesBuilder builder) {
   }
 
