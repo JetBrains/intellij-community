@@ -194,6 +194,7 @@ public interface JavaElementType {
 
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.INSTANCE) {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      @Override
       public void parse(final PsiBuilder builder) {
         StatementParser.parseStatements(builder);
       }
@@ -208,6 +209,7 @@ public interface JavaElementType {
 
   IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", JavaLanguage.INSTANCE) {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      @Override
       public void parse(final PsiBuilder builder) {
         ExpressionParser.parse(builder);
       }
@@ -222,6 +224,7 @@ public interface JavaElementType {
 
   IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", JavaLanguage.INSTANCE) {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      @Override
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
       }
@@ -236,6 +239,7 @@ public interface JavaElementType {
 
   IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", JavaLanguage.INSTANCE) {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      @Override
       public void parse(final PsiBuilder builder) {
         ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
                                            ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);

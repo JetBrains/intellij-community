@@ -30,6 +30,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
     super(originalLexer, table);
   }
 
+  @Override
   public void advance() {
     final IElementType tokenType = getDelegate().getTokenType();
 

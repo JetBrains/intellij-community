@@ -23,10 +23,12 @@ import com.intellij.psi.impl.source.tree.LeafElement;
  * @author max
  */
 public class JavadocFormatterUtilHelper implements FormatterUtilHelper {
+  @Override
   public boolean addWhitespace(final ASTNode treePrev, final LeafElement whiteSpaceElement) {
     return false;
   }
 
+  @Override
   public boolean containsWhitespacesOnly(final ASTNode node) {
     return node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0;
   }

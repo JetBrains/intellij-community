@@ -44,6 +44,7 @@ public class FileReferenceSet {
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>> DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(PsiBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new Function<PsiFile, Collection<PsiFileSystemItem>>() {
+          @Override
           @Nullable
           public Collection<PsiFileSystemItem> fun(final PsiFile file) {
             return getAbsoluteTopLevelDirLocations(file);
@@ -51,12 +52,14 @@ public class FileReferenceSet {
         };
 
    public static final Condition<PsiFileSystemItem> FILE_FILTER = new Condition<PsiFileSystemItem>() {
+    @Override
     public boolean value(final PsiFileSystemItem item) {
       return item instanceof PsiFile;
     }
   };
 
   public static final Condition<PsiFileSystemItem> DIRECTORY_FILTER = new Condition<PsiFileSystemItem>() {
+    @Override
     public boolean value(final PsiFileSystemItem item) {
       return item instanceof PsiDirectory;
     }
@@ -126,10 +129,12 @@ public class FileReferenceSet {
     }
 
     return new FileReferenceSet(text, element, offset, null, true, endingSlashNotAllowed) {
+      @Override
       protected boolean isUrlEncoded() {
         return urlEncoded;
       }
 
+      @Override
       protected boolean isSoft() {
         return soft;
       }

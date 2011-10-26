@@ -42,6 +42,7 @@ import java.util.Set;
  */
 public abstract class AbstractQualifiedReference<T extends AbstractQualifiedReference<T>> extends ASTWrapperPsiElement implements PsiPolyVariantReference, PsiQualifiedReference {
   private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER = new ResolveCache.PolyVariantResolver<AbstractQualifiedReference>() {
+    @Override
     public ResolveResult[] resolve(final AbstractQualifiedReference expression, final boolean incompleteCode) {
       return expression.resolveInner();
     }
@@ -51,21 +52,25 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     super(node);
   }
 
+  @Override
   public final PsiReference getReference() {
     return this;
   }
 
+  @Override
   public final PsiElement getElement() {
     return this;
   }
 
   protected abstract ResolveResult[] resolveInner();
 
+  @Override
   @NotNull
   public final ResolveResult[] multiResolve(final boolean incompleteCode) {
     return ResolveCache.getInstance(getProject()).resolveWithCaching(this, MY_RESOLVER, true, false);
   }
 
+  @Override
   @Nullable
   public final PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
@@ -87,17 +92,20 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
 
+  @Override
   @NotNull
   public  String getCanonicalText() {
     return getText();
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   @Nullable
   public T getQualifier() {
     return (T)findChildByClass(getClass());
   }
 
+  @Override
   public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     final PsiElement firstChildNode = ObjectUtils.assertNotNull(getFirstChild());
@@ -108,6 +116,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (isReferenceTo(element)) return this;
@@ -143,6 +152,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
 
   private boolean isDirectlyVisible(final PsiMethod method) {
     final AbstractQualifiedReferenceResolvingProcessor processor = new AbstractQualifiedReferenceResolvingProcessor() {
+      @Override
       protected void process(final PsiElement element) {
         if (getManager().areElementsEquivalent(element, method) && isAccessible(element)) {
           setFound();
@@ -196,6 +206,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     }
   }
 
+  @Override
   public boolean isReferenceTo(final PsiElement element) {
     final PsiManager manager = getManager();
     for (final ResolveResult result : multiResolve(false)) {
@@ -210,12 +221,14 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @Nullable
   protected abstract PsiElement getReferenceNameElement();
 
+  @Override
   public TextRange getRangeInElement() {
     final PsiElement element = getSeparator();
     final int length = getTextLength();
     return element == null ? TextRange.from(0, length) : new TextRange(element.getStartOffsetInParent() + element.getTextLength(), length);
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getReferenceName() {
@@ -223,6 +236,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return element == null ? null : element.getText().trim();
   }
 
+  @Override
   public final boolean isSoft() {
     return false;
   }
@@ -231,6 +245,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     private boolean myFound = false;
     private final Set<ResolveResult> myResults = new LinkedHashSet<ResolveResult>();
 
+    @Override
     public boolean execute(final PsiElement element, final ResolveState state) {
       if (isFound()) return false;
       process(element);
@@ -245,6 +260,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
       return myFound;
     }
 
+    @Override
     public void handleEvent(final Event event, final Object associated) {
       if ((event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT || event == Event.SET_DECLARATION_HOLDER) && !myResults.isEmpty()) {
         setFound();

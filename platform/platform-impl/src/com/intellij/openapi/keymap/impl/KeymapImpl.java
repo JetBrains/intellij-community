@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -343,7 +344,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     KeymapManagerEx keymapManager = getKeymapManager();
     LinkedHashSet<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
     if (listOfShortcuts != null) {
-      listOfShortcuts = new LinkedHashSet<Shortcut>(listOfShortcuts);
+      return listOfShortcuts;
     }
     else {
       listOfShortcuts = new LinkedHashSet<Shortcut>();
@@ -564,6 +565,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
             KeyStroke firstKeyStroke;
             String firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE);
+            if (SystemInfo.isMac && firstKeyStrokeStr.contains("INSERT")) continue;
+
             if (firstKeyStrokeStr != null) {
               firstKeyStroke = ActionManagerEx.getKeyStroke(firstKeyStrokeStr);
               if (firstKeyStroke == null) {

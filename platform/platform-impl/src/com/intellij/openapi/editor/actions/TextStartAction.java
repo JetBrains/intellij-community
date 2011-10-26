@@ -39,6 +39,7 @@ public class TextStartAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getCaretModel().moveToOffset(0);
       editor.getSelectionModel().removeSelection();

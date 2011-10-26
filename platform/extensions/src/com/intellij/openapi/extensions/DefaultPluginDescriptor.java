@@ -35,10 +35,12 @@ public class DefaultPluginDescriptor implements PluginDescriptor {
     myPluginClassLoader = pluginClassLoader;
   }
 
+  @Override
   public PluginId getPluginId() {
     return myPluginId;
   }
 
+  @Override
   public ClassLoader getPluginClassLoader() {
     return myPluginClassLoader;
   }

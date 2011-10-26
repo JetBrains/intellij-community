@@ -55,6 +55,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   protected CreateFromUsageBaseFix() {
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = getElement();
@@ -72,6 +73,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isValidElement(PsiElement result);
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -102,6 +104,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         invokeImpl(targetClass);
       }
@@ -122,6 +125,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     renderer.installSpeedSearch(builder);
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         int index = list.getSelectedIndex();
         if (index < 0) return;
@@ -349,6 +353,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       final TemplateEditingListener listener,
                                       final String commandName) {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (project.isDisposed() || editor.isDisposed()) return;
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {

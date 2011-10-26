@@ -111,6 +111,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
+  @Override
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     validateCallContext();
@@ -176,10 +177,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myEditor.assertIsDispatchThread();
   }
 
+  @Override
   public void moveToOffset(int offset) {
     moveToOffset(offset, false);
   }
 
+  @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
     assertIsDispatchThread();
     validateCallContext();
@@ -202,6 +205,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     this.ignoreWrongMoves = ignoreWrongMoves;
   }
 
+  @Override
   public void moveCaretRelatively(int columnShift,
                                   int lineShift,
                                   boolean withSelection,
@@ -351,6 +355,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     EditorActionUtil.selectNonexpandableFold(myEditor);
   }
 
+  @Override
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
     moveToLogicalPosition(pos, false);
   }
@@ -422,6 +427,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     if (collapsedAt != null && offset > collapsedAt.getStartOffset()) {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           FoldRegion[] allCollapsedAt = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchCollapsedAt(offset);
           for (FoldRegion foldRange : allCollapsedAt) {
@@ -487,6 +493,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     return !myIsInUpdate;
   }
 
+  @Override
   @NotNull
   public LogicalPosition getLogicalPosition() {
     validateCallContext();
@@ -497,34 +504,41 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     LOG.assertTrue(!myIsInUpdate, "Caret model is in its update process. All requests are illegal at this point.");
   }
 
+  @Override
   @NotNull
   public VisualPosition getVisualPosition() {
     validateCallContext();
     return myVisibleCaret;
   }
 
+  @Override
   public int getOffset() {
     validateCallContext();
     return myOffset;
   }
 
+  @Override
   public int getVisualLineStart() {
     return myVisualLineStart;
   }
 
+  @Override
   public int getVisualLineEnd() {
     return myVisualLineEnd;
   }
 
+  @Override
   public void addCaretListener(@NotNull CaretListener listener) {
     myCaretListeners.add(listener);
   }
 
+  @Override
   public void removeCaretListener(@NotNull CaretListener listener) {
     boolean success = myCaretListeners.remove(listener);
     LOG.assertTrue(success);
   }
 
+  @Override
   public TextAttributes getTextAttributes() {
     if (myTextAttributes == null) {
       myTextAttributes = new TextAttributes();
@@ -538,6 +552,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myTextAttributes = null;
   }
 
+  @Override
   public void documentChanged(DocumentEvent e) {
     finishUpdate();
 
@@ -606,10 +621,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     return Character.isWhitespace(charBefore)/* || !Character.isWhitespace(charAfter)*/;
   }
 
+  @Override
   public void beforeDocumentChange(DocumentEvent e) {
     myIsInUpdate = true;
   }
 
+  @Override
   public int getPriority() {
     return EditorDocumentPriorities.CARET_MODEL;
   }

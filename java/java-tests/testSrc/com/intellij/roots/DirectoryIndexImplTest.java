@@ -308,6 +308,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
   public void testExplicitExcludeOfInner() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
 
@@ -368,6 +369,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     final VirtualFile finalModule2Output = module2Output;
     final VirtualFile finalModule2TestOutput = module2TestOutput;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
         ContentEntry[] ee = m.getContentEntries();
@@ -475,6 +477,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     final File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
         rootModel.getContentEntries()[0]
@@ -497,6 +500,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
   public void testLibraryDirInContent() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
         Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();

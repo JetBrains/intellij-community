@@ -48,6 +48,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     myVariance = variance;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren(){
     loadChild();
@@ -55,10 +56,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return new PsiElement[] {myChild};
   }
 
+  @Override
   public PsiElement getParent(){
     return myParent;
   }
 
+  @Override
   public String getText(){
     final String shortClassName = PsiNameHelper.getShortClassName(myTypeText);
     return decorateTypeText(shortClassName);
@@ -84,10 +87,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return decorateTypeText(myTypeText);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
     buffer.append(decorateTypeText(myTypeText));
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element){
     setMirrorCheckingType(element, JavaElementType.TYPE);
 
@@ -126,6 +131,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return myTypeText.endsWith("...");
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     if (myCachedType == null) {
@@ -138,14 +144,17 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return myCachedType;
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
     return null;
   }
 
+  @Override
   public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
     return this; //todo
   }
 
+  @Override
   public PsiType getTypeNoResolve(@NotNull PsiElement context) {
     return getType();
   }
@@ -229,6 +238,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeElement(this);
@@ -242,20 +252,24 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return "PsiTypeElement:" + getText();
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     throw new UnsupportedOperationException();//todo
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new UnsupportedOperationException();//todo
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();

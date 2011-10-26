@@ -24,6 +24,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 
 public class JavaTodoIndexer extends LexerBasedTodoIndexer {
+  @Override
   protected Lexer createLexer(final TodoOccurrenceConsumer consumer) {
     final JavaLexer javaLexer = new JavaLexer(LanguageLevel.JDK_1_3);
     final JavaFilterLexer filterLexer = new JavaFilterLexer(javaLexer, consumer);

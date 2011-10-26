@@ -35,12 +35,15 @@ public interface PsiDirectory extends PsiFileSystemItem {
    *
    * @return the virtual file instance.
    */
+  @Override
   @NotNull
   VirtualFile getVirtualFile();
 
+  @Override
   @NotNull
   String getName();
 
+  @Override
   @NotNull
   PsiElement setName(@NotNull String name) throws IncorrectOperationException;
 
@@ -52,6 +55,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
   @Nullable
   PsiDirectory getParentDirectory();
 
+  @Override
   @Nullable
   PsiDirectory getParent();
 

@@ -50,10 +50,12 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     super(project);
   }
 
+  @Override
   protected String serialize(final Language language) {
     return language.getID();
   }
 
+  @Override
   public List<Language> getAvailableValues() {
     return getTemplateableLanguages();
   }
@@ -65,6 +67,7 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
 
   public static List<Language> getTemplateableLanguages() {
     return ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
+      @Override
       public boolean value(final Language language) {
         if (language == Language.ANY) return false;
         if (language instanceof TemplateLanguage || language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;

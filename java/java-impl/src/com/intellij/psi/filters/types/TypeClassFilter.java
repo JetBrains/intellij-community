@@ -37,10 +37,12 @@ public class TypeClassFilter implements ElementFilter{
     myFilter = _filter;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiType.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiType){
       final PsiType type = (PsiType) element;

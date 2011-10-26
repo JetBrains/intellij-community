@@ -55,6 +55,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * Tracks any PSI modification.
    * @return current counter value.
    */
+  @Override
   long getModificationCount();
 
   long getOutOfCodeBlockModificationCount();

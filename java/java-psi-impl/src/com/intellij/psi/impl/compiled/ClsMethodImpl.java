@@ -57,6 +57,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     super(stub);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     PsiDocComment docComment = getDocComment();
@@ -104,10 +105,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return children;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return (PsiClass)getParent();
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myNameIdentifier == null) {
@@ -117,50 +120,60 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
+  @Override
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
 
+  @Override
   public PsiMethod findDeepestSuperMethod() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getStub().getName();
   }
 
+  @Override
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   public PsiTypeElement getReturnTypeElement() {
     if (isConstructor()) return null;
 
@@ -173,38 +186,46 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
+  @Override
   public PsiType getReturnType() {
     PsiTypeElement typeElement = getReturnTypeElement();
     return typeElement == null ? null : typeElement.getType();
   }
 
+  @Override
   @NotNull
   public PsiModifierList getModifierList() {
     return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
+  @Override
   @NotNull
   public PsiParameterList getParameterList() {
     return getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST).getPsi();
   }
 
+  @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
     return getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST).getPsi();
   }
 
+  @Override
   public PsiCodeBlock getBody() {
     return null;
   }
 
+  @Override
   public boolean isDeprecated() {
     return getStub().isDeprecated();
   }
 
+  @Override
   public PsiAnnotationMemberValue getDefaultValue() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myDefaultValue == null) {
@@ -217,6 +238,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
+  @Override
   public PsiDocComment getDocComment() {
     if (!isDeprecated()) return null;
 
@@ -229,19 +251,23 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
 
+  @Override
   public boolean isConstructor() {
     return getStub().isConstructor();
   }
 
+  @Override
   public boolean isVarArgs() {
     return getStub().isVarArgs();
   }
 
+  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     appendMethodHeader(buffer, indentLevel);
 
@@ -282,6 +308,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -305,6 +332,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethod(this);
@@ -318,6 +346,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return "PsiMethod:" + getName();
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -347,28 +376,34 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return this;
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     final PsiMethod method = getSourceMirrorMethod();
     return method != this ? method.getNavigationElement() : this;
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST).getPsi();
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return PsiImplUtil.hasTypeParameters(this);
   }
 
+  @Override
   @NotNull public PsiTypeParameter[] getTypeParameters() {
     return PsiImplUtil.getTypeParameters(this);
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
     RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(methodIcon, this, false);
@@ -380,13 +415,16 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
+  @Override
   public PsiMethodReceiver getMethodReceiver() {
     return null; //todo parse cls
   }
+  @Override
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }

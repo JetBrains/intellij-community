@@ -31,10 +31,12 @@ public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJav
     super(type, text);
   }
 
+  @Override
   public IElementType getTokenType(){
     return getElementType();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitKeyword(this);

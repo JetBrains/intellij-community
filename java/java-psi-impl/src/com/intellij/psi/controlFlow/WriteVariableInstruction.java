@@ -28,6 +28,7 @@ public class WriteVariableInstruction extends SimpleInstruction {
     return "WRITE " + variable.getName();
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitWriteVariableInstruction(this, offset, nextOffset);
   }

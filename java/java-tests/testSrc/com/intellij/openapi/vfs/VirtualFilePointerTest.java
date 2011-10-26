@@ -471,6 +471,7 @@ public class VirtualFilePointerTest extends IdeaTestCase {
       @Override
       public boolean process(Object o) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             VirtualFile file = pointer.getFile();
             if (file != null && !file.isValid()) {

@@ -59,6 +59,7 @@ public abstract class BlockSupport {
       return myDiffLog;
     }
 
+    @Override
     public synchronized Throwable fillInStackTrace() {
       return this;
     }

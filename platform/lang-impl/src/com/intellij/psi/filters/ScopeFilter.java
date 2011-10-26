@@ -33,6 +33,7 @@ public class ScopeFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return context != null && getFilter().isAcceptable(context, context);
   }

@@ -53,10 +53,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final VirtualFileManagerEx myVirtualFileManager;
   private final MessageBus myBus;
   private static final Comparator<String> COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
+    @Override
     public int compare(@NotNull String url1, @NotNull String url2) {
       return url1.compareTo(url2);
     }
   } : new Comparator<String>() {
+    @Override
     public int compare(@NotNull String url1, @NotNull String url2) {
       return url1.compareToIgnoreCase(url2);
     }
@@ -155,11 +157,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @Override
   @Deprecated
   public synchronized VirtualFilePointer create(String url, VirtualFilePointerListener listener) {
     return create(url, this, listener);
   }
 
+  @Override
   @NotNull
   public synchronized VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return create(null, url, parent, listener);
@@ -168,11 +172,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #create(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @Override
   @Deprecated
   public synchronized VirtualFilePointer create(VirtualFile file, VirtualFilePointerListener listener) {
     return create(file, this, listener);
   }
 
+  @Override
   @NotNull
   public synchronized VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return create(file, file.getUrl(), parent,listener);
@@ -295,11 +301,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #duplicate(com.intellij.openapi.vfs.pointers.VirtualFilePointer, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @Override
   @Deprecated
   public synchronized VirtualFilePointer duplicate(VirtualFilePointer pointer, VirtualFilePointerListener listener) {
     return duplicate(pointer, this, listener);
   }
 
+  @Override
   @NotNull
   public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
                                                    @Nullable VirtualFilePointerListener listener) {
@@ -311,13 +319,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
    * Does nothing. To cleanup pointer correctly, just pass Disposable during its creation
    * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @Override
   @Deprecated
   public synchronized void kill(VirtualFilePointer pointer, final VirtualFilePointerListener listener) {
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     Disposer.dispose(this);
     assertPointersDisposed();
@@ -342,9 +353,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "SmartVirtualPointerManager";
@@ -361,6 +374,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #createContainer(com.intellij.openapi.Disposable)
    */
+  @Override
   @Deprecated
   public synchronized VirtualFilePointerContainer createContainer() {
     return createContainer(this);
@@ -369,6 +383,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #createContainer(com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @Override
   @Deprecated
   public synchronized VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
     final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this, null){
@@ -390,11 +405,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return registerContainer(this, virtualFilePointerContainer);
   }
 
+  @Override
   @NotNull
   public VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
     return createContainer(parent, null);
   }
 
+  @Override
   @NotNull
   public synchronized VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent, listener));
@@ -405,6 +422,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myContainers.add(virtualFilePointerContainer);
     }
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         Disposer.dispose(virtualFilePointerContainer);
         boolean removed;
@@ -428,6 +446,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     private List<String> myUrlsToUpdate = null;
     private List<VirtualFilePointer> myPointersToUpdate = null;
 
+    @Override
     public void before(final List<? extends VFileEvent> events) {
       cleanContainerCaches();
       List<VirtualFilePointer> toFireEvents = new ArrayList<VirtualFilePointer>();
@@ -497,6 +516,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myUrlsToUpdate = toUpdateUrl;
     }
 
+    @Override
     public void after(final List<? extends VFileEvent> events) {
       cleanContainerCaches();
 
@@ -542,6 +562,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myPointer = pointer;
     }
 
+    @Override
     public void dispose() {
       myPointer.useCount -= disposeCount-1;
       LOG.assertTrue(myPointer.useCount > 0);

@@ -37,10 +37,12 @@ public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExte
   }
 
 
+  @Override
   public StubIndexKey<String, PsiAnonymousClass> getKey() {
     return JavaStubIndexKeys.ANONYMOUS_BASEREF;
   }
 
+  @Override
   public Collection<PsiAnonymousClass> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }

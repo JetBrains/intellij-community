@@ -32,80 +32,98 @@ public class PsiMethodReceiverImpl extends CompositePsiElement implements PsiMet
     super(JavaElementType.METHOD_RECEIVER);
   }
 
+  @Override
   @NotNull
   public PsiElement getDeclarationScope() {
     return getParent();
   }
 
+  @Override
   public boolean isVarArgs() {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return getChildrenAsPsiElements(ElementType.ANNOTATIONS, Constants.PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
 
 
+  @Override
   @NotNull
   public PsiType getType() {
     return JavaPsiFacade.getElementFactory(getProject()).createType(((PsiMethod)getParent()).getContainingClass());
   }
 
+  @Override
   public PsiTypeElement getTypeElement() {
     return null;
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return null;
   }
 
+  @Override
   public boolean hasInitializer() {
     return false;
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
 
   }
 
+  @Override
   public Object computeConstantValue() {
     return null;
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return null;
   }
 
+  @Override
   public String getName() {
     return "this";
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return null;
   }
 
+  @Override
   public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
   }
 
+  @Override
   public PsiType getTypeNoResolve() {
     return getType();
   }

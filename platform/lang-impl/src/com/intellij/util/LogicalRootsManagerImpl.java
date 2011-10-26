@@ -53,23 +53,28 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(LOGICAL_ROOTS, new LogicalRootListener() {
+      @Override
       public void logicalRootsChanged() {
         clear();
         //updateCache(moduleManager);
       }
     });
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         bus.asyncPublisher(LOGICAL_ROOTS).logicalRootsChanged();
       }
     });
     registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
+      @Override
       @NotNull
       public List<VirtualFileLogicalRoot> fun(final Module module) {
         return ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), new Function<VirtualFile, VirtualFileLogicalRoot>() {
+          @Override
           public VirtualFileLogicalRoot fun(final VirtualFile s) {
             return new VirtualFileLogicalRoot(s);
           }
@@ -102,6 +107,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     return myRoots;
   }
 
+  @Override
   @Nullable
   public LogicalRoot findLogicalRoot(@NotNull final VirtualFile file) {
     final Module module = ModuleUtil.findModuleForFile(file, myProject);
@@ -120,14 +126,17 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     return result;
   }
 
+  @Override
   public List<LogicalRoot> getLogicalRoots() {
     return ContainerUtil.concat(myModuleManager.getModules(), new Function<Module, Collection<? extends LogicalRoot>>() {
+      @Override
       public Collection<? extends LogicalRoot> fun(final Module module) {
         return getLogicalRoots(module);
       }
     });
   }
 
+  @Override
   public List<LogicalRoot> getLogicalRoots(@NotNull final Module module) {
     final Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> roots = getRoots(myModuleManager);
     final MultiValuesMap<LogicalRootType, LogicalRoot> valuesMap = roots.get(module);
@@ -137,14 +146,17 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     return new ArrayList<LogicalRoot>(valuesMap.values());
   }
 
+  @Override
   public List<LogicalRoot> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType... types) {
     return ContainerUtil.concat(types, new Function<LogicalRootType, Collection<? extends LogicalRoot>>() {
+      @Override
       public Collection<? extends LogicalRoot> fun(final LogicalRootType s) {
         return getLogicalRootsOfType(module, s);
       }
     });
   }
 
+  @Override
   public <T extends LogicalRoot> List<T> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType<T> type) {
     final Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> roots = getRoots(myModuleManager);
     final MultiValuesMap<LogicalRootType, LogicalRoot> map = roots.get(module);
@@ -157,6 +169,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     return new ArrayList<T>((Collection<T>)collection);
   }
 
+  @Override
   @NotNull
   public LogicalRootType[] getRootTypes(@NotNull final FileType type) {
     final Collection<LogicalRootType> rootTypes = myFileTypes2RootTypes.get(type);
@@ -167,10 +180,12 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     return rootTypes.toArray(new LogicalRootType[rootTypes.size()]);
   }
 
+  @Override
   public void registerRootType(@NotNull final FileType fileType, @NotNull final LogicalRootType... rootTypes) {
     myFileTypes2RootTypes.putAll(fileType, rootTypes);
   }
 
+  @Override
   public <T extends LogicalRoot> void registerLogicalRootProvider(@NotNull final LogicalRootType<T> rootType, @NotNull NotNullFunction<Module, List<T>> provider) {
     myProviders.put(rootType, provider);
     clear();

@@ -118,6 +118,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
     PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test");
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(currentClass, new MemberInfo.Filter<PsiMember>() {
+      @Override
       public boolean includeMember(PsiMember element) {
         return true;
       }

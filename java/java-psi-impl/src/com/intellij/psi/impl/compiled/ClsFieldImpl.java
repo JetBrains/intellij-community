@@ -53,6 +53,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     myNameIdentifier = new ClsIdentifierImpl(this, getName());
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     PsiDocComment docComment = getDocComment();
@@ -84,31 +85,37 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return children;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return (PsiClass)getParent();
   }
 
+  @Override
   @NotNull
   public PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getName() {
     return getStub().getName();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return getTypeElement().getType();
   }
 
+  @Override
   public PsiTypeElement getTypeElement() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myType == null) {
@@ -119,14 +126,17 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     }
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
+  @Override
   public PsiExpression getInitializer() {
     synchronized (LAZY_BUILT_LOCK) {
       if (!myInitializerInitialized) {
@@ -141,14 +151,17 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     }
   }
 
+  @Override
   public boolean hasInitializer() {
     return getInitializer() != null;
   }
 
+  @Override
   public Object computeConstantValue() {
     return computeConstantValue(new THashSet<PsiVariable>());
   }
 
+  @Override
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
     PsiExpression initializer = getInitializer();
@@ -172,17 +185,21 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);
   }
 
+  @Override
   public boolean isDeprecated() {
     return getStub().isDeprecated();
   }
 
+  @Override
   public PsiDocComment getDocComment() {
     return myDocComment;
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
@@ -200,6 +217,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     buffer.append(';');
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -212,6 +230,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
       ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitField(this);
@@ -225,6 +244,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return "PsiField:" + getName();
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
@@ -232,14 +252,17 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return sourceFieldMirror != null && sourceFieldMirror != this ? sourceFieldMirror.getNavigationElement() : this;
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.FIELD_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
@@ -250,11 +273,13 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 
+  @Override
   public PsiType getTypeNoResolve() {
     return getType(); //todo?
   }

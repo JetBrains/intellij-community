@@ -37,6 +37,7 @@ import java.util.Set;
  */
 public class ExpectedTypesGetter implements ContextGetter{
 
+  @Override
   @NotNull
   public PsiType[] get(PsiElement context, CompletionContext completionContext){
     return getExpectedTypes(context, false);

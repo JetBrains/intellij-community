@@ -37,14 +37,17 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     super(SWITCH_LABEL_STATEMENT);
   }
 
+  @Override
   public boolean isDefaultCase() {
     return findChildByRoleAsPsiElement(ChildRole.DEFAULT_KEYWORD) != null;
   }
 
+  @Override
   public PsiExpression getCaseValue() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CASE_EXPRESSION);
   }
 
+  @Override
   public PsiSwitchStatement getEnclosingSwitchStatement() {
     final CompositeElement guessedSwitch = getTreeParent().getTreeParent();
     return guessedSwitch != null && guessedSwitch.getElementType() == SWITCH_STATEMENT
@@ -52,6 +55,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
            : null;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -72,6 +76,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -94,6 +99,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     }
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent == null) return true;
 
@@ -108,6 +114,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     return true;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitSwitchLabelStatement(this);

@@ -33,20 +33,24 @@ public class EditorActionManagerImpl extends EditorActionManager {
     myActionManager = actionManager;
   }
 
+  @Override
   public EditorActionHandler getActionHandler(@NotNull String actionId) {
     return ((EditorAction) myActionManager.getAction(actionId)).getHandler();
   }
 
+  @Override
   public EditorActionHandler setActionHandler(@NotNull String actionId, @NotNull EditorActionHandler handler) {
     EditorAction action = (EditorAction)myActionManager.getAction(actionId);
     return action.setupHandler(handler);
   }
 
+  @Override
   @NotNull
   public TypedAction getTypedAction() {
     return myTypedAction;
   }
 
+  @Override
   public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
     return myReadonlyFragmentsHandler;
   }
@@ -67,6 +71,7 @@ public class EditorActionManagerImpl extends EditorActionManager {
     }
   }
 
+  @Override
   public ReadonlyFragmentModificationHandler setReadonlyFragmentModificationHandler(@NotNull ReadonlyFragmentModificationHandler handler) {
     ReadonlyFragmentModificationHandler oldHandler = myReadonlyFragmentsHandler;
     myReadonlyFragmentsHandler = handler;
@@ -75,6 +80,7 @@ public class EditorActionManagerImpl extends EditorActionManager {
 
 
   private static class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
+    @Override
     public void handle(ReadOnlyFragmentModificationException e) {
       Messages.showErrorDialog(EditorBundle.message("guarded.block.modification.attempt.error.message"),
                                EditorBundle.message("guarded.block.modification.attempt.error.title"));

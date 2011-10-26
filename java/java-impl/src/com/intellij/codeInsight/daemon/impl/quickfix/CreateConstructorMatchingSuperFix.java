@@ -52,17 +52,20 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     myClass = aClass;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.matching.super");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
     setText(QuickFixBundle.message("create.constructor.matching.super"));
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiClass baseClass = myClass.getSuperClass();
@@ -106,6 +109,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     final boolean isCopyJavadoc1 = isCopyJavadoc;
     ApplicationManager.getApplication().runWriteAction (
       new Runnable() {
+        @Override
         public void run() {
           try {
             PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -154,6 +158,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     );
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -39,10 +39,12 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
+  @Override
   public JComponent getPreferredFocusedControl() {
     return myCbUsages;
   }
 
+  @Override
   public void calcFindUsagesOptions(JavaClassFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
@@ -69,6 +71,7 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     options.isIncludeInherited = false;
   }
 
+  @Override
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
 
@@ -93,6 +96,7 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     return findWhatPanel;
   }
 
+  @Override
   protected void update() {
     if(myCbToSearchForTextOccurrences != null){
       if (isSelected(myCbUsages)){

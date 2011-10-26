@@ -39,6 +39,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
@@ -57,6 +58,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
 
     final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+      @Override
       public String[] compute() {
         return cache.getAllClassNames();
       }
@@ -83,6 +85,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     }
 
     Collections.sort(sorted, new Comparator<String>() {
+      @Override
       public int compare(final String o1, final String o2) {
         return o1.compareToIgnoreCase(o2);
       }
@@ -91,6 +94,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     for (final String name : sorted) {
       ProgressManager.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+        @Override
         public PsiClass[] compute() {
           return cache.getClassesByName(name, scope);
         }

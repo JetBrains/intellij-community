@@ -37,12 +37,14 @@ import java.util.List;
  * @author cdr
  */
 public class ShowRecentFindUsagesGroup extends ActionGroup {
+  @Override
   public void update(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(project != null);
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
@@ -67,6 +69,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
                                        UsageViewUtil.getDescriptiveName(psiElement),
                                        scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
       AnAction action = new AnAction(text, description, psiElement.getIcon(0)) {
+        @Override
         public void actionPerformed(final AnActionEvent e) {
           findUsagesManager.rerunAndRecallFromHistory(data);
         }

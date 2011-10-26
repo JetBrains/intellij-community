@@ -50,30 +50,37 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     myNameElement = new ClsIdentifierImpl(this, myName);
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public PsiExpression getQualifierExpression() {
     return myQualifier;
   }
 
+  @Override
   public PsiElement bindToElementViaStaticImport(@NotNull PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
     throw new IncorrectOperationException("This method should not be called for compiled elements");
   }
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return myNameElement;
   }
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     if (myQualifier != null){
@@ -84,27 +91,33 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     }
   }
 
+  @Override
   public String getText() {
     return myQualifier != null ? myQualifier.getText() + "." + myName : myName;
   }
 
+  @Override
   public boolean isQualified() {
     return myQualifier != null;
   }
 
+  @Override
   public PsiType getType() {
     return myPatternExpression.getType();
   }
 
+  @Override
   public PsiElement resolve() {
     return myPatternExpression.resolve();
   }
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     return myPatternExpression.advancedResolve(incompleteCode);
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
@@ -113,60 +126,74 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myPatternExpression.getCanonicalText();
   }
 
+  @Override
   public String getQualifiedName() {
     return getCanonicalText();
   }
 
+  @Override
   public String getReferenceName() {
     return myPatternExpression.getReferenceName();
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return myPatternExpression.isReferenceTo(element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return myPatternExpression.getVariants();
   }
 
+  @Override
   public void processVariants(PsiScopeProcessor processor) {
     myPatternExpression.processVariants(processor);
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, ElementType.REFERENCE_EXPRESSION);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceExpression(this);
@@ -180,11 +207,13 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return "PsiReferenceExpression:" + getText();
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getQualifier() {
     return getQualifierExpression();
   }

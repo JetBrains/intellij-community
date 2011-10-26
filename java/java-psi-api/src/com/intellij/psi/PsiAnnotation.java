@@ -33,6 +33,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
   PsiAnnotation[] EMPTY_ARRAY = new PsiAnnotation[0];
 
   ArrayFactory<PsiAnnotation> ARRAY_FACTORY = new ArrayFactory<PsiAnnotation>() {
+    @Override
     public PsiAnnotation[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiAnnotation[count];
     }

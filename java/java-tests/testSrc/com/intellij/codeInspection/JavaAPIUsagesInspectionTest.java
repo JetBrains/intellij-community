@@ -39,6 +39,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     final LanguageLevel[] languageLevel = {null};
     try {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
           LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
@@ -52,6 +53,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
           LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);

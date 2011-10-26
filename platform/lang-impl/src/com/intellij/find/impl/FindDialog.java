@@ -150,10 +150,12 @@ public class FindDialog extends DialogWrapper {
     super.dispose();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myInputComboBox;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return myModel.isReplaceState() ? "replaceTextDialog" : "findTextDialog";
   }
@@ -168,12 +170,14 @@ public class FindDialog extends DialogWrapper {
 
   private Action getFindAllAction() {
     return myFindAllAction = new AbstractAction(FindBundle.message("find.all.button")) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction(true);
       }
     };
   }
 
+  @Override
   public JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -192,6 +196,7 @@ public class FindDialog extends DialogWrapper {
       final Component editorComponent = myReplaceComboBox.getEditor().getEditorComponent();
       editorComponent.addFocusListener(
         new FocusAdapter() {
+          @Override
           public void focusGained(FocusEvent e) {
             myReplaceComboBox.getEditor().selectAll();
             editorComponent.removeFocusListener(this);
@@ -226,6 +231,7 @@ public class FindDialog extends DialogWrapper {
     comboBox.setMaximumRowCount(8);
 
     comboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateFindButton();
       }
@@ -237,6 +243,7 @@ public class FindDialog extends DialogWrapper {
       final EditorTextField etf = (EditorTextField) editorComponent;
 
       DocumentAdapter listener = new DocumentAdapter() {
+        @Override
         public void documentChanged(final DocumentEvent e) {
           handleComboBoxValueChanged(comboBox);
         }
@@ -247,6 +254,7 @@ public class FindDialog extends DialogWrapper {
     else {
       editorComponent.addKeyListener(
         new KeyAdapter() {
+          @Override
           public void keyReleased(KeyEvent e) {
             handleComboBoxValueChanged(comboBox);
           }
@@ -320,6 +328,7 @@ public class FindDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
     optionsPanel.setLayout(new GridBagLayout());
@@ -406,6 +415,7 @@ public class FindDialog extends DialogWrapper {
 
     useFileFilter.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (!useFileFilter.isSelected()) {
             fileFilter.setEnabled(false);
@@ -420,6 +430,7 @@ public class FindDialog extends DialogWrapper {
     );
   }
 
+  @Override
   public void doOKAction() {
     doOKAction(false);
   }
@@ -552,6 +563,7 @@ public class FindDialog extends DialogWrapper {
     return result;
   }
 
+  @Override
   public void doHelpAction() {
     String id = myModel.isReplaceState()
                 ? myModel.isMultipleFiles() ? HelpID.REPLACE_IN_PATH : HelpID.REPLACE_OPTIONS
@@ -587,6 +599,7 @@ public class FindDialog extends DialogWrapper {
     regExPanel.add(myCbRegularExpressions);
 
     regExPanel.add(new LinkLabel("[Help]", null, new LinkListener() {
+      @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         try {
           final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
@@ -609,12 +622,14 @@ public class FindDialog extends DialogWrapper {
     }
 
     ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }
     };
     myCbRegularExpressions.addActionListener(actionListener);
     myCbRegularExpressions.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(final ItemEvent e) {
         setupRegExpSetting();
       }
@@ -798,12 +813,14 @@ public class FindDialog extends DialogWrapper {
     bgScope.add(myRbCustomScope);
 
     myRbProject.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
       }
     });
     myRbCustomScope.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
@@ -811,6 +828,7 @@ public class FindDialog extends DialogWrapper {
     });
 
     myRbDirectory.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
@@ -819,6 +837,7 @@ public class FindDialog extends DialogWrapper {
     });
 
     myRbModule.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
@@ -827,6 +846,7 @@ public class FindDialog extends DialogWrapper {
     });
 
     mySelectDirectoryButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, null, new Consumer<VirtualFile[]>() {
@@ -884,6 +904,7 @@ public class FindDialog extends DialogWrapper {
     bgScope.add(myRbSelectedText);
 
     ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }

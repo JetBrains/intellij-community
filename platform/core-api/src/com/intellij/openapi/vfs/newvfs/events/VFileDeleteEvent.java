@@ -34,6 +34,7 @@ public class VFileDeleteEvent extends VFileEvent {
     myFile = file;
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;
@@ -44,14 +45,17 @@ public class VFileDeleteEvent extends VFileEvent {
     return "VfsEvent[deleted: " + myFile.getUrl() + "]";
   }
 
+  @Override
   public String getPath() {
     return myFile.getPath();
   }
 
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
+  @Override
   public boolean isValid() {
     return myFile.isValid();
   }

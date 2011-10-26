@@ -42,64 +42,78 @@ public class VirtualFileImpl extends VirtualFile {
   public void cacheIsDirectory(final boolean isDirectory) {
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new UnsupportedOperationException("contentsToByteArray is not implemented"); // TODO
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     throw new UnsupportedOperationException("getChildren is not implemented"); // TODO
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     throw new UnsupportedOperationException("getFileSystem is not implemented"); // TODO
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException("getInputStream is not implemented"); // TODO
   }
 
+  @Override
   public long getLength() {
     throw new UnsupportedOperationException("getLength is not implemented"); // TODO
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getName() {
     throw new UnsupportedOperationException("getName is not implemented"); // TODO
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException("getOutputStream is not implemented"); // TODO
   }
 
+  @Override
   @Nullable
   public VirtualFile getParent() {
     throw new UnsupportedOperationException("getParent is not implemented"); // TODO
   }
 
+  @Override
   public String getPath() {
     throw new UnsupportedOperationException("getPath is not implemented"); // TODO
   }
 
+  @Override
   public long getTimeStamp() {
     throw new UnsupportedOperationException("getTimeStamp is not implemented"); // TODO
   }
 
+  @Override
   public boolean isDirectory() {
     throw new UnsupportedOperationException("isDirectory is not implemented"); // TODO
   }
 
+  @Override
   public boolean isValid() {
     throw new UnsupportedOperationException("isValid is not implemented"); // TODO
   }
 
+  @Override
   public boolean isWritable() {
     throw new UnsupportedOperationException("isWritable is not implemented"); // TODO
   }
 
+  @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     throw new UnsupportedOperationException("refresh is not implemented"); // TODO
   }

@@ -54,124 +54,153 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
     myPackages = packages;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myPackages[myIndex].getName();
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkSetName(final String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public boolean isDirectory() {
     return true;
   }
 
+  @Override
   public PsiFileSystemItem getParent() {
     return myIndex > 0 ? new PackagePrefixFileSystemItem(myDirectory, myIndex - 1, myPackages) : myDirectory.getParent();
   }
 
+  @Override
   public PsiFile getContainingFile() throws PsiInvalidElementAccessException {
     return null;
   }
 
+  @Override
   public TextRange getTextRange() {
     return null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return 0;
   }
 
+  @Override
   public int getTextLength() {
     return 0;
   }
 
+  @Override
   @Nullable
   public PsiElement findElementAt(final int offset) {
     return null;
   }
 
+  @Override
   public int getTextOffset() {
     return 0;
   }
 
+  @Override
   @NonNls
   public String getText() {
     return "";
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return ArrayUtil.EMPTY_CHAR_ARRAY;
   }
 
+  @Override
   public boolean textMatches(@NotNull @NonNls final CharSequence text) {
     return false;
   }
 
+  @Override
   public boolean textMatches(@NotNull final PsiElement element) {
     return false;
   }
 
+  @Override
   public void accept(@NotNull final PsiElementVisitor visitor) {
   }
 
+  @Override
   public PsiElement copy() {
     return null;
   }
 
+  @Override
   public PsiElement add(@NotNull final PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addBefore(@NotNull final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public boolean isValid() {
     return myDirectory.isValid();
   }
 
+  @Override
   public boolean isWritable() {
     final VirtualFile file = getVirtualFile();
     return file != null && file.isWritable();
   }
 
+  @Override
   public boolean isPhysical() {
     final VirtualFile file = getVirtualFile();
     return file != null && !(file.getFileSystem() instanceof DummyFileSystem);
   }
 
+  @Override
   @Nullable
   public ASTNode getNode() {
     return null;
   }
 
+  @Override
   public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
     if (myIndex == myPackages.length - 1) {
       return myDirectory.processChildren(processor);
@@ -181,24 +210,29 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
     }
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return Language.ANY;
   }
 
+  @Override
   public PsiManager getManager() {
     return myDirectory.getManager();
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return myIndex == myPackages.length -1? myDirectory.getChildren() : new PsiElement[] {new PackagePrefixFileSystemItem(myDirectory, myIndex + 1, myPackages)};
   }
 
+  @Override
   public boolean canNavigate() {
     return getVirtualFile() != null;
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     if (myIndex == myPackages.length - 1) {
       return myDirectory.getVirtualFile();
@@ -208,6 +242,7 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
     }
   }
 
+  @Override
   @Nullable
   public Icon getIcon(final int flags) {
     return myDirectory.getIcon(flags);

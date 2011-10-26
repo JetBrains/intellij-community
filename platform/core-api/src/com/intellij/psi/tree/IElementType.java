@@ -48,6 +48,7 @@ public class IElementType {
    * @see #enumerate(Predicate)
    */
   public static final Predicate TRUE = new Predicate() {
+    @Override
     public boolean matches(IElementType type) {
       return true;
     }

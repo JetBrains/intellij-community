@@ -35,6 +35,7 @@ import javax.swing.*;
  * @author max
  */
 public class UsageScopeGroupingRule implements UsageGroupingRule {
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
@@ -55,30 +56,36 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
   }
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
+    @Override
     public Icon getIcon(boolean isOpen) {
       return PlatformIcons.TEST_SOURCE_FOLDER;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return "Test";
     }
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
+    @Override
     public Icon getIcon(boolean isOpen) {
       return PlatformIcons.SOURCE_FOLDERS_ICON;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return "Production";
     }
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
+    @Override
     public Icon getIcon(boolean isOpen) {
       return PlatformIcons.LIBRARY_ICON;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return "Library";
@@ -91,21 +98,28 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
       myCode = code;
     }
 
+    @Override
     public void update() {
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return null;
     }
 
+    @Override
     public boolean isValid() { return true; }
+    @Override
     public void navigate(boolean focus) { }
+    @Override
     public boolean canNavigate() { return false; }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }

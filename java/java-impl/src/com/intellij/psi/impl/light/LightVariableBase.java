@@ -60,24 +60,29 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return myScope;
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
 
+  @Override
   public boolean isValid() {
     return myNameIdentifier == null || myNameIdentifier.isValid();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return StringUtil.notNullize(getNameIdentifier().getText());
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     if (myType == null) {
@@ -91,38 +96,47 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return PsiType.VOID;
   }
 
+  @Override
   @NotNull
   public PsiTypeElement getTypeElement() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeElement(myType);
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return myModifierList;
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return null;
   }
 
+  @Override
   public boolean hasInitializer() {
     return false;
   }
 
+  @Override
   public String getText() {
     return myNameIdentifier.getText();
   }
 
+  @Override
   public Object computeConstantValue() {
     return null;
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
+  @Override
   public boolean isWritable() {
     return myWritable;
   }
@@ -131,10 +145,12 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return true;
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.VARIABLE_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+  @Override
   public PsiType getTypeNoResolve() {
     return getType();
   }

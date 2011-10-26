@@ -31,6 +31,7 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
     myOverloadsMatter = overloadsMatter;
   }
 
+  @Override
   protected boolean placeCaretInsideParentheses(final InsertionContext context, final LookupElement item) {
     return hasParams(item, context.getElements(), myOverloadsMatter, myMethod);
   }

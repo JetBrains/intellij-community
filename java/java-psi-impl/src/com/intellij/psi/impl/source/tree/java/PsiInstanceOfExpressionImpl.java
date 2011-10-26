@@ -31,19 +31,23 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
     super(INSTANCE_OF_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
+  @Override
   public PsiTypeElement getCheckType() {
     return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
+  @Override
   public PsiType getType() {
     return PsiType.BOOLEAN;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -61,6 +65,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -78,6 +83,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitInstanceOfExpression(this);

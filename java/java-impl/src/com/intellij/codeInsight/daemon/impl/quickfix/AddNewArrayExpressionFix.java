@@ -36,22 +36,26 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     myInitializer = initializer;
   }
 
+  @Override
   @NotNull
   public String getText() {
     PsiType type = getType();
     return QuickFixBundle.message("add.new.array.text", type.getPresentableText());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.new.array.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myInitializer.isValid() || !myInitializer.getManager().isInProject(myInitializer)) return false;
     return getType() != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementsForWrite(myInitializer, file)) return;
     PsiManager manager = file.getManager();
@@ -80,6 +84,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     return ((PsiArrayType)type).getComponentType();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

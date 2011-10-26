@@ -36,6 +36,7 @@ public class ExpressionPsiElement extends CompositePsiElement {
     super(type);
   }
 
+  @Override
   public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);

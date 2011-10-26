@@ -72,6 +72,7 @@ public class ImportHelper{
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>(collectNamesToImport(file, nonImports));
     Collections.sort(names, new Comparator<Pair<String, Boolean>>() {
+      @Override
       public int compare(Pair<String, Boolean> o1, Pair<String, Boolean> o2) {
         return o1.getFirst().compareTo(o2.getFirst());
       }
@@ -124,6 +125,7 @@ public class ImportHelper{
         myIsVisitingPackages = isVisitingPackages;
       }
 
+      @Override
       public boolean execute(final String packageOrClassName, final int count) {
         if (isToUseImportOnDemand(packageOrClassName, count, !myIsVisitingPackages)){
           classesOrPackagesToImportOnDemand.add(packageOrClassName);

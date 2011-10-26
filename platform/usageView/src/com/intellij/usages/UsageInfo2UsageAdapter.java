@@ -58,6 +58,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, TypeSafeDataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = new NotNullFunction<UsageInfo, Usage>() {
+    @Override
     @NotNull
     public Usage fun(UsageInfo usageInfo) {
       return new UsageInfo2UsageAdapter(usageInfo);
@@ -127,11 +128,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return chunks;
   }
 
+  @Override
   @NotNull
   public UsagePresentation getPresentation() {
     return this;
   }
 
+  @Override
   public boolean isValid() {
     PsiElement element = getElement();
     if (element == null || !element.isValid()) {
@@ -143,10 +146,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return isValid() && !getElement().isWritable();
   }
 
+  @Override
   @Nullable
   public FileEditorLocation getLocation() {
     VirtualFile virtualFile = getFile();
@@ -157,6 +162,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return new TextEditorLocation(getUsageInfo().getSegment().getStartOffset(), (TextEditor)editor);
   }
 
+  @Override
   public void selectInEditor() {
     if (!isValid()) return;
     Editor editor = openTextEditor(true);
@@ -164,6 +170,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
   }
 
+  @Override
   public void highlightInEditor() {
     if (!isValid()) return;
 
@@ -193,6 +200,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
 
+  @Override
   public void navigate(boolean focus) {
     if (canNavigate()) {
       openTextEditor(focus);
@@ -203,11 +211,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return FileEditorManager.getInstance(getProject()).openTextEditor(getDescriptor(), focus);
   }
 
+  @Override
   public boolean canNavigate() {
     VirtualFile file = getFile();
     return file != null && file.isValid();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
@@ -248,6 +258,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return result.toString();
   }
 
+  @Override
   public Module getModule() {
     if (!isValid()) return null;
     VirtualFile virtualFile = getFile();
@@ -258,6 +269,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return fileIndex.getModuleForFile(virtualFile);
   }
 
+  @Override
   public OrderEntry getLibraryEntry() {
     if (!isValid()) return null;
     PsiFile psiFile = getPsiFile();
@@ -279,6 +291,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return null;
   }
 
+  @Override
   public VirtualFile getFile() {
     return getUsageInfo().getVirtualFile();
   }
@@ -290,6 +303,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return myLineNumber;
   }
 
+  @Override
   public boolean merge(MergeableUsage other) {
     if (!(other instanceof UsageInfo2UsageAdapter)) return false;
     UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
@@ -306,6 +320,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return true;
   }
 
+  @Override
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myMergedUsageInfos.isEmpty()) {
@@ -315,6 +330,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
   }
 
+  @Override
   public final PsiElement getElement() {
     return getUsageInfo().getElement();
   }
@@ -323,6 +339,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return getElement().getReference();
   }
 
+  @Override
   public boolean isNonCodeUsage() {
     return getUsageInfo().isNonCodeUsage;
   }
@@ -333,6 +350,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   // by start offset
+  @Override
   public int compareTo(final UsageInfo2UsageAdapter o) {
     VirtualFile containingFile = getFile();
     int shift1 = 0;
@@ -355,6 +373,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return s1.getStartOffset() + shift1 - s2.getStartOffset() - shift2;
   }
 
+  @Override
   public void rename(String newName) throws IncorrectOperationException {
     final PsiReference reference = getUsageInfo().getReference();
     assert reference != null : this;
@@ -370,6 +389,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return result;
   }
 
+  @Override
   public void calcData(final DataKey key, final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
@@ -390,6 +410,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return containingFile == null ? -1L : containingFile.getModificationStamp();
   }
 
+  @Override
   @NotNull
   public TextChunk[] getText() {
     TextChunk[] chunks = myTextChunks.get();
@@ -403,6 +424,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return chunks;
   }
 
+  @Override
   @NotNull
   public String getPlainText() {
     //if (myRangeMarkers.isEmpty()) { // element over light virtual file
@@ -432,10 +454,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return "";
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon != null ? myIcon.getIcon() : null;
   }
 
+  @Override
   public String getTooltipText() {
     return myTooltipText;
   }

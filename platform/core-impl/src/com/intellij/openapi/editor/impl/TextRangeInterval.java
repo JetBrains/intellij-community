@@ -24,10 +24,12 @@ public class TextRangeInterval extends ProperTextRange implements Interval{
   public TextRangeInterval(int startOffset, int endOffset) {
     super(startOffset, endOffset);
   }
+  @Override
   public int intervalStart() {
     return getStartOffset();
   }
 
+  @Override
   public int intervalEnd() {
     return getEndOffset();
   }

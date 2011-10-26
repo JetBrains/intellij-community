@@ -16,9 +16,11 @@
 package com.intellij.openapi.editor.event;
 
 public abstract class DocumentAdapter implements DocumentListener {
+  @Override
   public void beforeDocumentChange(DocumentEvent e) {
   }
 
+  @Override
   public void documentChanged(DocumentEvent e) {
   }
 }

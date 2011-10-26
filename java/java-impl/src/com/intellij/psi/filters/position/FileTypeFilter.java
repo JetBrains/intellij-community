@@ -33,6 +33,7 @@ public class FileTypeFilter implements ElementFilter {
   }
 
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     if (!(element instanceof PsiElement)) return false;
     PsiElement psiElement = (PsiElement)element;
@@ -40,6 +41,7 @@ public class FileTypeFilter implements ElementFilter {
     return containingFile.getFileType().equals(myFileType);
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }

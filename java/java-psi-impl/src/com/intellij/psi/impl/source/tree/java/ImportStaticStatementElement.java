@@ -26,6 +26,7 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
     super(JavaElementType.IMPORT_STATIC_STATEMENT);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     final ASTNode result = super.findChildByRole(role);
     if (result != null) return result;
@@ -44,6 +45,7 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     final int role = super.getChildRole(child);
     if (role != ChildRoleBase.NONE) return role;

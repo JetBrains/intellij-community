@@ -58,16 +58,19 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
 
     final Processor<SliceUsage> uniqueProcessor =
       new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
+        @Override
         public int computeHashCode(final SliceUsage object) {
           return object.getUsageInfo().hashCode();
         }
 
+        @Override
         public boolean equals(final SliceUsage o1, final SliceUsage o2) {
           return o1.getUsageInfo().equals(o2.getUsageInfo());
         }
       });
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         if (params.dataFlowToThis) {
           SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor);

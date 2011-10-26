@@ -117,6 +117,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     myContentProvider.saveContent(myUrl, localFile, this);
   }
 
+  @Override
   public void finished(@Nullable final FileType fileType) {
     final File localIOFile;
 
@@ -142,6 +143,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
 
     VirtualFile localFile = new WriteAction<VirtualFile>() {
+      @Override
       protected void run(final Result<VirtualFile> result) {
         final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile);
         if (file != null) {
@@ -165,6 +167,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
+  @Override
   public boolean isCancelled() {
     return myCancelled.get();
   }
@@ -175,6 +178,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
+  @Override
   public void errorOccurred(@NotNull final String errorMessage, boolean cancelled) {
     LOG.debug("Error: " + errorMessage);
     FileDownloadingListener[] listeners;
@@ -192,6 +196,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
+  @Override
   public void setProgressFraction(final double fraction) {
     FileDownloadingListener[] listeners;
     synchronized (myLock) {
@@ -202,6 +207,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
+  @Override
   public void setProgressText(@NotNull final String text, final boolean indeterminate) {
     FileDownloadingListener[] listeners;
     synchronized (myLock) {

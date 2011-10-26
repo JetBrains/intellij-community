@@ -64,10 +64,12 @@ public class TypeConversionUtil {
   private static final int STRING_RANK = 100;
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;
   public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
+    @Override
     public boolean isValid() {
       return true;
     }
 
+    @Override
     @NonNls
     public String getPresentableText() {
       return "FAKE TYPE";
@@ -790,12 +792,14 @@ public class TypeConversionUtil {
     CachedValue<Set<String>> boxedHolderTypes = project.getUserData(POSSIBLE_BOXED_HOLDER_TYPES);
     if (boxedHolderTypes == null) {
       project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
+        @Override
         public Result<Set<String>> compute() {
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           final Set<String> set = new THashSet<String>();
           for (final String qname : PsiPrimitiveType.getAllBoxedTypeNames()) {
             final PsiClass boxedClass = facade.findClass(qname, GlobalSearchScope.allScope(project));
             InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
+              @Override
               public boolean process(PsiClass psiClass) {
                 ContainerUtil.addIfNotNull(psiClass.getQualifiedName(), set);
                 return true;
@@ -1343,36 +1347,43 @@ public class TypeConversionUtil {
   private static final Caster[][] caster = {
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return operand;
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf((short)((Number)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character((char) ((Number) operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf(((Number)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf(((Number)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Number) operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Number) operand).intValue());
         }
@@ -1381,36 +1392,43 @@ public class TypeConversionUtil {
     ,
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Byte.valueOf((byte)((Short)operand).shortValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf(((Short)operand).shortValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character((char) ((Short) operand).shortValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf(((Short)operand).shortValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf(((Short)operand).shortValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Short) operand).shortValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Short) operand).shortValue());
         }
@@ -1419,36 +1437,43 @@ public class TypeConversionUtil {
     ,
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Byte.valueOf((byte)((Character)operand).charValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf((short)((Character)operand).charValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character(((Character) operand).charValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf(((Character)operand).charValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf(((Character)operand).charValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Character) operand).charValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Character) operand).charValue());
         }
@@ -1457,36 +1482,43 @@ public class TypeConversionUtil {
     ,
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Byte.valueOf((byte)((Integer)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf((short)((Integer)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character((char) ((Integer) operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf(((Integer)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf(((Integer)operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Integer) operand).intValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Integer) operand).intValue());
         }
@@ -1495,36 +1527,43 @@ public class TypeConversionUtil {
     ,
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Byte.valueOf((byte)((Long)operand).longValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf((short)((Long)operand).longValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character((char) ((Long) operand).longValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf((int)((Long)operand).longValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf(((Long)operand).longValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Long) operand).longValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Long) operand).longValue());
         }
@@ -1533,36 +1572,43 @@ public class TypeConversionUtil {
     ,
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Byte.valueOf((byte)((Float)operand).floatValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf((short)((Float)operand).floatValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character((char) ((Float) operand).floatValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf((int)((Float)operand).floatValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf((long)((Float)operand).floatValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Float) operand).floatValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Float) operand).floatValue());
         }
@@ -1571,36 +1617,43 @@ public class TypeConversionUtil {
     ,
     {
       new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Byte.valueOf((byte)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Short.valueOf((short)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Character((char) ((Double) operand).doubleValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Integer.valueOf((int)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return Long.valueOf((long)((Double)operand).doubleValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Float(((Double) operand).doubleValue());
         }
       }
       , new Caster() {
+        @Override
         public Object cast(Object operand) {
           return new Double(((Double) operand).doubleValue());
         }

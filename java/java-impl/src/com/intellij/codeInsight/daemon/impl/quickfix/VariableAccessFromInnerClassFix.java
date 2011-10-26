@@ -57,6 +57,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     getVariablesToFix().add(variable);
   }
 
+  @Override
   @NotNull
   public String getText() {
     @NonNls String message;
@@ -77,11 +78,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return QuickFixBundle.message(message, varNames);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("make.final.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myClass != null
            && myClass.isValid()
@@ -97,6 +100,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return PsiTreeUtil.isAncestor(variable, aClass, false);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.preparePsiElementsForWrite(myClass, myVariable)) return;
     try {
@@ -339,6 +343,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return false;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

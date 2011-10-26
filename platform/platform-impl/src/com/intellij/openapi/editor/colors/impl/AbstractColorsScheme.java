@@ -95,24 +95,29 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
   }
 
+  @Override
   public Color getDefaultBackground() {
     final Color c = getAttributes(HighlighterColors.TEXT).getBackgroundColor();
     return c != null ? c : Color.white;
   }
 
+  @Override
   public Color getDefaultForeground() {
     final Color c = getAttributes(HighlighterColors.TEXT).getForegroundColor();
     return c != null ? c : Color.black;
   }
 
+  @Override
   public String getName() {
     return mySchemeName;
   }
 
+  @Override
   public void setFont(EditorFontType key, Font font) {
     myFonts.put(key, font);
   }
 
+  @Override
   public abstract Object clone();
 
   public void copyTo(AbstractColorsScheme newScheme) {
@@ -135,11 +140,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     newScheme.myVersion = myVersion;
   }
 
+  @Override
   public void setEditorFontName(String fontName) {
     myEditorFontName = fontName;
     initFonts();
   }
 
+  @Override
   public void setEditorFontSize(int fontSize) {
     myEditorFontSize = fontSize;
     initFonts();
@@ -150,18 +157,22 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     myQuickDocFontSize = fontSize;
   }
 
+  @Override
   public void setLineSpacing(float lineSpacing) {
     myLineSpacing = lineSpacing;
   }
 
+  @Override
   public Font getFont(EditorFontType key) {
     return myFonts.get(key);
   }
 
+  @Override
   public void setName(String name) {
     mySchemeName = name;
   }
 
+  @Override
   public String getEditorFontName() {
     if (myFallbackFontName != null) {
       return myFallbackFontName;
@@ -169,6 +180,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return myEditorFontName == null ? DEFAULT_FONT_NAME : myEditorFontName;
   }
 
+  @Override
   public int getEditorFontSize() {
     return myEditorFontSize;
   }
@@ -179,6 +191,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return myQuickDocFontSize;
   }
   
+  @Override
   public float getLineSpacing() {
     return myLineSpacing <= 0 ? 1.0f : myLineSpacing;
   }
@@ -224,6 +237,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return getName();
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
@@ -362,6 +376,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
 
+  @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));

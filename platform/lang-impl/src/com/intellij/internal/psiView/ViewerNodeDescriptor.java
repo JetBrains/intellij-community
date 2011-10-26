@@ -33,10 +33,12 @@ public class ViewerNodeDescriptor extends NodeDescriptor {
     myName = myElement.toString();
   }
 
+  @Override
   public boolean update() {
     return false;
   }
 
+  @Override
   public Object getElement() {
     return myElement;
   }

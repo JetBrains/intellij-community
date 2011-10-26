@@ -133,9 +133,8 @@ public class TestPackage extends TestObject {
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
         if (mySearchForTestsIndicator != null && !mySearchForTestsIndicator.isCanceled()) {
-          mySearchForTestsIndicator.cancel(); //ensure that search for tests stops anyway
           if (tasks[0] != null) {
-            tasks[0].connect();
+            tasks[0].finish();
           }
         }
       }
@@ -253,20 +252,7 @@ public class TestPackage extends TestObject {
     final boolean[] isJunit4 = new boolean[1];
     final MySearchForTestsTask task =
       new MySearchForTestsTask(classFilter, isJunit4, classes, callback);
-    mySearchForTestsIndicator = new BackgroundableProcessIndicator(task) {
-      @Override
-      public void cancel() {
-        try {//ensure that serverSocket.accept was interrupted
-          if (!myServerSocket.isClosed()) {
-            new Socket(InetAddress.getLocalHost(), myServerSocket.getLocalPort());
-          }
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-        super.cancel();
-      }
-    };
+    mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
     ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
     return task;
   }
@@ -348,23 +334,23 @@ public class TestPackage extends TestObject {
     public void run(@NotNull ProgressIndicator indicator) {
       try {
         mySocket = myServerSocket.accept();
+        myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+        myFoundTests = !myClasses.isEmpty();
       }
       catch (IOException e) {
         LOG.info(e);
       }
-      myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
-      myFoundTests = !myClasses.isEmpty();
     }
 
     @Override
     public void onSuccess() {
       myCallback.found(myClasses, myJunit4[0]);
-      connect();
+      finish();
     }
 
     @Override
     public void onCancel() {
-      connect();
+      finish();
     }
 
     @Override
@@ -372,9 +358,10 @@ public class TestPackage extends TestObject {
       return DumbModeAction.WAIT;
     }
 
-    private void connect() {
+    private void finish() {
       DataOutputStream os = null;
       try {
+        if (mySocket == null || mySocket.isClosed()) return;
         os = new DataOutputStream(mySocket.getOutputStream());
         os.writeBoolean(true);
       }
@@ -390,7 +377,9 @@ public class TestPackage extends TestObject {
         }
 
         try {
-          myServerSocket.close();
+          if (!myServerSocket.isClosed()) {
+            myServerSocket.close();
+          }
         }
         catch (Throwable e) {
           LOG.info(e);

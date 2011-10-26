@@ -382,6 +382,7 @@ public class CodeEditUtil {
 
   public static void enablePostponedFormattingInTree(@NotNull ASTNode root) {
     ((TreeElement)root).acceptTree(new RecursiveTreeElementVisitor() {
+      @Override
       protected boolean visitNode(TreeElement element) {
         element.putUserData(DISABLE_POSTPONED_REFORMAT_KEY, null);
         return true;

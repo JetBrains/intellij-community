@@ -64,6 +64,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     super(node);
   }
 
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     dropCached();
@@ -74,12 +75,14 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     myCachedType = null;
   }
 
+  @Override
   protected Object clone() {
     PsiFieldImpl clone = (PsiFieldImpl)super.clone();
     clone.dropCached();
     return clone;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, PsiSyntheticClass.class);
@@ -91,16 +94,19 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return cc != null ? cc : super.getContext();
   }
 
+  @Override
   @NotNull
   public CompositeElement getNode() {
     return (CompositeElement)super.getNode();
   }
 
+  @Override
   @NotNull
   public PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
+  @Override
   @NotNull
   public String getName() {
     final PsiFieldStub stub = getStub();
@@ -110,11 +116,13 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return getNameIdentifier().getText();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   public PsiType getTypeNoResolve() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {
@@ -135,6 +143,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return JavaSharedImplUtil.getTypeNoResolve(typeElement, nameIdentifier, this);
   }
 
+  @Override
   @NotNull
   public PsiType getType(){
     final PsiFieldStub stub = getStub();
@@ -161,6 +170,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return JavaSharedImplUtil.getType(this);
   }
 
+  @Override
   public PsiTypeElement getTypeElement(){
     PsiField firstField = findFirstFieldInDeclaration();
     if (firstField != this){
@@ -170,6 +180,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
+  @Override
   @NotNull
   public PsiModifierList getModifierList() {
     final PsiModifierList selfModifierList = getSelfModifierList();
@@ -196,6 +207,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
@@ -236,10 +248,12 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
   }
 
+  @Override
   public boolean hasInitializer() {
     if (getStub() != null) {
       return getInitializerText() != null;
@@ -248,6 +262,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return getInitializer() != null;
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.FIELD_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
@@ -256,6 +271,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   private static class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
     private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
 
+    @Override
     public Object execute(PsiVariable variable, Set<PsiVariable> visitedVars) {
       return ((PsiFieldImpl)variable)._computeConstantValue(visitedVars);
     }
@@ -310,6 +326,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return result;
   }
 
+  @Override
   public Object computeConstantValue() {
     Object cachedInitializerValue = myCachedInitializerValue;
     if (cachedInitializerValue != null && !(cachedInitializerValue instanceof PsiExpression)){
@@ -319,6 +336,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return computeConstantValue(new HashSet<PsiVariable>(2));
   }
 
+  @Override
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
@@ -335,6 +353,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     throw new RuntimeException("Shall not be called when in stubless mode");
   }
 
+  @Override
   public boolean isDeprecated() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {
@@ -344,6 +363,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
+  @Override
   public PsiDocComment getDocComment(){
     CompositeElement treeElement = getNode();
     if (getTypeElement() != null) {
@@ -359,6 +379,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException{
     CheckUtil.checkWritable(this);
 
@@ -388,6 +409,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     JavaSharedImplUtil.normalizeBrackets(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitField(this);
@@ -397,6 +419,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     return true;
@@ -406,16 +429,19 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return "PsiField:" + getName();
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     PsiClass originalClass = (PsiClass)getContainingClass().getOriginalElement();
     PsiField originalField = originalClass.findFieldByName(getName(), false);
     return originalField != null ? originalField : this;
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     JavaSharedImplUtil.setInitializer(this, initializer);
   }
@@ -425,11 +451,13 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     info.put("fieldName", getName());
   }

@@ -41,14 +41,17 @@ public class VisibleEditorsTracker extends CommandAdapter implements Application
     commandProcessor.addCommandListener(this);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "VisibleEditorsTracker";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -60,6 +63,7 @@ public class VisibleEditorsTracker extends CommandAdapter implements Application
 
   public long getLastCommandFinish() { return myLastCommandFinish; }
 
+  @Override
   public void commandStarted(CommandEvent event) {
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getComponent().isShowing()) {
@@ -71,6 +75,7 @@ public class VisibleEditorsTracker extends CommandAdapter implements Application
     }
   }
 
+  @Override
   public void commandFinished(CommandEvent event) {
     myEditorsVisibleOnCommandStart.clear();
     myLastCommandFinish = System.currentTimeMillis();

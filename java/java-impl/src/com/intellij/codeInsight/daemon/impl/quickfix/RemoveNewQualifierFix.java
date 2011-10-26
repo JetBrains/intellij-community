@@ -43,16 +43,19 @@ public class RemoveNewQualifierFix implements IntentionAction {
     this.aClass = aClass;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.qualifier.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.qualifier.fix");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         expression != null
@@ -61,6 +64,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
         && expression.getManager().isInProject(expression);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(expression.getContainingFile())) return;
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
@@ -70,6 +74,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

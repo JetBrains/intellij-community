@@ -48,6 +48,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return (PsiNewExpression)myNewExpression.getElement();
   }
 
+  @Override
   protected void invokeImpl(PsiClass targetClass) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
@@ -55,9 +56,11 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final PsiClass[] psiClass = new PsiClass[1];
         CommandProcessor.getInstance().executeCommand(newExpression.getProject(), new Runnable() {
+          @Override
           public void run() {
             psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
           }
@@ -193,6 +196,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   protected PsiElement getElement() {
     final PsiNewExpression expression = getNewExpression();
     if (expression == null || !expression.getManager().isInProject(expression)) return null;
@@ -203,15 +207,18 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   protected boolean isAllowOuterTargetClass() {
     return false;
   }
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(element, PsiJavaCodeReferenceElement.class);
     return ref != null && ref.resolve() != null;
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     PsiElement nameElement = getNameElement(getNewExpression());
 
@@ -243,6 +250,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return referenceElement.getReferenceNameElement();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.class.from.new.family");

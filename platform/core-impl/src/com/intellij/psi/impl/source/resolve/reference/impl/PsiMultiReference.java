@@ -35,6 +35,7 @@ import java.util.*;
 
 public class PsiMultiReference implements PsiPolyVariantReference {
   public static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
+    @Override
     public int compare(final PsiReference ref1, final PsiReference ref2) {
       if (ref1.isSoft() && !ref2.isSoft()) return 1;
       if (!ref1.isSoft() && ref2.isSoft()) return -1;
@@ -81,10 +82,12 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences[0];
   }
 
+  @Override
   public PsiElement getElement(){
     return myElement;
   }
 
+  @Override
   public TextRange getRangeInElement(){
     final PsiReference chosenRef = chooseReference();
     TextRange rangeInElement = chosenRef.getRangeInElement();
@@ -97,6 +100,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return rangeInElement;
   }
 
+  @Override
   public PsiElement resolve(){
     final PsiReference reference = chooseReference();
     if (cannotChoose()) {
@@ -110,19 +114,23 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences.length > 1 && COMPARATOR.compare(myReferences[0], myReferences[1]) == 0;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText(){
     return chooseReference().getCanonicalText();
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
     return chooseReference().handleElementRename(newElementName);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
     return chooseReference().bindToElement(element);
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element){
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
@@ -130,6 +138,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return false;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     Set<Object> variants = new HashSet<Object>();
@@ -140,6 +149,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return variants.toArray();
   }
 
+  @Override
   public boolean isSoft(){
     for (PsiReference reference : getReferences()) {
       if (!reference.isSoft()) {
@@ -149,6 +159,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return true;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiReference[] refs = getReferences();

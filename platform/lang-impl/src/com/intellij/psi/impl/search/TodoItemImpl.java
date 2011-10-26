@@ -35,14 +35,17 @@ public class TodoItemImpl implements TodoItem {
     myPattern = pattern;
   }
 
+  @Override
   public PsiFile getFile() {
     return myFile;
   }
 
+  @Override
   public TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
+  @Override
   public TodoPattern getPattern() {
     return myPattern;
   }

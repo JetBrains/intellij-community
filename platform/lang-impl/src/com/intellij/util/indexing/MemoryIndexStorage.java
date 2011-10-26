@@ -81,29 +81,35 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
+  @Override
   public void close() throws StorageException {
     myBackendStorage.close();
   }
 
+  @Override
   public void clear() throws StorageException {
     clearMemoryMap();
     myBackendStorage.clear();
   }
 
+  @Override
   public void flush() throws IOException {
     myBackendStorage.flush();
   }
 
+  @Override
   public Collection<Key> getKeys() throws StorageException {
     final Set<Key> keys = new HashSet<Key>();
     processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
     return keys;
   }
 
+  @Override
   public boolean processKeys(final Processor<Key> processor) throws StorageException {
     final Set<Key> stopList = new HashSet<Key>();
 
     Processor<Key> decoratingProcessor = new Processor<Key>() {
+      @Override
       public boolean process(final Key key) {
         if (stopList.contains(key)) return true;
 
@@ -120,6 +126,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     return myBackendStorage.processKeys(decoratingProcessor);
   }
 
+  @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     if (myBufferingEnabled.get()) {
       getMemValueContainer(key).addValue(inputId, value);
@@ -133,6 +140,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage.addValue(key, inputId, value);
   }
 
+  @Override
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
     if (myBufferingEnabled.get()) {
       getMemValueContainer(key).removeValue(inputId, value);
@@ -145,6 +153,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage.removeValue(key, inputId, value);
   }
 
+  @Override
   public void removeAllValues(Key key, int inputId) throws StorageException {
     if (myBufferingEnabled.get()) {
       getMemValueContainer(key).removeAllValues(inputId);
@@ -162,10 +171,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
       valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+        @Override
         public Object getLock() {
           return this;
         }
 
+        @Override
         public ValueContainer<Value> compute() {
           try {
             return myBackendStorage.read(key);
@@ -180,6 +191,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     return valueContainer;
   }
 
+  @Override
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
     final ValueContainer<Value> valueContainer = myMap.get(key);

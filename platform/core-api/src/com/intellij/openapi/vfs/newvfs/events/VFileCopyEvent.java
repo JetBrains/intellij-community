@@ -35,6 +35,7 @@ public class VFileCopyEvent extends VFileEvent {
     myNewChildName = newChildName;
   }
 
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
@@ -52,14 +53,17 @@ public class VFileCopyEvent extends VFileEvent {
     return "VfsEvent[copy " + myFile +" to " + myNewParent + " as " + myNewChildName +"]";
   }
 
+  @Override
   public String getPath() {
     return myNewParent.getPath() + "/" + myNewChildName;
   }
 
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
+  @Override
   public boolean isValid() {
     return myFile.isValid() && myNewParent.findChild(myNewChildName) == null;
   }

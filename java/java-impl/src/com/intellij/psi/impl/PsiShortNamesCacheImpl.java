@@ -45,16 +45,19 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     myManager = manager;
   }
 
+  @Override
   @NotNull
   public PsiFile[] getFilesByName(@NotNull String name) {
     return FilenameIndex.getFilesByName(myManager.getProject(), name, GlobalSearchScope.projectScope(myManager.getProject()));
   }
 
+  @Override
   @NotNull
   public String[] getAllFileNames() {
     return FilenameIndex.getAllFilenames(myManager.getProject());
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClassesByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiClass> classes = JavaShortClassNameIndex.getInstance().get(name, myManager.getProject(), scope);
@@ -91,16 +94,19 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     return list.toArray(new PsiClass[list.size()]);
   }
 
+  @Override
   @NotNull
   public String[] getAllClassNames() {
     final Collection<String> names = JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject());
     return ArrayUtil.toStringArray(names);
   }
 
+  @Override
   public void getAllClassNames(@NotNull HashSet<String> set) {
     set.addAll(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiMethod> methods =
@@ -112,21 +118,25 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   }
 
 
+  @Override
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     return getMethodsByName(name, scope); // TODO!!!
   }
 
+  @Override
   @NotNull
   public String[] getAllMethodNames() {
     final Collection<String> names = JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject());
     return ArrayUtil.toStringArray(names);
   }
 
+  @Override
   public void getAllMethodNames(@NotNull HashSet<String> set) {
     set.addAll(JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
+  @Override
   @NotNull
   public PsiField[] getFieldsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiField> fields = JavaFieldNameIndex.getInstance().get(name, myManager.getProject(), scope);
@@ -137,12 +147,14 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     return list.toArray(new PsiField[list.size()]);
   }
 
+  @Override
   @NotNull
   public String[] getAllFieldNames() {
     final Collection<String> names = JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject());
     return ArrayUtil.toStringArray(names);
   }
 
+  @Override
   public void getAllFieldNames(@NotNull HashSet<String> set) {
     set.addAll(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
@@ -150,6 +162,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {
     List<T> result = new ArrayList<T>();
     Set<PsiMember> set = new THashSet<PsiMember>(members.size(), new TObjectHashingStrategy<PsiMember>() {
+      @Override
       public int computeHashCode(PsiMember member) {
         int code = 0;
         final PsiClass clazz = member.getContainingClass();
@@ -168,6 +181,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
         return code;
       }
 
+      @Override
       public boolean equals(PsiMember object, PsiMember object1) {
         return myManager.areElementsEquivalent(object, object1);
       }

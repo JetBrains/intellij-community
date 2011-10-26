@@ -32,6 +32,7 @@ public class DefaultCachedValuesFactory implements CachedValuesFactory {
     myProject = project;
   }
 
+  @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return trackValue ? new CachedValueImpl<T>(provider) {
       @Override
@@ -52,6 +53,7 @@ public class DefaultCachedValuesFactory implements CachedValuesFactory {
     };
   }
 
+  @Override
   public <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                               boolean trackValue) {
     return trackValue ? new ParameterizedCachedValueImpl<T, P>(provider) {

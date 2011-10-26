@@ -35,6 +35,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
   }
 
+  @Override
   public boolean contains(final VirtualFile file) {
     if (!super.contains(file)) {
       return false;

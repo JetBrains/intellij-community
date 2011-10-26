@@ -31,6 +31,7 @@ import java.util.List;
  * @author cdr
  */
 public class ChangeFileEncodingGroup extends ActionGroup {
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
@@ -63,6 +64,7 @@ public class ChangeFileEncodingGroup extends ActionGroup {
       getTemplatePresentation().setText("more...");
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       Charset[] charsets = CharsetToolkit.getAvailableCharsets();
 

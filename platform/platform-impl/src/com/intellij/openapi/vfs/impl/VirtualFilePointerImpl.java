@@ -54,6 +54,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     }
   }
 
+  @Override
   @NotNull
   public String getFileName() {
     Pair<VirtualFile, String> result = update();
@@ -70,6 +71,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return index >= 0 ? url.substring(index + 1) : url;
   }
 
+  @Override
   public VirtualFile getFile() {
     Pair<VirtualFile, String> result = update();
     if (result == null) {
@@ -79,6 +81,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return result.first;
   }
 
+  @Override
   @NotNull
   public String getUrl() {
     //checkDisposed(); no check here since Disposer might want to compute hashcode during dispose()
@@ -94,6 +97,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return url == null ? file.getUrl() : url;
   }
 
+  @Override
   @NotNull
   public String getPresentableUrl() {
     checkDisposed();
@@ -145,6 +149,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     }
   }
 
+  @Override
   public boolean isValid() {
     Pair<VirtualFile, String> result = update();
     return result != null && result.first != null;
@@ -185,6 +190,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return getUrlNoUpdate();
   }
 
+  @Override
   public void dispose() {
     if (disposed) {
       throw new MyException("Punching the dead horse.\nurl="+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));

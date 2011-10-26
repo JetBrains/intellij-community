@@ -86,21 +86,25 @@ public class MoveClassToModuleFix {
       final Module classModule = fileIndex.getModuleForFile(virtualFile);
       if (classModule != null && classModule != currentModule && !ModuleRootManager.getInstance(currentModule).isDependsOn(classModule)) {
         IntentionAction action = new IntentionAction() {
+          @Override
           @NotNull
           public String getText() {
             return "Move '"+aClass.getQualifiedName()+"' from module '" + classModule.getName() +
                    "' to '"+currentModule.getName()+"'";
           }
 
+          @Override
           @NotNull
           public String getFamilyName() {
             return "move it";
           }
 
+          @Override
           public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
             return true;
           }
 
+          @Override
           public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
             RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
             DataManager dataManager = DataManager.getInstance();
@@ -120,6 +124,7 @@ public class MoveClassToModuleFix {
             }
           }
 
+          @Override
           public boolean startInWriteAction() {
             return false;
           }

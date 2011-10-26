@@ -43,10 +43,12 @@ public class NotFilter
     return myFilter;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return myFilter.isClassAcceptable(hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return !myFilter.isAcceptable(element, context);
   }

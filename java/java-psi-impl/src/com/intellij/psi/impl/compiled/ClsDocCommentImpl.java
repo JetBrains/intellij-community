@@ -36,6 +36,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     myTags = tags;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("/**");
     for (PsiDocTag tag : getTags()) {
@@ -47,48 +48,58 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     buffer.append("*/");
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, JavaDocElementType.DOC_COMMENT);
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return getTags();
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public PsiDocCommentOwner getOwner() {
     return myParent;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getDescriptionElements() {
     return EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiDocTag[] getTags() {
     return myTags;
   }
 
+  @Override
   public PsiDocTag findTagByName(@NonNls String name) {
     if (!name.equals("deprecated")) return null;
     return getTags()[0];
   }
 
+  @Override
   @NotNull
   public PsiDocTag[] findTagsByName(@NonNls String name) {
     if (!name.equals("deprecated")) return PsiDocTag.EMPTY_ARRAY;
     return getTags();
   }
 
+  @Override
   public IElementType getTokenType() {
     return JavaDocElementType.DOC_COMMENT;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocComment(this);

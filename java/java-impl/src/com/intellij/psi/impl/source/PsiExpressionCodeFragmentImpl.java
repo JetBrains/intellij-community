@@ -35,16 +35,19 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
     myExpectedType = expectedType;
   }
 
+  @Override
   public PsiExpression getExpression() {
     ASTNode exprChild = calcTreeElement().findChildByType(Constants.EXPRESSION_BIT_SET);
     if (exprChild == null) return null;
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprChild);
   }
 
+  @Override
   public PsiType getExpectedType() {
     return myExpectedType;
   }
 
+  @Override
   public void setExpectedType(PsiType type) {
     myExpectedType = type;
   }

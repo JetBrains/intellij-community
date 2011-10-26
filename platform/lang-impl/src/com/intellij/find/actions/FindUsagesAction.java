@@ -40,6 +40,7 @@ public class FindUsagesAction extends AnAction {
     setInjectedContext(true);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
@@ -55,6 +56,7 @@ public class FindUsagesAction extends AnAction {
 
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
+      @Override
       public boolean execute(@NotNull final PsiElement element) {
         new PsiElement2UsageTargetAdapter(element).findUsages();
         return false;
@@ -62,6 +64,7 @@ public class FindUsagesAction extends AnAction {
     });
   }
 
+  @Override
   public void update(AnActionEvent event){
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }

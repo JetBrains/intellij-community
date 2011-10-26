@@ -33,15 +33,18 @@ public class ClassExtensionPoint<T> extends AbstractExtensionPointBean implement
   public String implementationClass;
 
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {
+    @Override
     protected Class<T> getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }
   };
 
+  @Override
   public T getInstance() {
     return myHandler.getValue();
   }
 
+  @Override
   public String getKey() {
     return psiElementClass;
   }

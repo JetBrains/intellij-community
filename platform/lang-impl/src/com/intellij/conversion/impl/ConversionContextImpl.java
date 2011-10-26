@@ -178,7 +178,8 @@ public class ConversionContextImpl implements ConversionContext {
     try {
       Element libraryElement = null;
       if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(level)) {
-        libraryElement = findProjectLibraryElement(name);
+        final ProjectLibrarySettingsImpl projectLibrarySettings = findProjectLibrarySettings(name);
+        libraryElement = projectLibrarySettings != null ? projectLibrarySettings.getLibraryElement() : null;
       }
       else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) {
         libraryElement = findGlobalLibraryElement(name);
@@ -266,24 +267,26 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   @Nullable
-  private Element findProjectLibraryElement(String name) throws CannotConvertException {
+  public ProjectLibrarySettingsImpl findProjectLibrarySettings(String libraryName) throws CannotConvertException {
     if (myStorageScheme == StorageScheme.DEFAULT) {
       final Element tableElement = getProjectSettings().getComponentElement("libraryTable");
       if (tableElement != null) {
-        return findLibraryInTable(tableElement, name);
+        final Element element = findLibraryInTable(tableElement, libraryName);
+        return element != null ? new ProjectLibrarySettingsImpl(getProjectSettings().getFile(), element, this) : null;
       }
     }
     else {
-      File libraryFile = new File(new File(mySettingsBaseDir, "libraries"), name + ".xml");
+      File libraryFile = new File(new File(mySettingsBaseDir, "libraries"), FileUtil.sanitizeFileName(libraryName) + ".xml");
       if (libraryFile.exists()) {
-        return JDomConvertingUtil.loadDocument(libraryFile).getRootElement().getChild(LibraryImpl.ELEMENT);
+        SettingsXmlFile f = getOrCreateFile(libraryFile);
+        return new ProjectLibrarySettingsImpl(libraryFile, f.getRootElement().getChild(LibraryImpl.ELEMENT), this);
       }
     }
     return null;
   }
 
   @Nullable
-  private Element findLibraryInTable(Element tableElement, String name) {
+  private static Element findLibraryInTable(Element tableElement, String name) {
     final Condition<Element> filter = JDomConvertingUtil.createElementWithAttributeFilter(LibraryImpl.ELEMENT,
                                                                                           LibraryImpl.LIBRARY_NAME_ATTR, name);
     return JDomConvertingUtil.findChild(tableElement, filter);

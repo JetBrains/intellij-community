@@ -36,6 +36,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
    * @return the name specified in the package statement, or an empty string for a JSP page or
    * file which has no package statement.
    */
+  @Override
   @NotNull String getPackageName();
 
   /**

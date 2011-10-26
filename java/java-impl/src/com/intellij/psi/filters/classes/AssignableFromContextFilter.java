@@ -30,12 +30,14 @@ import com.intellij.util.ReflectionCache;
  */
 public class AssignableFromContextFilter implements ElementFilter{
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiClass.class, hintClass);
   }
 
   private SoftReference myCurrentContext = new SoftReference(null);
   private SoftReference myCachedClass = new SoftReference(null);
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(myCurrentContext.get() != context){
       myCurrentContext = new SoftReference(context);

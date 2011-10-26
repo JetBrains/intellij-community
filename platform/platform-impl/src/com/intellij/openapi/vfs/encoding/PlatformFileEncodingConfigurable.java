@@ -22,28 +22,34 @@ public class PlatformFileEncodingConfigurable implements SearchableConfigurable 
   private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
   private PlatformEncodingOptionsPanel myPanel;
 
+  @Override
   @NotNull
   public String getId() {
     return "GeneralEncodingOptions";
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "";
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new PlatformEncodingOptionsPanel();
@@ -51,6 +57,7 @@ public class PlatformFileEncodingConfigurable implements SearchableConfigurable 
     return myPanel.getMainPanel();
   }
 
+  @Override
   public boolean isModified() {
     final Object item = myPanel.myIDEEncodingComboBox.getSelectedItem();
     if (SYSTEM_DEFAULT.equals(item)) {
@@ -60,6 +67,7 @@ public class PlatformFileEncodingConfigurable implements SearchableConfigurable 
     return !Comparing.equal(item, EncodingManager.getInstance().getDefaultCharset());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final Object item = myPanel.myIDEEncodingComboBox.getSelectedItem();
     if (SYSTEM_DEFAULT.equals(item)) {
@@ -70,6 +78,7 @@ public class PlatformFileEncodingConfigurable implements SearchableConfigurable 
     }
   }
 
+  @Override
   public void reset() {
     final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
     encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
@@ -84,6 +93,7 @@ public class PlatformFileEncodingConfigurable implements SearchableConfigurable 
     }
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }

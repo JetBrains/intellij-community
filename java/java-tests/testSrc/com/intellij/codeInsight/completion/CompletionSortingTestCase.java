@@ -29,6 +29,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
     super.tearDown();
   }
 
+  @Override
   protected abstract String getBasePath();
 
   protected void checkPreferredItems(final int selected, @NonNls final String... expected) {

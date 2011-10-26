@@ -147,6 +147,8 @@
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
   <extensionPoint name="gotoFileContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
+  <extensionPoint name="anonymousElementProvider"
+                  interface="com.intellij.navigation.AnonymousElementProvider"/>
 
   <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 

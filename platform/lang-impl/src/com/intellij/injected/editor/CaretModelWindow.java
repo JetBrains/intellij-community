@@ -39,6 +39,7 @@ public class CaretModelWindow implements CaretModel {
     myEditorWindow = editorWindow;
   }
 
+  @Override
   public void moveCaretRelatively(final int columnShift,
                                   final int lineShift,
                                   final boolean withSelection,
@@ -47,11 +48,13 @@ public class CaretModelWindow implements CaretModel {
     myDelegate.moveCaretRelatively(columnShift, lineShift, withSelection, blockSelection, scrollToCaret);
   }
 
+  @Override
   public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(pos);
     myDelegate.moveToLogicalPosition(hostPos);
   }
 
+  @Override
   public void moveToVisualPosition(@NotNull final VisualPosition pos) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     myDelegate.moveToLogicalPosition(hostPos);
@@ -62,23 +65,27 @@ public class CaretModelWindow implements CaretModel {
     moveToOffset(offset, false);
   }
 
+  @Override
   public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
     int hostOffset = myEditorWindow.getDocument().injectedToHost(offset);
     myDelegate.moveToOffset(hostOffset, locateBeforeSoftWrap);
   }
 
+  @Override
   @NotNull
   public LogicalPosition getLogicalPosition() {
     LogicalPosition hostPos = myDelegate.getLogicalPosition();
     return myEditorWindow.hostToInjected(hostPos);
   }
 
+  @Override
   @NotNull
   public VisualPosition getVisualPosition() {
     LogicalPosition logicalPosition = getLogicalPosition();
     return myEditorWindow.logicalToVisualPosition(logicalPosition);
   }
 
+  @Override
   public int getOffset() {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getOffset());
   }
@@ -89,8 +96,10 @@ public class CaretModelWindow implements CaretModel {
   }
 
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<CaretListener>();
+  @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
     CaretListener wrapper = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         CaretEvent event = new CaretEvent(myEditorWindow, myEditorWindow.hostToInjected(e.getOldPosition()),
                                           myEditorWindow.hostToInjected(e.getNewPosition()));
@@ -101,6 +110,7 @@ public class CaretModelWindow implements CaretModel {
     myDelegate.addCaretListener(wrapper);
   }
 
+  @Override
   public void removeCaretListener(@NotNull final CaretListener listener) {
     CaretListener wrapper = myCaretListeners.removeWrapper(listener);
     if (wrapper != null) {
@@ -115,14 +125,17 @@ public class CaretModelWindow implements CaretModel {
     myCaretListeners.clear();
   }
 
+  @Override
   public int getVisualLineStart() {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getVisualLineStart());
   }
 
+  @Override
   public int getVisualLineEnd() {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getVisualLineEnd());
   }
 
+  @Override
   public TextAttributes getTextAttributes() {
     return myDelegate.getTextAttributes();
   }

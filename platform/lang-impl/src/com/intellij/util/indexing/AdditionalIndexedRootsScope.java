@@ -41,6 +41,7 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
     this.myFileSet = myFileSet;
   }
 
+  @Override
   public boolean contains(VirtualFile file) {
     return myBaseScope.contains(file) || myFileSet.isInSet(file);
   }
@@ -50,14 +51,17 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
     return true;
   }
 
+  @Override
   public int compare(VirtualFile file1, VirtualFile file2) {
     return myBaseScope.compare(file1, file2);
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return myBaseScope.isSearchInModuleContent(aModule);
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return myBaseScope.isSearchInLibraries();
   }

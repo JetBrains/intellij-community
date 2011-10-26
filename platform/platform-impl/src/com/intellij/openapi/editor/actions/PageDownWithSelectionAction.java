@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 
 public class PageDownWithSelectionAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretPageDown(editor, true);
     }

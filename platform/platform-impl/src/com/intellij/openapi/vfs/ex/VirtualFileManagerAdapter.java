@@ -19,9 +19,11 @@ package com.intellij.openapi.vfs.ex;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 
 public abstract class VirtualFileManagerAdapter implements VirtualFileManagerListener {
+  @Override
   public void beforeRefreshStart(boolean asynchronous) {
   }
 
+  @Override
   public void afterRefreshFinish(boolean asynchronous) {
   }
 }

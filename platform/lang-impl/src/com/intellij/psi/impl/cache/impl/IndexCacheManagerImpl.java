@@ -63,6 +63,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     myProject = psiManager.getProject();
   }
 
+  @Override
   @NotNull
   public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
@@ -77,6 +78,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
   }
 
+  @Override
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
       return true;
@@ -85,8 +87,10 @@ public class IndexCacheManagerImpl implements CacheManager{
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject).union(scope);
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+            @Override
             public boolean process(final VirtualFile file, final Integer value) {
               ProgressManager.checkCanceled();
               final int mask = value.intValue();
@@ -134,6 +138,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     return true;
   }
 
+  @Override
   @NotNull
   public PsiFile[] getFilesWithTodoItems() {
     if (myProject.isDefault()) {
@@ -147,6 +152,7 @@ public class IndexCacheManagerImpl implements CacheManager{
         TodoIndex.NAME,
         new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           for (VirtualFile file : files) {
             if (projectFileIndex.isInContent(file)) {
@@ -162,6 +168,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(allFiles);
   }
 
+  @Override
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
     if (myProject.isDefault()) {
       return 0;
@@ -175,6 +182,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     return count;
   }
    
+  @Override
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
     if (myProject.isDefault()) {
       return 0;
@@ -188,6 +196,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
       new FileBasedIndex.ValueProcessor<Integer>() {
+        @Override
         public boolean process(final VirtualFile file, final Integer value) {
           count[0] += value.intValue();
           return true;

@@ -59,6 +59,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     myElementType = node.getElementType();
   }
 
+  @Override
   @NotNull
   public ASTNode getNode() {
     ASTNode node = myNode;
@@ -111,6 +112,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return myElementType.getLanguage();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     StubElement stub = myStub;
     if (stub != null) {
@@ -123,10 +125,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return super.getContainingFile();
   }
 
+  @Override
   public boolean isWritable() {
     return getContainingFile().isWritable();
   }
 
+  @Override
   public boolean isValid() {
     T stub = myStub;
     if (stub != null) {
@@ -140,19 +144,23 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return super.isValid();
   }
 
+  @Override
   public PsiManagerEx getManager() {
     return (PsiManagerEx)getContainingFile().getManager();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return getContainingFile().getProject();
   }
 
+  @Override
   public boolean isPhysical() {
     return getContainingFile().isPhysical();
   }
 
+  @Override
   public PsiElement getContext() {
     T stub = myStub;
     if (stub != null) {
@@ -172,6 +180,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return SharedImplUtil.getParent(getNode());
   }
 
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     setStub(null);
@@ -181,6 +190,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return SharedImplUtil.getParent(getNode());
   }
 
+  @Override
   public PsiElement getParent() {
     return getParentByTree();
   }
@@ -302,6 +312,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return PsiTreeUtil.getParentOfType(this, parentClass);
   }
 
+  @Override
   protected Object clone() {
     final StubBasedPsiElementBase stubbless = (StubBasedPsiElementBase)super.clone();
     stubbless.myStub = null;

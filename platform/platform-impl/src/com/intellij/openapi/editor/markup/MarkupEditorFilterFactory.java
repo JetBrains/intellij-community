@@ -27,6 +27,7 @@ public class MarkupEditorFilterFactory {
 
   public static MarkupEditorFilter createNotFilter(final MarkupEditorFilter filter) {
     return new MarkupEditorFilter() {
+      @Override
       public boolean avaliableIn(Editor editor) {
         return !filter.avaliableIn(editor);
       }

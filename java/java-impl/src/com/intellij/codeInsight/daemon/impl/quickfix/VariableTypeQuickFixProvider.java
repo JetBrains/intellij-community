@@ -26,6 +26,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiType;
 
 public class VariableTypeQuickFixProvider implements ChangeVariableTypeQuickFixProvider{
+  @Override
   public IntentionAction[] getFixes(PsiVariable variable, PsiType toReturn) {
     return new IntentionAction[]{new VariableTypeFix(variable, toReturn)};
   }

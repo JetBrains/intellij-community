@@ -48,6 +48,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     super(Constants.DOC_PARAMETER_REF);
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiDocComment comment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
     if (comment == null) return null;
@@ -78,15 +79,18 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
 
     final PsiElement resultReference = reference;
     return new PsiJavaReference() {
+      @Override
       public PsiElement resolve() {
         return resultReference;
       }
 
+      @Override
       @NotNull
       public String getCanonicalText() {
         return valueToken.getText();
       }
 
+      @Override
       public PsiElement handleElementRename(String newElementName) {
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(getNode());
         LeafElement newElement = Factory.createSingleLeafElement(JavaDocTokenType.DOC_TAG_VALUE_TOKEN, newElementName, charTableByTree, getManager());
@@ -94,6 +98,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return PsiDocParamRef.this;
       }
 
+      @Override
       public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         if (isReferenceTo(element)) return PsiDocParamRef.this;
         if(!(element instanceof PsiParameter)) {
@@ -102,6 +107,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return handleElementRename(((PsiParameter) element).getName());
       }
 
+      @Override
       public boolean isReferenceTo(PsiElement element) {
         if (!(element instanceof PsiNamedElement)) return false;
         PsiNamedElement namedElement = (PsiNamedElement)element;
@@ -109,6 +115,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return getManager().areElementsEquivalent(resolve(), element);
       }
 
+      @Override
       @NotNull
       public PsiElement[] getVariants() {
         final PsiElement firstChild = getFirstChild();
@@ -138,19 +145,23 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return filtered.toArray(new PsiElement[filtered.size()]);
       }
 
+      @Override
       public boolean isSoft(){
         return false;
       }
 
+      @Override
       public TextRange getRangeInElement() {
         final int startOffsetInParent = valueToken.getPsi().getStartOffsetInParent();
         return new TextRange(startOffsetInParent, startOffsetInParent + valueToken.getTextLength());
       }
 
+      @Override
       public PsiElement getElement() {
         return PsiDocParamRef.this;
       }
 
+      @Override
       public void processVariants(PsiScopeProcessor processor) {
         for (final PsiElement element : getVariants()) {
           if (!processor.execute(element, ResolveState.initial())) {
@@ -159,11 +170,13 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         }
       }
 
+      @Override
       @NotNull
       public JavaResolveResult advancedResolve(boolean incompleteCode) {
         return resultReference == null ? JavaResolveResult.EMPTY : new CandidateInfo(resultReference, PsiSubstitutor.EMPTY);
       }
 
+      @Override
       @NotNull
       public JavaResolveResult[] multiResolve(boolean incompleteCode) {
         return resultReference == null
@@ -173,6 +186,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     };
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocTagValue(this);

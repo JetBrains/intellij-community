@@ -31,6 +31,7 @@ import java.util.Map;
  */
 public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
   
+  @Override
   @NotNull
   public final Map<IdIndexEntry,Integer> map(final FileContent inputData) {
     final IdDataConsumer consumer = new IdDataConsumer();
@@ -52,14 +53,17 @@ public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
       myIndexDataConsumer = indexDataConsumer;
     }
     
+    @Override
     public void addOccurrence(final CharSequence charSequence, final int start, final int end, final int occurrenceMask) {
       myIndexDataConsumer.addOccurrence(charSequence, start, end, occurrenceMask);
     }
 
+    @Override
     public void incTodoOccurrence(final IndexPattern pattern) {
       // empty
     }
   
+    @Override
     public boolean canConsumeTodoOccurrences() {
       return false;
     }

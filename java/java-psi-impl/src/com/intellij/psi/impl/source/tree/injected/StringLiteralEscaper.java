@@ -32,6 +32,7 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
     super(host);
   }
 
+  @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     ProperTextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
@@ -39,12 +40,14 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
     return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets);
   }
 
+  @Override
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
     if (result == -1) return -1;
     return (result <= rangeInsideHost.getLength() ? result : rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
   }
 
+  @Override
   public boolean isOneLine() {
     return true;
   }

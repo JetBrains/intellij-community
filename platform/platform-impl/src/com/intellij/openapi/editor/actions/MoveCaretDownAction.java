@@ -35,10 +35,12 @@ public class MoveCaretDownAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return !editor.isOneLineMode();
     }

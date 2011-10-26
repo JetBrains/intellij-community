@@ -40,28 +40,34 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     myProject = project;
   }
 
+  @Override
   public int getIndentSize(final FileType fileType) {
     return CodeStyleSettingsManager.getSettings(myProject).getIndentSize(fileType);
   }
 
+  @Override
   @Nullable
   public String getLineIndent(@NotNull final Document document, int offset) {
     if (myProject == null) return null;
     return CodeStyleManager.getInstance(myProject).getLineIndent(document, offset);
   }
 
+  @Override
   public String getLineSeparator() {
     return CodeStyleSettingsManager.getSettings(myProject).getLineSeparator();
   }
 
+  @Override
   public boolean projectUsesOwnSettings() {
     return myProject != null && CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS;
   }
 
+  @Override
   public boolean isUnsuitableCodeStyleConfigurable(final Configurable c) {
     return false;
   }
 
+  @Override
   public int getRightMargin() {
     return CodeStyleSettingsManager.getSettings(myProject).RIGHT_MARGIN;
   }
@@ -71,14 +77,17 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return CodeStyleSettingsManager.getSettings(myProject).WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
+  @Override
   public int getTabSize(final FileType fileType) {
     return CodeStyleSettingsManager.getSettings(myProject).getTabSize(fileType);
   }
 
+  @Override
   public boolean isSmartTabs(final FileType fileType) {
     return CodeStyleSettingsManager.getSettings(myProject).isSmartTabs(fileType);
   }
 
+  @Override
   public boolean useTabCharacter(final FileType fileType) {
     return CodeStyleSettingsManager.getSettings(myProject).useTabCharacter(fileType);
   }

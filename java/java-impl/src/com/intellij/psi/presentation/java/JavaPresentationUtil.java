@@ -33,6 +33,7 @@ public class JavaPresentationUtil {
 
   public static ColoredItemPresentation getMethodPresentation(final PsiMethod psiMethod) {
     return new ColoredItemPresentation() {
+      @Override
       public String getPresentableText() {
         return PsiFormatUtil.formatMethod(
           psiMethod,
@@ -49,10 +50,12 @@ public class JavaPresentationUtil {
         return null;
       }
 
+      @Override
       public String getLocationString() {
         return getJavaSymbolContainerText(psiMethod);
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return psiMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY);
       }
@@ -61,6 +64,7 @@ public class JavaPresentationUtil {
 
   public static ItemPresentation getFieldPresentation(final PsiField psiField) {
     return new ColoredItemPresentation() {
+      @Override
       public String getPresentableText() {
         return psiField.getName();
       }
@@ -73,10 +77,12 @@ public class JavaPresentationUtil {
         return null;
       }
 
+      @Override
       public String getLocationString() {
         return getJavaSymbolContainerText(psiField);
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return psiField.getIcon(Iconable.ICON_FLAG_VISIBILITY);
       }

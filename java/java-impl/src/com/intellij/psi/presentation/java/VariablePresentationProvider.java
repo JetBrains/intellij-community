@@ -33,14 +33,17 @@ public class VariablePresentationProvider<T extends PsiVariable & NavigationItem
   @Override
   public ItemPresentation getPresentation(final T variable) {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
       }
 
+      @Override
       public String getLocationString() {
         return "";
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return variable.getIcon(Iconable.ICON_FLAG_OPEN);
       }

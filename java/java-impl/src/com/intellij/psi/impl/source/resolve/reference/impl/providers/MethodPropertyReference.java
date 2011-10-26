@@ -81,12 +81,14 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     return JspSpiUtil.resolveMethodPropertyReference(this, resolveClass(), myReadable);
   }
 
 
+  @Override
   public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
     String newElementName = PropertyUtil.getPropertyName(_newElementName);
     if (newElementName == null) newElementName = _newElementName;
@@ -94,11 +96,13 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
     return super.handleElementRename(newElementName);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return JspSpiUtil.getMethodPropertyReferenceVariants(this, resolveClass(), myReadable);
   }
 
+  @Override
   public boolean isSoft() {
     return true;
   }

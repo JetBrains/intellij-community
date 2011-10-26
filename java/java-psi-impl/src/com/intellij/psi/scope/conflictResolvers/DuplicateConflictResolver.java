@@ -38,6 +38,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
   private DuplicateConflictResolver() {
   }
 
+  @Override
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     final Map<Object, CandidateInfo> uniqueItems = new HashMap<Object, CandidateInfo>();
     for (CandidateInfo info : conflicts) {

@@ -45,6 +45,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   private byte[] myContent;
   private CharSequence myContentAsText;
 
+  @Override
   public Project getProject() {
     return getUserData(IndexingDataKeys.PROJECT);
   }

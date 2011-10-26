@@ -39,10 +39,12 @@ public class MethodElement extends CompositeElement implements Constants {
     super(type);
   }
 
+  @Override
   public int getTextOffset() {
     return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (first == last && first.getElementType() == ElementType.CODE_BLOCK){
       ASTNode semicolon = findChildByRole(ChildRole.CLOSING_SEMICOLON);
@@ -60,6 +62,7 @@ public class MethodElement extends CompositeElement implements Constants {
     return psiClass != null ? ChangeUtil.copyElement(this, psiClass.getTypeParameterList(), table) : super.copyElement();
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == CODE_BLOCK){
       final ASTNode prevWS = TreeUtil.prevLeaf(child);
@@ -76,6 +79,7 @@ public class MethodElement extends CompositeElement implements Constants {
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -111,6 +115,7 @@ public class MethodElement extends CompositeElement implements Constants {
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();

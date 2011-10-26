@@ -31,49 +31,59 @@ import org.jetbrains.annotations.NotNull;
 
 class EmptyShortNamesCacheImpl extends PsiShortNamesCache {
 
+  @Override
   @NotNull
   public PsiClass[] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllClassNames() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public void getAllClassNames(@NotNull HashSet<String> dest) {
     // do nothing
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllMethodNames() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public void getAllMethodNames(@NotNull HashSet<String> set) {
     // do nothing
   }
 
+  @Override
   @NotNull
   public PsiField[] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllFieldNames() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public void getAllFieldNames(@NotNull HashSet<String> set) {
     // do nothing
   }

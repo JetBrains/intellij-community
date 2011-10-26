@@ -53,11 +53,13 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     myFileType = viewProvider.getVirtualFile().getFileType();
   }
 
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
   }
 
+  @Override
   public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
     return true;
   }
@@ -66,11 +68,13 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return myContents;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return !isCopy() ? getVirtualFile().getName() : myName;
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
 
@@ -82,15 +86,18 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return PsiFileImplUtil.setName(this, name);
   }
 
+  @Override
   public void checkSetName(String name) throws IncorrectOperationException {
     if (isCopy()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public PsiDirectory getContainingDirectory() {
     VirtualFile parentFile = getVirtualFile().getParent();
     if (parentFile == null) return null;
@@ -102,73 +109,90 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return getContainingDirectory();
   }
 
+  @Override
   public long getModificationStamp() {
     return myModificationStamp;
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return Language.ANY;
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return this;
   }
 
+  @Override
   public TextRange getTextRange() {
     return null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return -1;
   }
 
+  @Override
   public int getTextLength() {
     return -1;
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     return null;
   }
 
+  @Override
   public int getTextOffset() {
     return -1;
   }
 
+  @Override
   public String getText() {
     return ""; // TODO[max] throw new UnsupportedOperationException()
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO[max] throw new UnsupportedOperationException()
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return false;
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return false;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitBinaryFile(this);
   }
 
+  @Override
   public PsiElement copy() {
     PsiBinaryFileImpl clone = (PsiBinaryFileImpl)clone();
     clone.myName = getName();
@@ -184,27 +208,33 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return myName != null;
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException{
     checkDelete();
     PsiFileImplUtil.doDelete(this);
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException{
     if (isCopy()){
       throw new IncorrectOperationException();
@@ -212,23 +242,28 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     return null;
   }
 
+  @Override
   public boolean isValid() {
     if (isCopy()) return true; // "dummy" file
     return getVirtualFile().isValid() && !myManager.getProject().isDisposed() && myManager.getFileManager().findFile(getVirtualFile()) == this;
   }
 
+  @Override
   public boolean isWritable() {
     return isCopy() || getVirtualFile().isWritable();
   }
 
+  @Override
   public boolean isPhysical() {
     return !isCopy();
   }
 
+  @Override
   @NotNull
   public PsiFile getOriginalFile() {
     return this;
@@ -239,25 +274,30 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return "PsiBinaryFile:" + getName();
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return myFileType;
   }
 
+  @Override
   @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }
 
+  @Override
   public FileASTNode getNode() {
     return null; // TODO[max] throw new UnsupportedOperationException()
   }
 
+  @Override
   public void subtreeChanged() {
   }
 
@@ -266,6 +306,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return FileContextUtil.getFileContext(this);
   }
 
+  @Override
   public void putInfo(Map<String, String> info) {
     info.put("fileName", getName());
     info.put("fileType", getFileType().getName());

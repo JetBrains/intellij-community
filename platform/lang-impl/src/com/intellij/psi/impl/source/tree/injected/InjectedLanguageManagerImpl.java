@@ -77,19 +77,23 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
     final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME);
     multiPoint.addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
+      @Override
       public void extensionAdded(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         registerMultiHostInjector(injector);
       }
 
+      @Override
       public void extensionRemoved(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         unregisterMultiHostInjector(injector);
       }
     },this);
     final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
+      @Override
       public void extensionAdded(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         psiManagerInjectorsChanged();
       }
 
+      @Override
       public void extensionRemoved(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         psiManagerInjectorsChanged();
       }
@@ -140,6 +144,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         final DocumentWindow[] stillInjectedDocument = {null};
         // it is here where the reparse happens and old file contents replaced
         InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
             PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
@@ -178,6 +183,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         @Override
         public void run() {
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+            @Override
             public void run() {
               commitRunnable.compute();
             }
@@ -204,6 +210,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
   }
 
+  @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
@@ -216,6 +223,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return null;
   }
 
+  @Override
   @NotNull
   public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
     ProperTextRange.assertProperRange(injectedTextRange);
@@ -226,6 +234,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     return documentWindow.injectedToHost(injectedTextRange);
   }
+  @Override
   public int injectedToHost(@NotNull PsiElement element, int offset) {
     PsiFile file = element.getContainingFile();
     if (file == null) return offset;
@@ -238,6 +247,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   private final ConcurrentMap<Class, MultiHostInjector[]> injectors = new ConcurrentHashMap<Class, MultiHostInjector[]>();
   private final ClassMapCachingNulls<MultiHostInjector> cachedInjectors = new ClassMapCachingNulls<MultiHostInjector>(injectors, new MultiHostInjector[0]);
 
+  @Override
   public void registerMultiHostInjector(@NotNull MultiHostInjector injector) {
     for (Class<? extends PsiElement> place : injector.elementsToInjectIn()) {
       LOG.assertTrue(place != null, injector);
@@ -255,6 +265,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     cachedInjectors.clearCache();
   }
 
+  @Override
   public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     boolean removed = false;
     Iterator<Map.Entry<Class,MultiHostInjector[]>> iterator = injectors.entrySet().iterator();
@@ -279,6 +290,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
 
   static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
+  @Override
   public String getUnescapedText(@NotNull final PsiElement injectedNode) {
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
     // gather text from (patched) leaves
@@ -305,6 +317,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
    *  @param rangeToEdit range in encoded(raw) PSI
    *  @return list of ranges in encoded (raw) PSI
    */
+  @Override
   @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
@@ -349,6 +362,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return count == 0 ? Collections.<TextRange>emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
   }
 
+  @Override
   public boolean isInjectedFragment(final PsiFile file) {
     return file.getViewProvider() instanceof InjectedFileViewProvider;
   }
@@ -411,9 +425,11 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {
+    @Override
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
       final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
+        @Override
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix) {
           ProperTextRange.assertProperRange(rangeInsideHost);
           injectionPlacesRegistrar
@@ -427,6 +443,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
 
+    @Override
     @NotNull
     public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
       return Arrays.asList(PsiLanguageInjectionHost.class);

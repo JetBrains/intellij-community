@@ -54,6 +54,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
     return super.getResolveScope();
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return JavaFileType.INSTANCE;

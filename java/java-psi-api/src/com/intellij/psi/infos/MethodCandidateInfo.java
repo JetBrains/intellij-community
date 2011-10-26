@@ -81,6 +81,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myApplicabilityLevel;
   }
 
+  @Override
   public PsiSubstitutor getSubstitutor() {
     if (myCalcedSubstitutor == null) {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
@@ -108,10 +109,12 @@ public class MethodCandidateInfo extends CandidateInfo{
     return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, myArgumentList.getParent());
   }
 
+  @Override
   public boolean isValidResult(){
     return super.isValidResult() && isApplicable();
   }
 
+  @Override
   public PsiMethod getElement(){
     return (PsiMethod)super.getElement();
   }

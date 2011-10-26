@@ -33,6 +33,7 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
 
   static {
     JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+      @Override
       public void run() {
         processQueue();
       }

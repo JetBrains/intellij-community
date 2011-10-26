@@ -41,6 +41,7 @@ public final class MethodTextOccurrenceProcessor extends RequestResultProcessor 
     myStrictSignatureSearch = strictSignatureSearch;
   }
 
+  @Override
   public boolean processTextOccurrence(PsiElement element, int offsetInElement, final Processor<PsiReference> consumer) {
     for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {

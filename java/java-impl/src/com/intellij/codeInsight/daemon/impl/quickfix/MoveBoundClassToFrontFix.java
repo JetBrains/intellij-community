@@ -38,11 +38,13 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
                                     HighlightUtil.formatClass(aClass));
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.class.in.extend.list.family");

@@ -33,6 +33,7 @@ class ExceptionTagInfo implements JavadocTagInfo {
     myName = name;
   }
 
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     if (value == null) return JavaErrorMessages.message("javadoc.exception.tag.exception.class.expected");
     final PsiElement firstChild = value.getFirstChild();
@@ -88,23 +89,28 @@ class ExceptionTagInfo implements JavadocTagInfo {
     return JavaErrorMessages.message("javadoc.exception.tag.exception.is.not.thrown", exceptionClass.getName(), method.getName());
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     if (!(element instanceof PsiMethod)) return false;
     return true;
   }
 
+  @Override
   public boolean isInline() {
     return false;
   }

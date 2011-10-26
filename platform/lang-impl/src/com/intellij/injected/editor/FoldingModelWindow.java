@@ -44,24 +44,29 @@ public class FoldingModelWindow implements FoldingModelEx{
     myEditorWindow = editorWindow;
   }
 
+  @Override
   public void setFoldingEnabled(boolean isEnabled) {
     myDelegate.setFoldingEnabled(isEnabled);
   }
 
+  @Override
   public boolean isFoldingEnabled() {
     return myDelegate.isFoldingEnabled();
   }
 
+  @Override
   public FoldRegion getFoldingPlaceholderAt(Point p) {
     return myDelegate.getFoldingPlaceholderAt(p);
   }
 
+  @Override
   public boolean intersectsRegion(int startOffset, int endOffset) {
     int hostStart = myDocumentWindow.injectedToHost(startOffset);
     int hostEnd = myDocumentWindow.injectedToHost(endOffset);
     return myDelegate.intersectsRegion(hostStart, hostEnd);
   }
 
+  @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null, false);
     if (region == null) return null;
@@ -73,14 +78,17 @@ public class FoldingModelWindow implements FoldingModelEx{
     return region;
   }
 
+  @Override
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
     return myDelegate.addFoldRegion(((FoldingRegionWindow)region).getDelegate());
   }
 
+  @Override
   public void removeFoldRegion(@NotNull FoldRegion region) {
     myDelegate.removeFoldRegion(((FoldingRegionWindow)region).getDelegate());
   }
 
+  @Override
   @NotNull
   public FoldRegion[] getAllFoldRegions() {
     FoldRegion[] all = myDelegate.getAllFoldRegions();
@@ -94,41 +102,50 @@ public class FoldingModelWindow implements FoldingModelEx{
     return result.toArray(new FoldRegion[result.size()]);
   }
 
+  @Override
   public boolean isOffsetCollapsed(int offset) {
     return myDelegate.isOffsetCollapsed(myDocumentWindow.injectedToHost(offset));
   }
 
+  @Override
   public FoldRegion getCollapsedRegionAtOffset(int offset) {
     FoldRegion host = myDelegate.getCollapsedRegionAtOffset(myDocumentWindow.injectedToHost(offset));
     return host; //todo convert to window?
   }
 
+  @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation) {
     myDelegate.runBatchFoldingOperation(operation);
   }
 
+  @Override
   public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
     myDelegate.runBatchFoldingOperationDoNotCollapseCaret(operation);
   }
 
+  @Override
   public FoldRegion fetchOutermost(int offset) {
     FoldRegion host = myDelegate.fetchOutermost(myDocumentWindow.injectedToHost(offset));
     return host; //todo convert to window?
   }
 
+  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }
 
+  @Override
   public TextAttributes getPlaceholderAttributes() {
     return myDelegate.getPlaceholderAttributes();
   }
 
+  @Override
   public FoldRegion[] fetchTopLevel() {
     return FoldRegion.EMPTY_ARRAY; //todo implement
   }
 
   private static final Key<FoldingRegionWindow> FOLD_REGION_WINDOW = Key.create("FOLD_REGION_WINDOW");
+  @Override
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
     TextRange hostRange = myDocumentWindow.injectedToHost(new TextRange(startOffset, endOffset));
     if (hostRange.getLength() < 2) return null;

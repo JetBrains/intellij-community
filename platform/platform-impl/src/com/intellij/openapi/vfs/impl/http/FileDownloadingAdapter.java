@@ -22,21 +22,27 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class FileDownloadingAdapter implements FileDownloadingListener {
+  @Override
   public void fileDownloaded(final VirtualFile localFile) {
   }
 
+  @Override
   public void errorOccurred(@NotNull final String errorMessage) {
   }
 
+  @Override
   public void downloadingStarted() {
   }
 
+  @Override
   public void downloadingCancelled() {
   }
 
+  @Override
   public void progressMessageChanged(final boolean indeterminate, @NotNull final String message) {
   }
 
+  @Override
   public void progressFractionChanged(final double fraction) {
   }
 }

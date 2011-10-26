@@ -55,10 +55,12 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
            myPsiElement != null && PsiSearchHelper.SERVICE.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement)instanceof LocalSearchScope;
   }
 
+  @Override
   protected JPanel createFindWhatPanel() {
     return null;
   }
 
+  @Override
   public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");

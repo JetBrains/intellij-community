@@ -49,6 +49,7 @@ public abstract class GenericReference extends CachingReference {
     }
   }
 
+  @Override
   @Nullable
   public PsiElement handleElementRename(String string) throws IncorrectOperationException {
     final PsiElement element = getElement();

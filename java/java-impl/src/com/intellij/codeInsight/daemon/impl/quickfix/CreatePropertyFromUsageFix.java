@@ -61,16 +61,19 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
   private final PsiMethodCallExpression myMethodCall;
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.property.from.usage.family");
   }
 
+  @Override
   protected PsiElement getElement() {
     if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
     return myMethodCall;
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
@@ -123,14 +126,17 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       myDefaultFieldName = field.getName();
     }
 
+    @Override
     public Result calculateResult(ExpressionContext context) {
       return new TextResult(myDefaultFieldName);
     }
 
+    @Override
     public Result calculateQuickResult(ExpressionContext context) {
       return new TextResult(myDefaultFieldName);
     }
 
+    @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       set.add(JavaLookupElementBuilder.forField(myField).setTypeText(myField.getType().getPresentableText()));
@@ -151,6 +157,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     }
   }
 
+  @Override
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     List<PsiClass> all = super.getTargetClasses(element);
@@ -163,6 +170,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     return nonInterfaces;
   }
 
+  @Override
   protected void invokeImpl(PsiClass targetClass) {
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
@@ -250,8 +258,10 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
     final boolean isStatic1 = isStatic;
     startTemplate(editor, template, project, new TemplateEditingAdapter() {
+      @Override
       public void beforeTemplateFinished(final TemplateState state, Template template) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
             if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
@@ -287,6 +297,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
         final PsiMethod generatedMethod = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
         if (generatedMethod != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               CodeStyleManager.getInstance(project).reformat(generatedMethod);
             }
@@ -308,6 +319,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     return null;
   }
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element;
     return methodCall.getMethodExpression().resolve() != null;

@@ -51,6 +51,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myRuleIndex = ruleIndex;
   }
 
+  @Override
   protected void updateNotify() {
     myGroup.update();
   }
@@ -89,6 +90,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return (UsageViewTreeModelBuilder)myTreeModel;
   }
 
+  @Override
   public void removeAllChildren() {
     synchronized (lock) {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -167,6 +169,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
     if (!getBuilder().isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));
           incrementUsageCount();
@@ -222,6 +225,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
+  @Override
   public String tree2string(int indent, String lineSeparator) {
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
@@ -244,10 +248,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return result.toString();
   }
 
+  @Override
   protected boolean isDataValid() {
     return myGroup == null || myGroup.isValid();
   }
 
+  @Override
   protected boolean isDataReadOnly() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
@@ -276,6 +282,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       return 0;
     }
 
+    @Override
     public int compare(DefaultMutableTreeNode n1, DefaultMutableTreeNode n2) {
       int classIdx1 = getClassIndex(n1);
       int classIdx2 = getClassIndex(n2);
@@ -286,6 +293,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
+  @Override
   public int compareTo(GroupNode groupNode) {
     if (myRuleIndex == groupNode.myRuleIndex) {
       return myGroup.compareTo(groupNode.myGroup);
@@ -302,21 +310,25 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return myRecursiveUsageCount;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (myGroup != null) {
       myGroup.navigate(requestFocus);
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return myGroup != null && myGroup.canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myGroup != null && myGroup.canNavigateToSource();
   }
 
 
+  @Override
   protected boolean isDataExcluded() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
@@ -326,6 +338,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return true;
   }
 
+  @Override
   protected String getText(UsageView view) {
     return myGroup.getText(view);
   }

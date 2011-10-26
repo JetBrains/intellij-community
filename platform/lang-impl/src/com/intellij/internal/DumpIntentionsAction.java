@@ -46,6 +46,7 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
     super("Dump Intentions");
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final VirtualFile file =
       FileChooser.chooseFile(e.getData(PlatformDataKeys.PROJECT), FileChooserDescriptorFactory.createSingleFolderDescriptor(), null);
@@ -95,6 +96,7 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
     return element;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
   }

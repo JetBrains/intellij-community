@@ -33,6 +33,7 @@ public class VariablesNotProcessor extends VariablesProcessor{
     this(var, staticSensitive, new SmartList<PsiVariable>());
   }
 
+  @Override
   protected boolean check(PsiVariable var, ResolveState state) {
     String name = var.getName();
     return name != null && name.equals(myVariable.getName()) && !var.equals(myVariable);

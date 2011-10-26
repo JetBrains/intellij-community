@@ -26,6 +26,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tags[0].delete();
       }
@@ -51,6 +52,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tags[1].delete();
       }
@@ -77,6 +79,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tags[1].delete();
       }

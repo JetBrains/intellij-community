@@ -41,15 +41,18 @@ public class PsiLabelReference implements PsiReference{
     myIdentifier = identifier;
   }
 
+  @Override
   public PsiElement getElement(){
     return myStatement;
   }
 
+  @Override
   public TextRange getRangeInElement(){
     final int parent = myIdentifier.getStartOffsetInParent();
     return new TextRange(parent, myIdentifier.getTextLength() + parent);
   }
 
+    @Override
     public PsiElement resolve(){
       final String label = myIdentifier.getText();
       if(label == null) return null;
@@ -65,16 +68,19 @@ public class PsiLabelReference implements PsiReference{
       return null;
     }
 
+    @Override
     @NotNull
     public String getCanonicalText(){
       return getElement().getText();
     }
 
+    @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
       myIdentifier = (PsiIdentifier) PsiImplUtil.setName(myIdentifier, newElementName);
       return myIdentifier;
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
       if(element instanceof PsiLabeledStatement){
         myIdentifier = (PsiIdentifier) PsiImplUtil.setName(myIdentifier, ((PsiLabeledStatement)element).getName());
@@ -83,10 +89,12 @@ public class PsiLabelReference implements PsiReference{
       throw new IncorrectOperationException("Can't bind not to labeled statement");
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element){
       return resolve() == element;
     }
 
+    @Override
     @NotNull
     public Object[] getVariants(){
       final List result = new ArrayList();
@@ -100,6 +108,7 @@ public class PsiLabelReference implements PsiReference{
       return result.toArray();
     }
 
+  @Override
   public boolean isSoft(){
     return false;
   }

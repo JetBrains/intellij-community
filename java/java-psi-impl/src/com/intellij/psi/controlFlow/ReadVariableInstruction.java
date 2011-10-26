@@ -28,6 +28,7 @@ public class ReadVariableInstruction extends SimpleInstruction {
     return "READ " + variable.getName();
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReadVariableInstruction(this, offset, nextOffset);
   }

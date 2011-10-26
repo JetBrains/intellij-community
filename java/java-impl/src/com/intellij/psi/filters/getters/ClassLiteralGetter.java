@@ -37,6 +37,7 @@ public class ClassLiteralGetter {
                                     @NotNull Consumer<LookupElement> result, final PrefixMatcher matcher) {
 
     final Condition<String> shortNameCondition = new Condition<String>() {
+      @Override
       public boolean value(String s) {
         return matcher.prefixMatches(s);
       }

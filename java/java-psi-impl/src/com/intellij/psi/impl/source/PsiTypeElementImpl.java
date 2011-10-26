@@ -56,12 +56,14 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     super(type);
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCachedType = null;
     myCachedDetachedType = null;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeElement(this);
@@ -75,6 +77,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return "PsiTypeElement:" + getText();
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     PsiType cachedType = myCachedType;
@@ -186,11 +189,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   private static final Function<PsiAnnotation, String> ANNOTATION_TEXT = new Function<PsiAnnotation, String>() {
+    @Override
     public String fun(PsiAnnotation psiAnnotation) {
       return psiAnnotation.getText();
     }
   };
 
+  @Override
   public PsiType getTypeNoResolve(@NotNull PsiElement context) {
     PsiFile file = getContainingFile();
     String text;
@@ -249,6 +254,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return temp;
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
     TreeElement firstChildNode = getFirstChildNode();
     if (firstChildNode == null) return null;
@@ -260,6 +266,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     }
   }
 
+  @Override
   public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
     PsiElement next = PsiTreeUtil.skipSiblingsForward(annotation, PsiComment.class, PsiWhiteSpace.class);
     if (next != null && next.getNode().getElementType() == JavaTokenType.LBRACKET) {
@@ -275,11 +282,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     return true;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     List<PsiAnnotation> result = null;
@@ -296,6 +305,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return result== null ?  PsiAnnotation.EMPTY_ARRAY : toAnnotationsArray(result);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     PsiAnnotation[] annotations = getAnnotations();
@@ -306,10 +316,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return toAnnotationsArray(list);
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new UnsupportedOperationException();//todo

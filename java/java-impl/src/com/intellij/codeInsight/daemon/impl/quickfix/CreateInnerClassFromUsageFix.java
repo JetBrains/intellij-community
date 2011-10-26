@@ -46,10 +46,12 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     super(kind, refElement);
   }
 
+  @Override
   public String getText(String varName) {
     return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement element = getRefElement();
     assert element != null;
@@ -64,6 +66,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
   }
@@ -99,13 +102,16 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     renderer.installSpeedSearch(builder);
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         int index = list.getSelectedIndex();
         if (index < 0) return;
         final PsiClass aClass = (PsiClass)list.getSelectedValue();
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 try {
                   doInvoke(aClass, superClassName);

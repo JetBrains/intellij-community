@@ -35,6 +35,7 @@ public class MoveCaretRightWithSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getCaretModel().moveCaretRelatively(1, 0, true, editor.isColumnMode(), true);
     }

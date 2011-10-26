@@ -133,12 +133,14 @@ public class LoadingOrder {
     }
 
     DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
+      @Override
       public Collection<Orderable> getNodes() {
         final ArrayList<Orderable> list = new ArrayList<Orderable>(Arrays.asList(orderables));
         Collections.reverse(list);
         return list;
       }
 
+      @Override
       public Iterator<Orderable> getIn(final Orderable n) {
         final LoadingOrder order = cachedMap.get(n);
 

@@ -27,10 +27,12 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
     super(type, text);
   }
 
+  @Override
   public IElementType getTokenType() {
     return getElementType();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitComment(this);
   }
@@ -44,15 +46,18 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
     return true;
   }
 
+  @Override
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     return (PsiCommentImpl)replaceWithText(text);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiComment.class);
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<PsiCommentImpl> createLiteralTextEscaper() {
     return new CommentLiteralEscaper(this);

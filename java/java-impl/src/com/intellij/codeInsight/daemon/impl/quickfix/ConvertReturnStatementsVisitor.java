@@ -37,6 +37,7 @@ public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
     myDefaultValue = PsiTypesUtil.getDefaultValueOfType(targetType);
   }
 
+  @Override
   public void visit(final List<PsiReturnStatement> returnStatements) throws IncorrectOperationException {
     final PsiReturnStatement statement = replaceReturnStatements(returnStatements);
     if (statement != null) {

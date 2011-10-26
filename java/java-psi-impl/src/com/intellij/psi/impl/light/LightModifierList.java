@@ -60,42 +60,51 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     myModifiers.clear();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return myModifiers.contains(name);
   }
 
+  @Override
   public boolean hasExplicitModifier(@NotNull String name) {
     return myModifiers.contains(name);
   }
 
+  @Override
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     //todo
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitModifierList(this);

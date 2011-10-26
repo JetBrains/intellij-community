@@ -93,6 +93,7 @@ public abstract class FindUsagesHandler {
 
   public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull final FindUsagesOptions options) {
     final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
+      @Override
       public boolean processInReadAction(final PsiReference ref) {
         TextRange rangeInElement = ref.getRangeInElement();
         return processor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
@@ -110,6 +111,7 @@ public abstract class FindUsagesHandler {
     if (searchText) {
       if (options.fastTrack != null) {
         options.fastTrack.searchCustom(new Processor<Processor<PsiReference>>() {
+          @Override
           public boolean process(Processor<PsiReference> consumer) {
             processUsagesInText(element, processor, (GlobalSearchScope)scope);
             return true;
@@ -127,12 +129,14 @@ public abstract class FindUsagesHandler {
     Collection<String> stringToSearch = getStringsToSearch(element);
     if (stringToSearch == null) return;
     final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+      @Override
       public TextRange compute() {
         if (!element.isValid()) return null;
         return element.getTextRange();
       }
     });
     TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
+      @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         if (elementTextRange != null
             && usage.getContainingFile() == element.getContainingFile()

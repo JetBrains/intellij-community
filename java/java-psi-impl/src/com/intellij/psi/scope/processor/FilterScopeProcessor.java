@@ -55,6 +55,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
     myResults = container;
   }
 
+  @Override
   public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
     if (myProcessor != null) {
       myProcessor.handleEvent(event, associated);
@@ -64,6 +65,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
     }
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
     if (myFilter.isAcceptable(element, myCurrentDeclarationHolder)) {
       if (myProcessor != null) {

@@ -31,6 +31,7 @@ public class JavaWordCompletionFilter implements WordCompletionElementFilter {
   private static final TokenSet ENABLED_TOKENS = TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
                                                                  JavaDocTokenType.DOC_COMMENT_DATA, JavaTokenType.STRING_LITERAL);
 
+  @Override
   public boolean isWordCompletionEnabledIn(final IElementType element) {
     return ENABLED_TOKENS.contains(element);
   }

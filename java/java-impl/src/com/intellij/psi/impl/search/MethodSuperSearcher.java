@@ -18,6 +18,7 @@ import java.util.List;
 public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.MethodSuperSearcher");
 
+  @Override
   public boolean execute(@NotNull final SuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<MethodSignatureBackedByPsiMethod> consumer) {
     final PsiClass parentClass = queryParameters.getPsiClass();
     final PsiMethod method = queryParameters.getMethod();

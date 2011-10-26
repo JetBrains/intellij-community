@@ -30,6 +30,7 @@ public class CommonReferenceProviderTypesImpl extends CommonReferenceProviderTyp
     myProvider = new JavaClassReferenceProvider();
   }
 
+  @Override
   public PsiReferenceProvider getClassReferenceProvider() {
     return myProvider;
   }

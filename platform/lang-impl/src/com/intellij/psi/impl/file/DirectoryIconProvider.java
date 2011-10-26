@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DirectoryIconProvider extends IconProvider implements DumbAware {
+  @Override
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)element;

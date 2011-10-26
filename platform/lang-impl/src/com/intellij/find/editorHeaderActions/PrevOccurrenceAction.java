@@ -37,10 +37,12 @@ public class PrevOccurrenceAction extends EditorHeaderAction implements DumbAwar
     registerShortcutsForComponent(shortcuts, editorTextField.get(), this);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     getEditorSearchComponent().searchBackward();
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(getEditorSearchComponent().hasMatches());
   }

@@ -29,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author peter
  */
 public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment> {
+  @Override
   public PsiComment handleContentChange(PsiComment psiComment, TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = psiComment.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());

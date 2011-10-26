@@ -73,14 +73,17 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myReturnType = returnType;
   }
 
+  @Override
   public boolean isConstructor() {
     return (myFlags & CONSTRUCTOR) != 0;
   }
 
+  @Override
   public boolean isVarArgs() {
     return (myFlags & VARARGS) != 0;
   }
 
+  @Override
   public boolean isAnnotationMethod() {
     return isAnnotationMethod(myFlags);
   }
@@ -89,24 +92,29 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     return (flags & ANNOTATION) != 0;
   }
 
+  @Override
   public String getDefaultValueText() {
     return StringRef.toString(myDefaultValueText);
   }
 
+  @Override
   @NotNull
   public TypeInfo getReturnTypeText(boolean doResolve) {
     if (!doResolve) return myReturnType;
     return PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType);
   }
 
+  @Override
   public boolean isDeprecated() {
     return (myFlags & DEPRECATED) != 0;
   }
 
+  @Override
   public boolean hasDeprecatedAnnotation() {
     return (myFlags & DEPRECATED_ANNOTATION) != 0;
   }
 
+  @Override
   public PsiParameterStub findParameter(final int idx) {
     PsiParameterListStub list = null;
     for (StubElement child : getChildrenStubs()) {
@@ -124,6 +132,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     throw new RuntimeException("No parameter(s) [yet?]");
   }
 
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }

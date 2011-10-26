@@ -35,6 +35,7 @@ import java.util.List;
  * @author peter
  */
 public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingModelBuilder{
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     if (element instanceof PsiFile) {
@@ -50,20 +51,24 @@ public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingM
 
     final PsiFile file = element.getContainingFile();
     return new DocumentBasedFormattingModel(new AbstractBlock(element.getNode(), Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment()) {
+      @Override
       protected List<Block> buildChildren() {
         return Collections.emptyList();
       }
 
+      @Override
       public Spacing getSpacing(final Block child1, final Block child2) {
         return Spacing.getReadOnlySpacing();
       }
 
+      @Override
       public boolean isLeaf() {
         return true;
       }
     }, element.getProject(), settings, file.getFileType(), file);
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(final PsiFile file, final int offset, final ASTNode elementAtOffset) {
     return null;
   }

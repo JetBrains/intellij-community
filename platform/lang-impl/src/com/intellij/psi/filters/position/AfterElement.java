@@ -29,6 +29,7 @@ public class AfterElement extends PositionElementFilter {
     setFilter(filter);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     final PsiElement previous = FilterPositionUtil.searchNonSpaceNonCommentBack((PsiElement) element, true);

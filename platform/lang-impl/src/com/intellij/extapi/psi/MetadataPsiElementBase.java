@@ -28,32 +28,39 @@ public abstract class MetadataPsiElementBase extends PsiElementBase {
     mySourceElement = sourceElement;
   }
 
+  @Override
   public TextRange getTextRange() {
     return mySourceElement != null? mySourceElement.getTextRange() : null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     final PsiElement parent = getParent();
     return (parent == null) ? 0 : getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
   }
 
+  @Override
   public int getTextLength() {
     return mySourceElement.getTextLength();
   }
 
+  @Override
   public int getTextOffset() {
     return mySourceElement.getTextOffset();
   }
 
+  @Override
   public String getText() {
     return mySourceElement.getText();
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return mySourceElement.textToCharArray();
   }
 
+  @Override
   public boolean textContains(char c) {
     return mySourceElement.textContains(c);
   }

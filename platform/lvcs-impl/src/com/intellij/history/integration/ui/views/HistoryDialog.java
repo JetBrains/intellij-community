@@ -26,6 +26,7 @@ import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
@@ -223,7 +224,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     result.add(new RevertAction());
     result.add(new CreatePatchAction());
     result.add(Separator.getInstance());
-    result.add(new HelpAction());
+    result.add(new ContextHelpAction(getHelpId()));
     return result;
   }
 
@@ -374,11 +375,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   //todo
   protected abstract String getHelpId();
-
-  //todo
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(getHelpId());
-  }
 
   protected void revert() {
     revert(myModel.createReverter());
@@ -567,16 +563,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     @Override
     protected boolean isEnabled(T model) {
       return isCreatePatchEnabled();
-    }
-  }
-
-  private class HelpAction extends AnAction {
-    public HelpAction() {
-      super(CommonBundle.getHelpButtonText(), null, IconLoader.getIcon("/actions/help.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      doHelpAction();
     }
   }
 

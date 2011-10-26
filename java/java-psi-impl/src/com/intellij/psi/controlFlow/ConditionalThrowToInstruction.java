@@ -31,6 +31,7 @@ public class ConditionalThrowToInstruction extends ConditionalBranchingInstructi
     return "COND_THROW_TO " + offset;
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitConditionalThrowToInstruction(this, offset, nextOffset);
   }

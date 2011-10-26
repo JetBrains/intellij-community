@@ -33,6 +33,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     super(stub);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
@@ -45,6 +46,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -56,19 +58,23 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
       ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
   }
 
+  @Override
   public PsiExpressionList getArgumentList() {
     return null;
   }
 
+  @Override
   public PsiMethod resolveMethod() {
     return null;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
 
+  @Override
   public PsiEnumConstantInitializer getInitializingClass() {
     return null;
   }
@@ -79,28 +85,34 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     throw new IncorrectOperationException("cannot create initializing class in cls enum constant");
   }
 
+  @Override
   public PsiMethod resolveConstructor() {
     return null;
   }
 
 
+  @Override
   @NotNull
   public PsiType getType() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass());
   }
 
+  @Override
   public PsiTypeElement getTypeElement() {
     return null;
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return null;
   }
 
+  @Override
   public boolean hasInitializer() {
     return true;
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name);
   }

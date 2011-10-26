@@ -33,11 +33,13 @@ public class InstanceofLink<Parent extends PsiElement, Child extends PsiElement,
     myCastTo = castTo;
   }
 
+  @Override
   public CastTo findLinkedChild(@Nullable Parent parent) {
     final Child existing = myDelegate.findLinkedChild(parent);
     return myCastTo.isInstance(existing) ? (CastTo) existing : null;
   }
 
+  @Override
   @NotNull
   public CastTo createChild(@NotNull Parent parent) throws IncorrectOperationException {
     return (CastTo) myDelegate.createChild(parent);

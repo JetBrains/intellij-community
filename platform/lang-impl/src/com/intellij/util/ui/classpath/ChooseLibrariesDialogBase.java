@@ -168,6 +168,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     return component;
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     myBuilder = new SimpleTreeBuilder(myTree, new DefaultTreeModel(new DefaultMutableTreeNode()),
@@ -182,11 +183,13 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
     myTree.setRootVisible(false);
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(final TreeSelectionEvent e) {
         updateOKAction();
       }
     });
     myTree.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() != 2) return;
         if (isOKActionEnabled()) {
@@ -237,6 +240,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     }
   }
 
+  @Override
   protected void dispose() {
     Disposer.dispose(myBuilder);
     super.dispose();
@@ -250,6 +254,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       myElement = element;
     }
 
+    @Override
     public T getElement() {
       return myElement;
     }

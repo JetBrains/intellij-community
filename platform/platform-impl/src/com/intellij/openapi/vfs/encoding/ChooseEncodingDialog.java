@@ -42,13 +42,16 @@ public class ChooseEncodingDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     AbstractListModel model = new AbstractListModel() {
+      @Override
       public int getSize() {
         return myCharsets.length;
       }
 
+      @Override
       public Object getElementAt(int i) {
         return myCharsets[i];
       }
@@ -56,6 +59,7 @@ public class ChooseEncodingDialog extends DialogWrapper {
     myList.setModel(model);
     TreeUIHelper.getInstance().installListSpeedSearch(myList);
     myList.setCellRenderer(new DefaultListCellRenderer(){
+      @Override
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
@@ -75,10 +79,12 @@ public class ChooseEncodingDialog extends DialogWrapper {
     return (Charset)myList.getSelectedValue();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "#com.intellij.openapi.vfs.encoding.ChooseEncodingDialog";

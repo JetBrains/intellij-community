@@ -21,10 +21,12 @@ public class StartNewLineBeforeAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return getHandler(IdeActions.ACTION_EDITOR_ENTER).isEnabled(editor, dataContext);
     }
 
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       editor.getSelectionModel().removeSelection();
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();

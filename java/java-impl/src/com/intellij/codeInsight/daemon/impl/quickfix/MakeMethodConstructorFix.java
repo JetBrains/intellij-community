@@ -35,25 +35,30 @@ public class MakeMethodConstructorFix implements IntentionAction {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("convert.method.to.constructor");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod.isValid() && myMethod.getReturnTypeElement() != null && myMethod.getManager().isInProject(myMethod);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myMethod)) return;
     myMethod.getReturnTypeElement().delete();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

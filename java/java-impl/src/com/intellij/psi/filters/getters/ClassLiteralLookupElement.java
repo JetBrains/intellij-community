@@ -64,6 +64,7 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
     return myExpr;
   }
 
+  @Override
   public PsiType getType() {
     return myExpr.getType();
   }

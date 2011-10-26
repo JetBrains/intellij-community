@@ -47,17 +47,20 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     myVariable = variable;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message(myVariable instanceof PsiField ? "remove.unused.field" : "remove.unused.variable",
                                   myVariable.getName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.unused.variable.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
       myVariable != null
@@ -66,6 +69,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     removeVariableAndReferencingStatements(editor);
@@ -111,6 +115,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     final int deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects[0]);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           deleteReferences(myVariable, references, deleteMode);
@@ -383,6 +388,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     return false;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

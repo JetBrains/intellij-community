@@ -58,6 +58,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     super(manager, null, null, table, null, JavaLanguage.INSTANCE);
   }
 
+  @Override
   public boolean importClass(PsiClass aClass) {
     if (myContext != null) {
       final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
@@ -85,6 +86,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     return !myPseudoImports.isEmpty();
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
@@ -129,6 +131,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
 
+  @Override
   public void setOriginalFile(@NotNull final PsiFile originalFile) {
     super.setOriginalFile(originalFile);
     putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));

@@ -31,24 +31,29 @@ import java.util.Collections;
  */
 public class JarFileReferenceHelper extends FileReferenceHelper {
 
+  @Override
   public PsiFileSystemItem getPsiFileSystemItem(Project project, @NotNull VirtualFile file) {
     return null;
   }
 
+  @Override
   public PsiFileSystemItem findRoot(Project project, @NotNull VirtualFile file) {
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return PsiFileReferenceHelper.getContextsForModule(module, "", null);
   }
 
+  @Override
   @NotNull
   public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile file) {
     return Collections.emptyList();
   }
 
+  @Override
   public boolean isMine(Project project, @NotNull VirtualFile file) {
     return ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(file);
   }

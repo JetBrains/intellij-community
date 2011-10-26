@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 public class FindInPathAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -30,6 +31,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
     FindInProjectManager.getInstance(project).findInProject(dataContext);
   }
 
+  @Override
   public void update(AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getData(PlatformDataKeys.PROJECT);

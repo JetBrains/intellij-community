@@ -64,30 +64,37 @@ public class DummyHolderFactory  {
   }
 
   private static class DefaultFactory implements HolderFactory {
+    @Override
     public DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
       return new DummyHolder(manager, contentElement, context);
     }
 
+    @Override
     public DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
       return new DummyHolder(manager, table, validity);
     }
 
+    @Override
     public DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context) {
       return new DummyHolder(manager, context);
     }
 
+    @Override
     public DummyHolder createHolder(@NotNull final PsiManager manager, final Language language, final PsiElement context) {
       return new DummyHolder(manager, language, context);
     }
 
+    @Override
     public DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
       return new DummyHolder(manager, contentElement, context, table);
     }
 
+    @Override
     public DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
       return new DummyHolder(manager, context, table);
     }
 
+    @Override
     public DummyHolder createHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
       return new DummyHolder(manager, table, language);
     }

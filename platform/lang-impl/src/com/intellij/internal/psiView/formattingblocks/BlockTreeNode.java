@@ -30,6 +30,7 @@ public class BlockTreeNode extends SimpleNode {
     });
   }
 
+  @Override
   protected void update(PresentationData presentation) {
     presentation.addText(new String(myBlock.getClass().getSimpleName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

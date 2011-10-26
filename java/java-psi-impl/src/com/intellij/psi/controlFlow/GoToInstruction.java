@@ -39,13 +39,16 @@ public class GoToInstruction extends BranchingInstruction {
     return "GOTO " + sRole + " " + offset + (isReturn ? " RETURN" : "");
   }
 
+  @Override
   public int nNext() { return 1; }
 
+  @Override
   public int getNext(int index, int no) {
     LOG.assertTrue(no == 0);
     return offset;
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitGoToInstruction(this, offset, nextOffset);
   }

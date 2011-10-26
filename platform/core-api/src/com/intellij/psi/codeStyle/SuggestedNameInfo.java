@@ -51,6 +51,7 @@ public abstract class SuggestedNameInfo {
       myDelegate = delegate;
     }
 
+    @Override
     public void nameChoosen(final String name) {
       myDelegate.nameChoosen(name);
     }

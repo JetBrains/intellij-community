@@ -46,6 +46,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myPlaceFile = place.getContainingFile();
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
     if (myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
       return false;
@@ -56,6 +57,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     return true;
   }
 
+  @Override
   protected void add(PsiElement element, PsiSubstitutor substitutor) {
     add(new CandidateInfo(element, substitutor));
   }
@@ -65,6 +67,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myResults.add(info);
   }
 
+  @Override
   public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL && myName != null) {
       getResult();
@@ -88,6 +91,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     return myCachedResult;
   }
 
+  @Override
   public String getName(ResolveState state) {
     return myName;
   }
@@ -96,6 +100,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myName = name;
   }
 
+  @Override
   public <T> T getHint(Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
       //noinspection unchecked

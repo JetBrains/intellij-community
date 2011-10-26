@@ -77,6 +77,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
 
     myUpdateAction = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         update();
       }
@@ -88,6 +89,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     setTitle(isSingleFile ? FindBundle.message("find.usages.in.file.dialog.title") : FindBundle.message("find.usages.dialog.title"));
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
@@ -96,6 +98,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return !myIsShowInNewTabVisible;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -116,6 +119,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
   public abstract void configureLabelComponent(final SimpleColoredComponent coloredComponent);
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -143,6 +147,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return myFindUsagesOptions;
   }
 
+  @Override
   protected void init() {
     super.init();
     update();
@@ -165,6 +170,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return myCbToSkipResultsWhenOneUsage != null && myCbToSkipResultsWhenOneUsage.isSelected();
   }
 
+  @Override
   protected void doOKAction() {
     if (!shouldDoOkAction()) return;
 
@@ -283,6 +289,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     if (myScopeCombo != null) {
       return myScopeCombo.getComboBox();

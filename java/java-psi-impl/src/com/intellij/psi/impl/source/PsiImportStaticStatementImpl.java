@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
   public static final PsiImportStaticStatementImpl[] EMPTY_ARRAY = new PsiImportStaticStatementImpl[0];
   public static final ArrayFactory<PsiImportStaticStatementImpl> ARRAY_FACTORY = new ArrayFactory<PsiImportStaticStatementImpl>() {
+    @Override
     public PsiImportStaticStatementImpl[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiImportStaticStatementImpl[count];
     }
@@ -39,6 +40,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     super(node);
   }
 
+  @Override
   public PsiClass resolveTargetClass() {
     final PsiJavaCodeReferenceElement classReference = getClassReference();
     if (classReference == null) return null;
@@ -51,6 +53,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
+  @Override
   public String getReferenceName() {
     if (isOnDemand()) return null;
     final PsiImportStaticReferenceElement memberReference = getMemberReference();
@@ -88,6 +91,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitImportStaticStatement(this);

@@ -39,6 +39,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     super(str, element, startInElement, DOT_SEPARATOR);
   }
 
+  @Override
   @NotNull
   protected PsiPackageReference createReference(final TextRange range, final int index) {
     return new PsiPackageReference(this, range, index);
@@ -61,6 +62,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
       return Collections.emptyList();
     }
     return ContainerUtil.map2List(packageReference.multiResolve(false), new NullableFunction<ResolveResult, PsiPackage>() {
+      @Override
       public PsiPackage fun(final ResolveResult resolveResult) {
         return (PsiPackage)resolveResult.getElement();
       }

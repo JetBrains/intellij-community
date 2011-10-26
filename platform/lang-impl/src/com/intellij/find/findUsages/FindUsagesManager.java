@@ -87,7 +87,6 @@ public class FindUsagesManager implements JDOMExternalizable {
   private final Project myProject;
   private final com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = false;
-  private final List<FindUsagesHandlerFactory> myHandlers = new ArrayList<FindUsagesHandlerFactory>();
 
   public static class SearchData {
     public SmartPsiElementPointer[] myElements = null;
@@ -118,28 +117,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     myAnotherManager = anotherManager;
   }
 
-  /**
-   * @deprecated
-   * @see FindUsagesHandlerFactory#EP_NAME
-   */
-  public void registerFindUsagesHandler(FindUsagesHandlerFactory handler) {
-    myHandlers.add(0, handler);
-  }
-
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    for (FindUsagesHandlerFactory factory : myHandlers) {
-      try {
-        if (factory.canFindUsages(element)) {
-          return true;
-        }
-      }
-      catch (IndexNotReadyException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       try {
         if (factory.canFindUsages(element)) {
@@ -169,10 +147,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     return findUsageInFile(editor, FileSearchScope.BEFORE_CARET);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myToOpenInNewTab = JDOMExternalizer.readBoolean(element, "OPEN_NEW_TAB");
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     JDOMExternalizer.write(element, "OPEN_NEW_TAB", myToOpenInNewTab);
   }
@@ -237,15 +217,6 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : myHandlers) {
-      if (factory.canFindUsages(element)) {
-        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
-        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
-        if (handler != null) {
-          return handler;
-        }
-      }
-    }
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
@@ -315,6 +286,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
     final AtomicBoolean used = new AtomicBoolean();
     usageSearcher.generate(new Processor<Usage>() {
+      @Override
       public boolean process(final Usage usage) {
         used.set(true);
         return false;
@@ -340,8 +312,10 @@ public class FindUsagesManager implements JDOMExternalizable {
     final boolean[] canceled = {false};
     final AtomicInteger usageCount = new AtomicInteger();
     Task task = new Task.Modal(myProject, UsageViewManagerImpl.getProgressTitle(presentation), true) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         usageSearcher.generate(new Processor<Usage>() {
+          @Override
           public boolean process(final Usage usage) {
             usageCount.incrementAndGet();
             return processor.process(usage);
@@ -349,11 +323,13 @@ public class FindUsagesManager implements JDOMExternalizable {
         });
       }
 
+      @Override
       @Nullable
       public NotificationInfo getNotificationInfo() {
         return new NotificationInfo("Find Usages",  "Find Usages Finished", usageCount.get() + " Usage(s) Found");
       }
 
+      @Override
       public void onCancel() {
         canceled[0] = true;
       }
@@ -385,17 +361,20 @@ public class FindUsagesManager implements JDOMExternalizable {
                                                    final PsiFile scopeFile) {
 
     return new UsageSearcher() {
+      @Override
       public void generate(@NotNull final Processor<Usage> processor) {
         if (scopeFile != null) {
           options.searchScope = new LocalSearchScope(scopeFile);
         }
         final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<UsageInfo>(new Processor<UsageInfo>() {
+          @Override
           public boolean process(UsageInfo usageInfo) {
             return processor.process(UsageInfoToUsageConverter.convert(descriptor, usageInfo));
           }
         });
         final List<? extends PsiElement> elements =
           ApplicationManager.getApplication().runReadAction(new Computable<List<? extends PsiElement>>() {
+            @Override
             public List<? extends PsiElement> compute() {
               return descriptor.getAllElements();
             }
@@ -406,6 +385,7 @@ public class FindUsagesManager implements JDOMExternalizable {
         try {
           for (final PsiElement element : elements) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
               public void run() {
                 LOG.assertTrue(element.isValid());
               }
@@ -422,12 +402,14 @@ public class FindUsagesManager implements JDOMExternalizable {
           }
 
           Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+            @Override
             public Project compute() {
               return scopeFile != null ? scopeFile.getProject() : !elements.isEmpty() ? elements.get(0).getProject() : handler.getProject();
             }
           });
           PsiSearchHelper.SERVICE.getInstance(project)
               .processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+                @Override
                 public boolean processInReadAction(final PsiReference ref) {
                   return usageInfoProcessor.process(new UsageInfo(ref));
                 }
@@ -458,6 +440,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     List<? extends PsiElement> elements = descriptor.getAllElements();
     final UsageTarget[] targets = convertToUsageTargets(elements);
     myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
+      @Override
       public UsageSearcher create() {
         return createUsageSearcher(descriptor, handler, findUsagesOptions, null);
       }
@@ -579,6 +562,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     usageViewManager.setCurrentSearchCancelled(false);
     final Usage[] foundUsage = {null};
     usageSearcher.generate(new Processor<Usage>() {
+      @Override
       public boolean process(Usage usage) {
         if (usageViewManager.searchHasBeenCancelled()) return false;
 

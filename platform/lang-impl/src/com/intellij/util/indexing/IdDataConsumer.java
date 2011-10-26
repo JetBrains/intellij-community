@@ -34,6 +34,7 @@ public class IdDataConsumer {
   public Map<IdIndexEntry, Integer> getResult() {
     final Map<IdIndexEntry, Integer> result = new HashMap<IdIndexEntry, Integer>();
     myResult.forEachEntry(new TIntIntProcedure() {
+      @Override
       public boolean execute(final int key, final int value) {
         result.put(new IdIndexEntry(key), value);
         return true;

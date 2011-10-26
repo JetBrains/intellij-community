@@ -35,11 +35,13 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
     super(ANNOTATION_ARRAY_INITIALIZER, ANNOTATION_MEMBER_VALUE_BIT_SET);
   }
 
+  @Override
   @NotNull
   public PsiAnnotationMemberValue[] getInitializers() {
     return getChildrenAsPsiElements(ANNOTATION_MEMBER_VALUE_BIT_SET, PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -54,6 +56,7 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -78,6 +81,7 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
     return "PsiArrayInitializerMemberValue:" + getText();
   }
 
+  @Override
   public final void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotationArrayInitializer(this);

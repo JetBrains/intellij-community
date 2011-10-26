@@ -37,6 +37,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
     return groupUsage(usage, UsageTarget.EMPTY_ARRAY);
   }
 
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
@@ -87,30 +88,39 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
       myUsageType = usageType;
     }
 
+    @Override
     public void update() {
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return null;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myUsageType.toString();
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return null;
     }
 
+    @Override
     public boolean isValid() { return true; }
+    @Override
     public void navigate(boolean focus) { }
+    @Override
     public boolean canNavigate() { return false; }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareTo(usageGroup.getText(null));
     }

@@ -35,6 +35,7 @@ public class AddDefaultConstructorFix extends AddMethodFix {
     return constructorModifier + " " + aClass.getName() + "() {}";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.default.constructor.family");

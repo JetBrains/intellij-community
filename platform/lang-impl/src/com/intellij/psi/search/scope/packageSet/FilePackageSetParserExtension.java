@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FilePackageSetParserExtension implements PackageSetParserExtension {
 
+  @Override
   @Nullable
   public String parseScope(Lexer lexer) {
     if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return null;
@@ -48,6 +49,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
     return null;
   }
 
+  @Override
   @Nullable
   public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
     if (scope != FilePatternPackageSet.SCOPE_FILE) return null;

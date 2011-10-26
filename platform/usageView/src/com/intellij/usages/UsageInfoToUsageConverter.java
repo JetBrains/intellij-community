@@ -56,6 +56,7 @@ public class UsageInfoToUsageConverter {
     }
 
     private static final Function<SmartPsiElementPointer,PsiElement> SMARTPOINTER_TO_ELEMENT_MAPPER = new Function<SmartPsiElementPointer, PsiElement>() {
+      @Override
       public PsiElement fun(final SmartPsiElementPointer s) {
         return s.getElement();
       }
@@ -66,6 +67,7 @@ public class UsageInfoToUsageConverter {
 
     private static List<SmartPsiElementPointer> convertToSmartPointers(final PsiElement[] primaryElements) {
       return primaryElements != null ? ContainerUtil.mapNotNull(primaryElements, new Function<PsiElement, SmartPsiElementPointer>() {
+        @Override
         public SmartPsiElementPointer fun(final PsiElement s) {
           return SmartPointerManager.getInstance(s.getProject()).createSmartPsiElementPointer(s);
         }

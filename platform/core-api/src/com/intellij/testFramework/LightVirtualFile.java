@@ -123,41 +123,51 @@ public class LightVirtualFile extends VirtualFile {
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
     @NonNls private static final String PROTOCOL = "mock";
 
+    @Override
     @NotNull
     public String getProtocol() {
       return PROTOCOL;
     }
 
+    @Override
     @Nullable
     public VirtualFile findFileByPath(@NotNull String path) {
       return null;
     }
 
+    @Override
     public void refresh(boolean asynchronous) {
     }
 
+    @Override
     @Nullable
     public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
       return null;
     }
 
+    @Override
     public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     }
 
+    @Override
     public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     }
 
+    @Override
     public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
       throw new IOException("Cannot copy files");
     }
 
+    @Override
     public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     }
 
+    @Override
     public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
       throw new IOException("Cannot create files");
     }
 
+    @Override
     @NotNull
     public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
       throw new IOException("Cannot create directories");
@@ -166,6 +176,7 @@ public class LightVirtualFile extends VirtualFile {
 
   private static final MyVirtualFileSystem ourFileSystem = new MyVirtualFileSystem();
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return ourFileSystem;
@@ -176,23 +187,28 @@ public class LightVirtualFile extends VirtualFile {
     return myFileType;
   }
 
+  @Override
   public String getPath() {
     return "/" + getName();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean isWritable() {
     return myIsWritable;
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return myValid;
   }
@@ -201,21 +217,26 @@ public class LightVirtualFile extends VirtualFile {
     myValid = valid;
   }
 
+  @Override
   public VirtualFile getParent() {
     return null;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this);
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
+      @Override
       public void close() {
         myModStamp = newModificationStamp;
         setContent(toString());
@@ -223,6 +244,7 @@ public class LightVirtualFile extends VirtualFile {
     },this);
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     final Charset charset = getCharset();
@@ -230,14 +252,17 @@ public class LightVirtualFile extends VirtualFile {
     return charset != null ? s.getBytes(charset.name()) : s.getBytes();
   }
 
+  @Override
   public long getModificationStamp() {
     return myModStamp;
   }
 
+  @Override
   public long getTimeStamp() {
     return 0; // todo[max] : Add UnsupporedOperationException at better times.
   }
 
+  @Override
   public long getLength() {
     try {
       return contentsToByteArray().length;
@@ -249,6 +274,7 @@ public class LightVirtualFile extends VirtualFile {
     }
   }
 
+  @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
   }
 
@@ -261,6 +287,7 @@ public class LightVirtualFile extends VirtualFile {
     myIsWritable = b;
   }
 
+  @Override
   public void rename(Object requestor, @NotNull String newName) throws IOException {
     myName = newName;
   }

@@ -54,6 +54,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     super(id);
   }
 
+  @Override
   public PsiField createPsi(final PsiFieldStub stub) {
     final boolean compiled = isCompiled(stub);
     if (compiled) {
@@ -64,6 +65,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     }
   }
 
+  @Override
   public PsiField createPsi(final ASTNode node) {
     if (node instanceof EnumConstantElement) {
       return new PsiEnumConstantImpl(node);
@@ -122,6 +124,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     return LightTreeUtil.toFilteredString(tree, initializer, null);
   }
 
+  @Override
   public void serialize(final PsiFieldStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
@@ -129,6 +132,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
   }
 
+  @Override
   public PsiFieldStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     final StringRef name = dataStream.readName();
     final TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
@@ -137,6 +141,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
   }
 
+  @Override
   public void indexStub(final PsiFieldStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
@@ -144,6 +149,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     }
   }
 
+  @Override
   public String getId(final PsiFieldStub stub) {
     final String name = stub.getName();
     if (name != null) return name;

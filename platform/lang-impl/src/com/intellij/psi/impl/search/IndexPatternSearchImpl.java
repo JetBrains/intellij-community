@@ -30,12 +30,14 @@ class IndexPatternSearchImpl extends IndexPatternSearch {
     registerExecutor(new IndexPatternSearcher());
   }
 
+  @Override
   protected int getOccurrencesCountImpl(PsiFile file, IndexPatternProvider provider) {
     int count = CacheManager.SERVICE.getInstance(file.getProject()).getTodoCount(file.getVirtualFile(), provider);
     if (count != -1) return count;
     return search(file, provider).findAll().size();
   }
 
+  @Override
   protected int getOccurrencesCountImpl(PsiFile file, IndexPattern pattern) {
     int count = CacheManager.SERVICE.getInstance(file.getProject()).getTodoCount(file.getVirtualFile(), pattern);
     if (count != -1) return count;

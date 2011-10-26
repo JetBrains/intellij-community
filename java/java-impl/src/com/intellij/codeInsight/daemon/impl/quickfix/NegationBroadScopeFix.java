@@ -37,6 +37,7 @@ public class NegationBroadScopeFix implements IntentionAction {
     myPrefixExpression = prefixExpression;
   }
 
+  @Override
   @NotNull
   public String getText() {
     String text = myPrefixExpression.getOperand().getText();
@@ -61,11 +62,13 @@ public class NegationBroadScopeFix implements IntentionAction {
     return QuickFixBundle.message("negation.broader.scope.text", text);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("negation.broader.scope.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myPrefixExpression == null || !myPrefixExpression.isValid()) return false;
 
@@ -78,6 +81,7 @@ public class NegationBroadScopeFix implements IntentionAction {
     return binaryExpression.getLOperand() == myPrefixExpression && TypeConversionUtil.isBooleanType(binaryExpression.getType());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myPrefixExpression)) return;
     PsiExpression operand = myPrefixExpression.getOperand();
@@ -91,6 +95,7 @@ public class NegationBroadScopeFix implements IntentionAction {
     parent.replace(negated);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

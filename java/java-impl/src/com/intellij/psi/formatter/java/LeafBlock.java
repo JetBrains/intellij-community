@@ -43,10 +43,12 @@ public class LeafBlock implements ASTBlock{
     myIndent = indent;
   }
 
+  @Override
   public ASTNode getNode() {
     return myNode;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     if (myStartOffset != -1) {
@@ -55,23 +57,28 @@ public class LeafBlock implements ASTBlock{
     return myNode.getTextRange();
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     return EMPTY_SUB_BLOCKS;
   }
 
+  @Override
   public Wrap getWrap() {
     return myWrap;
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent;
   }
 
+  @Override
   public Alignment getAlignment() {
     return myAlignment;
   }
 
+  @Override
   public Spacing getSpacing(Block child1, Block child2) {
     return null;
   }
@@ -80,15 +87,18 @@ public class LeafBlock implements ASTBlock{
     return myNode;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return new ChildAttributes(getIndent(), null);
   }
 
+  @Override
   public boolean isIncomplete() {
     return false;
   }
 
+  @Override
   public boolean isLeaf() {
     return ShiftIndentInsideHelper.mayShiftIndentInside(myNode);
   }

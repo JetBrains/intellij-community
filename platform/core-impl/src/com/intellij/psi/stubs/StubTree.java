@@ -63,6 +63,7 @@ public class StubTree {
       final int stubIdx = i;
       //noinspection unchecked
       serializer.indexStub(stub, new IndexSink() {
+        @Override
         public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
           Map<Object, TIntArrayList> map = result.get(indexKey);
           if (map == null) {

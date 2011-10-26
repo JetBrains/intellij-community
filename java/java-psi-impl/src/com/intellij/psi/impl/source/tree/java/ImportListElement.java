@@ -29,6 +29,7 @@ public class ImportListElement extends CompositeElement{
     super(JavaElementType.IMPORT_LIST);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before){
     if (before == null){
       if (first == last && (first.getElementType() == JavaElementType.IMPORT_STATEMENT || first.getElementType() == JavaElementType.IMPORT_STATIC_STATEMENT)){

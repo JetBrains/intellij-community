@@ -88,11 +88,13 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     element.setAttribute(JDK_15_ATTR, Boolean.toString(is15));
   }
 
+  @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
+  @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (myLanguageLevel != languageLevel) {
       reloadProjectOnLanguageLevelChange(languageLevel, false);
@@ -104,9 +106,11 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
   }
 
+  @Override
   public void reloadProjectOnLanguageLevelChange(@NotNull final LanguageLevel languageLevel, final boolean forceReload) {
     if (willReload()) {
       myReloadProjectRequest = new Runnable() {
+        @Override
         public void run() {
           if (myProject.isDisposed()) return;
           if (myReloadProjectRequest != this) {
@@ -143,10 +147,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       myProject = project;
     }
 
+    @Override
     public void readExternal(final Element element) throws InvalidDataException {
       ((LanguageLevelProjectExtensionImpl)getInstance(myProject)).readExternal(element);
     }
 
+    @Override
     public void writeExternal(final Element element) throws WriteExternalException {
       ((LanguageLevelProjectExtensionImpl)getInstance(myProject)).writeExternal(element);
     }

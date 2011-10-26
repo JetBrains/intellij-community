@@ -304,6 +304,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     //to load text
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         TreeUtil.clearCaches((TreeElement)myFile.getNode());
       }

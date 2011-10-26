@@ -32,18 +32,22 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
   }
 
   private static class ASTTreeGuide implements WalkingState.TreeGuide<ASTNode> {
+    @Override
     public ASTNode getNextSibling(@NotNull ASTNode element) {
       return element.getTreeNext();
     }
 
+    @Override
     public ASTNode getPrevSibling(@NotNull ASTNode element) {
       return element.getTreePrev();
     }
 
+    @Override
     public ASTNode getFirstChild(@NotNull ASTNode element) {
       return element.getFirstChildNode();
     }
 
+    @Override
     public ASTNode getParent(@NotNull ASTNode element) {
       return element.getTreeParent();
     }

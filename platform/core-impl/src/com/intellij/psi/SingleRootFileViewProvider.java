@@ -85,6 +85,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(manager.getProject());
   }
 
+  @Override
   @NotNull
   public Language getBaseLanguage() {
     return myBaseLanguage;
@@ -115,11 +116,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return PlainTextLanguage.INSTANCE;
   }
 
+  @Override
   @NotNull
   public Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
+  @Override
   @Nullable
   public final PsiFile getPsi(@NotNull Language target) {
     if (!isPhysical()) {
@@ -128,6 +131,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return getPsiInner(target);
   }
 
+  @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
     return Collections.singletonList(getPsi(getBaseLanguage()));
@@ -149,10 +153,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return psiFile;
   }
 
+  @Override
   public void beforeContentsSynchronized() {
     unsetPsiContent();
   }
 
+  @Override
   public void contentsSynchronized() {
     unsetPsiContent();
   }
@@ -170,24 +176,29 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
+  @Override
   public void rootChanged(PsiFile psiFile) {
     if (((PsiFileEx)psiFile).isContentsLoaded()) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
     }
   }
 
+  @Override
   public boolean isEventSystemEnabled() {
     return myEventSystemEnabled;
   }
 
+  @Override
   public boolean isPhysical() {
     return myPhysical;
   }
 
+  @Override
   public long getModificationStamp() {
     return getContent().getModificationStamp();
   }
 
+  @Override
   public boolean supportsIncrementalReparse(final Language rootLanguage) {
     return true;
   }
@@ -288,16 +299,19 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return null;
   }
 
+  @Override
   @NotNull
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @NotNull
   public CharSequence getContents() {
     return getContent().getText();
   }
 
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
@@ -310,6 +324,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
+  @Override
   public Document getDocument() {
     Document document = myDocument != null ? myDocument.get() : null;
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
@@ -322,6 +337,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return document;
   }
 
+  @Override
   public FileViewProvider clone() {
     final VirtualFile origFile = getVirtualFile();
     LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
@@ -337,16 +353,19 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return new SingleRootFileViewProvider(getManager(), copy, false, myBaseLanguage);
   }
 
+  @Override
   public PsiReference findReferenceAt(final int offset) {
     final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
     return findReferenceAt(psiFile, offset);
   }
 
+  @Override
   public PsiElement findElementAt(final int offset, final Language language) {
     final PsiFile psiFile = getPsi(language);
     return psiFile != null ? findElementAt(psiFile, offset) : null;
   }
 
+  @Override
   @Nullable
   public PsiReference findReferenceAt(final int offset, @NotNull final Language language) {
     final PsiFile psiFile = getPsi(language);
@@ -370,11 +389,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return null;
   }
 
+  @Override
   public PsiElement findElementAt(final int offset) {
     return findElementAt(getPsi(getBaseLanguage()), offset);
   }
 
 
+  @Override
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
     if (!ReflectionCache.isAssignable(lang, getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
@@ -417,6 +438,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private class VirtualFileContent implements Content {
+    @Override
     public CharSequence getText() {
       final VirtualFile virtualFile = getVirtualFile();
       if (virtualFile instanceof LightVirtualFile) {
@@ -434,18 +456,21 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
     }
 
+    @Override
     public long getModificationStamp() {
       return getVirtualFile().getModificationStamp();
     }
   }
 
   private class DocumentContent implements Content {
+    @Override
     public CharSequence getText() {
       final Document document = getDocument();
       assert document != null;
       return document.getCharsSequence();
     }
 
+    @Override
     public long getModificationStamp() {
       Document document = myDocument == null ? null : myDocument.get();
       if (document != null) return document.getModificationStamp();
@@ -463,6 +488,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       myModificationStamp = modificationStamp;
     }
 
+    @Override
     public CharSequence getText() {
       if (!myFile.isContentsLoaded()) {
         unsetPsiContent();
@@ -472,6 +498,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       return myContent = myFile.calcTreeElement().getText();
     }
 
+    @Override
     public long getModificationStamp() {
       if (!myFile.isContentsLoaded()) {
         unsetPsiContent();

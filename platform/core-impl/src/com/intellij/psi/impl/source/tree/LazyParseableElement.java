@@ -77,6 +77,7 @@ public class LazyParseableElement extends CompositeElement {
     return super.getText();
   }
 
+  @Override
   @NotNull
   public CharSequence getChars() {
     CharSequence text = myText();

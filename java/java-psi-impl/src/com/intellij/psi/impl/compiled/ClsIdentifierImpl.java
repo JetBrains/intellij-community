@@ -33,31 +33,38 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
     myText = text;
   }
 
+  @Override
   public IElementType getTokenType() {
     return JavaTokenType.IDENTIFIER;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren(){
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getParent(){
     return myParent;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
     buffer.append(getText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element){
     setMirrorCheckingType(element, ElementType.IDENTIFIER);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitIdentifier(this);

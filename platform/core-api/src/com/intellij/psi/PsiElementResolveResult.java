@@ -43,10 +43,12 @@ public class PsiElementResolveResult implements ResolveResult{
     myValidResult = validResult;
   }
 
+  @Override
   @NotNull public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   public boolean isValidResult() {
     return myValidResult;
   }

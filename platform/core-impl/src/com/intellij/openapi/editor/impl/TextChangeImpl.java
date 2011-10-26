@@ -75,6 +75,7 @@ public class TextChangeImpl implements TextChange {
   /**
    * @return      start index (inclusive) of text range affected by the change encapsulated at the current object
    */
+  @Override
   public int getStart() {
     return myStart;
   }
@@ -86,6 +87,7 @@ public class TextChangeImpl implements TextChange {
   /**
    * @return      end index (exclusive) of text range affected by the change encapsulated at the current object
    */
+  @Override
   public int getEnd() {
     return myEnd;
   }
@@ -99,6 +101,7 @@ public class TextChangeImpl implements TextChange {
    *
    * @return    text related to the change encapsulated by the current object
    */
+  @Override
   @NotNull
   public CharSequence getText() {
     return myText;
@@ -114,6 +117,7 @@ public class TextChangeImpl implements TextChange {
    *
    * @return    stored change text as a char array
    */
+  @Override
   @NotNull
   public char[] getChars() {
     if (myChars == null) {

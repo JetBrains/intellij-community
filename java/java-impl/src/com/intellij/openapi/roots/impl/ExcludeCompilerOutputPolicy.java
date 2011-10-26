@@ -37,6 +37,7 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     myProject = project;
   }
 
+  @Override
   public boolean isExcludeRoot(final VirtualFile f) {
     CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
     if (isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
@@ -49,11 +50,13 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     return false;
   }
 
+  @Override
   public boolean isExcludeRootForModule(final Module module, final VirtualFile excludeRoot) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     return compilerModuleExtension.getCompilerOutputPath() == excludeRoot || compilerModuleExtension.getCompilerOutputPathForTests() == excludeRoot;
   }
 
+  @Override
   public VirtualFile[] getExcludeRootsForProject() {
     VirtualFile outputPath = CompilerProjectExtension.getInstance(myProject).getCompilerOutput();
     if (outputPath != null) {
@@ -62,6 +65,7 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  @Override
   public VirtualFilePointer[] getExcludeRootsForModule(final ModuleRootModel rootModel) {
     ArrayList<VirtualFilePointer> result = new ArrayList<VirtualFilePointer>();
     final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);

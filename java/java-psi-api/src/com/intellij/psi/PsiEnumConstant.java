@@ -30,6 +30,7 @@ public interface PsiEnumConstant extends PsiField, PsiConstructorCall {
    *
    * @return the list of arguments, or null
    */
+  @Override
   @Nullable
   PsiExpressionList getArgumentList();
 

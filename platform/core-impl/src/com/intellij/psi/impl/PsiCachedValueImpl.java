@@ -31,11 +31,13 @@ public class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements CachedVa
     super(manager);
     myProvider = provider;
   }
+  @Override
   @Nullable
   public T getValue() {
     return getValueWithLock(null);
   }
 
+  @Override
   public CachedValueProvider<T> getValueProvider() {
     return myProvider;
   }

@@ -39,30 +39,37 @@ public class PsiImmediateClassType extends PsiClassType {
   private String myInternalCanonicalText;
 
   private final ClassResolveResult myClassResolveResult = new ClassResolveResult() {
+    @Override
     public PsiClass getElement() {
       return myClass;
     }
 
+    @Override
     public PsiSubstitutor getSubstitutor() {
       return mySubstitutor;
     }
 
+    @Override
     public boolean isValidResult() {
       return true;
     }
 
+    @Override
     public boolean isAccessible() {
       return true;
     }
 
+    @Override
     public boolean isStaticsScopeCorrect() {
       return true;
     }
 
+    @Override
     public PsiElement getCurrentFileResolveScope() {
       return null;
     }
 
+    @Override
     public boolean isPackagePrefixPackageReference() {
       return false;
     }
@@ -84,13 +91,16 @@ public class PsiImmediateClassType extends PsiClassType {
     LOG.assertTrue(mySubstitutor != null);
   }
 
+  @Override
   public PsiClass resolve() {
     return myClass;
   }
 
+  @Override
   public String getClassName() {
     return myClass.getName();
   }
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
@@ -108,16 +118,19 @@ public class PsiImmediateClassType extends PsiClassType {
     return lst.toArray(new PsiType[lst.size()]);
   }
 
+  @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
     return myClassResolveResult;
   }
 
+  @Override
   @NotNull
   public PsiClassType rawType() {
     return JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createType(myClass);
   }
 
+  @Override
   public String getPresentableText() {
     if (myPresentableText == null) {
       final StringBuilder buffer = new StringBuilder();
@@ -127,6 +140,7 @@ public class PsiImmediateClassType extends PsiClassType {
     return myPresentableText;
   }
 
+  @Override
   public String getCanonicalText() {
     if (myCanonicalText == null) {
       final StringBuilder buffer = new StringBuilder();
@@ -136,6 +150,7 @@ public class PsiImmediateClassType extends PsiClassType {
     return myCanonicalText;
   }
 
+  @Override
   public String getInternalCanonicalText() {
     if (myInternalCanonicalText == null) {
       final StringBuilder buffer = new StringBuilder();
@@ -214,10 +229,12 @@ public class PsiImmediateClassType extends PsiClassType {
     }
   }
 
+  @Override
   public boolean isValid() {
     return myClass.isValid() && mySubstitutor.isValid();
   }
 
+  @Override
   public boolean equalsToText(String text) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     final PsiType patternType;
@@ -231,17 +248,20 @@ public class PsiImmediateClassType extends PsiClassType {
 
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return myClass.getResolveScope();
   }
 
+  @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
     if (myLanguageLevel != null) return myLanguageLevel;
     return PsiUtil.getLanguageLevel(myClass);
   }
 
+  @Override
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
     return new PsiImmediateClassType(myClass, mySubstitutor, languageLevel,getAnnotations());

@@ -34,6 +34,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   int getAffectedAreaStartOffset();
 
   int getAffectedAreaEndOffset();
+  @Override
   long getId();
 
   void setTextAttributes(TextAttributes textAttributes);

@@ -35,6 +35,7 @@ public interface PrioritizedDocumentListener extends DocumentListener {
    * </pre>
    */
   Comparator<? super DocumentListener> COMPARATOR = new Comparator<Object>() {
+    @Override
     public int compare(Object o1, Object o2) {
       return getPriority(o1) - getPriority(o2);
     }

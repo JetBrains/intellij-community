@@ -64,6 +64,7 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
         myExtensionPoint.addExtensionPointListener(this);
         myCache = new ArrayList<V>(myExplicitExtensions);
         myCache.addAll(ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(), new NullableFunction<Extension, V>() {
+          @Override
           @Nullable
           public V fun(final Extension extension) {
             return getExtension(extension);
@@ -74,6 +75,7 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
     }
   }
 
+  @Override
   public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
     dropCache();
   }
@@ -88,10 +90,12 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
     }
   }
 
+  @Override
   public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
     dropCache();
   }
 
+  @Override
   public void areaReplaced(final ExtensionsArea area) {
     dropCache();
   }

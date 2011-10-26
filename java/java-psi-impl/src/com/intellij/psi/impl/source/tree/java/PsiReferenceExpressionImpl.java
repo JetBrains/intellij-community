@@ -70,10 +70,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     super(JavaElementType.REFERENCE_EXPRESSION);
   }
 
+  @Override
   public PsiExpression getQualifierExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
+  @Override
   public PsiElement bindToElementViaStaticImport(@NotNull PsiClass qualifierClass) throws IncorrectOperationException {
     String qualifiedName = qualifierClass.getQualifiedName();
     if (qualifiedName == null) throw new IncorrectOperationException();
@@ -143,6 +145,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return array;
   }
 
+  @Override
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
     final PsiExpression oldQualifier = getQualifierExpression();
     if (newQualifier == null) {
@@ -166,18 +169,22 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @Override
   public PsiElement getQualifier() {
     return getQualifierExpression();
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   public PsiElement resolve() {
     return advancedResolve(false).getElement();
   }
 
+  @Override
   public void clearCaches() {
     myCachedQName = null;
     myCachedTextSkipWhiteSpaceAndComments = null;
@@ -198,6 +205,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       return result;
     }
 
+    @Override
     public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
       final JavaResolveResult[] result = _resolve(incompleteCode, (PsiReferenceExpressionImpl)ref);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
@@ -282,6 +290,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiManagerEx manager = getManager();
@@ -293,6 +302,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return (JavaResolveResult[])results;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final PsiElement element = resolve();
@@ -306,10 +316,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return getCachedTextSkipWhiteSpaceAndComments();
   }
 
+  @Override
   public String getQualifiedName() {
     return getCanonicalText();
   }
 
+  @Override
   public String getReferenceName() {
     PsiElement element = getReferenceNameElement();
     if (element == null) return null;
@@ -319,6 +331,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   private final Function<PsiReferenceExpressionImpl, PsiType> ourTypeEvaluator = new TypeEvaluator();
 
   private static class TypeEvaluator implements NullableFunction<PsiReferenceExpressionImpl, PsiType> {
+    @Override
     public PsiType fun(final PsiReferenceExpressionImpl expr) {
       JavaResolveResult result = expr.advancedResolve(false);
       PsiElement resolve = result.getElement();
@@ -369,10 +382,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @Override
   public PsiType getType() {
     return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     IElementType i = getLastChildNode().getElementType();
     boolean resolvingToMethod = element instanceof PsiMethod;
@@ -398,16 +413,19 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     //this reference's variants are rather obtained with processVariants()
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public void processVariants(PsiScopeProcessor processor) {
     OrFilter filter = new OrFilter();
     filter.addFilter(ElementClassFilter.CLASS);
@@ -451,6 +469,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
            Character.isLowerCase(qualifiedName.charAt(0));
   }
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
@@ -458,19 +477,23 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return JavaResolveResult.EMPTY;
   }
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
   }
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     return (PsiReferenceParameterList)findChildByRoleAsPsiElement(ChildRole.REFERENCE_PARAMETER_LIST);
   }
 
+  @Override
   public int getTextOffset() {
     ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
     return refName == null ? super.getTextOffset() : refName.getStartOffset();
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     if (getQualifierExpression() != null) {
       return renameDirectly(newElementName);
@@ -512,6 +535,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return this;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
 
@@ -571,6 +595,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return refElement instanceof PsiPackage || isFullyQualified((CompositeElement)qualifier);
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
       ASTNode dot = findChildByRole(ChildRole.DOT);
@@ -582,6 +607,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -610,6 +636,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -630,6 +657,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceExpression(this);
@@ -643,6 +671,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return "PsiReferenceExpression:" + getText();
   }
 
+  @Override
   public TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     if (nameChild == null) {
@@ -655,10 +684,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return new TextRange(nameChild.getStartOffsetInParent(), getTextLength());
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
@@ -667,6 +698,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
 
+  @Override
   public String getClassNameText() {
     String cachedQName = myCachedQName;
     if (cachedQName == null) {
@@ -675,10 +707,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return cachedQName;
   }
 
+  @Override
   public void fullyQualify(PsiClass targetClass) {
     JavaSourceUtil.fullyQualifyReference(this, targetClass);
   }
 
+  @Override
   public boolean isQualified() {
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
   }

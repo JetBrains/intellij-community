@@ -41,6 +41,7 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
     final PsiTypeElement[] parms = list.getTypeParameterElements();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         parms[0].delete();
 

@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
@@ -40,7 +39,7 @@ import java.util.Set;
  */
 public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
-  private final List<GroovyCompilerWrapper.OutputItem> myCompiledItems = new ArrayList<GroovyCompilerWrapper.OutputItem>();
+  private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
@@ -161,11 +160,11 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   }
 
   @Nullable
-  private static GroovyCompilerWrapper.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
-    return new GroovyCompilerWrapper.OutputItem(outputPath, sourceFile);
+  private static OutputItem getOutputItem(final String outputPath, final String sourceFile) {
+    return new OutputItem(outputPath, sourceFile);
   }
 
-  public List<GroovyCompilerWrapper.OutputItem> getSuccessfullyCompiled() {
+  public List<OutputItem> getSuccessfullyCompiled() {
     return myCompiledItems;
   }
 
@@ -180,4 +179,15 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   public StringBuffer getStdErr() {
     return stdErr;
   }
+
+  public static class OutputItem {
+    public final String outputPath;
+    public final String sourcePath;
+
+    public OutputItem(String outputPath, String sourceFileName) {
+      this.outputPath = outputPath;
+      sourcePath = sourceFileName;
+    }
+  }
+
 }

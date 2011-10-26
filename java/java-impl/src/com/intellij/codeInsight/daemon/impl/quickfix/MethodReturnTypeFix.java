@@ -75,6 +75,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.return.type.family");
@@ -265,6 +266,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       myAffectedMethods.add(baseMethod);
     }
 
+    @Override
     public void visit(final UsageInfo usage) {
       if (usage instanceof OverriderUsageInfo) {
         myAffectedMethods.add(((OverriderUsageInfo) usage).getElement());
@@ -275,6 +277,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       return myAffectedMethods;
     }
 
+    @Override
     public void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
       for (Iterator<UsageInfo> usageInfoIterator = covariantOverriderInfos.iterator(); usageInfoIterator.hasNext();) {
         final UsageInfo info = usageInfoIterator.next();
@@ -303,10 +306,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       myUsageVisitor = usageVisitor;
     }
 
+    @Override
     protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
       myUsageVisitor.preprocessCovariantOverriders(covariantOverriderInfos);
     }
 
+    @Override
     protected void performRefactoring(final UsageInfo[] usages) {
       super.performRefactoring(usages);
 

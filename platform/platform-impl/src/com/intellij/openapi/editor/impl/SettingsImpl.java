@@ -80,12 +80,14 @@ public class SettingsImpl implements EditorSettings {
     myEditor = editor;
   }
   
+  @Override
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
            ? myIsRightMarginShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isRightMarginShown();
   }
 
+  @Override
   public void setRightMarginShown(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsRightMarginShown)) return;
@@ -93,22 +95,26 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isWhitespacesShown() {
     return myIsWhitespacesShown != null
            ? myIsWhitespacesShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isWhitespacesShown();
   }
 
+  @Override
   public void setWhitespacesShown(boolean val) {
     myIsWhitespacesShown = Boolean.valueOf(val);
   }
 
+  @Override
   public boolean isIndentGuidesShown() {
     return myIndentGuidesShown != null
            ? myIndentGuidesShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isIndentGuidesShown();
   }
 
+  @Override
   public void setIndentGuidesShown(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIndentGuidesShown)) return;
@@ -117,12 +123,14 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isLineNumbersShown() {
     return myAreLineNumbersShown != null
            ? myAreLineNumbersShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isLineNumbersShown();
   }
 
+  @Override
   public void setLineNumbersShown(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myAreLineNumbersShown)) return;
@@ -130,6 +138,7 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public int getRightMargin(Project project) {
     return myRightMargin != null ? myRightMargin.intValue() :
            CodeStyleFacade.getInstance(project).getRightMargin();
@@ -140,6 +149,7 @@ public class SettingsImpl implements EditorSettings {
     return CodeStyleFacade.getInstance(project).isWrapWhenTypingReachesRightMargin();
   }
 
+  @Override
   public void setRightMargin(int rightMargin) {
     final Integer newValue = Integer.valueOf(rightMargin);
     if (newValue.equals(myRightMargin)) return;
@@ -147,42 +157,50 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public int getAdditionalLinesCount() {
     return myAdditionalLinesCount;
   }
 
+  @Override
   public void setAdditionalLinesCount(int additionalLinesCount) {
     if (myAdditionalLinesCount == additionalLinesCount) return;
     myAdditionalLinesCount = additionalLinesCount;
     fireEditorRefresh();
   }
 
+  @Override
   public int getAdditionalColumnsCount() {
     return myAdditionalColumnsCount;
   }
 
+  @Override
   public void setAdditionalColumnsCount(int additinalColumnsCount) {
     if (myAdditionalColumnsCount == additinalColumnsCount) return;
     myAdditionalColumnsCount = additinalColumnsCount;
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isLineMarkerAreaShown() {
     return myLineMarkerAreaShown;
   }
 
+  @Override
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
     if (myLineMarkerAreaShown == lineMarkerAreaShown) return;
     myLineMarkerAreaShown = lineMarkerAreaShown;
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isFoldingOutlineShown() {
     return myIsFoldingOutlineShown != null
            ? myIsFoldingOutlineShown.booleanValue()
            : EditorSettingsExternalizable.getInstance().isFoldingOutlineShown();
   }
 
+  @Override
   public void setFoldingOutlineShown(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsFoldingOutlineShown)) return;
@@ -190,11 +208,13 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isUseTabCharacter(Project project) {
     FileType fileType = getFileType();
     return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleFacade.getInstance(project).useTabCharacter(fileType);
   }
 
+  @Override
   public void setUseTabCharacter(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myUseTabCharacter)) return;
@@ -210,6 +230,7 @@ public class SettingsImpl implements EditorSettings {
     myCachedTabSize = null;
   }
 
+  @Override
   public int getTabSize(Project project) {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
@@ -226,6 +247,7 @@ public class SettingsImpl implements EditorSettings {
     return file == null ? null : file.getFileType();
   }
 
+  @Override
   public void setTabSize(int tabSize) {
     final Integer newValue = Integer.valueOf(tabSize);
     if (newValue.equals(myTabSize)) return;
@@ -233,12 +255,14 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isSmartHome() {
     return myIsSmartHome != null
            ? myIsSmartHome.booleanValue()
            : EditorSettingsExternalizable.getInstance().isSmartHome();
   }
 
+  @Override
   public void setSmartHome(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsSmartHome)) return;
@@ -246,6 +270,7 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isVirtualSpace() {
     if (myEditor != null && myEditor.isColumnMode()) return true;
     return myIsVirtualSpace != null
@@ -253,6 +278,7 @@ public class SettingsImpl implements EditorSettings {
            : EditorSettingsExternalizable.getInstance().isVirtualSpace();
   }
 
+  @Override
   public void setVirtualSpace(boolean allow) {
     final Boolean newValue = allow;
     if (newValue.equals(myIsVirtualSpace)) return;
@@ -260,16 +286,19 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isAdditionalPageAtBottom() {
     return myIsAdditionalPageAtBottom != null
            ? myIsAdditionalPageAtBottom.booleanValue()
            : EditorSettingsExternalizable.getInstance().isAdditionalPageAtBottom();
   }
 
+  @Override
   public void setAdditionalPageAtBottom(boolean val) {
     myIsAdditionalPageAtBottom = Boolean.valueOf(val);
   }
 
+  @Override
   public boolean isCaretInsideTabs() {
     if (myEditor != null && myEditor.isColumnMode()) return true;
     return myIsCaretInsideTabs != null
@@ -277,6 +306,7 @@ public class SettingsImpl implements EditorSettings {
            : EditorSettingsExternalizable.getInstance().isCaretInsideTabs();
   }
 
+  @Override
   public void setCaretInsideTabs(boolean allow) {
     final Boolean newValue = allow;
     if (newValue.equals(myIsCaretInsideTabs)) return;
@@ -284,12 +314,14 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isBlockCursor() {
     return myIsBlockCursor != null
            ? myIsBlockCursor.booleanValue()
            : EditorSettingsExternalizable.getInstance().isBlockCursor();
   }
 
+  @Override
   public void setBlockCursor(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsBlockCursor)) return;
@@ -297,30 +329,36 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public int getLineCursorWidth() {
     return myLineCursorWidth;
   }
 
+  @Override
   public void setLineCursorWidth(int width) {
     myLineCursorWidth = width;
   }
 
+  @Override
   public boolean isAnimatedScrolling() {
     return myIsAnimatedScrolling != null
            ? myIsAnimatedScrolling.booleanValue()
            : EditorSettingsExternalizable.getInstance().isSmoothScrolling();
   }
 
+  @Override
   public void setAnimatedScrolling(boolean val) {
     myIsAnimatedScrolling = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public boolean isCamelWords() {
     return myIsCamelWords != null
            ? myIsCamelWords.booleanValue()
            : EditorSettingsExternalizable.getInstance().isCamelWords();
   }
 
+  @Override
   public void setCamelWords(boolean val) {
     myIsCamelWords = val ? Boolean.TRUE : Boolean.FALSE;
   }
@@ -330,12 +368,14 @@ public class SettingsImpl implements EditorSettings {
     myIsCamelWords = null;
   }
 
+  @Override
   public boolean isBlinkCaret() {
     return myIsCaretBlinking != null
            ? myIsCaretBlinking.booleanValue()
            : EditorSettingsExternalizable.getInstance().isBlinkCaret();
   }
 
+  @Override
   public void setBlinkCaret(boolean val) {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsCaretBlinking)) return;
@@ -343,12 +383,14 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public int getCaretBlinkPeriod() {
     return myCaretBlinkingPeriod != null
            ? myCaretBlinkingPeriod.intValue()
            : EditorSettingsExternalizable.getInstance().getBlinkPeriod();
   }
 
+  @Override
   public void setCaretBlinkPeriod(int blinkPeriod) {
     final Integer newValue = Integer.valueOf(blinkPeriod);
     if (newValue.equals(myCaretBlinkingPeriod)) return;
@@ -356,59 +398,71 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  @Override
   public boolean isDndEnabled() {
     return myIsDndEnabled != null ? myIsDndEnabled.booleanValue() : EditorSettingsExternalizable.getInstance().isDndEnabled();
   }
 
+  @Override
   public void setDndEnabled(boolean val) {
     myIsDndEnabled = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public boolean isWheelFontChangeEnabled() {
     return myIsWheelFontChangeEnabled != null
            ? myIsWheelFontChangeEnabled.booleanValue()
            : EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled();
   }
 
+  @Override
   public void setWheelFontChangeEnabled(boolean val) {
     myIsWheelFontChangeEnabled = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public boolean isMouseClickSelectionHonorsCamelWords() {
     return myIsMouseClickSelectionHonorsCamelWords != null
            ? myIsMouseClickSelectionHonorsCamelWords.booleanValue()
            : EditorSettingsExternalizable.getInstance().isMouseClickSelectionHonorsCamelWords();
   }
 
+  @Override
   public void setMouseClickSelectionHonorsCamelWords(boolean val) {
     myIsMouseClickSelectionHonorsCamelWords = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public boolean isVariableInplaceRenameEnabled() {
     return myIsRenameVariablesInplace != null
            ? myIsRenameVariablesInplace.booleanValue()
            : EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled();
   }
 
+  @Override
   public void setVariableInplaceRenameEnabled(boolean val) {
     myIsRenameVariablesInplace = val? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public boolean isRefrainFromScrolling() {
     if (myIsRefrainFromScrolling != null) return myIsRefrainFromScrolling.booleanValue();
     return EditorSettingsExternalizable.getInstance().isRefrainFromScrolling();
   }
 
 
+  @Override
   public void setRefrainFromScrolling(boolean b) {
     myIsRefrainFromScrolling = b ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public boolean isUseSoftWraps() {
     return myUseSoftWraps != null ? myUseSoftWraps.booleanValue()
                                   : EditorSettingsExternalizable.getInstance().isUseSoftWraps(mySoftWrapAppliancePlace);
   }
 
+  @Override
   public void setUseSoftWraps(boolean use) {
     final Boolean newValue = use ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myUseSoftWraps)) return;

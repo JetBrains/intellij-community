@@ -45,10 +45,12 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     myWrongElement = wrongElement;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -91,6 +93,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
+        @Override
         public void run() {
           if (!CodeInsightUtilBase.prepareFileForWrite(targetMethod.getContainingFile())) return;
           if (processSuperMethods) {
@@ -158,6 +161,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     CodeStyleManager.getInstance(project).reformat(targetMethod.getThrowsList());
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     if (myWrongElement == null || !myWrongElement.isValid()) return false;
@@ -171,6 +175,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return true;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.exception.to.throws.family");

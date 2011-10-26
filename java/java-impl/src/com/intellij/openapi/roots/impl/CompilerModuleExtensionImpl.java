@@ -85,6 +85,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     assert !myDisposed;
     final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
@@ -100,6 +101,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputForTests = getOutputPathValue(element, TEST_OUTPUT_TAG);
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     assert !myDisposed;
     if (myCompilerOutput != null) {
@@ -138,6 +140,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return null;
   }
 
+  @Override
   @Nullable
   public VirtualFile getCompilerOutputPath() {
     if (myInheritedCompilerOutput) {
@@ -148,6 +151,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getFile();
   }
 
+  @Override
   @Nullable
   public VirtualFile getCompilerOutputPathForTests() {
     if (myInheritedCompilerOutput) {
@@ -158,6 +162,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getFile();
   }
 
+  @Override
   @Nullable
   public String getCompilerOutputUrl() {
     if (myInheritedCompilerOutput) {
@@ -168,6 +173,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getUrl();
   }
 
+  @Override
   @Nullable
   public String getCompilerOutputUrlForTests() {
     if (myInheritedCompilerOutput) {
@@ -178,6 +184,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getUrl();
   }
 
+  @Override
   public void setCompilerOutputPath(final VirtualFile file) {
     setCompilerOutputPath(file == null ? null : file.getUrl());
   }
@@ -186,16 +193,19 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return VirtualFilePointerManager.getInstance().create(url, this, null);
   }
 
+  @Override
   public void setCompilerOutputPath(final String url) {
     assertWritable();
     myCompilerOutput = url;
     myCompilerOutputPointer = url == null ? null : createPointer(url);
   }
 
+  @Override
   public void setCompilerOutputPathForTests(final VirtualFile file) {
     setCompilerOutputPathForTests(file == null ? null : file.getUrl());
   }
 
+  @Override
   public void setCompilerOutputPathForTests(final String url) {
     assertWritable();
     myCompilerOutputForTests = url;
@@ -210,6 +220,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myModule.getProject();
   }
 
+  @Override
   public void inheritCompilerOutputPath(final boolean inherit) {
     assertWritable();
     myInheritedCompilerOutput = inherit;
@@ -219,32 +230,39 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     assert myWritable: "Writable model can be retrieved from writable ModifiableRootModel";
   }
 
+  @Override
   public boolean isCompilerOutputPathInherited() {
     return myInheritedCompilerOutput;
   }
 
+  @Override
   public VirtualFilePointer getCompilerOutputPointer() {
     return myCompilerOutputPointer;
   }
 
+  @Override
   public VirtualFilePointer getCompilerOutputForTestsPointer() {
     return myCompilerOutputPathForTestsPointer;
   }
 
+  @Override
   public void setExcludeOutput(final boolean exclude) {
     assertWritable();
     myExcludeOutput = exclude;
   }
 
+  @Override
   public boolean isExcludeOutput() {
     return myExcludeOutput;
   }
 
+  @Override
   public CompilerModuleExtension getModifiableModel(final boolean writable) {
     assert !myDisposed;
     return new CompilerModuleExtensionImpl(this, writable);
   }
 
+  @Override
   public void commit() {
     if (mySource != null) {
       mySource.myCompilerOutput = myCompilerOutput;
@@ -259,6 +277,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     }
   }
 
+  @Override
   public boolean isChanged() {
     if (myInheritedCompilerOutput != mySource.myInheritedCompilerOutput) {
       return true;
@@ -280,6 +299,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return Comparing.equal(p1 == null ? null : p1.getUrl(), p2 == null ? null : p2.getUrl());
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     mySource = null;

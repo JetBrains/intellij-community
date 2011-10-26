@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorToggleDecorationAction extends ToggleAction {
+  @Override
   public final void setSelected(AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
     assert editor != null;
@@ -38,6 +39,7 @@ public abstract class EditorToggleDecorationAction extends ToggleAction {
     editor.getComponent().repaint();
   }
 
+  @Override
   public final boolean isSelected(AnActionEvent e) {
     Editor editor = getEditor(e);
     return editor != null && getOption(editor);
@@ -48,6 +50,7 @@ public abstract class EditorToggleDecorationAction extends ToggleAction {
     return e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE);
   }
 
+  @Override
   public final void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getEditor(e) != null);

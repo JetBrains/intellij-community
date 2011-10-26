@@ -51,14 +51,17 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     myLanguage = language;
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
   }
 
+  @Override
   public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
     return true;
   }
 
+  @Override
   public boolean isValid() {
     if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
     return getViewProvider().getVirtualFile().isValid();
@@ -69,14 +72,17 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     myExplicitlySetAsValid = b;
   }
 
+  @Override
   public String getText() {
     return getViewProvider().getContents().toString();
   }
 
+  @Override
   public long getModificationStamp() {
     return getViewProvider().getModificationStamp();
   }
 
+  @Override
   public void subtreeChanged() {
     clearCaches();
     getViewProvider().rootChanged(this);
@@ -84,6 +90,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   public abstract void clearCaches();
 
+  @Override
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected LightPsiFileImpl clone() {
     final FileViewProvider provider = getViewProvider().clone();
@@ -100,26 +107,31 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return clone;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     subtreeChanged();
     return PsiFileImplUtil.setName(this, name);
   }
 
+  @Override
   public void checkSetName(String name) throws IncorrectOperationException {
     if (!getViewProvider().isEventSystemEnabled()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
+  @Override
   public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
+  @Override
   public PsiDirectory getContainingDirectory() {
     final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
     if (parentFile == null) return null;
@@ -131,14 +143,17 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return getContainingDirectory();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return this;
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     if (!getViewProvider().isEventSystemEnabled()) {
       throw new IncorrectOperationException();
@@ -146,6 +161,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   @NotNull
   public PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
@@ -155,29 +171,35 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     myOriginalFile = originalFile.getOriginalFile();
   }
 
+  @Override
   @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
+  @Override
   public boolean isPhysical() {
     return getViewProvider().isEventSystemEnabled();
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return myLanguage;
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
@@ -186,6 +208,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return manager.getProject();
   }
 
+  @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -195,131 +218,162 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     }
   }
 
+  @Override
   public final synchronized PsiElement copy() {
     return clone();
   }
 
+  @Override
   public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
+  @Override
   @NotNull
   public synchronized PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
+  @Override
   public synchronized PsiElement findElementAt(int offset) {
     return getViewProvider().findElementAt(offset);
   }
 
+  @Override
   public synchronized PsiReference findReferenceAt(int offset) {
     return getViewProvider().findReferenceAt(offset);
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
   }
 
+  @Override
   public boolean isContentsLoaded() {
     return true;
   }
 
-  public void onContentReload() {    
+  @Override
+  public void onContentReload() {
   }
 
+  @Override
   public PsiFile cacheCopy(final FileContent content) {
     return this;
   }
 
+  @Override
   public boolean isWritable() {
     return getViewProvider().getVirtualFile().isWritable();
   }
 
+  @Override
   @NotNull
   public abstract PsiElement[] getChildren();
 
+  @Override
   public PsiElement getFirstChild() {
     final PsiElement[] children = getChildren();
     return children.length == 0 ? null : children[0];
   }
 
+  @Override
   public PsiElement getLastChild() {
     final PsiElement[] children = getChildren();
     return children.length == 0 ? null : children[children.length - 1];
   }
 
+  @Override
   public TextRange getTextRange() {
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return 0;
   }
 
+  @Override
   public int getTextLength() {
     return getViewProvider().getContents().length();
   }
 
+  @Override
   public int getTextOffset() {
     return 0;
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return textMatches(element.getText());
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return text.equals(getViewProvider().getContents());
   }
 
+  @Override
   public boolean textContains(char c) {
     return getText().indexOf(c) >= 0;
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public final PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
+  @Override
   public FileASTNode getNode() {
     return null;
   }

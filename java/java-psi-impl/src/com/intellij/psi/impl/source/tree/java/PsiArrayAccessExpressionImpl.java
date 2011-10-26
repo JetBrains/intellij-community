@@ -31,21 +31,25 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
     super(ARRAY_ACCESS_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpression getArrayExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ARRAY);
   }
 
+  @Override
   public PsiExpression getIndexExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.INDEX);
   }
 
+  @Override
   public PsiType getType() {
     PsiType arrayType = getArrayExpression().getType();
     if (!(arrayType instanceof PsiArrayType)) return null;
     return ((PsiArrayType)arrayType).getComponentType();
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -75,6 +79,7 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -94,6 +99,7 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitArrayAccessExpression(this);

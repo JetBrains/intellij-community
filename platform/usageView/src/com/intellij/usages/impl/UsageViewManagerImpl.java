@@ -68,6 +68,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory) {
     UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
@@ -76,6 +77,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return usageView;
   }
 
+  @Override
   @NotNull
   public UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
@@ -84,6 +86,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return usageView;
   }
 
+  @Override
   @NotNull
   public UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation) {
     return showUsages(searchedFor, foundUsages, presentation, null);
@@ -103,6 +106,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     content.putUserData(USAGE_VIEW_KEY, usageView);
   }
 
+  @Override
   public UsageView searchAndShowUsages(@NotNull final UsageTarget[] searchFor,
                                        @NotNull final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
@@ -115,6 +119,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
 
     Task task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener).run();
       }
@@ -124,6 +129,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
         return DumbModeAction.CANCEL;
       }
 
+      @Override
       @Nullable
       public NotificationInfo getNotificationInfo() {
         String notification = usageView.get() != null ? usageView.get().getUsagesCount() + " Usage(s) Found" : "No Usages Found";
@@ -134,6 +140,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return usageView.get();
   }
 
+  @Override
   public void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
                                   @NotNull Factory<UsageSearcher> searcherFactory,
                                   @NotNull FindUsagesProcessPresentation processPresentation,
@@ -147,9 +154,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     final ProgressIndicator progressIndicator = progressIndicatorFactory != null ? progressIndicatorFactory.create() : null;
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         try {
           ProgressManager.getInstance().runProcess(new Runnable() {
+            @Override
             public void run() {
               runnable.searchUsages();
             }
@@ -165,6 +174,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     });
   }
 
+  @Override
   public UsageView getSelectedUsageView() {
     final Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent();
     if (content != null) {
@@ -192,6 +202,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   private static void appendUsages(@NotNull final Usage[] foundUsages, final UsageViewImpl usageView) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         for (Usage foundUsage : foundUsages) {
           usageView.appendUsage(foundUsage);
@@ -201,14 +212,17 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
+  @Override
   public void setCurrentSearchCancelled(boolean flag) {
     mySearchHasBeenCancelled = flag;
   }
 
+  @Override
   public boolean searchHasBeenCancelled() {
     return mySearchHasBeenCancelled;
   }
 
+  @Override
   public void checkSearchCanceled() throws ProcessCanceledException {
     if (searchHasBeenCancelled()) throw new ProcessCanceledException();
     ProgressManager.checkCanceled();
@@ -277,6 +291,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     private void openView(final UsageViewImpl usageView) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           addContent(usageView, myPresentation);
           if (myListener!=null) {
@@ -287,6 +302,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       });
     }
 
+    @Override
     public void run() {
       searchUsages();
       endSearchForUsages();
@@ -298,6 +314,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       // 0: ok, 1:warning dialog shown; 2:user closed dialog
       final CountDownLatch waitWhileUserClick = new CountDownLatch(1);
       usageSearcher.generate(new Processor<Usage>() {
+        @Override
         public boolean process(final Usage usage) {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return false;
@@ -329,6 +346,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       });
       if (getUsageView() != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             showToolWindow(true);
           }
@@ -341,6 +359,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       int usageCount = myUsageCountWithoutDefinition.get();
       if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
               final String message = UsageViewBundle.message("dialog.no.usages.found.in",
@@ -375,6 +394,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       }
       else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
             Usage usage = myFirstUsage.get();

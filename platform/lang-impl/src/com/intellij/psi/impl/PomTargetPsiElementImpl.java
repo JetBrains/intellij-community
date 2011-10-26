@@ -46,6 +46,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     myTarget = target;
   }
 
+  @Override
   @NotNull
   public PomTarget getTarget() {
     return myTarget;
@@ -67,6 +68,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     return false;
   }
 
+  @Override
   public String getTypeName() {
     throw new UnsupportedOperationException("Method getTypeName is not yet implemented for " + myTarget.getClass().getName() + "; see PomDescriptionProvider");
   }
@@ -80,6 +82,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     return super.getNavigationElement();
   }
 
+  @Override
   public Icon getIcon() {
     for (IconProvider iconProvider : IconProvider.EXTENSION_POINT_NAME.getExtensions()) {
       if (iconProvider instanceof PomIconProvider) {
@@ -145,6 +148,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getParent() {
     return null;
@@ -174,6 +178,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     return null;
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     if (myTarget instanceof PsiTarget) {

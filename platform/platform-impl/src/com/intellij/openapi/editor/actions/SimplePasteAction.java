@@ -50,6 +50,7 @@ public class SimplePasteAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       Producer<Transferable> producer = (Producer<Transferable>) dataContext.getData(PasteAction.TRANSFERABLE_PROVIDER);
 

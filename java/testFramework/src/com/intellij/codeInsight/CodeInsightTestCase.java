@@ -156,6 +156,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
@@ -192,6 +193,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     final String newFileText = editorInfo.getNewFileText();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         if (!document.getText().equals(newFileText)) {
           document.setText(newFileText);
@@ -218,6 +220,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final VirtualFile toDir = getVirtualFile(toDirIO);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
@@ -475,6 +478,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected void checkResultByFile(@NonNls final String filePath, final boolean stripTrailingSpaces) throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
         if (stripTrailingSpaces) {

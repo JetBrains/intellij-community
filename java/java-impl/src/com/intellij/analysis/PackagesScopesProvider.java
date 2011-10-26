@@ -46,6 +46,7 @@ public class PackagesScopesProvider implements CustomScopesProvider {
     myScopes = Arrays.asList(myProjectProductionScope);
   }
 
+  @Override
   @NotNull
   public List<NamedScope> getCustomScopes() {
     return myScopes;

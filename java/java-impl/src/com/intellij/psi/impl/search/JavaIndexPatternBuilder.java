@@ -36,6 +36,7 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
   public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlElementType.XML_COMMENT_CHARACTERS);
 
+  @Override
   @Nullable
   public Lexer getIndexingLexer(final PsiFile file) {
     if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
@@ -44,6 +45,7 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
     return null;
   }
 
+  @Override
   @Nullable
   public TokenSet getCommentTokenSet(final PsiFile file) {
     if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
@@ -52,10 +54,12 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
     return null;
   }
 
+  @Override
   public int getCommentStartDelta(final IElementType tokenType) {
     return 0;
   }
 
+  @Override
   public int getCommentEndDelta(final IElementType tokenType) {
     return tokenType == JavaTokenType.C_STYLE_COMMENT ? "*/".length() : 0;
   }

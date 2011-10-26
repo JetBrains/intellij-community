@@ -49,6 +49,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     myProject = project;
   }
 
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     VirtualFile virtualFile;
     if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
@@ -74,6 +75,7 @@ public class FileGroupingRule implements UsageGroupingRule {
       return IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, myProject);
     }
 
+    @Override
     public void update() {
       if (isValid()) {
         myIcon = new ComputableIcon(new Computable<Icon>() {
@@ -99,39 +101,48 @@ public class FileGroupingRule implements UsageGroupingRule {
       return myFile.hashCode();
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return myIcon.getIcon();
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myPresentableName;
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return isValid() ? FileStatusManager.getInstance(myProject).getStatus(myFile) : null;
     }
 
+    @Override
     public boolean isValid() {
       return myFile.isValid();
     }
 
+    @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
       FileEditorManager.getInstance(myProject).openFile(myFile, focus);
     }
 
+    @Override
     public boolean canNavigate() {
       return myFile.isValid();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
       if (key == PlatformDataKeys.VIRTUAL_FILE) {
@@ -147,6 +158,7 @@ public class FileGroupingRule implements UsageGroupingRule {
       return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
     }
 
+    @Override
     @NotNull
     public String getPresentableName() {
       return myPresentableName;

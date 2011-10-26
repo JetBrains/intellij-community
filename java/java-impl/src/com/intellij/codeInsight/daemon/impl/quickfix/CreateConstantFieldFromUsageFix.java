@@ -24,10 +24,12 @@ import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
+  @Override
   protected boolean createConstantField() {
     return true;
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     String refName = myReferenceExpression.getReferenceName();
@@ -38,10 +40,12 @@ public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
     super(referenceElement);
   }
 
+  @Override
   protected String getText(String varName) {
     return QuickFixBundle.message("create.constant.from.usage.text", varName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constant.from.usage.family");

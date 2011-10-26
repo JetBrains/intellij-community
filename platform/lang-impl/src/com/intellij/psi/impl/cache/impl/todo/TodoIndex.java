@@ -61,19 +61,23 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   }
 
   private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<TodoIndexEntry>() {
+    @Override
     public int getHashCode(final TodoIndexEntry value) {
       return value.hashCode();
     }
 
+    @Override
     public boolean isEqual(final TodoIndexEntry val1, final TodoIndexEntry val2) {
       return val1.equals(val2);
     }
 
+    @Override
     public void save(final DataOutput out, final TodoIndexEntry value) throws IOException {
       out.writeUTF(value.pattern);
       out.writeBoolean(value.caseSensitive);
     }
 
+    @Override
     public TodoIndexEntry read(final DataInput in) throws IOException {
       final String pattern = in.readUTF();
       final boolean caseSensitive = in.readBoolean();
@@ -82,16 +86,19 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   };
   
   private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
+    @Override
     public void save(final DataOutput out, final Integer value) throws IOException {
       out.writeInt(value.intValue());
     }
 
+    @Override
     public Integer read(final DataInput in) throws IOException {
       return Integer.valueOf(in.readInt());
     }
   };
 
   private final DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
+    @Override
     @NotNull
     public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
@@ -105,6 +112,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     private final FileTypeManager myFtManager = FileTypeManager.getInstance();
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
         return false; // do not index TODOs in library sources
@@ -127,30 +135,37 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     }
   };
 
+  @Override
   public int getVersion() {
     return 4;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public ID<TodoIndexEntry, Integer> getName() {
     return NAME;
   }
 
+  @Override
   public DataIndexer<TodoIndexEntry, Integer, FileContent> getIndexer() {
     return myIndexer;
   }
 
+  @Override
   public KeyDescriptor<TodoIndexEntry> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @Override
   public DataExternalizer<Integer> getValueExternalizer() {
     return myValueExternalizer;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }

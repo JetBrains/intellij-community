@@ -43,10 +43,12 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
 
   private JavaConstantExpressionEvaluator(Set<PsiVariable> visitedVars, final boolean throwExceptionOnOverflow, final Project project, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     myMapFactory = auxEvaluator != null ? new Factory<ConcurrentMap<PsiElement, Object>>() {
+      @Override
       public ConcurrentMap<PsiElement, Object> create() {
         return auxEvaluator.getCacheMap(throwExceptionOnOverflow);
       }
     } : new Factory<ConcurrentMap<PsiElement, Object>>() {
+      @Override
       public ConcurrentMap<PsiElement, Object> create() {
         final Key<CachedValue<ConcurrentMap<PsiElement, Object>>> key =
           throwExceptionOnOverflow ? CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY : CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY;
@@ -80,6 +82,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
   }
 
   private static final CachedValueProvider<ConcurrentMap<PsiElement,Object>> PROVIDER = new CachedValueProvider<ConcurrentMap<PsiElement,Object>>() {
+    @Override
     public Result<ConcurrentMap<PsiElement,Object>> compute() {
       ConcurrentMap<PsiElement, Object> value = new ConcurrentSoftHashMap<PsiElement, Object>();
       return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);

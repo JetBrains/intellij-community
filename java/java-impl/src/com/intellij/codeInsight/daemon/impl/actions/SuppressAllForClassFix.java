@@ -42,6 +42,7 @@ public class SuppressAllForClassFix extends SuppressFix {
     super(SuppressionUtil.ALL);
   }
 
+  @Override
   @Nullable
   protected PsiDocCommentOwner getContainer(final PsiElement element) {
     PsiDocCommentOwner container = super.getContainer(element);
@@ -58,11 +59,13 @@ public class SuppressAllForClassFix extends SuppressFix {
     return container;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("suppress.all.for.class");
   }
 
+  @Override
   public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
     final PsiDocCommentOwner container = getContainer(element);
     LOG.assertTrue(container != null);

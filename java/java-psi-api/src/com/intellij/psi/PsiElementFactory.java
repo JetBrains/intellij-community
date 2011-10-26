@@ -51,6 +51,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created class instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
+  @Override
   @NotNull PsiClass createClass(@NonNls @NotNull String name) throws IncorrectOperationException;
 
   /**
@@ -60,6 +61,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created interface instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
+  @Override
   @NotNull PsiClass createInterface(@NonNls @NotNull String name) throws IncorrectOperationException;
 
   /**
@@ -69,6 +71,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created enum instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
+  @Override
   @NotNull PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException;
 
   /**
@@ -90,6 +93,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
    *                                     or <code>type</code> represents an invalid type.
    */
+  @Override
   @NotNull PsiField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException;
 
   /**
@@ -101,6 +105,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
    *                                     or <code>type</code> represents an invalid type.
    */
+  @Override
   @NotNull PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType) throws IncorrectOperationException;
 
   /**
@@ -108,6 +113,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @return the created constructor instance.
    */
+  @Override
   @NotNull
   PsiMethod createConstructor();
 
@@ -126,6 +132,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created initializer block instance.
    * @throws IncorrectOperationException in case of an internal error.
    */
+  @Override
   @NotNull PsiClassInitializer createClassInitializer() throws IncorrectOperationException;
 
   /**
@@ -137,6 +144,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
    *                                     or <code>type</code> represents an invalid type.
    */
+  @Override
   @NotNull PsiParameter createParameter(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException;
 
   /**
@@ -415,6 +423,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created parameter list.
    * @throws IncorrectOperationException if some of the parameter names or types are invalid.
    */
+  @Override
   @NotNull PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException;
 
   /**

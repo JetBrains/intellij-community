@@ -201,6 +201,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     if (dominated(method1, substitutor1, method2, substitutor2, scope)) {
+      if (dominated(method2, substitutor2, method1, substitutor1, scope)) {
+        if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
+          return -1;
+        }
+      }
       return 1;
     }
     if (dominated(method2, substitutor2, method1, substitutor1, scope)) {

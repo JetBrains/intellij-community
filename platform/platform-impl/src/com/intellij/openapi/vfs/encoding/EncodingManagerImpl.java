@@ -106,6 +106,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private void handleDocument(final Document document) {
     ApplicationManager.getApplication().runReadAction(new Runnable(){
+      @Override
       public void run() {
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
         if (virtualFile == null) return;
@@ -121,6 +122,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     });
   }
 
+  @Override
   public void dispose() {
     updateEncodingFromContent.cancelAllRequests();
     clearDocumentQueue();
@@ -130,22 +132,26 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myChangedDocuments.offer(new WeakReference<Document>(document));
   }
 
+  @Override
   @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return document.getUserData(CACHED_CHARSET_FROM_CONTENT);
   }
 
+  @Override
   public Element getState() {
     Element result = new Element("x");
     result.setAttribute("default_encoding", myDefaultEncoding);
     return result;
   }
 
+  @Override
   public void loadState(final Element state) {
     myCachedCharset = null;
     myDefaultEncoding = state.getAttributeValue("default_encoding");
   }
 
+  @Override
   @NotNull
   public Collection<Charset> getFavorites() {
     Set<Charset> result = new THashSet<Charset>();
@@ -156,6 +162,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return result;
   }
 
+  @Override
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     Project project = guessProject(virtualFile);
@@ -174,22 +181,26 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return ProjectLocator.getInstance().guessProjectForFile(virtualFile);
   }
 
+  @Override
   public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
     Project project = guessProject(virtualFileOrDir);
     EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
   }
 
+  @Override
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     return project != null && EncodingProjectManager.getInstance(project).isUseUTFGuessing(virtualFile);
   }
 
+  @Override
   public void setUseUTFGuessing(final VirtualFile virtualFile, final boolean useUTFGuessing) {
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setUseUTFGuessing(virtualFile, useUTFGuessing);
   }
 
+  @Override
   public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     return project != null && EncodingProjectManager.getInstance(project).isNative2Ascii(virtualFile);
@@ -201,12 +212,14 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return project != null && EncodingProjectManager.getInstance(project).isNative2AsciiForPropertiesFiles();
   }
 
+  @Override
   public void setNative2AsciiForPropertiesFiles(final VirtualFile virtualFile, final boolean native2Ascii) {
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(virtualFile, native2Ascii);
   }
 
+  @Override
   @Nullable
   public Charset getDefaultCharset() {
     Charset result = myCachedCharset;
@@ -218,11 +231,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return result;
   }
 
+  @Override
   @Nullable
   public String getDefaultCharsetName() {
     return myDefaultEncoding;
   }
 
+  @Override
   public void setDefaultCharsetName(final String name) {
     myDefaultEncoding = name;
     myCachedCharset = null;
@@ -243,6 +258,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return result;
   }
 
+  @Override
   @Nullable
   public Charset getDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
@@ -250,12 +266,14 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return EncodingProjectManager.getInstance(project).getDefaultCharsetForPropertiesFiles(virtualFile);
   }
 
+  @Override
   public void setDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile, final Charset charset) {
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
@@ -271,6 +289,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     });
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaFileTypeFactory extends FileTypeFactory {
+  @Override
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(JavaClassFileType.INSTANCE, "class");
     consumer.consume(JavaFileType.INSTANCE, "java");

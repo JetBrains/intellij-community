@@ -37,15 +37,18 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     super(CLASS_OBJECT_ACCESS_EXPRESSION);
   }
 
+  @Override
   public PsiType getType() {
     return PsiImplUtil.getType(this);
   }
 
+  @Override
   @NotNull
   public PsiTypeElement getOperand() {
     return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -63,6 +66,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -80,6 +84,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClassObjectAccessExpression(this);
@@ -98,6 +103,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     return getElementIcon(flags);
   }
 
+  @Override
   @NotNull
   public Icon getElementIcon(final int flags) {
     final RowIcon rowIcon = ElementBase.createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);

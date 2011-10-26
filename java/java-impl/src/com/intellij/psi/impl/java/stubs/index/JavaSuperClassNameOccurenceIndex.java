@@ -37,10 +37,12 @@ public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<P
     return ourInstance;
   }
 
+  @Override
   public StubIndexKey<String, PsiReferenceList> getKey() {
     return JavaStubIndexKeys.SUPER_CLASSES;
   }
 
+  @Override
   public Collection<PsiReferenceList> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }

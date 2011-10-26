@@ -32,7 +32,6 @@ import java.util.List;
  */
 public class GroovyBuilder extends Builder {
   public static final String BUILDER_NAME = "groovy";
-  public static final String GROOVY = "Groovy";
 
   public String getName() {
     return BUILDER_NAME;
@@ -97,7 +96,7 @@ public class GroovyBuilder extends Builder {
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
         context.processMessage(
-          new org.jetbrains.jps.incremental.messages.CompilerMessage(GROOVY, kind, message.getMessage(), message.getUrl(), -1, -1, -1,
+          new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, kind, message.getMessage(), message.getUrl(), -1, -1, -1,
                                                                      message.getLineNum(), message.getColumnNum()));
       }
 
@@ -106,22 +105,22 @@ public class GroovyBuilder extends Builder {
       StringBuffer unparsedBuffer = handler.getStdErr();
       if (unparsedBuffer.length() != 0) {
         context.processMessage(
-          new org.jetbrains.jps.incremental.messages.CompilerMessage(GROOVY, BuildMessage.Kind.ERROR, unparsedBuffer.toString()));
+          new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, unparsedBuffer.toString()));
         hasMessages = true;
       }
 
       final int exitCode = handler.getProcess().exitValue();
       if (!hasMessages && exitCode != 0) {
-        context.processMessage(new org.jetbrains.jps.incremental.messages.CompilerMessage(GROOVY, BuildMessage.Kind.ERROR,
+        context.processMessage(new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                                                           "Internal groovyc error: code " + exitCode));
       }
 
       OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
-      for (GroovyCompilerWrapper.OutputItem item : handler.getSuccessfullyCompiled()) {
-        String src = item.getSourceFile();
-        storage.update(item.getOutputPath(), src);
-        final File classFile = new File(item.getOutputPath());
+      for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
+        String src = item.sourcePath;
+        storage.update(item.outputPath, src);
         /* todo
+        final File classFile = new File(item.outputPath);
         Callbacks.Backend callback = delta.getCallback();
         callback.associate(item.getOutputPath(), Callbacks.getDefaultLookup(FileUtil.toSystemIndependentName(src)),
                             new ClassReader(FileUtil.loadFile(classFile)));

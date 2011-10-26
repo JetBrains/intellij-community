@@ -31,6 +31,7 @@ public class BaseGenerateAction extends CodeInsightAction {
     myHandler = handler;
   }
 
+  @Override
   protected final CodeInsightActionHandler getHandler() {
     return myHandler;
   }
@@ -44,6 +45,7 @@ public class BaseGenerateAction extends CodeInsightAction {
     return target instanceof SyntheticElement ? null : target;
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     if (file instanceof PsiCompiledElement) return false;

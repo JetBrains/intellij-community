@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 
 public class ReplaceInPathAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -29,6 +30,7 @@ public class ReplaceInPathAction extends AnAction {
     ReplaceInProjectManager.getInstance(project).replaceInProject(dataContext);
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());

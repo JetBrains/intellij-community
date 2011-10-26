@@ -28,6 +28,7 @@ public interface PsiSuperExpression extends PsiQualifiedExpression {
    *
    * @return the qualifier, or null if the expression has no qualifier.
    */
+  @Override
   @Nullable
   PsiJavaCodeReferenceElement getQualifier();
 }

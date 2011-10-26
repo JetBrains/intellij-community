@@ -99,10 +99,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     onScopeRadioButtonPressed();
   }
 
+  @Override
   public void setOKActionEnabled(boolean isEnabled) {
     super.setOKActionEnabled(isEnabled);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myTitledSeparator.setText(myAnalysisNoon);
 
@@ -170,6 +172,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 
     final ActionListener radioButtonPressed = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         onScopeRadioButtonPressed();
       }

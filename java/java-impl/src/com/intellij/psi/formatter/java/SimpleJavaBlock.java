@@ -43,6 +43,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     super(node, wrap, alignment, indent,settings);
   }
 
+  @Override
   protected List<Block> buildChildren() {
     ASTNode child = myNode.getFirstChildNode();
     int offset = myStartOffset != -1 ? myStartOffset : child != null ? child.getTextRange().getStartOffset():0;
@@ -88,6 +89,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     return result;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     if (myStartOffset != -1) {

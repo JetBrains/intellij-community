@@ -33,18 +33,22 @@ public class SliceTreeStructure extends AbstractTreeStructureBase {
     myRoot = rootNode;
   }
 
+  @Override
   public List<TreeStructureProvider> getProviders() {
     return Collections.emptyList();
   }
 
+  @Override
   public Object getRootElement() {
     return myRoot;
   }
 
+  @Override
   public void commit() {
 
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }

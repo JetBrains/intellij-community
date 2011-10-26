@@ -37,6 +37,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
     super(node);
   }
 
+  @Override
   public boolean isOnDemand(){
     final PsiImportStatementStub stub = getStub();
     if (stub != null) {
@@ -46,6 +47,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
     return calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_ON_DEMAND_DOT) != null;
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getImportReference() {
     final PsiImportStatementStub stub = getStub();
     if (stub != null) {
@@ -54,6 +56,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
     return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_REFERENCE);
   }
 
+  @Override
   public PsiElement resolve() {
     final PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.resolve();

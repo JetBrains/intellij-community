@@ -31,6 +31,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     super(stub);
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     synchronized (LAZY_BUILT_LOCK) {
@@ -48,20 +49,24 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return getReferenceElements();
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     return getStub().getReferencedTypes();
   }
 
+  @Override
   public Role getRole() {
     return getStub().getRole();
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     final String[] names = getStub().getReferencedNames();
     if (names.length != 0) {
@@ -85,6 +90,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -98,6 +104,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceList(this);

@@ -54,6 +54,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(new Runnable() {
+        @Override
         public void run() {
           final RefreshCacheUpdater changedFilesUpdater = new RefreshCacheUpdater();
           final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
@@ -63,6 +64,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           rootManager.registerRefreshUpdater(changedFilesUpdater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+            @Override
             public void projectClosing(Project project) {
               rootManager.unregisterRefreshUpdater(changedFilesUpdater);
               rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
@@ -74,6 +76,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     }
   }
 
+  @Override
   public boolean isInSet(final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
@@ -83,6 +86,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     return false;
   }
 
+  @Override
   public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
     if (!isInSet(file)) return;
 
@@ -96,28 +100,34 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     }
   }
 
+  @Override
   public void disposeComponent() {
     // done mostly for tests. In real life this is noop, becase the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
 
   private class RefreshCacheUpdater implements CacheUpdater {
+    @Override
     public int getNumberOfPendingUpdateJobs() {
       return myIndex.getNumberOfPendingInvalidations();
     }
 
+    @Override
     public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
       Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
       return VfsUtil.toVirtualFileArray(files);
     }
 
+    @Override
     public void processFile(FileContent fileContent) {
       myIndex.processRefreshedFile(myProject, fileContent);
     }
 
+    @Override
     public void updatingDone() {
     }
 
+    @Override
     public void canceled() {
     }
   }

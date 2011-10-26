@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaChangeLocalityDetector implements ChangeLocalityDetector {
+  @Override
   @Nullable
   public PsiElement getChangeHighlightingDirtyScopeFor(final PsiElement element) {
     PsiElement parent = element.getParent();

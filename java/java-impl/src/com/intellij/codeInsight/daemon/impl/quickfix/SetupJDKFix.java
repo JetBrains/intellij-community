@@ -43,24 +43,29 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
 
   private SetupJDKFix() { }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("setup.jdk.location.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("setup.jdk.location.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return JavaPsiFacade.getInstance(project).findClass("java.lang.Object", file.getResolveScope()) == null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
     Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
     if (projectJdk == null) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         Module module = ModuleUtil.findModuleForPsiElement(file);
         if (module != null) {
@@ -72,6 +77,7 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
     });
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

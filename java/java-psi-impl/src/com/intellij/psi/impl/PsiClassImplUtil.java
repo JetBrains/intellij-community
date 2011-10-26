@@ -198,6 +198,7 @@ public class PsiClassImplUtil {
 
     FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(
       new OrFilter(ElementClassFilter.METHOD, ElementClassFilter.FIELD, ElementClassFilter.CLASS)) {
+      @Override
       protected void add(PsiElement element, PsiSubstitutor substitutor) {
         if (element instanceof PsiMethod) {
           methods.add(new Pair<PsiMember, PsiSubstitutor>((PsiMethod)element, substitutor));
@@ -287,6 +288,7 @@ public class PsiClassImplUtil {
   }
 
   private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new NullableFunction<ClassIconRequest, Icon>() {
+    @Override
     public Icon fun(ClassIconRequest r) {
       if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
@@ -386,6 +388,7 @@ public class PsiClassImplUtil {
       myClass = aClass;
     }
 
+    @Override
     public Result<Map> compute() {
       final Map<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> map = buildAllMaps(myClass);
       return new Result<Map>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);

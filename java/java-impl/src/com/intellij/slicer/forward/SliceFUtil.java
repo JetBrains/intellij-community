@@ -54,6 +54,7 @@ public class SliceFUtil {
           final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
 
           Processor<PsiMethod> myProcessor = new Processor<PsiMethod>() {
+            @Override
             public boolean process(PsiMethod override) {
               if (!parent.getScope().contains(override)) return true;
               final PsiSubstitutor superSubstitutor = method == override
@@ -121,6 +122,7 @@ public class SliceFUtil {
         for (PsiMethod superMethod : superMethods) {
           SliceManager.getInstance(method.getProject()).checkCanceled();
           if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiMethod>() {
+            @Override
             public boolean process(PsiMethod sub) {
               SliceManager.getInstance(method.getProject()).checkCanceled();
               implementors.add(sub);
@@ -161,6 +163,7 @@ public class SliceFUtil {
       final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
       for (final PsiMethod containingMethod : superMethods) {
         if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
+            @Override
             public boolean process(final PsiReference reference) {
               SliceManager.getInstance(from.getProject()).checkCanceled();
               synchronized (processed) {
@@ -181,6 +184,7 @@ public class SliceFUtil {
   private static boolean searchReferencesAndProcessAssignmentTarget(@NotNull PsiElement element, @Nullable final PsiElement context, final SliceUsage parent,
                                                                     final Processor<SliceUsage> processor) {
     return ReferencesSearch.search(element).forEach(new Processor<PsiReference>() {
+      @Override
       public boolean process(PsiReference reference) {
         PsiElement element = reference.getElement();
         if (context != null && element.getTextOffset() < context.getTextOffset()) return true;

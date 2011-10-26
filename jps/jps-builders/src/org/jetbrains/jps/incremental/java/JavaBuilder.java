@@ -67,11 +67,9 @@ public class JavaBuilder extends Builder{
       public void process(CompileContext context, OutputFileObject out) {
         final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
         if (callback != null) {
-          final String className = out.getClassName();
           final OutputFileObject.Content content = out.getContent();
           final File srcFile = out.getSourceFile();
           if (srcFile != null && content != null) {
-            // todo: the callback is not thread-safe?
             final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
             final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
             try {
@@ -81,10 +79,11 @@ public class JavaBuilder extends Builder{
               context.processMessage(new CompilerMessage(BUILDER_NAME, e));
             }
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+            // todo: the callback is not thread-safe?
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (callback) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
-              callback.associate(className, Callbacks.getDefaultLookup(sourcePath), reader);
+              callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), reader);
             }
           }
         }
@@ -167,6 +166,7 @@ public class JavaBuilder extends Builder{
         }
       }
 
+      context.deleteCorrespondingClasses(filesToCompile);
 
       return compile(context, chunk, filesToCompile, formsToCompile, removedPaths);
     }

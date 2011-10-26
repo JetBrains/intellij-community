@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+  @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
     return new JavaFileHighlighter(

@@ -37,6 +37,7 @@ public class DefaultColorSchemesManager implements JDOMExternalizable, NamedComp
   private final List<DefaultColorsScheme> mySchemes;
   @NonNls private static final String SCHEME_ELEMENT = "scheme";
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DefaultColorSchemesManager";
@@ -50,6 +51,7 @@ public class DefaultColorSchemesManager implements JDOMExternalizable, NamedComp
     return ServiceManager.getService(DefaultColorSchemesManager.class);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     List schemes = element.getChildren(SCHEME_ELEMENT);
     for (Object scheme : schemes) {
@@ -60,6 +62,7 @@ public class DefaultColorSchemesManager implements JDOMExternalizable, NamedComp
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }

@@ -37,21 +37,25 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     super(node);
   }
 
+  @Override
   protected Object clone() {
     PsiAnonymousClassImpl clone = (PsiAnonymousClassImpl)super.clone();
     clone.myCachedBaseType = null;
     return clone;
   }
 
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     myCachedBaseType = null;
   }
 
+  @Override
   public PsiExpressionList getArgumentList() {
     return (PsiExpressionList)getNode().findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     final PsiJavaCodeReferenceElement result =
@@ -60,6 +64,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return result;
   }
 
+  @Override
   @NotNull
   public PsiClassType getBaseClassType() {
     final PsiClassStub stub = getStub();
@@ -100,54 +105,67 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClassReference());
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return null;
   }
 
+  @Override
   public String getQualifiedName() {
     return null;
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     return null;
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return name.equals(PsiModifier.FINAL);
   }
 
+  @Override
   public PsiReferenceList getExtendsList() {
     return null;
   }
 
+  @Override
   public PsiReferenceList getImplementsList() {
     return null;
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return null;
   }
 
+  @Override
   public boolean isInterface() {
     return false;
   }
 
+  @Override
   public boolean isAnnotationType() {
     return false;
   }
 
+  @Override
   public boolean isEnum() {
     return false;
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return null;
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     return this;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnonymousClass(this);
@@ -161,6 +179,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return "PsiAnonymousClass";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -182,6 +201,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return super.processDeclarations(processor, state, lastParent, place);
   }
 
+  @Override
   public boolean isInQualifiedNew() {
     final PsiClassStub stub = getStub();
     if (stub != null) {
@@ -192,6 +212,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
   }
 
+  @Override
   public PsiElement getParent() {
     return SharedImplUtil.getParent(getNode());
   }

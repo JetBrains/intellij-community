@@ -36,6 +36,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
     super(node, wrap, alignment, indent, settings);
   }
 
+  @Override
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
     ASTNode child = myNode.getFirstChildNode();

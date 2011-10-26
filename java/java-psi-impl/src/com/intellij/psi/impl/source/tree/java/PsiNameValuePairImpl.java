@@ -43,6 +43,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   private volatile PsiAnnotationMemberValue myCachedValue = null;
   private volatile boolean myNameCached = false;
 
+  @Override
   public void clearCaches() {
     myNameCached = false;
     myCachedName = null;
@@ -55,6 +56,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     super(JavaElementType.NAME_VALUE_PAIR);
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     PsiIdentifier cachedNameIdentifier = myCachedNameIdentifier;
     if (!myNameCached) {
@@ -65,6 +67,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return cachedNameIdentifier;
   }
 
+  @Override
   public String getName() {
     String cachedName = myCachedName;
     if (!myNameCached) {
@@ -76,6 +79,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return cachedName;
   }
 
+  @Override
   public PsiAnnotationMemberValue getValue() {
     PsiAnnotationMemberValue cachedValue = myCachedValue;
     if (cachedValue == null) {
@@ -85,12 +89,14 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return cachedValue;
   }
 
+  @Override
   @NotNull
   public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     getValue().replace(newValue);
     return getValue();
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_VALUE;
@@ -105,6 +111,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return ChildRoleBase.NONE;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     if (role == ChildRole.NAME) {
       return findChildByType(JavaTokenType.IDENTIFIER);
@@ -123,6 +130,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return "PsiNameValuePair";
   }
 
+  @Override
   public PsiReference getReference() {
     return new PsiReference() {
       @Nullable
@@ -135,6 +143,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return target instanceof PsiClass ? (PsiClass)target : null;
       }
 
+      @Override
       public PsiElement getElement() {
         PsiIdentifier nameIdentifier = getNameIdentifier();
         if (nameIdentifier != null) {
@@ -143,6 +152,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return PsiNameValuePairImpl.this;
       }
 
+      @Override
       public TextRange getRangeInElement() {
         PsiIdentifier id = getNameIdentifier();
         if (id != null) {
@@ -151,6 +161,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return TextRange.EMPTY_RANGE;
       }
 
+      @Override
       public PsiElement resolve() {
         PsiClass refClass = getReferencedClass();
         if (refClass == null) return null;
@@ -160,12 +171,14 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return MethodSignatureUtil.findMethodBySignature(refClass, signature, false);
       }
 
+      @Override
       @NotNull
       public String getCanonicalText() {
         String name = getName();
         return name != null ? name : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
       }
 
+      @Override
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
         PsiIdentifier nameIdentifier = getNameIdentifier();
         if (nameIdentifier != null) {
@@ -180,25 +193,30 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return PsiNameValuePairImpl.this;
       }
 
+      @Override
       public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         throw new IncorrectOperationException("Not implemented");
       }
 
+      @Override
       public boolean isReferenceTo(PsiElement element) {
         return element instanceof PsiMethod && element.equals(resolve());
       }
 
+      @Override
       @NotNull
       public Object[] getVariants() {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
+      @Override
       public boolean isSoft() {
         return false;
       }
     };
   }
 
+  @Override
   public final void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitNameValuePair(this);
@@ -208,6 +226,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     }
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     final TreeElement treeElement = super.addInternal(first, last, anchor, before);
@@ -218,6 +237,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return treeElement;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     super.deleteChildInternal(child);
     if (child.getElementType() == JavaTokenType.IDENTIFIER) {

@@ -66,10 +66,12 @@ public class JavaSdkImpl extends JavaSdk {
     super("JavaSDK");
   }
 
+  @Override
   public String getPresentableName() {
     return ProjectBundle.message("sdk.java.name");
   }
 
+  @Override
   public Icon getIcon() {
     return ICON;
   }
@@ -80,26 +82,32 @@ public class JavaSdkImpl extends JavaSdk {
     return "reference.project.structure.sdk.java";
   }
 
+  @Override
   public Icon getIconForExpandedTreeNode() {
     return JDK_ICON_EXPANDED;
   }
 
+  @Override
   public Icon getIconForAddAction() {
     return ADD_ICON;
   }
 
+  @Override
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     return null;
   }
 
+  @Override
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getBinPath(Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
 
+  @Override
   @NonNls
   public String getToolsPath(Sdk sdk) {
     final String versionString = sdk.getVersionString();
@@ -107,6 +115,7 @@ public class JavaSdkImpl extends JavaSdk {
     return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
   }
 
+  @Override
   public String getVMExecutablePath(Sdk sdk) {
     /*
     if ("64".equals(System.getProperty("sun.arch.data.model"))) {
@@ -124,6 +133,7 @@ public class JavaSdkImpl extends JavaSdk {
     return path;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
@@ -170,10 +180,12 @@ public class JavaSdkImpl extends JavaSdk {
     return homePath;
   }
 
+  @Override
   public boolean isValidSdkHome(String path) {
     return checkForJdk(new File(path));
   }
 
+  @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     final String suggestedName;
     if (currentSdkName != null && currentSdkName.length() > 0) {
@@ -224,6 +236,7 @@ public class JavaSdkImpl extends JavaSdk {
     return versionString;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void setupSdkPaths(Sdk sdk) {
     final File jdkHome = new File(sdk.getHomePath());
@@ -272,6 +285,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   private final Map<String, String> myCachedVersionStrings = new HashMap<String, String>();
 
+  @Override
   public final String getVersionString(final String sdkHome) {
     if (myCachedVersionStrings.containsKey(sdkHome)) {
       return myCachedVersionStrings.get(sdkHome);
@@ -288,20 +302,25 @@ public class JavaSdkImpl extends JavaSdk {
     return versionString;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return getName();
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public int compareTo(@NotNull String versionString, @NotNull String versionNumber) {
     return getVersionNumber(versionString).compareTo(versionNumber);
   }
 
+  @Override
   public Sdk createJdk(final String jdkName, final String home, final boolean isJre) {
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
@@ -412,6 +431,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   private static VirtualFile[] findClasses(File file, boolean isJre) {
     FileFilter jarFileFilter = new FileFilter(){
+      @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f){
         return !f.isDirectory() && f.getName().endsWith(".jar");

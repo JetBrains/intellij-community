@@ -11,6 +11,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
   public void testRemoveBoundFromFront() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         typeParameter.getExtendsList().getReferenceElements()[0].delete();
       }
@@ -21,6 +22,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
   public void testRemoveBoundFromEnd() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         typeParameter.getExtendsList().getReferenceElements()[1].delete();
       }
@@ -31,6 +33,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
   public void testRemoveBoundFromMiddle() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         typeParameter.getExtendsList().getReferenceElements()[1].delete();
       }

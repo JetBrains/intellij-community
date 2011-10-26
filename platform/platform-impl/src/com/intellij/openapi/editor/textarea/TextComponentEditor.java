@@ -62,20 +62,24 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     mySoftWrapModel = new TextComponentSoftWrapModel();
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @Override
   public boolean isViewer() {
     return !myTextComponent.isEditable();
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return myTextComponent;
   }
 
+  @Override
   @NotNull
   public JComponent getContentComponent() {
     return myTextComponent;
@@ -90,36 +94,43 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     return new Insets(0,0,0,0);
   }
 
+  @Override
   @NotNull
   public SelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 
+  @Override
   @NotNull
   public MarkupModel getMarkupModel() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public FoldingModel getFoldingModel() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public ScrollingModel getScrollingModel() {
     return myScrollingModel;
   }
 
+  @Override
   @NotNull
   public CaretModel getCaretModel() {
     return myCaretModel;
   }
 
+  @Override
   @NotNull
   public SoftWrapModel getSoftWrapModel() {
     return mySoftWrapModel;
   }
 
+  @Override
   @NotNull
   public EditorSettings getSettings() {
     if (mySettings == null) {
@@ -128,39 +139,47 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     return mySettings;
   }
 
+  @Override
   @NotNull
   public EditorColorsScheme getColorsScheme() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public int getLineHeight() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
     return myDocument.getLineStartOffset(pos.line) + pos.column;
   }
 
+  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition logicalPos) {
     return new VisualPosition(logicalPos.line, logicalPos.column);
   }
 
+  @Override
   @NotNull
   public Point visualPositionToXY(@NotNull final VisualPosition visible) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
     return new LogicalPosition(visiblePos.line, visiblePos.column);
   }
 
+  @Override
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
     int line = myDocument.getLineNumber(offset);
@@ -168,6 +187,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     return new LogicalPosition(line, offset - lineStartOffset);
   }
 
+  @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
     int line = myDocument.getLineNumber(offset);
@@ -175,76 +195,93 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     return new VisualPosition(line, offset - lineStartOffset);
   }
 
+  @Override
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull final Point p) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public boolean isDisposed() {
     return false;
   }
 
+  @Override
   @Nullable
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public boolean isInsertMode() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public boolean isColumnMode() {
     return false;
   }
 
+  @Override
   public boolean isOneLineMode() {
     return !(myTextComponent instanceof JTextArea);
   }
 
+  @Override
   @NotNull
   public EditorGutter getGutter() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   @Nullable
   public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void setHeaderComponent(@Nullable final JComponent header) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public boolean hasHeaderComponent() {
     return false;
   }
 
+  @Override
   @Nullable
   public JComponent getHeaderComponent() {
     return null;
   }
 
+  @Override
   public IndentsModel getIndentsModel() {
     return new EmptyIndentsModel();
   }

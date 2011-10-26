@@ -31,10 +31,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 
 public class PageUpAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretPageUp(editor, false);
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return !editor.isOneLineMode();
     }

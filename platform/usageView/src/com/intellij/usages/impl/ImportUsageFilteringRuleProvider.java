@@ -38,6 +38,7 @@ import java.util.List;
  * @author yole
  */
 public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
+  @Override
   @NotNull
   public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
@@ -47,6 +48,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
     return rules.toArray(new UsageFilteringRule[rules.size()]);
   }
 
+  @Override
   @NotNull
   public AnAction[] createFilteringActions(@NotNull final UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
@@ -66,10 +68,12 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
       super(view, UsageViewBundle.message("action.show.import.statements"), IconLoader.getIcon("/actions/showImportStatements.png"));
     }
 
+    @Override
     protected boolean getOptionValue() {
       return ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS;
     }
 
+    @Override
     protected void setOptionValue(boolean value) {
       ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS = value;
     }

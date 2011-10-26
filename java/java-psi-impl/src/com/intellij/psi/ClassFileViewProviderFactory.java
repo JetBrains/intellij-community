@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class ClassFileViewProviderFactory implements FileViewProviderFactory{
+  @Override
   public FileViewProvider createFileViewProvider(final VirtualFile file, final Language language, final PsiManager manager, final boolean physical) {
     // Define language for compiled file
     final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);

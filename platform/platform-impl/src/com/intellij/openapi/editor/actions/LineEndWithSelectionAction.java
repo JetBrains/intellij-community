@@ -34,6 +34,7 @@ public class LineEndWithSelectionAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineEnd(editor, true);
     }

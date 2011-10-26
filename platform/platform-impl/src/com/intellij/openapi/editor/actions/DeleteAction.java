@@ -38,6 +38,7 @@ public class DeleteAction extends EditorAction {
   }
 
   public static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       SelectionModel selectionModel = editor.getSelectionModel();

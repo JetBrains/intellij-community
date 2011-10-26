@@ -32,18 +32,22 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   public EverythingGlobalScope() {
   }
 
+  @Override
   public int compare(final VirtualFile file1, final VirtualFile file2) {
     return 0;
   }
 
+  @Override
   public boolean contains(final VirtualFile file) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return true;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull final Module aModule) {
     return true;
   }

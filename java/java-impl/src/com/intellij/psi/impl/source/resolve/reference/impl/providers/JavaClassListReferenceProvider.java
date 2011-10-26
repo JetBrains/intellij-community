@@ -45,6 +45,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
     setOption(ADVANCED_RESOLVE, Boolean.TRUE);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByString(String str, @NotNull final PsiElement position, int offsetInPosition){
     if (position instanceof XmlTag && ((XmlTag)position).getValue().getTextElements().length == 0) {
@@ -96,6 +97,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
         }
         String s = str.substring(start, end + 1);
         ContainerUtil.addAll(results, new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this) {
+          @Override
           public boolean isSoft() {
             return true;
           }

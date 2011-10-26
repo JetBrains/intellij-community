@@ -248,6 +248,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
     doTest(true, false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         PsiFile txt = myFile.getParent().createFile("x.txt");
         try {
@@ -319,6 +320,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

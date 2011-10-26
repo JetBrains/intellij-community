@@ -27,6 +27,7 @@ public class SortingException extends RuntimeException {
 
   public SortingException(String message, Element[] conflictingElements) {
     super(message + ": " + StringUtil.join(conflictingElements, new Function<Element, String>() {
+      @Override
       public String fun(Element element) {
         return element.getAttributeValue("id") + "(" + element.getAttributeValue("order") + ")";
       }

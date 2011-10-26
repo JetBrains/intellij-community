@@ -39,6 +39,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl");
   
   private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
+    @Override
     public PsiAnnotation fun(Project project, String text) {
       return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(text, null);
     }
@@ -52,6 +53,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     super(node);
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
     final PsiAnnotationStub stub = getStub();
     if (stub != null) {
@@ -65,15 +67,18 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return (PsiJavaCodeReferenceElement)result;
   }
 
+  @Override
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
+  @Override
   @Nullable
   public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
+  @Override
   public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, @Nullable T value) {
     return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
   }
@@ -82,6 +87,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return "PsiAnnotation";
   }
 
+  @Override
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
     final PsiAnnotationStub stub = getStub();
@@ -92,12 +98,14 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return PsiTreeUtil.getRequiredChildOfType(this, PsiAnnotationParameterList.class);
   }
 
+  @Override
   @Nullable public String getQualifiedName() {
     final PsiJavaCodeReferenceElement nameRef = getNameReferenceElement();
     if (nameRef == null) return null;
     return nameRef.getCanonicalText();
   }
 
+  @Override
   public final void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotation(this);
@@ -107,10 +115,12 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     }
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 
+  @Override
   public PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
     if (parent instanceof PsiTypeElement) {

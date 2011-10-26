@@ -36,10 +36,12 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
     super(EXPRESSION_LIST_STATEMENT);
   }
 
+  @Override
   public PsiExpressionList getExpressionList() {
     return (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.EXPRESSION_LIST);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -54,6 +56,7 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -68,6 +71,7 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitExpressionListStatement(this);

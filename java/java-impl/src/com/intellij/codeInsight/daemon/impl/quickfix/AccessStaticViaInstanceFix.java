@@ -69,6 +69,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
                                   HighlightUtil.formatClass(aClass, false));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("access.static.via.class.reference.family");

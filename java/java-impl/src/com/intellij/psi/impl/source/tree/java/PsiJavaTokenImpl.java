@@ -27,10 +27,12 @@ public class PsiJavaTokenImpl extends LeafPsiElement implements PsiJavaToken{
     super(type, text);
   }
 
+  @Override
   public IElementType getTokenType() {
     return getElementType();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitJavaToken(this);

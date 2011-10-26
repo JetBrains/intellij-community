@@ -85,31 +85,37 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myResolveHelper = resolveHelper;
   }
 
+  @Override
   @NotNull
   public HighlightVisitorImpl clone() {
     return new HighlightVisitorImpl(myResolveHelper);
   }
 
+  @Override
   public int order() {
     return 0;
   }  
 
+  @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
     return !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
+  @Override
   public void visit(@NotNull PsiElement element) {
     element.accept(this);
   }
 
   private void registerReferencesFromInjectedFragments(final PsiElement element) {
     InjectedLanguageUtil.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
       }
     });
   }
 
+  @Override
   public boolean analyze(@NotNull final PsiFile file,
                          final boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
@@ -148,6 +154,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return success;
   }
 
+  @Override
   public void visitElement(final PsiElement element) {
     if (element instanceof XmlAttributeValue) {
       try {

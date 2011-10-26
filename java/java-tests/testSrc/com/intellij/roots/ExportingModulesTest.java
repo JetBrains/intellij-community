@@ -33,6 +33,7 @@ public class ExportingModulesTest extends IdeaTestCase {
     assertNotNull(testRoot);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
         final Module moduleA = moduleModel.newModule("A.iml", StdModuleTypes.JAVA);
@@ -70,6 +71,7 @@ public class ExportingModulesTest extends IdeaTestCase {
 
   private void configureModule(final Module module, final VirtualFile testRoot, final String name) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         final VirtualFile contentRoot = testRoot.findChild(name);

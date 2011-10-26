@@ -34,33 +34,40 @@ public class UnknownFileType implements FileType {
 
   private UnknownFileType() {}
 
+  @Override
   @NotNull
   public String getName() {
     return "UNKNOWN";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "UNKNOWN";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "";
   }
 
+  @Override
   public Icon getIcon() {
     return ICON.getValue();
   }
 
+  @Override
   public boolean isBinary() {
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return null;
   }

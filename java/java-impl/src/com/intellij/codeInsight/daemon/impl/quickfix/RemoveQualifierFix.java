@@ -41,16 +41,19 @@ public class RemoveQualifierFix implements IntentionAction {
     myResolved = resolved;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.qualifier.action.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
       myQualifier != null
@@ -63,12 +66,14 @@ public class RemoveQualifierFix implements IntentionAction {
       ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myQualifier.delete();
     myExpression.bindToElement(myResolved);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -142,6 +142,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * scrollpane.setLayout(mySPLayout):
    * </pre>
    */
+  @Override
   public void syncWithScrollPane(JScrollPane sp) {
     viewport = sp.getViewport();
     vsb = sp.getVerticalScrollBar();
@@ -170,6 +171,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @param newC the <code>Component</code> to add
    * @return the <code>newC</code>
    */
+  @Override
   protected Component addSingletonComponent(Component oldC, Component newC) {
     if ((oldC != null) && (oldC != newC)) {
       oldC.getParent().remove(oldC);
@@ -197,6 +199,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @param c the component to be added
    * @throws IllegalArgumentException if <code>s</code> is an invalid key
    */
+  @Override
   public void addLayoutComponent(String s, Component c) {
     if (s.equals(VIEWPORT)) {
       viewport = (JViewport)addSingletonComponent(viewport, c);
@@ -236,6 +239,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * 
    * @param c the component to remove
    */
+  @Override
   public void removeLayoutComponent(Component c) {
     if (c == viewport) {
       viewport = null;
@@ -273,6 +277,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return an integer giving the display policy
    * @see #setVerticalScrollBarPolicy
    */
+  @Override
   public int getVerticalScrollBarPolicy() {
     return vsbPolicy;
   }
@@ -294,6 +299,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @throws IllegalArgumentException if <code>x</code> is an invalid
    *                                  vertical scroll bar policy, as listed above
    */
+  @Override
   public void setVerticalScrollBarPolicy(int x) {
     switch (x) {
       case VERTICAL_SCROLLBAR_AS_NEEDED:
@@ -313,6 +319,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return an integer giving the display policy
    * @see #setHorizontalScrollBarPolicy
    */
+  @Override
   public int getHorizontalScrollBarPolicy() {
     return hsbPolicy;
   }
@@ -332,6 +339,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @throws IllegalArgumentException if <code>x</code> is not a valid
    *                                  horizontal scrollbar policy, as listed above
    */
+  @Override
   public void setHorizontalScrollBarPolicy(int x) {
     switch (x) {
       case HORIZONTAL_SCROLLBAR_AS_NEEDED:
@@ -352,6 +360,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the <code>JViewport</code> object that displays the scrollable contents
    * @see javax.swing.JScrollPane#getViewport
    */
+  @Override
   public JViewport getViewport() {
     return viewport;
   }
@@ -363,6 +372,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the <code>JScrollBar</code> object that handles horizontal scrolling
    * @see javax.swing.JScrollPane#getHorizontalScrollBar
    */
+  @Override
   public JScrollBar getHorizontalScrollBar() {
     return hsb;
   }
@@ -373,6 +383,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the <code>JScrollBar</code> object that handles vertical scrolling
    * @see javax.swing.JScrollPane#getVerticalScrollBar
    */
+  @Override
   public JScrollBar getVerticalScrollBar() {
     return vsb;
   }
@@ -384,6 +395,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the <code>JViewport</code> object that is the row header
    * @see javax.swing.JScrollPane#getRowHeader
    */
+  @Override
   public JViewport getRowHeader() {
     return rowHead;
   }
@@ -395,6 +407,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the <code>JViewport</code> object that is the column header
    * @see javax.swing.JScrollPane#getColumnHeader
    */
+  @Override
   public JViewport getColumnHeader() {
     return colHead;
   }
@@ -409,6 +422,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    *         four corners, <code>null</code> is returned
    * @see javax.swing.JScrollPane#getCorner
    */
+  @Override
   public Component getCorner(String key) {
     if (key.equals(LOWER_LEFT_CORNER)) {
       return lowerLeft;
@@ -443,6 +457,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @see ViewportLayout
    * @see LayoutManager
    */
+  @Override
   public Dimension preferredLayoutSize(Container parent) {
     /* Sync the (now obsolete) policy fields with the
      * JScrollPane.
@@ -561,6 +576,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @param parent the <code>Container</code> that will be laid out
    * @return a <code>Dimension</code> object specifying the minimum size
    */
+  @Override
   public Dimension minimumLayoutSize(Container parent) {
     /* Sync the (now obsolete) policy fields with the
      * JScrollPane.
@@ -661,6 +677,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * 
    * @param parent the <code>Container</code> to lay out
    */
+  @Override
   public void layoutContainer(Container parent) {
     /* Sync the (now obsolete) policy fields with the
      * JScrollPane.
@@ -1048,6 +1065,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @deprecated As of JDK version Swing1.1
    *             replaced by <code>JScrollPane.getViewportBorderBounds()</code>.
    */
+  @Override
   public Rectangle getViewportBorderBounds(JScrollPane scrollpane) {
     return scrollpane.getViewportBorderBounds();
   }

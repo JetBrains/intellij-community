@@ -18,10 +18,12 @@ package com.intellij.psi.scope;
 import com.intellij.openapi.util.Key;
 
 public abstract class BaseScopeProcessor implements PsiScopeProcessor {
+  @Override
   public <T> T getHint(Key<T> hintKey) {
     return null;
   }
 
+  @Override
   public void handleEvent(Event event, Object associated) {
   }
 }

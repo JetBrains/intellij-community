@@ -46,6 +46,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     myUnresolvedReference = unresolvedReference;
   }
 
+  @Override
   @NotNull
   public String getText() {
     PsiLocalVariable variable = myOutOfScopeVariable;
@@ -54,11 +55,13 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     return QuickFixBundle.message("bring.variable.to.scope.text", varText);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("bring.variable.to.scope.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     if (myUnresolvedReference.isQualified()) return false;
@@ -95,6 +98,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     return myOutOfScopeVariable != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(myOutOfScopeVariable != null);
     PsiManager manager = file.getManager();
@@ -158,6 +162,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     variable.setInitializer(initializer);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

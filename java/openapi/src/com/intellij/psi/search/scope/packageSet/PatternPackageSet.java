@@ -71,6 +71,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     myPattern = aspectPattern != null ? Pattern.compile(FilePatternPackageSet.convertToRegexp(aspectPattern, '.')) : null;
   }
 
+  @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     Project project = holder.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -105,14 +106,17 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.isDirectory() ? file :  file.getParent()), file.getNameWithoutExtension());
   }
 
+  @Override
   public PackageSet createCopy() {
     return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText);
   }
 
+  @Override
   public int getNodePriority() {
     return 0;
   }
 
+  @Override
   public String getText() {
     StringBuilder buf = new StringBuilder();
     if (myScope != SCOPE_ANY) {

@@ -29,16 +29,11 @@ import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
-/**
- * @author Vladimir Kondratyev
- */
-public class IdeGraphics2D extends Graphics2D{
-  private final Graphics2D myDelegate;
+public class Graphics2DDelegate extends Graphics2D{
+  protected final Graphics2D myDelegate;
 
-  public IdeGraphics2D(Graphics2D g2d){
+  public Graphics2DDelegate(Graphics2D g2d){
     myDelegate=g2d;
-    setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-    setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
   }
 
   public void addRenderingHints(Map hints) {
@@ -62,7 +57,7 @@ public class IdeGraphics2D extends Graphics2D{
   }
 
   public Graphics create() {
-    return new IdeGraphics2D((Graphics2D)myDelegate.create());
+    return new Graphics2DDelegate((Graphics2D)myDelegate.create());
   }
 
   public void dispose() {
@@ -121,11 +116,11 @@ public class IdeGraphics2D extends Graphics2D{
     myDelegate.drawOval(x, y, width, height);
   }
 
-  public void drawPolygon(int xPoints[], int yPoints[], int nPoints) {
+  public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
     myDelegate.drawPolygon(xPoints, yPoints, nPoints);
   }
 
-  public void drawPolyline(int xPoints[], int yPoints[], int nPoints) {
+  public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
     myDelegate.drawPolyline(xPoints, yPoints, nPoints);
   }
 
@@ -169,7 +164,7 @@ public class IdeGraphics2D extends Graphics2D{
     myDelegate.fillOval(x, y, width, height);
   }
 
-  public void fillPolygon(int xPoints[], int yPoints[], int nPoints) {
+  public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
     myDelegate.fillPolygon(xPoints, yPoints, nPoints);
   }
 

@@ -28,10 +28,12 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
+  @Override
   public JComponent getPreferredFocusedControl() {
     return myCbToSkipResultsWhenOneUsage;
   }
 
+  @Override
   public void calcFindUsagesOptions(JavaVariableFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
@@ -39,14 +41,17 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
     options.isWriteAccess = true;
   }
 
+  @Override
   protected JPanel createFindWhatPanel(){
     return null;
   }
 
+  @Override
   protected JPanel createAllOptionsPanel() {
     return getPsiElement() instanceof PsiField ? super.createAllOptionsPanel() : createUsagesOptionsPanel();
   }
 
+  @Override
   protected void update() {
     setOKActionEnabled(true);
   }

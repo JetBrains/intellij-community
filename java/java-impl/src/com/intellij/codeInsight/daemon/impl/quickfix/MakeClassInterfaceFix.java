@@ -46,6 +46,7 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
     return QuickFixBundle.message(myMakeInterface? "make.class.an.interface.text":"make.interface.an.class.text", myName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("make.class.an.interface.family");

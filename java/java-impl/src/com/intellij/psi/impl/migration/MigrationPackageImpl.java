@@ -35,18 +35,22 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
     return "MigrationPackage: " + getQualifiedName();
   }
 
+  @Override
   public boolean isWritable() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return myMigration.isValid();
   }
 
+  @Override
   public void handleQualifiedNameChange(@NotNull String newQualifiedName) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public VirtualFile[] occursInPackagePrefixes() {
     return VirtualFile.EMPTY_ARRAY;
   }

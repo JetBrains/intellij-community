@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -53,7 +52,7 @@ class ComboContentLayout extends ContentLayout {
     Dimension idSize = myIdLabel.getPreferredSize();
 
     int eachX = 0;
-    int eachY = TitlePanel.STRUT;
+    int eachY = 0;
 
     myIdLabel.setBounds(eachX, eachY, idSize.width, bounds.height);
     eachX += idSize.width;
@@ -78,7 +77,7 @@ class ComboContentLayout extends ContentLayout {
     final GraphicsConfig c = new GraphicsConfig(g);
     c.setAntialiasing(true);
 
-    fillTabShape(g2d, myComboLabel, getShapeFor(myComboLabel), true);
+    fillTabShape(g2d, getShapeFor(myComboLabel), true, myComboLabel.getBounds());
 
     c.restore();
   }
@@ -106,7 +105,6 @@ class ComboContentLayout extends ContentLayout {
 
     if (bounds.width <= 0 || bounds.height <= 0) return new GeneralPath();
 
-    bounds.y = bounds.y - TitlePanel.STRUT;
     int height = bounds.height - 1;
 
     bounds.width += 1;

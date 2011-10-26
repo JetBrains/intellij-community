@@ -36,9 +36,11 @@ public abstract class ClassAssignableFilter implements ElementFilter{
   protected PsiClass myClass = null;
   private SoftReference myCachedClass = new SoftReference(null);
 
+  @Override
   public abstract boolean isAcceptable(Object aClass, PsiElement context);
   public abstract String toString();
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiClass.class, hintClass);
   }

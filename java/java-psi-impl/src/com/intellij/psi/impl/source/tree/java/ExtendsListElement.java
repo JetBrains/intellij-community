@@ -34,14 +34,17 @@ public class ExtendsListElement extends ReferenceListElement {
     super(JavaElementType.EXTENDS_LIST);
   }
 
+  @Override
   protected String getKeywordText() {
     return PsiKeyword.EXTENDS;
   }
 
+  @Override
   protected IElementType getKeywordType() {
     return JavaTokenType.EXTENDS_KEYWORD;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -53,6 +56,7 @@ public class ExtendsListElement extends ReferenceListElement {
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();

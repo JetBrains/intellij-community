@@ -77,11 +77,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo.elementHashCode();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myElementInfo.getProject();
   }
 
+  @Override
   @Nullable
   public E getElement() {
     E element = getCachedElement();
@@ -109,6 +111,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return ref == null ? null : ref.get();
   }
 
+  @Override
   public PsiFile getContainingFile() {
     VirtualFile virtualFile = myElementInfo.getVirtualFile();
     if (virtualFile != null && virtualFile.isValid()) {
@@ -124,6 +127,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(doc);
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     return myElementInfo.getVirtualFile();
   }
@@ -184,6 +188,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return new SelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
   }
 
+  @Override
   public void documentAndPsiInSync() {
     myElementInfo.documentAndPsiInSync();
   }
@@ -193,6 +198,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElementInfo.unfastenBelt(offset);
   }
 
+  @Override
   public void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker) {
     myElementInfo.fastenBelt(offset, cachedRangeMarker);
   }

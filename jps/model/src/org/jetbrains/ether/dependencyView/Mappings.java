@@ -1061,14 +1061,17 @@ public class Mappings implements RW.Writable {
     };
   }
 
+  @Nullable
   public Set<ClassRepr> getClasses(final StringCache.S sourceFileName) {
     return (Set<ClassRepr>)sourceFileToClasses.foxyGet(sourceFileName);
   }
 
+  @Nullable
   public Set<StringCache.S> getSubClasses(final StringCache.S className) {
     return (Set<StringCache.S>)classToSubclasses.foxyGet(className);
   }
 
+  @Nullable
   public StringCache.S getJavaByForm(final StringCache.S formFileName) {
     final StringCache.S classFileName = formToClass.get(formFileName);
 
@@ -1077,6 +1080,7 @@ public class Mappings implements RW.Writable {
     return classToSourceFile.get(classFileName);
   }
 
+  @Nullable
   public StringCache.S getFormByJava(final StringCache.S javaFileName) {
     final Set<ClassRepr> classes = getClasses(javaFileName);
 

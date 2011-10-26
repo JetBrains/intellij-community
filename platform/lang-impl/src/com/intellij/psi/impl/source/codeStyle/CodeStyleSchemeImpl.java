@@ -97,6 +97,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     }
   }
 
+  @Override
   public CodeStyleSettings getCodeStyleSettings(){
     return myCodeStyleSettings;
   }
@@ -105,10 +106,12 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     myCodeStyleSettings = codeStyleSettings;
   }
 
+  @Override
   public String getName(){
     return myName;
   }
 
+  @Override
   public boolean isDefault(){
     return myIsDefault;
   }
@@ -117,10 +120,12 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     return getName();
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException{
     myCodeStyleSettings.writeExternal(element);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException{
     myCodeStyleSettings.readExternal(element);
   }
@@ -163,10 +168,12 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     return new Document(newElement);
   }
 
+  @Override
   public void setName(final String name) {
     myName = name;
   }
 
+  @Override
   @NotNull
   public ExternalInfo getExternalInfo() {
     return myExternalInfo;

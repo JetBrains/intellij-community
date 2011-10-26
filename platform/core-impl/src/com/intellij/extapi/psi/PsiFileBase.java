@@ -59,11 +59,13 @@ public abstract class PsiFileBase extends PsiFileImpl {
         "Language " + baseLanguage + " doesn't participate in view provider " + viewProvider + ": " + new ArrayList<Language>(languages));
   }
 
+  @Override
   @NotNull
   public final Language getLanguage() {
     return myLanguage;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }

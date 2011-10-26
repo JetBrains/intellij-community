@@ -38,10 +38,12 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
     return "PsiTypeElement:" + getText();
   }
 
+  @Override
   public String getText() {
     return myType.getPresentableText();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeElement(this);
@@ -51,45 +53,55 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
     }
   }
 
+  @Override
   public PsiElement copy() {
     return new LightTypeElement(myManager, myType);
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return myType;
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
     return null;
   }
 
+  @Override
   public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
     return this;
   }
 
+  @Override
   public PsiType getTypeNoResolve(@NotNull PsiElement context) {
     return getType();
   }
 
+  @Override
   public boolean isValid() {
     return myType.isValid();
   }
 
+  @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
     return myType.getAnnotations();
   }
 
+  @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return myType.findAnnotation(qualifiedName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
   
+  @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();

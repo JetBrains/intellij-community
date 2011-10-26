@@ -61,6 +61,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     myModel.setTreeTable(this);
 
     new TreeTableSpeedSearch(this, new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath o) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
         final Object userObject = node.getUserObject();
@@ -81,6 +82,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setLineStyleAngled();
     getTree().setRootVisible(true);
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
+      @Override
       public Component getTreeCellRendererComponent(final JTree tree, final Object value, final boolean sel, final boolean expanded,
                                                     final boolean leaf, final int row, final boolean hasFocus) {
         super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
@@ -180,6 +182,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     return myModel.getValues();
   }
 
+  @Override
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
     TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
     UIUtil.setLineStyleAngled(tableRenderer);
@@ -243,10 +246,12 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     public void setTree(JTree tree) {
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public String getColumnName(final int column) {
       switch (column) {
         case 0:
@@ -258,6 +263,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       }
     }
 
+    @Override
     public Class getColumnClass(final int column) {
       switch (column) {
         case 0:
@@ -269,6 +275,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       }
     }
 
+    @Override
     public Object getValueAt(final Object node, final int column) {
       Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
       if (userObject instanceof Project) {
@@ -290,6 +297,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       }
     }
 
+    @Override
     public boolean isCellEditable(final Object node, final int column) {
       switch (column) {
         case 0:
@@ -302,6 +310,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       }
     }
 
+    @Override
     public void setValueAt(final Object aValue, final Object node, final int column) {
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
       final Object userObject = treeNode.getUserObject();
@@ -340,6 +349,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       myFilter = filter;
     }
 
+    @Override
     protected void appendChildrenTo(final Collection<ConvenientNode> children) {
       Project project = getObject();
       VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
@@ -369,16 +379,19 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
     protected abstract void appendChildrenTo(final Collection<ConvenientNode> children);
 
+    @Override
     public int getChildCount() {
       init();
       return super.getChildCount();
     }
 
+    @Override
     public TreeNode getChildAt(final int childIndex) {
       init();
       return super.getChildAt(childIndex);
     }
 
+    @Override
     public Enumeration children() {
       init();
       return super.children();
@@ -390,6 +403,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         final List<ConvenientNode> children = new ArrayList<ConvenientNode>();
         appendChildrenTo(children);
         Collections.sort(children, new Comparator<ConvenientNode>() {
+          @Override
           public int compare(final ConvenientNode node1, final ConvenientNode node2) {
             Object o1 = node1.getObject();
             Object o2 = node2.getObject();
@@ -437,6 +451,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       myFilter = filter;
     }
 
+    @Override
     protected void appendChildrenTo(final Collection<ConvenientNode> children) {
       VirtualFile[] childrenf = getObject().getChildren();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();

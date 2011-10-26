@@ -16,7 +16,6 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -27,16 +26,18 @@ import javax.swing.*;
 
 
 public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
-  private ProblemDescriptor myProblemDescriptor;
+  private String myWord;
+
+  public AcceptWordAsCorrect(String word) {
+    myWord = word;
+  }
 
   public AcceptWordAsCorrect() {
   }
 
   @NotNull
   public String getName() {
-    return myProblemDescriptor!=null ? SpellCheckerBundle.message("add.0.to.dictionary", ProblemDescriptionNode.extractHighlightedText(myProblemDescriptor, myProblemDescriptor.getPsiElement()))
-       : SpellCheckerBundle.message("add.to.dictionary")
-       ;
+    return myWord != null ? SpellCheckerBundle.message("add.0.to.dictionary", myWord) : SpellCheckerBundle.message("add.to.dictionary");
   }
 
   @NotNull
@@ -51,15 +52,10 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-    final String w = ProblemDescriptionNode.extractHighlightedText(descriptor, descriptor.getPsiElement());
-    spellCheckerManager.acceptWordAsCorrect(w, project);
+    spellCheckerManager.acceptWordAsCorrect(myWord, project);
   }
 
   public Icon getIcon(int flags) {
     return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
-  }
-
-  public void setDescriptor(ProblemDescriptor problemDescriptor) {
-    myProblemDescriptor = problemDescriptor;
   }
 }

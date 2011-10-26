@@ -53,6 +53,7 @@ public class RowIcon implements Icon {
     return myIcons[index];
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     int _x = x;
     for (Icon icon : myIcons) {
@@ -63,10 +64,12 @@ public class RowIcon implements Icon {
     }
   }
 
+  @Override
   public int getIconWidth() {
     return myWidth;
   }
 
+  @Override
   public int getIconHeight() {
     return myHeight;
   }

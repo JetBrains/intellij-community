@@ -37,11 +37,13 @@ public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassRefer
     super(node);
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, Constants.PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     final PsiClassReferenceListStub stub = getStub();
@@ -59,6 +61,7 @@ public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassRefer
     return types;
   }
 
+  @Override
   public Role getRole() {
     final IElementType tt = getElementType();
 
@@ -80,6 +83,7 @@ public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassRefer
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceList(this);

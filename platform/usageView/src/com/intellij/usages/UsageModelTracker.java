@@ -34,26 +34,32 @@ public class UsageModelTracker implements Disposable {
 
   public UsageModelTracker(Project project) {
     final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
+      @Override
       public void childAdded(PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
+      @Override
       public void childRemoved(PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
+      @Override
       public void childReplaced(PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
+      @Override
       public void childrenChanged(PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
+      @Override
       public void childMoved(PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
+      @Override
       public void propertyChanged(PsiTreeChangeEvent event) {
         doFire(event, true);
       }
@@ -69,6 +75,7 @@ public class UsageModelTracker implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
   }
 

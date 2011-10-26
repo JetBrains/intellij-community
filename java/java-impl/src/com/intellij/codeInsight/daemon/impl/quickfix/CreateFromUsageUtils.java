@@ -164,6 +164,7 @@ public class CreateFromUsageUtils {
       }
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
                                          QuickFixBundle.message("new.method.body.template.error.title"));
@@ -277,6 +278,7 @@ public class CreateFromUsageUtils {
       if (qualifierElement instanceof PsiClass) {
         return ApplicationManager.getApplication().runWriteAction(
           new Computable<PsiClass>() {
+            @Override
             public PsiClass compute() {
               return createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement);
             }
@@ -370,6 +372,7 @@ public class CreateFromUsageUtils {
 
     return ApplicationManager.getApplication().runWriteAction(
       new Computable<PsiClass>() {
+        @Override
         public PsiClass compute() {
           try {
             PsiClass targetClass;
@@ -445,6 +448,7 @@ public class CreateFromUsageUtils {
   public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,
                                                       final boolean isPackage) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Messages.showErrorDialog(QuickFixBundle.message(
           isPackage ? "cannot.create.java.package.error.text" : "cannot.create.java.file.error.text", name, directory.getVirtualFile().getName(), e.getLocalizedMessage()),
@@ -498,6 +502,7 @@ public class CreateFromUsageUtils {
 
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor("", true, list){
+      @Override
       public boolean execute(PsiElement element, ResolveState state) {
         if(!(element instanceof PsiField) ||
            JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiField)element, expression, null)) {
@@ -679,6 +684,7 @@ public class CreateFromUsageUtils {
       final Set<PsiType> typesSet = new HashSet<PsiType>();
 
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
+        @Override
         @Nullable
         public PsiType visitType(PsiType type) {
           if (PsiType.NULL.equals(type)) {
@@ -710,6 +716,7 @@ public class CreateFromUsageUtils {
           return null;
         }
 
+        @Override
         public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
           return capturedWildcardType.getUpperBound().accept(this);
         }
@@ -731,6 +738,7 @@ public class CreateFromUsageUtils {
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
     Arrays.sort(members, new Comparator<PsiMember>() {
+      @Override
       public int compare(final PsiMember m1, final PsiMember m2) {
         int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
         if (result != 0) return result;
@@ -812,6 +820,7 @@ public class CreateFromUsageUtils {
     if (moduleForFile == null) return;
 
     final GlobalSearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
       public GlobalSearchScope compute() {
         return file.getResolveScope();
       }
@@ -825,6 +834,7 @@ public class CreateFromUsageUtils {
     }
 
     final PsiMember[] members = ApplicationManager.getApplication().runReadAction(new Computable<PsiMember[]>() {
+      @Override
       public PsiMember[] compute() {
         return method ? cache.getMethodsByName(memberName, searchScope) : cache.getFieldsByName(memberName, searchScope);
       }
@@ -840,6 +850,7 @@ public class CreateFromUsageUtils {
           if (qName == null) continue;
 
           ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(new Processor<PsiClass>() {
+            @Override
             public boolean process(PsiClass psiClass) {
               ContainerUtil.addIfNotNull(getQualifiedName(psiClass), possibleClassNames);
               return true;
@@ -857,6 +868,7 @@ public class CreateFromUsageUtils {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
         if (objectClass != null) {
@@ -880,12 +892,14 @@ public class CreateFromUsageUtils {
       }
 
       final String[] strings = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+        @Override
         public String[] compute() {
           return cache.getAllClassNames();
         }
       });
       for (final String className : strings) {
         final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+          @Override
           public PsiClass[] compute() {
             return cache.getClassesByName(className, searchScope);
           }
@@ -903,6 +917,7 @@ public class CreateFromUsageUtils {
   @Nullable
   private static String getQualifiedName(final PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         return aClass.getQualifiedName();
       }
@@ -915,6 +930,7 @@ public class CreateFromUsageUtils {
     }
 
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         return !member.hasModifierProperty(PsiModifier.PRIVATE) && member.hasModifierProperty(PsiModifier.STATIC) == staticAccess;
       }
@@ -928,6 +944,7 @@ public class CreateFromUsageUtils {
       myNames = names;
     }
 
+    @Override
     public Result calculateResult(ExpressionContext context) {
       LookupElement[] lookupItems = calculateLookupItems(context);
       if (lookupItems.length == 0) return new TextResult("");
@@ -935,10 +952,12 @@ public class CreateFromUsageUtils {
       return new TextResult(lookupItems[0].getLookupString());
     }
 
+    @Override
     public Result calculateQuickResult(ExpressionContext context) {
       return null;
     }
 
+    @Override
     @NotNull
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();

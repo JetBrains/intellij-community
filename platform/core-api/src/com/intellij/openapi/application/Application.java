@@ -279,6 +279,7 @@ public interface Application extends ComponentManager {
    */
   boolean isCommandLine();
 
+  @Override
   boolean isDisposed();
 
   /**

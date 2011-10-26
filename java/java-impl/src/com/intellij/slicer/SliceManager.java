@@ -125,23 +125,28 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     final Content[] myContent = new Content[1];
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID);
     final SlicePanel slicePanel = new SlicePanel(myProject, dataFlowToThis, rootNode, splitByLeafExpressions, toolWindow) {
+      @Override
       protected void close() {
         super.close();
         contentManager.removeContent(myContent[0], true);
       }
 
+      @Override
       public boolean isAutoScroll() {
         return sliceToolwindowSettings.isAutoScroll();
       }
 
+      @Override
       public void setAutoScroll(boolean autoScroll) {
         sliceToolwindowSettings.setAutoScroll(autoScroll);
       }
 
+      @Override
       public boolean isPreview() {
         return sliceToolwindowSettings.isPreview();
       }
 
+      @Override
       public void setPreview(boolean preview) {
         sliceToolwindowSettings.setPreview(preview);
       }
@@ -187,10 +192,12 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     }
   }
 
+  @Override
   public StoredSettingsBean getState() {
     return myStoredSettings;
   }
 
+  @Override
   public void loadState(StoredSettingsBean state) {
     myStoredSettings.analysisUIOptions.save(state.analysisUIOptions);
   }

@@ -67,18 +67,22 @@ public class RefreshSessionImpl extends RefreshSession {
     myEvents = new ArrayList<VFileEvent>(events);
   }
 
+  @Override
   public void addAllFiles(final Collection<VirtualFile> files) {
     myWorkQueue.addAll(files);
   }
 
+  @Override
   public void addFile(@NotNull final VirtualFile file) {
     myWorkQueue.add(file);
   }
 
+  @Override
   public boolean isAsynchronous() {
     return myIsAsync;
   }
 
+  @Override
   public void launch() {
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
@@ -118,6 +122,7 @@ public class RefreshSessionImpl extends RefreshSession {
       }
       else {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             fireEventsInWriteAction();
           }

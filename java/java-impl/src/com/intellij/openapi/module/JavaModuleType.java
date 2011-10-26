@@ -44,32 +44,39 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     super(id);
   }
 
+  @Override
   public JavaModuleBuilder createModuleBuilder() {
     return new JavaModuleBuilder();
   }
 
+  @Override
   public String getName() {
     return ProjectBundle.message("module.type.java.name");
   }
 
+  @Override
   public String getDescription() {
     return ProjectBundle.message("module.type.java.description");
   }
 
+  @Override
   public Icon getBigIcon() {
     return getJavaModuleIcon();
   }
 
+  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return isOpened ? getJavaModuleNodeIconOpen() : getJavaModuleNodeIconClosed();
   }
 
+  @Override
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext, final JavaModuleBuilder moduleBuilder,
                                               final ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
     steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
         return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;

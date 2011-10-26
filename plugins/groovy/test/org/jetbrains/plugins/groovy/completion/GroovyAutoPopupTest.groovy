@@ -30,7 +30,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     return LightGroovyTestCase.GROOVY_DESCRIPTOR
   }
 
-  public void testGenerallyNoFocusLookup() {
+  public void testGenerallyFocusLookup() {
     myFixture.configureByText("a.groovy", """
         String foo(String xxxxxx) {
           return xx<caret>
@@ -38,33 +38,29 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     """)
     edt { myFixture.doHighlighting() }
     type 'x'
-    assert !lookup.focused
+    assert lookup.focused
   }
 
-  public void testGenerallyFocusLookupInGpp() {
-    myFixture.configureByText("a.gpp", """
-        String foo(String xxxxxx) {
-          return xx<caret>
-        }
-    """)
-    type 'x'
+  public void testTopLevelFocus() {
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'p'
     assert lookup.focused
   }
 
   public void testNoLookupFocusInVariable() {
-    myFixture.configureByText("a.gpp", """StringBuffer st<caret>""")
+    myFixture.configureByText("a.groovy", """StringBuffer st<caret>""")
     type 'r'
     assert !lookup.focused
   }
 
   public void testNoLookupFocusOnUnresolvedQualifier() {
-    myFixture.configureByText("a.gpp", """xxx.<caret>""")
+    myFixture.configureByText("a.groovy", """xxx.<caret>""")
     type 'h' //hashCode
     assert !lookup.focused
   }
 
   public void testNoLookupFocusOnUntypedQualifier() {
-    myFixture.configureByText("a.gpp", """
+    myFixture.configureByText("a.groovy", """
       def foo(xxx) {
         xxx.<caret>
       }""")
@@ -73,7 +69,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testPossibleClosureParameter() {
-    myFixture.configureByText("a.gpp", "{ <caret> }")
+    myFixture.configureByText("a.groovy", "{ <caret> }")
     type 'h'
     assert !lookup.focused
   }
@@ -81,7 +77,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   public void testPossibleClosureParameter2() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     try {
-      myFixture.configureByText("a.gpp", "{ a, <caret> }")
+      myFixture.configureByText("a.groovy", "{ a, <caret> }")
       type 'h'
       assert !lookup.focused
     }
@@ -91,7 +87,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testImpossibleClosureParameter() {
-    myFixture.configureByText("a.gpp", "String a; { a.<caret> }")
+    myFixture.configureByText("a.groovy", "String a; { a.<caret> }")
     type 'h'
     assert lookup.focused
   }
@@ -163,6 +159,30 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>) { }"
     type '.'
     assert !lookup
+  }
+
+  public void testDotDot() {
+    myFixture.configureByText "a.groovy", '2<caret>'
+    type '.'
+    assert lookup
+    assert lookup.focused
+    type '.'
+    assert !lookup
+    myFixture.checkResult '2..<caret>'
+  }
+
+  public void testInsideBuilderMethod() {
+    myFixture.configureByText 'a.groovy', 'html { body {}; <caret> }'
+    type 'h'
+    assert lookup
+    assert !lookup.focused
+  }
+
+  public void testInsideClosure() {
+    myFixture.configureByText 'a.groovy', 'def cl = { foo(); <caret> }'
+    type 'h'
+    assert lookup
+    assert lookup.focused
   }
 
 }

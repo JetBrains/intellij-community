@@ -17,10 +17,9 @@ package com.intellij.internal.statistic.configurable;
 
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -37,7 +36,8 @@ public class StatisticsConfigurationComponent {
 
   public StatisticsConfigurationComponent() {
     myTitle.setText("Help improve "+ ApplicationNamesInfo.getInstance().getFullProductName() + " by sending anonymous usage statistics to JetBrains");
-    myLabel.setText("<html>We're asking your permission to send information about your plugins configuration (what is enabled and what is not) <br> and feature usage statistics (e.g. how frequently you're using code completion).<br>    This data is anonymous, does not contain any personal information, collected for use only by JetBrains<br> and will never be transmitted to any third party.</html>");
+    myLabel.setText("<html>We're asking your permission to send information about your plugins configuration (what is enabled <br>and what is not) and feature usage statistics (e.g. how frequently you're using code completion).<br>    This data is anonymous, does not contain any personal information, collected for use only by JetBrains<br> and will never be transmitted to any third party.</html>");
+    myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
     myAllowToSendUsagesCheckBox.addActionListener(new ActionListener() {
       @Override

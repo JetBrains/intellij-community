@@ -31,6 +31,7 @@ import java.util.Map;
  *         Date: Jan 20, 2008
  */
 public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+  @Override
   @NotNull
   public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
     

@@ -12,6 +12,7 @@ public class VariableAccessFromInnerClassTest extends LightQuickFixTestCase {
   protected void beforeActionStarted(String testName, String contents) {
     for (int i=0;i<10;i++) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), "//");
         }

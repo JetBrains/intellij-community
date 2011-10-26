@@ -32,6 +32,7 @@ public class CharTableImpl implements CharTable {
 
   private final OpenTHashSet<CharSequence> entries = new OpenTHashSet<CharSequence>(10, 0.9f, HASHER);
 
+  @Override
   public CharSequence intern(final CharSequence text) {
     if (text.length() > INTERN_THRESHOLD) return createSequence(text);
 
@@ -55,6 +56,7 @@ public class CharTableImpl implements CharTable {
     }
   }
 
+  @Override
   public CharSequence intern(final CharSequence baseText, final int startOffset, final int endOffset) {
     if (endOffset - startOffset == baseText.length()) return baseText.toString();
     return intern(baseText.subSequence(startOffset, endOffset));

@@ -42,10 +42,12 @@ public class ElementExtractorFilter implements ElementFilter{
     return myFilter;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return myFilter.isClassAcceptable(hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof CandidateInfo) {
       final CandidateInfo candidateInfo = (CandidateInfo)element;

@@ -37,18 +37,22 @@ public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFi
     myDocumentWindow = window;
   }
 
+  @Override
   public VirtualFile getDelegate() {
     return myDelegate;
   }
 
+  @Override
   public DocumentWindowImpl getDocumentWindow() {
     return myDocumentWindow;
   }
 
+  @Override
   public boolean isValid() {
     return myDelegate.isValid();
   }
 
+  @Override
   public boolean isWritable() {
     return getDelegate().isWritable();
   }

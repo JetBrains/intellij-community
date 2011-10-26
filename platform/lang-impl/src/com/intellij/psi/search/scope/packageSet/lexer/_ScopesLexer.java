@@ -346,14 +346,17 @@ class _ScopesLexer implements FlexLexer {
     return map;
   }
 
+  @Override
   public final int getTokenStart(){
     return zzStartRead;
   }
 
+  @Override
   public final int getTokenEnd(){
     return getTokenStart() + yylength();
   }
 
+  @Override
   public void reset(CharSequence buffer, int start, int end,int initialState){
     zzBuffer = buffer;
     zzBufferArray = com.intellij.util.text.CharArrayUtil.fromSequenceWithoutCopying(buffer);
@@ -380,6 +383,7 @@ class _ScopesLexer implements FlexLexer {
   /**
    * Returns the current lexical state.
    */
+  @Override
   public final int yystate() {
     return zzLexicalState;
   }
@@ -390,6 +394,7 @@ class _ScopesLexer implements FlexLexer {
    *
    * @param newState the new lexical state
    */
+  @Override
   public final void yybegin(int newState) {
     zzLexicalState = newState;
   }
@@ -489,6 +494,7 @@ class _ScopesLexer implements FlexLexer {
    * @return      the next token
    * @exception   java.io.IOException  if any I/O-Error occurs
    */
+  @Override
   public IElementType advance() throws java.io.IOException {
     int zzInput;
     int zzAction;

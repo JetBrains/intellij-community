@@ -23,6 +23,7 @@ import com.intellij.psi.PsiAnnotationSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaAnnotationSupport implements PsiAnnotationSupport {
+  @Override
   @NotNull
   public PsiLiteral createLiteralValue(@NotNull String value, @NotNull PsiElement context) {
     return (PsiLiteral)JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value) + "\"", null);

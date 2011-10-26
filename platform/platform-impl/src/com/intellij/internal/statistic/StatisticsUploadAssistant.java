@@ -15,6 +15,8 @@
  */
 package com.intellij.internal.statistic;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.PatchedUsage;
@@ -28,8 +30,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
+import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +44,8 @@ public class StatisticsUploadAssistant {
     }
 
     public static boolean showNotification() {
-        return UsageStatisticsPersistenceComponent.getInstance().isShowNotification();
+        return UsageStatisticsPersistenceComponent.getInstance().isShowNotification() &&
+               (System.currentTimeMillis() - Time.DAY > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime()) ;
     }
 
     public static boolean isTimeToSend() {

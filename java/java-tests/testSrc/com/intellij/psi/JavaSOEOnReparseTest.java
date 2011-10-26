@@ -40,28 +40,32 @@ public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     // replace small expression with huge binary one
-    ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() { @Override
+                                                                        public void run() {
       getEditor().getDocument().replaceString(pos, pos + 2, HUGE_EXPR);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
     doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (1)
-    ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() { @Override
+                                                                        public void run() {
       getEditor().getDocument().insertString(pos, "\".\"+");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
     doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (2)
-    ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() { @Override
+                                                                        public void run() {
       getEditor().getDocument().replaceString(pos, pos + 4, "");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});
     doTestConfiguredFile(false, false, null);
 
     // replace huge binary expression with small one
-    ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() { @Override
+                                                                        public void run() {
       getEditor().getDocument().replaceString(pos, pos + HUGE_EXPR.length(), "\".\"");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }});

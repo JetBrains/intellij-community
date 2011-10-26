@@ -41,6 +41,7 @@ public class SuperMethodReturnFix implements IntentionAction {
     mySuperMethod = superMethod;
   }
 
+  @Override
   @NotNull
   public String getText() {
     String name = PsiFormatUtil.formatMethod(
@@ -53,11 +54,13 @@ public class SuperMethodReturnFix implements IntentionAction {
                                   HighlightUtil.formatType(mySuperMethodType));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.super.method.return.type.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
             mySuperMethod != null
@@ -67,6 +70,7 @@ public class SuperMethodReturnFix implements IntentionAction {
             && mySuperMethodType.isValid();
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(mySuperMethod.getContainingFile())) return;
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
@@ -83,6 +87,7 @@ public class SuperMethodReturnFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -75,16 +75,19 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return myResult;
   }
 
+  @Override
   public String getName(ResolveState state) {
     return myClassName;
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     return kind == DeclarationKind.CLASS;
   }
 
   private boolean myStaticContext = false;
 
+  @Override
   public void handleEvent(PsiScopeProcessor.Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.START_STATIC) {
       myStaticContext = true;
@@ -161,6 +164,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return Domination.EQUAL;
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
     if (!(element instanceof PsiClass)) return true;
     final PsiClass aClass = (PsiClass)element;

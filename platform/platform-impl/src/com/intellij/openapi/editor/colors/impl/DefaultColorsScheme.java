@@ -36,36 +36,44 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     super(null, defaultColorSchemesManager);
   }
 
+  @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
     if (key == null) return null;
     TextAttributes attrs = myAttributesMap.get(key);
     return attrs != null ? attrs : key.getDefaultAttributes();
   }
 
+  @Override
   public Color getColor(ColorKey key) {
     if (key == null) return null;
     Color color = myColorsMap.get(key);
     return color != null ? color : key.getDefaultColor();
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
     myName = parentNode.getAttributeValue(NAME_ATTR);
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
   }
 
+  @Override
   public void setColor(ColorKey key, Color color) {
   }
 
+  @Override
   public void setFont(EditorFontType key, Font font) {
   }
 
+  @Override
   public Object clone() {
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(this, myDefaultColorSchemesManager);
     copyTo(newScheme);

@@ -50,6 +50,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     return new ParameterElement();
   }
 
+  @Override
   public PsiParameter createPsi(final PsiParameterStub stub) {
     if (isCompiled(stub)) {
       return new ClsParameterImpl(stub);
@@ -59,6 +60,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     }
   }
 
+  @Override
   public PsiParameter createPsi(final ASTNode node) {
     return new PsiParameterImpl(node);
   }
@@ -73,12 +75,14 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis);
   }
 
+  @Override
   public void serialize(final PsiParameterStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeBoolean(stub.isParameterTypeEllipsis());
   }
 
+  @Override
   public PsiParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
@@ -86,6 +90,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     return new PsiParameterStubImpl(parentStub, name, type, isEll);
   }
 
+  @Override
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {
   }
 }

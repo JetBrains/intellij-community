@@ -53,6 +53,7 @@ class AnchorElementInfo extends SelfElementInfo {
     assert contentElementType instanceof IStubFileElementType : contentElementType;
   }
 
+  @Override
   @Nullable
   public PsiElement restoreElement() {
     if (stubId != -1) {

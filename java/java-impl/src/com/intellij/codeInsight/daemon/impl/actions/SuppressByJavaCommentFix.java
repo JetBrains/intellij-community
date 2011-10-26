@@ -33,6 +33,7 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
     super(key, PsiStatement.class);
   }
 
+  @Override
   @Nullable
   protected PsiElement getContainer(PsiElement context) {
     if (context == null || PsiTreeUtil.getParentOfType(context, JspMethodCall.class) != null) return null;

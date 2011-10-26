@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
 
 public class GeneratedMarkerVisitor extends RecursiveTreeElementWalkingVisitor {
+  @Override
   protected void visitNode(TreeElement element) {
     CodeEditUtil.setNodeGenerated(element, true);
     super.visitNode(element);

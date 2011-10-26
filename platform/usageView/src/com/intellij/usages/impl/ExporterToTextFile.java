@@ -37,16 +37,20 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
     myUsageView = usageView;
   }
 
+  @Override
   public JComponent getSettingsEditor() {
     return null;
   }
 
+  @Override
   public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
   }
 
+  @Override
   public void removeSettingsChangedListener(ChangeListener listener) {
   }
 
+  @Override
   public String getReportText() {
     StringBuffer buf = new StringBuffer();
     appendNode(buf, myUsageView.getModelRoot(), SystemProperties.getLineSeparator(), "");
@@ -94,14 +98,17 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
     buf.append(lineSeparator);
   }
 
+  @Override
   public String getDefaultFilePath() {
     return UsageViewSettings.getInstance().EXPORT_FILE_NAME;
   }
 
+  @Override
   public void exportedTo(String filePath) {
     UsageViewSettings.getInstance().EXPORT_FILE_NAME = filePath;
   }
 
+  @Override
   public boolean canExport() {
     return !myUsageView.isSearchInProgress() && myUsageView.areTargetsValid();
   }

@@ -75,6 +75,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     myFS = fs;
   }
 
+  @Override
   @NotNull
   public NewVirtualFileSystem getFileSystem() {
     return myFS;
@@ -307,11 +308,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @Override
   @Nullable
   public NewVirtualFile refreshAndFindChild(@NotNull String name) {
     return findChild(name, true, true, getFileSystem());
   }
 
+  @Override
   @Nullable
   public synchronized NewVirtualFile findChildIfCached(@NotNull String name) {
     final VirtualFileSystemEntry[] a = asArray();
@@ -337,6 +340,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   public Iterable<VirtualFile> iterInDbChildren() {
     return ContainerUtil.iterate(getInDbChildren(), new Condition<VirtualFile>() {
+      @Override
       public boolean value(VirtualFile file) {
         return file != NULL_VIRTUAL_FILE;
       }
@@ -367,6 +371,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return new ArrayList<VirtualFile>(ensureAsMap().values());
   }
 
+  @Override
   @NotNull
   public synchronized VirtualFile[] getChildren() {
     if (myChildren instanceof VirtualFileSystemEntry[]) {
@@ -399,11 +404,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return children;
   }
 
+  @Override
   @Nullable
   public VirtualFileSystemEntry findChild(@NotNull final String name) {
     return findChild(name, false, true, getFileSystem());
   }
 
+  @Override
   @Nullable
   public NewVirtualFile findChildById(int id) {
     final NewVirtualFile loaded = findChildByIdIfCached(id);
@@ -415,6 +422,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false, false, getFileSystem());
   }
 
+  @Override
   public NewVirtualFile findChildByIdIfCached(int id) {
     final VirtualFile[] a = asArray();
     if (a != null) {
@@ -508,10 +516,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return names;
   }
 
+  @Override
   public boolean isDirectory() {
     return true;
   }
 
+  @Override
   @NotNull
   public synchronized Collection<VirtualFile> getCachedChildren() {
     final Map<String, VirtualFileSystemEntry> map = asMap();
@@ -548,10 +558,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     throw new IOException("getInputStream() must not be called against a directory: " + getUrl());
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());

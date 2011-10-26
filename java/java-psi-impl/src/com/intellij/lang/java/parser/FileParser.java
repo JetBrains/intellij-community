@@ -38,6 +38,7 @@ public class FileParser {
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
   private static final JavaParserUtil.MarkingParserWrapper TOP_LEVEL_DECLARATION_PARSER = new JavaParserUtil.MarkingParserWrapper() {
+    @Override
     public PsiBuilder.Marker parse(final PsiBuilder builder) {
       return DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
     }

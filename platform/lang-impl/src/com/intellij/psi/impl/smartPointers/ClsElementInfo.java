@@ -35,6 +35,7 @@ public class ClsElementInfo implements SmartPointerElementInfo {
     myStubIndexReference = stubReference;
   }
 
+  @Override
   public Document getDocumentToSynchronize() {
     return null;
   }
@@ -50,9 +51,11 @@ public class ClsElementInfo implements SmartPointerElementInfo {
   }
 
   // commit
+  @Override
   public void documentAndPsiInSync() {
   }
 
+  @Override
   public PsiElement restoreElement() {
     return myStubIndexReference.retrieve();
   }

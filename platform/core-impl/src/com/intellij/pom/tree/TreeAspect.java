@@ -27,5 +27,6 @@ public class TreeAspect implements PomModelAspect {
     model.registerAspect(TreeAspect.class, this, Collections.<PomModelAspect>emptySet());
   }
 
+  @Override
   public void update(PomModelEvent event) {}
 }

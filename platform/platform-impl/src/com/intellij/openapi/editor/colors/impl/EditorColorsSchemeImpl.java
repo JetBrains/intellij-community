@@ -41,18 +41,21 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   // -------------------------------------------------------------------------
   // Getters & Setters
   // -------------------------------------------------------------------------
+  @Override
   public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
     if (!Comparing.equal(attributes, getAttributes(key))) {
       myAttributesMap.put(key, attributes);
     }
   }
 
+  @Override
   public void setColor(ColorKey key, Color color) {
     if (!Comparing.equal(color, getColor(key))) {
       myColorsMap.put(key, color);
     }
   }
 
+  @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
     if (myAttributesMap.containsKey(key)) {
       return myAttributesMap.get(key);
@@ -61,6 +64,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     }
   }
 
+  @Override
   public Color getColor(ColorKey key) {
     if (myColorsMap.containsKey(key)) {
       return myColorsMap.get(key);
@@ -69,6 +73,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     }
   }
 
+  @Override
   public Object clone() {
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(myParentScheme, DefaultColorSchemesManager.getInstance());
     copyTo(newScheme);
@@ -76,6 +81,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return newScheme;
   }
 
+  @Override
   @NotNull
   public ExternalInfo getExternalInfo() {
     return myExternalInfo;

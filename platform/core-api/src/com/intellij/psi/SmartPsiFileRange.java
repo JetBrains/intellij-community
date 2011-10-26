@@ -26,6 +26,7 @@ public interface SmartPsiFileRange extends SmartPsiElementPointer<PsiFile> {
   /**
    * @return the range inside the PsiFile, or null if the range or PsiFile became invalid
    */
+  @Override
   @Nullable
   Segment getRange();
 }

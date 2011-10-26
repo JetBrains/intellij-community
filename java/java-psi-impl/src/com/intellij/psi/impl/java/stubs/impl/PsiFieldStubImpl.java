@@ -54,6 +54,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     myFlags = flags;
   }
 
+  @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
     if (!doResolve) return myType;
@@ -76,6 +77,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return typeInfo;
   }
 
+  @Override
   public String getInitializerText() {
     return StringRef.toString(myInitializer);
   }
@@ -84,6 +86,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return myFlags;
   }
 
+  @Override
   public boolean isEnumConstant() {
     return isEnumConst(myFlags);
   }
@@ -92,14 +95,17 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return (flags & ENUM_CONST) != 0;
   }
 
+  @Override
   public boolean isDeprecated() {
     return (myFlags & DEPRECATED) != 0;
   }
 
+  @Override
   public boolean hasDeprecatedAnnotation() {
     return (myFlags & DEPRECATED_ANNOTATION) != 0;
   }
 
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }

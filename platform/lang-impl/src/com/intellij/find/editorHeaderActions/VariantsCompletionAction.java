@@ -44,6 +44,7 @@ public class VariantsCompletionAction extends AnAction {
     }
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final String prefix = getPrefix();
     if (StringUtil.isEmpty(prefix)) return;
@@ -57,6 +58,7 @@ public class VariantsCompletionAction extends AnAction {
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
       final JList list = new JBList(array) {
+        @Override
         protected void paintComponent(final Graphics g) {
           UISettings.setupAntialiasing(g);
           super.paintComponent(g);
@@ -96,6 +98,7 @@ public class VariantsCompletionAction extends AnAction {
     CharSequence chars = editor.getDocument().getCharsSequence();
 
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
+        @Override
         public void run(final CharSequence chars, final int start, final int end) {
           final String word = chars.subSequence(start, end).toString();
           if (matcher.matches(word)) {

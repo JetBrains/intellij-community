@@ -35,6 +35,7 @@ public class BorderEffect {
   private final TextRange myRange;
   private final EditorImpl myEditor;
   private static final Equality<TextAttributes> SAME_COLOR_BOXES = new Equality<TextAttributes>() {
+    @Override
     public boolean equals(final TextAttributes attributes1, final TextAttributes attributes2) {
       Color effectColor = attributes1.getEffectColor();
       EffectType effectType = attributes1.getEffectType();
@@ -45,6 +46,7 @@ public class BorderEffect {
     }
   };
   private static final Condition<TextAttributes> BOX_FILTER = new Condition<TextAttributes>() {
+                              @Override
                               public boolean value(TextAttributes attributes) {
                                 return isBorder(attributes);
                               }
@@ -172,6 +174,7 @@ public class BorderEffect {
       this(editor.getDocument().getCharsSequence(), new RangeIterator.FoldingGaps(editor.getFoldingModel()));
     }
 
+    @Override
     public boolean isGapAt(int offset) {
       return myChars.charAt(offset) == '\n' || myFoldingGaps.isGapAt(offset);
     }

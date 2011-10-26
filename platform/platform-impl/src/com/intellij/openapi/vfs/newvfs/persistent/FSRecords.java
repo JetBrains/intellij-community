@@ -126,7 +126,7 @@ public class FSRecords implements Forceable {
 
     private static void scanFreeRecords() {
       final int filelength = (int)getRecords().length();
-      LOG.assertTrue(filelength % RECORD_SIZE == 0);
+      LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
 
       int count = filelength / RECORD_SIZE;
       for (int n = 2; n < count; n++) {
@@ -225,6 +225,7 @@ public class FSRecords implements Forceable {
         }
         catch (final IOException e1) {
           final Runnable warnAndShutdown = new Runnable() {
+            @Override
             public void run() {
               boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
               if (!(unitTest || ApplicationManager.getApplication().isHeadlessEnvironment())) {
@@ -280,6 +281,7 @@ public class FSRecords implements Forceable {
     private static boolean deleteWithSubordinates(File file) {
       final String baseName = file.getName();
       final File[] files = file.getParentFile().listFiles(new FileFilter() {
+        @Override
         public boolean accept(final File pathname) {
           return pathname.getName().startsWith(baseName);
         }
@@ -306,6 +308,7 @@ public class FSRecords implements Forceable {
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         int lastModCount = 0;
 
+        @Override
         public void run() {
           if (lastModCount == ourLocalModificationCount) {
             flushSome();
@@ -583,10 +586,12 @@ public class FSRecords implements Forceable {
     }
   }
 
+  @Override
   public void force() {
     DbConnection.force();
   }
 
+  @Override
   public boolean isDirty() {
     return DbConnection.isDirty();
   }
@@ -1148,6 +1153,7 @@ public class FSRecords implements Forceable {
       myFixedSize = fixedSize;
     }
 
+    @Override
     public void close() throws IOException {
       super.close();
 

@@ -38,30 +38,37 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     super(FOR_STATEMENT);
   }
 
+  @Override
   public PsiStatement getInitialization(){
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.FOR_INITIALIZATION);
   }
 
+  @Override
   public PsiExpression getCondition(){
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
+  @Override
   public PsiStatement getUpdate(){
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.FOR_UPDATE);
   }
 
+  @Override
   public PsiStatement getBody(){
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.LOOP_BODY);
   }
 
+  @Override
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }
 
+  @Override
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -118,6 +125,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -150,6 +158,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitForStatement(this);
@@ -163,6 +172,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     return "PsiForStatement";
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     final boolean isForInitialization = getChildRole(child) == ChildRole.FOR_INITIALIZATION;
 
@@ -180,6 +190,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null || lastParent.getParent() != this)

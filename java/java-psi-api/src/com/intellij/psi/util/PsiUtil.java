@@ -687,11 +687,13 @@ public final class PsiUtil extends PsiUtilCore {
       myIndex = myCurrentParams.length - 1;
     }
 
+    @Override
     public boolean hasNext() {
       nextElement();
       return myNext != null;
     }
 
+    @Override
     public PsiTypeParameter next() {
       nextElement();
       if (myNext == null) throw new NoSuchElementException();
@@ -699,6 +701,7 @@ public final class PsiUtil extends PsiUtilCore {
       return myNext;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException("TypeParameterIterator.remove");
     }
@@ -731,6 +734,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
   public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
     return new Iterable<PsiTypeParameter>() {
+      @Override
       public Iterator<PsiTypeParameter> iterator() {
         return typeParametersIterator(owner);
       }
@@ -879,6 +883,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static final Comparator<PsiElement> BY_POSITION = new Comparator<PsiElement>() {
+    @Override
     public int compare(PsiElement o1, PsiElement o2) {
       return compareElementsByPosition(o1, o2);
     }

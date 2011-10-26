@@ -53,6 +53,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     myRole = role;
   }
 
+  @Override
   public PsiClassType[] getReferencedTypes() {
     if (myTypes != null) return myTypes;
     if (myNames.length == 0) {
@@ -104,6 +105,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return types;
   }
 
+  @Override
   public String[] getReferencedNames() {
     String[] names = ArrayUtil.newStringArray(myNames.length);
     for (int i = 0; i < names.length; i++) {
@@ -112,6 +114,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return names;
   }
 
+  @Override
   public PsiReferenceList.Role getRole() {
     return myRole;
   }

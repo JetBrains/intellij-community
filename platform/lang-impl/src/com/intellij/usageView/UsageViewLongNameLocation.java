@@ -33,11 +33,13 @@ public class UsageViewLongNameLocation extends ElementDescriptionLocation {
 
   public static final UsageViewLongNameLocation INSTANCE = new UsageViewLongNameLocation();
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
+    @Override
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof UsageViewLongNameLocation) {
         if (element instanceof PsiDirectory) {

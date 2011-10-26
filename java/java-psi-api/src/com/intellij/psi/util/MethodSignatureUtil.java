@@ -33,10 +33,12 @@ public class MethodSignatureUtil {
 
   public static final TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
     new TObjectHashingStrategy<MethodSignatureBackedByPsiMethod>() {
+      @Override
       public int computeHashCode(final MethodSignatureBackedByPsiMethod signature) {
         return signature.getMethod().hashCode();
       }
 
+      @Override
       public boolean equals(final MethodSignatureBackedByPsiMethod s1, final MethodSignatureBackedByPsiMethod s2) {
         return s1.getMethod().equals(s2.getMethod());
       }
@@ -44,6 +46,7 @@ public class MethodSignatureUtil {
 
   public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
     new TObjectHashingStrategy<MethodSignature>() {
+      @Override
       public int computeHashCode(final MethodSignature signature) {
         int result = signature.isConstructor() ? 0 : signature.getName().hashCode();
 
@@ -57,6 +60,7 @@ public class MethodSignatureUtil {
         return result;
       }
 
+      @Override
       public boolean equals(MethodSignature method1, MethodSignature method2) {
         if (method1.isConstructor() != method2.isConstructor()) return false;
         if (!method1.isConstructor() && !method1.getName().equals(method2.getName())) return false;

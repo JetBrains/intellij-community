@@ -40,6 +40,7 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
     setOpaque(false);
   }
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     assert value instanceof DefaultMutableTreeNode;
     DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;

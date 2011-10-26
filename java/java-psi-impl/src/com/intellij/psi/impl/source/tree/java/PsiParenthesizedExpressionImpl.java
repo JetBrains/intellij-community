@@ -32,17 +32,20 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
     super(PARENTH_EXPRESSION);
   }
 
+  @Override
   @Nullable
   public PsiExpression getExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.EXPRESSION);
   }
 
+  @Override
   public PsiType getType() {
     PsiExpression expr = getExpression();
     if (expr == null) return null;
     return expr.getType();
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -61,6 +64,7 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -78,6 +82,7 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitParenthesizedExpression(this);

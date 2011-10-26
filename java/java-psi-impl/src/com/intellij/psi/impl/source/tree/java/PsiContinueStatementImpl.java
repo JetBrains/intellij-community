@@ -33,10 +33,12 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     super(CONTINUE_STATEMENT);
   }
 
+  @Override
   public PsiIdentifier getLabelIdentifier() {
     return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL);
   }
 
+  @Override
   public PsiStatement findContinuedStatement() {
     PsiIdentifier label = getLabelIdentifier();
     if (label == null){
@@ -65,6 +67,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     return null;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -82,6 +85,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -99,6 +103,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitContinueStatement(this);
@@ -112,6 +117,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     return "PsiContinueStatement";
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiReference[] references = getReferences();
     if (references != null && references.length > 0)
@@ -119,6 +125,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     if (getLabelIdentifier() == null)

@@ -40,6 +40,7 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
     myName = name;
   }
 
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }
@@ -51,11 +52,13 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
     return builder.toString();
   }
   
+  @Override
   @NotNull
   public List<PsiAnnotationStub> getAnnotations() {
     List<StubElement> children = getChildrenStubs();
 
     return ContainerUtil.mapNotNull(children, new Function<StubElement, PsiAnnotationStub>() {
+      @Override
       public PsiAnnotationStub fun(StubElement stubElement) {
         return stubElement instanceof PsiAnnotationStub ? (PsiAnnotationStub)stubElement : null;
       }

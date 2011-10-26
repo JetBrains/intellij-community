@@ -52,16 +52,19 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     this.expression = expression;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("defer.final.assignment.with.temp.family");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("defer.final.assignment.with.temp.text", variable.getName());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(variable.getContainingFile())) return;
 
@@ -195,6 +198,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     return JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, variable, true);
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         variable != null
@@ -207,6 +211,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
         ;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

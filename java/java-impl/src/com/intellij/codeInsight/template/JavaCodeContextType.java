@@ -94,10 +94,10 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
 
     private static boolean isStatementContext(PsiElement element) {
-      if (!Expression.isExpressionContext(element)) {
+      if (isAfterExpression(element)) {
         return false;
       }
-
+      
       PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
       return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
@@ -132,17 +132,22 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      ProcessingContext context = new ProcessingContext();
-      if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
-        PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
-        if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
-          return false;
-        }
-      }
-      
-      return true;
+      return !isAfterExpression(element);
     }
   }
+
+  private static boolean isAfterExpression(PsiElement element) {
+    ProcessingContext context = new ProcessingContext();
+    if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
+      PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
+      if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public static class Declaration extends JavaCodeContextType {
     public Declaration() {
       super("JAVA_DECLARATION", "Declaration", Generic.class);

@@ -24,11 +24,13 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantReference {
+  @Override
   @NotNull
   public final ResolveResult[] multiResolve(boolean incompleteCode) {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, true, incompleteCode);
   }
 
+  @Override
   public PsiElement resolve() {
     ResolveResult[] results = multiResolve(false);
     return results.length == 1 ? results[0].getElement() : null;
@@ -37,10 +39,12 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   @NotNull
   protected abstract ResolveResult[] resolveInner(boolean incompleteCode);
 
+  @Override
   public boolean isReferenceTo(final PsiElement element) {
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @Override
   public boolean isSoft(){
     return false;
   }
@@ -53,6 +57,7 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   private static class MyResolver implements ResolveCache.PolyVariantResolver<PsiPolyVariantReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
+    @Override
     public ResolveResult[] resolve(PsiPolyVariantReference reference, boolean incompleteCode) {
       return ((PsiPolyVariantCachingReference)reference).resolveInner(incompleteCode);
     }

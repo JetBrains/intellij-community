@@ -51,6 +51,7 @@ public class SliceRootNode extends SliceNode {
     return newNode;
   }
 
+  @Override
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     if (myCachedChildren == null) {

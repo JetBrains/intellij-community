@@ -29,6 +29,7 @@ public interface PsiExpression extends PsiAnnotationMemberValue {
   PsiExpression[] EMPTY_ARRAY = new PsiExpression[0];
 
   Function<PsiExpression, PsiType> EXPRESSION_TO_TYPE = new NullableFunction<PsiExpression, PsiType>() {
+    @Override
     public PsiType fun(final PsiExpression expression) {
       return expression.getType();
     }

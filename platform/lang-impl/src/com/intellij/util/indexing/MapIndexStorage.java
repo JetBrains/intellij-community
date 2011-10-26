@@ -61,13 +61,16 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     final PersistentMap<Key, ValueContainer<Value>> map =
       new ValueContainerMap<Key, Value>(myStorageFile, myKeyDescriptor, myDataExternalizer);
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
+      @Override
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
         return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+          @Override
           public Object getLock() {
             return map;
           }
 
+          @Override
           public ValueContainer<Value> compute() {
             ValueContainer<Value> value;
             try {
@@ -84,6 +87,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         });
       }
 
+      @Override
       protected void onDropFromCache(final Key key, final ChangeTrackingValueContainer<Value> valueContainer) {
         if (valueContainer.isDirty()) {
           try {
@@ -99,6 +103,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     myMap = map;
   }
 
+  @Override
   public void flush() {
     l.lock();
     try {
@@ -112,6 +117,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public void close() throws StorageException {
     try {
       flush();
@@ -132,6 +138,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public void clear() throws StorageException{
     try {
       myMap.close();
@@ -158,6 +165,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public boolean processKeys(final Processor<Key> processor) throws StorageException {
     l.lock();
     try {
@@ -182,12 +190,14 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public Collection<Key> getKeys() throws StorageException {
     List<Key> keys = new ArrayList<Key>();
     processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
     return keys;
   }
 
+  @Override
   @NotNull
   public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
     l.lock();
@@ -209,6 +219,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     try {
       myMap.markDirty();
@@ -219,6 +230,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
     try {
       myMap.markDirty();
@@ -229,6 +241,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @Override
   public void removeAllValues(Key key, int inputId) throws StorageException {
     try {
       myMap.markDirty();

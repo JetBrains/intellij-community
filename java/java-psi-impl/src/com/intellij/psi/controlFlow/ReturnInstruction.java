@@ -76,8 +76,10 @@ public class ReturnInstruction extends GoToInstruction {
   }
 
 
+  @Override
   public int nNext() { return offset == 0 ? 3 : 1; }
 
+  @Override
   public int getNext(int index, int no) {
     if (offset == 0)
       switch (no) {
@@ -97,6 +99,7 @@ public class ReturnInstruction extends GoToInstruction {
       }
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReturnInstruction(this, offset, nextOffset);
   }

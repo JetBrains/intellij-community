@@ -24,6 +24,7 @@ public class ImportStatementElement extends ImportStatementBaseElement {
     super(JavaElementType.IMPORT_STATEMENT);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     final ASTNode result = super.findChildByRole(role);
     if (result != null) return result;

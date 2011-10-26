@@ -314,6 +314,7 @@ public class RegExHelpPopup extends JPanel {
 
 
     myEditorPane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (HyperlinkEvent.EventType.ACTIVATED == e.getEventType()) BrowserUtil.launchBrowser(e.getURL().toString());
       }

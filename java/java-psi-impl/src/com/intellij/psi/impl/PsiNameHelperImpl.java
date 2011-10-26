@@ -31,18 +31,22 @@ public class PsiNameHelperImpl extends PsiNameHelper {
     myLanguageLevelExtension = LanguageLevelProjectExtension.getInstance(manager.getProject());
   }
 
+  @Override
   public boolean isIdentifier(@Nullable String text) {
     return isIdentifier(text, myLanguageLevelExtension.getLanguageLevel());
   }
 
+  @Override
   public boolean isIdentifier(@Nullable String text, @NotNull LanguageLevel languageLevel) {
     return text != null && StringUtil.isJavaIdentifier(text) && !JavaLexer.isKeyword(text, languageLevel);
   }
 
+  @Override
   public boolean isKeyword(@Nullable String text) {
     return text != null && JavaLexer.isKeyword(text, myLanguageLevelExtension.getLanguageLevel());
   }
 
+  @Override
   public boolean isQualifiedName(@Nullable String text) {
     if (text == null) return false;
     int index = 0;

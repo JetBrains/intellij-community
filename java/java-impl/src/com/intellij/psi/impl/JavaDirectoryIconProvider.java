@@ -39,6 +39,7 @@ import javax.swing.*;
  * @author yole
  */
 public class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
+  @Override
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof PsiDirectory) {

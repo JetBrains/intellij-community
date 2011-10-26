@@ -1,9 +1,12 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ether.dependencyView.ClassRepr;
 import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.ether.dependencyView.StringCache;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -145,6 +148,24 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       final FSSnapshot snapshot = myFilesCache.get(module);
       if (!snapshot.processFiles(processor)) {
         return;
+      }
+    }
+  }
+
+  // delete all class files that according to mappings correspond to given sources
+  public void deleteCorrespondingClasses(Set<File> sources) {
+    if (isMake() && !sources.isEmpty()) {
+      final Mappings mappings = getMappings();
+      for (File file : sources) {
+        final Set<ClassRepr> classes = mappings.getClasses(StringCache.get(FileUtil.toSystemIndependentName(file.getPath())));
+        if (classes != null) {
+          for (ClassRepr aClass : classes) {
+            final StringCache.S fileName = aClass.fileName;
+            if (fileName != null) {
+              FileUtil.delete(new File(fileName.value));
+            }
+          }
+        }
       }
     }
   }

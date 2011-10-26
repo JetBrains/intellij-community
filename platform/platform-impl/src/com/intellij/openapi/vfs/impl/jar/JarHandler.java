@@ -118,6 +118,7 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
       final String path1 = original.getPath();
       final String path2 = mirror.getPath();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showMessageDialog(VfsBundle.message("jar.copy.error.message", path1, path2, e.getMessage()), VfsBundle.message("jar.copy.error.title"),
                                      Messages.getErrorIcon());

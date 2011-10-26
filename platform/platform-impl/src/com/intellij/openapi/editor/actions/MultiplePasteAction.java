@@ -46,6 +46,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -57,6 +58,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     final CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
     final ContentChooser<Transferable> chooser = new ContentChooser<Transferable>(project, UIBundle.message(
       "choose.content.to.paste.dialog.title"), true, true){
+      @Override
       protected String getStringRepresentationFor(final Transferable content) {
         try {
           return (String)content.getTransferData(DataFlavor.stringFlavor);
@@ -69,10 +71,12 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
         }
       }
 
+      @Override
       protected List<Transferable> getContents() {
         return Arrays.asList(CopyPasteManager.getInstance().getAllContents());
       }
 
+      @Override
       protected void removeContentAt(final Transferable content) {
         copyPasteManager.removeContent(content);
       }
@@ -116,6 +120,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final boolean enabled = isEnabled(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {

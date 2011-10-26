@@ -56,134 +56,164 @@ public class LightMethod extends LightElement implements PsiMethod {
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
   public boolean hasTypeParameters() {
     return myMethod.hasTypeParameters();
   }
 
+  @Override
   @NotNull public PsiTypeParameter[] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 
+  @Override
   public PsiTypeParameterList getTypeParameterList() {
     return myMethod.getTypeParameterList();
   }
 
+  @Override
   public PsiDocComment getDocComment() {
     return myMethod.getDocComment();
   }
 
+  @Override
   public boolean isDeprecated() {
     return myMethod.isDeprecated();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     return myMethod.setName(name);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myMethod.getName();
   }
 
+  @Override
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return myMethod.getHierarchicalMethodSignature();
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return myMethod.hasModifierProperty(name);
   }
 
+  @Override
   @NotNull
   public PsiModifierList getModifierList() {
     return myMethod.getModifierList();
   }
 
+  @Override
   public PsiType getReturnType() {
     return myMethod.getReturnType();
   }
 
+  @Override
   public PsiTypeElement getReturnTypeElement() {
     return myMethod.getReturnTypeElement();
   }
 
+  @Override
   @NotNull
   public PsiParameterList getParameterList() {
     return myMethod.getParameterList();
   }
 
+  @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
     return myMethod.getThrowsList();
   }
 
+  @Override
   public PsiCodeBlock getBody() {
     return myMethod.getBody();
   }
 
+  @Override
   public boolean isConstructor() {
     return myMethod.isConstructor();
   }
 
+  @Override
   public boolean isVarArgs() {
     return myMethod.isVarArgs();
   }
 
+  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);
   }
 
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return myMethod.getNameIdentifier();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods() {
     return myMethod.findSuperMethods();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
     return myMethod.findSuperMethods(checkAccess);
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return myMethod.findSuperMethods(parentClass);
   }
 
+  @Override
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return myMethod.findSuperMethodSignaturesIncludingStatic(checkAccess);
   }
 
+  @Override
   @SuppressWarnings("deprecation")
   public PsiMethod findDeepestSuperMethod() {
     return myMethod.findDeepestSuperMethod();
   }
 
+  @Override
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
     return myMethod.findDeepestSuperMethods();
   }
 
+  @Override
   public String getText() {
     return myMethod.getText();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     myMethod.accept(visitor);
   }
 
+  @Override
   public PsiElement copy() {
     return new LightMethod(myManager, (PsiMethod)myMethod.copy(), myContainingClass);
   }
 
+  @Override
   public boolean isValid() {
     return myContainingClass.isValid();
   }
 
+  @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
   }
@@ -197,6 +227,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return true;
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
     RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(methodIcon, this, false);
@@ -208,6 +239,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
@@ -218,10 +250,12 @@ public class LightMethod extends LightElement implements PsiMethod {
     return getContainingClass();
   }
 
+  @Override
   public PsiMethodReceiver getMethodReceiver() {
     return null;
   }
 
+  @Override
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }

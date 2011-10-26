@@ -40,6 +40,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     myCachedChildren = children;
   }
 
+  @Override
   @NotNull
   public Collection<SliceNode> getChildren() {
     return myCachedChildren;
@@ -63,6 +64,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     return "Value: "+ text;
   }
 
+  @Override
   public void customizeCellRenderer(SliceUsageCellRenderer renderer,
                                     JTree tree,
                                     Object value,

@@ -44,6 +44,7 @@ import java.util.List;
 public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     int offset = editor.getCaretModel().getOffset();
@@ -143,6 +144,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     return finallyElement;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
 
@@ -183,6 +185,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.catch.clause.family");

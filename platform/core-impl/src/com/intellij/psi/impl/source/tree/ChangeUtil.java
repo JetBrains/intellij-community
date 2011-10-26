@@ -53,6 +53,7 @@ public class ChangeUtil {
 
   public static void changeElementInPlace(final ASTNode element, final ChangeAction action){
     prepareAndRunChangeAction(new ChangeAction() {
+      @Override
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         destinationTreeChange.addElementaryChange(element, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, element));
         action.makeChange(destinationTreeChange);
@@ -175,6 +176,7 @@ public class ChangeUtil {
     try{
       final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
       model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
+        @Override
         public PomModelEvent runInner() {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);

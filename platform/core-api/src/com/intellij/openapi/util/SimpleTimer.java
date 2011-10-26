@@ -90,6 +90,7 @@ public class SimpleTimer {
   private void scheduleNext(long delay, long targetTime) {
     myNextScheduledTime = targetTime;
     myNextProcessingTask = new TimerTask() {
+      @Override
       public void run() {
         processNext();
       }

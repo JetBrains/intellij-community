@@ -30,8 +30,10 @@ public abstract class ConditionalBranchingInstruction extends BranchingInstructi
     this.expression = expression;
   }
 
+  @Override
   public int nNext() { return 2; }
 
+  @Override
   public int getNext(int index, int no) {
     switch (no) {
       case 0: return offset;
@@ -42,6 +44,7 @@ public abstract class ConditionalBranchingInstruction extends BranchingInstructi
     }
   }
 
+  @Override
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitConditionalBranchingInstruction(this, offset, nextOffset);
   }

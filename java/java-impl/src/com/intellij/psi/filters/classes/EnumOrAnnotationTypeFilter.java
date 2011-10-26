@@ -23,10 +23,12 @@ import org.jetbrains.annotations.NonNls;
 
 public class EnumOrAnnotationTypeFilter implements ElementFilter{
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiClass.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiClass){
       return ((PsiClass)element).isEnum() || ((PsiClass)element).isAnnotationType();

@@ -37,6 +37,7 @@ public class LexerEditorHighlighterLexer extends LexerBase {
     myAlreadyInitializedHighlighter = alreadyInitializedHighlighter;
   }
 
+  @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
     if (myAlreadyInitializedHighlighter) {
       this.buffer = buffer;
@@ -48,31 +49,38 @@ public class LexerEditorHighlighterLexer extends LexerBase {
     iterator = myHighlighter.createIterator(0);
   }
 
+  @Override
   public int getState() {
     return 0;
   }
 
+  @Override
   public IElementType getTokenType() {
     if (iterator.atEnd()) return null;
     return iterator.getTokenType();
   }
 
+  @Override
   public int getTokenStart() {
     return iterator.getStart();
   }
 
+  @Override
   public int getTokenEnd() {
     return iterator.getEnd();
   }
 
+  @Override
   public void advance() {
     iterator.advance();
   }
 
+  @Override
   public CharSequence getBufferSequence() {
     return buffer;
   }
 
+  @Override
   public int getBufferEnd() {
     return end;
   }

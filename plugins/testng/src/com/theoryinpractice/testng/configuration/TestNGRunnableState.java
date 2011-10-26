@@ -82,7 +82,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class TestNGRunnableState extends JavaCommandLineState {
@@ -139,8 +138,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         unboundOutputRoot.flush();
 
         if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
-          mySearchForTestIndicator.cancel();
-          task.connect();
+          task.finish();
         }
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -172,20 +170,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
         unboundOutputRoot.setOutputFilePath(config.getOutputFilePath());
         client.prepareListening(listener, port);
-        mySearchForTestIndicator = new BackgroundableProcessIndicator(task) {
-          @Override
-          public void cancel() {
-            try {//ensure that serverSocket.accept was interrupted
-              if (!myServerSocket.isClosed()) {
-                new Socket(InetAddress.getLocalHost(), myServerSocket.getLocalPort());
-              }
-            }
-            catch (Throwable e) {
-              LOG.info(e);
-            }
-            super.cancel();
-          }
-        };
+        mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
         ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
       }
 

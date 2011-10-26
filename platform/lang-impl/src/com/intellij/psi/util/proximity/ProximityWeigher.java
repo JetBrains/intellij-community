@@ -25,5 +25,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ProximityWeigher extends Weigher<PsiElement, ProximityLocation> {
 
+  @Override
   public abstract Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location);
 }

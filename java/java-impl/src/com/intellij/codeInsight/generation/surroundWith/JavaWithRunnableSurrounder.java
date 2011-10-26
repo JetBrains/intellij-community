@@ -72,6 +72,7 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
     final int textOffset = variable.getNameIdentifier().getTextOffset();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     editor.getCaretModel().moveToOffset(textOffset);
+    editor.getSelectionModel().removeSelection();
     new VariableInplaceRenamer(variable, editor){
       @Override
       protected void moveOffsetAfter(boolean success) {

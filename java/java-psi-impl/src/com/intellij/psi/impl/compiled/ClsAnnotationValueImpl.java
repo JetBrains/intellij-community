@@ -48,11 +48,13 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
 
   protected abstract ClsJavaCodeReferenceElementImpl createReference();
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("@").append(myReferenceElement.getCanonicalText());
     myParameterList.appendMirrorText(indentLevel, buffer);
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -61,15 +63,18 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
       ((ClsElementImpl)getNameReferenceElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameReferenceElement()));
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myReferenceElement, myParameterList};
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotation(this);
@@ -79,39 +84,47 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
     }
   }
 
+  @Override
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
     return myParameterList;
   }
 
+  @Override
   @Nullable public String getQualifiedName() {
     if (myReferenceElement == null) return null;
     return myReferenceElement.getCanonicalText();
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
     return myReferenceElement;
   }
 
+  @Override
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
+  @Override
   @Nullable
   public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
+  @Override
   public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @Override
   public String getText() {
     final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }

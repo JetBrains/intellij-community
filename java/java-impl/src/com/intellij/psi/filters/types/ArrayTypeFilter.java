@@ -28,10 +28,12 @@ import com.intellij.util.ReflectionCache;
  * To change this template use Options | File Templates.
  */
 public class ArrayTypeFilter implements ElementFilter{
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return element instanceof PsiArrayType;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiArrayType.class, hintClass);
   }

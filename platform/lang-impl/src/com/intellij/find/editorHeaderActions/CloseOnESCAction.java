@@ -23,6 +23,7 @@ public class CloseOnESCAction extends EditorHeaderAction  implements DumbAware {
     if (KeymapUtil.isEmacsKeymap()) {
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK), null));
       textField.registerKeyboardAction(new ActionListener() {
+                                         @Override
                                          public void actionPerformed(final ActionEvent e) {
                                            CloseOnESCAction.this.actionPerformed(null);
                                          }

@@ -33,22 +33,27 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
     super(WHILE_STATEMENT);
   }
 
+  @Override
   public PsiExpression getCondition(){
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
+  @Override
   public PsiStatement getBody(){
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.LOOP_BODY);
   }
 
+  @Override
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }
 
+  @Override
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -72,6 +77,7 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -97,6 +103,7 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitWhileStatement(this);

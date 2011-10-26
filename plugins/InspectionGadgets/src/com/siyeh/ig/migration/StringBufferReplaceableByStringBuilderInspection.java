@@ -30,12 +30,9 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class StringBufferReplaceableByStringBuilderInspection
-  extends BaseInspection {
+public class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -51,15 +48,13 @@ public class StringBufferReplaceableByStringBuilderInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.buffer.replaceable.by.string.builder.display.name");
+    return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "string.buffer.replaceable.by.string.builder.problem.descriptor");
+    return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.problem.descriptor");
   }
 
   @Override
@@ -79,17 +74,45 @@ public class StringBufferReplaceableByStringBuilderInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiElement variableIdentifier =
-        descriptor.getPsiElement();
-      final PsiLocalVariable variable =
-        (PsiLocalVariable)variableIdentifier.getParent();
-      assert variable != null;
-      final PsiDeclarationStatement declarationStatement =
-        (PsiDeclarationStatement)variable.getParent();
-      @NonNls final String text = declarationStatement.getText();
-      final String newStatement = text.replaceAll("StringBuffer",
-                                                  "StringBuilder");
-      replaceStatement(declarationStatement, newStatement);
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiClass stringBuilderClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING_BUILDER, element.getResolveScope());
+      if (stringBuilderClass == null) {
+        return;
+      }
+      final PsiElementFactory factory = psiFacade.getElementFactory();
+      final PsiJavaCodeReferenceElement stringBuilderClassReference = factory.createClassReferenceElement(stringBuilderClass);
+      final PsiClassType stringBuilderType = factory.createType(stringBuilderClass);
+      final PsiTypeElement stringBuilderTypeElement = factory.createTypeElement(stringBuilderType);
+      final PsiElement grandParent = parent.getParent();
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)grandParent;
+      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+      for (PsiElement declaredElement : declaredElements) {
+        if (!(declaredElement instanceof PsiVariable)) {
+          continue;
+        }
+        replaceWithStringBuilder(stringBuilderClassReference, stringBuilderTypeElement, (PsiVariable)declaredElement);
+      }
+    }
+
+    private static void replaceWithStringBuilder(PsiJavaCodeReferenceElement newClassReference,
+                                                 PsiTypeElement newTypeElement,
+                                                 PsiVariable variable) {
+      final PsiExpression initializer = variable.getInitializer();
+      if (!(initializer instanceof PsiNewExpression)) {
+        return;
+      }
+      final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+      final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference(); // no anonymous classes because StringBuffer is final
+      if (classReference == null) {
+        return;
+      }
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.getParent() == variable) {
+        typeElement.replace(newTypeElement);
+      }
+      classReference.replace(newClassReference);
     }
   }
 
@@ -98,56 +121,66 @@ public class StringBufferReplaceableByStringBuilderInspection
     return new StringBufferReplaceableByStringBuilderVisitor();
   }
 
-  private static class StringBufferReplaceableByStringBuilderVisitor
-    extends BaseInspectionVisitor {
+  private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
-    private static final Set<String> excludes = new HashSet(Arrays.asList(
-      CommonClassNames.JAVA_LANG_STRING_BUILDER,
-      CommonClassNames.JAVA_LANG_STRING_BUFFER));
+    private static final Set<String> excludes = new HashSet(Arrays.asList(CommonClassNames.JAVA_LANG_STRING_BUILDER,
+                                                                          CommonClassNames.JAVA_LANG_STRING_BUFFER));
 
     @Override
-    public void visitLocalVariable(
-      @NotNull PsiLocalVariable variable) {
-      super.visitLocalVariable(variable);
-      if (!PsiUtil.isLanguageLevel5OrHigher(variable)) {
+    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
         return;
       }
-      final PsiCodeBlock codeBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      if (codeBlock == null) {
+      super.visitDeclarationStatement(statement);
+      final PsiElement[] declaredElements = statement.getDeclaredElements();
+      if (declaredElements.length == 0) {
         return;
+      }
+      for (PsiElement declaredElement : declaredElements) {
+        if (!(declaredElement instanceof PsiLocalVariable)) {
+          return;
+        }
+        final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
+        final PsiElement context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
+        if (!isReplaceableStringBuffer(variable, context)) {
+          return;
+        }
+      }
+      final PsiLocalVariable firstVariable = (PsiLocalVariable)declaredElements[0];
+      registerVariableError(firstVariable);
+    }
+
+    private static boolean isReplaceableStringBuffer(PsiVariable variable, PsiElement context) {
+      if (context == null) {
+        return false;
       }
       final PsiType type = variable.getType();
-      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
-                                type)) {
-        return;
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER, type)) {
+        return false;
       }
       final PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
-        return;
+        return false;
       }
       if (!isNewStringBuffer(initializer)) {
-        return;
+        return false;
       }
-      if (VariableAccessUtils.variableIsAssigned(variable, codeBlock)) {
-        return;
+      if (VariableAccessUtils.variableIsAssigned(variable, context)) {
+        return false;
       }
-      if (VariableAccessUtils.variableIsAssignedFrom(variable,
-                                                     codeBlock)) {
-        return;
+      if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
+        return false;
       }
-      if (VariableAccessUtils.variableIsReturned(variable, codeBlock)) {
-        return;
+      if (VariableAccessUtils.variableIsReturned(variable, context)) {
+        return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                               excludes, codeBlock)) {
-        return;
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, excludes, context)) {
+        return false;
       }
-      if (VariableAccessUtils.variableIsUsedInInnerClass(variable,
-                                                         codeBlock)) {
-        return;
+      if (VariableAccessUtils.variableIsUsedInInnerClass(variable, context)) {
+        return false;
       }
-      registerVariableError(variable);
+      return true;
     }
 
     private static boolean isNewStringBuffer(PsiExpression expression) {
@@ -158,17 +191,13 @@ public class StringBufferReplaceableByStringBuilderInspection
         return true;
       }
       else if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression =
-          methodCallExpression.getMethodExpression();
-        @NonNls final String methodName =
-          methodExpression.getReferenceName();
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"append".equals(methodName)) {
           return false;
         }
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
         return isNewStringBuffer(qualifier);
       }
       return false;

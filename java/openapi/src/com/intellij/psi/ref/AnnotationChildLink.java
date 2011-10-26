@@ -47,6 +47,7 @@ public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiA
     return modifierList != null ? modifierList.findAnnotation(myAnnoFqn) : null;
   }
 
+  @Override
   @NotNull
   public PsiAnnotation createChild(@NotNull PsiModifierListOwner member) throws IncorrectOperationException {
     final PsiModifierList modifierList = member.getModifierList();

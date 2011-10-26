@@ -31,19 +31,23 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
     super(JavaElementType.PACKAGE_STATEMENT);
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
     return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.PACKAGE_REFERENCE);
   }
 
+  @Override
   public String getPackageName() {
     PsiJavaCodeReferenceElement ref = getPackageReference();
     return ref == null ? null : SourceUtil.getTextSkipWhiteSpaceAndComments(SourceTreeToPsiMap.psiElementToTree(ref));
   }
 
+  @Override
   public PsiModifierList getAnnotationList() {
     return (PsiModifierList)findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -64,6 +68,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -84,6 +89,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPackageStatement(this);

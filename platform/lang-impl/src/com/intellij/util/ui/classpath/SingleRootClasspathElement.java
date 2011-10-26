@@ -21,6 +21,7 @@ public class SingleRootClasspathElement implements SimpleClasspathElement {
     myUrl = url;
   }
 
+  @Override
   public String getPresentableName() {
     String url;
     if (myUrl.endsWith(JarFileSystem.JAR_SEPARATOR)) {
@@ -33,18 +34,22 @@ public class SingleRootClasspathElement implements SimpleClasspathElement {
     return url.substring(startIndex);
   }
 
+  @Override
   public Library getLibrary() {
     return null;
   }
 
+  @Override
   public String getLibraryName() {
     return null;
   }
 
+  @Override
   public void serialize(Element element) throws IOException {
     element.addContent(new Element(URL_ELEMENT).setText(myUrl));
   }
 
+  @Override
   public List<String> getClassesRootUrls() {
     return Collections.singletonList(myUrl);
   }

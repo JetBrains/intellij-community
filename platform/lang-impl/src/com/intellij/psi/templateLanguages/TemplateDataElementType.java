@@ -68,6 +68,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return new TemplateFileType(language);
   }
 
+  @Override
   public ASTNode parseContents(ASTNode chameleon) {
     final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
     final FileElement treeElement = new DummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
@@ -180,6 +181,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final LightVirtualFile virtualFile = new LightVirtualFile("foo", createTemplateFakeFileType(language), text, LocalTimeCounter.currentTime());
 
     FileViewProvider viewProvider = new SingleRootFileViewProvider(manager, virtualFile, false) {
+      @Override
       @NotNull
       public Language getBaseLanguage() {
         return language;
@@ -197,22 +199,26 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       myLanguage = language;
     }
 
+    @Override
     @NotNull
     public String getDefaultExtension() {
       return "";
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getDescription() {
       return "fake for language" + myLanguage.getID();
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getName() {

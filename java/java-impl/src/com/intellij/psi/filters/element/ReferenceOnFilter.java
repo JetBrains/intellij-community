@@ -34,10 +34,12 @@ public class ReferenceOnFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiJavaCodeReferenceElement.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     PsiElement parent = ((PsiElement) element).getParent();

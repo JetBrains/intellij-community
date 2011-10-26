@@ -44,26 +44,32 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
     return new ImportListElement();
   }
 
+  @Override
   public PsiImportList createPsi(final PsiImportListStub stub) {
     assert !isCompiled(stub);
     return new PsiImportListImpl(stub);
   }
 
+  @Override
   public PsiImportList createPsi(final ASTNode node) {
     return new PsiImportListImpl(node);
   }
 
+  @Override
   public PsiImportListStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
     return new PsiImportListStubImpl(parentStub);
   }
 
+  @Override
   public void serialize(final PsiImportListStub stub, final StubOutputStream dataStream) throws IOException {
   }
 
+  @Override
   public PsiImportListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiImportListStubImpl(parentStub);
   }
 
+  @Override
   public void indexStub(final PsiImportListStub stub, final IndexSink sink) {
   }
 }

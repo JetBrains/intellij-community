@@ -41,25 +41,30 @@ public class ShowModulePropertiesFix implements IntentionAction {
     myModuleName = module != null ? module.getName() : null;
   }
 
+  @Override
   @NotNull
   public String getText() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS);
     return action.getTemplatePresentation().getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myModuleName != null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModuleName, null);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

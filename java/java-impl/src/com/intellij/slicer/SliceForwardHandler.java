@@ -33,6 +33,7 @@ public class SliceForwardHandler extends SliceHandler {
     super(false);
   }
 
+  @Override
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtil.findModuleForPsiElement(element);

@@ -38,6 +38,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place);
   }
 
+  @Override
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;

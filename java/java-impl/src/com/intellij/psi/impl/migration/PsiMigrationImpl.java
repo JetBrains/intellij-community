@@ -48,6 +48,7 @@ public class PsiMigrationImpl implements PsiMigration {
     myManager = manager;
   }
 
+  @Override
   public PsiClass createClass(String qualifiedName) {
     assertValid();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -76,6 +77,7 @@ public class PsiMigrationImpl implements PsiMigration {
     return psiClasses;
   }
 
+  @Override
   public PsiPackage createPackage(String qualifiedName) {
     assertValid();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -93,6 +95,7 @@ public class PsiMigrationImpl implements PsiMigration {
     return migrationPackage;
   }
 
+  @Override
   public void finish() {
     assertValid();
     myQNameToClassMap.clear();

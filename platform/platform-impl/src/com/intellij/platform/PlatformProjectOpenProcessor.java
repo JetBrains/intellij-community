@@ -111,6 +111,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     Project project = null;
     if (projectDir.exists()) {
       try {
+        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
+          processor.refreshProjectFiles(projectDir);
+        }
+        
         project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
       }
       catch (Exception e) {

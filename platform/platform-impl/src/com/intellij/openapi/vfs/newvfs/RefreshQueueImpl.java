@@ -68,6 +68,7 @@ public class RefreshQueueImpl extends RefreshQueue {
 
   private void queueSession(final RefreshSessionImpl session, final ModalityState modality) {
     myQueue.submit(new Runnable() {
+      @Override
       public void run() {
         try {
           myRefreshIndicator.start();
@@ -83,6 +84,7 @@ public class RefreshQueueImpl extends RefreshQueue {
         finally {
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new DumbAwareRunnable() {
+            @Override
             public void run() {
               if (app.isDisposed()) return;
               session.fireEvents(false);
@@ -93,6 +95,7 @@ public class RefreshQueueImpl extends RefreshQueue {
     });
   }
 
+  @Override
   public RefreshSession createSession(final boolean async, boolean recursively, @Nullable final Runnable finishRunnable, ModalityState state) {
     return new RefreshSessionImpl(async, recursively, finishRunnable, state);
   }
@@ -102,6 +105,7 @@ public class RefreshQueueImpl extends RefreshQueue {
     RefreshQueue.getInstance().refresh(async, true, postAction, modalityState, ManagingFS.getInstance().getLocalRoots());
   }
 
+  @Override
   public void processSingleEvent(VFileEvent event) {
     new RefreshSessionImpl(Collections.singletonList(event)).launch();
   }

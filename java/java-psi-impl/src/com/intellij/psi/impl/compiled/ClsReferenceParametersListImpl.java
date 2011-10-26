@@ -36,6 +36,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     myTypeElements = typeElements;
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     if (myTypeElements.length != 0) {
       buffer.append('<');
@@ -48,6 +49,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
@@ -61,25 +63,30 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return myTypeElements;
   }
 
+  @Override
   @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
     return myTypeElements;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeArguments() {
     return PsiImplUtil.typesByTypeElements(myTypeElements);
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceParameterList(this);

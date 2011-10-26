@@ -33,10 +33,12 @@ public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSu
     super(methodCall);
   }
 
+  @Override
   protected String getSyntheticMethodName() {
     return "super";
   }
 
+  @Override
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     do {
@@ -55,6 +57,7 @@ public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSu
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.from.super.call.family");

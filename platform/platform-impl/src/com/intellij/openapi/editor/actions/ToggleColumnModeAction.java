@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbAware;
 
 public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final EditorEx editor = getEditor(e);
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -75,6 +76,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
     }
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     final EditorEx ex = getEditor(e);
     return ex != null && ex.isColumnMode();
@@ -84,6 +86,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
     return (EditorEx) PlatformDataKeys.EDITOR.getData(e.getDataContext());
   }
 
+  @Override
   public void update(AnActionEvent e){
     if (getEditor(e) == null) {
       e.getPresentation().setEnabled(false);

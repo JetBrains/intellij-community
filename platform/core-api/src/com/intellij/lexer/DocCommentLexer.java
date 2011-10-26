@@ -44,6 +44,7 @@ public class DocCommentLexer extends MergingLexerAdapter {
       myTokenTypes = tokenTypes;
     }
 
+    @Override
     public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
       myBufferIndex =  startOffset;
@@ -53,34 +54,41 @@ public class DocCommentLexer extends MergingLexerAdapter {
       myFlex.reset(myBuffer, startOffset, endOffset, initialState);
     }
 
+    @Override
     public int getState() {
       return myState;
     }
 
+    @Override
     public CharSequence getBufferSequence() {
       return myBuffer;
     }
 
+    @Override
     public int getBufferEnd() {
       return myBufferEndOffset;
     }
 
+    @Override
     public final IElementType getTokenType() {
       locateToken();
       return myTokenType;
     }
 
+    @Override
     public final int getTokenStart() {
       locateToken();
       return myBufferIndex;
     }
 
+    @Override
     public final int getTokenEnd() {
       locateToken();
       return myTokenEndOffset;
     }
 
 
+    @Override
     public final void advance() {
       locateToken();
       myTokenType = null;

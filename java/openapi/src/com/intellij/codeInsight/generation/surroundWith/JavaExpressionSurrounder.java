@@ -33,6 +33,7 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundExpressionHandler");
 
+  @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == 1 && elements[0] instanceof PsiExpression);
     return isApplicable((PsiExpression)elements[0]);
@@ -40,6 +41,7 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
 
   public abstract boolean isApplicable(PsiExpression expr);
 
+  @Override
   public TextRange surroundElements(@NotNull Project project,
                                     @NotNull Editor editor,
                                     @NotNull PsiElement[] elements) throws IncorrectOperationException {

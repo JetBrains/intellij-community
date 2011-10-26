@@ -35,10 +35,12 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     super(IF_STATEMENT);
   }
 
+  @Override
   public PsiExpression getCondition() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child == getElseBranch()) {
       ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
@@ -49,26 +51,32 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     super.deleteChildInternal(child);
   }
 
+  @Override
   public PsiStatement getThenBranch() {
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.THEN_BRANCH);
   }
 
+  @Override
   public PsiStatement getElseBranch() {
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.ELSE_BRANCH);
   }
 
+  @Override
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }
 
+  @Override
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
+  @Override
   public PsiKeyword getElseElement() {
     return (PsiKeyword)findChildByRoleAsPsiElement(ChildRole.ELSE_KEYWORD);
   }
 
+  @Override
   public void setElseBranch(@NotNull PsiStatement statement) throws IncorrectOperationException {
     PsiStatement elseBranch = getElseBranch();
     if (elseBranch != null) elseBranch.delete();
@@ -81,6 +89,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
 
     addRange(ifStatement.getElseElement(), ifStatement.getLastChild());
   }
+  @Override
   public void setThenBranch(@NotNull PsiStatement statement) throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     ASTNode keyword = findChildByRole(ChildRole.IF_KEYWORD);
@@ -102,6 +111,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -138,6 +148,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -171,6 +182,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitIfStatement(this);

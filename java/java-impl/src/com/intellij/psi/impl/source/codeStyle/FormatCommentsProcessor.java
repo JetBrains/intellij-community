@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
 
 public class FormatCommentsProcessor implements PreFormatProcessor {
+  @Override
   public TextRange process(final ASTNode element, final TextRange range) {
     final Project project = SourceTreeToPsiMap.treeElementToPsi(element).getProject();
     if (!CodeStyleSettingsManager.getSettings(project).ENABLE_JAVADOC_FORMATTING ||

@@ -71,10 +71,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
     myFoldTree = new FoldRegionsTree() {
+      @Override
       protected boolean isFoldingEnabled() {
         return FoldingModelImpl.this.isFoldingEnabled();
       }
 
+      @Override
       protected boolean isBatchFoldingProcessing() {
         return myIsBatchFoldingProcessing;
       }
@@ -121,10 +123,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myFoldTextAttributes = myEditor.getColorsScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
   }
 
+  @Override
   public boolean isFoldingEnabled() {
     return myIsFoldingEnabled;
   }
 
+  @Override
   public boolean isOffsetCollapsed(int offset) {
     assertReadAccess();
     return getCollapsedRegionAtOffset(offset) != null;
@@ -137,11 +141,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
   }
 
+  @Override
   public void setFoldingEnabled(boolean isEnabled) {
     assertIsDispatchThread();
     myIsFoldingEnabled = isEnabled;
   }
 
+  @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null, false);
     if (region == null) return null;
@@ -153,6 +159,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return region;
   }
 
+  @Override
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
     assertIsDispatchThread();
     if (!isFoldingEnabled()) {
@@ -178,6 +185,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return false;
   }
 
+  @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation) {
     runBatchFoldingOperation(operation, false);
   }
@@ -206,6 +214,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myDoNotCollapseCaret = oldDontCollapseCaret;
   }
 
+  @Override
   public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull final Runnable operation) {
     runBatchFoldingOperation(operation, true);
   }
@@ -214,12 +223,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     mySavedCaretShift = -1;
   }
 
+  @Override
   @NotNull
   public FoldRegion[] getAllFoldRegions() {
     assertReadAccess();
     return myFoldTree.fetchAllRegions();
   }
 
+  @Override
   @Nullable
   public FoldRegion getCollapsedRegionAtOffset(int offset) {
     return myFoldTree.fetchOutermost(offset);
@@ -229,6 +240,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.getLastTopLevelIndexBefore(offset);
   }
 
+  @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(Point p) {
     assertReadAccess();
@@ -245,6 +257,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.fetchOutermost(offset);
   }
 
+  @Override
   public void removeFoldRegion(@NotNull final FoldRegion region) {
     assertIsDispatchThread();
 
@@ -413,11 +426,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 
+  @Override
   @Nullable
   public FoldRegion[] fetchTopLevel() {
     return myFoldTree.fetchTopLevel();
   }
 
+  @Override
   @Nullable
   public FoldRegion fetchOutermost(int offset) {
     return myFoldTree.fetchOutermost(offset);
@@ -427,6 +442,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.fetchCollapsedAt(offset);
   }
 
+  @Override
   public boolean intersectsRegion (int startOffset, int endOffset) {
     return myFoldTree.intersectsRegion(startOffset, endOffset);
   }
@@ -435,10 +451,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.fetchVisible();
   }
 
+  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return myFoldTree.getLastTopLevelIndexBefore(offset);
   }
 
+  @Override
   public TextAttributes getPlaceholderAttributes() {
     return myFoldTextAttributes;
   }
@@ -447,9 +465,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myCaretPositionSaved = false;
   }
 
+  @Override
   public void beforeDocumentChange(DocumentEvent event) {
   }
 
+  @Override
   public void documentChanged(DocumentEvent event) {
     if (((DocumentEx)event.getDocument()).isInBulkUpdate()) {
       myFoldTree.clear();
@@ -458,10 +478,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
   }
 
+  @Override
   public int getPriority() {
     return EditorDocumentPriorities.FOLD_MODEL;
   }
 
+  @Override
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
                                      boolean neverExpands)
   {

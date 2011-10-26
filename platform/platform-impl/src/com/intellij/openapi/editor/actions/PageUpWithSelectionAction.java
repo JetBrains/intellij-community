@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 
 public class PageUpWithSelectionAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretPageUp(editor, true);
     }

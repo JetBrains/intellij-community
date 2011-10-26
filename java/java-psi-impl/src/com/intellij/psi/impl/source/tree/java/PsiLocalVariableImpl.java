@@ -57,11 +57,13 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     super(type);
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCachedName = null;
   }
 
+  @Override
   @NotNull
   public final PsiIdentifier getNameIdentifier() {
     final PsiElement element = findChildByRoleAsPsiElement(ChildRole.NAME);
@@ -69,6 +71,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return (PsiIdentifier)element;
   }
 
+  @Override
   @NotNull
   public final String getName() {
     String cachedName = myCachedName;
@@ -78,20 +81,24 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return cachedName;
   }
 
+  @Override
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     JavaSharedImplUtil.setInitializer(this, initializer);
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
+  @Override
   @NotNull
   public final PsiType getType() {
     return JavaSharedImplUtil.getType(this);
   }
 
+  @Override
   @NotNull
   public PsiTypeElement getTypeElement() {
     PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
@@ -106,6 +113,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return typeElement;
   }
 
+  @Override
   public PsiModifierList getModifierList() {
     final CompositeElement parent = getTreeParent();
     if (parent == null) return null;
@@ -113,23 +121,28 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return first != null ? (PsiModifierList)first.findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST) : null;
   }
 
+  @Override
   public boolean hasModifierProperty(@NotNull String name) {
     final PsiModifierList modifierList = getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
+  @Override
   public PsiExpression getInitializer() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
   }
 
+  @Override
   public boolean hasInitializer() {
     return getInitializer() != null;
   }
 
+  @Override
   public Object computeConstantValue() {
     return computeConstantValue(new THashSet<PsiVariable>());
   }
 
+  @Override
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
@@ -142,10 +155,12 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);
   }
 
+  @Override
   public int getTextOffset() {
     return getNameIdentifier().getTextOffset();
   }
 
+  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
@@ -198,6 +213,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     JavaSharedImplUtil.normalizeBrackets(this);
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
       ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
@@ -208,6 +224,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     super.deleteChildInternal(child);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -234,6 +251,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -260,6 +278,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitLocalVariable(this);
@@ -269,6 +288,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent == null) return true;
     if (lastParent.getContext() instanceof JavaDummyHolder) {
@@ -282,6 +302,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
            processor.execute(this, state);
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }
@@ -290,6 +311,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return "PsiLocalVariable:" + getName();
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     final PsiElement parentElement = getParent();
@@ -301,6 +323,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
+  @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.VARIABLE_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
@@ -310,6 +333,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return true;
   }
 
+  @Override
   public PsiType getTypeNoResolve() {
     return getType();
   }

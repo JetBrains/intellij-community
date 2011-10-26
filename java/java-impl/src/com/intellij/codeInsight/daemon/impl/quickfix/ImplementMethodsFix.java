@@ -49,6 +49,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return QuickFixBundle.message("implement.methods.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("implement.methods.fix");
@@ -80,6 +81,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
       if (selectedElements == null || selectedElements.isEmpty()) return;
 
       new WriteCommandAction(project, file) {
+        @Override
         protected void run(final Result result) throws Throwable {
           final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
           OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
@@ -93,6 +95,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

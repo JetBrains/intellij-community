@@ -39,6 +39,7 @@ import java.util.List;
  * @author max
  */
 public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider {
+  @Override
   @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
@@ -71,6 +72,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     return rules.toArray(new UsageGroupingRule[rules.size()]);
   }
 
+  @Override
   @NotNull
   public AnAction[] createGroupingActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
@@ -121,9 +123,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     private GroupByUsageTypeAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.usage.type"), IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
     }
+    @Override
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE;
     }
+    @Override
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE = value;
     }
@@ -133,9 +137,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     private GroupByScopeAction(UsageViewImpl view) {
       super(view, "Group by test/production", PlatformIcons.TEST_SOURCE_FOLDER);
     }
+    @Override
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_SCOPE;
     }
+    @Override
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_SCOPE = value;
     }
@@ -146,10 +152,12 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       super(view, UsageViewBundle.message("action.group.by.module"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
+    @Override
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_MODULE;
     }
 
+    @Override
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_MODULE = value;
     }
@@ -159,9 +167,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     private GroupByPackageAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.package"), PlatformIcons.GROUP_BY_PACKAGES);
     }
+    @Override
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_PACKAGE;
     }
+    @Override
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_PACKAGE = value;
     }
@@ -171,9 +181,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     private GroupByFileStructureAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.file.structure"), IconLoader.getIcon("/actions/groupByMethod.png"));
     }
+    @Override
     protected boolean getOptionValue() {
       return UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE;
     }
+    @Override
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE = value;
     }

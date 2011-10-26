@@ -31,27 +31,32 @@ public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements Ps
     super(Constants.POSTFIX_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
+  @Override
   @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     return getOperationSign().getTokenType();
   }
 
+  @Override
   public PsiType getType() {
     PsiType type = getOperand().getType();
     if (type instanceof PsiClassType) type = PsiPrimitiveType.getUnboxedType(type);
     return type;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -66,6 +71,7 @@ public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements Ps
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERAND;
@@ -73,6 +79,7 @@ public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements Ps
     return ChildRoleBase.NONE;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPostfixExpression(this);

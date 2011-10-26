@@ -232,6 +232,7 @@ public class GenericsUtil {
 
   public static PsiType getVariableTypeByExpressionType(final PsiType type) {
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
+      @Override
       public PsiType visitArrayType(PsiArrayType arrayType) {
         PsiType componentType = arrayType.getComponentType();
         PsiType type = componentType.accept(this);
@@ -239,10 +240,12 @@ public class GenericsUtil {
         return type.createArrayType();
       }
 
+      @Override
       public PsiType visitType(PsiType type) {
         return type;
       }
 
+      @Override
       public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         PsiManager manager = wildcardType.getManager();
@@ -260,10 +263,12 @@ public class GenericsUtil {
         return wildcardType;
       }
 
+      @Override
       public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
         return capturedWildcardType.getWildcard().accept(this);
       }
 
+      @Override
       public PsiType visitClassType(PsiClassType classType) {
         PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
         PsiClass aClass = resolveResult.getElement();
@@ -319,6 +324,7 @@ public class GenericsUtil {
     for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
       final String name = typeParameter.getName();
       final PsiTypeParameter key = ContainerUtil.find(substitutionMap.keySet(), new Condition<PsiTypeParameter>() {
+        @Override
         public boolean value(final PsiTypeParameter psiTypeParameter) {
           return name.equals(psiTypeParameter.getName());
         }

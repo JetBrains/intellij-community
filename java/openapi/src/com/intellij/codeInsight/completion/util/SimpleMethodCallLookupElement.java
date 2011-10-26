@@ -35,6 +35,7 @@ public class SimpleMethodCallLookupElement extends LookupElement {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public String getLookupString() {
     return myMethod.getName();

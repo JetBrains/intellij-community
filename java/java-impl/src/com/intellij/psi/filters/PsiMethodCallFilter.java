@@ -33,6 +33,7 @@ public class PsiMethodCallFilter implements ElementFilter {
     myMethodNames = new HashSet<String>(Arrays.asList(methodNames));
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)element;
@@ -49,6 +50,7 @@ public class PsiMethodCallFilter implements ElementFilter {
     return false;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return PsiMethodCallExpression.class.isAssignableFrom(hintClass);
   }

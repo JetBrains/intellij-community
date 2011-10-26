@@ -76,6 +76,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           action.invoke(getProject(), getEditor(), getFile());
         }
@@ -101,6 +102,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableRootModel model = ModuleRootManager.getInstance(a).getModifiableModel();
         model.addModuleOrderEntry(b);

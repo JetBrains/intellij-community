@@ -32,20 +32,24 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
     super(TYPE_CAST_EXPRESSION);
   }
 
+  @Override
   public PsiTypeElement getCastType() {
     return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
+  @Override
   public PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
+  @Override
   @Nullable public PsiType getType() {
     final PsiTypeElement castType = getCastType();
     if (castType == null) return null;
     return castType.getType();
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -66,6 +70,7 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     assert child.getTreeParent() == this: "child:"+child+"; child.getTreeParent():"+child.getTreeParent();
     IElementType i = child.getElementType();
@@ -86,6 +91,7 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeCastExpression(this);

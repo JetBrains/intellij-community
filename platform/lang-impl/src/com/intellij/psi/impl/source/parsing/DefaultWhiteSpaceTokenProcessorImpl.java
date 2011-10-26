@@ -26,10 +26,12 @@ import com.intellij.psi.tree.IElementType;
 public abstract class DefaultWhiteSpaceTokenProcessorImpl implements TokenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.DefaultWhiteSpaceTokenProcessorImpl");
 
+  @Override
   public boolean isTokenValid(IElementType tokenType) {
     return tokenType != null && isInSet(tokenType);
   }
 
+  @Override
   public TreeElement process(Lexer lexer, ParsingContext context) {
     TreeElement first = null;
     TreeElement last = null;

@@ -44,6 +44,7 @@ public class CutLineEndAction extends EditorAction {
       myCopyToClipboard = copyToClipboard;
     }
 
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document doc = editor.getDocument();
       int caretOffset = editor.getCaretModel().getOffset();

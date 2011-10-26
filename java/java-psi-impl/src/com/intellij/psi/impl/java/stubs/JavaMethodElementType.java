@@ -51,6 +51,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     super(name);
   }
 
+  @Override
   public PsiMethod createPsi(final PsiMethodStub stub) {
     if (isCompiled(stub)) {
       return new ClsMethodImpl(stub);
@@ -60,6 +61,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     }
   }
 
+  @Override
   public PsiMethod createPsi(final ASTNode node) {
     if (node instanceof AnnotationMethodElement) {
       return new PsiAnnotationMethodImpl(node);
@@ -119,6 +121,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     return new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
   }
 
+  @Override
   public void serialize(final PsiMethodStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText(false));
@@ -128,6 +131,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     }
   }
 
+  @Override
   public PsiMethodStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     final TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
@@ -136,6 +140,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
   }
 
+  @Override
   public void indexStub(final PsiMethodStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {

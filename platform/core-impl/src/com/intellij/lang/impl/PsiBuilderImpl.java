@@ -96,32 +96,38 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private Map<Key, Object> myUserData = null;
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
+    @Override
     public StartMarker create() {
       return new StartMarker();
     }
 
+    @Override
     public void cleanup(final StartMarker startMarker) {
       startMarker.clean();
     }
   });
 
   private final LimitedPool<DoneMarker> DONE_MARKERS = new LimitedPool<DoneMarker>(2000, new LimitedPool.ObjectFactory<DoneMarker>() {
+    @Override
     public DoneMarker create() {
       return new DoneMarker();
     }
 
+    @Override
     public void cleanup(final DoneMarker doneMarker) {
       doneMarker.clean();
     }
   });
 
   private static final WhitespacesAndCommentsBinder DEFAULT_LEFT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
+    @Override
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
   };
 
   private static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
+    @Override
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return 0;
     }
@@ -228,14 +234,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexemeCount = i;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public void enforceCommentTokens(TokenSet tokens) {
     myComments = tokens;
   }
 
+  @Override
   @Nullable
   public LighterASTNode getLatestDoneMarker() {
     int index = myProduction.size() - 1;
@@ -276,6 +285,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
     }
 
+    @Override
     public void clean() {
       super.clean();
       myBuilder = null;
@@ -287,6 +297,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
     }
 
+    @Override
     public int hc() {
       if (myHC == -1) {
         PsiBuilderImpl builder = myBuilder;
@@ -319,10 +330,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myHC;
     }
 
+    @Override
     public int getStartOffset() {
       return myBuilder.myLexStarts[myLexemeIndex];
     }
 
+    @Override
     public int getEndOffset() {
       return myBuilder.myLexStarts[myDoneMarker.myLexemeIndex];
     }
@@ -338,33 +351,40 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
+    @Override
     public Marker precede() {
       return myBuilder.precede(this);
     }
 
+    @Override
     public void drop() {
       myBuilder.drop(this);
     }
 
+    @Override
     public void rollbackTo() {
       myBuilder.rollbackTo(this);
     }
 
+    @Override
     public void done(IElementType type) {
       myType = type;
       myBuilder.done(this);
     }
 
+    @Override
     public void collapse(IElementType type) {
       myType = type;
       myBuilder.collapse(this);
     }
 
+    @Override
     public void doneBefore(IElementType type, Marker before) {
       myType = type;
       myBuilder.doneBefore(this, before);
     }
 
+    @Override
     public void doneBefore(final IElementType type, final Marker before, final String errorMessage) {
       final StartMarker marker = (StartMarker)before;
       myBuilder.myProduction.add(myBuilder.myProduction.lastIndexOf(marker),
@@ -372,20 +392,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneBefore(type, before);
     }
 
+    @Override
     public void error(String message) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.error(this, message);
     }
 
+    @Override
     public void errorBefore(final String message, final Marker before) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.errorBefore(this, message, before);
     }
 
+    @Override
     public IElementType getTokenType() {
       return myType;
     }
 
+    @Override
     public void setCustomEdgeTokenBinders(final WhitespacesAndCommentsBinder left, final WhitespacesAndCommentsBinder right) {
       if (left != null) {
         myEdgeTokenBinder = left;
@@ -420,6 +444,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myHC = -1;
     }
 
+    @Override
     public int hc() {
       if (myHC == -1) {
         int hc = 0;
@@ -446,10 +471,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myHC;
     }
 
+    @Override
     public int getEndOffset() {
       return myTokenEnd;
     }
 
+    @Override
     public int getStartOffset() {
       return myTokenStart;
     }
@@ -462,6 +489,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myBuilder.myText.subSequence(myTokenStart, myTokenEnd);
     }
 
+    @Override
     public IElementType getTokenType() {
       return myTokenType;
     }
@@ -474,16 +502,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private MyTreeStructure myParent;
     private FlyweightCapableTreeStructure<LighterASTNode> myParsed;
 
+    @Override
     public void clean() {
       super.clean();
       myParent = null;
       myParsed = null;
     }
 
+    @Override
     public PsiFile getContainingFile() {
       return myBuilder.myFile;
     }
 
+    @Override
     public CharTable getCharTable() {
       return myBuilder.myCharTable;
     }
@@ -510,24 +541,29 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myStart = marker;
     }
 
+    @Override
     public void clean() {
       super.clean();
       myStart = null;
       myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
+    @Override
     public int hc() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
+    @Override
     public IElementType getTokenType() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
+    @Override
     public int getEndOffset() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
+    @Override
     public int getStartOffset() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
@@ -541,6 +577,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myMessage = message;
     }
 
+    @Override
     public void clean() {
       super.clean();
       myMessage = null;
@@ -558,32 +595,39 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
     }
 
+    @Override
     public void clean() {
       super.clean();
       myMessage = null;
     }
 
+    @Override
     public int hc() {
       return 0;
     }
 
+    @Override
     public int getEndOffset() {
       return myBuilder.myLexStarts[myLexemeIndex];
     }
 
+    @Override
     public int getStartOffset() {
       return myBuilder.myLexStarts[myLexemeIndex];
     }
 
+    @Override
     public IElementType getTokenType() {
       return TokenType.ERROR_ELEMENT;
     }
   }
 
+  @Override
   public CharSequence getOriginalText() {
     return myText;
   }
 
+  @Override
   public IElementType getTokenType() {
     if (eof()) return null;
 
@@ -596,6 +640,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return myLexTypes[myCurrentLexeme];
   }
 
+  @Override
   public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
     myRemapper = remapper;
   }
@@ -644,6 +689,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myWhitespaceSkippedCallback = callback;
   }
 
+  @Override
   public void advanceLexer() {
     if (eof()) return;
 
@@ -668,11 +714,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @Override
   public int getCurrentOffset() {
     if (eof()) return getOriginalText().length();
     return myLexStarts[myCurrentLexeme];
   }
 
+  @Override
   @Nullable
   public String getTokenText() {
     if (eof()) return null;
@@ -698,6 +746,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return myWhitespaces.contains(token) || myComments.contains(token);
   }
 
+  @Override
   public Marker mark() {
     if (!myProduction.isEmpty()) {
       skipWhitespace();
@@ -719,6 +768,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return marker;
   }
 
+  @Override
   public final boolean eof() {
     if (!markTokenTypeChecked()) {
       skipWhitespace();
@@ -871,6 +921,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @Override
   public void error(String messageText) {
     final ProductionMarker lastMarker = myProduction.get(myProduction.size() - 1);
     if (lastMarker instanceof ErrorItem && lastMarker.myLexemeIndex == myCurrentLexeme) {
@@ -879,6 +930,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myProduction.add(new ErrorItem(this, messageText, myCurrentLexeme));
   }
 
+  @Override
   public ASTNode getTreeBuilt() {
     try {
       return buildTree();
@@ -916,6 +968,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return rootNode;
   }
 
+  @Override
   public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
     final StartMarker rootMarker = prepareLightTree();
     return new MyTreeStructure(rootMarker, myParentLightTree);
@@ -943,14 +996,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myConverter = new ASTConverter(rootNode);
     }
 
+    @Override
     public void nodeDeleted(@NotNull final ASTNode oldParent, @NotNull final ASTNode oldNode) {
       myDelegate.nodeDeleted(oldParent, oldNode);
     }
 
+    @Override
     public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull final LighterASTNode newNode, final int pos) {
       myDelegate.nodeInserted(oldParent, myConverter.convert((Node)newNode), pos);
     }
 
+    @Override
     public void nodeReplaced(@NotNull final ASTNode oldChild, @NotNull final LighterASTNode newChild) {
       ASTNode converted = myConverter.convert((Node)newChild);
       myDelegate.nodeReplaced(oldChild, converted);
@@ -1060,6 +1116,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       final List<IElementType> wsTokens = CollectionFactory.arrayList(myLexTypes, wsStartIndex, wsEndIndex);
       final boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
       final WhitespacesAndCommentsBinder.TokenTextGetter getter = new WhitespacesAndCommentsBinder.TokenTextGetter() {
+        @Override
         public CharSequence get(final int i) {
           return myText.subSequence(myLexStarts[wsStartIndex + i], myLexStarts[wsStartIndex + i + 1]);
         }
@@ -1185,6 +1242,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myTreeStructure = treeStructure;
     }
 
+    @Override
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
       ProgressIndicatorProvider.checkCanceled();
 
@@ -1236,6 +1294,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return ThreeState.UNSURE;
     }
 
+    @Override
     public boolean typesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof PsiWhiteSpaceImpl) {
         return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) ||
@@ -1252,6 +1311,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return probablyWrapper;
     }
 
+    @Override
     public boolean hashCodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
         boolean isForeign1 = n1 instanceof ForeignLeafPsiElement;
@@ -1282,19 +1342,23 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
         myPool = new LimitedPool<Token>(1000, new LimitedPool.ObjectFactory<Token>() {
+          @Override
           public void cleanup(final Token token) {
             token.clean();
           }
 
+          @Override
           public Token create() {
             return new TokenNode();
           }
         });
         myLazyPool = new LimitedPool<LazyParseableToken>(200, new LimitedPool.ObjectFactory<LazyParseableToken>() {
+          @Override
           public void cleanup(final LazyParseableToken token) {
             token.clean();
           }
 
+          @Override
           public LazyParseableToken create() {
             return new LazyParseableToken();
           }
@@ -1433,6 +1497,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myRoot = root;
     }
 
+    @Override
     public ASTNode convert(final Node n) {
       if (n instanceof Token) {
         final Token token = (Token)n;
@@ -1451,6 +1516,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @Override
   public void setDebugMode(boolean dbgMode) {
     myDebugMode = dbgMode;
   }
@@ -1499,6 +1565,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     private Object[] cachedElementData;
 
+    @Override
     public void removeRange(final int fromIndex, final int toIndex) {
       super.removeRange(fromIndex, toIndex);
     }
@@ -1507,6 +1574,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       super(256);
     }
 
+    @Override
     public int lastIndexOf(final Object o) {
       if (cachedElementData == null) return super.lastIndexOf(o);
       for (int i = size() - 1; i >= 0; i--) {
@@ -1515,6 +1583,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return -1;
     }
 
+    @Override
     public void ensureCapacity(final int minCapacity) {
       if (cachedElementData == null || minCapacity >= cachedElementData.length) {
         super.ensureCapacity(minCapacity);

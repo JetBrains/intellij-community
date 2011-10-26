@@ -30,6 +30,7 @@ public class ConstructorFilter extends ClassFilter {
     super(PsiMethod.class);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiMethod){
       return ((PsiMethod)element).isConstructor();

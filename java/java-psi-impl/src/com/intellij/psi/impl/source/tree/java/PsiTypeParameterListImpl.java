@@ -39,15 +39,18 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     super(node);
   }
 
+  @Override
   public PsiTypeParameter[] getTypeParameters() {
     return getStubOrPsiChildren(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.ARRAY_FACTORY);
   }
 
+  @Override
   public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
     LOG.assertTrue(typeParameter.getParent() == this);
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     final PsiTypeParameter[] parameters = getTypeParameters();
     for (final PsiTypeParameter parameter : parameters) {
@@ -56,6 +59,7 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     return true;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeParameterList(this);

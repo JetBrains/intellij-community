@@ -132,6 +132,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class StubIdExternalizer implements DataExternalizer<TIntArrayList> {
+    @Override
     public void save(final DataOutput out, final TIntArrayList value) throws IOException {
       int size = value.size();
       if (size == 0) {
@@ -148,6 +149,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
 
+    @Override
     public TIntArrayList read(final DataInput in) throws IOException {
       int size = DataInputOutputUtil.readSINT(in);
       if (size == Integer.MAX_VALUE) {
@@ -168,6 +170,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  @Override
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
@@ -186,6 +189,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
         container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+          @Override
           public void perform(final int id, final TIntArrayList value) {
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file != null && (scope == null || scope.contains(file))) {
@@ -238,6 +242,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                           // requestReindex() may want to acquire write lock (for indices not requiring content loading)
                           // thus, because here we are under read lock, need to use invoke later
                           ApplicationManager.getApplication().invokeLater(new Runnable() {
+                            @Override
                             public void run() {
                               FileBasedIndex.getInstance().requestReindex(file);
                             }
@@ -297,6 +302,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     FileBasedIndex.requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
+  @Override
   public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
 
@@ -317,14 +323,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "Stub.IndexManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     // This index must be disposed only after StubUpdatingIndex is disposed
     // To ensure this, disposing is done explicitly from StubUpdatingIndex by calling dispose() method
@@ -381,10 +390,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  @Override
   public StubIndexState getState() {
     return new StubIndexState(myIndices.keySet());
   }
 
+  @Override
   public void loadState(final StubIndexState state) {
     myPreviouslyRegistered = state;
   }
@@ -406,6 +417,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
       index.updateWithMap(fileId, newValues, new Callable<Collection<K>>() {
+        @Override
         public Collection<K> call() throws Exception {
           return oldValues.keySet();
         }
@@ -422,6 +434,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       super(null, null, storage);
     }
 
+    @Override
     public void updateWithMap(final int inputId, final Map<K, TIntArrayList> newData, Callable<Collection<K>> oldKeysGetter) throws StorageException {
       super.updateWithMap(inputId, newData, oldKeysGetter);
     }

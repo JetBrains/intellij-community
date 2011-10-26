@@ -61,11 +61,13 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.suppression.action.family");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     try {
@@ -106,6 +108,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getName() {
     return QuickFixBundle.message("remove.suppression.action.name", myID);

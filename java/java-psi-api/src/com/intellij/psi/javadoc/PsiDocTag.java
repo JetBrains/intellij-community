@@ -27,6 +27,7 @@ public interface PsiDocTag extends PsiElement, PsiNamedElement{
 
   PsiDocComment getContainingComment();
   PsiElement getNameElement();
+  @Override
   @NonNls @NotNull String getName();
   PsiElement[] getDataElements();
   @Nullable PsiDocTagValue getValueElement();

@@ -42,10 +42,12 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     myProject = project;
   }
 
+  @Override
   public int getNumberOfPendingUpdateJobs() {
     return myIndex.getNumberOfPendingInvalidations();
   }
 
+  @Override
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
     CollectingContentIterator finder = myIndex.createContentIterator();
     long l = System.currentTimeMillis();
@@ -57,15 +59,18 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     return VfsUtil.toVirtualFileArray(files);
   }
 
+  @Override
   public void processFile(final FileContent fileContent) {
     myIndex.indexFileContent(myProject, fileContent);
     IndexingStamp.flushCache();
   }
 
+  @Override
   public void updatingDone() {
     LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
   }
 
+  @Override
   public void canceled() {
     LOG.info("Unindexed files update canceled");
   }

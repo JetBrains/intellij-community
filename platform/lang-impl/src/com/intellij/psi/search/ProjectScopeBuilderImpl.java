@@ -59,6 +59,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     if (projectRootManager == null) {
       return new EverythingGlobalScope(myProject) {
+        @Override
         public boolean isSearchInLibraries() {
           return false;
         }

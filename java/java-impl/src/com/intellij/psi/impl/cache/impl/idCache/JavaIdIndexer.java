@@ -24,6 +24,7 @@ import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 
 public class JavaIdIndexer extends LexerBasedIdIndexer {
+  @Override
   protected Lexer createLexer(final BaseFilterLexer.OccurrenceConsumer consumer) {
     final JavaLexer javaLexer = new JavaLexer(LanguageLevel.JDK_1_3);
     final JavaFilterLexer filterLexer = new JavaFilterLexer(javaLexer, consumer);

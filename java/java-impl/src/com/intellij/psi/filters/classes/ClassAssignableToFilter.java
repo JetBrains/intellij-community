@@ -37,6 +37,7 @@ public class ClassAssignableToFilter extends ClassAssignableFilter{
 
   public ClassAssignableToFilter(){}
 
+  @Override
   public boolean isAcceptable(Object aClass, PsiElement context){
     if(aClass instanceof PsiClass){
       PsiManager manager = ((PsiElement) aClass).getManager();

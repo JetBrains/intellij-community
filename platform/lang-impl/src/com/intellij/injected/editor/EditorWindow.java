@@ -185,30 +185,37 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myDisposed = true;
   }
 
+  @Override
   public boolean isViewer() {
     return myDelegate.isViewer();
   }
 
+  @Override
   public boolean isRendererMode() {
     return myDelegate.isRendererMode();
   }
 
+  @Override
   public void setRendererMode(final boolean isRendererMode) {
     myDelegate.setRendererMode(isRendererMode);
   }
 
+  @Override
   public void setFile(final VirtualFile vFile) {
     myDelegate.setFile(vFile);
   }
 
+  @Override
   public void setHeaderComponent(@Nullable JComponent header) {
 
   }
 
+  @Override
   public boolean hasHeaderComponent() {
     return false;
   }
 
+  @Override
   @Nullable
   public JComponent getHeaderComponent() {
     return null;
@@ -219,53 +226,64 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.getTextDrawingCallback();
   }
 
+  @Override
   @NotNull
   public SelectionModel getSelectionModel() {
     return mySelectionModelDelegate;
   }
 
+  @Override
   @NotNull
   public MarkupModel getMarkupModel() {
     return myMarkupModelDelegate;
   }
 
+  @Override
   @NotNull
   public FoldingModelEx getFoldingModel() {
     return myFoldingModelWindow;
   }
 
+  @Override
   @NotNull
   public CaretModel getCaretModel() {
     return myCaretModelDelegate;
   }
 
+  @Override
   @NotNull
   public ScrollingModelEx getScrollingModel() {
     return myDelegate.getScrollingModel();
   }
 
+  @Override
   @NotNull
   public SoftWrapModelEx getSoftWrapModel() {
     return myDelegate.getSoftWrapModel();
   }
 
+  @Override
   @NotNull
   public EditorSettings getSettings() {
     return myDelegate.getSettings();
   }
 
+  @Override
   public void reinitSettings() {
     myDelegate.reinitSettings();
   }
 
+  @Override
   public void setFontSize(final int fontSize) {
     myDelegate.setFontSize(fontSize);
   }
 
+  @Override
   public void setHighlighter(@NotNull final EditorHighlighter highlighter) {
     myDelegate.setHighlighter(highlighter);
   }
 
+  @Override
   public EditorHighlighter getHighlighter() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getVirtualFile(), scheme, getProject());
@@ -273,54 +291,66 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return highlighter;
   }
 
+  @Override
   @NotNull
   public JComponent getContentComponent() {
     return myDelegate.getContentComponent();
   }
 
+  @Override
   public EditorGutterComponentEx getGutterComponentEx() {
     return myDelegate.getGutterComponentEx();
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myDelegate.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myDelegate.removePropertyChangeListener(listener);
   }
 
+  @Override
   public void setInsertMode(final boolean mode) {
     myDelegate.setInsertMode(mode);
   }
 
+  @Override
   public boolean isInsertMode() {
     return myDelegate.isInsertMode();
   }
 
+  @Override
   public void setColumnMode(final boolean mode) {
     myDelegate.setColumnMode(mode);
   }
 
+  @Override
   public boolean isColumnMode() {
     return myDelegate.isColumnMode();
   }
 
+  @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull final Point p) {
     return logicalToVisualPosition(xyToLogicalPosition(p));
   }
 
+  @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
+  @Override
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
     return offsetToLogicalPosition(offset, true);
   }
 
+  @Override
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset, boolean softWrapAware) {
     assert isValid();
@@ -335,6 +365,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.createBoundColorSchemeDelegate(customGlobalScheme);
   }
 
+  @Override
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     assert isValid();
@@ -354,53 +385,64 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return pos;
   }
 
+  @Override
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     assert isValid();
     return myDelegate.logicalPositionToXY(injectedToHost(fitInsideEditor(pos)));
   }
 
+  @Override
   @NotNull
   public Point visualPositionToXY(@NotNull final VisualPosition pos) {
     assert isValid();
     return logicalPositionToXY(visualToLogicalPosition(pos));
   }
 
+  @Override
   public void repaint(final int startOffset, final int endOffset) {
     assert isValid();
     myDelegate.repaint(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset));
   }
 
+  @Override
   @NotNull
   public DocumentWindowImpl getDocument() {
     return myDocumentWindow;
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return myDelegate.getComponent();
   }
 
   private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<EditorMouseListener>();
+  @Override
   public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
     assert isValid();
     EditorMouseListener wrapper = new EditorMouseListener() {
+      @Override
       public void mousePressed(EditorMouseEvent e) {
         listener.mousePressed(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
+      @Override
       public void mouseClicked(EditorMouseEvent e) {
         listener.mouseClicked(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
+      @Override
       public void mouseReleased(EditorMouseEvent e) {
         listener.mouseReleased(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
+      @Override
       public void mouseEntered(EditorMouseEvent e) {
         listener.mouseEntered(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
+      @Override
       public void mouseExited(EditorMouseEvent e) {
         listener.mouseExited(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
@@ -410,6 +452,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myDelegate.addEditorMouseListener(wrapper);
   }
 
+  @Override
   public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
     EditorMouseListener wrapper = myEditorMouseListeners.removeWrapper(listener);
     // HintManager might have an old editor instance
@@ -419,13 +462,16 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<EditorMouseMotionListener>();
+  @Override
   public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     assert isValid();
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
+      @Override
       public void mouseMoved(EditorMouseEvent e) {
         listener.mouseMoved(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
+      @Override
       public void mouseDragged(EditorMouseEvent e) {
         listener.mouseDragged(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
@@ -434,6 +480,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myDelegate.addEditorMouseMotionListener(wrapper);
   }
 
+  @Override
   public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     EditorMouseMotionListener wrapper = myEditorMouseMotionListeners.removeWrapper(listener);
     if (wrapper != null) {
@@ -441,30 +488,37 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     }
   }
 
+  @Override
   public boolean isDisposed() {
     return !myDisposed && myDelegate.isDisposed();
   }
 
+  @Override
   public void setBackgroundColor(final Color color) {
     myDelegate.setBackgroundColor(color);
   }
 
+  @Override
   public Color getBackgroundColor() {
     return myDelegate.getBackgroundColor();
   }
 
+  @Override
   public int getMaxWidthInRange(final int startOffset, final int endOffset) {
     return myDelegate.getMaxWidthInRange(startOffset, endOffset);
   }
 
+  @Override
   public int getLineHeight() {
     return myDelegate.getLineHeight();
   }
 
+  @Override
   public Dimension getContentSize() {
     return myDelegate.getContentSize();
   }
 
+  @Override
   public JScrollPane getScrollPane() {
     return myDelegate.getScrollPane();
   }
@@ -479,6 +533,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.getInsets();
   }
 
+  @Override
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
     int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
     return calcOffset(pos.column, pos.line, lineStartOffset);
@@ -502,10 +557,12 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, EditorUtil.getTabSize(myDelegate));
   }
 
+  @Override
   public void setLastColumnNumber(final int val) {
     myDelegate.setLastColumnNumber(val);
   }
 
+  @Override
   public int getLastColumnNumber() {
     return myDelegate.getLastColumnNumber();
   }
@@ -518,111 +575,137 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   // assuming there is no folding in injected documents
+  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
     return logicalToVisualPosition(pos, false);
   }
 
+  @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
     return visualToLogicalPosition(pos, true);
   }
 
+  @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos, boolean softWrapAware) {
     assert isValid();
     return new LogicalPosition(pos.line, pos.column);
   }
 
+  @Override
   public DataContext getDataContext() {
     return myDelegate.getDataContext();
   }
 
+  @Override
   public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
     return myDelegate.getMouseEventArea(e);
   }
 
+  @Override
   public boolean setCaretVisible(final boolean b) {
     return myDelegate.setCaretVisible(b);
   }
 
+  @Override
   public boolean setCaretEnabled(boolean enabled) {
     return myDelegate.setCaretEnabled(enabled);
   }
 
+  @Override
   public void addFocusListener(@NotNull final FocusChangeListener listener) {
     myDelegate.addFocusListener(listener);
   }
 
+  @Override
   public Project getProject() {
     return myDelegate.getProject();
   }
 
+  @Override
   public boolean isOneLineMode() {
     return myOneLine;
   }
 
+  @Override
   public void setOneLineMode(final boolean isOneLineMode) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isEmbeddedIntoDialogWrapper() {
     return myDelegate.isEmbeddedIntoDialogWrapper();
   }
 
+  @Override
   public void setEmbeddedIntoDialogWrapper(final boolean b) {
     myDelegate.setEmbeddedIntoDialogWrapper(b);
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     return myDelegate.getVirtualFile();
   }
 
+  @Override
   public void stopOptimizedScrolling() {
     myDelegate.stopOptimizedScrolling();
   }
 
+  @Override
   public CopyProvider getCopyProvider() {
     return myDelegate.getCopyProvider();
   }
 
+  @Override
   public CutProvider getCutProvider() {
     return myDelegate.getCutProvider();
   }
 
+  @Override
   public PasteProvider getPasteProvider() {
     return myDelegate.getPasteProvider();
   }
 
+  @Override
   public DeleteProvider getDeleteProvider() {
     return myDelegate.getDeleteProvider();
   }
 
+  @Override
   public void setColorsScheme(@NotNull final EditorColorsScheme scheme) {
     myDelegate.setColorsScheme(scheme);
   }
 
+  @Override
   @NotNull
   public EditorColorsScheme getColorsScheme() {
     return myDelegate.getColorsScheme();
   }
 
+  @Override
   public void setVerticalScrollbarOrientation(final int type) {
     myDelegate.setVerticalScrollbarOrientation(type);
   }
 
+  @Override
   public void setVerticalScrollbarVisible(final boolean b) {
     myDelegate.setVerticalScrollbarVisible(b);
   }
 
+  @Override
   public void setHorizontalScrollbarVisible(final boolean b) {
     myDelegate.setHorizontalScrollbarVisible(b);
   }
 
+  @Override
   public boolean processKeyTyped(@NotNull final KeyEvent e) {
     return myDelegate.processKeyTyped(e);
   }
 
+  @Override
   @NotNull
   public EditorGutter getGutter() {
     return myDelegate.getGutter();
@@ -646,16 +729,19 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate;
   }
 
+  @Override
   public int calcColumnNumber(@NotNull final CharSequence text, final int start, final int offset, final int tabSize) {
     int hostStart = myDocumentWindow.injectedToHost(start);
     int hostOffset = myDocumentWindow.injectedToHost(offset);
     return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);
   }
 
+  @Override
   public int calcColumnNumber(int offset, int lineIndex) {
     return myDelegate.calcColumnNumber(myDocumentWindow.injectedToHost(offset), myDocumentWindow.injectedToHostLine(lineIndex));
   }
 
+  @Override
   public IndentsModel getIndentsModel() {
     return myDelegate.getIndentsModel();
   }

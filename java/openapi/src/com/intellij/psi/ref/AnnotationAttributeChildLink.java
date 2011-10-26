@@ -45,6 +45,7 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
     return psiAnnotation.findDeclaredAttributeValue(myAttributeName);
   }
 
+  @Override
   @NotNull
   public PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
     psiAnnotation.getText();

@@ -35,8 +35,8 @@ import java.util.List;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public ChangeTo() {
-    super();
+  public ChangeTo(String wordWithTypo) {
+    super(wordWithTypo);
   }
 
 
@@ -75,7 +75,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     }
 
     List<LookupElement> lookupItems = new ArrayList<LookupElement>();
-    for (String variant : getSuggestions()) {
+    for (String variant : getSuggestions(project)) {
       lookupItems.add(LookupElementBuilder.create(variant));
     }
     LookupElement[] items = new LookupElement[lookupItems.size()];

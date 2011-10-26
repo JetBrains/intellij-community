@@ -62,15 +62,18 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private OrderEntryFix() {
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     invoke(project, null, descriptor.getPsiElement().getContainingFile());
   }
@@ -98,20 +101,24 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         JavaPsiFacade.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
       if (found != null) return null; //no need to add junit to classpath
       final OrderEntryFix fix = new OrderEntryFix() {
+        @Override
         @NotNull
         public String getText() {
           return QuickFixBundle.message("orderEntry.fix.add.junit.jar.to.classpath");
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
           return getText();
         }
 
+        @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
+        @Override
         public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
           String jarPath = isJunit4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
           addBundledJarToRoots(project, editor, currentModule, reference, className, jarPath);
@@ -127,28 +134,34 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         JavaPsiFacade.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
       if (found != null) return null; //no need to add junit to classpath
       final OrderEntryFix fix = new OrderEntryFix() {
+        @Override
         @NotNull
         public String getText() {
           return QuickFixBundle.message("orderEntry.fix.add.annotations.jar.to.classpath");
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
           return getText();
         }
 
+        @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
+        @Override
         public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               final LocateLibraryDialog dialog = new LocateLibraryDialog(currentModule, PathManager.getLibPath(), "annotations.jar",
                                                                    QuickFixBundle.message("add.library.annotations.description"));
               dialog.show();
               if (dialog.isOK()) {
                 new WriteCommandAction(project) {
+                  @Override
                   protected void run(final Result result) throws Throwable {
                     addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName,
                                          dialog.getResultingLibraryPath());
@@ -176,22 +189,27 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       final Module classModule = fileIndex.getModuleForFile(virtualFile);
       if (classModule != null && classModule != currentModule && !ModuleRootManager.getInstance(currentModule).isDependsOn(classModule)) {
         final OrderEntryFix fix = new OrderEntryFix() {
+          @Override
           @NotNull
           public String getText() {
             return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", classModule.getName());
           }
 
+          @Override
           @NotNull
           public String getFamilyName() {
             return QuickFixBundle.message("orderEntry.fix.family.add.module.dependency");
           }
 
+          @Override
           public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
             return !project.isDisposed() && !classModule.isDisposed() && !currentModule.isDisposed();
           }
 
+          @Override
           public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
             final Runnable doit = new Runnable() {
+              @Override
               public void run() {
                 ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
                 model.addModuleOrderEntry(classModule);
@@ -234,20 +252,24 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             }
           }
           final OrderEntryFix fix = new OrderEntryFix() {
+            @Override
             @NotNull
             public String getText() {
               return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", libraryEntry.getPresentableName());
             }
 
+            @Override
             @NotNull
             public String getFamilyName() {
               return QuickFixBundle.message("orderEntry.fix.family.add.library.to.classpath");
             }
 
+            @Override
             public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
               return !project.isDisposed() && !currentModule.isDisposed() && libraryEntry.isValid();
             }
 
+            @Override
             public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
               OrderEntryUtil.addLibraryToRoots(libraryEntry, currentModule);
               if (editor != null) {
@@ -332,6 +354,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                                      circularModules.getFirst().getName(), circularModules.getSecond().getName());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     ApplicationManager.getApplication().invokeLater(new Runnable(){
+      @Override
       public void run() {
         if (!project.isOpen()) return;
         int ret = Messages.showOkCancelDialog(project, message,
@@ -355,6 +378,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     dialog.show();
     if (dialog.isOK()) {
       new WriteCommandAction(module.getProject()) {
+        @Override
         protected void run(final Result result) throws Throwable {
           addJarToRoots(dialog.getResultingLibraryPath(), module, null);
         }

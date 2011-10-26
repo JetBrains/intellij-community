@@ -29,6 +29,7 @@ public class PlainTextLanguage extends Language {
     super("TEXT", "text/plain");
   }
 
+  @Override
   public String getDisplayName() {
     return "Plain text";
   }

@@ -54,6 +54,7 @@ public interface PsiBinaryExpression extends PsiExpression, PsiPolyadicExpressio
    *
    * @return the token type.
    */
+  @Override
   @NotNull
   IElementType getOperationTokenType();
 }

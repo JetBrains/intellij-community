@@ -56,6 +56,7 @@ public class JavaParserUtil {
   }
 
   public static final WhitespacesAndCommentsBinder GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
+    @Override
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       return tokens.size();
     }
@@ -68,6 +69,7 @@ public class JavaParserUtil {
       this.myAfterEmptyImport = afterImport;
     }
 
+    @Override
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter
       getter) {
       if (tokens.size() == 0) return 0;
@@ -99,6 +101,7 @@ public class JavaParserUtil {
   }
 
   private static class TrailingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
+    @Override
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       if (tokens.size() == 0) return 0;
 

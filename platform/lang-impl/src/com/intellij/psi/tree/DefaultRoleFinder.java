@@ -26,6 +26,7 @@ public class DefaultRoleFinder implements RoleFinder{
     myElementTypes = elementType;
   }
 
+  @Override
   public ASTNode findChild(@NotNull ASTNode parent) {
     ASTNode current = parent.getFirstChildNode();
     while(current != null){

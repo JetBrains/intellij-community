@@ -49,6 +49,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     return psiPackages;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     Set<PsiPackage> subPackages = new HashSet<PsiPackage>();
@@ -59,10 +60,12 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     return subPackages.toArray();
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return JavaErrorMessages.message("cannot.resolve.package");
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final Collection<PsiPackage> packages = new HashSet<PsiPackage>();

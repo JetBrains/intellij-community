@@ -74,6 +74,7 @@ public class IndexingStamp {
         final int[] count = new int[]{0};
         DataInputOutputUtil.writeINT(stream, size);
         myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
+          @Override
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
               DataInputOutputUtil.writeINT(stream, id.getUniqueId());
@@ -112,6 +113,7 @@ public class IndexingStamp {
   }
 
   private static final SLRUCache<VirtualFile, Timestamps> myTimestampsCache = new SLRUCache<VirtualFile, Timestamps>(5, 5) {
+    @Override
     @NotNull
     public Timestamps createValue(final VirtualFile key) {
       try {

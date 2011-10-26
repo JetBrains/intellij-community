@@ -371,6 +371,7 @@ public class JDParser {
 
   private static final TagParser[] tagParsers = {
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = SEE_TAG.equals(tag);
         if (isMyTag) {
@@ -380,6 +381,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = SINCE_TAG.equals(tag);
         if (isMyTag) {
@@ -389,6 +391,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = c instanceof JDClassComment && VERSION_TAG.equals(tag);
         if (isMyTag) {
@@ -398,6 +401,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = DEPRECATED_TAG.equals(tag);
         if (isMyTag) {
@@ -407,6 +411,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = c instanceof JDMethodComment && RETURN_TAG.equals(tag);
         if (isMyTag) {
@@ -417,6 +422,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = c instanceof JDParamListOwnerComment && PARAM_TAG.equals(tag);
         if (isMyTag) {
@@ -439,6 +445,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = c instanceof JDMethodComment && (THROWS_TAG.equals(tag) || EXCEPTION_TAG.equals(tag));
         if (isMyTag) {
@@ -461,6 +468,7 @@ public class JDParser {
       }
     },
     new TagParser() {
+      @Override
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = c instanceof JDClassComment && AUTHOR_TAG.equals(tag);
         if (isMyTag) {

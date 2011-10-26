@@ -51,6 +51,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     myCacheArray = myCaches.toArray(new PsiShortNamesCache[myCaches.size()]);
   }
 
+  @Override
   @NotNull
   public PsiFile[] getFilesByName(@NotNull String name) {
     Merger<PsiFile> merger = null;
@@ -65,6 +66,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : PsiFile.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllFileNames() {
     Merger<String> merger = new Merger<String>();
@@ -75,6 +77,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiClass> merger = null;
@@ -89,6 +92,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : PsiClass.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllClassNames() {
     Merger<String> merger = new Merger<String>();
@@ -99,12 +103,14 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public void getAllClassNames(@NotNull HashSet<String> dest) {
     for (PsiShortNamesCache cache : myCacheArray) {
       cache.getAllClassNames(dest);
     }
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiMethod> merger = null;
@@ -119,6 +125,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     Merger<PsiMethod> merger = null;
@@ -133,6 +140,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : PsiMethod.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllMethodNames() {
     Merger<String> merger = new Merger<String>();
@@ -143,12 +151,14 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public void getAllMethodNames(@NotNull HashSet<String> set) {
     for (PsiShortNamesCache cache : myCacheArray) {
       cache.getAllMethodNames(set);
     }
   }
 
+  @Override
   @NotNull
   public PsiField[] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiField> merger = null;
@@ -163,6 +173,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : PsiField.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getAllFieldNames() {
     Merger<String> merger = new Merger<String>();
@@ -173,6 +184,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public void getAllFieldNames(@NotNull HashSet<String> set) {
     for (PsiShortNamesCache cache : myCacheArray) {
       cache.getAllFieldNames(set);

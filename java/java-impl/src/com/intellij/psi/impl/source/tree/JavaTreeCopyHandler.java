@@ -34,6 +34,7 @@ import java.util.Map;
 public class JavaTreeCopyHandler implements TreeCopyHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaTreeCopyHandler");
 
+  @Override
   public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {
     boolean shallDecodeEscapedTexts = shallEncodeEscapedTexts(element, decodingState);
     if (element instanceof CompositeElement) {
@@ -131,6 +132,7 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
   }
 
 
+  @Override
   public void encodeInformation(final TreeElement element, final ASTNode original, final Map<Object, Object> encodingState) {
     boolean shallEncodeEscapedTexts = shallEncodeEscapedTexts(original, encodingState);
 

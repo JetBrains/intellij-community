@@ -38,16 +38,19 @@ public class AddReturnFix implements IntentionAction {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("add.return.statement.family");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.return.statement.text");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
@@ -57,6 +60,7 @@ public class AddReturnFix implements IntentionAction {
         ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
 
@@ -103,6 +107,7 @@ public class AddReturnFix implements IntentionAction {
     return variables.toArray(new PsiVariable[variables.size()]);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

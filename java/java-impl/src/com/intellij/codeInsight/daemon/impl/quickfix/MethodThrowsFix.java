@@ -56,6 +56,7 @@ public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement
                                   myMethodName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.throws.list.family");

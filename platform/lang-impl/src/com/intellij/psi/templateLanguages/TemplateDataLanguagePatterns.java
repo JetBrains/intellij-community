@@ -60,6 +60,7 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
     myAssocTable = assocTable.copy();
   }
 
+  @Override
   public void loadState(Element state) {
     myAssocTable = new FileTypeAssocTable<Language>();
 
@@ -81,6 +82,7 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
     }
   }
 
+  @Override
   public Element getState() {
     Element state = new Element("x");
     for (final Language language : TemplateDataLanguageMappings.getTemplateableLanguages()) {
@@ -89,6 +91,7 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
         final Element child = new Element("pattern");
         state.addContent(child);
         child.setAttribute("value", StringUtil.join(matchers, new Function<FileNameMatcher, String>() {
+          @Override
           public String fun(FileNameMatcher fileNameMatcher) {
             return fileNameMatcher.getPresentableString();
           }

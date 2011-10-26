@@ -33,15 +33,18 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     super(JavaElementType.CONDITIONAL_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpression getCondition() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
+  @Override
   public PsiExpression getThenExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.THEN_EXPRESSION);
   }
 
+  @Override
   public PsiExpression getElseExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ELSE_EXPRESSION);
   }
@@ -49,6 +52,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
   /**
    * JLS 15.25
    */
+  @Override
   public PsiType getType() {
     PsiExpression expr1 = getThenExpression();
     PsiExpression expr2 = getElseExpression();
@@ -96,6 +100,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     return GenericsUtil.getLeastUpperBound(type1, type2, getManager());
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -128,6 +133,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())){
@@ -147,6 +153,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     return ChildRoleBase.NONE;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitConditionalExpression(this);

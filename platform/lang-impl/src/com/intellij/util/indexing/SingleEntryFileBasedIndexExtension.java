@@ -26,13 +26,16 @@ import com.intellij.util.io.KeyDescriptor;
  *         Date: Feb 18, 2009
  */
 public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedIndexExtension<Integer, V>{
+  @Override
   public final KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public abstract SingleEntryIndexer<V> getIndexer();
 }

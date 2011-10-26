@@ -47,8 +47,10 @@ class VirtualFileImpl extends HttpVirtualFile {
     myFileInfo = fileInfo;
     if (myFileInfo != null) {
       myFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
+        @Override
         public void fileDownloaded(final VirtualFile localFile) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               VirtualFileImpl file = VirtualFileImpl.this;
               FileDocumentManager.getInstance().reloadFiles(file);
@@ -97,20 +99,24 @@ class VirtualFileImpl extends HttpVirtualFile {
     }
   }
 
+  @Override
   @Nullable
   public RemoteFileInfo getFileInfo() {
     return myFileInfo;
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
+  @Override
   public String getPath() {
     return myPath;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
@@ -121,23 +127,28 @@ class VirtualFileImpl extends HttpVirtualFile {
     return "HttpVirtualFile:" + myPath + ", info=" + myFileInfo;
   }
 
+  @Override
   public VirtualFile getParent() {
     if (myParentPath == null) return null;
     return myFileSystem.findFileByPath(myParentPath, true);
   }
 
+  @Override
   public boolean isWritable() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public boolean isDirectory() {
     return myFileInfo == null;
   }
 
+  @Override
   public VirtualFile[] getChildren() {
     if (myFileInfo == null) {
       return EMPTY_ARRAY;
@@ -145,6 +156,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     if (myFileInfo == null) {
@@ -162,6 +174,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     return fileType;
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     if (myFileInfo != null) {
       VirtualFile localFile = myFileInfo.getLocalFile();
@@ -172,6 +185,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     if (myFileInfo != null) {
@@ -183,6 +197,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     if (myFileInfo == null) {
@@ -196,18 +211,22 @@ class VirtualFileImpl extends HttpVirtualFile {
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
+  @Override
   public long getTimeStamp() {
     return 0;
   }
 
+  @Override
   public long getModificationStamp() {
     return 0;
   }
 
+  @Override
   public long getLength() {
     return -1;
   }
 
+  @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     if (myFileInfo != null) {
       myFileInfo.refresh(postRunnable);

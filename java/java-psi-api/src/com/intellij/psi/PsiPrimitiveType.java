@@ -51,14 +51,17 @@ public class PsiPrimitiveType extends PsiType {
     }
   }
 
+  @Override
   public String getPresentableText() {
     return myName;
   }
 
+  @Override
   public String getCanonicalText() {
     return myName;
   }
 
+  @Override
   public String getInternalCanonicalText() {
     return getAnnotationsTextPrefix() + getCanonicalText();
   }
@@ -66,22 +69,27 @@ public class PsiPrimitiveType extends PsiType {
   /**
    * Always returns true.
    */
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public boolean equalsToText(String text) {
     return myName.equals(text);
   }
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitPrimitiveType(this);
   }
 
+  @Override
   public GlobalSearchScope getResolveScope() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     return new PsiType[0];

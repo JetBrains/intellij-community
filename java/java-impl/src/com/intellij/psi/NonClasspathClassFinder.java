@@ -190,6 +190,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         final VirtualFile dir = classRoot.findFileByRelativePath(qname.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
           final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+            @Override
             @Nullable
             public PsiDirectory compute() {
               return dir.isValid() ? psiManager.findDirectory(dir) : null;

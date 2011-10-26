@@ -56,6 +56,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
   @NonNls
   protected abstract String getSyntheticMethodName ();
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
     if (!ref.getText().equals(getSyntheticMethodName())) return false;
@@ -74,6 +75,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     return false;
   }
 
+  @Override
   protected void invokeImpl(PsiClass targetClass) {
     final PsiFile callSite = myMethodCall.getContainingFile();
     final Project project = myMethodCall.getProject();
@@ -109,8 +111,10 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
+        @Override
         public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -134,6 +138,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     }
   }
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element;
     PsiMethod method = (PsiMethod) methodCall.getMethodExpression().resolve();
@@ -143,6 +148,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     return !CreateFromUsageUtils.shouldCreateConstructor(targetClass, argumentList, method);
   }
 
+  @Override
   protected PsiElement getElement() {
     if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
     return myMethodCall;

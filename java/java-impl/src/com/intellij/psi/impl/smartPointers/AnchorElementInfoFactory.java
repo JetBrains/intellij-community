@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory");
 
+  @Override
   @Nullable
   public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();

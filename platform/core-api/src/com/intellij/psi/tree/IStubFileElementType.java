@@ -44,17 +44,21 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
     return new DefaultStubBuilder();
   }
 
+  @Override
   public String getExternalId() {
     return "psi.file";
   }
 
+  @Override
   public void serialize(final T stub, final StubOutputStream dataStream) throws IOException {
   }
 
+  @Override
   public T deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return (T)new PsiFileStubImpl(null);
   }
 
+  @Override
   public void indexStub(final PsiFileStub stub, final IndexSink sink) {
   }
 

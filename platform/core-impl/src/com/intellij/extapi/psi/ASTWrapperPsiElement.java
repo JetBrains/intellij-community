@@ -31,10 +31,12 @@ public class ASTWrapperPsiElement extends ASTDelegatePsiElement {
     myNode = node;
   }
 
+  @Override
   public PsiElement getParent() {
     return SharedImplUtil.getParent(getNode());
   }
 
+  @Override
   @NotNull
   public ASTNode getNode() {
     return myNode;

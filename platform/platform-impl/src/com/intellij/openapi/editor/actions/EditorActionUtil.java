@@ -700,6 +700,7 @@ public class EditorActionUtil {
 
   public static EditorPopupHandler createEditorPopupHandler(final String groupId) {
     return new EditorPopupHandler() {
+      @Override
       public void invokePopup(final EditorMouseEvent event) {
         if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
           ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);

@@ -155,6 +155,7 @@ public abstract class PsiClassType extends PsiType {
     return className.hashCode();
   }
 
+  @Override
   @NotNull
   public PsiType[] getSuperTypes() {
     final ClassResolveResult resolveResult = resolveGenerics();
@@ -207,10 +208,12 @@ public abstract class PsiClassType extends PsiType {
   /**
    * Overrides {@link com.intellij.psi.PsiType#getResolveScope()} to narrow specify @NotNull.
    */
+  @Override
   @NotNull
   public abstract GlobalSearchScope getResolveScope();
 
 
+  @Override
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitClassType(this);
   }
@@ -229,33 +232,41 @@ public abstract class PsiClassType extends PsiType {
    * Represents the result of resolving a reference to a Java class.
    */
   public interface ClassResolveResult extends JavaResolveResult {
+    @Override
     PsiClass getElement();
 
     ClassResolveResult EMPTY = new ClassResolveResult() {
+      @Override
       public PsiClass getElement() {
         return null;
       }
 
+      @Override
       public PsiSubstitutor getSubstitutor() {
         return PsiSubstitutor.EMPTY;
       }
 
+      @Override
       public boolean isValidResult(){
         return false;
       }
 
+      @Override
       public boolean isAccessible(){
         return false;
       }
 
+      @Override
       public boolean isStaticsScopeCorrect(){
         return false;
       }
 
+      @Override
       public PsiElement getCurrentFileResolveScope() {
         return null;
       }
 
+      @Override
       public boolean isPackagePrefixPackageReference() {
         return false;
       }

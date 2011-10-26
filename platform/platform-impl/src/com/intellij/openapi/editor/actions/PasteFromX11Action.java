@@ -46,6 +46,7 @@ public class PasteFromX11Action extends EditorAction {
     super(new Handler());
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
@@ -64,6 +65,7 @@ public class PasteFromX11Action extends EditorAction {
   }
 
   public static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Clipboard clip = editor.getComponent().getToolkit().getSystemSelection();
       if (clip != null) {

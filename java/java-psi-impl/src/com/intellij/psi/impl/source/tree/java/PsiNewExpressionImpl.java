@@ -43,6 +43,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     super(JavaElementType.NEW_EXPRESSION);
   }
 
+  @Override
   public PsiType getType(){
     PsiType type = null;
     List<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
@@ -78,6 +79,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return type;
   }
 
+  @Override
   public PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
     if (list != null) return list;
@@ -88,6 +90,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return null;
   }
 
+  @Override
   @NotNull
   public PsiExpression[] getArrayDimensions() {
     PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
@@ -103,16 +106,19 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
+  @Override
   public PsiArrayInitializerExpression getArrayInitializer() {
     return (PsiArrayInitializerExpression)findChildByRoleAsPsiElement(ChildRole.ARRAY_INITIALIZER);
   }
 
+  @Override
   public PsiMethod resolveMethod() {
     return resolveConstructor();
   }
 
   private PsiPolyVariantCachingReference getConstructorFakeReference() {
     return new PsiPolyVariantCachingReference() {
+      @Override
       @NotNull
       public JavaResolveResult[] resolveInner(boolean incompleteCode) {
         ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
@@ -141,27 +147,33 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return JavaResolveResult.EMPTY_ARRAY;
       }
 
+      @Override
       public PsiElement getElement() {
         return PsiNewExpressionImpl.this;
       }
 
+      @Override
       public TextRange getRangeInElement() {
         return null;
       }
 
+      @Override
       @NotNull
       public String getCanonicalText() {
         return null;
       }
 
+      @Override
       public PsiElement handleElementRename(String newElementName) {
         return null;
       }
 
+      @Override
       public PsiElement bindToElement(@NotNull PsiElement element) {
         return null;
       }
 
+      @Override
       @NotNull
       public Object[] getVariants() {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -179,34 +191,41 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     };
   }
 
+  @Override
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     ResolveResult[] results = getConstructorFakeReference().multiResolve(false);
     return results.length == 1 ? (JavaResolveResult)results[0] : JavaResolveResult.EMPTY;
   }
 
+  @Override
   public PsiExpression getQualifier() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
+  @Override
   @NotNull
   public PsiReferenceParameterList getTypeArgumentList() {
     return (PsiReferenceParameterList) findChildByRoleAsPsiElement(ChildRole.REFERENCE_PARAMETER_LIST);
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeArguments() {
     return getTypeArgumentList().getTypeArguments();
   }
 
+  @Override
   public PsiMethod resolveConstructor(){
     return (PsiMethod)resolveMethodGenerics().getElement();
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getClassReference() {
     return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.TYPE_REFERENCE);
   }
 
+  @Override
   public PsiAnonymousClass getAnonymousClass() {
     ASTNode anonymousClass = findChildByType(JavaElementType.ANONYMOUS_CLASS);
     if (anonymousClass == null) return null;
@@ -214,6 +233,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   private static final TokenSet CLASS_REF = TokenSet.create(JavaElementType.JAVA_CODE_REFERENCE, JavaElementType.ANONYMOUS_CLASS);
+  @Override
   @Nullable
   public PsiJavaCodeReferenceElement getClassOrAnonymousClassReference() {
     ASTNode ref = findChildByType(CLASS_REF);
@@ -223,6 +243,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return anonymousClass.getBaseClassReference();
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER){
       ASTNode dot = findChildByRole(ChildRole.DOT);
@@ -234,6 +255,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -286,6 +308,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -337,6 +360,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitNewExpression(this);

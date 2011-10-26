@@ -34,11 +34,13 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     super(Constants.BLOCK_STATEMENT);
   }
 
+  @Override
   @NotNull
   public PsiCodeBlock getCodeBlock() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.BLOCK);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -50,6 +52,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == Constants.CODE_BLOCK) {
@@ -60,6 +63,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitBlockStatement(this);

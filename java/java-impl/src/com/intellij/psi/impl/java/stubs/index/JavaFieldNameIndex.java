@@ -36,10 +36,12 @@ public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
     return ourInstance;
   }
 
+  @Override
   public StubIndexKey<String, PsiField> getKey() {
     return JavaStubIndexKeys.FIELDS;
   }
 
+  @Override
   public Collection<PsiField> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }

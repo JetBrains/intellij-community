@@ -60,17 +60,20 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     getFieldsToFix().add(myField);
   }
 
+  @Override
   @NotNull
   public String getText() {
     if (getFieldsToFix().size() > 1 && myClass.getConstructors().length <= 1) return "Add constructor parameters";
     return QuickFixBundle.message("add.constructor.parameter.name");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiField field = getField();
     PsiClass containingClass = field == null ? null : field.getContainingClass();
@@ -84,6 +87,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       ;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -91,6 +95,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           defaultConstructorFix.invoke(project, editor, file);
         }
@@ -224,6 +229,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       HintManager.getInstance().showErrorHint(editor, "Constructor with corresponding signature already exist");
     }
     return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         return doCreate(project, editor, parameters, constructorPointer, addParamFix, fields);
       }
@@ -281,6 +287,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     return myField.getElement();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

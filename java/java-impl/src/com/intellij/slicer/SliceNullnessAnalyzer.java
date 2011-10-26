@@ -79,6 +79,7 @@ public class SliceNullnessAnalyzer {
     Set<PsiElement> uniqueValues = new THashSet<PsiElement>(groupedByValue, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
     for (final PsiElement expression : uniqueValues) {
       SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
+        @Override
         public SliceNode fun(SliceNode oldNode) {
           if (oldNode.getDuplicate() != null) {
             return null;
@@ -92,6 +93,7 @@ public class SliceNullnessAnalyzer {
           return null;
         }
       },new PairProcessor<SliceNode, List<SliceNode>>() {
+        @Override
         public boolean process(SliceNode node, List<SliceNode> children) {
           if (!children.isEmpty()) return true;
           PsiElement element = node.getValue().getElement();
@@ -110,6 +112,7 @@ public class SliceNullnessAnalyzer {
     final Map<SliceNode, NullAnalysisResult> map = createMap();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);
         leafExpressions.set(l);
@@ -173,6 +176,7 @@ public class SliceNullnessAnalyzer {
           SliceUsage sliceUsage = element.getValue();
           final PsiElement value = sliceUsage.getElement();
           DfaUtil.Nullness nullness = ApplicationManager.getApplication().runReadAction(new Computable<DfaUtil.Nullness>() {
+            @Override
             public DfaUtil.Nullness compute() {
               return checkNullness(value);
             }

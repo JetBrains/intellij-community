@@ -110,11 +110,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.getChars();
   }
 
+  @Override
   @NotNull
   public char[] getChars() {
     return CharArrayUtil.fromSequence(getCharsSequence());
   }
 
+  @Override
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     isStripTrailingSpacesEnabled = isEnabled;
   }
@@ -162,8 +164,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         else {
           final int finalStart = whiteSpaceStart;
           ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, project) {
+            @Override
             public void run() {
               CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+                @Override
                 public void run() {
                   deleteString(finalStart, lineEnd);
                 }
@@ -180,6 +184,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return markAsNeedsStrippingLater;
   }
 
+  @Override
   public void setReadOnly(boolean isReadOnly) {
     if (myIsReadOnly != isReadOnly) {
       myIsReadOnly = isReadOnly;
@@ -195,10 +200,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 
+  @Override
   public boolean isWritable() {
     return !myIsReadOnly;
   }
 
+  @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     return myRangeMarkers.removeInterval(rangeMarker);
   }
@@ -216,6 +223,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myRangeMarkers.nodeSize();
   }
 
+  @Override
   @NotNull
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
@@ -224,15 +232,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return block;
   }
 
+  @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
     myGuardedBlocks.remove(block);
   }
 
+  @Override
   @NotNull
   public List<RangeMarker> getGuardedBlocks() {
     return myGuardedBlocks;
   }
 
+  @Override
   @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
   public RangeMarker getOffsetGuard(int offset) {
     for (int i = 0; i < myGuardedBlocks.size(); i++) {
@@ -243,6 +254,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return null;
   }
 
+  @Override
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
       if (rangesIntersect(start, true, block.getStartOffset(), block.isGreedyToLeft(), end, true, block.getEndOffset(), block.isGreedyToRight())) {
@@ -253,10 +265,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return null;
   }
 
+  @Override
   public void startGuardedBlockChecking() {
     myCheckGuardedBlocks++;
   }
 
+  @Override
   public void stopGuardedBlockChecking() {
     LOG.assertTrue(myCheckGuardedBlocks > 0, "Unpaired start/stopGuardedBlockChecking");
     myCheckGuardedBlocks--;
@@ -277,11 +291,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return end0 > start1;
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset) {
     return createRangeMarker(startOffset, endOffset, false);
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
@@ -292,23 +308,28 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
            : new RangeMarkerImpl(this, startOffset, endOffset,true);
   }
 
+  @Override
   public long getModificationStamp() {
     return myModificationStamp;
   }
 
+  @Override
   public void setModificationStamp(long modificationStamp) {
     myModificationStamp = modificationStamp;
   }
 
+  @Override
   public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     replaceString(0, getTextLength(), chars, newModificationStamp, true); //TODO: optimization!!!
     clearLineModificationFlags();
   }
 
+  @Override
   public int getListenersCount() {
     return myDocumentListeners.size();
   }
 
+  @Override
   public void insertString(int offset, @NotNull CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
@@ -331,6 +352,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myText.insert(this, s, offset);
   }
 
+  @Override
   public void deleteString(int startOffset, int endOffset) {
     assertBounds(startOffset, endOffset);
 
@@ -349,6 +371,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myText.remove(this, startOffset, endOffset, sToDelete);
   }
 
+  @Override
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset == 0 && endOffset == getTextLength());
   }
@@ -460,18 +483,22 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @Override
   public void suppressGuardedExceptions() {
     myGuardsSuppressed = true;
   }
 
+  @Override
   public void unSuppressGuardedExceptions() {
     myGuardsSuppressed = false;
   }
 
+  @Override
   public boolean isInEventsHandling() {
     return myEventsHandling;
   }
 
+  @Override
   public void clearLineModificationFlags() {
     myLineSet.clearModificationFlags();
   }
@@ -544,6 +571,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @Override
   public String getText() {
     assertReadAccessToDocumentsAllowed();
     return myText.toString();
@@ -556,6 +584,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.substring(range.getStartOffset(), range.getEndOffset()).toString();
   }
 
+  @Override
   public int getTextLength() {
     assertReadAccessToDocumentsAllowed();
     return myText.length();
@@ -581,6 +610,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.getCharArray();
   }
 
+  @Override
   @NotNull
   public CharSequence getCharsSequence() {
     assertReadAccessToDocumentsAllowed();
@@ -588,21 +618,25 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
 
+  @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
     boolean added = myDocumentListeners.addIfAbsent(listener);
     LOG.assertTrue(added, listener);
   }
 
+  @Override
   public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
     addDocumentListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeDocumentListener(listener);
       }
     });
   }
 
+  @Override
   public void removeDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
@@ -611,6 +645,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @Override
   public int getLineNumber(int offset) {
     assertReadAccessToDocumentsAllowed();
     int lineIndex = myLineSet.findLineIndex(offset);
@@ -618,11 +653,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return lineIndex;
   }
 
+  @Override
   @NotNull
   public LineIterator createLineIterator() {
     return myLineSet.createIterator();
   }
 
+  @Override
   public final int getLineStartOffset(int line) {
     assertReadAccessToDocumentsAllowed();
     if (line == 0) return 0; // otherwise it crashed for zero-length document
@@ -631,6 +668,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return lineStart;
   }
 
+  @Override
   public final int getLineEndOffset(int line) {
     if (getTextLength() == 0 && line == 0) return 0;
     int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
@@ -638,12 +676,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return result;
   }
 
+  @Override
   public final int getLineSeparatorLength(int line) {
     int separatorLength = myLineSet.getSeparatorLength(line);
     assert separatorLength >= 0;
     return separatorLength;
   }
 
+  @Override
   public final int getLineCount() {
     int lineCount = myLineSet.getLineCount();
     assert lineCount >= 0;
@@ -662,35 +702,43 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return cachedListeners;
   }
 
+  @Override
   public void fireReadOnlyModificationAttempt() {
     for (EditReadOnlyListener listener : myReadOnlyListeners) {
       listener.readOnlyModificationAttempt(this);
     }
   }
 
+  @Override
   public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myReadOnlyListeners.add(listener);
   }
 
+  @Override
   public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myReadOnlyListeners.remove(listener);
   }
 
 
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
+  @Override
   public void setCyclicBufferSize(int bufferSize) {
     myText.setBufferSize(bufferSize);
   }
 
+  @Override
   public void setText(@NotNull final CharSequence text) {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
       }
@@ -705,15 +753,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     clearLineModificationFlags();
   }
 
+  @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
+  @Override
   public final boolean isInBulkUpdate() {
     return myDoingBulkUpdate;
   }
 
+  @Override
   public final void setInBulkUpdate(boolean value) {
     myDoingBulkUpdate = value;
     myText.setDeferredChangeMode(value);
@@ -734,10 +785,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return DocumentBulkUpdateListenerHolder.ourBulkChangePublisher;
   }
 
+  @Override
   public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
     return myRangeMarkers.process(processor);
   }
 
+  @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return myRangeMarkers.processOverlappingWith(start, end, processor);
   }
@@ -747,6 +800,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       super(0);
     }
 
+    @Override
     @NotNull
     protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
                                                 int offset,
@@ -756,6 +810,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return subj.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
     }
 
+    @Override
     protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
       ((DocumentImpl)event.getDocument()).changedUpdate(event, newModificationStamp);
     }

@@ -172,6 +172,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       myDefault = aDefault;
     }
 
+    @Override
     public int compare(final Language o1, final Language o2) {
       if (myDefault.equals(o1)) return -1;
       if (myDefault.equals(o2)) return 1;
@@ -243,6 +244,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
   }
 
+  @Override
   protected void init() {
     initMnemonics();
 
@@ -275,6 +277,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myRefs.addMouseListener(listener);
     myRefs.getSelectionModel().addListSelectionListener(listener);
     myRefs.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (resolve(index) == null) {
@@ -411,12 +414,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
     final ViewerTreeStructure psiTreeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
     myShowWhiteSpacesBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         psiTreeStructure.setShowWhiteSpaces(myShowWhiteSpacesBox.isSelected());
         myPsiTreeBuilder.queueUpdate();
       }
     });
     myShowTreeNodesCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         psiTreeStructure.setShowTreeNodes(myShowTreeNodesCheckBox.isSelected());
         myPsiTreeBuilder.queueUpdate();
@@ -429,6 +434,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myShowBlocksCheckBox.setSelected(settings.showBlocks);
     myBlockStructurePanel.setVisible(settings.showBlocks);
     myShowBlocksCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myShowBlocksCheckBox.isSelected()) {
           settings.blockRefDividerLocation = myBlockRefSplitPane.getDividerLocation();
@@ -480,6 +486,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     new TreeSpeedSearch(tree);
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.internal.psiView.PsiViewerDialog";
   }
@@ -489,6 +496,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     return "reference.psi.viewer";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getContentComponent();
   }
@@ -497,12 +505,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     final int mask = SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
 
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         focusEditor();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_T, mask));
 
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         focusTree();
       }
@@ -510,18 +520,21 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
 
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         focusBlockTree();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_K, mask));
 
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         focusRefs();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_R, mask));
 
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myRefs.isFocusOwner()) {
           focusBlockTree();
@@ -679,6 +692,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     return extensions;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -692,6 +706,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     return null;
   }
 
+  @Override
   protected void doOKAction() {
     if (myBlockTreeBuilder != null) {
       Disposer.dispose(myBlockTreeBuilder);
@@ -802,6 +817,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
   }
 
+  @Override
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       String fqn = null;
@@ -841,6 +857,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       myAttributes.setForegroundColor(Color.white);
     }
 
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
       if (!myEditor.getDocument().getText().equals(myLastParsedText) || myBlockTree.hasFocus()) return;
       TreePath path = myPsiTree.getSelectionPath();
@@ -923,6 +940,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       myAttributes.setForegroundColor(Color.white);
     }
 
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
       if (myIgnoreBlockTreeSelectionMarker > 0 || myBlockTreeBuilder == null) {
         return;
@@ -996,6 +1014,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
   }
 
+  @Override
   public void doCancelAction() {
     final PsiViewerSettings settings = PsiViewerSettings.getSettings();
     final SourceWrapper wrapper = (SourceWrapper)myFileTypeComboBox.getSelectedItem();
@@ -1014,6 +1033,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     super.doCancelAction();
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myPsiTreeBuilder);
     if (myBlockTreeBuilder != null) {
@@ -1091,18 +1111,21 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       }
     }
 
+    @Override
     public void keyPressed(KeyEvent e) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         navigate();
       }
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
       if (e.getClickCount() > 1) {
         navigate();
       }
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       clearSelection();
       updateDialectsCombo(null);
@@ -1140,11 +1163,17 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       }
     }
 
+    @Override
     public void keyTyped(KeyEvent e) {}
+    @Override
     public void keyReleased(KeyEvent e) {}
+    @Override
     public void mousePressed(MouseEvent e) {}
+    @Override
     public void mouseReleased(MouseEvent e) {}
+    @Override
     public void mouseEntered(MouseEvent e) {}
+    @Override
     public void mouseExited(MouseEvent e) {}
   }
 
@@ -1170,6 +1199,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   private class EditorListener implements CaretListener, SelectionListener, DocumentListener {
+    @Override
     public void caretPositionChanged(CaretEvent e) {
       if (!available() || myEditor.getSelectionModel().hasSelection()) return;
       final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
@@ -1186,6 +1216,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       myPsiTreeBuilder.select(element);
     }
 
+    @Override
     public void selectionChanged(SelectionEvent e) {
       if (!available() || !myEditor.getSelectionModel().hasSelection()) return;
       final PsiElement rootElement =((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
@@ -1231,9 +1262,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       return root instanceof PsiFile ? (PsiFile)root : null;
     }
 
+    @Override
     public void beforeDocumentChange(DocumentEvent event) {
 
     }
+    @Override
     public void documentChanged(DocumentEvent event) {
       myNewDocumentHashCode = event.getDocument().getText().hashCode();
     }

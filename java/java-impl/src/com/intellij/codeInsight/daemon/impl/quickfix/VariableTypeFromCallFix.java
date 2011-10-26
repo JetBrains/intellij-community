@@ -44,6 +44,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     myVar = var;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
@@ -51,15 +52,18 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                   myExpressionType.getCanonicalText());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.variable.type.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVar));
     rules.setMigrationRootType(myExpressionType);
@@ -68,6 +72,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.SameColor;
 
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -28,10 +29,10 @@ abstract class ContentLayout {
   static final Color TAB_BORDER_ACTIVE_WINDOW = new Color(38, 63, 106);
   static final Color TAB_BORDER_PASSIVE_WINDOW = new Color(130, 120, 111);
 
-  static final Color TAB_BG_ACTIVE_WND_SELECTED_FROM = new Color(90, 133, 215);
-  static final Color TAB_BG_ACTIVE_WND_SELECTED_TO = new Color(33, 87, 138);
-  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_FROM = new Color(129, 147, 219);
-  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_TO = new Color(84, 130, 171);
+  static final Color TAB_BG_ACTIVE_WND_SELECTED_FROM = new SameColor(111);
+  static final Color TAB_BG_ACTIVE_WND_SELECTED_TO = new SameColor(164);
+  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_FROM = new Color(130, 130, 130);
+  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_TO = new Color(85, 85, 85);
   static final Color TAB_BG_PASSIVE_WND_FROM = new Color(152, 143, 134);
   static final Color TAB_BG_PASSIVE_WND_TO = new Color(165, 157, 149);
 
@@ -75,8 +76,7 @@ abstract class ContentLayout {
     }
   }
 
-  protected void fillTabShape(Graphics2D g2d, BaseLabel each, Shape shape, boolean isSelected) {
-    final Rectangle bounds = each.getBounds();
+  protected void fillTabShape(Graphics2D g2d, Shape shape, boolean isSelected, Rectangle bounds) {
     if (myUi.myWindow.isActive()) {
       if (isSelected) {
         g2d.setPaint(new GradientPaint(bounds.x, bounds.y, TAB_BG_ACTIVE_WND_SELECTED_FROM, bounds.x, (float)bounds.getMaxY(), TAB_BG_ACTIVE_WND_SELECTED_TO));

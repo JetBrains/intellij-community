@@ -179,6 +179,7 @@ public abstract class CachedValueBase<T> {
       myTimeStamps = timeStamps;
     }
 
+    @Override
     public void dispose() {
       if (myValue instanceof Disposable) {
         Disposer.dispose((Disposable)myValue);

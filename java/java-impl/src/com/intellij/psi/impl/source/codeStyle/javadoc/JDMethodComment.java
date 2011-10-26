@@ -35,6 +35,7 @@ public class JDMethodComment extends JDParamListOwnerComment {
   private static final @NonNls String THROWS_TAG = "@throws ";
   private static final @NonNls String EXCEPTION_TAG = "@exception ";
 
+  @Override
   protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
 
     super.generateSpecial(prefix, sb);

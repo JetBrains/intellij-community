@@ -79,15 +79,18 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, context, null, null, language);
   }
 
+  @Override
   public PsiElement getContext() {
     return myContext;
   }
 
+  @Override
   public boolean isValid() {
     if (myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
     return super.isValid() && !(myContext != null && !myContext.isValid());
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }
@@ -97,6 +100,7 @@ public class DummyHolder extends PsiFileImpl {
     return "DummyHolder";
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     if (myContext != null) {
@@ -107,6 +111,7 @@ public class DummyHolder extends PsiFileImpl {
     return fileType != null ? fileType : PlainTextFileType.INSTANCE;
   }
 
+  @Override
   public FileElement getTreeElement() {
     if (myFileElement != null) return myFileElement;
 
@@ -115,6 +120,7 @@ public class DummyHolder extends PsiFileImpl {
     }
   }
 
+  @Override
   public FileElement getTreeElementNoLock() {
     if (myFileElement == null) {
       myFileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
@@ -125,11 +131,13 @@ public class DummyHolder extends PsiFileImpl {
     return myFileElement;
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return myLanguage;
   }
 
+  @Override
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiFileImpl clone() {
     final PsiFileImpl psiFile = cloneImpl(myFileElement);
@@ -146,6 +154,7 @@ public class DummyHolder extends PsiFileImpl {
 
   private FileViewProvider myViewProvider = null;
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;

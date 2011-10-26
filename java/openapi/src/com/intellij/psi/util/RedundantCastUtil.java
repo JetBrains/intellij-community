@@ -88,6 +88,7 @@ public class RedundantCastUtil {
       // avoid multiple visit
     }
 
+    @Override
     protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {
         myFoundCasts.add(typeCast);
@@ -455,6 +456,7 @@ public class RedundantCastUtil {
     final PsiElement resolved = refExpression.resolve();
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
     CodeStyleManager.getInstance(refExpression.getProject()).performActionWithFormatterDisabled(new Runnable() {
+      @Override
       public void run() {
         try {
           final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();

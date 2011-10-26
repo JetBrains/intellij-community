@@ -32,15 +32,18 @@ import java.util.List;
  * @author mike
  */
 class ParamDocTagInfo implements JavadocTagInfo {
+  @Override
   public String getName() {
     return "param";
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     return element instanceof PsiMethod ||
            (element instanceof PsiClass && PsiUtil.isLanguageLevel5OrHigher(element));
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     if (context instanceof PsiTypeParameterListOwner) {
       List<PsiNamedElement> result = new ArrayList<PsiNamedElement>(Arrays.asList(((PsiTypeParameterListOwner)context).getTypeParameters()));
@@ -56,6 +59,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     if (value == null) return JavaErrorMessages.message("javadoc.param.tag.paramter.name.expected");
     final ASTNode firstChildNode = value.getNode().getFirstChildNode();
@@ -72,12 +76,14 @@ class ParamDocTagInfo implements JavadocTagInfo {
     return null;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     if (value instanceof PsiDocParamRef) return value.getReference();
     return null;
   }
 
 
+  @Override
   public boolean isInline() {
     return false;
   }

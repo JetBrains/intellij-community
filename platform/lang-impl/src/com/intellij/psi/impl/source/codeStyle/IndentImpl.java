@@ -57,28 +57,34 @@ public class IndentImpl implements Indent{
     return myIndentLevel + mySpaceCount;
   }
 
+  @Override
   public boolean isGreaterThan(Indent indent) {
     return getSize() > ((IndentImpl)indent).getSize();
   }
 
+  @Override
   public Indent min(Indent anotherIndent) {
     return isGreaterThan(anotherIndent) ? anotherIndent : this;
   }
 
+  @Override
   public Indent max(Indent anotherIndent) {
     return isGreaterThan(anotherIndent) ? this : anotherIndent;
   }
 
+  @Override
   public Indent add(Indent indent) {
     IndentImpl indent1 = (IndentImpl)indent;
     return new IndentImpl(mySettings, myIndentLevel + indent1.myIndentLevel, mySpaceCount + indent1.mySpaceCount, myFileType);
   }
 
+  @Override
   public Indent subtract(Indent indent) {
     IndentImpl indent1 = (IndentImpl)indent;
     return new IndentImpl(mySettings, myIndentLevel - indent1.myIndentLevel, mySpaceCount - indent1.mySpaceCount, myFileType);
   }
 
+  @Override
   public boolean isZero() {
     return myIndentLevel == 0 && mySpaceCount == 0;
   }

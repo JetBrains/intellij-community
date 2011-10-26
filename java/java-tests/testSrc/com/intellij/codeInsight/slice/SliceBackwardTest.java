@@ -123,6 +123,7 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
 
   private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (int i = 1; i < 9; i++) {
           String newName = name + i;

@@ -31,6 +31,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
     super(node, wrap, alignment, indent, settings);
   }
 
+  @Override
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
 
@@ -47,6 +48,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
 
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return new ChildAttributes(Indent.getSpaceIndent(1), null);

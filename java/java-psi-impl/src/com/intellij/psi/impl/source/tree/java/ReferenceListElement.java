@@ -29,6 +29,7 @@ public abstract class ReferenceListElement extends CompositeElement {
     super(type);
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before){
     if (first == last && first.getElementType() == JavaElementType.JAVA_CODE_REFERENCE){
       if (getLastChildNode() != null && getLastChildNode().getElementType() == TokenType.ERROR_ELEMENT){
@@ -67,6 +68,7 @@ public abstract class ReferenceListElement extends CompositeElement {
     return firstAdded;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JavaElementType.JAVA_CODE_REFERENCE){
       ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());

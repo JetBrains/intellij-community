@@ -37,16 +37,19 @@ public class AddMethodBodyFix implements IntentionAction {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("add.method.body.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
@@ -55,6 +58,7 @@ public class AddMethodBodyFix implements IntentionAction {
         && myMethod.getManager().isInProject(myMethod);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
 
@@ -67,6 +71,7 @@ public class AddMethodBodyFix implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

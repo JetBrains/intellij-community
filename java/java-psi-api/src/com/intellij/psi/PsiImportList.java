@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiImportList extends PsiElement {
   PsiImportList[] EMPTY_ARRAY = new PsiImportList[0];
   ArrayFactory<PsiImportList> ARRAY_FACTORY = new ArrayFactory<PsiImportList>() {
+    @Override
     public PsiImportList[] create(int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiImportList[count];
     }

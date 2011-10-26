@@ -49,6 +49,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     myNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   }
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     boolean showAsReadOnly = false;
     if (value instanceof Node && value != tree.getModel().getRoot()) {

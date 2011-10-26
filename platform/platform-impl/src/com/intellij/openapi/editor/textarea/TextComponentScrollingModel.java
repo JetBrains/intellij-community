@@ -34,14 +34,17 @@ public class TextComponentScrollingModel implements ScrollingModel {
     myTextComponent = textComponent;
   }
 
+  @Override
   public Rectangle getVisibleArea() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public Rectangle getVisibleAreaOnScrollingFinished() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void scrollToCaret(final ScrollType scrollType) {
     final int position = myTextComponent.getCaretPosition();
     try {
@@ -53,40 +56,50 @@ public class TextComponentScrollingModel implements ScrollingModel {
     }
   }
 
+  @Override
   public void scrollTo(final LogicalPosition pos, final ScrollType scrollType) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void runActionOnScrollingFinished(final Runnable action) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void disableAnimation() {
   }
 
+  @Override
   public void enableAnimation() {
   }
 
+  @Override
   public int getVerticalScrollOffset() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public int getHorizontalScrollOffset() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void scrollVertically(final int scrollOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void scrollHorizontally(final int scrollOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void addVisibleAreaListener(final VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removeVisibleAreaListener(final VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }

@@ -27,6 +27,7 @@ import java.util.List;
 public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisitor  {
   private final boolean myVisitAllFileRoots;
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
+    @Override
     public void elementFinished(@NotNull PsiElement element) {
       PsiRecursiveElementWalkingVisitor.this.elementFinished(element);
     }
@@ -40,6 +41,7 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
     myVisitAllFileRoots = visitAllFileRoots;
   }
 
+  @Override
   public void visitElement(final PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
 

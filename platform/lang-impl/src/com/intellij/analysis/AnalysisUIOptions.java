@@ -63,10 +63,12 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
   public AnalysisUIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+      @Override
       protected boolean isAutoScrollMode() {
         return AUTOSCROLL_TO_SOURCE;
       }
 
+      @Override
       protected void setAutoScrollMode(boolean state) {
         AUTOSCROLL_TO_SOURCE = state;
       }
@@ -94,10 +96,12 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
                             IconLoader.getIcon("/nodes/sortBySeverity.png")) {
 
 
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return GROUP_BY_SEVERITY;
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         GROUP_BY_SEVERITY = state;
         view.update();
@@ -111,10 +115,12 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
                             IconLoader.getIcon("/ant/filter.png")) {
 
 
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return FILTER_RESOLVED_ITEMS;
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         FILTER_RESOLVED_ITEMS = state;
         view.update();
@@ -128,10 +134,12 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
                             IconLoader.getIcon("/actions/diff.png")) {
 
 
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return SHOW_DIFF_WITH_PREVIOUS_RUN;
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         SHOW_DIFF_WITH_PREVIOUS_RUN = state;
         if (!SHOW_DIFF_WITH_PREVIOUS_RUN) {
@@ -147,10 +155,12 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
                             "Group by directory",
                             PlatformIcons.DIRECTORY_CLOSED_ICON) {
 
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return SHOW_STRUCTURE;
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         SHOW_STRUCTURE = state;
         view.update();
@@ -164,15 +174,18 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
                             IconLoader.getIcon("/actions/showChangesOnly.png")) {
 
 
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return SHOW_ONLY_DIFF;
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         SHOW_ONLY_DIFF = state;
         view.update();
       }
 
+      @Override
       public void update(final AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(SHOW_DIFF_WITH_PREVIOUS_RUN);
@@ -180,10 +193,12 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     };
   }
 
+  @Override
   public AnalysisUIOptions getState() {
     return this;
   }
 
+  @Override
   public void loadState(AnalysisUIOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }

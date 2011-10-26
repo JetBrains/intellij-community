@@ -45,16 +45,19 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     myMethodCall = methodCall;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Surround with array initialization";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     return getExpression(element) != null;
  }
@@ -109,6 +112,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     return null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();

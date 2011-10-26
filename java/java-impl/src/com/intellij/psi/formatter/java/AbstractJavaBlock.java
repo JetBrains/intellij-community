@@ -290,14 +290,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return child.getElementType() == JavaTokenType.RBRACE;
   }
 
+  @Override
   public Spacing getSpacing(Block child1, Block child2) {
     return JavaSpacePropertyProcessor.getSpacing(getTreeNode(child2), mySettings);
   }
 
+  @Override
   public ASTNode getFirstTreeNode() {
     return myNode;
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent;
   }
@@ -1295,6 +1298,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @param elementType   target element type
    * @return              <code>null</code> all the time
    */
+  @Override
   public Wrap getReservedWrap(IElementType elementType) {
     return null;
   }
@@ -1341,6 +1345,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
+  @Override
   @Nullable
   protected Indent getChildIndent() {
     return getChildIndent(myNode, myIndentSettings);
@@ -1373,6 +1378,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return null;
   }
 
+  @Override
   public boolean isLeaf() {
     return ShiftIndentInsideHelper.mayShiftIndentInside(myNode);
   }

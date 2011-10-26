@@ -39,10 +39,12 @@ public class TokenTypeFilter implements ElementFilter{
     myType = type;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiDocToken.class, hintClass) || ReflectionCache.isAssignable(XmlToken.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiElement) {
       final ASTNode node = ((PsiElement)element).getNode();

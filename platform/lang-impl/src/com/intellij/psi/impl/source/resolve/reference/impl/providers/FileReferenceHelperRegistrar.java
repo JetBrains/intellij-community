@@ -57,6 +57,7 @@ public class FileReferenceHelperRegistrar {
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();
     return ContainerUtil.find(getHelpers(), new Condition<FileReferenceHelper>() {
+      @Override
       public boolean value(final FileReferenceHelper fileReferenceHelper) {
         return fileReferenceHelper.isMine(project, file);
       }
@@ -71,6 +72,7 @@ public class FileReferenceHelperRegistrar {
 
     public static final NullFileReferenceHelper INSTANCE = new NullFileReferenceHelper();
 
+    @Override
     public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
       final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
       VirtualFile contentRootForFile = index.getContentRootForFile(file);
@@ -78,15 +80,18 @@ public class FileReferenceHelperRegistrar {
       return contentRootForFile != null ? PsiManager.getInstance(project).findDirectory(contentRootForFile) : null;
     }
 
+    @Override
     @NotNull
     public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
       return ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRoots(), new Function<VirtualFile, PsiFileSystemItem>() {
+        @Override
         public PsiFileSystemItem fun(VirtualFile virtualFile) {
           return PsiManager.getInstance(module.getProject()).findDirectory(virtualFile);
         }
       });
     }
 
+    @Override
     @NotNull
     public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
       final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
@@ -99,6 +104,7 @@ public class FileReferenceHelperRegistrar {
       return Collections.emptyList();
     }
 
+    @Override
     public boolean isMine(final Project project, final @NotNull VirtualFile file) {
       return ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
     }

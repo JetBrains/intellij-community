@@ -218,6 +218,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   protected static void addLibraryToRoots(final Module module, final VirtualFile jarFile, final OrderRootType rootType) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModuleRootManager manager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel rootModel = manager.getModifiableModel();

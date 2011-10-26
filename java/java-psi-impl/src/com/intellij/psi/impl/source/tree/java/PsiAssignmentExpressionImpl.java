@@ -33,29 +33,35 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     super(JavaElementType.ASSIGNMENT_EXPRESSION);
   }
 
+  @Override
   @NotNull
   public PsiExpression getLExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOPERAND);
   }
 
+  @Override
   public PsiExpression getRExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ROPERAND);
   }
 
+  @Override
   @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     return getOperationSign().getTokenType();
   }
 
+  @Override
   public PsiType getType() {
     return getLExpression().getType();
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -73,6 +79,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
@@ -93,6 +100,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
                                                                          JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ, JavaTokenType.GTGTGTEQ,
                                                                          JavaTokenType.ANDEQ, JavaTokenType.OREQ, JavaTokenType.XOREQ);
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAssignmentExpression(this);

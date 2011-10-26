@@ -70,7 +70,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
-    Configurable config = findByClass(new IdeConfigurablesGroup().getConfigurables(), configurableClass);
+    Configurable config = findByClass(IdeConfigurablesGroup.getInstance().getConfigurables(), configurableClass);
     if (config == null) {
       config = findByClass(new ProjectConfigurablesGroup(project).getConfigurables(), configurableClass);
     }
@@ -93,9 +93,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
     ConfigurableGroup[] group;
     if (project == null) {
-      group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};
+      group = new ConfigurableGroup[] {IdeConfigurablesGroup.getInstance()};
     } else {
-      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
+      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project), IdeConfigurablesGroup.getInstance()};
     }
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
@@ -110,7 +110,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
     _showSettingsDialog(project, new ConfigurableGroup[]{
       new ProjectConfigurablesGroup(project),
-      new IdeConfigurablesGroup()
+      IdeConfigurablesGroup.getInstance()
     }, toSelect);
   }
 

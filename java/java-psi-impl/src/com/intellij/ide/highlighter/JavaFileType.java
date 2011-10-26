@@ -34,25 +34,30 @@ public class JavaFileType extends LanguageFileType {
     super(JavaLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "JAVA";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.java");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return ICON;
   }
 
+  @Override
   public boolean isJVMDebuggingSupported() {
     return true;
   }

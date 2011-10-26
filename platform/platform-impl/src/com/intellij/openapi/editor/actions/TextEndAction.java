@@ -39,6 +39,7 @@ public class TextEndAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       int offset = editor.getDocument().getTextLength();
       editor.getCaretModel().moveToOffset(offset);

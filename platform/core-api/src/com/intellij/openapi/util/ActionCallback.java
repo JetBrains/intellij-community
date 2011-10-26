@@ -99,6 +99,7 @@ public class ActionCallback implements Disposable {
 
   public final ActionCallback notifyWhenDone(final ActionCallback child) {
     return doWhenDone(new Runnable() {
+      @Override
       public void run() {
         child.setDone();
       }
@@ -107,6 +108,7 @@ public class ActionCallback implements Disposable {
 
   public final ActionCallback notifyWhenRejected(final ActionCallback child) {
     return doWhenRejected(new Runnable() {
+      @Override
       public void run() {
         child.setRejected();
       }
@@ -115,10 +117,12 @@ public class ActionCallback implements Disposable {
 
   public final ActionCallback notify(final ActionCallback child) {
     return doWhenDone(new Runnable() {
+      @Override
       public void run() {
         child.setDone();
       }
     }).doWhenRejected(new Runnable() {
+      @Override
       public void run() {
         child.setRejected();
       }
@@ -164,6 +168,7 @@ public class ActionCallback implements Disposable {
       final ActionCallback result = new ActionCallback(myCallbacks.size());
       for (ActionCallback each : myCallbacks) {
         each.doWhenProcessed(new Runnable() {
+          @Override
           public void run() {
             result.setDone();
           }
@@ -174,6 +179,7 @@ public class ActionCallback implements Disposable {
   }
 
 
+  @Override
   public void dispose() {
   }
 
@@ -198,6 +204,7 @@ public class ActionCallback implements Disposable {
       myMessage = message;
       myAllocation = allocation;
       myTask = SimpleTimer.getInstance().setUp(new Runnable() {
+        @Override
         public void run() {
           if (isEdt) {
             SwingUtilities.invokeLater(TimedOut.this);
@@ -208,6 +215,7 @@ public class ActionCallback implements Disposable {
       }, timeOut);
     }
 
+    @Override
     public final void run() {
       if (!isProcessed()) {
         setRejected();

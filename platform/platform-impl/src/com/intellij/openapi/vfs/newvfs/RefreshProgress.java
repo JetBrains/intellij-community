@@ -35,10 +35,12 @@ public class RefreshProgress extends ProgressIndicatorBase {
     myMessage = message;
   }
 
+  @Override
   public void start() {
     super.start();
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (ApplicationManager.getApplication().isDisposed()) return;
         final WindowManager windowManager = WindowManager.getInstance();
@@ -60,10 +62,12 @@ public class RefreshProgress extends ProgressIndicatorBase {
 
   }
 
+  @Override
   public void stop() {
     super.stop();
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (ApplicationManager.getApplication().isDisposed()) return;
         final WindowManager windowManager = WindowManager.getInstance();

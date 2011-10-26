@@ -42,12 +42,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     myManager = manager;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult resolveConstructor(PsiClassType classType, PsiExpressionList argumentList, PsiElement place) {
     JavaResolveResult[] result = multiResolveConstructor(classType, argumentList, place);
     return result.length == 1 ? result[0] : JavaResolveResult.EMPTY;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place) {
     PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
@@ -76,6 +78,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return processor.getResult();
   }
 
+  @Override
   public PsiClass resolveReferencedClass(@NotNull final String referenceText, final PsiElement context) {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
@@ -87,6 +90,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
   }
 
+  @Override
   public PsiVariable resolveReferencedVariable(@NotNull String referenceText, PsiElement context) {
     return resolveVar(referenceText, context, null);
   }
@@ -110,10 +114,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
   }
 
+  @Override
   public boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
     return isAccessible(member, member.getModifierList(), place, accessObjectClass, null);
   }
 
+  @Override
   public boolean isAccessible(@NotNull PsiMember member,
                               PsiModifierList modifierList,
                               @NotNull PsiElement place,
@@ -122,6 +128,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
+  @Override
   @NotNull
   public CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression expr, boolean dummyImplicitConstructor) {
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr);
@@ -233,6 +240,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return new Pair<PsiType, ConstraintType>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter), ConstraintType.EQUALS);
   }
 
+  @Override
   public PsiType inferTypeForMethodTypeParameter(@NotNull final PsiTypeParameter typeParameter,
                                                  @NotNull final PsiParameter[] parameters,
                                                  @NotNull PsiExpression[] arguments,
@@ -246,6 +254,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return constraint.getFirst();
   }
 
+  @Override
   @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                            @NotNull PsiParameter[] parameters,
@@ -337,6 +346,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return partialSubstitutor;
   }
 
+  @Override
   @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                            @NotNull PsiType[] leftTypes,
@@ -410,6 +420,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return substitution;
   }
 
+  @Override
   public PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                                  PsiType param,
                                                  PsiType arg,

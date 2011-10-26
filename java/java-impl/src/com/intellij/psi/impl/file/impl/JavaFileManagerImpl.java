@@ -77,6 +77,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     myUseRepository = true;
 
     myManager.registerRunnableToRunOnChange(new Runnable() {
+      @Override
       public void run() {
         myCachedObjectClassMap.clear();
       }
@@ -84,9 +85,11 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(final ModuleRootEvent event) {
       }
 
+      @Override
       public void rootsChanged(final ModuleRootEvent event) {
         myNontrivialPackagePrefixes = null;
         clearNonRepositoryMaps();
@@ -94,16 +97,19 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     });
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
       public void before(final List<? extends VFileEvent> events) {
         clearNonRepositoryMaps();
       }
 
+      @Override
       public void after(final List<? extends VFileEvent> events) {
         clearNonRepositoryMaps();
       }
     });
 
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
       public void fileWithNoDocumentChanged(final VirtualFile file) {
         clearNonRepositoryMaps();
       }
@@ -113,6 +119,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     startupManager.registerStartupActivity(
       new Runnable() {
+        @Override
         public void run() {
           initialize();
         }
@@ -121,10 +128,12 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     Disposer.register(myManager.getProject(), this);
   }
 
+  @Override
   public void initialize() {
     myInitialized = true;
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     myCachedObjectClassMap.clear();
@@ -136,6 +145,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     }
   }
 
+  @Override
   @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
     Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, false);
@@ -143,6 +153,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return new PsiPackageImpl(myManager, packageName);
   }
 
+  @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
     final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
@@ -167,6 +178,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     if (count == 1) return new PsiClass[] {aClass};
 
     ContainerUtil.quickSort(result, new Comparator<PsiClass>() {
+      @Override
       public int compare(PsiClass o1, PsiClass o2) {
         return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
       }
@@ -187,6 +199,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return true;
   }
 
+  @Override
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     if (!myUseRepository) {
@@ -372,6 +385,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return true;
   }
 
+  @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
     if (myNontrivialPackagePrefixes == null) {
       Set<String> names = new HashSet<String>();

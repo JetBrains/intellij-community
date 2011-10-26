@@ -22,6 +22,7 @@ package com.intellij.psi.controlFlow;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class InstructionBase implements Instruction, Cloneable{
+  @Override
   public Instruction clone() {
     try {
       return (Instruction)super.clone();

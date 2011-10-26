@@ -25,10 +25,12 @@ import java.util.Set;
  */
 public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper {
 
+  @Override
   public Object computeConstantExpression(PsiElement expression) {
     return computeConstantExpression(expression, false);
   }
 
+  @Override
   public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
     if (expression == null) return null;
     ConstantExpressionEvaluator expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(expression.getLanguage());

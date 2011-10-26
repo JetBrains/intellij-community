@@ -123,6 +123,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   }
 
+  @Override
   public void doCollectInformation(final ProgressIndicator progress) {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
@@ -143,6 +144,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     myRefCountHolder = RefCountHolder.getInstance(myFile);
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
+      @Override
       public void run() {
         boolean errorFound = collectHighlights(elementSet, highlights, progress);
         myHighlights = highlights;
@@ -157,10 +159,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
+  @Override
   public List<HighlightInfo> getInfos() {
     return myHighlights == null ? null : new ArrayList<HighlightInfo>(myHighlights);
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     if (myHighlights == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, getColorsScheme(), Pass.POST_UPDATE_ALL);
@@ -177,6 +181,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       final OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
       if (optimizeImportsFix.isAvailable(myProject, editor, myFile) && myFile.isWritable()) {
         invokeOnTheFlyImportOptimizer(new Runnable() {
+          @Override
           public void run() {
             optimizeImportsFix.invoke(myProject, editor, myFile);
           }
@@ -188,11 +193,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable, @NotNull final PsiFile file, @NotNull final Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
         PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
         String beforeText = file.getText();
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(runnable);
           }
@@ -394,6 +401,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterFix(false, true, field), myUnusedSymbolKey);
         QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
         SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
+          @Override
           public boolean process(final String annoName) {
             QuickFixAction.registerQuickFixAction(info, UnusedSymbolLocalInspection.createQuickFix(annoName, "fields", field.getProject()));
             return true;
@@ -520,6 +528,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), highlightDisplayKey);
     SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
+      @Override
       public boolean process(final String annoName) {
         QuickFixAction.registerQuickFixAction(highlightInfo, UnusedSymbolLocalInspection.createQuickFix(annoName, "methods", method.getProject()));
         return true;
@@ -667,6 +676,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), highlightDisplayKey);
     SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, new Processor<String>() {
+      @Override
       public boolean process(final String annoName) {
         QuickFixAction.registerQuickFixAction(highlightInfo, UnusedSymbolLocalInspection.createQuickFix(annoName, element, aClass.getProject()));
         return true;
@@ -741,6 +751,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
     boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+      @Override
       public boolean process(HighlightInfo error) {
         int infoStart = error.getActualStartOffset();
         int infoEnd = error.getActualEndOffset();

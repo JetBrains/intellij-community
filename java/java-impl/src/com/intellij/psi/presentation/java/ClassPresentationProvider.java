@@ -34,10 +34,12 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
   @Override
   public ItemPresentation getPresentation(final PsiClass psiClass) {
     return new ColoredItemPresentation() {
+      @Override
       public String getPresentableText() {
         return ClassPresentationUtil.getNameForClass(psiClass, false);
       }
 
+      @Override
       public String getLocationString() {
         PsiFile file = psiClass.getContainingFile();
         if (file instanceof PsiClassOwner) {
@@ -57,6 +59,7 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
         return null;
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
       }

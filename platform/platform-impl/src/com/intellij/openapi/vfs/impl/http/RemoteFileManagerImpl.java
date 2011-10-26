@@ -81,6 +81,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   public void addRemoteContentProvider(@NotNull final RemoteContentProvider provider, @NotNull Disposable parentDisposable) {
     addRemoteContentProvider(provider);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeRemoteContentProvider(provider);
       }
@@ -106,6 +107,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   public void addFileListener(@NotNull final HttpVirtualFileListener listener, @NotNull final Disposable parentDisposable) {
     addFileListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeFileListener(listener);
       }
@@ -125,6 +127,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     return myStorage;
   }
 
+  @Override
   public void dispose() {
     myStorage.deleteDownloadedFiles();
   }
@@ -136,6 +139,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
       myFile = file;
     }
 
+    @Override
     public void fileDownloaded(final VirtualFile localFile) {
       fireFileDownloaded(myFile);
     }

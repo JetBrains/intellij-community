@@ -46,6 +46,7 @@ public class AndFilter implements ElementFilter{
     myFilters.add(filter);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     for (ElementFilter elementFilter : myFilters) {
       if (!elementFilter.isAcceptable(element, context)) {
@@ -55,6 +56,7 @@ public class AndFilter implements ElementFilter{
     return true;
   }
 
+  @Override
   public boolean isClassAcceptable(Class elementClass){
     for (Object myFilter : myFilters) {
       final ElementFilter elementFilter = (ElementFilter)myFilter;

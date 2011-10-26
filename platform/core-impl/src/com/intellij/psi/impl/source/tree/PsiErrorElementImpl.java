@@ -30,10 +30,12 @@ public class PsiErrorElementImpl extends CompositePsiElement implements PsiError
     myErrorDescription = errorDescription;
   }
 
+  @Override
   public String getErrorDescription() {
     return myErrorDescription;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitErrorElement(this);
   }
@@ -42,6 +44,7 @@ public class PsiErrorElementImpl extends CompositePsiElement implements PsiError
     return "PsiErrorElement:" + getErrorDescription();
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     PsiElement master = this;

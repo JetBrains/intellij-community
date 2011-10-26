@@ -29,10 +29,12 @@ public class PatternFilter implements ElementFilter {
     myPattern = pattern;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     return myPattern.accepts(element);
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return true;
     //throw new UnsupportedOperationException("Method isClassAcceptable is not yet implemented in " + getClass().getName());

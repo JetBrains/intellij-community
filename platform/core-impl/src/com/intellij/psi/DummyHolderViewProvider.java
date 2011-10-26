@@ -45,66 +45,81 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     myModificationStamp = LocalTimeCounter.currentTime();
   }
 
+  @Override
   @NotNull
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   @Nullable
   public Document getDocument() {
     return FileDocumentManager.getInstance().getDocument(getVirtualFile());
   }
 
+  @Override
   @NotNull
   public CharSequence getContents() {
     return myHolder != null ? myHolder.getNode().getText() : "";
   }
 
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
     return myLightVirtualFile;
   }
 
+  @Override
   @NotNull
   public Language getBaseLanguage() {
     return myHolder.getLanguage();
   }
 
+  @Override
   @NotNull
   public Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
+  @Override
   public PsiFile getPsi(@NotNull Language target) {
     ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     return target == getBaseLanguage() ? myHolder : null;
   }
 
+  @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
     return Collections.singletonList(getPsi(getBaseLanguage()));
   }
 
+  @Override
   public void beforeContentsSynchronized() {}
 
+  @Override
   public void contentsSynchronized() {}
 
+  @Override
   public boolean isEventSystemEnabled() {
     return false;
   }
 
+  @Override
   public boolean isPhysical() {
     return false;
   }
 
+  @Override
   public long getModificationStamp() {
     return myModificationStamp;
   }
 
+  @Override
   public boolean supportsIncrementalReparse(final Language rootLanguage) {
     return true;
   }
 
+  @Override
   public void rootChanged(PsiFile psiFile) {
   }
 
@@ -113,25 +128,30 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     //myLightVirtualFile.setContent(null, getContents(), false);
   }
 
+  @Override
   public FileViewProvider clone(){
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 
+  @Override
   public PsiReference findReferenceAt(final int offset) {
     return SharedPsiElementImplUtil.findReferenceAt(getPsi(getBaseLanguage()), offset);
   }
 
+  @Override
   @Nullable
   public PsiElement findElementAt(final int offset, final Language language) {
     return language == getBaseLanguage() ? findElementAt(offset) : null;
   }
 
 
+  @Override
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
     if (!lang.isAssignableFrom(getBaseLanguage().getClass())) return null;
     return findElementAt(offset);
   }
 
+  @Override
   public PsiReference findReferenceAt(final int offsetInElement, @NotNull final Language language) {
     return language == getBaseLanguage() ? findReferenceAt(offsetInElement) : null;
   }
@@ -142,6 +162,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 
+  @Override
   public PsiElement findElementAt(final int offset) {
     final LeafElement element = ((PsiFileImpl)getPsi(getBaseLanguage())).calcTreeElement().findLeafElementAt(offset);
     return element != null ? element.getPsi() : null;

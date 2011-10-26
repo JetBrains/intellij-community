@@ -52,6 +52,7 @@ public class ControlFlowFactory {
 
   public ControlFlowFactory(PsiManagerEx psiManager) {
     psiManager.registerRunnableToRunOnChange(new Runnable(){
+      @Override
       public void run() {
         clearCache();
       }

@@ -37,6 +37,7 @@ public class JoinLinesAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document doc = editor.getDocument();
 

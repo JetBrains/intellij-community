@@ -100,6 +100,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     }
   };
 
+  @Override
   public void processIncludingFiles(PsiFile context, Processor<Pair<VirtualFile, FileIncludeInfo>> processor) {
     context = context.getOriginalFile();
     VirtualFile contextFile = context.getVirtualFile();
@@ -237,6 +238,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
     protected abstract VirtualFile[] computeFiles(PsiFile file, boolean compileTimeOnly);
 
+    @Override
     public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile psiFile) {
       VirtualFile[] value = computeFiles(psiFile, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile 

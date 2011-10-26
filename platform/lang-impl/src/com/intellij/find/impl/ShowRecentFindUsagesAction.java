@@ -46,12 +46,14 @@ import java.util.List;
  * @author cdr
  */
 public class ShowRecentFindUsagesAction extends AnAction {
+  @Override
   public void update(final AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(usageView != null && project != null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -69,6 +71,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
 
     BaseListPopupStep<FindUsagesManager.SearchData> step =
       new BaseListPopupStep<FindUsagesManager.SearchData>(FindBundle.message("recent.find.usages.action.title"), history) {
+        @Override
         public Icon getIconFor(final FindUsagesManager.SearchData data) {
           if (data.myElements == null) {
             return null;
@@ -78,6 +81,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
           return psiElement.getIcon(0);
         }
 
+        @Override
         @NotNull
         public String getTextFor(final FindUsagesManager.SearchData data) {
           if (data.myElements == null) {
@@ -92,8 +96,10 @@ public class ShowRecentFindUsagesAction extends AnAction {
                                     scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
         }
 
+        @Override
         public PopupStep onChosen(final FindUsagesManager.SearchData selectedValue, final boolean finalChoice) {
           return doFinalStep(new Runnable() {
+            @Override
             public void run() {
               if (selectedValue.myElements != null) {
                 findUsagesManager.rerunAndRecallFromHistory(selectedValue);

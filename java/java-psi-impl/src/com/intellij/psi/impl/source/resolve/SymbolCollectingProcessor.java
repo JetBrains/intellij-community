@@ -49,6 +49,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
     }
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
     if (element instanceof PsiNamedElement) {
       PsiNamedElement named = (PsiNamedElement)element;
@@ -60,6 +61,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
     return true;
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     return kind == DeclarationKind.CLASS || kind == DeclarationKind.PACKAGE || kind == DeclarationKind.METHOD || kind == DeclarationKind.FIELD;
   }

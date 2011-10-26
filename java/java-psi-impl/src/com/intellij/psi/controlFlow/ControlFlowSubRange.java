@@ -38,6 +38,7 @@ public class ControlFlowSubRange implements ControlFlow {
     myEnd = end;
   }
 
+  @Override
   @NotNull
   public List<Instruction> getInstructions() {
     if (myInstructions == null) {
@@ -73,24 +74,29 @@ public class ControlFlowSubRange implements ControlFlow {
     return offset;
   }
 
+  @Override
   public int getSize() {
     return myEnd - myStart;
   }
 
+  @Override
   public int getStartOffset(@NotNull PsiElement element) {
     return patchOffset(myControlFlow.getStartOffset(element));
     //return (myControlFlow.getStartOffset(element));
   }
 
+  @Override
   public int getEndOffset(@NotNull PsiElement element) {
     return patchOffset(myControlFlow.getEndOffset(element));
     //return myControlFlow.getEndOffset(element);
   }
 
+  @Override
   public PsiElement getElement(int offset) {
     return myControlFlow.getElement(myStart + offset);
   }
 
+  @Override
   public boolean isConstantConditionOccurred() {
     return myControlFlow.isConstantConditionOccurred();
   }

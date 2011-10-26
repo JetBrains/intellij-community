@@ -34,6 +34,7 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
     myProtocol = protocol;
   }
 
+  @Override
   public VirtualFile findFileByPath(@NotNull String path) {
     return findFileByPath(path, false);
   }
@@ -63,48 +64,60 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
     getRemoteFileManager().removeFileListener(listener);
   }
 
+  @Override
   public boolean isFileDownloaded(@NotNull final VirtualFile file) {
     return file instanceof HttpVirtualFile && ((HttpVirtualFile)file).getFileInfo().getState() == RemoteFileState.DOWNLOADED;
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String extractPresentableUrl(@NotNull String path) {
     return VirtualFileManager.constructUrl(myProtocol, path);
   }
 
+  @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
   }
 
+  @Override
   public void refresh(boolean asynchronous) {
   }
 

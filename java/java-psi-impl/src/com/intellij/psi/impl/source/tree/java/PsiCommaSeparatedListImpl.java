@@ -40,6 +40,7 @@ public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement impl
   }
 
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (myTypesOfElements.contains(first.getElementType()) && myTypesOfElements.contains(last.getElementType())) {
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
@@ -68,6 +69,7 @@ public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement impl
   }
 
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (myTypesOfElements.contains(child.getElementType())) {
       ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());

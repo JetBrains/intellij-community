@@ -49,6 +49,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                                   getReturnType().getCanonicalText());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.variable.type.family");

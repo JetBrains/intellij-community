@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PathListReferenceProvider extends PsiReferenceProviderBase {
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     return getReferencesByElement(element);
@@ -85,6 +86,7 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
     }
     return new FileReferenceSet(s.trim(), element, offset, this, true) {
 
+      @Override
       protected boolean isSoft() {
         return soft;
       }

@@ -100,6 +100,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return wellKnownSuffixes[index-1];
   }
 
+  @Override
   @NotNull
   public String getName() {
     Object name = rawName();
@@ -147,14 +148,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return myName;
   }
 
+  @Override
   public VirtualFileSystemEntry getParent() {
     return myParent;
   }
 
+  @Override
   public boolean isDirty() {
     return (myFlags & DIRTY_FLAG) != 0;
   }
 
+  @Override
   public void setFlag(int flag_mask, boolean value) {
     assert (flag_mask & 0xe0) == 0 : "Mask '"+ Integer.toBinaryString(flag_mask)+"' is not supported. High three bits are reserved.";
     if (value) {
@@ -165,15 +169,18 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
+  @Override
   public boolean getFlag(int flag_mask) {
     assert (flag_mask & 0xe0) == 0 : "Mask '"+ Integer.toBinaryString(flag_mask)+"' is not supported. High three bits are reserved.";
     return (myFlags & flag_mask) != 0;
   }
 
+  @Override
   public void markClean() {
     setFlag(DIRTY_FLAG, false);
   }
 
+  @Override
   public void markDirty() {
     if (!isDirty()) {
       setFlag(DIRTY_FLAG, true);
@@ -181,6 +188,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
+  @Override
   public void markDirtyRecursively() {
     markDirty();
     for (VirtualFile file : getCachedChildren()) {
@@ -229,6 +237,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return pos + length;
   }
 
+  @Override
   @NotNull
   public String getUrl() {
     String protocol = getFileSystem().getProtocol();
@@ -239,6 +248,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getPathImpl(chars, pos);
   }
 
+  @Override
   @NotNull
   public String getPath() {
     char[] chars = new char[getPathLength()];
@@ -250,10 +260,12 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return new String(chars, 0, count);
   }
 
+  @Override
   public void delete(final Object requestor) throws IOException {
     ourPersistence.deleteFile(requestor, this);
   }
 
+  @Override
   public void rename(final Object requestor, @NotNull @NonNls final String newName) throws IOException {
     if (getName().equals(newName)) return;
     if (!isValidName(newName)) {
@@ -263,32 +275,39 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     ourPersistence.renameFile(requestor, this, newName);
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildData(final Object requestor, @NotNull final String name) throws IOException {
     validateName(name);
     return ourPersistence.createChildFile(requestor, this, name);
   }
 
+  @Override
   public boolean isWritable() {
     return ourPersistence.isWritable(this);
   }
 
+  @Override
   public void setWritable(boolean writable) throws IOException {
     ourPersistence.setWritable(this, writable);
   }
 
+  @Override
   public long getTimeStamp() {
     return ourPersistence.getTimeStamp(this);
   }
 
+  @Override
   public void setTimeStamp(final long time) throws IOException {
     ourPersistence.setTimeStamp(this, time);
   }
 
+  @Override
   public long getLength() {
     return ourPersistence.getLength(this);
   }
 
+  @Override
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
@@ -299,18 +318,21 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
       public VirtualFile compute() throws IOException {
         return ourPersistence.copyFile(requestor, VirtualFileSystemEntry.this, newParent, copyName);
       }
     });
   }
 
+  @Override
   public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
       public VirtualFile compute() throws IOException {
         ourPersistence.moveFile(requestor, VirtualFileSystemEntry.this, newParent);
         return VirtualFileSystemEntry.this;
@@ -318,6 +340,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     });
   }
 
+  @Override
   public int getId() {
     return myId;
   }
@@ -328,6 +351,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return id >= 0 ? id : -id;
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(final Object requestor, final String name) throws IOException {
     validateName(name);
@@ -341,11 +365,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
+  @Override
   public boolean exists() {
     return ourPersistence.exists(this);
   }
 
 
+  @Override
   public boolean isValid() {
     return exists();
   }
@@ -371,6 +397,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myParent.addChild(this);
   }
 
+  @Override
   public boolean isInLocalFileSystem() {
     return getFileSystem() instanceof LocalFileSystem;
   }
@@ -379,6 +406,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -Math.abs(myId);
   }
 
+  @Override
   public Charset getCharset() {
     Charset charset;
     if (isCharsetSet()) {
@@ -413,6 +441,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return charset;
   }
 
+  @Override
   public String getPresentableName() {
     if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();

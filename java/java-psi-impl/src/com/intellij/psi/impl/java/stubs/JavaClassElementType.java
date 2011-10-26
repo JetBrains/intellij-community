@@ -52,6 +52,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     super(id);
   }
 
+  @Override
   public PsiClass createPsi(final PsiClassStub stub) {
     if (isCompiled(stub)) {
       return new ClsClassImpl(stub);
@@ -65,6 +66,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     return new PsiClassImpl(stub);
   }
 
+  @Override
   public PsiClass createPsi(final ASTNode node) {
     if (node instanceof EnumConstantInitializerElement) {
       return new PsiEnumConstantInitializerImpl(node);
@@ -154,6 +156,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
            : anonymous ? JavaStubElementTypes.ANONYMOUS_CLASS : JavaStubElementTypes.CLASS;
   }
 
+  @Override
   public void serialize(final PsiClassStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
@@ -166,6 +169,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
   }
 
+  @Override
   public PsiClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
 
@@ -187,6 +191,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
   }
 
+  @Override
   public void indexStub(final PsiClassStub stub, final IndexSink sink) {
     boolean isAnonymous = stub.isAnonymous();
     if (isAnonymous) {
@@ -208,6 +213,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
   }
 
+  @Override
   public String getId(final PsiClassStub stub) {
     final String name = stub.getName();
     return name != null ? name : super.getId(stub);

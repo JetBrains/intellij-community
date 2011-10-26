@@ -36,16 +36,19 @@ public class AddVariableInitializerFix implements IntentionAction {
     myVariable = variable;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("quickfix.add.variable.text", myVariable.getName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("quickfix.add.variable.family.name");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myVariable != null
         && myVariable.isValid()
@@ -54,6 +57,7 @@ public class AddVariableInitializerFix implements IntentionAction {
         ;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
 
@@ -82,6 +86,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -81,10 +81,12 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     final boolean anyChanged = changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
     if (anyChanged) {
       UndoManager.getInstance(psiPackage.getProject()).undoableActionPerformed(new GlobalUndoableAction() {
+        @Override
         public void undo() {
           changePackagePrefixes(psiPackage, newQualifiedName, oldQualifedName);
         }
 
+        @Override
         public void redo() {
           changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
         }
@@ -132,6 +134,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
     window.activate(null);
     window.getActivation().doWhenDone(new Runnable() {
+      @Override
       public void run() {
         final ProjectView projectView = ProjectView.getInstance(project);
         projectView.changeView(PackageViewPane.ID);

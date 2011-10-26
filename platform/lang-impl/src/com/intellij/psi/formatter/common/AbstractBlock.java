@@ -42,11 +42,13 @@ public abstract class AbstractBlock implements ASTBlock {
     myAlignment = alignment;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
@@ -59,22 +61,27 @@ public abstract class AbstractBlock implements ASTBlock {
 
   protected abstract List<Block> buildChildren();
 
+  @Override
   public Wrap getWrap() {
     return myWrap;
   }
 
+  @Override
   public Indent getIndent() {
     return null;
   }
 
+  @Override
   public Alignment getAlignment() {
     return myAlignment;
   }
 
+  @Override
   public ASTNode getNode() {
     return myNode;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return new ChildAttributes(getChildIndent(), getFirstChildAlignment());
@@ -97,6 +104,7 @@ public abstract class AbstractBlock implements ASTBlock {
     return null;
   }
 
+  @Override
   public boolean isIncomplete() {
     if (myIncomplete == null) {
       myIncomplete = FormatterUtil.isIncomplete(getNode());

@@ -34,6 +34,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     myIndicator = indicator;
   }
 
+  @Override
   public ThreeState deepEqual(final ASTNode oldNode, final ASTNode newNode) {
     return textMatches(oldNode, newNode);
   }
@@ -103,10 +104,12 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     return curOffset[0] == text.length();
   }
 
+  @Override
   public boolean typesEqual(final ASTNode n1, final ASTNode n2) {
     return n1.getElementType() == n2.getElementType();
   }
 
+  @Override
   public boolean hashCodesEqual(final ASTNode n1, final ASTNode n2) {
     if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
       return textMatches(n1, n2) == ThreeState.YES;

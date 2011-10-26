@@ -37,62 +37,76 @@ public abstract class LightElement extends PsiElementBase {
     myLanguage = language;
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return myLanguage;
   }
 
+  @Override
   public PsiManager getManager() {
     return myManager;
   }
 
+  @Override
   public PsiElement getParent() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return null;
   }
 
+  @Override
   public TextRange getTextRange() {
     return null;
   }
 
+  @Override
   public int getStartOffsetInParent() {
     return -1;
   }
 
+  @Override
   public final int getTextLength() {
     String text = getText();
     return text != null ? text.length() : 0;
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray() {
     return getText().toCharArray();
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return getText().equals(text.toString());
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return getText().equals(element.getText());
   }
 
+  @Override
   public PsiElement findElementAt(int offset) {
     return null;
   }
 
+  @Override
   public int getTextOffset() {
     return -1;
   }
 
+  @Override
   public boolean isValid() {
     final PsiElement navElement = getNavigationElement();
     if (navElement != this) {
@@ -102,44 +116,54 @@ public abstract class LightElement extends PsiElementBase {
     return true;
   }
 
+  @Override
   public boolean isWritable() {
     return false;
   }
 
+  @Override
   public boolean isPhysical() {
     return false;
   }
 
   public abstract String toString();
 
+  @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public void checkDelete() throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public ASTNode getNode() {
     return null;
   }

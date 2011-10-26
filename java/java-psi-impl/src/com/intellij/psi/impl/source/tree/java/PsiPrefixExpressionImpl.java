@@ -32,20 +32,24 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     super(JavaElementType.PREFIX_EXPRESSION);
   }
 
+  @Override
   public PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
+  @Override
   @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     return getOperationSign().getTokenType();
   }
 
+  @Override
   public PsiType getType() {
     PsiExpression operand = getOperand();
     if (operand == null) return null;
@@ -68,6 +72,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -82,6 +87,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERATION_SIGN;
@@ -89,6 +95,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     return ChildRoleBase.NONE;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPrefixExpression(this);

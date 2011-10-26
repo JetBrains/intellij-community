@@ -24,26 +24,32 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.ArrayUtil;
 
 public class SerialDocTagInfo implements JavadocTagInfo {
+  @Override
   public String getName() {
     return "serial";
   }
 
+  @Override
   public boolean isInline() {
     return false;
   }
 
+  @Override
   public boolean isValidInContext(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiField;
   }
 
+  @Override
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public String checkTagValue(PsiDocTagValue value) {
     return null;
   }
 
+  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
   }

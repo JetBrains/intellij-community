@@ -60,6 +60,7 @@ public class StaticImportMethodFix implements IntentionAction {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
   }
 
+  @Override
   @NotNull
   public String getText() {
     String text = QuickFixBundle.message("static.import.method.text");
@@ -74,11 +75,13 @@ public class StaticImportMethodFix implements IntentionAction {
     return text;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file)
            && myMethodCall.getElement() != null
@@ -152,6 +155,7 @@ public class StaticImportMethodFix implements IntentionAction {
     return false;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     if (candidates.size() == 1) {
@@ -165,8 +169,10 @@ public class StaticImportMethodFix implements IntentionAction {
 
   private void doImport(final PsiMethod toImport) {
     CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable(){
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               PsiMethodCallExpression element = myMethodCall.getElement();
@@ -282,6 +288,7 @@ public class StaticImportMethodFix implements IntentionAction {
     return className + "." + member.getName();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

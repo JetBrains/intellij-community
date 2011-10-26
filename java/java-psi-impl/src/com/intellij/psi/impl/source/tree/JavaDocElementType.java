@@ -119,6 +119,7 @@ public interface JavaDocElementType {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
 
+    @Override
     public boolean isParsable(final CharSequence buffer, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       lexer.start(buffer);

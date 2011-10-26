@@ -41,10 +41,12 @@ class FileElementInfo implements SmartPointerElementInfo {
     myProject = project;
   }
 
+  @Override
   public Document getDocumentToSynchronize() {
     return null;
   }
 
+  @Override
   public void documentAndPsiInSync() {
   }
 
@@ -56,6 +58,7 @@ class FileElementInfo implements SmartPointerElementInfo {
   public void unfastenBelt(int offset) {
   }
 
+  @Override
   public PsiElement restoreElement() {
     return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
   }

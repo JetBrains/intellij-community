@@ -33,10 +33,12 @@ public class EscapeAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getSelectionModel().removeSelection();
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
       return PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext) != Boolean.TRUE &&

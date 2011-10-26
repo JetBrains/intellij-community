@@ -67,7 +67,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean ADDITIONAL_PAGE_AT_BOTTOM = false;
 
     public boolean IS_DND_ENABLED = true;
-    public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
+    public boolean IS_WHEEL_FONTCHANGE_ENABLED = false;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
     @Deprecated
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
@@ -80,6 +80,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean SHOW_REFORMAT_DIALOG = true;
     public boolean SHOW_OPIMIZE_IMPORTS_DIALOG = true;
 
+    @Override
     public Object clone() {
       try {
         return super.clone();
@@ -116,8 +117,10 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     return app.getComponent(EditorSettingsExternalizable.class);
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -129,13 +132,16 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myOptions, element);
     parseRawSoftWraps();
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(myOptions, element, new DefaultJDOMExternalizer.JDOMFilter() {
+      @Override
       public boolean isAccept(final Field field) {
         return !field.getName().equals("IS_NATIVE2ASCII_FOR_PROPERTIES_FILES") && !field.getName().equals("DEFAULT_PROPERTIES_FILES_CHARSET_NAME");
       }
@@ -177,6 +183,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.USE_SOFT_WRAPS = buffer.toString();
   }
 
+  @Override
   public String getExternalFileName() {
     return "editor";
   }
@@ -365,6 +372,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.REFRAIN_FROM_SCROLLING = b;
   }
 
+  @Override
   public Object clone() {
     EditorSettingsExternalizable copy = new EditorSettingsExternalizable();
     copy.myOptions = (OptionSet) myOptions.clone();
@@ -378,16 +386,19 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     return copy;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "EditorSettings";
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return OptionsBundle.message("options.editor.settings.presentable.name");

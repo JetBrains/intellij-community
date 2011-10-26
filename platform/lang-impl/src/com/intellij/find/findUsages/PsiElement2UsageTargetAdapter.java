@@ -64,23 +64,28 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     myPresentation = new MyItemPresentation();
   }
 
+  @Override
   public String getName() {
     return getNavigationItem().getName();
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return myPresentation;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (!canNavigate()) return;
     getNavigationItem().navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return isValid() && getNavigationItem().canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return isValid() && getNavigationItem().canNavigateToSource();
   }
@@ -98,20 +103,24 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return myPresentation.getPresentableText();
   }
 
+  @Override
   public void findUsages() {
     PsiElement element = getElement();
     FindManager.getInstance(element.getProject()).findUsages(element);
   }
 
+  @Override
   public PsiElement getElement() {
     return myPointer.getElement();
   }
 
+  @Override
   public void findUsagesInEditor(@NotNull FileEditor editor) {
     PsiElement element = getElement();
     FindManager.getInstance(element.getProject()).findUsagesInEditor(element, editor);
   }
 
+  @Override
   public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
     PsiElement target = getElement();
 
@@ -139,14 +148,17 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
                                                    clearHighlights).run();
   }
 
+  @Override
   public boolean isValid() {
     return getElement() != null;
   }
 
+  @Override
   public boolean isReadOnly() {
     return isValid() && !getElement().isWritable();
   }
 
+  @Override
   public VirtualFile[] getFiles() {
     if (!isValid()) return null;
 
@@ -157,6 +169,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
+  @Override
   public void update() {
     myPresentation.update();
   }
@@ -170,6 +183,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return targets;
   }
 
+  @Override
   public void calcData(final DataKey key, final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       PsiElement element = getElement();
@@ -217,14 +231,17 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
       }
     }
 
+    @Override
     public String getPresentableText() {
       return myPresentableText;
     }
 
+    @Override
     public String getLocationString() {
       return null;
     }
 
+    @Override
     public Icon getIcon(boolean open) {
       final ComputableIcon computableIcon = open ? myIconOpen : myIconClosed;
       return computableIcon == null? null : computableIcon.getIcon();

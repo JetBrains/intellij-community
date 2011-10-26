@@ -203,6 +203,7 @@ public class HighlightControlFlowUtil {
 
   private static class ParamWriteProcessor implements Processor<PsiReference> {
     private volatile boolean myIsWriteRefFound = false;
+    @Override
     public boolean process(PsiReference reference) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {

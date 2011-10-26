@@ -37,6 +37,7 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       int selectionStart = editor.getSelectionModel().getLeadSelectionOffset();
       int offset = editor.getDocument().getTextLength();

@@ -32,10 +32,12 @@ import com.intellij.util.ReflectionCache;
 public class PackageEqualsFilter
   implements ElementFilter{
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiClass.class, hintClass) || ReflectionCache.isAssignable(PsiPackage.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     final String elementPackName = getPackageName((PsiElement) element);

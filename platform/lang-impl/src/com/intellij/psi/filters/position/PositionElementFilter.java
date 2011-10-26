@@ -37,6 +37,7 @@ public abstract class PositionElementFilter implements ElementFilter {
     return myFilter;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
   }

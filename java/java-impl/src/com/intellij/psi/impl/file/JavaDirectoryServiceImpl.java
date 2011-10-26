@@ -49,6 +49,7 @@ import java.util.Properties;
 public class JavaDirectoryServiceImpl extends JavaDirectoryService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.JavaDirectoryServiceImpl");
 
+  @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
     String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
@@ -56,6 +57,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     return JavaPsiFacade.getInstance(dir.getProject()).findPackage(packageName);
   }
 
+  @Override
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
@@ -72,11 +74,13 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
   }
 
+  @Override
   @NotNull
   public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
+  @Override
   @NotNull
   public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, templateName);
@@ -90,6 +94,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     return createClassFromTemplate(dir, name, templateName, askForUndefinedVariables);
   }
 
+  @Override
   @NotNull
   public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME;
@@ -100,6 +105,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     return someClass;
   }
 
+  @Override
   @NotNull
   public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME;
@@ -110,6 +116,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     return someClass;
   }
 
+  @Override
   @NotNull
   public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
@@ -165,6 +172,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
                              FileTemplateManager.getInstance().internalTemplateToSubject(templateName), templateName);
   }
 
+  @Override
   public void checkCreateClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     checkCreateClassOrInterface(dir, name);
   }
@@ -183,6 +191,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     }
   }
 
+  @Override
   public boolean isSourceRoot(@NotNull PsiDirectory dir) {
     final VirtualFile file = dir.getVirtualFile();
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(dir.getProject()).getFileIndex().getSourceRootForFile(file);
@@ -190,6 +199,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
   }
 
   private static final Key<LanguageLevel> LANG_LEVEL_IN_DIRECTORY = new Key<LanguageLevel>("LANG_LEVEL_IN_DIRECTORY");
+  @Override
   public LanguageLevel getLanguageLevel(@NotNull PsiDirectory dir) {
     synchronized (PsiLock.LOCK) {
       LanguageLevel level = dir.getUserData(LANG_LEVEL_IN_DIRECTORY);

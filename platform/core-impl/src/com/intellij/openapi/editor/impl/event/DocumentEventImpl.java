@@ -68,26 +68,32 @@ public class DocumentEventImpl extends DocumentEvent {
     }
   }
 
+  @Override
   public int getOffset() {
     return myOffset;
   }
 
+  @Override
   public int getOldLength() {
     return myOldLength;
   }
 
+  @Override
   public int getNewLength() {
     return myNewLength;
   }
 
+  @Override
   public CharSequence getOldFragment() {
     return myOldString;
   }
 
+  @Override
   public CharSequence getNewFragment() {
     return myNewString;
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return (Document) getSource();
@@ -125,6 +131,7 @@ public class DocumentEventImpl extends DocumentEvent {
     return isOnlyOneLineChanged;
   }
 
+  @Override
   public long getOldTimeStamp() {
     return myOldTimeStamp;
   }

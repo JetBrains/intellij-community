@@ -36,11 +36,13 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     super(ANNOTATION_PARAMETER_LIST, NAME_VALUE_PAIR_BIT_SET);
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCachedMembers = null;
   }
 
+  @Override
   @NotNull
   public PsiNameValuePair[] getAttributes() {
     PsiNameValuePair[] cachedMembers = myCachedMembers;
@@ -51,6 +53,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     return cachedMembers;
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     IElementType i = child.getElementType();
     if (i == COMMA) {
@@ -73,6 +76,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     switch (role) {
       default:
@@ -90,6 +94,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     return "PsiAnnotationParameterList";
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAnnotationParameterList(this);
@@ -99,6 +104,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     }
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (first.getElementType() == NAME_VALUE_PAIR && last.getElementType() == NAME_VALUE_PAIR) {
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);

@@ -45,6 +45,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     super(JavaElementType.IMPORT_STATIC_REFERENCE);
   }
 
+  @Override
   public int getTextOffset() {
     ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
     if (refName != null){
@@ -55,11 +56,13 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCanonicalText = null;
   }
 
+  @Override
   public final ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -87,6 +90,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
+  @Override
   public final int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -105,27 +109,33 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
 
+  @Override
   public PsiElement getReferenceNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
   }
 
+  @Override
   public PsiReferenceParameterList getParameterList() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiElement getQualifier() {
     return findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
+  @Override
   public PsiJavaCodeReferenceElement getClassReference() {
     return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
+  @Override
   public PsiImportStaticStatement bindToTargetClass(final PsiClass aClass) throws IncorrectOperationException {
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) throw new IncorrectOperationException();
@@ -147,28 +157,34 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
+  @Override
   public boolean isQualified() {
     return findChildByRole(ChildRole.QUALIFIER) != null;
   }
 
+  @Override
   public String getQualifiedName() {
     return getCanonicalText();
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public String getReferenceName() {
     final ASTNode childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
     if (childByRole == null) return "";
     return childByRole.getText();
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     if (nameChild == null) return new TextRange(0, getTextLength());
@@ -176,6 +192,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     String canonicalText = myCanonicalText;
@@ -199,6 +216,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return "PsiImportStaticReferenceElement:" + getText();
   }
 
+  @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
@@ -206,6 +224,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return JavaResolveResult.EMPTY;
   }
 
+  @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
@@ -216,6 +235,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiImportStaticReferenceElementImpl> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
+    @Override
     public JavaResolveResult[] resolve(final PsiImportStaticReferenceElementImpl referenceElement, final boolean incompleteCode) {
       final PsiElement qualifier = referenceElement.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return JavaResolveResult.EMPTY_ARRAY;
@@ -227,14 +247,17 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
 
+  @Override
   public PsiElement resolve() {
     return advancedResolve(false).getElement();
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     final String name = getReferenceName();
     return name != null &&
@@ -242,6 +265,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
            name.equals(((PsiNamedElement)element).getName()) && element.getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null) {
@@ -252,6 +276,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return this;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiMember) ||
         !(element instanceof PsiNamedElement) ||
@@ -293,17 +318,20 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return reference;
   }
 
+  @Override
   public void processVariants(PsiScopeProcessor processor) {
     FilterScopeProcessor proc = new FilterScopeProcessor(new ClassFilter(PsiModifierListOwner.class), processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     // IMPLEMENT[dsl]
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitImportStaticReferenceElement(this);

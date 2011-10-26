@@ -39,6 +39,7 @@ import javax.swing.*;
  * @author max
  */
 public class ModuleGroupingRule implements UsageGroupingRule {
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof UsageInModule) {
       UsageInModule usageInModule = (UsageInModule)usage;
@@ -60,6 +61,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     private final OrderEntry myEntry;
 
+    @Override
     public void update() {
     }
 
@@ -67,35 +69,43 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       myEntry = entry;
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return LIBRARY_ICON;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myEntry.getPresentableName();
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return null;
     }
 
+    @Override
     public boolean isValid() {
       return true;
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       if (usageGroup instanceof ModuleUsageGroup) return 1;
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
     }
 
+    @Override
     public boolean canNavigate() {
       return false;
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
@@ -119,6 +129,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       myModule = module;
     }
 
+    @Override
     public void update() {
     }
 
@@ -135,34 +146,42 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return myModule.hashCode();
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return myModule.isDisposed() ? null : ModuleType.get(myModule).getNodeIcon(isOpen);
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myModule.isDisposed() ? "" : myModule.getName();
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return null;
     }
 
+    @Override
     public boolean isValid() {
       return !myModule.isDisposed();
     }
 
+    @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
     }
 
+    @Override
     public boolean canNavigate() {
       return false;
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
 
+    @Override
     public int compareTo(UsageGroup o) {
       if (o instanceof LibraryUsageGroup) return -1;
       return getText(null).compareToIgnoreCase(o.getText(null));
@@ -172,6 +191,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return UsageViewBundle.message("node.group.module") + getText(null);
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
       if (LangDataKeys.MODULE_CONTEXT == key) {

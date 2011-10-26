@@ -42,61 +42,76 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myAttributes = attributes;
   }
 
+  @Override
   public void setText(CharSequence text) {
     myTextLength = text.length();
   }
 
+  @Override
   public void setEditor(HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
   }
 
+  @Override
   public void setColorScheme(EditorColorsScheme scheme) {
     setAttributes(scheme.getAttributes(HighlighterColors.TEXT));
   }
 
+  @Override
   public void documentChanged(DocumentEvent e) {
     myTextLength += e.getNewLength() - e.getOldLength();
   }
 
+  @Override
   public void beforeDocumentChange(DocumentEvent event) {}
 
+  @Override
   public int getPriority() {
     return 2;
   }
 
+  @Override
   public HighlighterIterator createIterator(int startOffset) {
     return new HighlighterIterator(){
       private int index = 0;
 
+      @Override
       public TextAttributes getTextAttributes() {
         return myAttributes;
       }
 
+      @Override
       public int getStart() {
         return 0;
       }
 
+      @Override
       public int getEnd() {
         return myTextLength;
       }
 
+      @Override
       public void advance() {
         index++;
       }
 
+      @Override
       public void retreat(){
         index--;
       }
 
+      @Override
       public boolean atEnd() {
         return index != 0;
       }
 
+      @Override
       public Document getDocument() {
         return myEditor.getDocument();
       }
 
+      @Override
       public IElementType getTokenType(){
         return IElementType.find(IElementType.FIRST_TOKEN_INDEX);
       }

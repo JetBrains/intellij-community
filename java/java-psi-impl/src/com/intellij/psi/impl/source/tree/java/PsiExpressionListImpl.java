@@ -33,11 +33,13 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     super(JavaElementType.EXPRESSION_LIST);
   }
 
+  @Override
   @NotNull
   public PsiExpression[] getExpressions() {
     return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   @NotNull
   public PsiType[] getExpressionTypes() {
     PsiExpression[] expressions = getExpressions();
@@ -50,6 +52,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     return types;
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -69,6 +72,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -89,6 +93,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (anchor == null) {
@@ -141,6 +146,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     return firstAdded;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
@@ -157,6 +163,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     super.deleteChildInternal(child);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitExpressionList(this);

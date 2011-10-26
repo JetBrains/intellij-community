@@ -46,6 +46,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
       public void contentRemoved(ContentManagerEvent event) {
         event.getContent().release();
       }
@@ -53,10 +54,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
     new ContentManagerWatcher(toolWindow, myFindContentManager);
   }
 
+  @Override
   public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
     return addContent(contentName, null, null, reusable, component, toOpenInNewTab, isLockable);
   }
 
+  @Override
   public Content addContent(String contentName, String tabName, String toolwindowTitle, boolean reusable, final JComponent component,
                             boolean toOpenInNewTab, boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
@@ -90,6 +93,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return content;
   }
 
+  @Override
   public int getReusableContentsCount() {
     return getContentCount(true);
   }
@@ -106,16 +110,19 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return count;
   }
 
+  @Override
   public Content getSelectedContent(boolean reusable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
     Content selectedContent = myFindContentManager.getSelectedContent();
     return selectedContent == null || selectedContent.getUserData(contentKey) == null ? null : selectedContent;
   }
 
+  @Override
   public Content getSelectedContent() {
     return myFindContentManager == null ? null : myFindContentManager.getSelectedContent();
   }
 
+  @Override
   public void closeContent(@NotNull Content content) {
     myFindContentManager.removeContent(content, true);
     content.release();

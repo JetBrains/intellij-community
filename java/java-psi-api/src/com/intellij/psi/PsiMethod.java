@@ -39,6 +39,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
 
   ArrayFactory<PsiMethod> ARRAY_FACTORY = new ArrayFactory<PsiMethod>() {
+    @Override
     public PsiMethod[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiMethod[count];
     }
@@ -107,6 +108,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the name identifier instance.
    */
+  @Override
   @Nullable PsiIdentifier getNameIdentifier();
 
   /**
@@ -170,11 +172,14 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull PsiMethod[] findDeepestSuperMethods();
 
+  @Override
   @NotNull PsiModifierList getModifierList();
 
+  @Override
   @NotNull @NonNls
   String getName();
 
+  @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
   @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature();

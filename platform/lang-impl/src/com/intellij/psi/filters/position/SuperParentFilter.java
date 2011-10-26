@@ -33,6 +33,7 @@ public class SuperParentFilter extends PositionElementFilter{
 
   public SuperParentFilter(){}
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;
     while((element = ((PsiElement) element).getParent()) != null){

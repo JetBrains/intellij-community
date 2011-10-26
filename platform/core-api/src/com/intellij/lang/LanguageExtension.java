@@ -40,6 +40,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     myDefaultImplementation = defaultImplementation;
   }
 
+  @Override
   protected String keyToString(final Language key) {
     return key.getID();
   }

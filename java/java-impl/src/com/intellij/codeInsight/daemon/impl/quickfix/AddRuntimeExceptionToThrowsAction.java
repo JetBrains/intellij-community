@@ -32,15 +32,18 @@ import java.util.Collections;
  */
 public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("add.runtime.exception.to.throws.text");
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -63,6 +66,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     return false;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     PsiClassType exception = getRuntimeExceptionAtCaret(editor, file);
@@ -93,6 +97,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
   }
 
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.runtime.exception.to.throws.family");

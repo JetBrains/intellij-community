@@ -160,7 +160,7 @@ public final class UpdateChecker {
     final Map<String, IdeaPluginDescriptor> toUpdate = new HashMap<String, IdeaPluginDescriptor>();
     final IdeaPluginDescriptor[] installedPlugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor installedPlugin : installedPlugins) {
-      if (!installedPlugin.isBundled() && ((IdeaPluginDescriptorImpl)installedPlugin).isEnabled()) {
+      if (!installedPlugin.isBundled()) {
         toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
       }
     }
@@ -175,9 +175,11 @@ public final class UpdateChecker {
           if (installedPlugin != null) {
             if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
               updateSettings.myOutdatedPlugins.add(idString);
-              final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
-              if (downloader.prepareToInstall()) {
-                downloaded.add(downloader);
+              if (((IdeaPluginDescriptorImpl)installedPlugin).isEnabled()) {
+                final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
+                if (downloader.prepareToInstall()) {
+                  downloaded.add(downloader);
+                }
               }
             }
           }

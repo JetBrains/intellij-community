@@ -35,14 +35,17 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     super(ASSERT_STATEMENT);
   }
 
+  @Override
   public PsiExpression getAssertCondition() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
+  @Override
   public PsiExpression getAssertDescription() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ASSERT_DESCRIPTION);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -74,6 +77,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -96,6 +100,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitAssertStatement(this);

@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final IndexPatternSearch.SearchParameters queryParameters,
                          @NotNull final Processor<IndexPatternOccurrence> consumer) {
     final PsiFile file = queryParameters.getFile();

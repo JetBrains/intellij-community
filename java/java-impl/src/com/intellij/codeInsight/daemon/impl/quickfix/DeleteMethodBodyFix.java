@@ -36,20 +36,24 @@ public class DeleteMethodBodyFix implements IntentionAction {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("delete.body.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("delete.body.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod.isValid() && myMethod.getManager().isInProject(myMethod) && myMethod.getBody() != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myMethod)) return;
     final PsiCodeBlock body = myMethod.getBody();
@@ -57,6 +61,7 @@ public class DeleteMethodBodyFix implements IntentionAction {
     body.delete();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

@@ -46,52 +46,64 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
     return myParent;
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return myParent.getContainingFile();
   }
 
+  @Override
   public abstract String getName();
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return getContainingFile().getLanguage();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myParent.getProject();
   }
 
+  @Override
   public PsiManager getManager() {
     return PsiManager.getInstance(getProject());
   }
 
+  @Override
   @Nullable
   public PsiMetaData getMetaData() {
     return this;
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return this;
   }
 
+  @Override
   @NonNls
   public String getName(final PsiElement context) {
     return getName();
   }
 
+  @Override
   public void init(final PsiElement element) {
   }
 
+  @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   @Nullable
   public final Icon getIcon(final boolean open) {
     return getIcon();
   }
 
+  @Override
   @Nullable
   public TextRange getTextRange() {
     return TextRange.from(0, 0);

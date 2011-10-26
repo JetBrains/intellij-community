@@ -51,6 +51,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     myFlags = flags;
   }
 
+  @Override
   public boolean isStatic() {
     return isStatic(myFlags);
   }
@@ -59,6 +60,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     return (flags & STATIC) != 0;
   }
 
+  @Override
   public boolean isOnDemand() {
     return (myFlags & ON_DEMAND) != 0;
   }
@@ -67,10 +69,12 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     return myFlags;
   }
 
+  @Override
   public String getImportReferenceText() {
     return StringRef.toString(myText);
   }
 
+  @Override
   @Nullable
   public PsiJavaCodeReferenceElement getReference() {
     PsiJavaCodeReferenceElement ref = myReference != null ? myReference.get() : null;

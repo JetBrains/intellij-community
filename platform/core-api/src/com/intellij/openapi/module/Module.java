@@ -73,6 +73,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    *
    * @return true if the module has been disposed, false otherwise
    */
+  @Override
   boolean isDisposed();
 
   boolean isLoaded();

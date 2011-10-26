@@ -44,6 +44,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     myType = type;
   }
 
+  @Override
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     synchronized (PsiLock.LOCK) {
@@ -56,6 +57,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return clone;
   }
 
+  @Override
   public ASTNode copyElement() {
     CharTable table = SharedImplUtil.findCharTableByTree(this);
     return ChangeUtil.copyElement(this, table);
@@ -77,24 +79,29 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
   }
 
+  @Override
   public abstract LeafElement findLeafElementAt(int offset);
 
   @NotNull
   public abstract char[] textToCharArray();
 
+  @Override
   public abstract TreeElement getFirstChildNode();
 
+  @Override
   public abstract TreeElement getLastChildNode();
 
   public abstract int getNotCachedLength();
 
   public abstract int getCachedLength();
 
+  @Override
   public TextRange getTextRange() {
     int start = getStartOffset();
     return new TextRange(start, start + getTextLength());
   }
 
+  @Override
   public int getStartOffset() {
     int result = 0;
     TreeElement current = this;
@@ -163,10 +170,12 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return "Element" + "(" + getElementType().toString() + ")";
   }
 
+  @Override
   public final CompositeElement getTreeParent() {
     return myParent;
   }
 
+  @Override
   public final TreeElement getTreePrev() {
     return myPrevSibling;
   }
@@ -180,6 +189,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     clearRelativeOffsets(this);
   }
 
+  @Override
   public final TreeElement getTreeNext() {
     return myNextSibling;
   }
@@ -375,6 +385,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     DebugUtil.checkTreeStructure(this);
   }
 
+  @Override
   public IElementType getElementType() {
     return myType;
   }

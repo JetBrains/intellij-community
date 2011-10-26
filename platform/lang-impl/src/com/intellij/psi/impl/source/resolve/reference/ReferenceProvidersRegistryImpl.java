@@ -34,6 +34,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
   private static final Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>> PRIORITY_COMPARATOR =
     new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
+      @Override
       public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
                          final Trinity<PsiReferenceProvider, ProcessingContext, Double> o2) {
         return o2.getThird().compareTo(o1.getThird());
@@ -76,10 +77,12 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     }
   };
 
+  @Override
   public synchronized PsiReferenceRegistrarImpl getRegistrar(Language language) {
     return myRegistrars.get(language);
   }
 
+  @Override
   protected PsiReference[] doGetReferencesFromProviders(PsiElement context,
                                                         PsiReferenceService.Hints hints) {
     List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providersForContextLanguage;

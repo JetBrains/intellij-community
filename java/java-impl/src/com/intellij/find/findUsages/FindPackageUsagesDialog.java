@@ -35,10 +35,12 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
+  @Override
   public JComponent getPreferredFocusedControl() {
     return myCbUsages;
   }
 
+  @Override
   public void calcFindUsagesOptions(JavaPackageFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
@@ -50,6 +52,7 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     options.isSkipImportStatements = false;
   }
 
+  @Override
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
     findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group"), false, true, true));
@@ -61,6 +64,7 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     return findWhatPanel;
   }
 
+  @Override
   protected void update() {
     if(myCbToSearchForTextOccurrences != null){
       if (isSelected(myCbUsages)){

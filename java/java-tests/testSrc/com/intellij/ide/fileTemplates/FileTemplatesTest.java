@@ -107,6 +107,7 @@ public class FileTemplatesTest extends IdeaTestCase {
 
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ModifiableRootModel model = rootManager.getModifiableModel();
           ContentEntry contentEntry = model.addContentEntry(tempDir);

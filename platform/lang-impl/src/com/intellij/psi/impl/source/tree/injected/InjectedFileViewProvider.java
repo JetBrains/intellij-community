@@ -63,6 +63,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     }
   }
 
+  @Override
   public void rootChanged(PsiFile psiFile) {
     super.rootChanged(psiFile);
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
@@ -88,6 +89,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     }
   }
 
+  @Override
   public FileViewProvider clone() {
     final DocumentWindow oldDocumentWindow = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
     Document hostDocument = oldDocumentWindow.getDelegate();
@@ -100,6 +102,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     assert elementCopy != null;
     final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
     InjectedLanguageUtil.enumerate(elementCopy, hostPsiFileCopy, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         Document document = documentManager.getCachedDocument(injectedPsi);
         if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {
@@ -110,6 +113,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     return provider.get();
   }
 
+  @Override
   @Nullable
   protected PsiFile getPsiInner(Language target) {
     // when FileManager rebuilds file map, all files temporarily become invalid, so this check is doomed

@@ -41,64 +41,79 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     myNameElement = new NameElement(name);
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(myNameElement.getText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, ElementType.DOC_TAG);
   }
 
+  @Override
   public String getText() {
     return myNameElement.getText();
   }
 
+  @Override
   @NotNull
   public char[] textToCharArray(){
     return myNameElement.textToCharArray();
   }
 
+  @Override
   public String getName() {
     return getNameElement().getText().substring(1);
   }
 
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return myNameElement.textMatches(text);
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return myNameElement.textMatches(element);
   }
 
+  @Override
   public int getTextLength(){
     return myNameElement.getTextLength();
   }
 
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myNameElement};
   }
 
+  @Override
   public PsiElement getParent() {
     return getContainingComment();
   }
 
+  @Override
   public PsiDocComment getContainingComment() {
     return myDocComment;
   }
 
+  @Override
   public PsiElement getNameElement() {
     return myNameElement;
   }
 
+  @Override
   public PsiElement[] getDataElements() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiDocTagValue getValueElement() {
     return null;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDocTag(this);
@@ -115,35 +130,43 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
       myText = text;
     }
 
+    @Override
     public String getText() {
       return myText;
     }
 
+    @Override
     @NotNull
     public char[] textToCharArray(){
       return myText.toCharArray();
     }
 
+    @Override
     @NotNull
     public PsiElement[] getChildren(){
       return PsiElement.EMPTY_ARRAY;
     }
 
+    @Override
     public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     }
 
+    @Override
     public void setMirror(@NotNull TreeElement element) {
       setMirrorCheckingType(element, null);
     }
 
+    @Override
     public PsiElement getParent() {
       return ClsDocTagImpl.this;
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
       visitor.visitElement(this);
     }
   }
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     PsiImplUtil.setName(getNameElement(), name);
     return this;

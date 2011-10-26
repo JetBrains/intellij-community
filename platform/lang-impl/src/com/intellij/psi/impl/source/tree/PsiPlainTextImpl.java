@@ -26,6 +26,7 @@ public class PsiPlainTextImpl extends OwnBufferLeafPsiElement implements PsiPlai
     super(PlainTextTokenTypes.PLAIN_TEXT, text);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitPlainText(this);
   }

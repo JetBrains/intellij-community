@@ -28,6 +28,7 @@ import org.jdom.Element;
  * To change this template use Options | File Templates.
  */
 public class StartElementFilter extends PositionElementFilter{
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     return FilterUtil.getPreviousElement((PsiElement) element, false) == null;

@@ -39,6 +39,7 @@ public class ExcludeDeclaredFilter extends PositionElementFilter{
   SoftReference<PsiElement> myCachedVar = new SoftReference<PsiElement>(null);
   SoftReference<PsiElement> myCurrentContext = new SoftReference<PsiElement>(null);
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     PsiElement cachedVar = context;
 

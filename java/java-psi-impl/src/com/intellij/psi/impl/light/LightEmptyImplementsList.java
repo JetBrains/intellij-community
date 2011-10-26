@@ -31,10 +31,12 @@ public class LightEmptyImplementsList extends LightElement implements PsiReferen
     return "PsiReferenceList";
   }
 
+  @Override
   public String getText() {
     return "";
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceList(this);
@@ -44,20 +46,24 @@ public class LightEmptyImplementsList extends LightElement implements PsiReferen
     }
   }
 
+  @Override
   public PsiElement copy() {
     return this;
   }
 
+  @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @Override
   public Role getRole() {
     return Role.IMPLEMENTS_LIST;
   }

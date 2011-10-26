@@ -35,6 +35,7 @@ public class EditorInfo {
 
   public EditorInfo(final String fileText) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         updateCaretAndSelection(EditorFactory.getInstance().createDocument(fileText));
       }

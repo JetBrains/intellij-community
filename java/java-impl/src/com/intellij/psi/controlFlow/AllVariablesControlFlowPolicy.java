@@ -29,15 +29,18 @@ import com.intellij.psi.*;
 public class AllVariablesControlFlowPolicy implements ControlFlowPolicy {
   private static final AllVariablesControlFlowPolicy INSTANCE = new AllVariablesControlFlowPolicy();
 
+  @Override
   public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
       PsiElement resolved = refExpr.resolve();
       return resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
   }
 
+  @Override
   public boolean isParameterAccepted(PsiParameter psiParameter) {
     return true;
   }
 
+  @Override
   public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
     return true;
   }

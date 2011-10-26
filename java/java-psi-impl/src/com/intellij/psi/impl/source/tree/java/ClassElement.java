@@ -37,6 +37,7 @@ public class ClassElement extends CompositeElement implements Constants {
     super(type);
   }
 
+  @Override
   public int getTextOffset() {
     ASTNode name = findChildByRole(ChildRole.NAME);
     if (name != null) {
@@ -47,6 +48,7 @@ public class ClassElement extends CompositeElement implements Constants {
     }
   }
 
+  @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     PsiClass psiClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(this);
     if (anchor == null) {
@@ -171,6 +173,7 @@ public class ClassElement extends CompositeElement implements Constants {
     return firstAdded;
   }
 
+  @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (isEnum()) {
       if (child.getElementType() == ENUM_CONSTANT) {
@@ -239,6 +242,7 @@ public class ClassElement extends CompositeElement implements Constants {
   );
 
 
+  @Override
   public ASTNode findChildByRole(int role) {
     assert ChildRole.isUnique(role);
 
@@ -328,6 +332,7 @@ public class ClassElement extends CompositeElement implements Constants {
     return null;
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     assert child.getTreeParent() == this;
 

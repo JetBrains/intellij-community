@@ -96,15 +96,18 @@ public class ClsParsingUtil {
       assert referenceElement != null : psiAnnotation;
       final String canonicalText = referenceElement.getCanonicalText();
       return new ClsAnnotationValueImpl(parent) {
+        @Override
         protected ClsJavaCodeReferenceElementImpl createReference() {
           return new ClsJavaCodeReferenceElementImpl(this, canonicalText);
         }
 
+        @Override
         protected ClsAnnotationParameterListImpl createParameterList() {
           PsiNameValuePair[] psiAttributes = psiAnnotation.getParameterList().getAttributes();
           return new ClsAnnotationParameterListImpl(this, psiAttributes);
         }
 
+        @Override
         public PsiAnnotationOwner getOwner() {
           return (PsiAnnotationOwner)getParent();
         }

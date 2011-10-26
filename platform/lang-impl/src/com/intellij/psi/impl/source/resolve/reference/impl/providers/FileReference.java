@@ -79,6 +79,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   };
 
   private static final TObjectHashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiElement>() {
+    @Override
     public int computeHashCode(final PsiElement object) {
       if (object instanceof PsiNamedElement) {
         final String name = ((PsiNamedElement)object).getName();
@@ -89,6 +90,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       return object.hashCode();
     }
 
+    @Override
     public boolean equals(final PsiElement o1, final PsiElement o2) {
       if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
         return Comparing.equal(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
@@ -129,6 +131,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return result;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
@@ -197,10 +200,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
           }
           else {
             processVariants(context, new PsiFileSystemItemProcessor() {
+              @Override
               public boolean acceptItem(String name, boolean isDirectory) {
                 return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
               }
 
+              @Override
               public boolean execute(@NotNull PsiFileSystemItem element) {
                 result.add(new PsiElementResolveResult(getOriginalFile(element)));
                 return true;
@@ -243,6 +248,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return _text;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final String s = getText();
@@ -252,6 +258,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
     final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector = new CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem>();
     final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
+      @Override
       public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
         return new FilteringProcessor<PsiFileSystemItem>(myFileReferenceSet.getReferenceCompletionFilter(), collector).process(getOriginalFile(fileSystemItem));
       }
@@ -334,10 +341,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
+  @Override
   public PsiElement getElement() {
     return myFileReferenceSet.getElement();
   }
 
+  @Override
   public PsiFileSystemItem resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
@@ -349,6 +358,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiFileSystemItem)) return false;
 
@@ -356,10 +366,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return item != null && FileReferenceHelperRegistrar.areElementsEquivalent(item, (PsiFileSystemItem)element);
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return myRange;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myText;
@@ -369,10 +381,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return myText;
   }
 
+  @Override
   public boolean isSoft() {
     return myFileReferenceSet.isSoft();
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
     if (manipulator != null) {
@@ -500,6 +514,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   }
 
   /* Happens when it's been moved to another folder */
+  @Override
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     return bindToElement(element, myFileReferenceSet.isAbsolutePathReference());
   }
@@ -513,6 +528,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return manipulator.handleContentChange(getElement(), range, newName);
   }
 
+  @Override
   public void registerQuickfix(HighlightInfo info, FileReference reference) {
     for (final FileReferenceHelper helper : getHelpers()) {
       helper.registerFixes(info, reference);
@@ -527,6 +543,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return myIndex;
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
            + " " + (isLast() ? LangBundle.message("terms.file") : LangBundle.message("terms.directory"))
@@ -542,6 +559,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return myFileReferenceSet;
   }
 
+  @Override
   public LocalQuickFix[] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     for (final FileReferenceHelper helper : getHelpers()) {
@@ -550,6 +568,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return result.toArray(new LocalQuickFix[result.size()]);
   }
 
+  @Override
   public FileReference getLastFileReference() {
     return myFileReferenceSet.getLastReference();
   }
@@ -557,6 +576,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   static class MyResolver implements ResolveCache.PolyVariantResolver<FileReference> {
     static final MyResolver INSTANCE = new MyResolver();
 
+    @Override
     public ResolveResult[] resolve(FileReference ref, boolean incompleteCode) {
       return ref.innerResolve(ref.getFileReferenceSet().isCaseSensitive());
     }

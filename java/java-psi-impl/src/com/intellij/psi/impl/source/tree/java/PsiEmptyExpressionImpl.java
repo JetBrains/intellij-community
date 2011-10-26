@@ -27,10 +27,12 @@ public class PsiEmptyExpressionImpl extends ExpressionPsiElement implements PsiE
     super(Constants.EMPTY_EXPRESSION);
   }
 
+  @Override
   public PsiType getType() {
     return null;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitExpression(this);

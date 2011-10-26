@@ -46,16 +46,19 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
     myMethodCall = methodCall;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Replace " + myMethodCall.getText() + " with " + getCollectionsMethodCall();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (myMethodCall == null || !myMethodCall.isValid()) return false;
 
@@ -90,6 +93,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
     return false;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -106,6 +110,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
            ", " + (expressions.length == 0 ? "" : expressions[0].getText()) + ")";
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

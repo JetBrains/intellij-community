@@ -41,6 +41,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     myManager = manager;
   }
 
+  @Override
   @NotNull
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
@@ -50,6 +51,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     return newElement.getPsi();
   }
 
+  @Override
   @NotNull
   public PsiComment createLineCommentFromText(@NotNull final LanguageFileType fileType,
                                               @NotNull final String text) throws IncorrectOperationException {
@@ -72,6 +74,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
   }
 
+  @Override
   @NotNull
   public PsiComment createLineOrBlockCommentFromText(@NotNull Language lang, @NotNull String text)
     throws IncorrectOperationException {

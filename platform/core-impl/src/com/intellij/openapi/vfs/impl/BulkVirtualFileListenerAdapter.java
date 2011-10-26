@@ -32,12 +32,14 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
     myAdaptee = adaptee;
   }
 
+  @Override
   public void before(final List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       fireBefore(event);
     }
   }
 
+  @Override
   public void after(final List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       fireAfter(event);

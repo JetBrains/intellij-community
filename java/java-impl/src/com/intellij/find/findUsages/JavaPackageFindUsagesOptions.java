@@ -18,6 +18,7 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
     super(project);
   }
 
+  @Override
   protected void addUsageTypes(LinkedHashSet<String> to) {
     if (this.isUsages || this.isClassesUsages) {
       to.add(FindBundle.message("find.usages.panel.title.usages"));

@@ -20,6 +20,7 @@ package com.intellij.openapi.editor.ex;
  */
 public abstract class ErrorStripeAdapter implements ErrorStripeListener {
 
+  @Override
   public void errorMarkerClicked(ErrorStripeEvent e) {
   }
 }

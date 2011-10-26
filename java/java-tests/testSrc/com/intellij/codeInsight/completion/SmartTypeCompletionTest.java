@@ -1140,6 +1140,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @Override
   protected void complete() {
     myItems = myFixture.complete(CompletionType.SMART);
   }

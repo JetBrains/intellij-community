@@ -42,6 +42,7 @@ public interface PsiJavaReference extends PsiPolyVariantReference {
   @NotNull
   JavaResolveResult advancedResolve(boolean incompleteCode);
   
+  @Override
   @NotNull
   JavaResolveResult[] multiResolve(boolean incompleteCode);
 

@@ -29,6 +29,7 @@ import com.intellij.codeInsight.completion.CompletionContext;
  * To change this template use Options | File Templates.
  */
 public class CastTypeGetter implements ContextGetter{
+  @Override
   public Object[] get(PsiElement context, CompletionContext completionContext){
     final PsiTypeCastExpression cast = PsiTreeUtil.getContextOfType(context, PsiTypeCastExpression.class, true);
     return new Object[]{cast.getCastType().getType()};

@@ -37,15 +37,18 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     super(LABELED_STATEMENT);
   }
 
+  @Override
   @NotNull
   public PsiIdentifier getLabelIdentifier() {
     return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL_NAME);
   }
 
+  @Override
   public PsiStatement getStatement() {
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.STATEMENT);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -63,6 +66,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -80,6 +84,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitLabeledStatement(this);
@@ -93,6 +98,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     return "PsiLabeledStatement";
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent != null && lastParent.getParent() != this){
       PsiElement[] children = getChildren();
@@ -105,15 +111,18 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     return true;
   }
 
+  @Override
   public String getName() {
     return getLabelIdentifier().getText();
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getLabelIdentifier(), name);
     return this;
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(this);

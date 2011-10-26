@@ -46,6 +46,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     super(DOC_INLINE_TAG);
   }
 
+  @Override
   public PsiDocComment getContainingComment() {
     ASTNode scope = getTreeParent();
     while (scope.getElementType() != JavaDocElementType.DOC_COMMENT) {
@@ -54,24 +55,29 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return (PsiDocComment)SourceTreeToPsiMap.treeElementToPsi(scope);
   }
 
+  @Override
   public PsiElement getNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.DOC_TAG_NAME);
   }
 
+  @Override
   public PsiElement[] getDataElements() {
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @Override
   public PsiDocTagValue getValueElement() {
     return (PsiDocTagValue)findChildByRoleAsPsiElement(ChildRole.DOC_TAG_VALUE);
   }
 
+  @Override
   public String getName() {
     final PsiElement nameElement = getNameElement();
     if (nameElement == null) return "";
     return nameElement.getText().substring(1);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -98,6 +104,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitInlineDocTag(this);
@@ -112,6 +119,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return "PsiInlineDocTag:" + (nameElement != null ? nameElement.getText() : null);
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(getNameElement(), name);
     return this;

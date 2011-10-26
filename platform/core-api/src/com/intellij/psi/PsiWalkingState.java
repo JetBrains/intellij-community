@@ -28,18 +28,22 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   private final PsiElementVisitor myVisitor;
 
   private static class PsiTreeGuide implements TreeGuide<PsiElement> {
+    @Override
     public PsiElement getNextSibling(@NotNull PsiElement element) {
       return element.getNextSibling();
     }
 
+    @Override
     public PsiElement getPrevSibling(@NotNull PsiElement element) {
       return element.getPrevSibling();
     }
 
+    @Override
     public PsiElement getFirstChild(@NotNull PsiElement element) {
       return element.getFirstChild();
     }
 
+    @Override
     public PsiElement getParent(@NotNull PsiElement element) {
       return element.getParent();
     }

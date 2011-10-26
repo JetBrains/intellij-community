@@ -39,26 +39,31 @@ import java.util.List;
 public abstract class PsiElementBase extends ElementBase implements NavigatablePsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiElementBase");
 
+  @Override
   public PsiElement getFirstChild() {
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
     return children[0];
   }
 
+  @Override
   public PsiElement getLastChild() {
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
     return children[children.length - 1];
   }
 
+  @Override
   public PsiElement getNextSibling() {
     return SharedPsiElementImplUtil.getNextSibling(this);
   }
 
+  @Override
   public PsiElement getPrevSibling() {
     return SharedPsiElementImplUtil.getPrevSibling(this);
   }
 
+  @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
@@ -67,41 +72,50 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     }
   }
 
+  @Override
   public PsiReference getReference() {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
+  @Override
   public PsiReference findReferenceAt(int offset) {
     return SharedPsiElementImplUtil.findReferenceAt(this, offset);
   }
 
+  @Override
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
+  @Override
   public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
+  @Override
   public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
+  @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
+  @Override
   public boolean textContains(char c) {
     return getText().indexOf(c) >= 0;
   }
 
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
@@ -109,29 +123,35 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return true;
   }
 
+  @Override
   public PsiElement getContext() {
     return getParent();
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }
 
+  @Override
   public PsiElement getOriginalElement() {
     return this;
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) {
@@ -139,14 +159,17 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
@@ -158,48 +181,58 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   //default implementations of methods from NavigationItem
+  @Override
   public ItemPresentation getPresentation() {
     return null;
   }
 
+  @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;
   }  
 
+  @Override
   public PsiFile getContainingFile() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     return parent.getContainingFile();
   }
 
+  @Override
   public boolean isPhysical() {
     final PsiElement parent = getParent();
     return parent != null && parent.isPhysical();
   }
 
+  @Override
   public boolean isWritable() {
     final PsiElement parent = getParent();
     return parent != null && parent.isWritable();
   }
 
+  @Override
   public boolean isValid() {
     final PsiElement parent = getParent();
     return parent != null && parent.isValid();
   }
 
   //Q: get rid of these methods?
+  @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return Comparing.equal(getText(), text, true);
   }
 
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return getText().equals(element.getText());
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitElement(this);
   }
 
+  @Override
   public String getName() {
     return null;
   }

@@ -23,8 +23,10 @@ import com.intellij.openapi.util.Computable;
  * @author cdr
  */
 public abstract class ReadActionProcessor<T> implements Processor<T> {
+  @Override
   public boolean process(final T t) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+      @Override
       public Boolean compute() {
         return processInReadAction(t);
       }

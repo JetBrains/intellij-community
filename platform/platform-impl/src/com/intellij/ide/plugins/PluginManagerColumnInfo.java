@@ -16,10 +16,12 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,6 +109,15 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return true;
   }
 
+  public static boolean isDownloaded(@NotNull PluginNode node) {
+    if (node.getStatus() == PluginNode.STATUS_DOWNLOADED) return true;
+    final PluginId pluginId = node.getPluginId();
+    if (PluginManager.isPluginInstalled(pluginId)) {
+      return false;
+    }
+    return PluginManagerUISettings.getInstance().myInstalledPlugins.contains(pluginId.getIdString());
+  }
+
   public Comparator<IdeaPluginDescriptor> getComparator() {
     if (isSortByName()) {
       return new Comparator<IdeaPluginDescriptor>() {
@@ -151,11 +162,11 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
           if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
             final int status1 = ((PluginNode)o1).getStatus();
             final int status2 = ((PluginNode)o2).getStatus();
-            if (status1 == PluginNode.STATUS_DOWNLOADED){
-              if (status2 != PluginNode.STATUS_DOWNLOADED) return -1;
+            if (isDownloaded((PluginNode)o1)){
+              if (!isDownloaded((PluginNode)o2)) return -1;
               return StringUtil.compare(o1.getName(), o2.getName(), true);
             }
-            if (status2 == PluginNode.STATUS_DOWNLOADED) return 1;
+            if (isDownloaded((PluginNode)o2)) return 1;
 
             if (status1 == PluginNode.STATUS_DELETED) {
               if (status2 != PluginNode.STATUS_DELETED) return -1;

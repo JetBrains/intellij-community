@@ -43,6 +43,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       final FileType fileType = file.getFileType();
       return isIndexable(fileType) && !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
@@ -50,26 +51,31 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   };
 
   private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
+    @Override
     public void save(final DataOutput out, final Integer value) throws IOException {
       out.writeByte(value.intValue());
     }
 
+    @Override
     public Integer read(final DataInput in) throws IOException {
       return Integer.valueOf(in.readByte());
     }
   };
   
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
+    @Override
     public IdIndexEntry fromInt(int n) {
       return new IdIndexEntry(n);
     }
 
+    @Override
     public int toInt(IdIndexEntry idIndexEntry) {
       return idIndexEntry.getWordHashCode();
     }
   };
   
   private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
+    @Override
     @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(inputData.getFileType());
@@ -81,30 +87,37 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
 
+  @Override
   public int getVersion() {
     return 9; // TODO: version should enumerate all word scanner versions and build version upon that set
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public ID<IdIndexEntry,Integer> getName() {
     return NAME;
   }
 
+  @Override
   public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
     return myIndexer;
   }
 
+  @Override
   public DataExternalizer<Integer> getValueExternalizer() {
     return myValueExternalizer;
   }
 
+  @Override
   public KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }

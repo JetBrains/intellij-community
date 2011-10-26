@@ -36,6 +36,7 @@ public class PsiReferenceContributorEP extends CustomLoadingExtensionPointBean i
   public String implementationClass;
 
   private final NotNullLazyValue<PsiReferenceContributor> myHandler = new NotNullLazyValue<PsiReferenceContributor>() {
+    @Override
     @NotNull
     protected PsiReferenceContributor compute() {
       try {
@@ -47,10 +48,12 @@ public class PsiReferenceContributorEP extends CustomLoadingExtensionPointBean i
     }
   };
 
+  @Override
   public PsiReferenceContributor getInstance() {
     return myHandler.getValue();
   }
 
+  @Override
   public String getKey() {
     return language;
   }

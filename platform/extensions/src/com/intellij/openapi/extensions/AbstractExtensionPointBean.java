@@ -28,6 +28,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
   protected PluginDescriptor myPluginDescriptor;
 
+  @Override
   public final void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }

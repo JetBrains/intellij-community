@@ -21,10 +21,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.util.TextRange;
 
 public class ImportPostFormatProcessor implements PostFormatProcessor {
+  @Override
   public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
     return new ImportsFormatter(settings, source.getContainingFile()).process(source);
   }
 
+  @Override
   public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
     return new ImportsFormatter(settings, source.getContainingFile()).processText(source, rangeToReformat);
   }

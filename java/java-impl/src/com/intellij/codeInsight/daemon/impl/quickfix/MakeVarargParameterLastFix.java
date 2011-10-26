@@ -35,26 +35,31 @@ public class MakeVarargParameterLastFix implements IntentionAction {
 
   private final PsiParameter myParameter;
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("make.vararg.parameter.last.text", myParameter.getName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("make.vararg.parameter.last.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myParameter.isValid() && myParameter.getManager().isInProject(myParameter);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myParameter)) return;
     myParameter.getParent().add(myParameter);
     myParameter.delete();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

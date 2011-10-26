@@ -38,16 +38,19 @@ public class TextComponentCaretModel implements CaretModel {
     myEditor = editor;
   }
 
+  @Override
   public void moveCaretRelatively(final int columnShift,
                                   final int lineShift,
                                   final boolean withSelection, final boolean blockSelection, final boolean scrollToCaret) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
     moveToOffset(myEditor.logicalPositionToOffset(pos), false);
   }
 
+  @Override
   public void moveToVisualPosition(@NotNull final VisualPosition pos) {
     moveToLogicalPosition(myEditor.visualToLogicalPosition(pos));
   }
@@ -57,6 +60,7 @@ public class TextComponentCaretModel implements CaretModel {
     moveToOffset(offset, false);
   }
 
+  @Override
   public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
     myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
   }
@@ -66,6 +70,7 @@ public class TextComponentCaretModel implements CaretModel {
     return true;
   }
 
+  @Override
   @NotNull
   public LogicalPosition getLogicalPosition() {
     int caretPos = myTextComponent.getCaretPosition();
@@ -88,32 +93,39 @@ public class TextComponentCaretModel implements CaretModel {
     return new LogicalPosition(line, caretPos - lineStart);
   }
 
+  @Override
   @NotNull
   public VisualPosition getVisualPosition() {
     LogicalPosition pos = getLogicalPosition();
     return new VisualPosition(pos.line, pos.column);
   }
 
+  @Override
   public int getOffset() {
     return myTextComponent.getCaretPosition();
   }
 
+  @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public void removeCaretListener(@NotNull final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   public int getVisualLineStart() {
     return 0;
   }
 
+  @Override
   public int getVisualLineEnd() {
     return 0;
   }
 
+  @Override
   public TextAttributes getTextAttributes() {
     return null;
   }

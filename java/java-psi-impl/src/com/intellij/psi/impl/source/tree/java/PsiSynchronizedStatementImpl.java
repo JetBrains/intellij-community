@@ -32,14 +32,17 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     super(SYNCHRONIZED_STATEMENT);
   }
 
+  @Override
   public PsiExpression getLockExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOCK);
   }
 
+  @Override
   public PsiCodeBlock getBody() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.BLOCK);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -63,6 +66,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -86,6 +90,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitSynchronizedStatement(this);

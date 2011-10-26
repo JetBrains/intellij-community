@@ -32,6 +32,7 @@ public class TypeParameterElement extends CompositeElement {
     super(ElementType.TYPE_PARAMETER);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType i = child.getElementType();
@@ -46,6 +47,7 @@ public class TypeParameterElement extends CompositeElement {
     }
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
 

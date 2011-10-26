@@ -35,26 +35,31 @@ public class SafeDeleteFix implements IntentionAction {
     myElement = element;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("safe.delete.text",
                                   HighlightMessageUtil.getSymbolName(myElement, PsiSubstitutor.EMPTY));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("safe.delete.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myElement.isValid() && myElement.getManager().isInProject(myElement);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
     SafeDeleteHandler.invoke(project, new PsiElement[]{myElement}, false);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

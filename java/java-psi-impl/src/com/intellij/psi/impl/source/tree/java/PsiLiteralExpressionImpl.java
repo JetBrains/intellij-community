@@ -48,6 +48,7 @@ public class PsiLiteralExpressionImpl
     super(JavaElementType.LITERAL_EXPRESSION);
   }
 
+  @Override
   public PsiType getType() {
     final IElementType type = getFirstChildNode().getElementType();
     if (type == JavaTokenType.INTEGER_LITERAL) {
@@ -85,6 +86,7 @@ public class PsiLiteralExpressionImpl
     return NUMERIC_LITERALS.contains(type) ? LiteralFormatUtil.removeUnderscores(literal.getText()) : literal.getText();
   }
 
+  @Override
   public Object getValue() {
     final TreeElement literal = getFirstChildNode();
     final IElementType type = literal.getElementType();
@@ -215,6 +217,7 @@ public class PsiLiteralExpressionImpl
     return integer;
   }
 
+  @Override
   public String getParsingError() {
     return null;
   }
@@ -351,6 +354,7 @@ public class PsiLiteralExpressionImpl
     return true;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitLiteralExpression(this);
@@ -369,11 +373,13 @@ public class PsiLiteralExpressionImpl
     return getValue() instanceof String;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return PsiReferenceService.getService().getContributedReferences(this);
   }
 
+  @Override
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     TreeElement valueNode = getFirstChildNode();
     assert valueNode instanceof LeafElement;
@@ -381,6 +387,7 @@ public class PsiLiteralExpressionImpl
     return this;
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
     return new StringLiteralEscaper<PsiLiteralExpressionImpl>(this);

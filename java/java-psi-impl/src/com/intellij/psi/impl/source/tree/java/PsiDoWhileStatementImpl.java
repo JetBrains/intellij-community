@@ -34,26 +34,32 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
     super(DO_WHILE_STATEMENT);
   }
 
+  @Override
   public PsiExpression getCondition(){
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
+  @Override
   public PsiStatement getBody(){
     return (PsiStatement)findChildByRoleAsPsiElement(ChildRole.LOOP_BODY);
   }
 
+  @Override
   public PsiKeyword getWhileKeyword() {
     return (PsiKeyword) findChildByRoleAsPsiElement(ChildRole.WHILE_KEYWORD);
   }
 
+  @Override
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }
 
+  @Override
   public PsiJavaToken getRParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
+  @Override
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
@@ -83,6 +89,7 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -114,6 +121,7 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
     }
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitDoWhileStatement(this);

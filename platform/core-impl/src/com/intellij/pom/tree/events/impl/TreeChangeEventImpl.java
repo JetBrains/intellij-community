@@ -49,11 +49,13 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     myFileElement = treeElement;
   }
 
+  @Override
   @NotNull
   public FileElement getRootElement() {
     return myFileElement;
   }
 
+  @Override
   @NotNull
   public ASTNode[] getChangedElements() {
     if (myChangedInOrder == null) {
@@ -76,6 +78,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
   }
 
+  @Override
   public TreeChange getChangesByElement(@NotNull ASTNode element) {
     LOG.assertTrue(isAncestor(element, myFileElement), element);
     return myChangedElements.get(element);
@@ -88,6 +91,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return element == fileElement;
   }
 
+  @Override
   public void addElementaryChange(@NotNull ASTNode element, @NotNull ChangeInfo change) {
     LOG.assertTrue(isAncestor(element, myFileElement), element);
     final ASTNode parent = element.getTreeParent();
@@ -124,6 +128,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return depth;
   }
 
+  @Override
   public void clear() {
     myChangedInOrder = null;
     myChangedElements.clear();
@@ -252,11 +257,13 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return -1;
   }
 
+  @Override
   @NotNull
   public PomModelAspect getAspect() {
     return myAspect;
   }
 
+  @Override
   public void merge(@NotNull PomChangeSet blocked) {
     if(!(blocked instanceof TreeChangeEventImpl)) return;
     final TreeChangeEventImpl blockedTreeChange = (TreeChangeEventImpl)blocked;

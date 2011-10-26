@@ -29,6 +29,7 @@ import com.intellij.lang.LangBundle;
  * @author peter
  */
 public class ChangeTemplateDataLanguageAction extends AnAction {
+  @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setVisible(false);
 
@@ -53,6 +54,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
 
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
@@ -60,6 +62,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      @Override
       public void run() {
         if (virtualFile != null) {
           configurable.selectFile(virtualFile);

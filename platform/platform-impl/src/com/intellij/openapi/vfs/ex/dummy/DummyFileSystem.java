@@ -55,27 +55,33 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     return null;
   }
 
+  @Override
   @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
 
+  @Override
   public VirtualFile findFileByPath(@NotNull String path) {
 //    LOG.error("method not implemented");
     return null;
   }
 
+  @Override
   public String extractPresentableUrl(@NotNull String path) {
     return path;
   }
 
+  @Override
   public void refresh(boolean asynchronous) {
   }
 
+  @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
   }
 
+  @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     fireBeforeFileDeletion(requestor, vFile);
     final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
@@ -87,14 +93,17 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     fireFileDeleted(requestor, vFile, vFile.getName(), parent);
   }
 
+  @Override
   public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     final String oldName = vFile.getName();
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
@@ -102,6 +111,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
   }
 
+  @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
     VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
@@ -120,6 +130,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);

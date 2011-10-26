@@ -67,6 +67,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return b;
   }
 
+  @Override
   public long getId() {
     return myId;
   }
@@ -78,11 +79,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
   }
 
+  @Override
   public int getStartOffset() {
     RangeMarkerTree.RMNode node = myNode;
     return intervalStart() + (node == null ? 0 : node.computeDeltaUpToRoot());
   }
 
+  @Override
   public int getEndOffset() {
     RangeMarkerTree.RMNode node = myNode;
     return intervalEnd() + (node == null ? 0 : node.computeDeltaUpToRoot());
@@ -103,6 +106,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
   }
 
+  @Override
   @NotNull
   public DocumentEx getDocument() {
     return myDocument;
@@ -113,27 +117,32 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return 0;
   }
 
+  @Override
   public void setGreedyToLeft(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToLeft()) return;
 
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), getLayer());
   }
 
+  @Override
   public void setGreedyToRight(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, getLayer());
   }
 
+  @Override
   public boolean isGreedyToLeft() {
     RangeMarkerTree.RMNode node = myNode;
     return node != null && node.isGreedyToLeft();
   }
 
+  @Override
   public boolean isGreedyToRight() {
     RangeMarkerTree.RMNode node = myNode;
     return node != null && node.isGreedyToRight();
   }
 
+  @Override
   public final void documentChanged(DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();
@@ -254,6 +263,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public void trackInvalidation(boolean track) {
     putUserData(TRACK_INVALIDATION_KEY, track ? Boolean.TRUE : null);
   }
+  @Override
   public boolean isTrackInvalidation() {
     return getUserData(TRACK_INVALIDATION_KEY) == Boolean.TRUE;
   }

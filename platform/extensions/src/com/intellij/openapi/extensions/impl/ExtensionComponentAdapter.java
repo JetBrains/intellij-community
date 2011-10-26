@@ -53,14 +53,17 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     myDeserializeInstance = deserializeInstance;
   }
 
+  @Override
   public Object getComponentKey() {
     return this;
   }
 
+  @Override
   public Class getComponentImplementation() {
     return loadClass(myImplementationClassName);
   }
 
+  @Override
   public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
     //assert myContainer == container : "Different containers: " + myContainer + " - " + container;
     if (myComponentInstance == null) {
@@ -94,10 +97,12 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myComponentInstance;
   }
 
+  @Override
   public void verify(PicoContainer container) throws PicoIntrospectionException {
     throw new UnsupportedOperationException("Method verify is not supported in " + getClass());
   }
 
+  @Override
   public void accept(PicoVisitor visitor) {
     throw new UnsupportedOperationException("Method accept is not supported in " + getClass());
   }
@@ -106,10 +111,12 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return getComponentInstance(myContainer);
   }
 
+  @Override
   public LoadingOrder getOrder() {
     return LoadingOrder.readOrder(myExtensionElement.getAttributeValue("order"));
   }
 
+  @Override
   public String getOrderId() {
     return myExtensionElement.getAttributeValue("id");
   }
@@ -118,6 +125,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myExtensionElement;
   }
 
+  @Override
   public Element getDescribingElement() {
     return getExtensionElement();
   }
@@ -154,10 +162,12 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myDelegate;
   }
 
+  @Override
   public boolean isAssignableTo(Class aClass) {
     return aClass.getName().equals(myImplementationClassName);
   }
 
+  @Override
   public String getAssignableToClassName() {
     return myImplementationClassName;
   }

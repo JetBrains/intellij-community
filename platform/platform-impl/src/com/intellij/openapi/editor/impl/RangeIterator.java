@@ -153,6 +153,7 @@ class RangeIterator {
       myFoldingModel = foldingModel;
     }
 
+    @Override
     public boolean isGapAt(int offset) {
       return myFoldingModel.isOffsetCollapsed(offset);
     }

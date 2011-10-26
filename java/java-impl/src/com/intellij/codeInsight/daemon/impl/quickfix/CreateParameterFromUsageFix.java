@@ -45,6 +45,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     super(referenceElement);
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
@@ -59,10 +60,12 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     while (true);
   }
 
+    @Override
     public String getText(String varName) {
     return QuickFixBundle.message("create.parameter.from.usage.text", varName);
   }
 
+  @Override
   protected void invokeImpl(PsiClass targetClass) {
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) return;
 
@@ -116,10 +119,12 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     }
   }
 
+  @Override
   protected boolean isAllowOuterTargetClass() {
     return false;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.parameter.from.usage.family");

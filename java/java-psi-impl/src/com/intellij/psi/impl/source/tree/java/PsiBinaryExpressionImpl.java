@@ -40,20 +40,24 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     super(elementType);
   }
 
+  @Override
   @NotNull
   public PsiExpression getLOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOPERAND);
   }
 
+  @Override
   public PsiExpression getROperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ROPERAND);
   }
 
+  @Override
   @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @Override
   @NotNull
   public IElementType getOperationTokenType() {
     return getOperationSign().getTokenType();
@@ -98,14 +102,17 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiBinaryExpressionImpl, PsiType>() {
+    @Override
     public PsiType fun(PsiBinaryExpressionImpl expression) {
       return doGetType(expression);
     }
   };
+  @Override
   public PsiType getType() {
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
 
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
@@ -123,6 +130,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
@@ -142,6 +150,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
                     JavaTokenType.GTGT, JavaTokenType.GTGTGT, JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV,
                     JavaTokenType.PERC);
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitBinaryExpression(this);

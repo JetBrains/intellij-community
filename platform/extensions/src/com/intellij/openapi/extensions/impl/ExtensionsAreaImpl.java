@@ -86,6 +86,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
   public AreaPicoContainer getPicoContainer() {
     return myPicoContainer;
   }
@@ -94,14 +95,17 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myPicoContainer;
   }
 
+  @Override
   public String getAreaClass() {
     return myAreaClass;
   }
 
+  @Override
   public void registerExtensionPoint(String pluginName, Element extensionPointElement) {
     registerExtensionPoint(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionPointElement);
   }
 
+  @Override
   public void registerExtensionPoint(PluginDescriptor pluginDescriptor, Element extensionPointElement) {
     assert pluginDescriptor.getPluginId() != null;
     final String pluginId = pluginDescriptor.getPluginId().getIdString();
@@ -136,10 +140,12 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtensionPoint(epName, className, pluginDescriptor, kind);
   }
 
+  @Override
   public void registerExtension(final String pluginName, final Element extensionElement) {
     registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement);
   }
 
+  @Override
   public void registerExtension(final PluginDescriptor pluginDescriptor, final Element extensionElement) {
     final PluginId pluginId = pluginDescriptor.getPluginId();
 
@@ -193,6 +199,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return epName;
   }
 
+  @Override
   public PicoContainer getPluginContainer(String pluginName) {
     return internalGetPluginContainer();
   }
@@ -208,12 +215,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
   public void unregisterExtensionPoint(String pluginName, Element extensionPointElement) {
     assert pluginName != null;
     String epName = pluginName + '.' + extensionPointElement.getAttributeValue("name");
     unregisterExtensionPoint(epName);
   }
 
+  @Override
   public void unregisterExtension(String pluginName, Element extensionElement) {
     String epName = extractEPName(extensionElement);
     if (!myExtensionElement2extension.containsKey(extensionElement)) {
@@ -249,6 +258,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
 
     getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).addExtensionPointListener(new ExtensionPointListener() {
+      @Override
       @SuppressWarnings({"unchecked"})
       public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
@@ -263,6 +273,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         myLogger.warn("Failed to find EP availability listener: " + epListenerExtension.getListenerClass());
       }
 
+      @Override
       public void extensionAdded(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
         try {
@@ -290,6 +301,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myCreationTrace;
   }
 
+  @Override
   public void addAvailabilityListener(String epName, ExtensionPointAvailabilityListener listener) {
     myAvailabilityListeners.putValue(epName, listener);
     if (hasExtensionPoint(epName)) {
@@ -297,6 +309,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
   public void registerExtensionPoint(final String extensionPointName, String extensionPointBeanClass) {
     registerExtensionPoint(extensionPointName, extensionPointBeanClass, ExtensionPoint.Kind.INTERFACE);
   }
@@ -306,6 +319,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtensionPoint(extensionPointName, extensionPointBeanClass, new UndefinedPluginDescriptor(), kind);
   }
 
+  @Override
   public void registerExtensionPoint(final String extensionPointName, String extensionPointBeanClass, PluginDescriptor descriptor) {
     registerExtensionPoint(extensionPointName, extensionPointBeanClass, descriptor, ExtensionPoint.Kind.INTERFACE);
   }
@@ -336,6 +350,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
   public void registerAreaExtensionsAndPoints(final PluginDescriptor pluginDescriptor,
                                               final List<Element> extensionsPoints,
                                               final List<Element> extensions) {
@@ -374,6 +389,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private void notifyAvailableListener(final ExtensionPointAvailabilityListener listener, final ExtensionPoint extensionPoint) {
     queueNotificationAction(new Runnable() {
+      @Override
       public void run() {
         listener.extensionPointRegistered(extensionPoint);
       }
@@ -389,6 +405,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
   @NotNull
   public <T> ExtensionPointImpl<T> getExtensionPoint(String extensionPointName) {
     ExtensionPointImpl<T> extensionPoint = myExtensionPoints.get(extensionPointName);
@@ -398,15 +415,18 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return extensionPoint;
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> ExtensionPoint<T> getExtensionPoint(ExtensionPointName<T> extensionPointName) {
     return getExtensionPoint(extensionPointName.getName());
   }
 
+  @Override
   public ExtensionPoint[] getExtensionPoints() {
     return myExtensionPoints.values().toArray(new ExtensionPoint[myExtensionPoints.size()]);
   }
 
+  @Override
   public void unregisterExtensionPoint(final String extensionPointName) {
     ExtensionPoint extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint != null) {
@@ -426,20 +446,24 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private void notifyUnavailableListener(final ExtensionPoint extensionPoint, final ExtensionPointAvailabilityListener listener) {
     queueNotificationAction(new Runnable() {
+      @Override
       public void run() {
         listener.extensionPointRemoved(extensionPoint);
       }
     });
   }
 
+  @Override
   public boolean hasExtensionPoint(String extensionPointName) {
     return myExtensionPoints.containsKey(extensionPointName);
   }
 
+  @Override
   public void suspendInteractions() {
     myAvailabilityNotificationsActive = false;
   }
 
+  @Override
   public void resumeInteractions() {
     myAvailabilityNotificationsActive = true;
     ExtensionPoint[] extensionPoints = getExtensionPoints();
@@ -457,6 +481,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     mySuspendedListenerActions.clear();
   }
 
+  @Override
   public void killPendingInteractions() {
     mySuspendedListenerActions.clear();
   }

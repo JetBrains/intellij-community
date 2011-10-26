@@ -41,10 +41,12 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     super(referenceElement);
   }
 
+  @Override
   protected String getText(String varName) {
     return QuickFixBundle.message("create.enum.constant.from.usage.text", myReferenceExpression.getReferenceName());
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     LOG.assertTrue(targetClass.isEnum());
     final String name = myReferenceExpression.getReferenceName();
@@ -86,6 +88,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
   }
 
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     PsiElement element = getElement();
@@ -99,6 +102,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     return false;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constant.from.usage.family");

@@ -908,6 +908,7 @@ public class HighlightClassUtil {
       if (selectedElements == null || selectedElements.isEmpty()) return;
 
       new WriteCommandAction(project, file) {
+        @Override
         protected void run(final Result result) throws Throwable {
           PsiNewExpression newExpression =
             (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(startElement.getText() + "{}", startElement);

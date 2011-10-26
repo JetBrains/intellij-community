@@ -35,6 +35,7 @@ public class SelectLineAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getSelectionModel().selectLineAtCaret();
     }

@@ -42,6 +42,7 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter {
       delegate instanceof LifecycleStrategy && ((LifecycleStrategy)delegate).hasLifecycle(delegate.getComponentImplementation());
   }
 
+  @Override
   public Object getComponentInstance(PicoContainer container)
     throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
 
@@ -60,6 +61,7 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter {
    * Starts the cached component instance
    * {@inheritDoc}
    */
+  @Override
   public void start(PicoContainer container) {
     if (delegateHasLifecylce) {
       if (disposed) throw new IllegalStateException("Already disposed");
@@ -73,6 +75,7 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter {
    * Stops the cached component instance
    * {@inheritDoc}
    */
+  @Override
   public void stop(PicoContainer container) {
     if (delegateHasLifecylce) {
       if (disposed) throw new IllegalStateException("Already disposed");
@@ -86,6 +89,7 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter {
    * Disposes the cached component instance
    * {@inheritDoc}
    */
+  @Override
   public void dispose(PicoContainer container) {
     if (delegateHasLifecylce) {
       if (disposed) throw new IllegalStateException("Already disposed");
@@ -94,6 +98,7 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter {
     }
   }
 
+  @Override
   public boolean hasLifecycle() {
     return delegateHasLifecylce;
   }

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.template;
 
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -80,12 +81,16 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
-      return isStatementContext(element);
+      PsiElement stmt = PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
+        @Override
+        public boolean value(PsiElement element11) {
+          return PsiUtil.isExpressionStatement(element11.getParent());
+        }
+      });
+
+      return !isAfterExpression(element) && stmt != null && stmt.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
 
-    private static boolean isStatementContext(PsiElement element) {
-      return Expression.isExpressionContext(element) && PsiUtil.isExpressionStatement(element.getParent());
-    }
   }
   public static class Expression extends GroovyTemplateContextType {
 
@@ -109,17 +114,22 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
       if (parent.getParent() instanceof GrCall) {
         return false;
       }
-      ProcessingContext context = new ProcessingContext();
-      if (PlatformPatterns.psiElement().inside(GrExpression.class).afterLeaf(
-        PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(GrExpression.class).save("prevExpr"))).accepts(element, context)) {
-        PsiElement prevExpr = (PsiElement)context.get("prevExpr");
-        if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
-          return false;
-        }
-      }
-      return true;
+      return !isAfterExpression(element);
     }
   }
+
+  private static boolean isAfterExpression(PsiElement element) {
+    ProcessingContext context = new ProcessingContext();
+    if (PlatformPatterns.psiElement().afterLeaf(
+      PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(GrExpression.class).save("prevExpr"))).accepts(element, context)) {
+      PsiElement prevExpr = (PsiElement)context.get("prevExpr");
+      if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static class Declaration extends GroovyTemplateContextType {
     public Declaration() {
       super("GROOVY_DECLARATION", "Declaration", Generic.class);

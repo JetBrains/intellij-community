@@ -46,6 +46,7 @@ public class TabAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.EDIT_COMMAND_GROUP);
       CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
@@ -53,6 +54,7 @@ public class TabAction extends EditorAction {
       insertTabAtCaret(editor, project);
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }

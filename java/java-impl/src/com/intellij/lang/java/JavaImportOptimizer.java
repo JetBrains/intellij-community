@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
 
+  @Override
   @NotNull
   public Runnable processFile(final PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
@@ -44,6 +45,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
     final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
     if (newImportList == null) return EmptyRunnable.getInstance();
     return new Runnable() {
+      @Override
       public void run() {
         try {
           final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
@@ -62,6 +64,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
     };
   }
 
+  @Override
   public boolean supports(PsiFile file) {
     return file instanceof PsiJavaFile;
   }

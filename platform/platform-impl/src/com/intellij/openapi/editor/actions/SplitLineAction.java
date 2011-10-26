@@ -42,11 +42,13 @@ public class SplitLineAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, dataContext) &&
              !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
 
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document document = editor.getDocument();
       final RangeMarker rangeMarker =

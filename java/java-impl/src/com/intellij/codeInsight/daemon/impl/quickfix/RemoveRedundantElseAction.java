@@ -34,16 +34,19 @@ import org.jetbrains.annotations.Nullable;
 public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction");
 
+  @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiKeyword &&
         element.getParent() instanceof PsiIfStatement &&
@@ -86,6 +89,7 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());

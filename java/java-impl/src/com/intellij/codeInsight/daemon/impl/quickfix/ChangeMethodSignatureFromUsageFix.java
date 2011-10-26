@@ -87,6 +87,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     myMinUsagesNumberToShowDialog = minUsagesNumberToShowDialog;
   }
 
+  @Override
   @NotNull
   public String getText() {
     final String shortText = getShortText();
@@ -142,11 +143,13 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     return result;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.method.signature.from.usage.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myTargetMethod.isValid()) return false;
     for (PsiExpression expression : myExpressions) {
@@ -167,6 +170,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     return false;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -185,8 +189,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     options.isSearchForTextOccurrences = false;
     final int[] usagesFound = new int[1];
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         Processor<UsageInfo> processor = new Processor<UsageInfo>() {
+          @Override
           public boolean process(final UsageInfo t) {
             return ++usagesFound[0] < myMinUsagesNumberToShowDialog;
           }
@@ -207,6 +213,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
                             method.getName(),
                             method.getReturnType(),
                             myNewParametersInfo){
+        @Override
         @NotNull
         protected UsageInfo[] findUsages() {
           return myChangeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
@@ -214,6 +221,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       };
       processor.run();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           UndoUtil.markPsiFileForUndo(file);
         }
@@ -434,6 +442,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -44,10 +44,12 @@ public class AssignableFromFilter implements ElementFilter{
 
   public AssignableFromFilter(){}
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     PsiType type = myType;
     if(type == null) {

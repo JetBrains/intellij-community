@@ -67,34 +67,42 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     myFlags = flags;
   }
 
+  @Override
   public String getName() {
     return StringRef.toString(myName);
   }
 
+  @Override
   public String getQualifiedName() {
     return StringRef.toString(myQualifiedName);
   }
 
+  @Override
   public String getBaseClassReferenceText() {
     return StringRef.toString(myBaseRefText);
   }
 
+  @Override
   public boolean isDeprecated() {
     return (myFlags & DEPRECATED) != 0;
   }
 
+  @Override
   public boolean hasDeprecatedAnnotation() {
     return (myFlags & DEPRECATED_ANNOTATION) != 0;
   }
 
+  @Override
   public boolean isInterface() {
     return (myFlags & INTERFACE) != 0;
   }
 
+  @Override
   public boolean isEnum() {
     return (myFlags & ENUM) != 0;
   }
 
+  @Override
   public boolean isEnumConstantInitializer() {
     return isEnumConstInitializer(myFlags);
   }
@@ -103,6 +111,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return (flags & ENUM_CONSTANT_INITIALIZER) != 0;
   }
 
+  @Override
   public boolean isAnonymous() {
     return isAnonymous(myFlags);
   }
@@ -111,14 +120,17 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return (flags & ANONYMOUS) != 0;
   }
 
+  @Override
   public boolean isAnnotationType() {
     return (myFlags & ANON_TYPE) != 0;
   }
 
+  @Override
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST; // TODO!!!
   }
 
+  @Override
   public String getSourceFileName() {
     return StringRef.toString(mySourceFileName);
   }
@@ -135,6 +147,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     mySourceFileName = StringRef.fromString(sourceFileName);
   }
 
+  @Override
   public boolean isAnonymousInQualifiedNew() {
     return (myFlags & IN_QUALIFIED_NEW) != 0;
   }

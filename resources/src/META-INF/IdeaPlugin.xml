@@ -698,6 +698,7 @@
 
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
     <usageToPsiElementProvider implementation="com.intellij.lang.java.JavaUsageToPsiElementProvider" />
+    <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
 
     <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
 

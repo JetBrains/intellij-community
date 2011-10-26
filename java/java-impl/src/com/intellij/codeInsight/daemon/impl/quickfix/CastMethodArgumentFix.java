@@ -34,6 +34,7 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
     super(list, i, toType, factory);
   }
 
+  @Override
   @NotNull
   public String getText() {
     if (myArgList.getExpressions().length == 1) {
@@ -44,10 +45,12 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
   }
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
+    @Override
     public CastMethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
       return new CastMethodArgumentFix(list, i, toType, this);
     }
 
+    @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, PsiType toType) throws IncorrectOperationException {
       final PsiType exprType = expression.getType();
       if (exprType instanceof PsiClassType && toType instanceof PsiPrimitiveType) {
@@ -57,6 +60,7 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
       return AddTypeCastFix.createCastExpression(expression, expression.getProject(), toType);
     }
 
+    @Override
     public boolean areTypesConvertible(PsiType exprType, PsiType parameterType, final PsiElement context) {
       if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType) {
         parameterType = ((PsiPrimitiveType)parameterType).getBoxedType(context); //unboxing from type of cast expression will take place at runtime

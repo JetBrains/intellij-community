@@ -58,6 +58,7 @@ public abstract class InjectedLanguageBlockBuilder {
     final Ref<Integer> suffixLength = new Ref<Integer>();
 
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         if (places.size() == 1) {
           final PsiLanguageInjectionHost.Shred shred = places.get(0);

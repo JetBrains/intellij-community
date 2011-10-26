@@ -81,12 +81,14 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
   }
 
   private static IndentBuilder tabIndentBuilder = new IndentBuilder() {
+    @Override
     public String buildIndent(int length, int tabSize) {
       return StringUtil.repeatSymbol('\t', length / tabSize) + StringUtil.repeatSymbol(' ', length % tabSize);
     }
   };
 
   private static IndentBuilder spaceIndentBuilder = new IndentBuilder() {
+    @Override
     public String buildIndent(int length, int tabSize) {
       return StringUtil.repeatSymbol(' ', length);
     }

@@ -47,6 +47,7 @@ public class UsageLimitUtil {
     final int[] answer = new int[1];
     try {
       GuiUtils.runOrInvokeAndWait(new Runnable() {
+        @Override
         public void run() {
           answer[0] = f.compute();
         }
@@ -61,6 +62,7 @@ public class UsageLimitUtil {
 
   private static int showMessage(final Project project, final String message, final String title, final String[] buttons) {
     return runOrInvokeAndWait(new Computable<Integer>() {
+      @Override
       public Integer compute() {
         return Messages.showOkCancelDialog(project, message, title, buttons[0], buttons[1], Messages.getWarningIcon());
       }

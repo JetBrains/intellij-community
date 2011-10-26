@@ -40,38 +40,46 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new JavaLanguageLevelPusher());
   }
 
+  @Override
   public void initExtra(Project project, MessageBus bus, Engine languageLevelUpdater) {
     // nothing
   }
 
+  @Override
   @NotNull
   public Key<LanguageLevel> getFileDataKey() {
     return LanguageLevel.KEY;
   }
 
+  @Override
   public boolean pushDirectoriesOnly() {
     return true;
   }
 
+  @Override
   @NotNull
   public LanguageLevel getDefaultValue() {
     return LanguageLevel.HIGHEST;
   }
 
+  @Override
   public LanguageLevel getImmediateValue(Project project, VirtualFile file) {
     return null;
   }
 
+  @Override
   public LanguageLevel getImmediateValue(Module module) {
     return LanguageLevelUtil.getEffectiveLanguageLevel(module);
   }
 
+  @Override
   public boolean acceptsFile(VirtualFile file) {
     return false;
   }
 
   private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 1, true);
 
+  @Override
   public void persistAttribute(VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
@@ -95,6 +103,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     }
   }
 
+  @Override
   public void afterRootsChanged(Project project) {
   }
 }

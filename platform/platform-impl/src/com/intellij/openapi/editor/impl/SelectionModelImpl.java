@@ -134,6 +134,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   private int startBefore;
   private int endBefore;
+  @Override
   public void beforeDocumentChange(DocumentEvent event) {
     myIsInUpdate = event;
     MyRangeMarker marker = mySelectionMarker;
@@ -143,6 +144,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
+  @Override
   public void documentChanged(DocumentEvent event) {
     if (myIsInUpdate == event) {
       myIsInUpdate = null;
@@ -168,6 +170,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
+  @Override
   public int getPriority() {
     return EditorDocumentPriorities.SELECTION_MODEL;
   }
@@ -176,6 +179,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     myEditor = editor;
   }
 
+  @Override
   public int getSelectionStart() {
     validateContext(false);
     if (hasSelection()) {
@@ -217,6 +221,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     //}
   }
 
+  @Override
   public int getSelectionEnd() {
     validateContext(false);
     if (hasSelection()) {
@@ -245,6 +250,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return result == null ? defaultPosition : result;
   }
   
+  @Override
   public boolean hasSelection() {
     validateContext(false);
     MyRangeMarker marker = mySelectionMarker;
@@ -255,6 +261,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return marker != null && marker.isValid() && marker.getEndOffset() > marker.getStartOffset();
   }
 
+  @Override
   public void setSelection(int startOffset, int endOffset) {
     doSetSelection(myEditor.offsetToVisualPosition(startOffset), startOffset, myEditor.offsetToVisualPosition(endOffset), endOffset, false);
   }
@@ -417,6 +424,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     myEditor.repaint(Math.min(oldSelectionEnd, endOffset), Math.max(oldSelectionEnd, endOffset));
   }
 
+  @Override
   public void setBlockSelection(LogicalPosition blockStart, LogicalPosition blockEnd) {
     removeSelection();
 
@@ -447,6 +455,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     myBlockEnd = blockEnd;
   }
 
+  @Override
   public void removeSelection() {
     if (myEditor.isStickySelection()) {
       // Most of our 'change caret position' actions (like move caret to word start/end etc) remove active selection.
@@ -466,6 +475,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
+  @Override
   public void removeBlockSelection() {
     if (hasBlockSelection()) {
       myEditor.repaint(0, myEditor.getDocument().getTextLength());
@@ -474,18 +484,22 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
+  @Override
   public boolean hasBlockSelection() {
     return myBlockStart != null;
   }
 
+  @Override
   public LogicalPosition getBlockStart() {
     return myBlockStart;
   }
 
+  @Override
   public LogicalPosition getBlockEnd() {
     return myBlockEnd;
   }
 
+  @Override
   public boolean isBlockSelectionGuarded() {
     if (!hasBlockSelection()) return false;
     int[] starts = getBlockSelectionStarts();
@@ -501,6 +515,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return false;
   }
 
+  @Override
   public RangeMarker getBlockSelectionGuard() {
     if (!hasBlockSelection()) return null;
 
@@ -523,6 +538,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return null;
   }
 
+  @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
     if (hasSelection()) {
@@ -545,6 +561,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return res;
   }
 
+  @Override
   @NotNull
   public int[] getBlockSelectionEnds() {
     if (hasSelection()) {
@@ -569,15 +586,18 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return res;
   }
 
+  @Override
   public void addSelectionListener(SelectionListener listener) {
     mySelectionListeners.add(listener);
   }
 
+  @Override
   public void removeSelectionListener(SelectionListener listener) {
     boolean success = mySelectionListeners.remove(listener);
     LOG.assertTrue(success);
   }
 
+  @Override
   public String getSelectedText() {
     validateContext(false);
     if (!hasSelection() && !hasBlockSelection()) return null;
@@ -615,6 +635,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
+  @Override
   public int getLeadSelectionOffset() {
     validateContext(false);
     int caretOffset = myEditor.getCaretModel().getOffset();
@@ -666,6 +687,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return marker.isEndPositionIsLead() ? endPosition : startPosition;
   }
 
+  @Override
   public void selectLineAtCaret() {
     validateContext(true);
     int lineNumber = myEditor.getCaretModel().getLogicalPosition().line;
@@ -687,6 +709,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     myEditor.getSelectionModel().setSelection(start, end);
   }
 
+  @Override
   public void selectWordAtCaret(boolean honorCamelWordsSettings) {
     validateContext(true);
     removeSelection();
@@ -749,6 +772,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return newOffset;
   }
 
+  @Override
   public void copySelectionToClipboard() {
     validateContext(true);
     String s = myEditor.getSelectionModel().getSelectedText();
@@ -759,6 +783,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     CopyPasteManager.getInstance().setContents(contents);
   }
 
+  @Override
   public TextAttributes getTextAttributes() {
     if (myTextAttributes == null) {
       TextAttributes textAttributes = new TextAttributes();

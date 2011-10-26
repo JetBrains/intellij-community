@@ -30,10 +30,12 @@ import com.intellij.util.ReflectionCache;
 public class AnnotationTypeFilter
   implements ElementFilter{
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiClass.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     return element instanceof PsiClass && ((PsiClass)element).isAnnotationType();
   }

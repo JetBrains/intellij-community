@@ -34,15 +34,18 @@ public class ModulePackageIndexImpl extends ModulePackageIndex {
   }
 
   private final Condition<VirtualFile> myDirCondition = new Condition<VirtualFile>() {
+    @Override
     public boolean value(final VirtualFile dir) {
       return dir.isValid() && myModuleFileIndex.getOrderEntryForFile(dir) != null;
     }
   };
 
+  @Override
   public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return new FilteredQuery<VirtualFile>(myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources), myDirCondition);
   }
 
+  @Override
   public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
   }

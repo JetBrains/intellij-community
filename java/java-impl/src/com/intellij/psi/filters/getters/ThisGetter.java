@@ -31,6 +31,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class ThisGetter implements ContextGetter{
+  @Override
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     return getThisExpressionVariants(context).toArray();
   }

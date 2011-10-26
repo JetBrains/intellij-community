@@ -42,10 +42,12 @@ public class PsiViewerSettings implements PersistentStateComponent<PsiViewerSett
     return ServiceManager.getService(PsiViewerSettings.class);
   }
 
+  @Override
   public PsiViewerSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(PsiViewerSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

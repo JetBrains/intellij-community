@@ -35,15 +35,18 @@ abstract class VirtualFileImpl extends VirtualFile implements VirtualFileWithId 
     myName = name;
   }
 
+  @Override
   public int getId() {
     return myId;
   }
 
+  @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
+  @Override
   public String getPath() {
     if (myParent == null) {
       return myName;
@@ -52,6 +55,7 @@ abstract class VirtualFileImpl extends VirtualFile implements VirtualFileWithId 
     }
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
@@ -61,22 +65,27 @@ abstract class VirtualFileImpl extends VirtualFile implements VirtualFileWithId 
     myName = name;
   }
 
+  @Override
   public boolean isWritable() {
     return true;
   }
 
+  @Override
   public boolean isValid() {
     return myIsValid;
   }
 
+  @Override
   public VirtualFile getParent() {
     return myParent;
   }
 
+  @Override
   public long getTimeStamp() {
     return -1;
   }
 
+  @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 public abstract class WrappingStrategy {
 
   public static final WrappingStrategy DO_NOT_WRAP = new WrappingStrategy(null) {
+    @Override
     protected boolean shouldWrap(final IElementType type) {
       return false;
     }
@@ -29,6 +30,7 @@ public abstract class WrappingStrategy {
 
   public static WrappingStrategy createDoNotWrapCommaStrategy(Wrap wrap) {
     return new WrappingStrategy(wrap) {
+      @Override
       protected boolean shouldWrap(final IElementType type) {
         return type != ElementType.COMMA && type != ElementType.SEMICOLON;
       }

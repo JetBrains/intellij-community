@@ -37,6 +37,7 @@ public class SegmentArrayWithData extends SegmentArray {
     myData[i] = (short)data;
   }
 
+  @Override
   public void remove(int startIndex, int endIndex) {
     myData = remove(myData, startIndex, endIndex);
     super.remove(startIndex, endIndex);

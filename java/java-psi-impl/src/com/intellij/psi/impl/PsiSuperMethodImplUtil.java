@@ -116,10 +116,12 @@ public class PsiSuperMethodImplUtil {
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>(new TObjectHashingStrategy<MethodSignature>() {
+      @Override
       public int computeHashCode(MethodSignature signature) {
         return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode(signature);
       }
 
+      @Override
       public boolean equals(MethodSignature o1, MethodSignature o2) {
         if (!MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals(o1, o2)) return false;
         List<PsiMethod> list = sameParameterErasureMethods.get(o1);

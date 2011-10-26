@@ -30,6 +30,7 @@ public abstract class IErrorCounterReparseableElementType extends IReparseableEl
 
   public abstract int getErrorsCount(CharSequence seq, Project project);
 
+  @Override
   public boolean isParsable(CharSequence buffer, final Project project) {
     return getErrorsCount(buffer, project) == NO_ERRORS;
   }

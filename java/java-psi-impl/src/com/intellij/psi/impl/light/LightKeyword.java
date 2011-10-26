@@ -31,16 +31,19 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
     myText = text;
   }
 
+  @Override
   public String getText(){
     return myText;
   }
 
+  @Override
   public IElementType getTokenType(){
     Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
     lexer.start(myText);
     return lexer.getTokenType();
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitKeyword(this);
@@ -50,6 +53,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
     }
   }
 
+  @Override
   public PsiElement copy(){
     return new LightKeyword(getManager(), myText);
   }

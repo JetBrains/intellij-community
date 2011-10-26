@@ -53,6 +53,7 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   public static void bindDataToElement(final PsiElement element, final PsiMetaData data) {
     CachedValue<PsiMetaData> value = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
+      @Override
       public Result<PsiMetaData> compute() {
         data.init(element);
         return new Result<PsiMetaData>(data, data.getDependences());
@@ -68,8 +69,10 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   private static final UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
     new UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object>() {
+      @Override
       protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
         return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
+          @Override
           public Result<PsiMetaData> compute() {
             ensureContributorsLoaded();
             for (final MyBinding binding : ourBindings) {
@@ -121,6 +124,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
     addBinding(binding);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         ourBindings.remove(binding);
       }
@@ -139,6 +143,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     ourBindings.add(0, binding);
   }
 
+  @Override
   public <T extends PsiMetaData> void registerMetaData(ElementFilter filter, Class<T> metadataDescriptorClass) {
     addMetadataBinding(filter, metadataDescriptorClass);
   }

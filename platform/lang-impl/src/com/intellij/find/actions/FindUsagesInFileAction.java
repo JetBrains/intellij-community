@@ -37,6 +37,7 @@ public class FindUsagesInFileAction extends AnAction {
     setInjectedContext(true);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -64,6 +65,7 @@ public class FindUsagesInFileAction extends AnAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent event){
     updateFindUsagesAction(event);
   }

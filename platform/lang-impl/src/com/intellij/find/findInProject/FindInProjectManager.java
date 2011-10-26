@@ -75,6 +75,7 @@ public class FindInProjectManager {
 
 
     findManager.showFindDialog(findModel, new Runnable() {
+      @Override
       public void run() {
         findModel.setOpenInNewTabVisible(false);
         final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
@@ -98,8 +99,10 @@ public class FindInProjectManager {
         manager.searchAndShowUsages(
             new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())},
           new Factory<UsageSearcher>() {
+            @Override
             public UsageSearcher create() {
               return new UsageSearcher() {
+                @Override
                 public void generate(final Processor<Usage> processor) {
                   myIsFindInProgress = true;
 

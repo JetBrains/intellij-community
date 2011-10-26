@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider {
+  @Override
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {
     if (element instanceof PsiElement) return null;
     

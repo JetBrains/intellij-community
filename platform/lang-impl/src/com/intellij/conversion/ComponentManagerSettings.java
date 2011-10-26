@@ -27,13 +27,9 @@ import java.io.File;
 /**
  * @author nik
  */
-public interface ComponentManagerSettings {
+public interface ComponentManagerSettings extends XmlBasedSettings {
 
   @Nullable
   Element getComponentElement(@NotNull @NonNls String componentName);
 
-  @NotNull
-  Element getRootElement();
-
-  File getFile();
 }

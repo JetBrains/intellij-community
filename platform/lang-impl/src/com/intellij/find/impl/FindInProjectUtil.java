@@ -190,6 +190,7 @@ public class FindInProjectUtil {
     }
     else {
       pattern = StringUtil.join(strings, new Function<String, String>() {
+        @Override
         public String fun(String s) {
           return "(" + PatternUtil.convertToRegex(s.trim()) + ")";
         }
@@ -277,6 +278,7 @@ public class FindInProjectUtil {
 
         final String finalMessage = message;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, MessageType.WARNING, finalMessage);
           }
@@ -327,6 +329,7 @@ public class FindInProjectUtil {
 
   private static String getPresentablePath(final VirtualFile virtualFile) {
     return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         return virtualFile.getPresentableUrl();
       }
@@ -341,6 +344,7 @@ public class FindInProjectUtil {
   private static long getFileLength(final VirtualFile virtualFile) {
     final long[] length = {-1L};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         if (!virtualFile.isValid()) return;
         if (virtualFile.getFileType().isBinary()) return;
@@ -352,6 +356,7 @@ public class FindInProjectUtil {
 
   private static Collection<PsiFile> getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiFile>>() {
+      @Override
       public Collection<PsiFile> compute() {
         return getFilesToSearchInReadAction(findModel, project, psiDirectory);
       }
@@ -378,6 +383,7 @@ public class FindInProjectUtil {
         final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch);
         final PsiManager psiManager = PsiManager.getInstance(project);
 
+        @Override
         public boolean processFile(VirtualFile virtualFile) {
           if (!virtualFile.isDirectory() && (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) && (!(customScope instanceof GlobalSearchScope) || ((GlobalSearchScope)customScope).contains(virtualFile))) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
@@ -421,6 +427,7 @@ public class FindInProjectUtil {
   private static boolean iterateAll(VirtualFile[] files, final GlobalSearchScope searchScope, final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
+      @Override
       public boolean accept(final VirtualFile file) {
         return file.isDirectory() ||
                !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
@@ -487,6 +494,7 @@ public class FindInProjectUtil {
 
     // hope long words are rare
     Collections.sort(words, new Comparator<String>() {
+      @Override
       public int compare(final String o1, final String o2) {
         return o2.length() - o1.length();
       }
@@ -643,6 +651,7 @@ public class FindInProjectUtil {
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     processPresentation.setProgressIndicatorFactory(
       new Factory<ProgressIndicator>() {
+        @Override
         public ProgressIndicator create() {
           return new FindProgressIndicator(project, presentation.getScopeText());
         }
@@ -655,14 +664,17 @@ public class FindInProjectUtil {
     private final String myStringToFind;
 
     private final ItemPresentation myItemPresentation = new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return FindBundle.message("find.usage.target.string.text", myStringToFind);
       }
 
+      @Override
       public String getLocationString() {
         return myStringToFind + "!!";
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return null;
       }
@@ -672,42 +684,54 @@ public class FindInProjectUtil {
       myStringToFind = _stringToFind;
     }
 
+    @Override
     public void findUsages() {}
+    @Override
     public void findUsagesInEditor(@NotNull FileEditor editor) {}
+    @Override
     public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {}
 
+    @Override
     public boolean isValid() {
       return true;
     }
 
+    @Override
     public boolean isReadOnly() {
       return true;
     }
 
+    @Override
     @Nullable
     public VirtualFile[] getFiles() {
       return null;
     }
 
+    @Override
     public void update() {
     }
 
+    @Override
     public String getName() {
       return myStringToFind;
     }
 
+    @Override
     public ItemPresentation getPresentation() {
       return myItemPresentation;
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean canNavigate() {
       return false;
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }

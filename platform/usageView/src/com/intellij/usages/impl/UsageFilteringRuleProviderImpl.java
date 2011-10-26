@@ -39,6 +39,7 @@ import java.util.List;
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider {
   private final ReadWriteState myReadWriteState = new ReadWriteState();
 
+  @Override
   @NotNull
   public UsageFilteringRule[] getActiveRules(@NotNull Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
@@ -52,6 +53,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     return rules.toArray(new UsageFilteringRule[rules.size()]);
   }
 
+  @Override
   @NotNull
   public AnAction[] createFilteringActions(@NotNull UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
@@ -100,10 +102,12 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       super(UsageViewBundle.message("action.show.read.access"), null, IconLoader.getIcon("/actions/showReadAccess.png"));
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myReadWriteState.isShowReadAccess();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myReadWriteState.setShowReadAccess(state);
       Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -117,10 +121,12 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       super(UsageViewBundle.message("action.show.write.access"), null, IconLoader.getIcon("/actions/showWriteAccess.png"));
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myReadWriteState.isShowWriteAccess();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myReadWriteState.setShowWriteAccess(state);
       Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());

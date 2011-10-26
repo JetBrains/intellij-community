@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
+  @Override
   public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
     registrar.register(new ImportClassFix(ref));
     registrar.register(SetupJDKFix.getInstance());
@@ -64,6 +65,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
   }
 
+  @Override
   @NotNull
   public Class<PsiJavaCodeReferenceElement> getReferenceClass() {
     return PsiJavaCodeReferenceElement.class;
