@@ -324,9 +324,10 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
         return;
       }
       final PsiType type = polyadicExpression.getType();
-      if (type != null && type.equalsToText("java.lang.String")) {
-        queried = true;
+      if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return;
       }
+      queried = true;
     }
 
     @Override
