@@ -19,7 +19,6 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -439,23 +438,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    @Override
-    public NotificationInfo notifyFinished() {
+    private String prepareNotificationWithUpdateInfo() {
       StringBuffer text = new StringBuffer();
       final List<FileGroup> groups = myUpdatedFiles.getTopLevelGroups();
       for (FileGroup group : groups) {
         appendGroup(text, group);
       }
-
-      final String title = "VCS Update Finished";
-
-      String log = title;
-      if (text.length() > 0) {
-        log += ": " + text.toString();
-      }
-      VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(log, NotificationType.INFORMATION).notify(myProject);
-
-      return new NotificationInfo("VCS Update", title, log, true);
+      return text.toString();
     }
 
     private void appendGroup(final StringBuffer text, final FileGroup group) {
@@ -544,6 +533,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
               final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
               cache.processUpdatedFiles(myUpdatedFiles);
+
+              if (someSessionWasCancelled) {
+                VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Incomplete" + prepareNotificationWithUpdateInfo(), MessageType.WARNING);
+              } else {
+                VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Finished" + prepareNotificationWithUpdateInfo(), MessageType.INFO);
+              }
             }
 
             ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
