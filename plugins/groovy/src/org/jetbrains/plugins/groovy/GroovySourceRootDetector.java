@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,19 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.ide.util.JavaUtil;
-import com.intellij.ide.util.newProjectWizard.SourceRootFinder;
-import com.intellij.openapi.util.Pair;
-
-import java.io.File;
-import java.util.List;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
 
 /**
- * @author Maxim.Medvedev
+ * @author nik
  */
-public class GroovySourceRootFinder implements SourceRootFinder {
+public class GroovySourceRootDetector extends JavaSourceRootDetector {
   @Override
-  public List<Pair<File, String>> findRoots(File dir) {
-    return JavaUtil.suggestRoots(dir, GroovyFileType.GROOVY_FILE_TYPE);
-  }
-
-  @Override
-  public String getDescription() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public String getName() {
+  protected String getLanguageName() {
     return "Groovy";
+  }
+
+  @Override
+  protected String getFileExtension() {
+    return GroovyFileType.DEFAULT_EXTENSION;
   }
 }

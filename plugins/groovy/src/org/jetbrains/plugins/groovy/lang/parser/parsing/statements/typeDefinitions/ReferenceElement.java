@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrReferenceListElementType;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.mayBeType;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.mustBeType;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -92,7 +90,9 @@ public class ReferenceElement implements GroovyElementTypes {
   public static ReferenceElementResult parse(PsiBuilder builder,
                                              boolean checkUpperCase,
                                              boolean parseTypeArgs,
-                                             boolean forImport, final boolean allowDiamond, boolean expressionPossible) {
+                                             boolean forImport,
+                                             final boolean allowDiamond,
+                                             boolean expressionPossible) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
     String lastIdentifier = builder.getTokenText();
@@ -101,16 +101,10 @@ public class ReferenceElement implements GroovyElementTypes {
       internalTypeMarker.rollbackTo();
       return fail;
     }
+
     boolean hasTypeArguments = false;
     if (parseTypeArgs) {
-      if (allowDiamond && ParserUtils.lookAhead(builder, mLT, mGT)) {
-        builder.advanceLexer();
-        builder.advanceLexer();
-        hasTypeArguments = true;
-      } else {
-        hasTypeArguments = TypeArguments.parseTypeArguments(builder, expressionPossible);
-      }
-
+      hasTypeArguments = TypeArguments.parseTypeArguments(builder, expressionPossible, allowDiamond);
     }
 
     internalTypeMarker.done(REFERENCE_ELEMENT);

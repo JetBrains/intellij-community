@@ -392,7 +392,6 @@
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
 
-    <sourceRootFinder implementation="com.intellij.ide.util.newProjectWizard.JavaSourceRootFinder"/>
     <breadcrumbsPresentationProvider
         implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
   </extensions>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
  */
 public class TypeArguments implements GroovyElementTypes {
   public static boolean parseTypeArguments(PsiBuilder builder, boolean expressionPossible) {
+    return parseTypeArguments(builder, expressionPossible, false);
+  }
+  
+  public static boolean parseTypeArguments(PsiBuilder builder, boolean expressionPossible, boolean allowDiamond) {
     PsiBuilder.Marker marker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLT)) {
@@ -37,6 +41,11 @@ public class TypeArguments implements GroovyElementTypes {
     }
 
     ParserUtils.getToken(builder, mNLS);
+
+    if (allowDiamond && ParserUtils.getToken(builder, mGT)) {
+      marker.done(TYPE_ARGUMENTS);
+      return true;
+    }
 
     if (!parseArgument(builder)) {
       marker.rollbackTo();

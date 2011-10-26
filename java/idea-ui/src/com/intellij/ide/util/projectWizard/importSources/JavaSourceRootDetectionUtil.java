@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util;
+package com.intellij.ide.util.projectWizard.importSources;
 
+import com.intellij.ide.util.importProject.RootDetectionProcessor;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,119 +28,56 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
-public class JavaUtil {
+public class JavaSourceRootDetectionUtil {
   private static final TokenSet JAVA_FILE_FIRST_TOKEN_SET = TokenSet.orSet(
     ElementType.MODIFIER_BIT_SET,
     ElementType.CLASS_KEYWORD_BIT_SET,
     TokenSet.create(JavaTokenType.AT, JavaTokenType.IMPORT_KEYWORD)
   );
 
-  private JavaUtil() { }
+  private JavaSourceRootDetectionUtil() { }
 
-  public static List<Pair<File,String>> suggestRoots(File dir, LanguageFileType fileType) {
-    ArrayList<Pair<File,String>> foundDirectories = new ArrayList<Pair<File, String>>();
-    try{
-      suggestRootsImpl(dir, dir, foundDirectories, fileType);
-    }
-    catch(PathFoundException ignore){
-    }
-    return foundDirectories;
-  }
+  @NotNull
+  public static Collection<JavaModuleSourceRoot> suggestRoots(@NotNull File dir) {
+    final List<JavaSourceRootDetector> detectors = ContainerUtil.findAll(ProjectStructureDetector.EP_NAME.getExtensions(), JavaSourceRootDetector.class);
+    final RootDetectionProcessor processor = new RootDetectionProcessor(dir, detectors.toArray(new JavaSourceRootDetector[detectors.size()]));
+    final Map<ProjectStructureDetector,List<DetectedProjectRoot>> rootsMap = processor.findRoots();
 
-  private static class PathFoundException extends Exception {
-    public File myDirectory;
-
-    public PathFoundException(File directory) {
-      myDirectory = directory;
-    }
-  }
-
-  private static void suggestRootsImpl(File base,
-                                       File dir,
-                                       ArrayList<? super Pair<File, String>> foundDirectories,
-                                       LanguageFileType fileType) throws PathFoundException {
-    if (!dir.isDirectory()) {
-      return;
-    }
-    FileTypeManager typeManager = FileTypeManager.getInstance();
-    if (typeManager.isFileIgnored(dir.getName())) {
-      return;
-    }
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      if (progressIndicator.isCanceled()) {
-        return;
-      }
-      progressIndicator.setText2(dir.getPath());
-    }
-
-    File[] list = dir.listFiles();
-    if (list == null || list.length == 0) {
-      return;
-    }
-    for (File child : list) {
-      if (child.isFile()) {
-        FileType type = typeManager.getFileTypeByFileName(child.getName());
-        if (fileType == type) {
-          if (progressIndicator != null && progressIndicator.isCanceled()) {
-            return;
-          }
-          Pair<File, String> root = suggestRootForJavaFile(child);
-          if (root != null) {
-            String packagePrefix = getPackagePrefix(base, root);
-            if (packagePrefix == null) {
-              foundDirectories.add(root);
-            }
-            else {
-              foundDirectories.add(Pair.create(base, packagePrefix));
-            }
-            throw new PathFoundException(root.getFirst());
+    Map<File, JavaModuleSourceRoot> result = new HashMap<File, JavaModuleSourceRoot>();
+    for (List<DetectedProjectRoot> roots : rootsMap.values()) {
+      for (DetectedProjectRoot root : roots) {
+        if (root instanceof JavaModuleSourceRoot) {
+          final JavaModuleSourceRoot sourceRoot = (JavaModuleSourceRoot)root;
+          final File directory = sourceRoot.getDirectory();
+          final JavaModuleSourceRoot oldRoot = result.remove(directory);
+          if (oldRoot != null) {
+            result.put(directory, oldRoot.combineWith(sourceRoot));
           }
           else {
-            return;
+            result.put(directory, sourceRoot);
           }
         }
       }
     }
-
-    for (File child : list) {
-      if (child.isDirectory()) {
-        try {
-          suggestRootsImpl(base, child, foundDirectories, fileType);
-        }
-        catch (PathFoundException found) {
-          if (!found.myDirectory.equals(child)) {
-            throw found;
-          }
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private static String getPackagePrefix(File base, Pair<File,String> root) {
-    String result = "";
-    for (File parent = base; parent != null; parent = parent.getParentFile()) {
-      if (parent.equals(root.getFirst())) {
-        return root.getSecond() + (root.getSecond().length() > 0 && result.length() > 0 ? "." : "") + result;
-      }
-      result = parent.getName() + (result.length() > 0 ? "." : "") + result;
-    }
-    return null;
+    return result.values();
   }
 
 
   @Nullable
-  private static Pair<File,String> suggestRootForJavaFile(File javaFile) {
+  public static Pair<File,String> suggestRootForJavaFile(File javaFile, File topmostPossibleRoot) {
     if (!javaFile.isFile()) return null;
 
     final CharSequence chars;
@@ -164,7 +97,7 @@ public class JavaUtil {
         String token = packageName.substring(index1 + 1, index);
         String dirName = root.getName();
         final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
-        if (!equalsToToken) {
+        if (!equalsToToken || root.equals(topmostPossibleRoot)) {
           return Pair.create(root, packageName.substring(0, index));
         }
         String parent = root.getParent();

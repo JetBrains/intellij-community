@@ -1173,6 +1173,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       if (!available() || myEditor.getSelectionModel().hasSelection()) return;
       final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
       final PsiElement rootPsiElement = treeStructure.getRootPsiElement();
+      if (rootPsiElement == null) return;
       final PsiElement rootElement = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;

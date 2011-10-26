@@ -125,7 +125,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     Disposer.register(application, myDisposable);
   }
 
-  private void showWelcomeScreen() {
+  void showWelcomeScreen() {
     myWelcomeScreen = new WelcomeScreen(this);
     Disposer.register(myDisposable, myWelcomeScreen);
     myWelcomePane = myWelcomeScreen.getWelcomePanel();

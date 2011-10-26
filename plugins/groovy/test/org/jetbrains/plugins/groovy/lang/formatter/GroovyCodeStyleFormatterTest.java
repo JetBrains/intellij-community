@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.lang.reflect.Field;
@@ -47,18 +48,29 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
       if (!matcher.find()) break;
       final String[] strings = matcher.group(1).split("=");
       String name = strings[0];
-      final CommonCodeStyleSettings groovySettings =
-        CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
-      final Field field = CommonCodeStyleSettings.class.getField(name);
+
+      Object settingObj;
+      Field field;
+
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+      try {
+        field = CommonCodeStyleSettings.class.getField(name);
+        settingObj = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+      }
+      catch (NoSuchFieldException e) {
+        field = GroovyCodeStyleSettings.class.getField(name);
+        settingObj = settings.getCustomSettings(GroovyCodeStyleSettings.class);
+      }
+
       final String value = strings[1];
       if ("true".equals(value) || "false".equals(value)) {
-        field.set(groovySettings, Boolean.parseBoolean(value));
+        field.set(settingObj, Boolean.parseBoolean(value));
       } else {
         try {
-          field.set(groovySettings, Integer.parseInt(value));
+          field.set(settingObj, Integer.parseInt(value));
         }
         catch (NumberFormatException e) {
-          field.set(groovySettings, CommonCodeStyleSettings.class.getField(value).get(value));
+          field.set(settingObj, CommonCodeStyleSettings.class.getField(value).get(value));
         }
       }
       input = input.substring(matcher.end());
@@ -89,5 +101,7 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   public void testWhile1() throws Throwable { doTest(); }
   public void testWhile2() throws Throwable { doTest(); }
   public void testWithin_brackets1() throws Throwable { doTest(); }
+  public void testSpace_in_named_arg_true() throws Throwable { doTest(); }
+  public void testSpace_in_named_arg_false() throws Throwable { doTest(); }
 
 }

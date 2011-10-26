@@ -231,13 +231,13 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   }
 
   @Override
-  public <T> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, Exception> process,
+  public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, E> process,
                                                    @NotNull @Nls String progressTitle,
                                                    boolean canBeCanceled,
-                                                   @Nullable Project project) throws Exception {
+                                                   @Nullable Project project) throws E {
 
     final Ref<T> result = new Ref<T>();
-    final Ref<Exception> exceptionRef = new Ref<Exception>();
+    final Ref<E> exceptionRef = new Ref<E>();
     Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -245,7 +245,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
           result.set(compute);
         }
         catch (Exception e) {
-          exceptionRef.set(e);
+          exceptionRef.set((E)e);
         }
       }
     };

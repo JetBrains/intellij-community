@@ -16,18 +16,20 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class SerializableInspection extends BaseInspection {
 
@@ -38,16 +40,14 @@ public abstract class SerializableInspection extends BaseInspection {
 
   @Deprecated @SuppressWarnings({"PublicField"})
   public String superClassString = "java.awt.Component";
-
-  @SuppressWarnings("PublicField")
-  public final ExternalizableStringSet superClasses = new ExternalizableStringSet();
+  protected List<String> superClassList = new ArrayList();
 
   @Override
   public final JComponent createOptionsPanel() {
     final JComponent panel = new JPanel(new GridBagLayout());
 
     final JPanel chooserList = UiUtils.createTreeClassChooserList(
-      superClasses, InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
+      superClassList, InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
       InspectionGadgetsBundle.message("choose.super.class.to.ignore"));
     UiUtils.setComponentSize(chooserList, 7, 25);
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
@@ -80,10 +80,13 @@ public abstract class SerializableInspection extends BaseInspection {
   @Override
   public void readSettings(Element node) throws InvalidDataException {
     super.readSettings(node);
-    if (!superClassString.isEmpty()) {
-      parseString(superClassString, superClasses);
-      superClassString = "";
-    }
+    parseString(superClassString, superClassList);
+  }
+
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    superClassString = formatString(superClassList);
+    super.writeSettings(node);
   }
 
   protected JComponent[] createAdditionalOptions() {
@@ -94,7 +97,7 @@ public abstract class SerializableInspection extends BaseInspection {
     if (SerializationUtils.isDirectlySerializable(aClass)) {
       return false;
     }
-    for (String superClassName : superClasses) {
+    for (String superClassName : superClassList) {
       if (InheritanceUtil.isInheritor(aClass, superClassName)) {
         return true;
       }

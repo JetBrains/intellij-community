@@ -41,7 +41,7 @@ public class GroovyCompilerWrapper {
     List compiledFiles = new ArrayList();
     try {
       unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
-      addCompiledFiles(unit, compiledFiles, forStubs, collector);
+      addCompiledFiles(unit, compiledFiles, forStubs);
     }
     catch (CompilationFailedException e) {
       processCompilationException(e, collector, forStubs);
@@ -64,7 +64,9 @@ public class GroovyCompilerWrapper {
     return compiledFiles;
   }
 
-  private static void addCompiledFiles(CompilationUnit compilationUnit, final List compiledFiles, final boolean forStubs, final List collector) throws IOException {
+  private static void addCompiledFiles(CompilationUnit compilationUnit,
+                                       final List compiledFiles,
+                                       final boolean forStubs) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
     final String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
@@ -76,7 +78,7 @@ public class GroovyCompilerWrapper {
           final String stubPath = outputPath + "/" + topLevel.replace('.', '/') + ".java";
           String fileName = source.getName();
           if (new File(stubPath).exists()) {
-            compiledFiles.add(new OutputItemImpl(outputPath, stubPath, fileName));
+            compiledFiles.add(new OutputItem(stubPath, fileName));
           }
           /*
           else {
@@ -113,7 +115,7 @@ public class GroovyCompilerWrapper {
           String className = (String)tailIter.next();
           if (className.equals(topLevel) || className.startsWith(nested)) {
             tailIter.remove();
-            compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
+            compiledFiles.add(new OutputItem(outputPath + "/" + className.replace('.', '/') + ".class", fileName));
           } else {
             break;
           }
@@ -210,32 +212,17 @@ public class GroovyCompilerWrapper {
     addMessageWithoutLocation(collector, message.getMessage(), true);
   }
 
-  public interface OutputItem {
-    String getOutputPath();
-
-    String getSourceFile();
-
-    String getOutputRootDirectory();
-  }
-
-  public static class OutputItemImpl implements OutputItem {
-
+  public static class OutputItem {
     private final String myOutputPath;
-    private final String myOutputDir;
     private final String mySourceFileName;
 
-    public OutputItemImpl(String outputDir, String outputPath, String sourceFileName) {
-      myOutputDir = outputDir;
+    public OutputItem(String outputPath, String sourceFileName) {
       myOutputPath = outputPath;
       mySourceFileName = sourceFileName;
     }
 
     public String getOutputPath() {
       return myOutputPath;
-    }
-
-    public String getOutputRootDirectory() {
-      return myOutputDir;
     }
 
     public String getSourceFile() {

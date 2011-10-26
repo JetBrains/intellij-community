@@ -32,6 +32,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,7 +109,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
   public JButton createSetupButton(final Project project,
                                    final ProjectSdksModel jdksModel,
                                    final JdkComboBoxItem firstItem,
-                                   final Condition<Sdk> additionalSetup,
+                                   @Nullable final Condition<Sdk> additionalSetup,
                                    final boolean moduleJdkSetup) {
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     setUpButton.addActionListener(new ActionListener() {
@@ -129,7 +130,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
         });
         JBPopupFactory.getInstance()
           .createActionGroupPopup(ProjectBundle.message("project.roots.set.up.jdk.title", moduleJdkSetup ? 1 : 2), group,
-                                  DataManager.getInstance().getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+                                  DataManager.getInstance().getDataContext(JdkComboBox.this), JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
           .showUnderneathOf(setUpButton);
       }
     });
@@ -140,7 +141,9 @@ class JdkComboBox extends ComboBoxWithWidePopup {
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Sdk projectJdk = retrieveJDK.compute();
-        ProjectStructureConfigurable.getInstance(project).select(projectJdk, true);
+        if (projectJdk != null) {
+          ProjectStructureConfigurable.getInstance(project).select(projectJdk, true);
+        }
       }
     });
     addActionListener(new ActionListener(){
@@ -160,6 +163,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
     return (JdkComboBoxItem)super.getSelectedItem();
   }
 
+  @Nullable
   public Sdk getSelectedJdk() {
     final JdkComboBoxItem selectedItem = (JdkComboBoxItem)super.getSelectedItem();
     return selectedItem != null? selectedItem.getJdk() : null;
@@ -248,7 +252,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
   public static class JdkComboBoxItem {
     private final Sdk myJdk;
 
-    public JdkComboBoxItem(Sdk jdk) {
+    public JdkComboBoxItem(@Nullable Sdk jdk) {
       myJdk = jdk;
     }
 

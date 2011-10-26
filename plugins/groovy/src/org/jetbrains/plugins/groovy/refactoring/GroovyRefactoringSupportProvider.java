@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMetho
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 
 /**
  * @author ilyas
@@ -50,7 +50,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
    */
   @Nullable
   public RefactoringActionHandler getIntroduceVariableHandler() {
-    return new GroovyIntroduceVariableHandler();
+    return new GrIntroduceVariableHandler();
   }
 
   @Nullable

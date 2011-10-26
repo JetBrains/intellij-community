@@ -196,7 +196,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     doCreate(targetClass, method, shouldBeAbstractImpl(targetClass), arguments, substitutor, expectedTypes, context);
   }
 
-  private static void doCreate(PsiClass targetClass,
+  public static void doCreate(PsiClass targetClass,
                                PsiMethod method,
                                boolean shouldBeAbstract,
                                List<Pair<PsiExpression, PsiType>> arguments,

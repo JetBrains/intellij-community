@@ -210,6 +210,10 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   }
 
   private static short getAlpha() {
+    if ((UIUtil.isUnderAlloyLookAndFeel() && !UIUtil.isUnderAlloyIDEALookAndFeel())
+      || UIUtil.isUnderMetalLookAndFeel() || UIUtil.isUnderMetalLookAndFeel()){
+      return 255;
+    }
     return 150;
   }
 

@@ -19,17 +19,21 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<GenericDebuggerRunnerSettings> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.GenericDebuggerParametersRunnerConfigurable");
   private JPanel myPanel;
   private JTextField myAddressField;
   private JPanel myShMemPanel;
@@ -45,21 +49,14 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myDebuggerSettings.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
-        if("".equals(getPort())) {
-          try {
-            String address = DebuggerUtils.getInstance().findAvailableDebugAddress(getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
-            setPort(address);
-          }
-          catch (ExecutionException e1) {
-            setPort("");
-          }
-        }
+        suggestAvailablePortIfNotSpecified();
         updateUI();
       }
     });
 
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        suggestAvailablePortIfNotSpecified();
         updateUI();
         myPanel.repaint();
       }
@@ -80,15 +77,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     return getTransport() == DebuggerSettings.SOCKET_TRANSPORT;
   }
 
-  public void apply() throws ConfigurationException {
-  }
-
-  public void reset() {
-  }
-
-  public void disposeUIResources() {
-  }
-
+  @NotNull
   public JComponent createEditor() {
     return myPanel;
   }
@@ -102,14 +91,34 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   public void resetEditorFrom(GenericDebuggerRunnerSettings runnerSettings) {
-    String port = runnerSettings.DEBUG_PORT;
-    if (port == null) port = "";
-
     setIsLocal(runnerSettings.LOCAL);
     setTransport(runnerSettings.getTransport());
-    setPort(port);
-
+    setPort(StringUtil.notNullize(runnerSettings.getDebugPort()));
+    suggestAvailablePortIfNotSpecified();
     updateUI();
+  }
+
+  private void suggestAvailablePortIfNotSpecified() {
+    String port = getPort();
+    boolean portSpecified = !StringUtil.isEmpty(port);
+    boolean isSocketTransport = getTransport() == DebuggerSettings.SOCKET_TRANSPORT;
+    if (isSocketTransport) {
+      try {
+        Integer.parseInt(port);
+      }
+      catch (NumberFormatException e) {
+        portSpecified = false;
+      }
+    }
+
+    if (!portSpecified) {
+      try {
+        setPort(DebuggerUtils.getInstance().findAvailableDebugAddress(isSocketTransport));
+      }
+      catch (ExecutionException e) {
+        LOG.info(e);
+      }
+    }
   }
 
   private int getTransport() {
@@ -146,7 +155,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private void setTransport(int transport) {
     mySocketTransport.setSelected(transport == DebuggerSettings.SOCKET_TRANSPORT);
-    myShmemTransport.setSelected (transport != DebuggerSettings.SOCKET_TRANSPORT);
+    myShmemTransport.setSelected(transport != DebuggerSettings.SOCKET_TRANSPORT);
   }
 
   private void setIsLocal(boolean b) {

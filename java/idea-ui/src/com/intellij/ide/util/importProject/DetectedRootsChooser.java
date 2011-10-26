@@ -16,7 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.ui.CollectionComboBoxModel;

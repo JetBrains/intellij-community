@@ -105,7 +105,7 @@ public class DuplicatesImpl {
     expandAllRegionsCoveringRange(project, editor, textRange);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (showAll.get() == null || !showAll.get()) {
+      if (size > 1 && (showAll.get() == null || !showAll.get())) {
         final String prompt = provider.getConfirmDuplicatePrompt(match);
         final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project){
           @Override

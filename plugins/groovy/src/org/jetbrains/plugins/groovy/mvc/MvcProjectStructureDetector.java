@@ -16,19 +16,16 @@
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ide.util.importProject.ProjectDescriptor;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,36 +34,24 @@ import java.util.List;
  */
 public abstract class MvcProjectStructureDetector extends ProjectStructureDetector {
   private final MvcFramework myFramework;
+  private final String myDirectoryName;
 
   public MvcProjectStructureDetector(MvcFramework framework) {
     myFramework = framework;
+    myDirectoryName = myFramework.getFrameworkName().toLowerCase() + "-app";
   }
 
   @NotNull
   @Override
-  public List<DetectedProjectRoot> detectRoots(File dir) {
-    final List<DetectedProjectRoot> result = new ArrayList<DetectedProjectRoot>();
-    FileUtil.processFilesRecursively(dir, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        if (file.isDirectory() && new File(file, myFramework.getFrameworkName().toLowerCase() + "-app").isDirectory()) {
-          result.add(new DetectedProjectRoot(file) {
-            @NotNull
-            @Override
-            public String getRootTypeName() {
-              return myFramework.getDisplayName();
-            }
-
-            @Override
-            public boolean canContainRoot(@NotNull DetectedProjectRoot root) {
-              return false;
-            }
-          });
-        }
-        return true;
+  public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
+                                               @NotNull List<DetectedProjectRoot> result) {
+    for (File child : children) {
+      if (child.getName().equals(myDirectoryName) && child.isDirectory()) {
+        result.add(new GroovyMvcProjectRoot(dir));
+        return DirectoryProcessingResult.SKIP_CHILDREN;
       }
-    });
-    return result;
+    }
+    return DirectoryProcessingResult.PROCESS_CHILDREN;
   }
 
   @Override
@@ -76,5 +61,22 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
     final ModuleWizardStep groovySdkStep = new GroovySdkForProjectFromSourcesStep(this, builder, projectDescriptor, myFramework, context);
     final ModuleWizardStep javaSdkStep = ProjectWizardStepFactory.getInstance().createProjectJdkStep(context);
     return Arrays.asList(javaSdkStep, groovySdkStep);
+  }
+
+  private class GroovyMvcProjectRoot extends DetectedProjectRoot {
+    public GroovyMvcProjectRoot(File dir) {
+      super(dir);
+    }
+
+    @NotNull
+    @Override
+    public String getRootTypeName() {
+      return myFramework.getDisplayName();
+    }
+
+    @Override
+    public boolean canContainRoot(@NotNull DetectedProjectRoot root) {
+      return false;
+    }
   }
 }

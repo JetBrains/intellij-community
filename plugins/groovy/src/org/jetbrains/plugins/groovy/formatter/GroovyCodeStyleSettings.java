@@ -41,6 +41,8 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
    */
   public boolean USE_FLYING_GEESE_BRACES = true;
 
+  public boolean SPACE_IN_NAMED_ARGUMENT = true;
+
   public GroovyCodeStyleSettings(CodeStyleSettings container) {
     super("GroovyCodeStyleSettings", container);
   }

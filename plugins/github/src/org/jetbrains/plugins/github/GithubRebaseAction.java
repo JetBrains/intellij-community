@@ -132,10 +132,11 @@ public class GithubRebaseAction extends DumbAwareAction {
     // Check that corresponding remote branch is configured for the fork origin repo
     final Ref<String> remoteForForkParentRepo = new Ref<String>();
     for (GitRemote gitRemote : gitRepository.getRemotes()) {
-      final String fetchUrl = gitRemote.getFetchRefSpec();
-      if (fetchUrl.endsWith(parent + ".git")) {
-        remoteForForkParentRepo.set(gitRemote.getName());
-        break;
+      for (String url : gitRemote.getUrls()) {
+        if (url.endsWith(parent + ".git")) {
+          remoteForForkParentRepo.set(gitRemote.getName());
+          break;
+        }
       }
     }
     if (remoteForForkParentRepo.isNull()){

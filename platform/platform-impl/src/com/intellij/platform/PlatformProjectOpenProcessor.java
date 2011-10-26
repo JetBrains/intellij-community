@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -110,10 +109,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
-    Ref<Boolean> cancelled = new Ref<Boolean>();
     if (projectDir.exists()) {
       try {
-        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath(), cancelled);
+        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
       }
       catch (Exception e) {
         // ignore
@@ -121,9 +119,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
     else {
       projectDir.mkdirs();
-    }
-    if (project == null && cancelled.isNull()) {
-      project = projectManager.newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
     }
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);

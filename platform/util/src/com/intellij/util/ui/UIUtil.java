@@ -747,6 +747,11 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderAlloyIDEALookAndFeel() {
+    return isUnderAlloyLookAndFeel() && UIManager.getLookAndFeel().getName().contains("IDEA");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderWindowsLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Windows");
   }

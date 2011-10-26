@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -70,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -527,5 +529,39 @@ public class PsiImplUtil {
   public static GrMethod[] getMethodOrReflectedMethods(GrMethod method) {
     final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
     return reflectedMethods.length > 0 ? reflectedMethods : new GrMethod[]{method};
+  }
+
+  @Nullable
+  public static PsiType inferExpectedTypeForDiamond(GrNewExpression diamondNew) {
+    PsiElement pparent = PsiUtil.skipParentheses(diamondNew.getParent(), true);
+    if (pparent instanceof GrAssignmentExpression &&
+        PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), diamondNew, false)) {
+      GrExpression lValue = ((GrAssignmentExpression)pparent).getLValue();
+      if (PsiUtil.mightBeLValue(lValue)) {
+        return lValue.getNominalType();
+      }
+    }
+    else if (pparent instanceof GrVariable && ((GrVariable)pparent).getInitializerGroovy() == diamondNew) {
+      return ((GrVariable)pparent).getDeclaredType();
+    }
+    else if (pparent instanceof GrListOrMap) {
+      PsiElement ppparent = PsiUtil.skipParentheses(pparent.getParent(), true);
+
+      if (ppparent instanceof GrAssignmentExpression &&
+          PsiTreeUtil.isAncestor(((GrAssignmentExpression)ppparent).getRValue(), pparent, false)) {
+
+        PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)ppparent).getLValue(), false);
+        if (lValue instanceof GrTupleExpression) {
+          GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
+          int index = ArrayUtil.find(initializers, diamondNew);
+          GrExpression[] expressions = ((GrTupleExpression)lValue).getExpressions();
+          if (index < expressions.length) {
+            return expressions[index].getNominalType();
+          }
+        }
+      }
+    }
+
+    return null;
   }
 }

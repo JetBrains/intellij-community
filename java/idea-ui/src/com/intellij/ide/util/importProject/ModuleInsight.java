@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.JavaUtil;
-import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -494,7 +494,7 @@ public class ModuleInsight {
   private void scanImportStatements(char[] text, final Lexer lexer, final Set<String> usedPackages){
     lexer.start(new CharArrayCharSequence(text));
 
-    JavaUtil.skipWhiteSpaceAndComments(lexer);
+    JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(lexer);
     if (lexer.getTokenType() == JavaTokenType.PACKAGE_KEYWORD) {
       advanceLexer(lexer);
       if (readPackageName(text, lexer) == null) {
@@ -573,6 +573,6 @@ public class ModuleInsight {
 
   private static void advanceLexer(final Lexer lexer) {
     lexer.advance();
-    JavaUtil.skipWhiteSpaceAndComments(lexer);
+    JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(lexer);
   }
 }

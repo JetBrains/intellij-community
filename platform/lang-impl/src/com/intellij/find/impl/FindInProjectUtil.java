@@ -280,7 +280,7 @@ public class FindInProjectUtil {
           public void run() {
             ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, MessageType.WARNING, finalMessage);
           }
-        });
+        }, project.getDisposed());
       }
     }
     catch (ProcessCanceledException e) {

@@ -112,12 +112,12 @@ public abstract class ProgressManager {
    * @param canBeCanceled whether "Cancel" button is shown on the progress window.
    * @param project       the project in the context of which the operation is executed.
    * @return true result of operation
-   * @throws Exception exception thrown by process
+   * @throws E exception thrown by process
    */
-  public abstract <T> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, Exception> process,
+  public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
                                                               @NotNull @Nls String progressTitle,
                                                               boolean canBeCanceled,
-                                                              @Nullable Project project) throws Exception;
+                                                              @Nullable Project project) throws E;
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the

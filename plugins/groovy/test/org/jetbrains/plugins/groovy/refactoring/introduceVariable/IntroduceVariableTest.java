@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,8 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -102,7 +102,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     myEditor.getSelectionModel().setSelection(startOffset, endOffset);
 
     // gathering data for introduce variable
-    final GroovyIntroduceVariableBase introduceVariableBase = new GroovyIntroduceVariableHandler();
+    final GrIntroduceVariableHandler introduceVariableHandler = new GrIntroduceVariableHandler();
 
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) myFixture.getFile()), startOffset, endOffset, GrExpression.class);
 
@@ -125,7 +125,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        introduceVariableBase.runRefactoring(context, new GroovyIntroduceVariableSettings() {
+        introduceVariableHandler.runRefactoring(context, new GroovyIntroduceVariableSettings() {
           @Override
           public boolean isDeclareFinal() {
             return false;

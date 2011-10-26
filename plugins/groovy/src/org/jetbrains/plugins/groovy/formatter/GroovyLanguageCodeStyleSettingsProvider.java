@@ -46,6 +46,11 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
       return;
     }
+    if (settingsType == SettingsType.SPACING_SETTINGS) {
+      consumer.showAllStandardOptions();
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
+      return;
+    }
     consumer.showAllStandardOptions();
   }
 
@@ -159,6 +164,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "          }\n" +
     "        }\n" +
     "      } catch (MyException e) {\n" +
+    "        logError(method: \"foo\", exception: e)\n" +
     "      } finally {\n" +
     "        int[] arr = (int[]) g(y)\n" +
     "        x = y >= 0 ? arr[y] : -1\n" +

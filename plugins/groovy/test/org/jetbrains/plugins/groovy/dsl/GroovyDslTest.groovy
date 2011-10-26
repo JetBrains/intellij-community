@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -27,9 +28,8 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.documentation.DocumentationManager
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
@@ -64,9 +64,23 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
-  public void testCompleteMethod() throws Throwable { doTest() }
+  public void testCompleteTopLevel() throws Throwable {
+    myFixture.configureByText 'a.gdsl', '<caret>'
+    myFixture.completeBasic()
+    def expected = ['contributor', 'contribute', 'currentType', 'assertVersion']
+    if (!myFixture.lookupElementStrings.containsAll(expected)) {
+      assertSameElements(expected, myFixture.lookupElementStrings)
+    }
+  }
 
-  public void testCompleteProperty() throws Throwable { doTest() }
+  public void testCompleteInContributor() throws Throwable {
+    myFixture.configureByText 'a.gdsl', 'contribute { <caret> }'
+    myFixture.completeBasic()
+    def expected = ['method', 'property', 'parameter']
+    if (!myFixture.lookupElementStrings.containsAll(expected)) {
+      assertSameElements(expected, myFixture.lookupElementStrings)
+    }
+  }
 
   public void testCompleteClassMethod() throws Throwable {
     doCustomTest("""
