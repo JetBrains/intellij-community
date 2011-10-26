@@ -1,22 +1,17 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
-import java.io.IOException;
+import com.intellij.JavaTestUtil
+import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
-public class VariablesCompletionTest extends CompletionTestCase {
+public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public static final String FILE_PREFIX = "/codeInsight/completion/variables/";
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath();
   }
 
   public void testObjectVariable() throws Exception {
@@ -30,7 +25,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testInputMethodEventVariable() throws Exception {
-    createClass("package java.awt.event; public interface InputMethodEvent {}");
+    myFixture.addClass("package java.awt.event; public interface InputMethodEvent {}");
 
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
     checkResultByFile(FILE_PREFIX + "locals/" + getTestName(false) + "_after.java");
@@ -47,7 +42,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
 
   public void testLocals2() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "TestSource2.java");
-    compareLookup(FILE_PREFIX + "locals/test2-lst.txt");
+    assert myFixture.lookupElementStrings == ['abc', 'aaa']
     checkResultByFile(FILE_PREFIX + "locals/" + "TestResult2.java");
   }
 
@@ -97,30 +92,28 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testFieldNameCompletion1() throws Exception {
-    configureByFileNoCompletion(FILE_PREFIX + "locals/" + "FieldNameCompletion1.java");
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
-    complete();
+    configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion1.java");
     settings.FIELD_NAME_PREFIX = oldPrefix;
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion1-result.java");
   }
 
   public void testFieldNameCompletion2() throws Exception {
-    configureByFileNoCompletion(FILE_PREFIX + "locals/" + "FieldNameCompletion2.java");
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
-    complete();
+    configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion2.java");
     settings.FIELD_NAME_PREFIX = oldPrefix;
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion2-result.java");
   }
 
   public void testFieldNameCompletion3() throws Exception {
-    configureByFileNoCompletion(FILE_PREFIX + "locals/" + "FieldNameCompletion3.java");
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
+    configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion3.java");
     complete();
     settings.FIELD_NAME_PREFIX = oldPrefix;
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion3-result.java");
@@ -140,7 +133,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
     configureByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
     complete();
     checkResultByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
-    doTestByCount(2, "creAnInt", "createStylesheetCombobox");
+    assert myFixture.lookupElementStrings.containsAll(["creAnInt", "createStylesheetCombobox"])
   }
 
   public void testArrayMethodName() throws Throwable {
@@ -148,13 +141,13 @@ public class VariablesCompletionTest extends CompletionTestCase {
   }
 
   public void testInitializerMatters() throws Exception {
-    configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
+    myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
     complete();
     assertStringItems("foo", "fS");
   }
 
   public void testFieldInitializerMatters() throws Exception {
-    configureByText(JavaFileType.INSTANCE, "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
+    myFixture.configureByText(JavaFileType.INSTANCE, "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
     complete();
     assertStringItems("foo", "fString");
   }
@@ -164,12 +157,4 @@ public class VariablesCompletionTest extends CompletionTestCase {
     assertStringItems("stringBuffer", "buffer");
   }
 
-  protected void compareLookup(String fileName) throws IOException{
-    String fullPath = getTestDataPath() + fileName;
-    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(fullPath);
-    assertNotNull("file " + fullPath + " not found", result);
-
-
-    assertStringItems(LineTokenizer.tokenize(FileDocumentManager.getInstance().getDocument(result).getCharsSequence(), false));
-  }
 }
