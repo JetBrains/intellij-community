@@ -70,7 +70,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -232,12 +231,12 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         compileContext.addMessage(CompilerMessageCategory.ERROR, "Internal groovyc error: code " + exitCode, null, -1, -1);
       }
 
-      List<GroovyCompilerWrapper.OutputItem> outputItems = processHandler.getSuccessfullyCompiled();
+      List<GroovycOSProcessHandler.OutputItem> outputItems = processHandler.getSuccessfullyCompiled();
       ArrayList<OutputItem> items = new ArrayList<OutputItem>();
       if (forStubs) {
         List<String> outputPaths = new ArrayList<String>();
-        for (final GroovyCompilerWrapper.OutputItem outputItem : outputItems) {
-          outputPaths.add(outputItem.getOutputPath());
+        for (final GroovycOSProcessHandler.OutputItem outputItem : outputItems) {
+          outputPaths.add(outputItem.outputPath);
         }
         addStubsToCompileScope(outputPaths, compileContext, module);
       }
@@ -248,8 +247,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
 
         final DependencyCache dependencyCache = ((CompileContextEx)compileContext).getDependencyCache();
-        for (GroovyCompilerWrapper.OutputItem outputItem : outputItems) {
-          final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(outputItem.getSourceFile()));
+        for (GroovycOSProcessHandler.OutputItem outputItem : outputItems) {
+          final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(outputItem.sourcePath));
           if (sourceVirtualFile == null) {
             continue;
           }
@@ -258,10 +257,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
             indicator.setText2(sourceVirtualFile.getName());
           }
 
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(outputItem.getOutputPath()));
-          items.add(new OutputItemImpl(outputItem.getOutputPath(), sourceVirtualFile));
+          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(outputItem.outputPath));
+          items.add(new OutputItemImpl(outputItem.outputPath, sourceVirtualFile));
 
-          final File classFile = new File(outputItem.getOutputPath());
+          final File classFile = new File(outputItem.outputPath);
           try {
             dependencyCache.reparseClassFile(classFile, FileUtil.loadFileBytes(classFile));
           }
