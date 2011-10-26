@@ -172,7 +172,7 @@ class GitBranchPopup  {
       // on type check ref validity, on OK check ref existence.
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference, null);
       }
     }
 
@@ -227,7 +227,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName, null);
       }
 
     }

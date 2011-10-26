@@ -51,6 +51,7 @@ import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -121,7 +122,7 @@ public final class GitBranchOperationsProcessor {
    * @param trackedBranchName Name of the remote branch being checked out.
    */
   public void checkoutNewTrackingBranch(@NotNull String newBranchName, @NotNull String trackedBranchName) {
-    commonCheckout(trackedBranchName, newBranchName);
+    commonCheckout(trackedBranchName, newBranchName, null);
   }
 
   /**
@@ -136,14 +137,17 @@ public final class GitBranchOperationsProcessor {
    *
    * @param reference reference to be checked out.
    */
-  public void checkout(@NotNull final String reference) {
-    commonCheckout(reference, null);
+  public void checkout(@NotNull final String reference, final Runnable callInAwtAfterCompleted) {
+    commonCheckout(reference, null, callInAwtAfterCompleted);
   }
 
-  private void commonCheckout(@NotNull final String reference, @Nullable final String newTrackingBranch) {
+  private void commonCheckout(@NotNull final String reference, @Nullable final String newTrackingBranch, final Runnable callInAwtAfterCompleted) {
     new CommonBackgroundTask(myProject, "Checking out " + reference) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doCheckout(indicator, reference, newTrackingBranch);
+        if (callInAwtAfterCompleted != null) {
+          SwingUtilities.invokeLater(callInAwtAfterCompleted);
+        }
       }
     }.runInBackground();
   }

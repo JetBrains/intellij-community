@@ -65,6 +65,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.history.browser.*;
+import git4idea.process.GitBranchOperationsProcessor;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -780,7 +783,6 @@ public class GitLogUI implements Disposable {
   private void createContextMenu() {
     if (myContextMenu == null) {
       final DefaultActionGroup group = new DefaultActionGroup();
-      group.add(myCopyHashAction);
       final Point location = MouseInfo.getPointerInfo().getLocation();
       SwingUtilities.convertPointFromScreen(location, myJBTable);
       final int row = myJBTable.rowAtPoint(location);
@@ -790,16 +792,23 @@ public class GitLogUI implements Disposable {
           myUsersFilterAction.setPreselectedUser(commit.getCommitter());
         }
       }
-      group.add(myBranchSelectorAction.asTextAction());
-      group.add(myUsersFilterAction.asTextAction());
-      group.add(myStructureFilterAction.asTextAction());
       group.add(myCherryPickAction);
       group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
+      group.add(new MyCheckoutRevisionAction());
+
+      group.add(new Separator());
+      group.add(myCopyHashAction);
       group.add(myMyShowTreeAction);
       final MyToggleCommitMark toggleCommitMark = new MyToggleCommitMark();
       toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myJBTable);
       toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myGraphGutter.getComponent());
       group.add(toggleCommitMark);
+      group.add(new Separator());
+
+      group.add(myBranchSelectorAction.asTextAction());
+      group.add(myUsersFilterAction.asTextAction());
+      group.add(myStructureFilterAction.asTextAction());
+      group.add(new Separator());
       group.add(myRefreshAction);
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
@@ -2036,5 +2045,37 @@ public class GitLogUI implements Disposable {
     disabled,
     select,
     unselect
+  }
+  
+  private class MyCheckoutRevisionAction extends DumbAwareAction {
+    private MyCheckoutRevisionAction() {
+      super("Checkout Revision");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (selectedRows.length != 1) return;
+      final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+      if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
+
+      final GitRepository repository =
+        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+      if (repository == null) return;
+      new GitBranchOperationsProcessor(myProject, repository).checkout(commitAt.getHash().getString(), new Runnable() {
+        @Override
+        public void run() {
+          reloadRequest();
+        }
+      });
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      e.getPresentation().setEnabled(selectedRows.length == 1 &&
+                                     ! myTableModel.getCommitAt(selectedRows[0]).holdsDecoration() &&
+                                     ! myTableModel.isStashed(myTableModel.getCommitAt(selectedRows[0])));
+    }
   }
 }
