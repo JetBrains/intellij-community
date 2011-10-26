@@ -44,10 +44,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Apt compiler.
@@ -87,9 +84,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       GenerationItem[] generationItems = computation.compute();
       List<VirtualFile> generatedVFiles = new ArrayList<VirtualFile>();
       for (GenerationItem item : generationItems) {
-        File generatedFile = ((AptGenerationItem)item).myGeneratedFile;
-        if (generatedFile != null) {
-
+        final File[] generatedFiles = ((AptGenerationItem)item).myGeneratedFiles;
+        for (File generatedFile : generatedFiles) {
           CompilerUtil.refreshIOFile(generatedFile);
           CompilerUtil.refreshIOFile(generatedFile.getParentFile());
 
@@ -118,25 +114,30 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
 
         try {
+
           Map<CompilerMessageCategory, List<String>> messages = AndroidApt
-            .compile(aptItem.myAndroidTarget, aptItem.myManifestFile.getPath(), aptItem.mySourceRootPath, aptItem.myResourcesPaths, 
-                     aptItem.getPackageFolderPath(), aptItem.myLibraryPackagesString, aptItem.myIsLibrary);
+            .compile(aptItem.myAndroidTarget, aptItem.myManifestFile.getPath(), aptItem.myPackage, aptItem.mySourceRootPath, aptItem
+              .myResourcesPaths, aptItem.myLibraryPackages, aptItem.myIsLibrary);
           
           AndroidCompileUtil.addMessages(context, messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(aptItem);
           }
-          if (aptItem.myGeneratedFile.exists()) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                if (context.getProject().isDisposed() || aptItem.myModule.isDisposed()) {
-                  return;
+          for (int i = 0, n = aptItem.myGeneratedFiles.length; i < n; i++) {
+            final File generatedFile = aptItem.myGeneratedFiles[i];
+            final String aPackage = i == 0 ? aptItem.myPackage : aptItem.myLibraryPackages[i - 1];
+            if (generatedFile.exists()) {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  if (context.getProject().isDisposed() || aptItem.myModule.isDisposed()) {
+                    return;
+                  }
+                  String className = FileUtil.getNameWithoutExtension(generatedFile);
+                  AndroidCompileUtil.removeDuplicatingClasses(aptItem.myModule, aPackage, className,
+                                                              generatedFile, aptItem.mySourceRootPath);
                 }
-                String className = FileUtil.getNameWithoutExtension(aptItem.myGeneratedFile);
-                AndroidCompileUtil.removeDuplicatingClasses(aptItem.myModule, aptItem.myPackage, className, aptItem.myGeneratedFile,
-                                                            aptItem.mySourceRootPath);
-              }
-            });
+              });
+            }
           }
         }
         catch (final IOException e) {
@@ -178,12 +179,14 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final String[] myResourcesPaths;
     final String mySourceRootPath;
     final IAndroidTarget myAndroidTarget;
-    final File myGeneratedFile;
+    
+    final File[] myGeneratedFiles;
+    
     final String myPackage;
-    final String myLibraryPackagesString;
+    final String[] myLibraryPackages;
     final boolean myIsLibrary;
     
-    private final boolean myFileExists;
+    private final Set<String> myNonExistingFiles;
 
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
@@ -191,7 +194,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                               @NotNull String sourceRootPath,
                               @NotNull IAndroidTarget target,
                               @NotNull String aPackage,
-                              @NotNull String libraryPackagesString,
+                              @NotNull String[] libPackages,
                               boolean isLibrary) {
       myModule = module;
       myManifestFile = manifestFile;
@@ -199,15 +202,29 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       mySourceRootPath = sourceRootPath;
       myAndroidTarget = target;
       myPackage = aPackage;
-      myLibraryPackagesString = libraryPackagesString;
+      myLibraryPackages = libPackages;
       myIsLibrary = isLibrary;
-      myGeneratedFile =
+      myGeneratedFiles = new File[libPackages.length + 1];
+      
+      myGeneratedFiles[0] =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
-      myFileExists = myGeneratedFile.exists();
+      for (int i = 0; i < myLibraryPackages.length; i++) {
+        myGeneratedFiles[i + 1] =
+          new File(sourceRootPath, libPackages[i].replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+      }
+      
+      myNonExistingFiles = new HashSet<String>();
+
+      for (File generatedFile : myGeneratedFiles) {
+        if (!generatedFile.exists()) {
+          myNonExistingFiles.add(FileUtil.toSystemIndependentName(generatedFile.getPath()));
+        }
+      }
     }
 
-    public File getGeneratedFile() {
-      return myGeneratedFile;
+    @NotNull
+    public File[] getGeneratedFiles() {
+      return myGeneratedFiles;
     }
 
     public String getPath() {
@@ -215,7 +232,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, myFileExists);
+      return new MyValidityState(myModule, myNonExistingFiles);
     }
 
     public Module getModule() {
@@ -300,42 +317,39 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           }
           AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
 
-          final String libPackagesString = getLibPackagesString(module, packageName);
+          final String[] libPackages = getLibPackages(module, packageName);
 
           items.add(new AptGenerationItem(module, manifestFile, resPaths, sourceRootPath, target,
-                                          packageName, libPackagesString, facet.getConfiguration().LIBRARY_PROJECT));
+                                          packageName, libPackages, facet.getConfiguration().LIBRARY_PROJECT));
         }
       }
       return items.toArray(new GenerationItem[items.size()]);
     }
 
     @NotNull
-    private static String getLibPackagesString(@NotNull Module module, @NotNull String packageName) {
+    private static String[] getLibPackages(@NotNull Module module, @NotNull String packageName) {
       final Set<String> packageSet = new HashSet<String>();
       packageSet.add(packageName);
 
-      final StringBuilder libPackages = new StringBuilder();
+      final List<String> result = new ArrayList<String>();
 
       for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
         if (packageSet.add(libPackage)) {
-          if (libPackages.length() > 0) {
-            libPackages.append(':');
-          }
-          libPackages.append(libPackage);
+          result.add(libPackage);
         }
       }
 
-      return libPackages.toString();
+      return result.toArray(new String[result.size()]);
     }
   }
 
   private static class MyValidityState extends ResourcesValidityState {
     private final String myCustomGenPathR;
-    private final boolean myOutputFileExists;
+    private final Set<String> myNonExistingFiles;
 
-    MyValidityState(Module module, boolean fileExists) {
+    MyValidityState(@NotNull Module module, @NotNull Set<String> nonExistingFiles) {
       super(module);
-      myOutputFileExists = fileExists;
+      myNonExistingFiles = nonExistingFiles;
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet == null) {
         myCustomGenPathR = "";
@@ -349,7 +363,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       super(is);
       String path = is.readUTF();
       myCustomGenPathR = path != null ? path : "";
-      myOutputFileExists = true;
+
+      myNonExistingFiles = Collections.emptySet();
     }
 
     @Override
@@ -359,7 +374,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       }
 
       final MyValidityState otherState1 = (MyValidityState)otherState;
-      if (otherState1.myOutputFileExists != myOutputFileExists) {
+      if (!otherState1.myNonExistingFiles.equals(myNonExistingFiles)) {
         return false;
       }
       if (!super.equalsTo(otherState)) {

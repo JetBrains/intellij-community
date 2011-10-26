@@ -18,6 +18,7 @@ package org.jetbrains.android.compiler.tools;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
@@ -47,19 +48,37 @@ public final class AndroidApt {
 
   public static Map<CompilerMessageCategory, List<String>> compile(@NotNull IAndroidTarget target,
                                                                    @NotNull String manifestFileOsPath,
+                                                                   @NotNull String aPackage,
                                                                    @NotNull String outDirOsPath,
                                                                    @NotNull String[] resourceDirsOsPaths,
-                                                                   @NotNull String packageFolderOsPath,
-                                                                   @NotNull String libraryPackagesString,
+                                                                   @NotNull String[] libPackages,
                                                                    boolean isLibrary) throws IOException {
+    final String packageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + aPackage.replace('.', '/'));
+
     /* We actually need to delete the manifest.java as it may become empty and
     in this case aapt doesn't generate an empty one, but instead doesn't
     touch it */
-
     final File manifestJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.MANIFEST_JAVA_FILE_NAME);
     if (manifestJavaFile.exists()) {
       if (!manifestJavaFile.delete()) {
         LOG.error("Unable to delete " + manifestJavaFile.getPath());
+      }
+    }
+    
+    final File rJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
+    if (rJavaFile.exists()) {
+      if (!rJavaFile.delete()) {
+        LOG.error("Unable to delete " + rJavaFile.getPath());
+      }
+    }
+
+    for (String libPackage : libPackages) {
+      final String libPackageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + libPackage.replace('.', '/'));
+      final File libRJavaFile = new File(libPackageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
+      if (libRJavaFile.exists()) {
+        if (!libRJavaFile.delete()) {
+          LOG.error("Unable to delete " + libRJavaFile.getPath());
+        }
       }
     }
 
@@ -77,9 +96,9 @@ public final class AndroidApt {
       args.add("--auto-add-overlay");
     }
 
-    if (libraryPackagesString.length() > 0) {
+    if (libPackages.length > 0) {
       args.add("--extra-packages");
-      args.add(libraryPackagesString);
+      args.add(toPackagesString(libPackages));
     }
 
     args.add("-J");
@@ -97,6 +116,18 @@ public final class AndroidApt {
 
     LOG.info(AndroidUtils.command2string(args));
     return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
+  }
+
+  @NotNull
+  private static String toPackagesString(@NotNull String[] packages) {
+    final StringBuilder builder = new StringBuilder();
+    for (int i = 0, n = packages.length; i < n; i++) {
+      if (i > 0) {
+        builder.append(':');
+      }
+      builder.append(packages[i]);
+    }
+    return builder.toString();
   }
 
   public static Map<CompilerMessageCategory, List<String>> crunch(@NotNull IAndroidTarget target,

@@ -306,11 +306,13 @@ public class AndroidCompileUtil {
     List<VirtualFile> filesToCheck = new ArrayList<VirtualFile>();
     for (GeneratingCompiler.GenerationItem item : items) {
       if (item instanceof AndroidAptCompiler.AptGenerationItem) {
-        File generatedFile = ((AndroidAptCompiler.AptGenerationItem)item).getGeneratedFile();
-        if (generatedFile.exists()) {
-          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
-          if (generatedVFile != null) {
-            filesToCheck.add(generatedVFile);
+        final File[] generatedFiles = ((AndroidAptCompiler.AptGenerationItem)item).getGeneratedFiles();
+        for (File generatedFile : generatedFiles) {
+          if (generatedFile.exists()) {
+            VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
+            if (generatedVFile != null) {
+              filesToCheck.add(generatedVFile);
+            }
           }
         }
       }
