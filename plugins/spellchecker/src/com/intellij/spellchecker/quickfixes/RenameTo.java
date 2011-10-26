@@ -40,8 +40,8 @@ import javax.swing.*;
 
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
-  public RenameTo() {
-    super();
+  public RenameTo(String wordWithTypo) {
+    super(wordWithTypo);
   }
 
   @NotNull

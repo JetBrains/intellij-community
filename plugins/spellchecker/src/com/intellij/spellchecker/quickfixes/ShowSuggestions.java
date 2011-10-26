@@ -16,11 +16,8 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.SpellCheckerManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,31 +29,23 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
   private List<String> suggestions;
   private boolean processed;
-  protected ProblemDescriptor myProblemDescriptor;
+  private final String myWordWithTypo;
 
 
-  public ShowSuggestions() {
+  public ShowSuggestions(String wordWithTypo) {
+    myWordWithTypo = wordWithTypo;
   }
 
   @NotNull
-  public List<String> getSuggestions(){
+  public List<String> getSuggestions(Project project){
     if (!processed){
-      calculateSuggestions();
-      processed=true;
+      suggestions = SpellCheckerManager.getInstance(project).getSuggestions(myWordWithTypo);
+      processed = true;
     }
     return suggestions;
   }
 
-  private void calculateSuggestions(){
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(myProblemDescriptor.getPsiElement().getProject());
-    suggestions = manager.getSuggestions(ProblemDescriptionNode.extractHighlightedText(myProblemDescriptor, myProblemDescriptor.getPsiElement()));
-  }
-
   public Icon getIcon(int flags) {
     return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
-  }
-
-  public void setDescriptor(ProblemDescriptor problemDescriptor) {
-    myProblemDescriptor = problemDescriptor;
   }
 }

@@ -23,9 +23,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -41,7 +38,6 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.hash.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 import java.util.Set;
 
 
@@ -147,11 +142,11 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     holder.registerProblem(problemDescriptor);
   }
 
-  private static void addRegularDescriptor(PsiElement element, int offset, @NotNull TextRange textRange,  @NotNull ProblemsHolder holder,
-                                           boolean useRename) {
+  private static void addRegularDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
+                                           boolean useRename, String wordWithTypo) {
       SpellCheckerQuickFix[] fixes = new SpellCheckerQuickFix[]{
-        (useRename ? new RenameTo() : new ChangeTo()),
-        new AcceptWordAsCorrect()
+        (useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo)),
+        new AcceptWordAsCorrect(wordWithTypo)
       };
 
       final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, true);
@@ -165,15 +160,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final TextRange highlightRange = TextRange.from(offset + textRange.getStartOffset(), textRange.getLength());
     assert highlightRange.getStartOffset()>=0;
 
-    final ProblemDescriptor problemDescriptor = holder.getManager()
-      .createProblemDescriptor(element, highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder.isOnTheFly(),
-                               fixes);
-    if(onTheFly) {
-      for (SpellCheckerQuickFix fix : fixes) {
-        fix.setDescriptor(problemDescriptor);
-      }
-    }
-    return problemDescriptor;
+    return holder.getManager()
+      .createProblemDescriptor(element, highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder.isOnTheFly(), fixes);
   }
 
   @SuppressWarnings({"PublicField"})
@@ -254,7 +242,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           addBatchDescriptor(myElement, myOffset, textRange, myHolder);
         }
         else {
-          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename);
+          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
         }
       }
     }
