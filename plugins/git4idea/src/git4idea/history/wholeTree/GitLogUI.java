@@ -2071,10 +2071,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void update(AnActionEvent e) {
-      final int[] selectedRows = myJBTable.getSelectedRows();
-      e.getPresentation().setEnabled(selectedRows.length == 1 &&
-                                     ! myTableModel.getCommitAt(selectedRows[0]).holdsDecoration() &&
-                                     ! myTableModel.isStashed(myTableModel.getCommitAt(selectedRows[0])));
+      commitCanBeUsedForCheckout(e);
     }
   }
 
@@ -2098,10 +2095,18 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void update(AnActionEvent e) {
-      final int[] selectedRows = myJBTable.getSelectedRows();
-      e.getPresentation().setEnabled(selectedRows.length == 1 &&
-                                     ! myTableModel.getCommitAt(selectedRows[0]).holdsDecoration() &&
-                                     ! myTableModel.isStashed(myTableModel.getCommitAt(selectedRows[0])));
+      commitCanBeUsedForCheckout(e);
     }
+  }
+
+  private void commitCanBeUsedForCheckout(AnActionEvent e) {
+    final int[] selectedRows = myJBTable.getSelectedRows();
+    if (selectedRows.length != 1) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+    boolean enabled = ! commitAt.holdsDecoration() && ! myTableModel.isStashed(commitAt);
+    e.getPresentation().setEnabled(enabled);
   }
 }
