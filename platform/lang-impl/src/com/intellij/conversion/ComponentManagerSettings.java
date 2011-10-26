@@ -35,8 +35,5 @@ public interface ComponentManagerSettings {
   @NotNull
   Element getRootElement();
 
-  @NotNull
-  Document getDocument();
-
   File getFile();
 }
