@@ -103,7 +103,10 @@ public class GraphGutter {
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
-          myJBTable.dispatchEvent(e);
+          final MouseEvent mouseEvent = new MouseEvent((Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), 0,
+                                                       (int)myTableViewPort.getViewPosition().getY() + e.getY(), e.getClickCount(),
+                                                       e.isPopupTrigger(), e.getButton());
+          myJBTable.dispatchEvent(mouseEvent);
         }
       });
       addMouseWheelListener(new MouseWheelListener() {
