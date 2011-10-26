@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.conversion;
 
 import org.jdom.Element;
-import org.jdom.Document;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
- * @author nik
+ * Created by IntelliJ IDEA.
+ * User: Kirill.Safonov
+ * Date: 26.10.11
+ * Time: 17:46
+ * To change this template use File | Settings | File Templates.
  */
-public interface ComponentManagerSettings extends XmlBasedSettings {
+public interface ProjectLibrarySettings extends XmlBasedSettings {
 
-  @Nullable
-  Element getComponentElement(@NotNull @NonNls String componentName);
-
+  Element getLibraryElement();
 }

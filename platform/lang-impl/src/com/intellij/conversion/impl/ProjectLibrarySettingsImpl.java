@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
-import com.intellij.conversion.ComponentManagerSettings;
+import com.intellij.conversion.ProjectLibrarySettings;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
-public class ComponentManagerSettingsImpl extends XmlBasedSettingsImpl implements ComponentManagerSettings {
+public class ProjectLibrarySettingsImpl extends XmlBasedSettingsImpl implements ProjectLibrarySettings {
 
-  protected ComponentManagerSettingsImpl(File file, ConversionContextImpl context) throws CannotConvertException {
+  @NotNull
+  private final Element myLibraryElement;
+
+  public ProjectLibrarySettingsImpl(@NotNull File file, @NotNull Element libraryElement, @NotNull ConversionContextImpl context)
+    throws CannotConvertException {
     super(file, context);
+    myLibraryElement = libraryElement;
   }
 
-  public Element getComponentElement(@NotNull @NonNls String componentName) {
-    return mySettingsFile.findComponent(componentName);
+  @NotNull
+  public Element getLibraryElement() {
+    return myLibraryElement;
   }
 }

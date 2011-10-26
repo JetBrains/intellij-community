@@ -61,4 +61,7 @@ public interface ConversionContext {
   File[] getModuleFiles();
 
   ComponentManagerSettings getModulesSettings();
+
+  @Nullable
+  ProjectLibrarySettings findProjectLibrarySettings(String libraryName) throws CannotConvertException;
 }
