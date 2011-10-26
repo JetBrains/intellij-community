@@ -156,6 +156,19 @@ public class Git {
     return run(h);
   }
 
+  public static GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
+                                                     @Nullable GitLineHandlerListener listener, String reference) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
+    h.addParameters(tagName);
+    if (reference != null && ! reference.isEmpty()) {
+      h.addParameters(reference);
+    }
+    if (listener != null) {
+      h.addLineListener(listener);
+    }
+    return run(h);
+  }
+
   /**
    * {@code git branch -d <reference>} or {@code git branch -D <reference>}
    */

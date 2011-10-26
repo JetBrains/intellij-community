@@ -804,6 +804,7 @@ public class GitLogUI implements Disposable {
       group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
       group.add(new MyCheckoutRevisionAction());
       group.add(new MyCheckoutNewBranchAction());
+      group.add(new MyCreateNewTagAction());
 
       group.add(new Separator());
       group.add(myCopyHashAction);
@@ -2108,5 +2109,29 @@ public class GitLogUI implements Disposable {
     final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
     boolean enabled = ! commitAt.holdsDecoration() && ! myTableModel.isStashed(commitAt);
     e.getPresentation().setEnabled(enabled);
+  }
+
+  private class MyCreateNewTagAction extends DumbAwareAction {
+    private MyCreateNewTagAction() {
+      super("New Tag");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (selectedRows.length != 1) return;
+      final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+      if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
+
+      final GitRepository repository =
+        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+      if (repository == null) return;
+      new GitCreateNewTag(myProject, repository, commitAt.getHash().getString(), myRefresh).execute();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      commitCanBeUsedForCheckout(e);
+    }
   }
 }

@@ -95,6 +95,17 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
+  public void createNewTag(@NotNull final String name, final String reference, final Runnable callInAwtAfterExecution) {
+    new CommonBackgroundTask(myProject, "Checking out new branch " + name) {
+      @Override public void execute(@NotNull ProgressIndicator indicator) {
+        Git.createNewTag(myRepository, name, null, reference);
+        if (callInAwtAfterExecution != null) {
+          SwingUtilities.invokeLater(callInAwtAfterExecution);
+        }
+      }
+    }.runInBackground();
+  }
+
   private void doCheckoutNewBranch(@NotNull final String name, String reference) {
     GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
     GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector, reference);
