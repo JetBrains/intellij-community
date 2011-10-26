@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,7 +28,10 @@ public class InheritanceToDelegationAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && elements[0] instanceof PsiClass && !((PsiClass) elements[0]).isInterface();
+    return elements.length == 1 &&
+           elements[0] instanceof PsiClass &&
+           !((PsiClass)elements[0]).isInterface() &&
+           elements[0].getLanguage() == JavaLanguage.INSTANCE;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {

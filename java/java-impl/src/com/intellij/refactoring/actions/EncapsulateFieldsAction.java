@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -30,10 +30,10 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
     if (elements.length == 1) {
-      return elements[0] instanceof PsiClass || isAcceptedField(elements[0]);
+      return elements[0] instanceof PsiClass && elements[0].getLanguage()==JavaLanguage.INSTANCE || isAcceptedField(elements[0]);
     }
-    else if (elements.length > 1){
-      for (int  idx = 0;  idx < elements.length;  idx++) {
+    else if (elements.length > 1) {
+      for (int idx = 0; idx < elements.length; idx++) {
         if (!isAcceptedField(elements[idx])) {
           return false;
         }
@@ -48,11 +48,8 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
   }
 
   private static boolean isAcceptedField(PsiElement element) {
-    if (element instanceof PsiField) {
-      if (((PsiField)element).getContainingClass() != null) {
-        return true;
-      }
-    }
-    return false;
+    return element instanceof PsiField &&
+           element.getLanguage() == JavaLanguage.INSTANCE &&
+           ((PsiField)element).getContainingClass() != null;
   }
 }
