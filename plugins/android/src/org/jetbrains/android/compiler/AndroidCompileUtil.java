@@ -63,7 +63,7 @@ public class AndroidCompileUtil {
   private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
-  @NonNls private static final String PNG_CACHE_DIR_NAME = "png-cache";
+  @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
 
   private AndroidCompileUtil() {
   }
@@ -378,23 +378,23 @@ public class AndroidCompileUtil {
   }
 
   @NotNull
-  public static String[] collectResourceDirs(AndroidFacet facet, boolean collectPngCacheDirs) {
+  public static String[] collectResourceDirs(AndroidFacet facet, boolean collectResCacheDirs) {
     final Project project = facet.getModule().getProject();
     final IntermediateOutputCompiler pngFilesCachingCompiler =
-      collectPngCacheDirs ? Extensions.findExtension(Compiler.EP_NAME, project, AndroidPngFilesCachingCompiler.class) : null;
+      collectResCacheDirs ? Extensions.findExtension(Compiler.EP_NAME, project, AndroidPngFilesCachingCompiler.class) : null;
     
-    if (collectPngCacheDirs) {
+    if (collectResCacheDirs) {
       assert pngFilesCachingCompiler != null;
     }
     
     final List<String> result = new ArrayList<String>();
     final Module module = facet.getModule();
 
-    if (collectPngCacheDirs) {
-      final String pngCacheDirOsPath = findPngCacheDirectory(module, false);
-      if (pngCacheDirOsPath != null) {
+    if (collectResCacheDirs) {
+      final String resCacheDirOsPath = findResourcesCacheDirectory(module, false);
+      if (resCacheDirOsPath != null) {
         LOG.info("PNG cache not found for module " + module.getName());
-        result.add(pngCacheDirOsPath);
+        result.add(resCacheDirOsPath);
       }
     }
 
@@ -406,11 +406,11 @@ public class AndroidCompileUtil {
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
       final Module depModule = depFacet.getModule();
       
-      if (collectPngCacheDirs) {
-        final String depPngCacheDirPath = findPngCacheDirectory(depModule, false);
-        if (depPngCacheDirPath != null) {
+      if (collectResCacheDirs) {
+        final String depResCacheDirPath = findResourcesCacheDirectory(depModule, false);
+        if (depResCacheDirPath != null) {
           LOG.info("PNG cache not found for module " + depModule.getName());
-          result.add(depPngCacheDirPath);
+          result.add(depResCacheDirPath);
         }
       }
 
@@ -423,7 +423,7 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static String findPngCacheDirectory(@NotNull Module module, boolean createIfNotFound) {
+  public static String findResourcesCacheDirectory(@NotNull Module module, boolean createIfNotFound) {
     final Project project = module.getProject();
     
     final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
@@ -436,7 +436,7 @@ public class AndroidCompileUtil {
       return null;
     }
 
-    final String pngCacheDirPath = projectOutputDirectory.getPath() + '/' + PNG_CACHE_DIR_NAME + '/' + module.getName();
+    final String pngCacheDirPath = projectOutputDirectory.getPath() + '/' + RESOURCES_CACHE_DIR_NAME + '/' + module.getName();
     final String pngCacheDirOsPath = FileUtil.toSystemDependentName(pngCacheDirPath);
     
     final File pngCacheDir = new File(pngCacheDirOsPath);
