@@ -238,6 +238,24 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
+  public void enableRows(IdeaPluginDescriptor[] ideaPluginDescriptors, Boolean value) {
+    for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
+      final PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
+      final Boolean enabled = myEnabled.get(currentPluginId) == null ? Boolean.FALSE : value;
+      myEnabled.put(currentPluginId, enabled);
+    }
+    updatePluginDependencies();
+    warnAboutMissedDependencies(ideaPluginDescriptors);
+    if (!value && ENABLED.equals(myEnabledFilter)) {
+      for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
+        view.remove(ideaPluginDescriptor);
+        filtered.add(ideaPluginDescriptor);
+      }
+      fireTableDataChanged();
+    }
+  }
+
+
   public static boolean hasNewerVersion(PluginId descr) {
     return NewVersions2Plugins.containsKey(descr);
   }
@@ -334,39 +352,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       myEnabled.put(currentPluginId, enabled);
       updatePluginDependencies();
       if (enabled.booleanValue()) {
-        final Set<PluginId> deps = new HashSet<PluginId>();
-        PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
-            @Nullable
-            public IdeaPluginDescriptor fun(final PluginId pluginId) {
-              return PluginManager.getPlugin(pluginId);
-            }
-          }, new Condition<PluginId>() {
-            public boolean value(final PluginId pluginId) {
-              final Boolean enabled = myEnabled.get(pluginId);
-              if (enabled == null) {
-                return false;
-              }
-              if (!enabled.booleanValue()) {
-                deps.add(pluginId);
-              }
-              return true;
-            }
-          });
-        if (!deps.isEmpty()) {
-          if (Messages.showOkCancelDialog("<html>The following plugins on which this plugin depends are disabled:<br>" + StringUtil.join(deps, new Function<PluginId, String>() {
-            public String fun(final PluginId pluginId) {
-              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
-              assert pluginDescriptor != null;
-              return pluginDescriptor.getName();
-            }
-          }, "<br>") + "<br>Would you like to enable them?</html>", "Enable Dependant Plugins", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
-            for (PluginId pluginId : deps) {
-              myEnabled.put(pluginId, Boolean.TRUE);
-            }
-
-            updatePluginDependencies();
-          }
-        }
+        warnAboutMissedDependencies(ideaPluginDescriptor);
       }
       if (!value && ENABLED.equals(myEnabledFilter)) {
         view.remove(ideaPluginDescriptor);
@@ -395,6 +381,55 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
         }
       };
+    }
+  }
+
+  private void warnAboutMissedDependencies(IdeaPluginDescriptor... ideaPluginDescriptors) {
+    final Set<PluginId> deps = new HashSet<PluginId>();
+    for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
+      PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+                                      @Nullable
+                                      public IdeaPluginDescriptor fun(final PluginId pluginId) {
+                                        return PluginManager.getPlugin(pluginId);
+                                      }
+                                    }, new Condition<PluginId>() {
+        public boolean value(final PluginId pluginId) {
+          final Boolean enabled = myEnabled.get(pluginId);
+          if (enabled == null) {
+            return false;
+          }
+          if (!enabled.booleanValue()) {
+            deps.add(pluginId);
+          }
+          return true;
+        }
+      }
+      );
+    }
+    if (!deps.isEmpty()) {
+      if (Messages.showOkCancelDialog("<html>The following plugins on which " +
+                                      StringUtil.join(ideaPluginDescriptors, new Function<IdeaPluginDescriptor, String>() {
+                                        @Override
+                                        public String fun(IdeaPluginDescriptor pluginDescriptor) {
+                                          return pluginDescriptor.getName();
+                                        }
+                                      }, ", ") +
+                                      " depend" + (ideaPluginDescriptors.length == 1 ? "s" : "")+
+                                      " are disabled:<br>" +
+                                      StringUtil.join(deps, new Function<PluginId, String>() {
+                                        public String fun(final PluginId pluginId) {
+                                          final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+                                          assert pluginDescriptor != null;
+                                          return pluginDescriptor.getName();
+                                        }
+                                      }, "<br>") +
+                                      "<br>Would you like to enable them?</html>", "Enable Dependant Plugins", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        for (PluginId pluginId : deps) {
+          myEnabled.put(pluginId, Boolean.TRUE);
+        }
+
+        updatePluginDependencies();
+      }
     }
   }
 

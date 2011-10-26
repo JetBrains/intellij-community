@@ -147,9 +147,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           final Boolean enabled = (Boolean)pluginTable.getValueAt(selectedRow, column);
           currentlyMarked &= enabled == null || enabled.booleanValue();
         }
-        for (int selectedRow : selectedRows) {
-          pluginTable.setValueAt(currentlyMarked ? Boolean.FALSE : Boolean.TRUE, selectedRow, column);
+        final IdeaPluginDescriptor[] selected = new IdeaPluginDescriptor[selectedRows.length];
+        for (int i = 0, selectedLength = selected.length; i < selectedLength; i++) {
+          selected[i] = pluginsModel.getObjectAt(pluginTable.convertRowIndexToModel(selectedRows[i]));
         }
+        ((InstalledPluginsTableModel)pluginsModel).enableRows(selected, currentlyMarked ? Boolean.FALSE : Boolean.TRUE);
+        pluginTable.repaint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
     return installedScrollPane;
