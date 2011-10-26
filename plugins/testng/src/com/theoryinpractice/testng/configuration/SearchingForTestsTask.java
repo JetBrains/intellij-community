@@ -85,29 +85,29 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       mySocket = myServerSocket.accept();
+      try {
+        fillTestObjects(myClasses);
+      }
+      catch (CantRunException e) {
+        logCantRunException(e);
+      }
     }
     catch (IOException e) {
       LOG.info(e);
-    }
-    try {
-      fillTestObjects(myClasses);
-    }
-    catch (CantRunException e) {
-      logCantRunException(e);
     }
   }
 
   @Override
   public void onSuccess() {
     writeTempFile();
-    connect();
+    finish();
 
     myClient.startListening(myConfig);
   }
 
   @Override
   public void onCancel() {
-    connect();
+    finish();
   }
 
   @Override
@@ -115,9 +115,10 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     return DumbModeAction.WAIT;
   }
 
-  public void connect() {
+  public void finish() {
     DataOutputStream os = null;
     try {
+      if (mySocket == null || mySocket.isClosed()) return;
       os = new DataOutputStream(mySocket.getOutputStream());
       os.writeBoolean(true);
     }
