@@ -107,9 +107,8 @@ class GitBranchPopup  {
    */
   private static class CurrentBranchAction extends DumbAwareAction {
     public CurrentBranchAction(GitRepository repository) {
-      super("Current Branch: " + getBranchText(repository),
-        String.format("Current branch [%s] in root [%s]", getBranchText(repository), repository.getRoot().getName()),
-        null);
+      super("", String.format("Current branch [%s] in root [%s]", getBranchText(repository), repository.getRoot().getName()), null);
+      getTemplatePresentation().setText("Current Branch: " + getBranchText(repository), false); // no mnemonics
     }
 
     private static String getBranchText(GitRepository repository) {
