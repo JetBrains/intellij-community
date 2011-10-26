@@ -615,7 +615,7 @@ public abstract class GroovyRefactoringUtil {
     return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(argText.toString());
   }
   
-  public static boolean hasSideEffect(@NotNull GrStatement statement) {
+  public static boolean hasSideEffect(@NotNull GroovyPsiElement statement) {
     final Ref<Boolean> hasSideEffect = new Ref<Boolean>(false);
     statement.accept(new GroovyRecursiveElementVisitor() {
       @Override
@@ -632,6 +632,8 @@ public abstract class GroovyRefactoringUtil {
       public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
         hasSideEffect.set(true);
       }
+
+
 
       @Override
       public void visitElement(GroovyPsiElement element) {

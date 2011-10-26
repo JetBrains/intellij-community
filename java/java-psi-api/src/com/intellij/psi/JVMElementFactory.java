@@ -124,4 +124,6 @@ public interface JVMElementFactory {
 
   @NotNull
   PsiAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
+
+  PsiElement createExpressionFromText(String text, PsiElement ctx) throws IncorrectOperationException;
 }
