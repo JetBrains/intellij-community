@@ -75,7 +75,7 @@ public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
   }
 
   public void dispose() {
-    myDisposedFlag = true;
+    setDisposed(true);
     cancelListUpdater();
   }
 }

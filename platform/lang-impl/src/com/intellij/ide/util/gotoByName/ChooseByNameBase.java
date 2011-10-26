@@ -128,7 +128,7 @@ public abstract class ChooseByNameBase {
   private final ListUpdater myListUpdater = new ListUpdater();
 
   private volatile boolean myListIsUpToDate = false;
-  protected boolean myDisposedFlag = false;
+  private boolean myDisposedFlag = false;
   private ActionCallback myPosponedOkAction;
 
   private final String[][] myNames = new String[2][];
@@ -150,6 +150,18 @@ public abstract class ChooseByNameBase {
   private boolean myClosedByShiftEnter = false;
   protected final int myInitialIndex;
   private String myFindUsagesTitle;
+
+  public boolean checkDisposed() {
+    if (myDisposedFlag && myPosponedOkAction != null && !myPosponedOkAction.isProcessed()) {
+      myPosponedOkAction.setRejected();
+    }
+    
+    return myDisposedFlag;
+  }
+
+  public void setDisposed(boolean disposedFlag) {
+    myDisposedFlag = disposedFlag;
+  }
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -662,7 +674,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected void doClose(final boolean ok) {
-    if (myDisposedFlag) return;
+    if (checkDisposed()) return;
 
     if (postponeCloseWhenListReady(ok)) return;
 
@@ -823,7 +835,7 @@ public abstract class ChooseByNameBase {
               public void run(final Set<?> elements) {
                 synchronized (myRebuildMutex) {
                   ApplicationManager.getApplication().assertIsDispatchThread();
-                  if (myDisposedFlag) {
+                  if (checkDisposed()) {
                     return;
                   }
 
@@ -883,7 +895,7 @@ public abstract class ChooseByNameBase {
 
   private void setElementsToList(int pos, Set<?> elements) {
     myListUpdater.cancelAll();
-    if (myDisposedFlag) return;
+    if (checkDisposed()) return;
     if (elements.isEmpty()) {
       myListModel.clear();
       myTextField.setForeground(Color.red);
@@ -1049,12 +1061,12 @@ public abstract class ChooseByNameBase {
       myAlarm.cancelAllRequests();
       myCommands.addAll(commands);
 
-      if (myCommands.isEmpty() || myDisposedFlag) {
+      if (myCommands.isEmpty() || checkDisposed()) {
         return;
       }
       myAlarm.addRequest(new Runnable() {
         public void run() {
-          if (myDisposedFlag) {
+          if (checkDisposed()) {
             return;
           }
           final long startTime = System.currentTimeMillis();
@@ -1075,7 +1087,7 @@ public abstract class ChooseByNameBase {
           else {
             doPostponedOkIfNeeded();
           }
-          if (!myDisposedFlag) {
+          if (!checkDisposed()) {
             showList();
             updateDocPosition();
           }
@@ -1088,7 +1100,7 @@ public abstract class ChooseByNameBase {
         if (getChosenElement() != null) {
           doClose(true);
         }
-        clearPosponedOkAction(myDisposedFlag);
+        clearPosponedOkAction(checkDisposed());
       }
     }
   }
