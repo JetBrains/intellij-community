@@ -215,7 +215,7 @@ public class SwitchUtils {
       return null;
     }
     final PsiType type = qualifierExpression.getType();
-    if (type == null || !type.equalsToText("java.lang.String")) {
+    if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return null;
     }
     final PsiExpressionList argumentList =
@@ -227,7 +227,7 @@ public class SwitchUtils {
     final PsiExpression argument = arguments[0];
     final PsiType argumentType = argument.getType();
     if (argumentType == null ||
-        !argumentType.equalsToText("java.lang.String")) {
+        !argumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return null;
     }
     if (PsiUtil.isConstantExpression(qualifierExpression)) {

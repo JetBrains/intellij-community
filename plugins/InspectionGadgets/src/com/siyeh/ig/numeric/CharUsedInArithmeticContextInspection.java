@@ -162,7 +162,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
           TypeConversionUtil.calcTypeForBinaryExpression(
             leftType, rightType, tokenType, true);
         if (expressionType == null ||
-            expressionType.equalsToText("java.lang.String")) {
+            expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           return;
         }
         if (PsiType.CHAR.equals(rightType)) {

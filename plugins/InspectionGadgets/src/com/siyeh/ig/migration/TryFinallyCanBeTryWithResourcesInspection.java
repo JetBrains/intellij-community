@@ -522,8 +522,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
     final PsiClassType classType = (PsiClassType)type;
     final PsiClass aClass = classType.resolve();
-    return aClass != null && InheritanceUtil.isInheritor(aClass,
-                                                         "java.lang.AutoCloseable");
+    return aClass != null && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   static int findInitialization(

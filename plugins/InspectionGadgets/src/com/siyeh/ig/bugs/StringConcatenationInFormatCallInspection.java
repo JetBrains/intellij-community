@@ -128,7 +128,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
       final PsiExpression formatArgument = arguments[formatArgumentIndex];
       final PsiType formatArgumentType = formatArgument.getType();
       if (formatArgumentType == null ||
-          !formatArgumentType.equalsToText("java.lang.String")) {
+          !formatArgumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
       if (!(formatArgument instanceof PsiBinaryExpression)) {
@@ -142,7 +142,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
         (PsiBinaryExpression)formatArgument;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiType lhsType = lhs.getType();
-      if (lhsType == null || !lhsType.equalsToText("java.lang.String")) {
+      if (lhsType == null || !lhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
       final PsiExpression rhs = binaryExpression.getROperand();

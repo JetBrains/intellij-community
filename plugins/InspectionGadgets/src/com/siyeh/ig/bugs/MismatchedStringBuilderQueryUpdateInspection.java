@@ -127,7 +127,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (context == null) {
         return false;
       }
-      if (!TypeUtils.variableHasTypeOrSubtype(variable, "java.lang.AbstractStringBuilder")) {
+      if (!TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
         return false;
       }
       if (VariableAccessUtils.variableIsAssigned(variable, context)) {
