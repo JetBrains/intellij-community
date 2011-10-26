@@ -150,9 +150,17 @@ public class BulkChangesMerger {
       }
     }
     catch (RuntimeException e) {
+      StringBuilder changesDescription = new StringBuilder();
+      for (TextChangeImpl change : changes) {
+        changesDescription.append(change.getText().length()).append(":").append(change.getStart()).append("-").append(change.getEnd())
+          .append(",");
+      }
+      if (changesDescription.length() > 0) {
+        changesDescription.setLength(changesDescription.length() - 1);
+      } 
       LOG.error(String.format(
-        "Invalid attempt to perform in-place document changes merge detected. Initial text length: %d, changes: %s, "
-        + "changes diff: %d, initial text: '%s'", length, changes, diff, Arrays.toString(data)
+        "Invalid attempt to perform in-place document changes merge detected. Initial text length: %d, data array length: %d, "
+        + "changes: [%s], changes diff: %d", length, data.length, changesDescription, diff
       ), e);
       char[] merged = mergeToCharArray(data, length, changes);
       System.arraycopy(merged, 0, data, 0, length + diff);

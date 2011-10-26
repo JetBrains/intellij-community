@@ -29,8 +29,7 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author cdr
@@ -52,10 +51,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
    */
   private static final int MAX_DEFERRED_CHANGES_NUMBER = 10000;
 
-  private final Lock myDeferredChangesLock = new ReentrantLock();
-  
-  @NotNull
-  private TextChangesStorage myDeferredChangesStorage;
+  private final AtomicReference<TextChangesStorage> myDeferredChangesStorage = new AtomicReference<TextChangesStorage>();
   
   private int myStart;
   /**
@@ -105,7 +101,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
                     boolean debugDeferredProcessing)
   {
     myBufferSize = bufferSize;
-    myDeferredChangesStorage = deferredChangesStorage;
+    myDeferredChangesStorage.set(deferredChangesStorage);
     if (data == null) {
       myOriginalSequence = "";
     }
@@ -157,19 +153,20 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myArray = null;
     myCount = chars.length();
     myStringRef = null;
-    myDeferredChangesLock.lock();
+    TextChangesStorage storage = myDeferredChangesStorage.get();
+    storage.getLock().lock();
     try {
       if (isSubSequence()) {
-        myDeferredChangesStorage = new TextChangesStorage();
+        myDeferredChangesStorage.set(new TextChangesStorage());
         myStart = 0;
         myEnd = -1;
       }
       else {
-        myDeferredChangesStorage.clear();
+        storage.clear();
       }
     }
     finally {
-      myDeferredChangesLock.unlock();
+      storage.getLock().unlock();
     }
     
     if (subj != null) {
@@ -281,20 +278,22 @@ abstract class CharArray implements CharSequenceBackedByArray {
    * @param change      new change to store
    */
   private void storeChange(@NotNull TextChangeImpl change) {
-    myDeferredChangesLock.lock();
+    TextChangesStorage storage = myDeferredChangesStorage.get();
+    storage.getLock().lock();
     try {
       doStoreChange(change);
     }
     finally {
-      myDeferredChangesLock.unlock();
+      storage.getLock().unlock();
     }
   }
   
   private void doStoreChange(@NotNull TextChangeImpl change) {
-    if (myDeferredChangesStorage.size() >= MAX_DEFERRED_CHANGES_NUMBER) {
-      flushDeferredChanged();
+    TextChangesStorage storage = myDeferredChangesStorage.get();
+    if (storage.size() >= MAX_DEFERRED_CHANGES_NUMBER) {
+      flushDeferredChanged(storage);
     }
-    myDeferredChangesStorage.store(change);
+    storage.store(change);
     myDeferredShift += change.getDiff();
 
     if (myDebugDeferredProcessing) {
@@ -356,12 +355,13 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (myOriginalSequence != null) return myOriginalSequence.charAt(i);
     final char result;
     if (hasDeferredChanges()) {
-      myDeferredChangesLock.lock();
+      TextChangesStorage storage = myDeferredChangesStorage.get();
+      storage.getLock().lock();
       try {
-        result = myDeferredChangesStorage.charAt(myArray, i);
+        result = storage.charAt(myArray, i);
       }
       finally {
-        myDeferredChangesLock.unlock();
+        storage.getLock().unlock();
       }
     }
     else {
@@ -385,7 +385,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
       return myOriginalSequence.subSequence(start, end);
     }
     if (hasDeferredChanges()) {
-      return new CharArray(myBufferSize, myDeferredChangesStorage, myArray, myStart + start, myStart + end) {
+      return new CharArray(myBufferSize, myDeferredChangesStorage.get(), myArray, myStart + start, myStart + end) {
         @NotNull
         @Override
         protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
@@ -418,7 +418,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
         myArray = CharArrayUtil.fromSequence(myOriginalSequence);
       }
     }
-    flushDeferredChanged();
+    flushDeferredChanged(myDeferredChangesStorage.get());
     if (myDebugDeferredProcessing && isDeferredChangeMode()) {
       char[] expected = myDebugArray.getChars();
       for (int i = 0, max = length(); i < max; i++) {
@@ -432,7 +432,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public void getChars(final char[] dst, final int dstOffset) {
-    flushDeferredChanged();
+    flushDeferredChanged(myDeferredChangesStorage.get());
     if (myOriginalSequence != null) {
       CharArrayUtil.getChars(myOriginalSequence,dst, dstOffset);
     }
@@ -457,12 +457,13 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (start == end) return "";
     final CharSequence result;
     if (myOriginalSequence == null) {
-      myDeferredChangesLock.lock();
+      TextChangesStorage storage = myDeferredChangesStorage.get();
+      storage.getLock().lock();
       try {
-        result = myDeferredChangesStorage.substring(myArray, start + myStart, end + myStart);
+        result = storage.substring(myArray, start + myStart, end + myStart);
       }
       finally {
-        myDeferredChangesLock.unlock();
+        storage.getLock().unlock();
       }
     }
     else {
@@ -495,7 +496,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   private void trimToSize(DocumentImpl subj) {
     if (myBufferSize != 0 && length() > myBufferSize) {
-      flushDeferredChanged();
+      flushDeferredChanged(myDeferredChangesStorage.get());
       // make a copy
       remove(subj, 0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
     }
@@ -510,7 +511,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public boolean hasDeferredChanges() {
-    return !myDeferredChangesStorage.isEmpty();
+    return !myDeferredChangesStorage.get().isEmpty();
   }
   
   /**
@@ -554,22 +555,23 @@ abstract class CharArray implements CharSequenceBackedByArray {
     }
     myDeferredChangeMode = deferredChangeMode;
     if (!deferredChangeMode) {
-      flushDeferredChanged();
+      flushDeferredChanged(myDeferredChangesStorage.get());
     }
   }
 
-  private void flushDeferredChanged() {
-    myDeferredChangesLock.lock();
+  private void flushDeferredChanged(@NotNull TextChangesStorage storage) {
+    storage.getLock().lock();
     try {
       doFlushDeferredChanged();
     }
     finally {
-      myDeferredChangesLock.unlock();
+      storage.getLock().unlock();
     }
   }
   
   private void doFlushDeferredChanged() {
-    List<TextChangeImpl> changes = myDeferredChangesStorage.getChanges();
+    TextChangesStorage storage = myDeferredChangesStorage.get();
+    List<TextChangeImpl> changes = storage.getChanges();
     if (changes.isEmpty()) {
       return;
     }
@@ -604,7 +606,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
     
     myCount += myDeferredShift;
     myDeferredShift = 0;
-    myDeferredChangesStorage.clear();
+    storage.clear();
+    myDeferredChangeMode = false;
   }
   
   private void checkStrings(@NotNull String operation, @NotNull String expected, @NotNull String actual) {

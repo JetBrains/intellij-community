@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import static org.junit.Assert.*;
-
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Pair;
@@ -24,19 +22,24 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
+import org.jmock.Mockery;
 import org.jmock.api.Invocation;
+import org.jmock.integration.junit4.JUnit4Mockery;
 import org.jmock.lib.action.CustomAction;
+import org.jmock.lib.legacy.ClassImposteriser;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.Before;
-import org.junit.After;
-import org.junit.rules.TestWatchman;
-import org.jmock.integration.junit4.JUnit4Mockery;
-import org.jmock.Mockery;
-import org.jmock.lib.legacy.ClassImposteriser;
-import org.junit.runners.model.FrameworkMethod;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
@@ -45,10 +48,10 @@ import java.lang.annotation.*;
 public class CharArrayTest {
 
   @Rule
-  public TestWatchman configReader = new TestWatchman() {
+  public TestWatcher configReader = new TestWatcher() {
     @Override
-    public void starting(FrameworkMethod method) {
-      Config config = method.getAnnotation(Config.class);
+    protected void starting(Description description) {
+      Config config = description.getAnnotation(Config.class);
       if (config != null) {
         myConfig = config;
       }
@@ -110,6 +113,7 @@ public class CharArrayTest {
   
   private void init(int size) {
     myArray = new CharArray(size) {
+      @NotNull
       @Override
       protected DocumentEvent beforeChangedUpdate(DocumentImpl subj, int offset, CharSequence oldString, CharSequence newString,
                                                   boolean wholeTextReplaced)
@@ -118,7 +122,7 @@ public class CharArrayTest {
       }
 
       @Override
-      protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+      protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
       }
     };
   }

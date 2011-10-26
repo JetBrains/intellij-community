@@ -20,10 +20,13 @@ import com.intellij.openapi.editor.impl.TextChangeImpl;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestWatchman;
-import org.junit.runners.model.FrameworkMethod;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -35,10 +38,11 @@ import static org.junit.Assert.assertEquals;
 public class BulkChangesMergerTest {
 
   @Rule
-  public TestWatchman configReader = new TestWatchman() {
+  public TestWatcher configReader = new TestWatcher() {
+
     @Override
-    public void starting(FrameworkMethod method) {
-      Config config = method.getAnnotation(Config.class);
+    protected void starting(Description description) {
+      Config config = description.getAnnotation(Config.class);
       if (config != null) {
         myConfig = config;
       }
@@ -122,6 +126,22 @@ public class BulkChangesMergerTest {
   public void overlapWithPositiveGroupOnStart() {
     doTest("0123456789ABC", "0abc1358d9eBC", c("abc", 1), c("", 2, 3), c("", 4, 5), c("", 6, 8), c("d", 9), c("e", 10, 11));
   }
+
+  //@Config(inplace = true)
+  //@Test
+  //public void client() {
+  //  int arrayLength = 31486;
+  //  int dataLength = 9552;
+  //  char[] initial = new char[arrayLength];
+  //  List<int[]> rawChanges = new ArrayList<int[]>();
+  //  rawChanges.add(new int[] {6609, 8209, 14634});
+  //  
+  //  List<TextChangeImpl> changes = new ArrayList<TextChangeImpl>();
+  //  for (int[] rawChange : rawChanges) {
+  //    changes.add(new TextChangeImpl(StringUtil.repeatSymbol('a', rawChange[0]), rawChange[1], rawChange[2]));
+  //  }
+  //  myMerger.mergeInPlace(initial, dataLength, changes);
+  //}
   
   private static TextChangeImpl c(String text, int offset) {
     return c(text, offset, offset);
