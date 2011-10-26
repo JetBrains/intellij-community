@@ -514,6 +514,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         else if (hasNewerVersion(myPluginDescriptor.getPluginId()) || 
                  PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(idString)) {
           myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
+          myPanel.setToolTipText("Newer version of the plugin is available");
         }
         else {
           myNameLabel.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
