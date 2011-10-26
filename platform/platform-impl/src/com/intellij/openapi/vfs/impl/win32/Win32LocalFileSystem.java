@@ -59,6 +59,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
         }
       }
     }
+    if (ourIsAvailable) {
+      LOG.info("Native filesystem for Windows is operational");
+    }
   }
 
   public static boolean isAvailable() {
