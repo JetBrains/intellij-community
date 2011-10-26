@@ -20,13 +20,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
@@ -48,7 +42,6 @@ public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
   private FilterComponent myFilter;
-  private JPanel myToolbarPanel;
 
   private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<IntentionActionMetaData, Boolean>();
 
@@ -95,46 +88,10 @@ public abstract class IntentionSettingsTree {
     myFilter = new MyFilterComponent();
     myComponent = new JPanel(new BorderLayout());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    myToolbarPanel = new JPanel(new BorderLayout());
-    myToolbarPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
-    myToolbarPanel.add(myFilter, BorderLayout.CENTER);
-    myComponent.add(myToolbarPanel, BorderLayout.NORTH);
+    myComponent.add(myFilter, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myTree.setSelectionRow(0);
-      }
-    });
     myFilter.reset();
-  }
-
-  private ActionToolbar createTreeToolbarPanel() {
-    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
-
-    TreeExpander treeExpander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
-
-      public boolean canExpand() {
-        return true;
-      }
-
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 3);
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
-
-    DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(actionManager.createExpandAllAction(treeExpander, myTree));
-    actions.add(actionManager.createCollapseAllAction(treeExpander, myTree));
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, actions, true);
   }
 
   protected abstract void selectionChanged(Object selected);
@@ -188,6 +145,8 @@ public abstract class IntentionSettingsTree {
     resetCheckMark(root);
     treeModel.setRoot(root);
     treeModel.nodeChanged(root);
+    TreeUtil.expandAll(myTree);
+    myTree.setSelectionRow(0);
   }
 
   public void selectIntention(String familyName) {
@@ -421,6 +380,6 @@ public abstract class IntentionSettingsTree {
   }
 
   public JPanel getToolbarPanel() {
-    return myToolbarPanel;
+    return myFilter;
   }
 }

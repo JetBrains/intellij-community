@@ -733,6 +733,32 @@ public class PsiTreeUtil {
     return result;
   }
 
+  @Nullable
+  public static <T extends PsiElement> T findElementOfClassAtOffsetWithStopSet(@NotNull PsiFile file,
+                                                                               int offset,
+                                                                               @NotNull Class<T> clazz,
+                                                                               boolean strictStart,
+                                                                               @NotNull Class<? extends PsiElement>... stopAt) {
+    final PsiElement[] psiRoots = file.getPsiRoots();
+    T result = null;
+    for (PsiElement root : psiRoots) {
+      final PsiElement elementAt = root.findElementAt(offset);
+      if (elementAt != null) {
+        final T parent = getParentOfType(elementAt, clazz, strictStart, stopAt);
+        if (parent != null) {
+          final TextRange range = parent.getTextRange();
+          if (!strictStart || range.getStartOffset() == offset) {
+            if (result == null || result.getTextRange().getEndOffset() > range.getEndOffset()) {
+              result = parent;
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   /**
    * @return maximal element of specified Class starting at startOffset exactly and ending not farther than endOffset
    */

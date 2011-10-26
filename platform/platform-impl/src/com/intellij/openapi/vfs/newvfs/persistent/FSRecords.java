@@ -126,7 +126,7 @@ public class FSRecords implements Forceable {
 
     private static void scanFreeRecords() {
       final int filelength = (int)getRecords().length();
-      LOG.assertTrue(filelength % RECORD_SIZE == 0);
+      LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
 
       int count = filelength / RECORD_SIZE;
       for (int n = 2; n < count; n++) {

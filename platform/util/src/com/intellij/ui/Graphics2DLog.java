@@ -258,7 +258,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public Graphics create() {
-    return myPeer.create();
+    return new Graphics2DLog(myPeer.create());
   }
 
   @Override

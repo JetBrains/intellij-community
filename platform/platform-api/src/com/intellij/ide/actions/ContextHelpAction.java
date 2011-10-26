@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
@@ -52,6 +53,11 @@ public class ContextHelpAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
+    if (!ApplicationInfo.contextHelpAvailable()) {
+      presentation.setVisible(false);
+      return;
+    }
+
     if (ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
       DataContext dataContext = event.getDataContext();
       presentation.setEnabled(getHelpId(dataContext) != null);

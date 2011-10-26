@@ -117,6 +117,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
       //HIDE_TOOL_STRIPES = true;
       SHOW_MAIN_TOOLBAR = false;
       SHOW_ICONS_IN_MENUS = false;
+      SHOW_MEMORY_INDICATOR = false;
     }
   }
 

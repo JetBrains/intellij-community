@@ -34,12 +34,14 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -65,45 +67,19 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   /*
    * Icons for buttons in the title bar.
    */
-  private static final Icon ourSlidingIcon = IconLoader.getIcon("/general/sliding.png");
-  private static final Icon ourSlidingInactiveIcon = IconLoader.getIcon("/general/slidingInactive.png");
-  private static final Icon ourDockedIcon = IconLoader.getIcon("/general/docked.png");
-  private static final Icon ourDockedInactiveIcon = IconLoader.getIcon("/general/dockedInactive.png");
-
-  private static final Icon ourAuthoHideOnIcon = IconLoader.getIcon("/general/autohideOn.png");
-  private static final Icon ourAuthoHideOnInactiveIcon = IconLoader.getIcon("/general/autohideOnInactive.png");
-  private static final Icon ourAuthoHideOffIcon = IconLoader.getIcon("/general/autohideOff.png");
-  private static final Icon ourAuthoHideOffInactiveIcon = IconLoader.getIcon("/general/autohideOffInactive.png");
-
-  private static final Icon ourHideIcon = IconLoader.getIcon("/general/hideToolWindow.png");
-  private static final Icon ourHideInactiveIcon = IconLoader.getIcon("/general/hideToolWindowInactive.png");
-
-  private static final Icon ourFloatingIcon = IconLoader.getIcon("/general/floating.png");
-  private static final Icon ourFloatingInactiveIcon = IconLoader.getIcon("/general/floatingInactive.png");
-  private static final Icon ourFixIcon = IconLoader.getIcon("/general/fix.png");
-  private static final Icon ourFixInactiveIcon = IconLoader.getIcon("/general/fixInactive.png");
-
-  private static final Icon ourHideSideUp = IconLoader.getIcon("/general/hideSideUp.png");
-  private static final Icon ourHideSideUpInactive = IconLoader.getIcon("/general/hideSideUpInactive.png");
-
-  private static final Icon ourHideSideDown = IconLoader.getIcon("/general/hideSideDown.png");
-  private static final Icon ourHideSideDownInactive = IconLoader.getIcon("/general/hideSideDownInactive.png");
-
-  private static final Icon ourHideSideLeft = IconLoader.getIcon("/general/hideSideLeft.png");
-  private static final Icon ourHideSideLeftInactive = IconLoader.getIcon("/general/hideSideLeftInactive.png");
-
-  private static final Icon ourHideSideRight = IconLoader.getIcon("/general/hideSideRight.png");
-  private static final Icon ourHideSideRightInactive = IconLoader.getIcon("/general/hideSideRightInactive.png");
+  private static final Icon ourGearIcon = IconLoader.getIcon("/general/gear.png");
+  private static final Icon ourHideLeftIcon = IconLoader.getIcon("/general/hideLeft.png");
+  private static final Icon ourHideRightIcon = IconLoader.getIcon("/general/hideRight.png");
+  private static final Icon ourHideDownIcon = IconLoader.getIcon("/general/hideDown.png");
+  private static final Icon ourHideUpIcon = IconLoader.getIcon("/general/hideUp.png");
 
   private Project myProject;
   private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
   private final TitlePanel myTitlePanel;
-  private final MyTitleButton myToggleFloatingModeButton;
-  private final MyTitleButton myToggleDockModeButton;
-  private final MyTitleButton myToggleAutoHideModeButton;
-  private final MyTitleButton myHideButton;
+  private final MyTitleButton myGearButton;
+  private final MyTitleButton myHideSideButton;
   private final EventListenerList myListenerList;
   /*
    * Actions
@@ -127,7 +103,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
-  private final MyTitleButton myHideSideButton;
   private final JComponent myTitleTabs;
 
   InternalDecorator(final Project project, final WindowInfoImpl info, final ToolWindowImpl toolWindow) {
@@ -148,15 +123,40 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToggleSideModeAction = new ToggleSideModeAction();
     myToggleDockModeAction = new ToggleDockModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
-    myHideAction = new HideAction();
-    HideSideAction hideSideAction = new HideSideAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
 
-    myToggleFloatingModeButton = new MyTitleButton(myToggleFloatingModeAction);
-    myToggleDockModeButton = new MyTitleButton(myToggleDockModeAction);
-    myToggleAutoHideModeButton = new MyTitleButton(myToggleAutoHideModeAction);
-    myHideButton = new MyTitleButton(myHideAction);
-    myHideSideButton = new MyTitleButton(hideSideAction);
+    myGearButton = new MyTitleButton(new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final InputEvent inputEvent = e.getInputEvent();
+        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, createGearPopupGroup());
+        
+        int x = 0;
+        int y = 0;
+        if (inputEvent instanceof MouseEvent) {
+          x = ((MouseEvent)inputEvent).getX();
+          y = ((MouseEvent)inputEvent).getY();
+        }
+        
+        popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
+      }
+    });
+
+    myHideAction = new HideAction();
+    final HideSideAction hideSideAction = new HideSideAction();
+
+    AnAction hide = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if ((e.getModifiers() & InputEvent.ALT_MASK) != 0) {
+          myHideAction.actionPerformed(e);
+        }
+        else {
+          hideSideAction.actionPerformed(e);
+        }
+      }
+    };
+    myHideSideButton = new MyTitleButton(hide);
     myListenerList = new EventListenerList();
 
 
@@ -220,50 +220,26 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     if (!info.isFloating()) {
       myHideSideButton.setVisible(true);
       if (ToolWindowAnchor.TOP == anchor) {
-        myHideSideButton.setIcon(ourHideSideUp, ourHideSideUpInactive);
+        myHideSideButton.setIcon(ourHideUpIcon);
       }
       else if (ToolWindowAnchor.LEFT == anchor) {
-        myHideSideButton.setIcon(ourHideSideLeft, ourHideSideLeftInactive);
+        myHideSideButton.setIcon(ourHideLeftIcon);
       }
       else if (ToolWindowAnchor.BOTTOM == anchor) {
-        myHideSideButton.setIcon(ourHideSideDown, ourHideSideDownInactive);
+        myHideSideButton.setIcon(ourHideDownIcon);
       }
       else if (ToolWindowAnchor.RIGHT == anchor) {
-        myHideSideButton.setIcon(ourHideSideRight, ourHideSideRightInactive);
+        myHideSideButton.setIcon(ourHideRightIcon);
       }
     }
     else {
       myHideSideButton.setVisible(false);
     }
 
+    myGearButton.setIcon(ourGearIcon);
+
     validate();
     repaint();
-    // Type
-    if (myInfo.isDocked()) {
-      myToggleFloatingModeButton.setIcon(ourFloatingIcon, ourFloatingInactiveIcon);
-      myToggleDockModeButton.setVisible(true);
-      myToggleDockModeButton.setIcon(ourSlidingIcon, ourSlidingInactiveIcon);
-      myToggleAutoHideModeButton.setVisible(true);
-      myToggleAutoHideModeButton.setIcon((myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon),
-                                         (myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon));
-      myHideButton.setVisible(true);
-    }
-    else if (myInfo.isFloating()) {
-      myToggleFloatingModeButton.setIcon(ourFixIcon, ourFixInactiveIcon);
-      myToggleDockModeButton.setVisible(false);
-      myToggleAutoHideModeButton.setVisible(true);
-      myToggleAutoHideModeButton.setIcon(myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon,
-                                         myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon);
-      myHideButton.setVisible(true);
-    }
-    else if (myInfo.isSliding()) {
-      myToggleFloatingModeButton.setIcon(ourFloatingIcon, ourFloatingInactiveIcon);
-      myToggleDockModeButton.setVisible(true);
-      myToggleDockModeButton.setIcon(ourDockedIcon, ourDockedInactiveIcon);
-      myToggleAutoHideModeButton.setVisible(false);
-      myHideButton.setVisible(true);
-    }
-    myHideButton.setIcon(ourHideIcon, ourHideInactiveIcon);
 
     //
     updateTitle();
@@ -388,15 +364,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     // Compose title bar
     myTitlePanel.addTitle(myTitleTabs);
 
-    final JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 2, 0));
+    final JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 2, 0));
     buttonPanel.setOpaque(false);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
-    buttonPanel.add(myToggleFloatingModeButton);
-    buttonPanel.add(myToggleDockModeButton);
-    buttonPanel.add(myToggleAutoHideModeButton);
-    buttonPanel.add(myHideButton);
+    buttonPanel.add(myGearButton);
+    buttonPanel.add(myHideSideButton);
 
-    myTitlePanel.addButtons(buttonPanel, myHideSideButton);
+    myTitlePanel.addButtons(buttonPanel);
 
     final JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(myTitlePanel, BorderLayout.NORTH);
@@ -405,11 +379,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
     final NonOpaquePanel inner = new NonOpaquePanel(innerPanel);
-    inner.setBorder(new InnerPanelBorder(myToolWindow));
+    inner.setBorder(new EmptyBorder(0, 0, 0, 0));
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
-    setBorder(new EmptyBorder(0, 0, 0, 0));
+    setBorder(new InnerPanelBorder(myToolWindow));
+    setBackground(new SameColor(200));
 
     // Add listeners
     registerKeyboardAction(new ActionListener() {
@@ -432,12 +407,16 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
       Insets insets = getBorderInsets(c);
 
+      if (insets.top > 0) {
+        UIUtil.drawLine(g, x, y + insets.top - 1, x + width - 1, y + insets.top - 1);
+      }
+
       if (insets.left > 0) {
-        UIUtil.drawLine(g, x, y, x, y + height - 1);
+        UIUtil.drawLine(g, x, y + insets.top, x, y + height - 1);
       }
 
       if (insets.right > 0) {
-        UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
+        UIUtil.drawLine(g, x + width - 1, y + insets.top, x + width - 1, y + height - 1);
       }
 
       if (insets.bottom > 0) {
@@ -479,20 +458,20 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         insets.right = rightBottoms ? 1: 0;
         insets.bottom = 1;
       } else if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) {
-        insets.top = 0;
+        insets.top = 1;
         insets.left = leftButtons ? 1 : 0;
         insets.right = rightBottoms ? 1: 0;
         insets.bottom = bottomButtons ? 1 : 0;
       } else if (myWindow.getAnchor() == ToolWindowAnchor.LEFT) {
-        insets.top = topButtons && !windowAtTop ? 1 : 0;
+        insets.top = myWindow.isSplitMode() ? 1 : 4;
         insets.left = leftButtons ? 1: 0;
-        insets.right = 0;
-        insets.bottom = bottomButtons || windowAtBottom ? 1 : 0;
+        insets.right = 1;
+        insets.bottom = bottomButtons && !windowAtBottom ? 1 : 0;
       } else if (myWindow.getAnchor() == ToolWindowAnchor.RIGHT) {
-        insets.top = topButtons && !windowAtTop ? 1: 0;
+        insets.top = myWindow.isSplitMode() ? 1 : 4;
         insets.left = 1;
         insets.right = rightBottoms ? 1: 0;
-        insets.bottom = bottomButtons || windowAtBottom ? 1: 0;
+        insets.bottom = bottomButtons && !windowAtBottom ? 1: 0;
       }
 
       return insets;
@@ -510,28 +489,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     public boolean isBorderOpaque() {
-      return true;
+      return false;
     }
   }
 
 
   public final ActionGroup createPopupGroup() {
-    final DefaultActionGroup group = new DefaultActionGroup();
-
-    if (myInfo.isDocked()) {
-      group.add(myToggleAutoHideModeAction);
-      group.add(myToggleDockModeAction);
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleSideModeAction);
-    }
-    else if (myInfo.isFloating()) {
-      group.add(myToggleAutoHideModeAction);
-      group.add(myToggleFloatingModeAction);
-    }
-    else if (myInfo.isSliding()) {
-      group.add(myToggleDockModeAction);
-      group.add(myToggleFloatingModeAction);
-    }
+    final DefaultActionGroup group = createGearPopupGroup();
 
     group.add(myToggleContentUiTypeAction);
 
@@ -567,6 +531,26 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     group.addSeparator();
     group.add(myHideAction);
+    return group;
+  }
+
+  private DefaultActionGroup createGearPopupGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+
+    if (myInfo.isDocked()) {
+      group.add(myToggleAutoHideModeAction);
+      group.add(myToggleDockModeAction);
+      group.add(myToggleFloatingModeAction);
+      group.add(myToggleSideModeAction);
+    }
+    else if (myInfo.isFloating()) {
+      group.add(myToggleAutoHideModeAction);
+      group.add(myToggleFloatingModeAction);
+    }
+    else if (myInfo.isSliding()) {
+      group.add(myToggleDockModeAction);
+      group.add(myToggleFloatingModeAction);
+    }
     return group;
   }
 
@@ -615,19 +599,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   }
 
   private void updateTooltips() {
-    if (myInfo.isDocked()) {
-      myToggleDockModeButton
-        .setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID, UIBundle.message("tool.wondow.undock.action.name")));
-    }
-    else if (myInfo.isSliding()) {
-      myToggleDockModeButton
-        .setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID, UIBundle.message("tool.wondow.dock.action.name")));
-    }
-    myToggleFloatingModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_FLOATING_MODE_ACTION_ID, myInfo.isFloating() ? UIBundle
-      .message("tool.wondow.fix.action.name") : UIBundle.message("tool.wondow.float.action.name")));
-    myToggleAutoHideModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_PINNED_MODE_ACTION_ID, myInfo.isAutoHide() ? UIBundle
-      .message("tool.wondow.pin.action.name") : UIBundle.message("tool.wondow.unpin.action.name")));
-    myHideButton.setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hide.action.name")));
     myHideSideButton
       .setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hideSide.action.name")));
   }
@@ -929,8 +900,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     public void actionPerformed(final ActionEvent e) {
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+      final InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent)e.getSource() : null;
       final AnActionEvent event =
-        new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+        new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
       actionManager.fireBeforeActionPerformed(myAction, dataContext, event);
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && !component.isShowing()) {
@@ -943,8 +915,8 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       return InternalDecorator.this.isFocused();
     }
 
-    public void setIcon(final Icon active, Icon inactive) {
-      myButton.setIcons(active, inactive, active);
+    public void setIcon(final Icon active) {
+      myButton.setIcons(active, active, active);
     }
 
 

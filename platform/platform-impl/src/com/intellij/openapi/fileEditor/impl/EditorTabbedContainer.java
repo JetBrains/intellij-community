@@ -82,7 +82,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     myProject = project;
     myDockManager = dockManager;
     final ActionManager actionManager = ActionManager.getInstance();
-    myTabs = new MacJBTabs(project, actionManager, IdeFocusManager.getInstance(project), this); 
+    myTabs = new MacJBTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
     ((JBTabsImpl)myTabs).putClientProperty(JBTabsImpl.EDITOR_TABS, Boolean.TRUE);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
@@ -194,13 +194,13 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       if (eachWnd.isVisible() && eachWnd.getType() == ToolWindowType.DOCKED) {
         ToolWindowAnchor eachAnchor = eachWnd.getAnchor();
         if (eachAnchor == ToolWindowAnchor.TOP) {
-          border.top = 1;
+          border.top = 0;
         }
         else if (eachAnchor == ToolWindowAnchor.BOTTOM) {
-          border.bottom = 1;
+          border.bottom = 0;
         }
         else if (eachAnchor == ToolWindowAnchor.LEFT) {
-          border.left = 1;
+          border.left = 0;
         }
         else if (eachAnchor == ToolWindowAnchor.RIGHT) {
           border.right = 0;

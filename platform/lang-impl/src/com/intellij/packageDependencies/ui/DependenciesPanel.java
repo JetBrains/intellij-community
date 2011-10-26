@@ -23,14 +23,13 @@ import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
-import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -301,7 +300,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new ChooseScopeTypeAction());
     group.add(new EditDependencyRulesAction());
     group.add(CommonActionsManager.getInstance().createExportToTextFileAction(new DependenciesExporterToTextFile()));
-    group.add(new HelpAction());
+    group.add(new ContextHelpAction("dependency.viewer.tool.window"));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
@@ -721,16 +720,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           }
         }
       });
-    }
-  }
-
-  private static class HelpAction extends AnAction {
-    private HelpAction() {
-      super(CommonBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
-    }
-
-    public void actionPerformed(AnActionEvent event) {
-      HelpManager.getInstance().invokeHelp("dependency.viewer.tool.window");
     }
   }
 

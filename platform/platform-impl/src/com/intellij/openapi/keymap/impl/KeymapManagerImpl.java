@@ -104,6 +104,16 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   }
 
   public Keymap[] getAllKeymaps() {
+    List<Keymap> answer = new ArrayList<Keymap>();
+    for (Keymap keymap : mySchemesManager.getAllSchemes()) {
+      if (!keymap.getPresentableName().startsWith("$")) {
+        answer.add(keymap);
+      }
+    }
+    return answer.toArray(new Keymap[answer.size()]);
+  }
+
+  public Keymap[] getAllIncludingDefaultsKeymaps() {
     Collection<Keymap> keymaps = mySchemesManager.getAllSchemes();
     return keymaps.toArray(new Keymap[keymaps.size()]);
   }
@@ -216,7 +226,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       throw new InvalidDataException();
     }
     KeymapImpl keymap = new KeymapImpl();
-    keymap.readExternal(root, getAllKeymaps());
+    keymap.readExternal(root, getAllIncludingDefaultsKeymaps());
 
     return keymap;
   }

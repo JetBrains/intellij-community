@@ -30,6 +30,7 @@ import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.ide.*;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -40,7 +41,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -319,7 +319,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
     group.add(myGlobalInspectionContext.createToggleAutoscrollAction());
     group.add(new ExportHTMLAction(this));
-    group.add(new HelpAction());
+    group.add(new ContextHelpAction(HELP_ID));
 
     return createToolbar(group);
   }
@@ -817,16 +817,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
     myInspectionProfile = (InspectionProfile)myInspectionProfile.getProfileManager().getProfile(name);
-  }
-
-  private static class HelpAction extends AnAction {
-    private HelpAction() {
-      super(CommonBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
-    }
-
-    public void actionPerformed(AnActionEvent event) {
-      HelpManager.getInstance().invokeHelp(HELP_ID);
-    }
   }
 
   private class RerunAction extends AnAction {

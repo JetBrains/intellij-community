@@ -67,7 +67,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean ADDITIONAL_PAGE_AT_BOTTOM = false;
 
     public boolean IS_DND_ENABLED = true;
-    public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
+    public boolean IS_WHEEL_FONTCHANGE_ENABLED = false;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
     @Deprecated
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;

@@ -17,6 +17,7 @@ package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -116,13 +117,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     panel.add(buttonPanel, BorderLayout.EAST);
 
     if (SystemInfo.isMac) {
-      JPanel leftPanel = new JPanel();
       myHelpButton.putClientProperty("JButton.buttonType", "help");
       if (UIUtil.isUnderAquaLookAndFeel()) {
         myHelpButton.setText("");
       }
 
-      leftPanel.add(myHelpButton);
+      JPanel leftPanel = new JPanel();
+      if (ApplicationInfo.contextHelpAvailable()) {
+        leftPanel.add(myHelpButton);
+      }
       leftPanel.add(myCancelButton);
       
       panel.add(leftPanel, BorderLayout.WEST);
@@ -147,7 +150,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myCancelButton);
       buttonPanel.add(Box.createHorizontalStrut(5));
-      buttonPanel.add(myHelpButton);
+      if (ApplicationInfo.contextHelpAvailable()) {
+        buttonPanel.add(myHelpButton);
+      }
     }
 
     myPreviousButton.setEnabled(false);
