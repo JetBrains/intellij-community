@@ -32,7 +32,7 @@ public class WrappingUtil {
   }
 
   public static boolean shouldWrap(int setting) {
-    return setting != CodeStyleSettings.DO_NOT_WRAP;
+    return setting != CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 
   public static Wrap createWrap(int setting) {
@@ -41,33 +41,15 @@ public class WrappingUtil {
 
   public static WrapType getWrapType(int setting) {
     switch (setting) {
-      case CodeStyleSettings.WRAP_ALWAYS:
+      case CommonCodeStyleSettings.WRAP_ALWAYS:
         return WrapType.ALWAYS;
-      case CodeStyleSettings.WRAP_AS_NEEDED:
+      case CommonCodeStyleSettings.WRAP_AS_NEEDED:
         return WrapType.NORMAL;
-      case CodeStyleSettings.DO_NOT_WRAP:
+      case CommonCodeStyleSettings.DO_NOT_WRAP:
         return WrapType.NONE;
       default:
         return WrapType.CHOP_DOWN_IF_LONG;
     }
   }
 
-  public static WrapType getArrayInitializerWrapType(CommonCodeStyleSettings settings,
-                                                     ASTNode node,
-                                                     IElementType lBraceType,
-                                                     IElementType rBraceType) {
-    WrapType wrapType = WrapType.NONE;
-    if (shouldWrap(settings.ARRAY_INITIALIZER_WRAP)) {
-      if (node.getElementType() == rBraceType) {
-        wrapType = settings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE ? Wrap.ALWAYS : Wrap.NONE;
-      }
-      else if (FormatterUtil.isPrecededBy(node, lBraceType)) {
-        wrapType = settings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE ? Wrap.ALWAYS : Wrap.NONE;
-      }
-      else {
-        wrapType = WrappingUtil.getWrapType(settings.ARRAY_INITIALIZER_WRAP);
-      }
-    }
-    return wrapType;
-  }
 }

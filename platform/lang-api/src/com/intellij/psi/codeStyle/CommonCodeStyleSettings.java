@@ -60,6 +60,10 @@ public class CommonCodeStyleSettings {
     myRootSettings = rootSettings;
   }
 
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
   void importOldIndentOptions(@NotNull CodeStyleSettings rootSettings) {
     if (myFileType != null && myIndentOptions != null) {
       if (getFileTypeIndentOptionsProvider() == null) {
