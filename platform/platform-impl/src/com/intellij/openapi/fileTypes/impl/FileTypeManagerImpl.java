@@ -56,7 +56,7 @@ import java.util.*;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private static final int VERSION = 10;
+  private static final int VERSION = 11;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("cached file type");
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
@@ -516,8 +516,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       addIgnore("__pycache__");
     }
 
-    if (savedVersion < VERSION) {
+    if (savedVersion < 10) {
       addIgnore(".bundle");
+    }
+
+    if (savedVersion < VERSION) {
+      addIgnore("*.rbc");
     }
   }
 

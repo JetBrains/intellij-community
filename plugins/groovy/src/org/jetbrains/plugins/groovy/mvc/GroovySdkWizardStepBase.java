@@ -113,13 +113,13 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
   private synchronized LibraryOptionsPanel getPanel() {
     if (myPanel == null) {
       final GroovyLibraryDescription libraryDescription = myFramework.createLibraryDescription();
-      final String contentEntryPath = getContentEntryPath();
-      final String basePath = contentEntryPath != null ? FileUtil.toSystemIndependentName(contentEntryPath) : "";
-      myPanel = new LibraryOptionsPanel(libraryDescription, basePath, null, myLibrariesContainer, false);
+      final String basePath = getBasePath();
+      final String baseDirPath = basePath != null ? FileUtil.toSystemIndependentName(basePath) : "";
+      myPanel = new LibraryOptionsPanel(libraryDescription, baseDirPath, null, myLibrariesContainer, false);
     }
     return myPanel;
   }
 
   @Nullable
-  protected abstract String getContentEntryPath();
+  protected abstract String getBasePath();
 }

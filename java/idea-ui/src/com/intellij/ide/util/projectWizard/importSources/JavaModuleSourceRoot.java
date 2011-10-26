@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,16 +54,22 @@ public class JavaModuleSourceRoot extends DetectedProjectRoot {
     return StringUtil.notNullize(myPackagePrefix);
   }
 
+  @NotNull
   @Override
   public String getRootTypeName() {
     return StringUtil.join(myLanguages, ", ");
   }
 
   @Override
-  public DetectedProjectRoot combineWith(DetectedProjectRoot root) {
+  public DetectedProjectRoot combineWith(@NotNull DetectedProjectRoot root) {
     if (root instanceof JavaModuleSourceRoot) {
-      return new JavaModuleSourceRoot(getDirectory(), myPackagePrefix, ContainerUtil.concat(myLanguages, ((JavaModuleSourceRoot)root).myLanguages));
+      return combineWith((JavaModuleSourceRoot)root);
     }
     return null;
+  }
+
+  @NotNull
+  public JavaModuleSourceRoot combineWith(@NotNull JavaModuleSourceRoot root) {
+    return new JavaModuleSourceRoot(getDirectory(), myPackagePrefix, ContainerUtil.concat(myLanguages, root.myLanguages));
   }
 }

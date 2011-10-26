@@ -24,6 +24,11 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
+
+/**
+ * @deprecated use {@link com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector} instead
+ */
+@Deprecated
 public interface SourceRootFinder {
   ExtensionPointName<SourceRootFinder> EP_NAME = ExtensionPointName.create("com.intellij.sourceRootFinder");
 

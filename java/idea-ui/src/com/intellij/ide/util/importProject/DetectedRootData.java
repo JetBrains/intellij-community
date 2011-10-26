@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,6 +56,9 @@ class DetectedRootData {
         final List<ProjectStructureDetector> values = new ArrayList<ProjectStructureDetector>(entry.getValue());
         values.add(detector);
         myRoots.put(combined, values);
+        if (mySelectedRoot == oldRoot) {
+          mySelectedRoot = combined;
+        }
         return combined;
       }
     }

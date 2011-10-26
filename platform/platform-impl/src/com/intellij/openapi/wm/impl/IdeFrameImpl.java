@@ -448,4 +448,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public final BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
+
+  public void showWelcomeScreen() {
+    myRootPane.showWelcomeScreen();
+  }
 }

@@ -25,6 +25,7 @@ public class LabeledEditor extends JPanel {
 
   public LabeledEditor() {
     super(new BorderLayout());
+    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
   }
 
   private static String addReadOnly(String title, boolean readonly) {

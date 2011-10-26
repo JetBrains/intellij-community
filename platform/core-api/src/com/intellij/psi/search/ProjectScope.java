@@ -22,27 +22,38 @@ package com.intellij.psi.search;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import org.jetbrains.annotations.NotNull;
 
 public class ProjectScope {
   private static final Key<GlobalSearchScope> ALL_SCOPE_KEY = new Key<GlobalSearchScope>("ALL_SCOPE_KEY");
   private static final Key<GlobalSearchScope> PROJECT_SCOPE_KEY = new Key<GlobalSearchScope>("PROJECT_SCOPE_KEY");
   private static final Key<GlobalSearchScope> LIBRARIES_SCOPE_KEY = new Key<GlobalSearchScope>("LIBRARIES_SCOPE_KEY");
+  private static final Key<GlobalSearchScope> CONTENT_SCOPE_KEY = new Key<GlobalSearchScope>("CONTENT_SCOPE_KEY");
 
   private ProjectScope() {
   }
 
-  public static GlobalSearchScope getAllScope(final Project project) {
+  @NotNull
+  public static GlobalSearchScope getAllScope(@NotNull Project project) {
     GlobalSearchScope cached = project.getUserData(ALL_SCOPE_KEY);
     return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(ALL_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildAllScope());
   }
 
-  public static GlobalSearchScope getProjectScope(final Project project) {
+  @NotNull
+  public static GlobalSearchScope getProjectScope(@NotNull Project project) {
     GlobalSearchScope cached = project.getUserData(PROJECT_SCOPE_KEY);
     return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(PROJECT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildProjectScope());
   }
 
-  public static GlobalSearchScope getLibrariesScope(Project project) {
+  @NotNull
+  public static GlobalSearchScope getLibrariesScope(@NotNull Project project) {
     GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
     return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(LIBRARIES_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
+  }
+
+  @NotNull
+  public static GlobalSearchScope getContentScope(@NotNull Project project) {
+    GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
+    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(CONTENT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildContentScope());
   }
 }

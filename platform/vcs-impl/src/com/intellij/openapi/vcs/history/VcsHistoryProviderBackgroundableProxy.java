@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,13 +48,15 @@ public class VcsHistoryProviderBackgroundableProxy {
   private VcsHistoryCache myVcsHistoryCache;
   private boolean myCachesHistory;
   private final HistoryComputerFactory myHistoryComputerFactory;
+  private final VcsType myType;
 
-  public VcsHistoryProviderBackgroundableProxy(final Project project, final VcsHistoryProvider delegate, DiffProvider diffProvider) {
+  public VcsHistoryProviderBackgroundableProxy(final AbstractVcs vcs, final VcsHistoryProvider delegate, DiffProvider diffProvider) {
     myDelegate = delegate;
-    myProject = project;
+    myProject = vcs.getProject();
     myCachesHistory = myDelegate instanceof VcsCacheableHistorySessionFactory;
     myDiffProvider = diffProvider;
     myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
+    myType = vcs.getType();
     myHistoryComputerFactory = new HistoryComputerFactory() {
       @Override
       public ThrowableComputable<VcsHistorySession, VcsException> create(FilePath filePath,
@@ -262,11 +265,24 @@ public class VcsHistoryProviderBackgroundableProxy {
     final FilePath correctedFilePath =
       ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(cached);
 
-    final ItemLatestState lastRevision = myDiffProvider.getLastRevision(correctedFilePath != null ? correctedFilePath : filePath);
-    if (lastRevision != null && ! lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
-      final List<VcsFileRevision> revisionList = cached.getRevisionList();
-      if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
-        return cached;
+    if (VcsType.distibuted.equals(myType)) {
+      final FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
+      path.hardRefresh();
+      final VirtualFile virtualFile = path.getVirtualFile();
+      if (virtualFile != null) {
+        final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(virtualFile);
+        final List<VcsFileRevision> revisionList = cached.getRevisionList();
+        if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
+          return cached;
+        }
+      }
+    } else {
+      final ItemLatestState lastRevision = myDiffProvider.getLastRevision(correctedFilePath != null ? correctedFilePath : filePath);
+      if (lastRevision != null && ! lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
+        final List<VcsFileRevision> revisionList = cached.getRevisionList();
+        if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
+          return cached;
+        }
       }
     }
     return null;

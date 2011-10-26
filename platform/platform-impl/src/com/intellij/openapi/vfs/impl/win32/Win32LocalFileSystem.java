@@ -36,27 +36,31 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   private static boolean ourIsAvailable;
 
   static {
-    if (SystemInfo.isWindows && SystemInfo.is32Bit) {
+    if (SystemInfo.isWindows) {
+      String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
       try {
-        System.load(PathManager.getHomePath() + "/community/bin/win/IdeaWin32.dll");
+        System.load(PathManager.getHomePath() + "/community/bin/win/" + libName + ".dll");
         ourIsAvailable = true;
       }
       catch (Throwable t0) {
         try {
-          System.load(PathManager.getHomePath() + "/bin/win/IdeaWin32.dll");
+          System.load(PathManager.getHomePath() + "/bin/win/" + libName + ".dll");
           ourIsAvailable = true;
         }
         catch (Throwable t1) {
           try {
-            System.loadLibrary("IdeaWin32");
+            System.loadLibrary(libName);
             ourIsAvailable = true;
           }
           catch (Throwable t2) {
-            LOG.warn("Failed to load native win32 system", t2);
+            LOG.warn("Failed to load native filesystem for Windows", t2);
             ourIsAvailable = false;
           }
         }
       }
+    }
+    if (ourIsAvailable) {
+      LOG.info("Native filesystem for Windows is operational");
     }
   }
 

@@ -73,7 +73,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
           IAndroidTarget target = configuration.getAndroidTarget();
           if (target != null) {
             String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
-            String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet);
+            String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet, true);
+
             if (resourcesDirPaths.length == 0) {
               context.addMessage(CompilerMessageCategory.WARNING, "Resource directory not found for module " + module.getName(),
                                  null, -1, -1);
@@ -150,7 +151,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                                                                         preprocessedManifestFile.getPath(),
                                                                                         item.myResourceDirPaths,
                                                                                         item.myAssetsDirPath,
-                                                                                        outputPath);
+                                                                                        outputPath, null, false, 0);
       AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
     }
     catch (final IOException e) {

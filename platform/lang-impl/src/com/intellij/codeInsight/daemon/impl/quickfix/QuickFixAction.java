@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -123,16 +124,34 @@ public final class QuickFixAction {
                                                    int offset) {
     if (info.quickFixActionMarkers == null) return;
     if (group != -1 && group != info.group) return;
+    Editor injectedEditor = null;
+    PsiFile injectedFile = null;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
       RangeMarker range = pair.second;
-      if (range.isValid()) {
-        int start = range.getStartOffset();
-        int end = range.getEndOffset();
-        final Project project = file.getProject();
-        if (start <= offset && offset <= end && actionInGroup.getAction().isAvailable(project, editor, file)) {
-          outList.add(actionInGroup);
+      if (!range.isValid()) continue;
+      int start = range.getStartOffset();
+      int end = range.getEndOffset();
+      final Project project = file.getProject();
+      if (start > offset || offset > end) {
+        continue;
+      }
+      Editor editorToUse;
+      PsiFile fileToUse;
+      if (info.fromInjection) {
+        if (injectedEditor == null) {
+          injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+          injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
         }
+        editorToUse = injectedEditor;
+        fileToUse = injectedFile;
+      }
+      else {
+        editorToUse = editor;
+        fileToUse = file;
+      }
+      if (actionInGroup.getAction().isAvailable(project, editorToUse, fileToUse)) {
+        outList.add(actionInGroup);
       }
     }
   }

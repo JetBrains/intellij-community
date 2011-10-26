@@ -55,29 +55,39 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
 
   private void doRefParserTest(final String text, final boolean incomplete) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false, false, false);
-      }
-    });
+    doParserTest(text, new MyTestParser(incomplete));
+  }
+  private static class MyTestParser implements TestParser {
+    private final boolean myIncomplete;
+
+    public MyTestParser(boolean incomplete) {
+      myIncomplete = incomplete;
+    }
+
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseJavaCodeReference(builder, myIncomplete, false, false, false, false);
+    }
   }
 
   private void doTypeParserTest(final String text) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
-      }
-    });
+    doParserTest(text, new MyTestParser2());
+  }
+  private static class MyTestParser2 implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
+    }
   }
 
   private void doTypeParamsParserTest(final String text) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseTypeParameters(builder);
-      }
-    });
+    doParserTest(text, new MyTestParser3());
+  }
+
+  private static class MyTestParser3 implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseTypeParameters(builder);
+    }
   }
 }

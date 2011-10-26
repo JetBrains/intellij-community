@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
 
   @Nullable
   private static ModulesConfigurator getModulesConfigurator(Project project) {
-    StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    StructureConfigurableContext context = getProjectStructureContext(project);
     return context != null ? context.getModulesConfigurator() : null;
   }
 
@@ -78,7 +78,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
       if (!project.isInitialized()) {
         continue;
       }
-      StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+      StructureConfigurableContext context = getProjectStructureContext(project);
       LibraryTableModifiableModelProvider provider = context != null ? context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL) : null;
       final LibraryTable.ModifiableModel modifiableModel = provider != null ? provider.getModifiableModel() : null;
       if (modifiableModel != null) {
@@ -90,11 +90,17 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
 
   @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
-    StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    StructureConfigurableContext context = getProjectStructureContext(project);
     if (context != null) {
       LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
       return provider.getModifiableModel();
     }
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
+  }
+
+  @Nullable
+  private static StructureConfigurableContext getProjectStructureContext(Project project) {
+    final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
+    return structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
   }
 }

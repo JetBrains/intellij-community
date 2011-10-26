@@ -93,7 +93,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       private void onNodeChange() {
         Object node = myTree.getLastSelectedPathComponent();
         Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
-        String cardName = pair == null ? EMPTY_CARD_NAME : pair.first;
+        String cardName = EMPTY_CARD_NAME;
+        if (pair != null) {
+          cardName = pair.first;
+          pair.second.refresh();
+        }
         mySettingsCardLayout.show(mySettingsPanel, cardName);
       }
     });
@@ -186,7 +190,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         DefaultMutableTreeNode dependenciesNode
           = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.dependencies"));
         final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
-        final List<GradleLibrary> libraryDependencies = new ArrayList<GradleLibrary>();
+        final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
         GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
           @Override
           public void visit(@NotNull GradleModuleDependency dependency) {
@@ -195,7 +199,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
           @Override
           public void visit(@NotNull GradleLibraryDependency dependency) {
-            libraryDependencies.add(dependency.getLibrary());
+            libraryDependencies.add(dependency);
           }
         };
         for (GradleDependency dependency : dependencies) {
@@ -206,7 +210,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         for (GradleModuleDependency dependency : moduleDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
-        for (GradleLibrary dependency : libraryDependencies) {
+        for (GradleLibraryDependency dependency : libraryDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
         moduleNode.add(dependenciesNode);
@@ -295,7 +299,6 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     for (Map.Entry<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> entry : myCards.entrySet()) {
       if (!entry.getValue().second.validate()) {
         myTree.getSelectionModel().setSelectionPath(new TreePath(entry.getKey().getPath()));
-        //mySettingsCardLayout.show(mySettingsPanel, entry.getValue().first);
         myOnValidateAttempt = true;
         return false;
       }

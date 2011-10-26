@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.resourses.ResourcesBuilder;
 
@@ -37,6 +38,7 @@ public class BuilderRegistry {
     // todo: some builder registration mechanism needed
     myBuilders.get(BuilderCategory.TRANSLATOR).add(new JavaBuilder(myTasksExecutor));
     myBuilders.get(BuilderCategory.TRANSLATOR).add(new ResourcesBuilder());
+    myBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder());
 
   }
 

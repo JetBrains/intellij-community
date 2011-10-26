@@ -60,6 +60,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.FilenameIndex;
@@ -764,7 +765,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   @Nullable
   private  Block buildBlocks(@NotNull PsiElement rootElement) {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(rootElement.getProject());
     if (formattingModelBuilder != null) {
       FormattingModel formattingModel = formattingModelBuilder.createModel(rootElement, settings);
       return formattingModel.getRootBlock();
@@ -1173,6 +1174,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       if (!available() || myEditor.getSelectionModel().hasSelection()) return;
       final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
       final PsiElement rootPsiElement = treeStructure.getRootPsiElement();
+      if (rootPsiElement == null) return;
       final PsiElement rootElement = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;

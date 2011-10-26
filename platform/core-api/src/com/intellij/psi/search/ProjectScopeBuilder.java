@@ -32,4 +32,6 @@ public abstract class ProjectScopeBuilder {
   public abstract GlobalSearchScope buildAllScope();
 
   public abstract GlobalSearchScope buildProjectScope();
+
+  public abstract GlobalSearchScope buildContentScope();
 }

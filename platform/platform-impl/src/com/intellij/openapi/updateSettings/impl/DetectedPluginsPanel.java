@@ -17,12 +17,18 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -33,6 +39,8 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
   private static final String AVAILABLE_VERSION = "available version: ";
   private static final String INSTALLED_VERSION = "installed version: ";
+
+  private static JEditorPane myDescriptionPanel = new JEditorPane();
 
   protected DetectedPluginsPanel() {
     super(PluginDownloader.class);
@@ -58,7 +66,24 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         }
       }
     });
+    entryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        final int selectedRow = entryTable.getSelectedRow();
+        if (selectedRow != -1) {
+          final PluginDownloader selection = getValueAt(selectedRow);
+          final PluginNode pluginNode = PluginDownloader.createPluginNode("", selection);
+          if (pluginNode != null) {
+            PluginManagerMain.pluginInfoUpdate(pluginNode, null, myDescriptionPanel);
+          }
+        }
+      }
+    });
     setCheckboxColumnName("");
+    myDescriptionPanel.setPreferredSize(new Dimension(400, -1));
+    myDescriptionPanel.setContentType("text/html");
+    myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionPanel);
+    add(scrollPane, BorderLayout.EAST);
   }
 
   public String getCheckboxColumnName() {

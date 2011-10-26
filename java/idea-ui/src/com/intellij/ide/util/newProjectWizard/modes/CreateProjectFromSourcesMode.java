@@ -13,34 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.newProjectWizard.modes;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.util.IconLoader;
 
-import java.io.File;
+import javax.swing.*;
 
 /**
  * @author nik
  */
-public abstract class DetectedProjectRoot {
-  private final File myDirectory;
+public class CreateProjectFromSourcesMode extends CreateFromSourcesMode {
+  private static final Icon STEP_ICON = IconLoader.getIcon("/newprojectwizard.png");
 
-  protected DetectedProjectRoot(File directory) {
-    myDirectory = directory;
+  protected Icon getIcon() {
+    return STEP_ICON;
   }
 
-  public File getDirectory() {
-    return myDirectory;
-  }
-
-  public abstract String getRootTypeName();
-
-  @Nullable
-  public DetectedProjectRoot combineWith(DetectedProjectRoot root) {
-    return null;
-  }
-
-  public boolean canContainRoot(DetectedProjectRoot root) {
-    return true;
+  public boolean isAvailable(WizardContext context) {
+    return context.isCreatingNewProject();
   }
 }

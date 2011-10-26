@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,8 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
 
   private final JComponent                myComponent;
   private final GradleProject             myProject;
-  private final JComponent                myNameControl;
+  private final JTextField                myNameControl;
+  private final JComboBox                 myLanguageLevelComboBox;
   private final DefaultComboBoxModel      mySdkModel;
   private final JRadioButton              myRegisteredSdksButton;
   private final JRadioButton              myAllSdksButton;
@@ -47,7 +49,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     myProject = project;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     myNameControl = GradleAdjustImportSettingsUtil.configureNameControl(builder, project);
-    setupLanguageLevelControls(builder);
+    myLanguageLevelComboBox = setupLanguageLevelControls(builder);
     Pair<JRadioButton, JRadioButton> sdkPair = setupSdkControls(mySdkModel = new DefaultComboBoxModel(), builder);
     myRegisteredSdksButton = sdkPair.first;
     myAllSdksButton = sdkPair.second;
@@ -55,51 +57,57 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     myProjectCompileOutputLocationField = setupProjectCompileOutputLocation(builder);
     filterSdksByLanguageLevel();    
     myComponent = builder.build();
+    refresh();
   }
   
-  private void setupLanguageLevelControls(@NotNull GradleProjectSettingsBuilder builder) {
-    JComboBox languageLevelComboBox = new JComboBox();
+  private JComboBox setupLanguageLevelControls(@NotNull GradleProjectSettingsBuilder builder) {
+    JComboBox result = new JComboBox();
     final Map<Object, LanguageLevel> levels = new HashMap<Object, LanguageLevel>();
     for (LanguageLevel level : LanguageLevel.values()) {
       levels.put(level.getPresentableText(), level);
-      languageLevelComboBox.addItem(level.getPresentableText());
+      result.addItem(level.getPresentableText());
     }
-    languageLevelComboBox.setSelectedItem(myProject.getLanguageLevel().getPresentableText());
-    languageLevelComboBox.addItemListener(new ItemListener() {
+    result.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         myProject.setLanguageLevel(levels.get(e.getItem()));
         filterSdksByLanguageLevel();
       }
     });
-    builder.add("gradle.import.structure.settings.label.language.level", languageLevelComboBox);
+    builder.add("gradle.import.structure.settings.label.language.level", result);
+    return result;
   }
   
   private void filterSdksByLanguageLevel() {
     Object selectedItem = mySdkModel.getSelectedItem();
-    myRegisteredSdksButton.setEnabled(true);
     mySdkModel.removeAllElements();
     LanguageLevel languageLevel = myProject.getLanguageLevel();
     boolean restoreSelection = false;
+    List<Sdk> matchedRegisteredSdks = new ArrayList<Sdk>();
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    List<Sdk> javaSdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
+    for (Sdk sdk : javaSdks) {
+      JavaSdkVersion version = javaSdk.getVersion(sdk);
+      if (version == null || !version.getMaxLanguageLevel().isAtLeast(languageLevel)) {
+        continue;
+      }
+      matchedRegisteredSdks.add(sdk);
+    }
+    myRegisteredSdksButton.setEnabled(!matchedRegisteredSdks.isEmpty());
+    
     if (myUseOnlyRegisteredSdks) {
-      JavaSdk javaSdk = JavaSdk.getInstance();
-      List<Sdk> javaSdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
-      for (Sdk sdk : javaSdks) {
-        JavaSdkVersion version = javaSdk.getVersion(sdk);
-        if (version == null || !version.getMaxLanguageLevel().isAtLeast(languageLevel)) {
-          continue;
-        }
+      for (Sdk sdk : matchedRegisteredSdks) {
         mySdkModel.addElement(sdk.getName());
         if (sdk.getName().equals(selectedItem)) {
           restoreSelection = true;
-        } 
+        }
+        if (matchedRegisteredSdks.isEmpty()) {
+          // Change to 'all' radio button if none of the registered sdks matches target language level.
+          myAllSdksButton.setSelected(true);
+          myRegisteredSdksButton.setEnabled(false);
+          return;
+        }
       }
-      if (mySdkModel.getSize() <= 0) {
-        // Change to 'all' radio button if none of the registered sdks matches target language level.
-        myAllSdksButton.setSelected(true);
-        myRegisteredSdksButton.setEnabled(false);
-        return;
-      } 
     }
     else {
       for (JavaSdkVersion version : JavaSdkVersion.values()) {
@@ -218,7 +226,15 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     
     return true;
   }
-  
+
+  @Override
+  public void refresh() {
+    myNameControl.setText(myProject.getName());
+    myProjectConfigLocationField.setText(myProject.getProjectFileDirectoryPath());
+    myProjectCompileOutputLocationField.setText(myProject.getCompileOutputPath());
+    myLanguageLevelComboBox.setSelectedItem(myProject.getLanguageLevel().getPresentableText());
+  }
+
   private static boolean validateDirLocation(
     @NotNull TextFieldWithBrowseButton dataHolder,
     @NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE)String undefinedPathMessageKey,

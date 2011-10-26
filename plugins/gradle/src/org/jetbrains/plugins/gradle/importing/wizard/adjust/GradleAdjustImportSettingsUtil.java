@@ -28,7 +28,7 @@ public class GradleAdjustImportSettingsUtil {
    * @return    UI control that holds target component's name
    */
   @NotNull
-  public static JComponent configureNameControl(@NotNull GradleProjectSettingsBuilder builder, @NotNull final Named component) {
+  public static JTextField configureNameControl(@NotNull GradleProjectSettingsBuilder builder, @NotNull final Named component) {
     final JTextField result = new JTextField();
     result.setText(component.getName());
     builder.add("gradle.import.structure.settings.label.name", result);

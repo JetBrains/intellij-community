@@ -15,16 +15,24 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +42,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +57,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
     super(uiSettings);
     init();
-    myActionsPanel.setLayout(new BorderLayout(5, 0));
+    myActionsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
     final JButton button = new JButton("Browse repositories...");
     button.setMnemonic('b');
     button.addActionListener(new ActionListener() {
@@ -62,7 +71,36 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         }.show();
       }
     });
-    myActionsPanel.add(button, BorderLayout.WEST);
+    myActionsPanel.add(button);
+
+    final JButton installPluginFromFileSystem = new JButton("Install plugin from disk...");
+    installPluginFromFileSystem.setMnemonic('d');
+    installPluginFromFileSystem.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false){
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            final String extension = file.getExtension();
+            return Comparing.strEqual(extension, "jar") || Comparing.strEqual(extension, "zip");
+          }
+        };
+        descriptor.setTitle("Choose Plugin File");
+        final VirtualFile virtualFile = FileChooser.chooseFile(myActionsPanel, descriptor);
+        if (virtualFile != null) {
+          final File file = VfsUtil.virtualToIoFile(virtualFile);
+          try {
+            PluginDownloader.install(file, file.getName());
+            setRequireShutdown(true);
+          }
+          catch (IOException ex) {
+            Messages.showErrorDialog(ex.getMessage(), CommonBundle.getErrorTitle());
+          }
+        }
+      }
+    });
+    myActionsPanel.add(installPluginFromFileSystem);
+
     final JButton manageRepositoriesBtn = new JButton("Manage repositories...");
     manageRepositoriesBtn.setMnemonic('m');
     manageRepositoriesBtn.addActionListener(new ActionListener() {
@@ -71,7 +109,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable());
       }
     });
-    myActionsPanel.add(manageRepositoriesBtn, BorderLayout.EAST);
+    myActionsPanel.add(manageRepositoriesBtn);
   }
 
   @Override
@@ -109,9 +147,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           final Boolean enabled = (Boolean)pluginTable.getValueAt(selectedRow, column);
           currentlyMarked &= enabled == null || enabled.booleanValue();
         }
-        for (int selectedRow : selectedRows) {
-          pluginTable.setValueAt(currentlyMarked ? Boolean.FALSE : Boolean.TRUE, selectedRow, column);
+        final IdeaPluginDescriptor[] selected = new IdeaPluginDescriptor[selectedRows.length];
+        for (int i = 0, selectedLength = selected.length; i < selectedLength; i++) {
+          selected[i] = pluginsModel.getObjectAt(pluginTable.convertRowIndexToModel(selectedRows[i]));
         }
+        ((InstalledPluginsTableModel)pluginsModel).enableRows(selected, currentlyMarked ? Boolean.FALSE : Boolean.TRUE);
+        pluginTable.repaint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
     return installedScrollPane;
@@ -123,6 +164,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     actionGroup.add(new RefreshAction());
     if (!inToolbar) {
       actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
+      actionGroup.add(new ActionInstallPlugin(this, this));
     }
     else {
       actionGroup.add(new MyFilterEnabledAction());

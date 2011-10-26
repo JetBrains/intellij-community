@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.HelpID;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -46,7 +48,7 @@ import java.util.ArrayList;
 /**
  * @author ilyas
  */
-public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings> {
+public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings> {
 
   private static final Logger LOG =
     Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.introduceVariable.groovyIntroduceVariableBase");
@@ -265,7 +267,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
 
       varDecl = (GrVariableDeclaration)newBody.getBlock().getStatements()[0];
 
-      GrCodeBlock tempBlock = ((GrBlockStatement)((GrLoopStatement)realContainer).replaceBody(newBody)).getBlock();
+      GrCodeBlock tempBlock = ((GrLoopStatement)realContainer).replaceBody(newBody).getBlock();
       refreshPositionMarker(tempBlock.getStatements()[tempBlock.getStatements().length - 1]);
     }
 
@@ -316,5 +318,21 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
       return definition.getVariables()[0];
     }
     return null;
+  }
+
+  @Override
+  protected String getRefactoringName() {
+    return REFACTORING_NAME;
+  }
+
+  @Override
+  protected String getHelpID() {
+    return HelpID.INTRODUCE_VARIABLE;
+  }
+
+  protected GroovyIntroduceVariableDialog getDialog(GrIntroduceContext context) {
+    final GroovyVariableValidator validator = new GroovyVariableValidator(context);
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(context.expression, validator);
+    return new GroovyIntroduceVariableDialog(context, validator, possibleNames);
   }
 }

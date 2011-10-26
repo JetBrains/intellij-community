@@ -23,13 +23,16 @@ import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +47,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<? extends DetectedFrameworkDescription>>
-  implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
+  implements ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater {
   private final Icon myIcon;
   private List<File> myLastRoots = null;
   private final DetectedFrameworksComponent myDetectedFrameworksComponent;
@@ -64,7 +67,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
 
       @Override
       protected String getContentPath() {
-        return builder.getContentEntryPath();
+        return builder.getBaseProjectPath();
       }
     };
     myDetectedFrameworksComponent = new DetectedFrameworksComponent(myContext);
@@ -126,11 +129,6 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     return myIcon;
   }
 
-  @Override
-  public boolean isStepVisible() {
-    return !getModuleDescriptors().isEmpty();
-  }
-
   public static boolean isEnabled() {
     return FrameworkDetector.EP_NAME.getExtensions().length > 0;
   }
@@ -140,8 +138,8 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     return "reference.dialogs.new.project.fromCode.facets";
   }
 
-  public void updateProject(@NotNull Project project) {
-    FrameworkDetectionUtil.setupFrameworks(myDetectedFrameworksComponent.getSelectedFrameworks(), project);
+  public void updateProject(@NotNull Project project, @NotNull ModifiableModelsProvider modelsProvider, @NotNull ModulesProvider modulesProvider) {
+    FrameworkDetectionUtil.setupFrameworks(myDetectedFrameworksComponent.getSelectedFrameworks(), modelsProvider, modulesProvider);
     myDetectedFrameworksComponent.processUncheckedNodes(DetectionExcludesConfiguration.getInstance(project));
   }
 }

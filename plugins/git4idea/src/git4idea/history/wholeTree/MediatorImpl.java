@@ -116,6 +116,12 @@ public class MediatorImpl implements Mediator {
   }
 
   @Override
+  public void acceptStashHead(Ticket ticket, VirtualFile root, Pair<AbstractHash, AbstractHash> hash) {
+    if (! myTicket.equals(ticket)) return;
+    myUIRefresh.reportStash(root, hash);
+  }
+
+  @Override
   public void oneFinished() {
     if (myController.isEmpty()) {
       myUIRefresh.finished();

@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
@@ -34,6 +35,11 @@ public abstract class XDebuggerTreeNodeHyperlink {
   @NotNull
   public String getLinkText() {
     return myLinkText;
+  }
+
+  @NotNull
+  public SimpleTextAttributes getTextAttributes() {
+    return SimpleTextAttributes.GRAY_ATTRIBUTES;
   }
 
   public abstract void onClick(MouseEvent event);

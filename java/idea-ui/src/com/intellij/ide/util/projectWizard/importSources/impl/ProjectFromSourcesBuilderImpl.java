@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.newProjectWizard;
+package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
@@ -24,8 +24,14 @@ import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -34,8 +40,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -56,36 +63,79 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectFromSourcesBuilder extends ProjectBuilder {
-  private String myContentRootPath;
+public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements ProjectFromSourcesBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl");
+  private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<ProjectStructureDetector, ProjectDescriptor>();
-  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.EMPTY;
+  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.emptyInstance();
+  private final WizardContext myContext;
+  private final ModulesProvider myModulesProvider;
+  private Set<String> myModuleNames;
+  private Set<String> myProjectLibrariesNames;
 
-  public ProjectFromSourcesBuilder() {
+  public ProjectFromSourcesBuilderImpl(WizardContext context, ModulesProvider modulesProvider) {
+    myContext = context;
+    myModulesProvider = modulesProvider;
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       myProjectDescriptors.put(detector, new ProjectDescriptor());
     }
   }
 
-  public void setContentEntryPath(final String contentRootPath) {
-    myContentRootPath = contentRootPath;
+  @NotNull
+  @Override
+  public Set<String> getExistingModuleNames() {
+    if (myModuleNames == null) {
+      myModuleNames = new HashSet<String>();
+      for (Module module : myModulesProvider.getModules()) {
+        myModuleNames.add(module.getName());
+      }
+    }
+    return myModuleNames;
   }
 
-  public String getContentEntryPath() {
-    return myContentRootPath;
+  @NotNull
+  @Override
+  public Set<String> getExistingProjectLibraryNames() {
+    if (myProjectLibrariesNames == null) {
+      myProjectLibrariesNames = new HashSet<String>();
+      final LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext, myModulesProvider);
+      for (Library library : container.getLibraries(LibrariesContainer.LibraryLevel.PROJECT)) {
+        myProjectLibrariesNames.add(library.getName());
+      }
+    }
+    return myProjectLibrariesNames;
+  }
+
+  @NotNull
+  @Override
+  public WizardContext getContext() {
+    return myContext;
+  }
+
+  public void setBaseProjectPath(final String contentRootPath) {
+    myBaseProjectPath = contentRootPath;
+  }
+
+  @Override
+  public String getBaseProjectPath() {
+    return myBaseProjectPath;
   }
 
   public void setProjectRoots(MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots) {
     myRoots = roots;
   }
 
-  public Collection<DetectedProjectRoot> getProjectRoots(ProjectStructureDetector detector) {
+  @NotNull
+  @Override
+  public Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector) {
     return myRoots.get(detector);
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
+    final boolean fromProjectStructure = model != null;
+    ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
+    final LibraryTable.ModifiableModel projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project);
     final Map<LibraryDescriptor, Library> projectLibs = new HashMap<LibraryDescriptor, Library>();
     final List<Module> result = new ArrayList<Module>();
     try {
@@ -106,12 +156,16 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
             }
           }
         }
+        if (!fromProjectStructure) {
+          projectLibraryTable.commit();
+        }
       }
       finally {
         token.finish();
       }
     }
     catch (Exception e) {
+      LOG.info(e);
       Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
     }
 
@@ -120,7 +174,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
     try {
       AccessToken token = WriteAction.start();
       try {
-        final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
+        final ModifiableModuleModel moduleModel = fromProjectStructure ? model : ModuleManager.getInstance(project).getModifiableModel();
         for (ProjectDescriptor descriptor : getSelectedDescriptors()) {
           for (final ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
             final Module module;
@@ -137,13 +191,16 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
           }
         }
 
-        moduleModel.commit();
+        if (!fromProjectStructure) {
+          moduleModel.commit();
+        }
       }
       finally {
         token.finish();
       }
     }
     catch (Exception e) {
+      LOG.info(e);
       Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
     }
 
@@ -177,13 +234,14 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
       }
     }
     catch (Exception e) {
+      LOG.info(e);
       Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
     }
 
     AccessToken token = WriteAction.start();
     try {
       for (ProjectConfigurationUpdater updater : myUpdaters) {
-        updater.updateProject(project);
+        updater.updateProject(project, modelsProvider, modulesProvider);
       }
     }
     finally {
@@ -203,8 +261,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
   }
 
   @NotNull
-  private Module createModule(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor, final Map<LibraryDescriptor, Library> projectLibs,
-                              final ModifiableModuleModel moduleModel)
+  private static Module createModule(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor,
+                                     final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
 
     final String moduleFilePath = descriptor.computeModuleFilePath();
@@ -218,8 +276,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
     return module;
   }
 
-  private void setupRootModel(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor, final ModifiableRootModel rootModel,
-                              final Map<LibraryDescriptor, Library> projectLibs) {
+  private static void setupRootModel(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor,
+                                     final ModifiableRootModel rootModel, final Map<LibraryDescriptor, Library> projectLibs) {
     final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setExcludeOutput(true);
     rootModel.inheritSdk();
@@ -261,7 +319,9 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
 
   }
 
-  public ProjectDescriptor getProjectDescriptor(ProjectStructureDetector detector) {
+  @NotNull
+  @Override
+  public ProjectDescriptor getProjectDescriptor(@NotNull ProjectStructureDetector detector) {
     return myProjectDescriptors.get(detector);
   }
 
@@ -281,12 +341,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
            "testSrc".equalsIgnoreCase(name);
   }
 
-  public List<LibraryDescriptor> getLibraries(ProjectStructureDetector detector) {
-    return myProjectDescriptors.get(detector).getLibraries();
-  }
-
   public interface ProjectConfigurationUpdater {
-    void updateProject(@NotNull Project project);
+    void updateProject(@NotNull Project project, @NotNull ModifiableModelsProvider modelsProvider, @NotNull ModulesProvider modulesProvider);
   }
 
   @Override

@@ -12,9 +12,11 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.history.browser.SymbolicRefs;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author irengrig
@@ -26,6 +28,7 @@ public interface UIRefresh {
   void detailsLoaded();
   void acceptException(final Exception e);
   void finished();
+  void reportStash(VirtualFile root, @Nullable Pair<AbstractHash, AbstractHash> hash);
 
   void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs);
 }

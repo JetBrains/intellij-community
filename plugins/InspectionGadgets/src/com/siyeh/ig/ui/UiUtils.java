@@ -33,10 +33,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.DefaultListModel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.Collection;
@@ -49,10 +46,13 @@ public class UiUtils {
   public static void setScrollPaneSize(JScrollPane scrollPane,
                                        int rows, int columns) {
     final Component view = scrollPane.getViewport().getView();
-    final FontMetrics fontMetrics = view.getFontMetrics(view.getFont());
+    setComponentSize(view, rows, columns);
+  }
+
+  public static void setComponentSize(Component component, int rows, int columns) {
+    final FontMetrics fontMetrics = component.getFontMetrics(component.getFont());
     final int width = fontMetrics.charWidth('m') * columns;
-    scrollPane.setPreferredSize(
-      new Dimension(width, fontMetrics.getHeight() * rows));
+    component.setPreferredSize(new Dimension(width, fontMetrics.getHeight() * rows));
   }
 
   public static ActionToolbar createAddRemoveToolbar(ListTable table) {

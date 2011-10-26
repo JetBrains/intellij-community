@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -40,7 +39,7 @@ public class PathUIUtils {
     @Override
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate,
                                                @NotNull ProgressIndicator progressIndicator) {
-      return JavaUtilForVfs.suggestRoots(rootCandidate, progressIndicator);
+      return JavaVfsSourceRootDetectionUtil.suggestRoots(rootCandidate, progressIndicator);
     }
   };
 

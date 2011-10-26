@@ -40,7 +40,11 @@ public abstract class GroupingMerger<T, S> {
     return t;
   }
 
-  public int firstPlusSecond(final StepList<T> first, final ReadonlyList<T> second, final Comparator<T> comparator, 
+  public S getCurrentGroup() {
+    return myCurrentGroup;
+  }
+
+  public int firstPlusSecond(final StepList<T> first, final ReadonlyList<T> second, final Comparator<T> comparator,
                              final int idxFrom) {
     if (second.getSize() == 0) return first.getSize();
     int idx;

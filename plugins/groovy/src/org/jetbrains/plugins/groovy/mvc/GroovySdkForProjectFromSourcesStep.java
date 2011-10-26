@@ -17,10 +17,9 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.openapi.module.StdModuleTypes;
 
 import java.util.ArrayList;
@@ -37,17 +36,16 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
 
   public GroovySdkForProjectFromSourcesStep(MvcProjectStructureDetector detector, ProjectFromSourcesBuilder builder,
                                             ProjectDescriptor projectDescriptor,
-                                            MvcFramework framework,
-                                            WizardContext wizardContext) {
-    super(framework, wizardContext);
+                                            MvcFramework framework) {
+    super(framework, builder.getContext());
     myDetector = detector;
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;
   }
 
   @Override
-  protected String getContentEntryPath() {
-    return myBuilder.getContentEntryPath();
+  protected String getBasePath() {
+    return myBuilder.getBaseProjectPath();
   }
 
   @Override
@@ -55,8 +53,7 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
     super.updateDataModel();
     List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
     for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
-      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<JavaModuleSourceRoot>emptyList()
-      );
+      final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<JavaModuleSourceRoot>emptyList());
       descriptor.addConfigurationUpdater(createModuleConfigurationUpdater());
       modules.add(descriptor);
     }

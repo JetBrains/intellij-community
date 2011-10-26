@@ -3,6 +3,7 @@ package org.jetbrains.android.importDependencies;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -17,7 +18,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Eugene.Kudelevsky
@@ -151,7 +154,7 @@ public class ImportDependenciesUtil {
     }
 
     if (createNewModuleTasks.size() > 0) {
-      final List<Trinity<String, String, Collection<String>>> sourceRoots = new ArrayList<Trinity<String, String, Collection<String>>>();
+      final List<JavaModuleSourceRoot> sourceRoots = new ArrayList<JavaModuleSourceRoot>();
       for (CreateNewModuleTask task : createNewModuleTasks) {
         final String contentRootPath = task.getContentRoot().getPath();
         sourceRoots.addAll(SourcePathsStep.calculateSourceRoots(contentRootPath));
@@ -174,15 +177,15 @@ public class ImportDependenciesUtil {
     }
   }
 
-  private static void addSourceRoots(final Project project, final Collection<Trinity<String, String, Collection<String>>> sourceRoots) {
+  private static void addSourceRoots(final Project project, final List<JavaModuleSourceRoot> sourceRoots) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        for (Trinity<String, String, Collection<String>> sourceRootTrinity : sourceRoots) {
-          final VirtualFile sourceRoot = LocalFileSystem.getInstance()
-            .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourceRootTrinity.first));
+        for (JavaModuleSourceRoot sourceRootTrinity : sourceRoots) {
+          final String path = sourceRootTrinity.getDirectory().getPath();
+          final VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
           if (sourceRoot == null) {
-            LOG.debug(new Exception("Cannot find source root " + sourceRootTrinity.first));
+            LOG.debug(new Exception("Cannot find source root " + path));
             continue;
           }
 
@@ -195,7 +198,7 @@ public class ImportDependenciesUtil {
           final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
           final ContentEntry[] entries = model.getContentEntries();
           if (entries.length > 0) {
-            entries[0].addSourceFolder(sourceRoot, false, sourceRootTrinity.second);
+            entries[0].addSourceFolder(sourceRoot, false, sourceRootTrinity.getPackagePrefix());
           }
           else {
             LOG.debug(new Exception("Module " + module.getName() + " has no content entries"));

@@ -103,11 +103,21 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }", false, false); }
 
   private void doParserTest(final String text, final boolean isAnnotation, final boolean isEnum) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        DeclarationParser.parseClassBodyWithBraces(builder, isAnnotation, isEnum);
-      }
-    });
+    doParserTest(text, new MyTestParser(isAnnotation, isEnum));
+  }
+
+  private static class MyTestParser implements TestParser {
+    private final boolean myAnnotation;
+    private final boolean myAnEnum;
+
+    public MyTestParser(boolean annotation, boolean anEnum) {
+      myAnnotation = annotation;
+      myAnEnum = anEnum;
+    }
+
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
+    }
   }
 }

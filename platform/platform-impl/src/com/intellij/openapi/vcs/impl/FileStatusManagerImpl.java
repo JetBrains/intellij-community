@@ -108,7 +108,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
-    return file.isSpecialFile() ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
+    return file.isValid() && file.isSpecialFile() ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
   }
 
   public void projectClosed() {

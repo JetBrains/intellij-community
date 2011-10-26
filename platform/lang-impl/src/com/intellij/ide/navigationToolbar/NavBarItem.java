@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -36,6 +37,8 @@ import java.awt.geom.Path2D;
 class NavBarItem extends SimpleColoredComponent implements Disposable {
   private static Image SEPARATOR_ACTIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorActive.png"));
   private static Image SEPARATOR_PASSIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorPassive.png"));
+  private static Image SEPARATOR_GRADIENT = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorGradient.png"));
+
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -197,18 +200,20 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
       }
     }
     if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {
-      Image img;
-      //if (UIUtil.isUnderAquaLookAndFeel()) {
-      //  //img = myPanel.isInFloatingMode() ? SEPARATOR_PASSIVE : SEPARATOR_ACTIVE;
-      //  img = SEPARATOR_PASSIVE;
-      //} else {
-      //  img = myPanel.isInFloatingMode() && isFocused() ? SEPARATOR_ACTIVE : SEPARATOR_PASSIVE;
-      //}
-      g.drawImage(SEPARATOR_PASSIVE, null, null);
+      Image img = SEPARATOR_PASSIVE;
+      final UISettings settings = UISettings.getInstance();
+      if (UIUtil.isUnderAquaLookAndFeel() || (settings.SHOW_MAIN_TOOLBAR && settings.SHOW_NAVIGATION_BAR)) {
+        img = SEPARATOR_GRADIENT;
+      }
+      g.drawImage(img, null, null);
     }
   }
 
   private static short getAlpha() {
+    if ((UIUtil.isUnderAlloyLookAndFeel() && !UIUtil.isUnderAlloyIDEALookAndFeel())
+      || UIUtil.isUnderMetalLookAndFeel() || UIUtil.isUnderMetalLookAndFeel()){
+      return 255;
+    }
     return 150;
   }
 

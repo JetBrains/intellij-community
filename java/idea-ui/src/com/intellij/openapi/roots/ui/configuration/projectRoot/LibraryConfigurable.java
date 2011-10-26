@@ -104,7 +104,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     }
   }
 
-  private LibraryEditor getLibraryEditor() {
+  protected LibraryEditor getLibraryEditor() {
     return myModel.getModifiableModel().getLibraryEditor(myLibrary);
   }
 

@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.JavaUtil;
-import com.intellij.ide.util.newProjectWizard.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,15 +60,15 @@ public class ModuleInsight {
 
   private List<ModuleDescriptor> myModules;
   private List<LibraryDescriptor> myLibraries;
+  private final Set<String> myExistingModuleNames;
+  private final Set<String> myExistingProjectLibraryNames;
 
-  public ModuleInsight(@Nullable final ProgressIndicator progress) {
-    this(progress, Collections.<File>emptyList(), Collections.<JavaModuleSourceRoot>emptyList(), Collections.<String>emptySet());
-  }
-
-  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> entryPointRoots, List<JavaModuleSourceRoot> sourceRoots, final Set<String> ignoredNames) {
+  public ModuleInsight(@Nullable final ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
+    myExistingModuleNames = existingModuleNames;
+    myExistingProjectLibraryNames = existingProjectLibraryNames;
     myLexer = new JavaLexer(LanguageLevel.JDK_1_5);
     myProgress = new ProgressIndicatorWrapper(progress);
-    setRoots(entryPointRoots, sourceRoots, ignoredNames);
+    setRoots(Collections.<File>emptyList(), Collections.<JavaModuleSourceRoot>emptyList(), Collections.<String>emptySet());
   }
 
   public final void setRoots(final List<File> contentRoots, final List<JavaModuleSourceRoot> sourceRoots, final Set<String> ignoredNames) {
@@ -148,7 +148,7 @@ public class ModuleInsight {
     }
 
     myModules = new ArrayList<ModuleDescriptor>(contentRootToModules.values());
-    final Set<String> moduleNames = new HashSet<String>();
+    final Set<String> moduleNames = new HashSet<String>(myExistingModuleNames);
     for (ModuleDescriptor module : myModules) {
       final String suggested = suggestUniqueName(moduleNames, module.getName());
       module.setName(suggested);
@@ -212,7 +212,7 @@ public class ModuleInsight {
       myProgress.setText("Building initial libraries layout...");
       final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
       // correct library names so that there are no duplicates
-      final Set<String> libNames = new HashSet<String>();
+      final Set<String> libNames = new HashSet<String>(myExistingProjectLibraryNames);
       for (LibraryDescriptor library : libraries) {
         final Collection<File> libJars = library.getJars();
         final String newName = suggestUniqueName(libNames, libJars.size() == 1? libJars.iterator().next().getName() : library.getName());
@@ -494,7 +494,7 @@ public class ModuleInsight {
   private void scanImportStatements(char[] text, final Lexer lexer, final Set<String> usedPackages){
     lexer.start(new CharArrayCharSequence(text));
 
-    JavaUtil.skipWhiteSpaceAndComments(lexer);
+    JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(lexer);
     if (lexer.getTokenType() == JavaTokenType.PACKAGE_KEYWORD) {
       advanceLexer(lexer);
       if (readPackageName(text, lexer) == null) {
@@ -573,6 +573,6 @@ public class ModuleInsight {
 
   private static void advanceLexer(final Lexer lexer) {
     lexer.advance();
-    JavaUtil.skipWhiteSpaceAndComments(lexer);
+    JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(lexer);
   }
 }

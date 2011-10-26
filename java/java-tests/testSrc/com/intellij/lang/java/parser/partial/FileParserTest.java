@@ -59,11 +59,13 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testBindDocComment4() { doParserTest("class A {\n /** field comment */\n// field comment\n int f;\n}"); }
 
   private void doParserTest(final String text) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        FileParser.parse(builder);
-      }
-    });
+    doParserTest(text, new MyTestParser());
+  }
+
+  private static class MyTestParser implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      FileParser.parse(builder);
+    }
   }
 }

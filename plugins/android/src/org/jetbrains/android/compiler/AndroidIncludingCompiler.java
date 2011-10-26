@@ -85,12 +85,21 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
           AndroidFacet facet = AndroidFacet.getInstance(module);
           if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
             for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
-              String genSrcRootPath = depFacet.getAptGenSourceRootPath();
-              VirtualFile genSrcRoot = genSrcRootPath != null ? LocalFileSystem.getInstance().findFileByPath(genSrcRootPath) : null;
+
+              final String aptGenSrcRootPath = depFacet.getAptGenSourceRootPath();
+              final VirtualFile aptGenSrcRoot = aptGenSrcRootPath != null
+                                                ? LocalFileSystem.getInstance().findFileByPath(aptGenSrcRootPath)
+                                                : null;
+
+              final String aidlGenSrcRootPath = depFacet.getAidlGenSourceRootPath();
+              final VirtualFile aidlGenSrcRoot = aidlGenSrcRootPath != null
+                                                 ? LocalFileSystem.getInstance().findFileByPath(aidlGenSrcRootPath)
+                                                 : null;
+
               VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
 
               for (VirtualFile depSourceRoot : srcRoots) {
-                if (depSourceRoot != genSrcRoot) {
+                if (depSourceRoot != aptGenSrcRoot && depSourceRoot != aidlGenSrcRoot) {
                   collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, qName2Item);
                 }
               }

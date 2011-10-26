@@ -16,7 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -33,6 +33,9 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -143,6 +146,34 @@ public class DetectedRootsChooser {
     myTable.setTableHeader(null);
     myTable.setShowGrid(false);
     myComponent = ScrollPaneFactory.createScrollPane(myTable);
+    myTable.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          invertSelectedRows();
+        }
+      },
+      KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
+      JComponent.WHEN_FOCUSED
+    );
+  }
+
+  private void invertSelectedRows() {
+    final int[] selectedRows = myTable.getSelectedRows();
+    if (selectedRows.length == 0) return;
+
+    boolean included = false;
+    for (int selectedRow : selectedRows) {
+      included |= myModel.getItems().get(selectedRow).isIncluded();
+    }
+    int first = Integer.MAX_VALUE;
+    int last = -1;
+    for (int selectedRow : selectedRows) {
+      first = Math.min(first, selectedRow);
+      last = Math.max(last, selectedRow);
+      myModel.getItems().get(selectedRow).setIncluded(!included);
+    }
+    myModel.fireTableRowsUpdated(first, last+1);
+    myDispatcher.getMulticaster().selectionChanged();
   }
 
   public JComponent getComponent() {
@@ -157,7 +188,7 @@ public class DetectedRootsChooser {
     for (DetectedRootData data : myModel.getItems()) {
       data.setIncluded(mark);
     }
-    myModel.fireTableRowsUpdated(0, myModel.getRowCount());
+    myModel.fireTableRowsUpdated(0, myModel.getRowCount()-1);
     myDispatcher.getMulticaster().selectionChanged();
   }
 

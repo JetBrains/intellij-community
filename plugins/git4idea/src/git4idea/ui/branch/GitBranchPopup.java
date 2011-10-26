@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -47,7 +48,9 @@ import java.util.*;
  * 
  * @author Kirill Likhodedov
  */
-class GitBranchPopup  {
+public class GitBranchPopup  {
+
+  private static final Logger LOG = Logger.getInstance(GitBranchPopup.class);
   
   private final Project myProject;
   private final GitRepository myRepository;
@@ -107,9 +110,8 @@ class GitBranchPopup  {
    */
   private static class CurrentBranchAction extends DumbAwareAction {
     public CurrentBranchAction(GitRepository repository) {
-      super("Current Branch: " + getBranchText(repository),
-        String.format("Current branch [%s] in root [%s]", getBranchText(repository), repository.getRoot().getName()),
-        null);
+      super("", String.format("Current branch [%s] in root [%s]", getBranchText(repository), repository.getRoot().getName()), null);
+      getTemplatePresentation().setText("Current Branch: " + getBranchText(repository), false); // no mnemonics
     }
 
     private static String getBranchText(GitRepository repository) {
@@ -124,22 +126,31 @@ class GitBranchPopup  {
     }
   }
 
-  private static class NewBranchAction extends DumbAwareAction {
+  public static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
     private final GitRepository myRepository;
+    private final String myReference;
+    private final Runnable myCallInAwtAfterExecution;
 
-    NewBranchAction(Project project, GitRepository repository) {
+    public NewBranchAction(Project project, GitRepository repository) {
+      this(project, repository, null, null);
+    }
+    
+    public NewBranchAction(Project project, GitRepository repository, final String reference, final Runnable callInAwtAfterExecution) {
       super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
       myProject = project;
       myRepository = repository;
+      myReference = reference;
+      myCallInAwtAfterExecution = callInAwtAfterExecution;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout new branch", Messages.getQuestionIcon(),
-                                             "", GitNewBranchNameValidator.newInstance(myRepository));
+      final String name = Messages.showInputDialog(myProject, "Enter the name of new branch",
+                                                   myReference == null ? "Checkout New Branch" : "Checkout New Branch On " + myReference,
+                                                   Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepository));
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name, myReference, myCallInAwtAfterExecution);
       }
     }
 
@@ -170,7 +181,7 @@ class GitBranchPopup  {
       // on type check ref validity, on OK check ref existence.
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference, null);
       }
     }
 
@@ -225,7 +236,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName, null);
       }
 
     }
@@ -303,7 +314,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout remote branch", Messages.getQuestionIcon(),
+        final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepository));
         if (name != null) {
           new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewTrackingBranch(name, myRemoteBranchName);
@@ -313,7 +324,7 @@ class GitBranchPopup  {
       private String guessBranchName() {
         // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
         int slashPosition = myRemoteBranchName.indexOf("/");
-        assert slashPosition > 0 : "remote branch name should have a slash separator";
+        LOG.assertTrue(slashPosition > 0, "Remote branch name should have a slash separator: [" + myRemoteBranchName + "]");
         return myRemoteBranchName.substring(slashPosition+1);
       }
     }

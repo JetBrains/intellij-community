@@ -290,7 +290,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
 
     File javadocPath = dependency.getJavadoc();
     if (javadocPath != null) {
-      library.addPath(LibraryPathType.JAVADOC, javadocPath.getAbsolutePath());
+      library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
     }
 
     if (!intellijProject.addLibrary(library)) {

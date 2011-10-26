@@ -65,7 +65,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
         if (lastElement instanceof PsiFile) { //the very end of an injected file
           lastElement = file.findElementAt(offset - 1);
         }
-        if (lastElement == null) return false;
+        if (lastElement == null || !lastElement.isValid()) return false;
 
         if (doCompleteIfNeeded(offset, file, lastElement)) {
           return true;
@@ -78,7 +78,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
         if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
             (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != parent.getLanguage()) {
           lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
-          if (lastElement == null) return false;
+          if (lastElement == null || !lastElement.isValid()) return false;
           return doCompleteIfNeeded(offset, file, lastElement);
         }
         return false;

@@ -14,42 +14,41 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.compiler;
+package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
+import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
  */
-public class GroovycOSProcessHandler extends OSProcessHandler {
-  private final List<TranslatingCompiler.OutputItem> myCompiledItems = new ArrayList<TranslatingCompiler.OutputItem>();
+public class GroovycOSProcessHandler extends BaseOSProcessHandler {
+  public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
+  private final List<GroovyCompilerWrapper.OutputItem> myCompiledItems = new ArrayList<GroovyCompilerWrapper.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
-  private final CompileContext myContext;
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
-  public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
 
-  public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
-    super(process, s);
-    myContext = context;
+  public GroovycOSProcessHandler(Process process, String s) {
+    super(process, s, Charset.forName("UTF-8"));
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
@@ -74,16 +73,18 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
+  protected void updateStatus(@Nullable String status) { }
+
   private void parseOutput(String text) {
     final String trimmed = text.trim();
 
     if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
-      myContext.getProgressIndicator().setText(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
+      updateStatus(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
       return;
     }
 
     if (GroovycRunner.CLEAR_PRESENTABLE.equals(trimmed)) {
-      myContext.getProgressIndicator().setText(GROOVY_COMPILER_IN_OPERATION);
+      updateStatus(null);
       return;
     }
 
@@ -102,7 +103,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         String outputPath = list.get(0);
         String sourceFile = list.get(1);
 
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(outputPath);
         ContainerUtil.addIfNotNull(getOutputItem(outputPath, sourceFile), myCompiledItems);
 
       }
@@ -112,14 +112,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           toRecompileFiles.add(new File(url));
         }
       }
-
-      /* Cathegory
-      * Message
-      * Url
-      * Linenum
-      * Colomnnum
-      */
-
       else if (outputBuffer.indexOf(GroovycRunner.MESSAGES_START) != -1) {
         if (!(outputBuffer.indexOf(GroovycRunner.MESSAGES_END) != -1)) {
           return;
@@ -169,23 +161,11 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   }
 
   @Nullable
-  private static TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
-
-    final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
-    if (sourceVirtualFile == null) return null; //the source might already have been deleted
-
-    return new TranslatingCompiler.OutputItem() {
-      public String getOutputPath() {
-        return outputPath;
-      }
-
-      public VirtualFile getSourceFile() {
-        return sourceVirtualFile;
-      }
-    };
+  private static GroovyCompilerWrapper.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
+    return new GroovyCompilerWrapper.OutputItem(outputPath, sourceFile);
   }
 
-  public List<TranslatingCompiler.OutputItem> getSuccessfullyCompiled() {
+  public List<GroovyCompilerWrapper.OutputItem> getSuccessfullyCompiled() {
     return myCompiledItems;
   }
 

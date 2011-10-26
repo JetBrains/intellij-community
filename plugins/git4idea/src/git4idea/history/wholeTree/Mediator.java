@@ -12,6 +12,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Ticket;
@@ -43,6 +44,7 @@ public interface Mediator {
   void forceStop();
 
   void acceptException(final VcsException e);
+  void acceptStashHead(final Ticket ticket, VirtualFile root, Pair<AbstractHash, AbstractHash> hash);
 
   void oneFinished();
 }

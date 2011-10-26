@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -51,9 +52,8 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     super.init();
   }
 
-  protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, final JPanel wholePluginsPanel, JEditorPane updateLinkPane) {
-    panel.setMinimumSize(new Dimension(-1, 200));
-    wholePluginsPanel.setVisible(myUploadedPlugins != null);
+  protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, JEditorPane updateLinkPane) {
+    pluginsPanel.setVisible(myUploadedPlugins != null);
     if (myUploadedPlugins != null) {
       final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel();
 
@@ -65,7 +65,8 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
         foundPluginsPanel.add(uploadedPlugin);
       }
-      pluginsPanel.add(foundPluginsPanel, BorderLayout.NORTH);
+      TableUtil.ensureSelectionExists(foundPluginsPanel.getEntryTable());
+      pluginsPanel.add(foundPluginsPanel, BorderLayout.CENTER);
     }
     updateLinkPane.setBackground(UIUtil.getPanelBackground());
     updateLinkPane.setText(IdeBundle.message("updates.configure.label", UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())));

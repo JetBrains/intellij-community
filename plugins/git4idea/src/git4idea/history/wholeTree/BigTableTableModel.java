@@ -16,6 +16,8 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.BigArray;
 import com.intellij.openapi.vcs.GroupingMerger;
 import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy;
@@ -36,6 +38,7 @@ import java.util.HashSet;
  */
 public class BigTableTableModel extends AbstractTableModel {
   public final static Object LOADING = new Object();
+  public static final String STASH = "Stash";
   // should be grouped
   @Nullable
   private Map<VirtualFile, SkeletonBuilder> mySkeletonBuilder;
@@ -69,6 +72,7 @@ public class BigTableTableModel extends AbstractTableModel {
   private final Set<VirtualFile> myActiveRoots;
   private final CommitGroupingStrategy myDefaultStrategy;
   private final CommitGroupingStrategy myNoGrouping;
+  private final Map<VirtualFile,Pair<AbstractHash, AbstractHash>> myStashTops;
 
   public BigTableTableModel(@NotNull final List<ColumnInfo> columns, Runnable init) {
     myColumns = columns;
@@ -107,6 +111,7 @@ public class BigTableTableModel extends AbstractTableModel {
       public void beforeStart() {
       }
     };
+    myStashTops = new HashMap<VirtualFile, Pair<AbstractHash, AbstractHash>>();
   }
 
   public void setCommitIdxInterval(int commitIdxInterval) {
@@ -193,7 +198,18 @@ public class BigTableTableModel extends AbstractTableModel {
     }
     return map;
   }
-  
+
+  public void stashFor(VirtualFile root, Pair<AbstractHash, AbstractHash> hash) {
+    myStashTops.put(root, hash);
+  }
+
+  public boolean isStashed(final CommitI commitI) {
+    final Pair<AbstractHash, AbstractHash> pair =
+      myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
+    return pair != null && (pair.getFirst() != null && pair.getFirst().equals(commitI.getHash()) ||
+                            pair.getSecond() != null && pair.getSecond().equals(commitI.getHash()));
+  }
+
   class WiresGroupIterator implements WireEventsIterator {
     private final int myFirstIdx;
     private List<Integer> myFirstUsed;
@@ -411,6 +427,19 @@ public class BigTableTableModel extends AbstractTableModel {
 
       @Override
       protected String getGroup(CommitI commitI) {
+        if (getCurrentGroup() == null) {
+          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
+          if (stashTop != null && (Comparing.equal(stashTop.getFirst(), commitI.getHash()))) {
+            return STASH;
+          }
+        }
+        if (STASH.equals(getCurrentGroup())) { // index on <branchname>: <short hash> <base commit description>
+          final VirtualFile root = commitI.selectRepository(myRootsHolder.getRoots());
+          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(root);
+          if (stashTop != null && (Comparing.equal(stashTop.getSecond(), commitI.getHash()))) {
+            return STASH;
+          }
+        }
         return myStrategy.getGroupName(commitI);
       }
 

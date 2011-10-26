@@ -576,6 +576,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (patched != null &&
           (patched.startOffset != patched.endOffset ||
            info.startOffset == info.endOffset)) {
+        patched.fromInjection = true;
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);
       }

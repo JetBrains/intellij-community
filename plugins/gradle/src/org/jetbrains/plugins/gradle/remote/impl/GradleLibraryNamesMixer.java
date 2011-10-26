@@ -196,10 +196,9 @@ public class GradleLibraryNamesMixer {
     Wrapped(@NotNull GradleLibrary library) {
       this.library = library;
       for (LibraryPathType pathType : LibraryPathType.values()) {
-        String path = library.getPath(pathType);
-        if (path != null) {
+        for (String path : library.getPaths(pathType)) {
           files.add(new File(path));
-        } 
+        }
       }
     }
     

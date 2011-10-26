@@ -151,21 +151,11 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
 
   private void doBlockParserTest(final String text) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        StatementParser.parseCodeBlockDeep(builder, true);
-      }
-    });
+    doParserTest(text, new MyTestParser1());
   }
 
   private void doParserTest(final String text) {
-    doParserTest(text, new TestParser() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        StatementParser.parseStatements(builder);
-      }
-    });
+    doParserTest(text, new MyTestParser2());
   }
 
   private void doParserTestJDK7(final String text) {
@@ -175,5 +165,19 @@ public class StatementParserTest extends JavaParsingTestCase {
         doParserTest(text);
       }
     });
+  }
+
+  private static class MyTestParser2 implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      StatementParser.parseStatements(builder);
+    }
+  }
+
+  private static class MyTestParser1 implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      StatementParser.parseCodeBlockDeep(builder, true);
+    }
   }
 }

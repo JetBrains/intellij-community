@@ -152,8 +152,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final Key<Object> MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
 
-  private final DocumentListener myEditorDocumentAdapter;
-
   private final SettingsImpl mySettings;
 
   private boolean isReleased = false;
@@ -295,7 +293,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myCommandProcessor = CommandProcessor.getInstance();
 
-    myEditorDocumentAdapter = new EditorDocumentAdapter();
     if (project != null) {
       myConnection = project.getMessageBus().connect();
       myConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
@@ -334,14 +331,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myMarkupModelListener);
-    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myMarkupModelListener);
+    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myCaretModel, myMarkupModelListener);
 
-    myDocument.addDocumentListener(myFoldingModel);
-    myDocument.addDocumentListener(myCaretModel);
-    myDocument.addDocumentListener(mySelectionModel);
-    myDocument.addDocumentListener(myEditorDocumentAdapter);
-    myDocument.addDocumentListener(mySoftWrapModel);
+    myDocument.addDocumentListener(myFoldingModel,myCaretModel);
+    myDocument.addDocumentListener(myCaretModel,myCaretModel);
+    myDocument.addDocumentListener(mySelectionModel, myCaretModel);
+
+    myDocument.addDocumentListener(new EditorDocumentAdapter(),myCaretModel);
+    myDocument.addDocumentListener(mySoftWrapModel,myCaretModel);
 
     myFoldingModel.addListener(mySoftWrapModel);
 
@@ -616,21 +614,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     isReleased = true;
     myDocument.removeDocumentListener(myHighlighter);
-    myDocument.removeDocumentListener(myEditorDocumentAdapter);
-    myDocument.removeDocumentListener(myFoldingModel);
-    myDocument.removeDocumentListener(myCaretModel);
-    myDocument.removeDocumentListener(mySelectionModel);
-    myDocument.removeDocumentListener(mySoftWrapModel);
 
     myFoldingModel.removeListener(mySoftWrapModel);
     myFoldingModel.dispose();
 
     mySoftWrapModel.release();
-
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, false);
-    if (markupModel instanceof MarkupModelImpl) {
-      markupModel.removeMarkupModelListener(myMarkupModelListener);
-    }
 
     myMarkupModel.dispose();
 
@@ -952,6 +940,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line+1, 0));
     int endOffset = logicalPositionToOffset(endLogicalPosition);
 
+    if (offset > endOffset) {
+      LOG.error(String.format(
+        "Detected invalid (x;y)->VisualPosition processing. Given point: %s, mapped to visual line %d. Visual(%d; %d) is mapped to "
+        + "logical position '%s' which is mapped to offset %d (start offset). Visual(%d; %d) is mapped to logical '%s' which is mapped "
+        + "to offset %d (end offset). State: %s",
+        p, line, line, 0, logicalPosition, offset, line + 1, 0, endLogicalPosition, endOffset, dumpState()
+      ));
+      return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
+    }
     IterationState state = new IterationState(this, offset, endOffset, false);
 
     int fontType = state.getMergedAttributes().getFontType();

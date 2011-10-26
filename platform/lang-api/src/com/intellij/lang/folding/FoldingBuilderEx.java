@@ -38,7 +38,7 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    * @param root     the element for which folding is requested.
    * @param document the document for which folding is built. Can be used to retrieve line
    *                 numbers for folding regions.
-   * @param quick    whether the result should be providen as soon as possible. Is true, when
+   * @param quick    whether the result should be provided as soon as possible. Is true, when
    *                 an editor is opened and we need to auto-fold something immediately, like Java imports.
    *                 If true, one should perform no reference resolving and avoid complex checks if possible.
    * @return the array of folding descriptors.

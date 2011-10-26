@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,42 +33,40 @@ import java.awt.*;
  * @author yole
  */
 public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
-  protected ChangesTreeList<T> myFileList;
-  protected JPanel myPanel;
   protected JCheckBox myDoNotShowCheckbox;
   protected final VcsShowConfirmationOption myConfirmationOption;
+  private final String myPrompt;
+  private final boolean myShowDoNotAskOption;
 
   public AbstractSelectFilesDialog(Project project, boolean canBeParent, final VcsShowConfirmationOption confirmationOption,
-                                   final String prompt) {
+                                   final String prompt, boolean showDoNotAskOption) {
     super(project, canBeParent);
     myConfirmationOption = confirmationOption;
+    myPrompt = prompt;
+    myShowDoNotAskOption = showDoNotAskOption;
+  }
 
-    myPanel = new JPanel(new BorderLayout());
+  @NotNull
+  protected abstract ChangesTreeList getFileList();
 
-    if (prompt != null) {
-      final JLabel label = new JLabel(prompt);
+  @Nullable
+  private JLabel createPromptLabel() {
+    if (myPrompt != null) {
+      final JLabel label = new JLabel(myPrompt);
       label.setUI(new MultiLineLabelUI());
       label.setBorder(new EmptyBorder(5, 1, 5, 1));
-      myPanel.add(label, BorderLayout.NORTH);
+      return label;
     }
-
-    myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
-    myPanel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
+    return null;
   }
 
   @Override
   protected JComponent createNorthPanel() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction[] actions = myFileList.getTreeActions();
-    for(AnAction action: actions) {
-      group.add(action);
-    }
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return toolbar.getComponent();
+    return createPromptLabel();
   }
 
   protected void doOKAction() {
-    if (myDoNotShowCheckbox.isSelected()) {
+  if (myDoNotShowCheckbox != null && myDoNotShowCheckbox.isSelected()) {
       myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
     }
     super.doOKAction();
@@ -75,11 +74,31 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myFileList;
+    return getFileList();
   }
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return myPanel;
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(createToolbar(), BorderLayout.NORTH);
+
+    panel.add(getFileList(), BorderLayout.CENTER);
+
+    if (myShowDoNotAskOption) {
+      myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
+      panel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
+    }
+    return panel;
   }
+
+  private JComponent createToolbar() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    final AnAction[] actions = getFileList().getTreeActions();
+    for(AnAction action: actions) {
+      group.add(action);
+    }
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    return toolbar.getComponent();
+  }
+
 }

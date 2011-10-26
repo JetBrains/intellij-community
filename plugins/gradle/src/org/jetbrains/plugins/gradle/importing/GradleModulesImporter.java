@@ -434,8 +434,7 @@ public class GradleModulesImporter {
 
   private static void registerPath(@NotNull GradleLibrary gradleLibrary, @NotNull Library.ModifiableModel model) {
     for (LibraryPathType pathType : LibraryPathType.values()) {
-      String path = gradleLibrary.getPath(pathType);
-      if (path != null) {
+      for (String path : gradleLibrary.getPaths(pathType)) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
         if (virtualFile == null) {
           GradleLog.LOG.warn(String.format("Can't find %s of the library '%s' at path '%s'", pathType, gradleLibrary.getName(), path));

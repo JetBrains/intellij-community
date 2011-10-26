@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateAnnotationMethodFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,8 +52,10 @@ public class AnnotationsHighlightUtil {
     PsiMethod method = (PsiMethod)ref.resolve();
     if (method == null) {
       if (pair.getName() != null) {
-        String description = JavaErrorMessages.message("annotation.unknown.method", ref.getCanonicalText());
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getElement(), description);
+        final String description = JavaErrorMessages.message("annotation.unknown.method", ref.getCanonicalText());
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getElement(), description);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateAnnotationMethodFromUsageFix(pair));
+        return highlightInfo;
       }
       else {
         String description = JavaErrorMessages.message("annotation.missing.method", ref.getCanonicalText());
@@ -334,8 +337,8 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  private static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
-    private static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
+  public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
+    public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
     public Boolean visitType(PsiType type) {
       return Boolean.FALSE;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,21 @@ contributor([gdslScriptContext]) {
   method name: "contributor", params: [contexts: "java.util.List", body: {}], type: void
   method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
   method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
+  method name: "contribute", params: [pointcut: "Pointcut", body: {}], type: void
+  
+  method name: "currentType", params: [qName: String.name], type: "Pointcut", doc:'Matches when the current (qualifier or this) type is a subtype of the type described by the parameter'
 
   method name: "category", params: [categoryClass: "java.lang.String", isStatic:"java.lang.Boolean"], type: void
   method name: "category", params: [categoryClass: "java.lang.String"], type: void
 
   method name: "supportsVersion", params: [version: "java.lang.String"], type: boolean
+
+  def version = [
+          parameter(name: 'dsl', type: String.name),
+          parameter(name: 'intellij', type: String.name),
+  ]
+  method name: "supportsVersion", namedParams: version, type: boolean
+  method name: "assertVersion", namedParams: version, type: void
 
   // scopes
   method name: "closureScope", params: [contexts: "java.util.Map"], type: {}
@@ -40,9 +50,25 @@ contributor([gdslScriptContext]) {
 def contributorBody = context(scope: closureScope(isArg: true), filetypes:['gdsl'])
 
 contributor([contributorBody]) {
-  if (enclosingCall("contributor")) {
-    method name: "method", type: "void", params: [args: [:]]
-    method name: "property", type: "void", params: [args: [:]]
+  if (enclosingCall("contributor") || enclosingCall("contribute")) {
+    method name: "method", type: "void", params: [args: [
+            parameter(name:'name', type:String.name, doc:'Method name'),
+            parameter(name:'params', type:Map.name, doc:'A map representing method parameters'),
+            parameter(name:'namedParams', type:Object.name, doc:'''A list representing method named parameters.<br>
+Its elements should be calls to <code>parameter</code> method.'''),
+            parameter(name:'type', type:Object.name, doc:'Return type name of the method'),
+            parameter(name:'doc', type:String.name, doc:'Method documentation text'),
+    ]], doc:'Describe a DSL method'
+    method name: "property", type: "void", params: [args: [
+            parameter(name:'name', type:String.name, doc:'Property name'),
+            parameter(name:'type', type:Object.name, doc:'Property type name'),
+            parameter(name:'doc', type:String.name, doc:'Property documentation text'),
+    ]], doc:'Describe a DSL property'
+    method name: "parameter", type: "Parameter", params: [args: [
+            parameter(name:'name', type:String.name, doc:'Parameter name'),
+            parameter(name:'type', type:Object.name, doc:'Parameter type name'),
+            parameter(name:'doc', type:String.name, doc:'Parameter documentation text'),
+    ]], doc:'Describe a method named parameter'
 
     method name: "add", type: "void", params: [member: "com.intellij.psi.PsiMember"]
     method name: "findClass", type: "com.intellij.psi.PsiClass", params: [name: "java.lang.String"]
@@ -50,7 +76,7 @@ contributor([contributorBody]) {
 
     method name: "enclosingCall",
            type: "com.intellij.psi.PsiElement",
-           params: [methodName: "java.lang.String"]
+           params: [methodName: "java.lang.String"], doc:'Returns an enclosing method call with <code>methodCall</code> name'
 
     method name: "enclosingMethod", type: "com.intellij.psi.PsiMethod"
     method name: "enclosingMember", type: "com.intellij.psi.PsiMember"

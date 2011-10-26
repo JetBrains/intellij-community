@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -261,8 +262,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         }
         else {
           final boolean undocked = isUndocked();
-
-          g2d.setPaint(new GradientPaint(0, 0, new Color(240, 240, 240), 0, r.height, new Color(210, 210, 210)));
+          final Color startColor = UIUtil.isUnderAquaLookAndFeel() ? new Color(240, 240, 240) : UIUtil.getControlColor();
+          final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
+          g2d.setPaint(new GradientPaint(0, 0, startColor, 0, r.height, endColor));
           g.fillRect(0, 0, r.width, r.height);
 
           if (!undocked) {

@@ -35,22 +35,26 @@ public class GlobalSearchScopes {
   private GlobalSearchScopes() {
   }
 
+  @NotNull
   public static GlobalSearchScope projectProductionScope(@NotNull Project project) {
     return new GlobalSearchScope.IntersectionScope(GlobalSearchScope.projectScope(project),
                                  new ProductionScopeFilter(project),
                                  PsiBundle.message("psi.search.scope.production.files"));
   }
 
+  @NotNull
   public static GlobalSearchScope projectTestScope(@NotNull Project project) {
     return new GlobalSearchScope.IntersectionScope(GlobalSearchScope.projectScope(project),
                                  new TestScopeFilter(project),
                                  PsiBundle.message("psi.search.scope.test.files"));
   }
 
+  @NotNull
   public static GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
     return new DirectoryScope(directory, withSubdirectories);
   }
 
+  @NotNull
   public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
     return new DirectoryScope(project, directory, withSubdirectories);
   }

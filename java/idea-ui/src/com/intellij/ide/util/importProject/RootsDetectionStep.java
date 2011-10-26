@@ -16,12 +16,15 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.DetectedProjectRoot;
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.newProjectWizard.ProjectStructureDetector;
-import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,17 +47,23 @@ import java.util.List;
 public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRootData>> {
   private static final String ROOTS_FOUND_CARD = "roots_found";
   private static final String ROOTS_NOT_FOUND_CARD = "roots_not_found";
-  private final ProjectFromSourcesBuilder myBuilder;
+  private final ProjectFromSourcesBuilderImpl myBuilder;
+  private final WizardContext myContext;
   private final StepSequence mySequence;
   private final Icon myIcon;
   private final String myHelpId;
   private DetectedRootsChooser myDetectedRootsChooser;
-  private String myCurrentContentEntryPath = null;
+  private String myCurrentBaseProjectPath = null;
   private JPanel myResultPanel;
 
-  public RootsDetectionStep(ProjectFromSourcesBuilder builder, StepSequence sequence, Icon icon, @NonNls String helpId) {
+  public RootsDetectionStep(ProjectFromSourcesBuilderImpl builder,
+                            WizardContext context,
+                            StepSequence sequence,
+                            Icon icon,
+                            @NonNls String helpId) {
     super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
     myBuilder = builder;
+    myContext = context;
     mySequence = sequence;
     myIcon = icon;
     myHelpId = helpId;
@@ -67,7 +76,6 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
       @Override
       public void selectionChanged() {
         updateSelectedTypes();
-        fireStateChanged();
       }
     });
     final String text = IdeBundle.message("label.project.roots.have.been.found");
@@ -116,14 +124,15 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   public void updateDataModel() {
     MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<ProjectStructureDetector, DetectedProjectRoot>();
     final List<DetectedRootData> selectedElements = myDetectedRootsChooser.getMarkedElements();
-    if (selectedElements.size() > 0) {
-      for (final DetectedRootData rootData : selectedElements) {
-        for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
-          roots.putValue(detector, rootData.getSelectedRoot());
-        }
+    for (final DetectedRootData rootData : selectedElements) {
+      for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
+        roots.putValue(detector, rootData.getSelectedRoot());
       }
     }
     myBuilder.setProjectRoots(roots);
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      detector.setupProjectStructure(roots.get(detector), myBuilder.getProjectDescriptor(detector), myBuilder);
+    }
     updateSelectedTypes();
   }
 
@@ -135,51 +144,46 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
       }
     }
     mySequence.setTypes(selectedTypes);
+    myContext.requestWizardButtonsUpdate();
   }
 
   protected boolean shouldRunProgress() {
-    return isContentEntryChanged();
+    final String baseProjectPath = getBaseProjectPath();
+    return myCurrentBaseProjectPath == null ? baseProjectPath != null : !myCurrentBaseProjectPath.equals(baseProjectPath);
   }
 
   protected void onFinished(final List<DetectedRootData> foundRoots, final boolean canceled) {
     final CardLayout layout = (CardLayout)myResultPanel.getLayout();
     if (foundRoots.size() > 0 && !canceled) {
-      myCurrentContentEntryPath = getContentRootPath();
+      myCurrentBaseProjectPath = getBaseProjectPath();
       myDetectedRootsChooser.setElements(foundRoots);
       updateSelectedTypes();
-      fireStateChanged();
       layout.show(myResultPanel, ROOTS_FOUND_CARD);
     }
     else {
-      myCurrentContentEntryPath = null;
+      myCurrentBaseProjectPath = null;
       layout.show(myResultPanel, ROOTS_NOT_FOUND_CARD);
     }
     myResultPanel.revalidate();
   }
 
-  protected boolean isContentEntryChanged() {
-    final String contentEntryPath = getContentRootPath();
-    return myCurrentContentEntryPath == null ? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
-  }
-
   protected List<DetectedRootData> calculate() {
-    final String contentRootPath = getContentRootPath();
-    if (contentRootPath == null) {
+    final String baseProjectPath = getBaseProjectPath();
+    if (baseProjectPath == null) {
       return Collections.emptyList();
     }
-    final File entryFile = new File(contentRootPath);
-    if (!entryFile.exists()) {
-      return Collections.emptyList();
-    }
-    final File[] children = entryFile.listFiles();
-    if (children == null || children.length == 0) {
-      return Collections.emptyList();
+
+    final File baseProjectFile = new File(baseProjectPath);
+    Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = new RootDetectionProcessor(baseProjectFile,
+                                                                                                ProjectStructureDetector.EP_NAME.getExtensions()).findRoots();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.setText2("Processing " + roots.values().size() + " project roots...");
     }
 
     Map<File, DetectedRootData> rootData = new LinkedHashMap<File, DetectedRootData>();
-    for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
-      final List<DetectedProjectRoot> detectedRoots = detector.detectRoots(entryFile);
-      for (DetectedProjectRoot detectedRoot : detectedRoots) {
+    for (ProjectStructureDetector detector : roots.keySet()) {
+      for (DetectedProjectRoot detectedRoot : roots.get(detector)) {
         if (isUnderIncompatibleRoot(detectedRoot, rootData)) {
           continue;
         }
@@ -193,6 +197,10 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
         }
         removeIncompatibleRoots(detectedRoot, rootData);
       }
+    }
+
+    if (progressIndicator != null) {
+      progressIndicator.setText2("");
     }
     return new ArrayList<DetectedRootData>(rootData.values());
   }
@@ -232,12 +240,12 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
   @Nullable
-  private String getContentRootPath() {
-    return myBuilder.getContentEntryPath();
+  private String getBaseProjectPath() {
+    return myBuilder.getBaseProjectPath();
   }
 
   protected String getProgressText() {
-    final String root = getContentRootPath();
+    final String root = getBaseProjectPath();
     return IdeBundle.message("progress.searching.for.sources", root != null ? root.replace('/', File.separatorChar) : "");
   }
 

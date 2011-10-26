@@ -45,11 +45,9 @@ import java.util.List;
  */
 public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
-  public static final MyVisitor MY_VISITOR = new MyVisitor();
-
   @Override
   protected BaseInspectionVisitor buildVisitor() {
-    return MY_VISITOR;
+    return new MyVisitor();
   }
 
   @Nls

@@ -218,11 +218,14 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     }
   }
 
-  private static class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
+  private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
     public ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
       myConfigEditor = configEditor;
+      if (configEditor instanceof RunConfigurationSettingsEditor) {
+        ((RunConfigurationSettingsEditor)configEditor).setOwner(ConfigurationSettingsEditor.this);
+      }
     }
 
     public void resetEditorFrom(RunnerAndConfigurationSettings configurationSettings) {

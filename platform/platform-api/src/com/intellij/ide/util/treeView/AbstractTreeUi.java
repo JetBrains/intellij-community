@@ -1808,7 +1808,10 @@ public class AbstractTreeUi {
 
     Object[] bg = myLoadedInBackground.keySet().toArray(new Object[myLoadedInBackground.size()]);
     for (Object each : bg) {
-      resetIncompleteNode(getNodeForElement(each, false));
+      final DefaultMutableTreeNode node = getNodeForElement(each, false);
+      if (node != null) {
+        resetIncompleteNode(node);
+      }
     }
 
     myUpdaterState = null;
@@ -1853,7 +1856,7 @@ public class AbstractTreeUi {
     return node instanceof DefaultMutableTreeNode && myCancelledBuild.containsKey(node);
   }
 
-  private void resetIncompleteNode(DefaultMutableTreeNode node) {
+  private void resetIncompleteNode(@NotNull DefaultMutableTreeNode node) {
     if (myReleaseRequested) return;
 
     addToCancelled(node);
@@ -2714,7 +2717,7 @@ public class AbstractTreeUi {
     return true;
   }
 
-  private boolean isExpanded(DefaultMutableTreeNode node, boolean isExpanded) {
+  private boolean isExpanded(@NotNull DefaultMutableTreeNode node, boolean isExpanded) {
     return isExpanded || myTree.isExpanded(getPathFor(node));
   }
 
@@ -3138,7 +3141,7 @@ public class AbstractTreeUi {
     });
   }
 
-  private static TreePath getPathFor(TreeNode node) {
+  private static TreePath getPathFor(@NotNull TreeNode node) {
     if (node instanceof DefaultMutableTreeNode) {
       return new TreePath(((DefaultMutableTreeNode)node).getPath());
     }
@@ -4272,7 +4275,7 @@ public class AbstractTreeUi {
 
         if (kidsToExpand.contains(eachElement)) {
           try {
-            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " path=" + kidsToExpand);
+            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " path=" + kidsToExpand + " tree structure=" + myTreeStructure);
           }
           catch (AssertionError e) {
           }
