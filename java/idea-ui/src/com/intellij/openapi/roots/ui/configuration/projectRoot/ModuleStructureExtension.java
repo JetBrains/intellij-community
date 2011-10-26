@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.NullableComputable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 
 public abstract class ModuleStructureExtension {
 
@@ -49,7 +51,9 @@ public abstract class ModuleStructureExtension {
   }
 
   public Collection<AnAction> createAddActions(final NullableComputable<MasterDetailsComponent.MyNode> selectedNodeRetriever,
-                                               final Runnable treeNodeNameUpdater) {
+                                               final Runnable treeNodeNameUpdater,
+                                               final Project project,
+                                               final MasterDetailsComponent.MyNode root) {
     return Collections.emptyList();
   }
 
@@ -58,5 +62,13 @@ public abstract class ModuleStructureExtension {
   }
 
   public void copy(final NamedConfigurable configurable, final Runnable treeNodeNameUpdater) {
+  }
+
+  public void addRootNodes(final MasterDetailsComponent.MyNode parent, final Project project, final Runnable treeUpdater) {
+  }
+
+  @Nullable
+  public Comparator<MasterDetailsComponent.MyNode> getNodeComparator() {
+    return null;
   }
 }
