@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -155,6 +156,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
     getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
+  public void _testAlignClosureBraceWithCall() throws Throwable { doTest(); }
+  public void testFlyingGeese() throws Throwable { doTest(); }
   public void testSpaceAfterTypeCast() throws Throwable {
     getGroovySettings().SPACE_AFTER_TYPE_CAST = false;
     getGroovySettings().SPACE_WITHIN_CAST_PARENTHESES = true;
@@ -170,6 +173,12 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testIndentNamedArguments() throws Throwable { doTest(); }
   public void testIndentAssigned() throws Throwable { doTest(); }
   public void testCommentBeforeMultilineString() throws Throwable { doTest(); }
+
+  public void _testNoFlyingGeese() throws Throwable {
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).SPACE_IN_NAMED_ARGUMENT = false;
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = false;
+    doTest();
+  }
 
   public void testAlignChainedCalls() throws Throwable {
     getGroovySettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
