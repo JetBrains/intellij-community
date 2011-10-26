@@ -69,10 +69,16 @@ public final class GitBranchOperationsProcessor {
   private final Project myProject;
   private final GitRepository myRepository;
   private final VirtualFile myRoot;
+  @Nullable private final Runnable myCallInAwtAfterExecution;
 
-  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull GitRepository repository) {
-    myProject = project;
+  public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
+    this(repository, null);
+  }
+  
+  public GitBranchOperationsProcessor(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
+    myProject = repository.getProject();
     myRepository = repository;
+    myCallInAwtAfterExecution = callInAwtAfterExecution;
     myRoot = myRepository.getRoot();
   }
 
@@ -84,20 +90,17 @@ public final class GitBranchOperationsProcessor {
    * @param name Name of the new branch to check out.
    */
   public void checkoutNewBranch(@NotNull final String name) {
-    new CommonBackgroundTask(myProject, "Checking out new branch " + name) {
+    new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doCheckoutNewBranch(name);
       }
     }.runInBackground();
   }
 
-  public void createNewTag(@NotNull final String name, final String reference, final Runnable callInAwtAfterExecution) {
-    new CommonBackgroundTask(myProject, "Checking out new branch " + name) {
+  public void createNewTag(@NotNull final String name, final String reference) {
+    new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         Git.createNewTag(myRepository, name, null, reference);
-        if (callInAwtAfterExecution != null) {
-          SwingUtilities.invokeLater(callInAwtAfterExecution);
-        }
       }
     }.runInBackground();
   }
@@ -133,12 +136,10 @@ public final class GitBranchOperationsProcessor {
    *
    * @param newBranchName     Name of new local branch.
    * @param startPoint        Reference to checkout.
-   * @param callInAwtAfterExecution
    */
   public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
-                                            @NotNull String startPoint,
-                                            Runnable callInAwtAfterExecution) {
-    commonCheckout(startPoint, newBranchName, callInAwtAfterExecution);
+                                            @NotNull String startPoint) {
+    commonCheckout(startPoint, newBranchName);
   }
 
   /**
@@ -153,17 +154,14 @@ public final class GitBranchOperationsProcessor {
    *
    * @param reference reference to be checked out.
    */
-  public void checkout(@NotNull final String reference, final Runnable callInAwtAfterCompleted) {
-    commonCheckout(reference, null, callInAwtAfterCompleted);
+  public void checkout(@NotNull final String reference) {
+    commonCheckout(reference, null);
   }
 
-  private void commonCheckout(@NotNull final String reference, @Nullable final String newBranch, final Runnable callInAwtAfterCompleted) {
-    new CommonBackgroundTask(myProject, "Checking out " + reference) {
+  private void commonCheckout(@NotNull final String reference, @Nullable final String newBranch) {
+    new CommonBackgroundTask(myProject, "Checking out " + reference, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doCheckout(indicator, reference, newBranch);
-        if (callInAwtAfterCompleted != null) {
-          SwingUtilities.invokeLater(callInAwtAfterCompleted);
-        }
       }
     }.runInBackground();
   }
@@ -308,7 +306,7 @@ public final class GitBranchOperationsProcessor {
   }
 
   public void deleteBranch(final String branchName) {
-    new CommonBackgroundTask(myProject, "Deleting " + branchName) {
+    new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doDelete(branchName);
       }
@@ -418,7 +416,7 @@ public final class GitBranchOperationsProcessor {
    * @param branchName name of the branch to compare with.
    */
   public void compare(@NotNull final String branchName) {
-    new CommonBackgroundTask(myProject, "Comparing with " + branchName) {
+    new CommonBackgroundTask(myProject, "Comparing with " + branchName, myCallInAwtAfterExecution) {
 
       private Pair<List<GitCommit>,List<GitCommit>> myCommits;
 
@@ -480,14 +478,20 @@ public final class GitBranchOperationsProcessor {
    */
   private static abstract class CommonBackgroundTask extends Task.Backgroundable {
 
-    private CommonBackgroundTask(@Nullable final Project project, @NotNull final String title) {
+    @Nullable private final Runnable myCallInAwtAfterExecution;
+
+    private CommonBackgroundTask(@Nullable final Project project, @NotNull final String title, @Nullable Runnable callInAwtAfterExecution) {
       super(project, title);
+      myCallInAwtAfterExecution = callInAwtAfterExecution;
     }
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
       saveAllDocuments();
       execute(indicator);
+      if (myCallInAwtAfterExecution != null) {
+        SwingUtilities.invokeLater(myCallInAwtAfterExecution);
+      }
     }
 
     abstract void execute(@NotNull ProgressIndicator indicator);

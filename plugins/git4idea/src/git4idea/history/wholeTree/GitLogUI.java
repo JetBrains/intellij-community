@@ -2067,7 +2067,7 @@ public class GitLogUI implements Disposable {
       final GitRepository repository =
         GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
-      new GitBranchOperationsProcessor(myProject, repository).checkout(commitAt.getHash().getString(), myRefresh);
+      new GitBranchOperationsProcessor(repository, myRefresh).checkout(commitAt.getHash().getString());
     }
 
     @Override
@@ -2095,7 +2095,7 @@ public class GitLogUI implements Disposable {
       String reference = commitAt.getHash().getString();
       final String name = GitBranchUiUtil.getNewBranchNameFromUser(repository, "Checkout New Branch From " + reference);
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, repository).checkoutNewBranchStartingFrom(name, reference, myRefresh);
+        new GitBranchOperationsProcessor(repository, myRefresh).checkoutNewBranchStartingFrom(name, reference);
       }
     }
 

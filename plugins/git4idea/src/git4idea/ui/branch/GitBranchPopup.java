@@ -139,7 +139,7 @@ class GitBranchPopup  {
     public void actionPerformed(AnActionEvent e) {
       final String name = GitBranchUiUtil.getNewBranchNameFromUser(myRepository, "Create New Branch");
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
+        new GitBranchOperationsProcessor(myRepository).checkoutNewBranch(name);
       }
     }
 
@@ -170,7 +170,7 @@ class GitBranchPopup  {
       // on type check ref validity, on OK check ref existence.
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference, null);
+        new GitBranchOperationsProcessor(myRepository).checkout(reference);
       }
     }
 
@@ -225,7 +225,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName, null);
+        new GitBranchOperationsProcessor(myRepository).checkout(myBranchName);
       }
 
     }
@@ -258,7 +258,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepository).deleteBranch(myBranchName);
+        new GitBranchOperationsProcessor(myRepository).deleteBranch(myBranchName);
       }
     }
   }
@@ -306,7 +306,7 @@ class GitBranchPopup  {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepository));
         if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranchStartingFrom(name, myRemoteBranchName, null);
+          new GitBranchOperationsProcessor(myRepository).checkoutNewBranchStartingFrom(name, myRemoteBranchName);
         }
       }
 
@@ -335,7 +335,7 @@ class GitBranchPopup  {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      new GitBranchOperationsProcessor(myProject, myRepository).compare(myBranchName);
+      new GitBranchOperationsProcessor(myRepository).compare(myBranchName);
     }
 
   }
