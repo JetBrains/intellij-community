@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class ParenthesesUtils {
 
   @Nullable public static PsiElement getParentSkipParentheses(PsiElement element) {
     PsiElement parent = element.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
+    while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
       parent = parent.getParent();
     }
     return parent;

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>MismatchedStringBuilderQueryUpdate.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Mismatched query and update of StringBuilder</problem_class>
+    <description>Contents of StringBuilder &lt;code&gt;c&lt;/code&gt; are updated, but never queried #loc</description>
+  </problem>
+</problems>

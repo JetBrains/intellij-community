@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,25 +155,6 @@ public class VariableAccessUtils {
     @NotNull PsiVariable variable) {
     if (expression == null) {
       return false;
-    }
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      PsiExpression lOperand = binaryExpression.getLOperand();
-      PsiExpression rOperand = binaryExpression.getROperand();
-      // iterate instead of recurse to prevent SOE in very deeply nested
-      // binary expressions
-      while (lOperand instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression innerBinaryExpression =
-          (PsiBinaryExpression)lOperand;
-        if (mayEvaluateToVariable(rOperand, variable)) {
-          return true;
-        }
-        lOperand = innerBinaryExpression.getLOperand();
-        rOperand = innerBinaryExpression.getROperand();
-      }
-      return mayEvaluateToVariable(lOperand, variable) ||
-             mayEvaluateToVariable(rOperand, variable);
     }
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression =
