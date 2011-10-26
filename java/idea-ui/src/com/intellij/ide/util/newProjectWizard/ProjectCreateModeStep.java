@@ -111,7 +111,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
       insets.left = 20;
       final JLabel description = new JLabel(mode.getDescription(wizardContext));
       myWholePanel.add(description, gc);
-      final JComponent settings = mode.getAdditionalSettings();
+      final JComponent settings = mode.getAdditionalSettings(wizardContext);
       if (settings != null) {
         myWholePanel.add(settings, gc);
       }

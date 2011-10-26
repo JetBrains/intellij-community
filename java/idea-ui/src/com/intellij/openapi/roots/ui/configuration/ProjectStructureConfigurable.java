@@ -99,7 +99,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private final GlobalLibrariesConfigurable myGlobalLibrariesConfig;
   private ModuleStructureConfigurable myModulesConfig;
 
-  private boolean myWasIntialized;
+  private boolean myUiInitialized;
 
   private final List<Configurable> myName2Config = new ArrayList<Configurable>();
   private final StructureConfigurableContext myContext;
@@ -200,7 +200,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myErrorsComponent = new ConfigurationErrorsComponent(myProject);
     myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
 
-    myWasIntialized = true;
+    myUiInitialized = true;
 
     return myComponent;
   }
@@ -330,7 +330,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public void disposeUIResources() {
-    if (!myWasIntialized) return;
+    if (!myUiInitialized) return;
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     propertiesComponent.setValue("project.structure.last.edited", myUiState.lastEditedConfigurable);
     propertiesComponent.setValue("project.structure.proportion", String.valueOf(myUiState.proportion));
@@ -351,7 +351,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     Disposer.dispose(myErrorsComponent);
 
-    myWasIntialized = false;
+    myUiInitialized = false;
+  }
+
+  public boolean isUiInitialized() {
+    return myUiInitialized;
   }
 
   public History getHistory() {

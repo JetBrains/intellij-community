@@ -131,7 +131,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     }
     myBuilder.setProjectRoots(roots);
     for (ProjectStructureDetector detector : roots.keySet()) {
-      detector.setupProjectStructure(roots.get(detector), myBuilder, myContext);
+      detector.setupProjectStructure(roots.get(detector), myBuilder);
     }
     updateSelectedTypes();
   }

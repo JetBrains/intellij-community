@@ -36,7 +36,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 
 public class ImportMode extends WizardMode {
@@ -91,11 +90,6 @@ public class ImportMode extends WizardMode {
   @Nullable
   public ProjectBuilder getModuleBuilder() {
     return myBuilder;
-  }
-
-  @Nullable
-  public JComponent getAdditionalSettings() {
-    return null;
   }
 
   public void onChosen(final boolean enabled) {}

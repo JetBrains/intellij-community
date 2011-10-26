@@ -17,7 +17,6 @@ package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +37,12 @@ public abstract class ProjectStructureDetector {
   public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
                                                         @NotNull List<DetectedProjectRoot> result);
 
-  public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
-                                                  ProjectDescriptor projectDescriptor, WizardContext context,
-                                                  Icon stepIcon) {
+  public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder, ProjectDescriptor projectDescriptor, Icon stepIcon) {
     return Collections.emptyList();
   }
 
-  public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots, @NotNull ProjectFromSourcesBuilder builder, @NotNull WizardContext context) {
+  public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots,
+                                    @NotNull ProjectFromSourcesBuilder builder) {
   }
 
   public static class DirectoryProcessingResult {

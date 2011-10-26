@@ -92,7 +92,7 @@ public abstract class MvcCreateFromSourcesMode extends WizardMode {
     return myProjectBuilder;
   }
 
-  public JComponent getAdditionalSettings() {
+  public JComponent getAdditionalSettings(WizardContext wizardContext) {
     if (!myDisplayPath) {
       return null;
     }
