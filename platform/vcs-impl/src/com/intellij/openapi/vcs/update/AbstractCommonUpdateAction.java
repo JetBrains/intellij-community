@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
@@ -451,7 +452,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final int s = group.getFiles().size();
       if (s > 0) {
         text.append("\n");
-        text.append(s + " Files " + group.getUpdateName());
+        text.append(s).append(" ").append(StringUtil.pluralize("File", s)).append(" ").append(group.getUpdateName());
       }
 
       final List<FileGroup> list = group.getChildren();
