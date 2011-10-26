@@ -923,7 +923,7 @@ public class GitLogUI implements Disposable {
     final TableColumnModel columnModel = myJBTable.getColumnModel();
     final FontMetrics metrics = myJBTable.getFontMetrics(myJBTable.getFont());
     final int height = metrics.getHeight();
-    myJBTable.setRowHeight((int) (height * 1.1) + 1);
+    myJBTable.setRowHeight((int) (height * 1.3) + 1);
     myGraphGutter.setRowHeight(myJBTable.getRowHeight());
     myGraphGutter.setHeaderHeight(myJBTable.getTableHeader().getHeight());
     final int dateWidth = metrics.stringWidth("Yesterday 00:00:00  " + scrollPane.getVerticalScrollBar().getWidth()) + columnModel.getColumnMargin();

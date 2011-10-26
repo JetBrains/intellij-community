@@ -112,6 +112,7 @@ public class GraphGutter {
           myTableViewPort.dispatchEvent(e);
         }
       });
+      setBorder(BorderFactory.createMatteBorder(0,0,1,0, UIUtil.getBorderColor()));
     }
 
     @Override
@@ -267,7 +268,7 @@ public class GraphGutter {
       for (int selectedRow : selectedRows) {
         if (selectedRow >= idx && selectedRow <= lastIdx) {
           graphics.setColor(UIUtil.getTableSelectionBackground());
-          graphics.fillRect(0, upBound + (selectedRow - idx) * myRowHeight,width,myRowHeight);
+          graphics.fillRect(0, upBound + (selectedRow - idx) * myRowHeight + 1,width,myRowHeight - 1);
         }
       }
     }
