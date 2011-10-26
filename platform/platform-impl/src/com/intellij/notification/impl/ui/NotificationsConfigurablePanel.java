@@ -30,6 +30,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import java.util.List;
 public class NotificationsConfigurablePanel extends JPanel implements Disposable {
   private NotificationsTable myTable;
   private static final String REMOVE_KEY = "REMOVE";
+  private final JCheckBox myDisplayBalloons;
 
   public NotificationsConfigurablePanel() {
     setLayout(new BorderLayout());
@@ -51,6 +53,16 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     JScrollPane scrollPane = StripeTable.createScrollPane(myTable);
     scrollPane.setBorder(new LineBorder(UIUtil.getBorderColor()));
     add(scrollPane, BorderLayout.CENTER);
+    myDisplayBalloons = new JCheckBox("Display balloon notifications");
+    myDisplayBalloons.setMnemonic('b');
+    add(myDisplayBalloons, BorderLayout.NORTH);
+    myDisplayBalloons.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myTable.repaint();
+      }
+
+    });
 
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
     myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
@@ -76,7 +88,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       }
     }
 
-    return false;
+    return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS != myDisplayBalloons.isSelected();
   }
 
   public void apply() {
@@ -84,6 +96,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     for (SettingsWrapper settingsWrapper : list) {
       settingsWrapper.apply();
     }
+
+    NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS = myDisplayBalloons.isSelected();
   }
 
   public void reset() {
@@ -91,12 +105,14 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     for (SettingsWrapper settingsWrapper : list) {
       settingsWrapper.reset();
     }
+    
+    myDisplayBalloons.setSelected(NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS);
 
     myTable.invalidate();
     myTable.repaint();
   }
 
-  private static class NotificationsTable extends StripeTable {
+  private class NotificationsTable extends StripeTable {
     private static final int ID_COLUMN = 0;
     private static final int DISPLAY_TYPE_COLUMN = 1;
     private static final int LOG_COLUMN = 2;
@@ -112,16 +128,30 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       displayTypeColumn.setPreferredWidth(250);
       displayTypeColumn.setCellRenderer(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
         @Override
+        protected void customizeComponent(NotificationDisplayType value, JTable table, boolean isSelected) {
+          super.customizeComponent(value, table, isSelected);
+          if (!myDisplayBalloons.isSelected() && !isSelected) {
+            setBackground(UIUtil.getComboBoxDisabledBackground());
+            setForeground(UIUtil.getComboBoxDisabledForeground());
+          }
+        }
+
+        @Override
         protected String getTextFor(@NotNull NotificationDisplayType value) {
           return value.getTitle();
         }
       });
 
       displayTypeColumn.setCellEditor(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
+
         @Override
         public boolean isCellEditable(EventObject event) {
+          if (!myDisplayBalloons.isSelected()) {
+            return false;
+          }
+
           if (event instanceof MouseEvent) {
-              return ((MouseEvent)event).getClickCount() >= 1;
+            return ((MouseEvent)event).getClickCount() >= 1;
           }
 
           return false;
