@@ -5657,7 +5657,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
           }
-          int endOffset = endLine==lineCount ? documentLength : myDocument.getLineEndOffset(endLine);
+          int endOffset = endLine >= lineCount ? documentLength : myDocument.getLineEndOffset(endLine);
           for (
             FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(endOffset);
             region != null && endOffset < myDocument.getTextLength();
