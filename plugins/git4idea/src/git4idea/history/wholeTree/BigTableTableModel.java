@@ -203,6 +203,13 @@ public class BigTableTableModel extends AbstractTableModel {
     myStashTops.put(root, hash);
   }
 
+  public boolean isStashed(final CommitI commitI) {
+    final Pair<AbstractHash, AbstractHash> pair =
+      myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
+    return pair != null && (pair.getFirst() != null && pair.getFirst().equals(commitI.getHash()) ||
+                            pair.getSecond() != null && pair.getSecond().equals(commitI.getHash()));
+  }
+
   class WiresGroupIterator implements WireEventsIterator {
     private final int myFirstIdx;
     private List<Integer> myFirstUsed;
@@ -427,7 +434,8 @@ public class BigTableTableModel extends AbstractTableModel {
           }
         }
         if (STASH.equals(getCurrentGroup())) { // index on <branchname>: <short hash> <base commit description>
-          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(commitI.selectRepository(myRootsHolder.getRoots()));
+          final VirtualFile root = commitI.selectRepository(myRootsHolder.getRoots());
+          final Pair<AbstractHash, AbstractHash> stashTop = myStashTops.get(root);
           if (stashTop != null && (Comparing.equal(stashTop.getSecond(), commitI.getHash()))) {
             return STASH;
           }

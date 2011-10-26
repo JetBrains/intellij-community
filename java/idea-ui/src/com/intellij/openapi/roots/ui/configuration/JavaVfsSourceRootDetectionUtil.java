@@ -123,7 +123,7 @@ public class JavaVfsSourceRootDetectionUtil {
 
     CharSequence chars = LoadTextUtil.loadText(javaFile);
 
-    String packageName = JavaSourceRootDetectionUtil.getPackageStatement(chars);
+    String packageName = JavaSourceRootDetectionUtil.getPackageName(chars);
     if (packageName != null){
       VirtualFile root = javaFile.getParent();
       int index = packageName.length();

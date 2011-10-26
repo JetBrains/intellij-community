@@ -48,7 +48,7 @@ import java.util.*;
  * 
  * @author Kirill Likhodedov
  */
-class GitBranchPopup  {
+public class GitBranchPopup  {
 
   private static final Logger LOG = Logger.getInstance(GitBranchPopup.class);
   
@@ -126,22 +126,31 @@ class GitBranchPopup  {
     }
   }
 
-  private static class NewBranchAction extends DumbAwareAction {
+  public static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
     private final GitRepository myRepository;
+    private final String myReference;
+    private final Runnable myCallInAwtAfterExecution;
 
-    NewBranchAction(Project project, GitRepository repository) {
+    public NewBranchAction(Project project, GitRepository repository) {
+      this(project, repository, null, null);
+    }
+    
+    public NewBranchAction(Project project, GitRepository repository, final String reference, final Runnable callInAwtAfterExecution) {
       super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
       myProject = project;
       myRepository = repository;
+      myReference = reference;
+      myCallInAwtAfterExecution = callInAwtAfterExecution;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch", Messages.getQuestionIcon(),
-                                             "", GitNewBranchNameValidator.newInstance(myRepository));
+      final String name = Messages.showInputDialog(myProject, "Enter the name of new branch",
+                                                   myReference == null ? "Checkout New Branch" : "Checkout New Branch On " + myReference,
+                                                   Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepository));
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name, myReference, myCallInAwtAfterExecution);
       }
     }
 
@@ -172,7 +181,7 @@ class GitBranchPopup  {
       // on type check ref validity, on OK check ref existence.
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference, null);
       }
     }
 
@@ -227,7 +236,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName);
+        new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName, null);
       }
 
     }

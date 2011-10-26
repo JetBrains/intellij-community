@@ -54,7 +54,7 @@ public abstract class ResourceManager {
   public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
   public static final String[] VALUE_RESOURCE_TYPES =
     new String[]{"drawable", "dimen", "color", "string", "style", "array", "id", "bool", "integer", "integer-array"};
-  private static final String[] DRAWABLE_EXTENSIONS = new String[]{"png", "jpg", "gif"};
+  private static final String[] DRAWABLE_EXTENSIONS = new String[]{AndroidUtils.PNG_EXTENSION, "jpg", "gif"};
 
   protected final Module myModule;
 
@@ -129,7 +129,7 @@ public abstract class ResourceManager {
     String extension = FileUtil.getExtension(fileName);
     String s = FileUtil.getNameWithoutExtension(fileName);
     if (resourceType.equals("drawable") && ArrayUtil.find(DRAWABLE_EXTENSIONS, extension) >= 0) {
-      if (s.endsWith(".9") && extension.equals("png")) {
+      if (s.endsWith(".9") && extension.equals(AndroidUtils.PNG_EXTENSION)) {
         return s.substring(0, s.length() - 2);
       }
       return s;

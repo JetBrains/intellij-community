@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.core.CoreProjectScopeBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -66,5 +67,10 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     else {
       return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
     }
+  }
+
+  @Override
+  public GlobalSearchScope buildContentScope() {
+    return new CoreProjectScopeBuilder.ContentSearchScope(FileIndexFacade.getInstance(myProject));
   }
 }

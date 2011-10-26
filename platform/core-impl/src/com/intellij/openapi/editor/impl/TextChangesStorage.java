@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Allows to store and retrieve {@link TextChange} objects assuming that they are applied to the same text.
@@ -36,6 +38,7 @@ import java.util.List;
 public class TextChangesStorage {
   
   private final List<ChangeEntry> myChanges = new ArrayList<ChangeEntry>();
+  private final Lock myLock = new ReentrantLock();
 
   /**
    * @return    list of changes stored previously via {@link #store(TextChange)}. Note that the changes offsets relate to initial
@@ -49,6 +52,15 @@ public class TextChangesStorage {
       result.add(changeEntry.change);
     }
     return result;
+  }
+
+  /**
+   * @return    lock object associated with the current storage object. We use {@link Lock} in preference to 'synchronised' here
+   *            because it shows better performance
+   */
+  @NotNull
+  public Lock getLock() {
+    return myLock;
   }
 
   /**

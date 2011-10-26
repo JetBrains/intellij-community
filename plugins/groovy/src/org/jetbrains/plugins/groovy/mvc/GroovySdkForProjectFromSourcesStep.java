@@ -20,7 +20,6 @@ import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.StdModuleTypes;
 
 import java.util.ArrayList;
@@ -37,9 +36,8 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
 
   public GroovySdkForProjectFromSourcesStep(MvcProjectStructureDetector detector, ProjectFromSourcesBuilder builder,
                                             ProjectDescriptor projectDescriptor,
-                                            MvcFramework framework,
-                                            WizardContext wizardContext) {
-    super(framework, wizardContext);
+                                            MvcFramework framework) {
+    super(framework, builder.getContext());
     myDetector = detector;
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;

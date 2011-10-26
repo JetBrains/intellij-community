@@ -21,11 +21,13 @@ import com.intellij.ide.util.importProject.LibrariesDetectionStep;
 import com.intellij.ide.util.importProject.ModuleInsight;
 import com.intellij.ide.util.importProject.ModulesDetectionStep;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
-import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,11 +38,13 @@ import java.util.List;
  */
 public class JavaProjectStructureDetector extends JavaSourceRootDetector {
 
+  @NotNull
   @Override
   protected String getLanguageName() {
     return "Java";
   }
 
+  @NotNull
   @Override
   protected String getFileExtension() {
     return JavaFileType.DEFAULT_EXTENSION;
@@ -48,13 +52,23 @@ public class JavaProjectStructureDetector extends JavaSourceRootDetector {
 
   @Override
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
-                                                  ProjectDescriptor projectDescriptor, WizardContext context,
+                                                  ProjectDescriptor projectDescriptor,
                                                   Icon stepIcon) {
     final List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    final ModuleInsight moduleInsight = new ModuleInsight(new DelegatingProgressIndicator());
+    final ModuleInsight moduleInsight = new ModuleInsight(new DelegatingProgressIndicator(), builder.getExistingModuleNames(), builder.getExistingProjectLibraryNames());
     steps.add(new LibrariesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page1"));
     steps.add(new ModulesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page2"));
-    steps.add(ProjectWizardStepFactory.getInstance().createProjectJdkStep(context));
+    steps.add(ProjectWizardStepFactory.getInstance().createProjectJdkStep(builder.getContext()));
     return steps;
+  }
+
+  @NotNull
+  protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
+    return new NullableFunction<CharSequence, String>() {
+      @Override
+      public String fun(CharSequence charSequence) {
+        return JavaSourceRootDetectionUtil.getPackageName(charSequence);
+      }
+    };
   }
 }

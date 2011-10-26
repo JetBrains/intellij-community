@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
@@ -103,6 +106,19 @@ public class LibrariesContainerFactory {
         return model.getLibraryByName(s) == null;
       }
     });
+  }
+
+  @NotNull
+  public static LibrariesContainer createContainer(@NotNull WizardContext context, @NotNull ModulesProvider modulesProvider) {
+    final LibrariesContainer container;
+    if (modulesProvider instanceof ModulesConfigurator) {
+      ModulesConfigurator configurator = (ModulesConfigurator)modulesProvider;
+      container = createContainer(configurator.getContext());
+    }
+    else {
+      container = createContainer(context.getProject());
+    }
+    return container;
   }
 
 

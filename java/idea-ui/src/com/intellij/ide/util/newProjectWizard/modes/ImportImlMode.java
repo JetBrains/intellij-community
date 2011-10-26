@@ -85,7 +85,7 @@ public class ImportImlMode extends WizardMode {
     myModulePathFieldPanel = null; //todo
   }
 
-  public JComponent getAdditionalSettings() {
+  public JComponent getAdditionalSettings(WizardContext wizardContext) {
     JTextField tfModuleFilePath = new JTextField();
     final String productName = ApplicationNamesInfo.getInstance().getProductName();
     myModulePathFieldPanel = new TextFieldWithBrowseButton(tfModuleFilePath, new BrowseFilesListener(tfModuleFilePath, IdeBundle.message(

@@ -22,9 +22,8 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +84,10 @@ public class FrameworkDetectionUtil {
     return descriptions;
   }
 
-  public static void setupFrameworks(List<? extends DetectedFrameworkDescription> descriptions, final Project project) {
+  public static void setupFrameworks(List<? extends DetectedFrameworkDescription> descriptions,
+                                     final ModifiableModelsProvider modelsProvider, final ModulesProvider modulesProvider) {
     AccessToken token = WriteAction.start();
     try {
-      final PlatformModifiableModelsProvider provider = new PlatformModifiableModelsProvider();
-      final DefaultModulesProvider modulesProvider = new DefaultModulesProvider(project);
       List<DetectedFrameworkDescription> sortedDescriptions = new ArrayList<DetectedFrameworkDescription>();
       //todo[nik] perform real sorting
       for (DetectedFrameworkDescription description : descriptions) {
@@ -103,7 +101,7 @@ public class FrameworkDetectionUtil {
         }
       }
       for (DetectedFrameworkDescription description : sortedDescriptions) {
-        description.setupFramework(provider, modulesProvider);
+        description.setupFramework(modelsProvider, modulesProvider);
       }
     }
     finally {

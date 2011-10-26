@@ -28,6 +28,7 @@ public class ProjectScope {
   private static final Key<GlobalSearchScope> ALL_SCOPE_KEY = new Key<GlobalSearchScope>("ALL_SCOPE_KEY");
   private static final Key<GlobalSearchScope> PROJECT_SCOPE_KEY = new Key<GlobalSearchScope>("PROJECT_SCOPE_KEY");
   private static final Key<GlobalSearchScope> LIBRARIES_SCOPE_KEY = new Key<GlobalSearchScope>("LIBRARIES_SCOPE_KEY");
+  private static final Key<GlobalSearchScope> CONTENT_SCOPE_KEY = new Key<GlobalSearchScope>("CONTENT_SCOPE_KEY");
 
   private ProjectScope() {
   }
@@ -48,5 +49,11 @@ public class ProjectScope {
   public static GlobalSearchScope getLibrariesScope(@NotNull Project project) {
     GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
     return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(LIBRARIES_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
+  }
+
+  @NotNull
+  public static GlobalSearchScope getContentScope(@NotNull Project project) {
+    GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
+    return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(CONTENT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildContentScope());
   }
 }

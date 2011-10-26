@@ -60,7 +60,9 @@ public abstract class WizardMode implements Disposable {
   public abstract ProjectBuilder getModuleBuilder();
 
   @Nullable
-  public abstract JComponent getAdditionalSettings();
+  public JComponent getAdditionalSettings(WizardContext wizardContext) {
+    return null;
+  }
 
   public abstract void onChosen(final boolean enabled);
 

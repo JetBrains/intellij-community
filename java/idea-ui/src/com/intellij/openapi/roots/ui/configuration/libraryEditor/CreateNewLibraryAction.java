@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,9 +68,22 @@ public class CreateNewLibraryAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    Library library =
+      createLibrary(myType, myLibrariesConfigurable.getTree(), myProject, myLibrariesConfigurable.getModelProvider().getModifiableModel());
+    if (library == null) return;
+
+    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    final DefaultMutableTreeNode
+      libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
+    rootConfigurable.selectNodeInTree(libraryNode);
+  }
+
+  @Nullable
+  public static Library createLibrary(@Nullable final LibraryType type, @NotNull final Component parentComponent,
+                                       @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
     LibraryRootsComponentDescriptor componentDescriptor = null;
-    if (myType != null) {
-      componentDescriptor = myType.createLibraryRootsComponentDescriptor();
+    if (type != null) {
+      componentDescriptor = type.createLibraryRootsComponentDescriptor();
     }
     if (componentDescriptor == null) {
       componentDescriptor = new DefaultLibraryRootsComponentDescriptor();
@@ -79,25 +93,22 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (!rootDetectors.isEmpty()) {
       final FileChooserDescriptor chooserDescriptor = componentDescriptor.createAttachFilesChooserDescriptor();
       chooserDescriptor.setTitle("Select Library Files");
-      final VirtualFile[] rootCandidates = FileChooser.chooseFiles(myLibrariesConfigurable.getTree(), chooserDescriptor,
-                                                                   myProject.getBaseDir());
+      final VirtualFile[] rootCandidates = FileChooser.chooseFiles(parentComponent, chooserDescriptor, project.getBaseDir());
       if (rootCandidates.length == 0) {
-        return;
+        return null;
       }
 
       roots = RootDetectionUtil
-          .detectRoots(Arrays.asList(rootCandidates), myLibrariesConfigurable.getTree(), myProject, rootDetectors,
-                       true);
-      if (roots.isEmpty()) return;
+        .detectRoots(Arrays.asList(rootCandidates), parentComponent, project, rootDetectors,
+                     true);
+      if (roots.isEmpty()) return null;
     }
     else {
       roots = Collections.emptyList();
     }
 
-    final LibrariesModifiableModel modifiableModel = myLibrariesConfigurable.getModelProvider().getModifiableModel();
-    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), myType);
+    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), type);
 
-    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     final NewLibraryEditor editor = new NewLibraryEditor(((LibraryEx)library).getType(), ((LibraryEx)library).getProperties());
     editor.addRoots(roots);
     final Library.ModifiableModel model = library.getModifiableModel();
@@ -109,10 +120,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     finally {
       token.finish();
     }
-
-    final DefaultMutableTreeNode
-      libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
-    rootConfigurable.selectNodeInTree(libraryNode);
+    return library;
   }
 
   public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {

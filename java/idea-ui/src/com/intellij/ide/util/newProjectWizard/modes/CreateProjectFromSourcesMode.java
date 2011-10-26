@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.projectWizard.importSources;
+package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.IconLoader;
 
-import java.util.Collection;
-import java.util.Set;
+import javax.swing.*;
 
 /**
  * @author nik
  */
-public interface ProjectFromSourcesBuilder {
-  @NotNull
-  Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector);
+public class CreateProjectFromSourcesMode extends CreateFromSourcesMode {
+  private static final Icon STEP_ICON = IconLoader.getIcon("/newprojectwizard.png");
 
-  @NotNull
-  ProjectDescriptor getProjectDescriptor(@NotNull ProjectStructureDetector detector);
+  protected Icon getIcon() {
+    return STEP_ICON;
+  }
 
-  String getBaseProjectPath();
-
-  @NotNull
-  Set<String> getExistingModuleNames();
-
-  @NotNull
-  Set<String> getExistingProjectLibraryNames();
-
-  @NotNull
-  WizardContext getContext();
+  public boolean isAvailable(WizardContext context) {
+    return context.isCreatingNewProject();
+  }
 }

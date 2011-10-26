@@ -24,11 +24,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.GeneratingCompiler;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -45,6 +44,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +63,7 @@ public class AndroidCompileUtil {
   private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
+  @NonNls private static final String PNG_CACHE_DIR_NAME = "png-cache";
 
   private AndroidCompileUtil() {
   }
@@ -377,20 +378,81 @@ public class AndroidCompileUtil {
   }
 
   @NotNull
-  public static String[] collectResourceDirs(AndroidFacet facet) {
-    List<String> result = new ArrayList<String>();
-    Module module = facet.getModule();
-    VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+  public static String[] collectResourceDirs(AndroidFacet facet, boolean collectPngCacheDirs) {
+    final Project project = facet.getModule().getProject();
+    final IntermediateOutputCompiler pngFilesCachingCompiler =
+      collectPngCacheDirs ? Extensions.findExtension(Compiler.EP_NAME, project, AndroidPngFilesCachingCompiler.class) : null;
+    
+    if (collectPngCacheDirs) {
+      assert pngFilesCachingCompiler != null;
+    }
+    
+    final List<String> result = new ArrayList<String>();
+    final Module module = facet.getModule();
+
+    if (collectPngCacheDirs) {
+      final String pngCacheDirOsPath = findPngCacheDirectory(module, false);
+      if (pngCacheDirOsPath != null) {
+        LOG.info("PNG cache not found for module " + module.getName());
+        result.add(pngCacheDirOsPath);
+      }
+    }
+
+    final VirtualFile resourcesDir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
     if (resourcesDir != null) {
       result.add(resourcesDir.getPath());
     }
+    
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
-      VirtualFile depResourceDir = AndroidAptCompiler.getResourceDirForApkCompiler(depFacet.getModule(), depFacet);
+      final Module depModule = depFacet.getModule();
+      
+      if (collectPngCacheDirs) {
+        final String depPngCacheDirPath = findPngCacheDirectory(depModule, false);
+        if (depPngCacheDirPath != null) {
+          LOG.info("PNG cache not found for module " + depModule.getName());
+          result.add(depPngCacheDirPath);
+        }
+      }
+
+      final VirtualFile depResourceDir = AndroidAptCompiler.getResourceDirForApkCompiler(depModule, depFacet);
       if (depResourceDir != null) {
         result.add(depResourceDir.getPath());
       }
     }
     return ArrayUtil.toStringArray(result);
+  }
+
+  @Nullable
+  public static String findPngCacheDirectory(@NotNull Module module, boolean createIfNotFound) {
+    final Project project = module.getProject();
+    
+    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+    if (extension == null) {
+      return null;
+    }
+
+    final VirtualFile projectOutputDirectory = extension.getCompilerOutput();
+    if (projectOutputDirectory == null) {
+      return null;
+    }
+
+    final String pngCacheDirPath = projectOutputDirectory.getPath() + '/' + PNG_CACHE_DIR_NAME + '/' + module.getName();
+    final String pngCacheDirOsPath = FileUtil.toSystemDependentName(pngCacheDirPath);
+    
+    final File pngCacheDir = new File(pngCacheDirOsPath);
+    if (pngCacheDir.exists()) {
+      return pngCacheDir.isDirectory() ? pngCacheDirOsPath : null;
+    }
+    
+    if (!createIfNotFound) {
+      return null;
+    }
+    
+    if (!pngCacheDir.mkdirs()) {
+      return null;
+    }
+    
+    return pngCacheDirOsPath;
   }
 
   public static boolean isFullBuild(@NotNull CompileContext context) {

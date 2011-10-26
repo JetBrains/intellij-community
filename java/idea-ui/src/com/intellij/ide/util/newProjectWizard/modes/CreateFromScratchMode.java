@@ -79,11 +79,6 @@ public class CreateFromScratchMode extends WizardMode {
     return myBuildersMap.get(getSelectedType());
   }
 
-  @Nullable
-  public JComponent getAdditionalSettings() {
-    return null;
-  }
-
   public void onChosen(final boolean enabled) {
     
   }

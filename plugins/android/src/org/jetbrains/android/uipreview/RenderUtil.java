@@ -247,7 +247,7 @@ class RenderUtil {
 
     final List<String> errors = scanningContext.getErrors();
     if (errors != null && errors.size() > 0) {
-      throw new RenderingException(merge(errors));
+      LOG.debug(new RenderingException(merge(errors)));
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.*;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author irengrig
@@ -57,10 +59,16 @@ public class GitLogDetailsPanel {
   private final HtmlHighlighter myHtmlHighlighter;
   private JEditorPane myJEditorPane;
   private VirtualFile myRoot;
+  private GitCommit myCommit;
   private final Convertor<VirtualFile, SymbolicRefs> myRefsProvider;
+  private final Processor<AbstractHash> myMarkProcessor;
 
-  public GitLogDetailsPanel(final Project myProject, final DetailsCache detailsCache, final Convertor<VirtualFile, SymbolicRefs> refsProvider) {
+  public GitLogDetailsPanel(final Project myProject,
+                            final DetailsCache detailsCache,
+                            final Convertor<VirtualFile, SymbolicRefs> refsProvider,
+                            Processor<AbstractHash> markProcessor) {
     myRefsProvider = refsProvider;
+    myMarkProcessor = markProcessor;
     myPanel = new JPanel(new CardLayout());
     myPanel.add(UIVcsUtil.errorPanel("Nothing selected", false), NOTHING_SELECTED);
     myPanel.add(UIVcsUtil.errorPanel("Loading...", false), LOADING);
@@ -151,7 +159,8 @@ public class GitLogDetailsPanel {
 
   public void setData(VirtualFile root, @NotNull final GitCommit commit) {
     myRoot = root;
-    redrawBranchLabels(commit);
+    myCommit = commit;
+    redrawBranchLabels();
 
     myPresentationData.setCommit(root, commit);
     ((CardLayout) myPanel.getLayout()).show(myPanel, DATA);
@@ -167,21 +176,24 @@ public class GitLogDetailsPanel {
     }
   }
 
-  private void redrawBranchLabels(GitCommit commit) {
+  void redrawBranchLabels() {
     final Font tableFont = myJEditorPane.getFont();
     final Font font = tableFont.deriveFont((float)(tableFont.getSize() - 1));
-    final String currentBranch = commit.getCurrentBranch();
+    final String currentBranch = myCommit.getCurrentBranch();
     myMarksPanel.removeAll();
-    for (String s : commit.getLocalBranches()) {
+    if (myMarkProcessor.process(myCommit.getShortHash())) {
+      myMarksPanel.add(new JLabel(GitLogUI.ourMarkIcon));
+    }
+    for (String s : myCommit.getLocalBranches()) {
       myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.local, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,
                                        s.equals(currentBranch))));
     }
     final String remoteName = myRefsProvider.convert(myRoot).getTrackedRemoteName();
-    for (String s : commit.getRemoteBranches()) {
+    for (String s : myCommit.getRemoteBranches()) {
       myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.remote, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,
                                        s.equals(remoteName))));
     }
-    for (String s : commit.getTags()) {
+    for (String s : myCommit.getTags()) {
       myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.tag, font, s, myMarksPanel, CaptionIcon.Form.ROUNDED, false, false)));
     }
   }

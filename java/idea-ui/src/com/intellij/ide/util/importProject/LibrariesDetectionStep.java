@@ -16,10 +16,8 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
-import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
-import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
-import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NonNls;
 
@@ -80,19 +78,14 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
 
   private int calcStateHashCode() {
     int hash = myBuilder.getBaseProjectPath().hashCode();
-    for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
+    for (DetectedProjectRoot root : getJavaSourceRoots()) {
       hash = 31 * hash + root.getDirectory().hashCode();
     }
     return hash;
   }
 
   protected List<LibraryDescriptor> calculate() {
-    final List<JavaModuleSourceRoot> sourceRoots = new ArrayList<JavaModuleSourceRoot>();
-    for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
-      if (root instanceof JavaModuleSourceRoot) {
-        sourceRoots.add((JavaModuleSourceRoot)root);
-      }
-    }
+    final List<JavaModuleSourceRoot> sourceRoots = getJavaSourceRoots();
 
     final HashSet<String> ignored = new HashSet<String>();
     final StringTokenizer tokenizer = new StringTokenizer(FileTypeManager.getInstance().getIgnoredFilesList(), ";", false);
@@ -104,6 +97,20 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     myInsight.scanLibraries();
     
     return myInsight.getSuggestedLibraries();
+  }
+
+  private List<JavaModuleSourceRoot> getJavaSourceRoots() {
+    final List<JavaModuleSourceRoot> sourceRoots = new ArrayList<JavaModuleSourceRoot>();
+    for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
+      if (detector instanceof JavaSourceRootDetector) {
+        for (DetectedProjectRoot root : myBuilder.getProjectRoots(detector)) {
+          if (root instanceof JavaModuleSourceRoot) {
+            sourceRoots.add((JavaModuleSourceRoot)root);
+          }
+        }
+      }
+    }
+    return sourceRoots;
   }
 
   protected void onFinished(List<LibraryDescriptor> libraries, final boolean canceled) {

@@ -1808,7 +1808,10 @@ public class AbstractTreeUi {
 
     Object[] bg = myLoadedInBackground.keySet().toArray(new Object[myLoadedInBackground.size()]);
     for (Object each : bg) {
-      resetIncompleteNode(getNodeForElement(each, false));
+      final DefaultMutableTreeNode node = getNodeForElement(each, false);
+      if (node != null) {
+        resetIncompleteNode(node);
+      }
     }
 
     myUpdaterState = null;

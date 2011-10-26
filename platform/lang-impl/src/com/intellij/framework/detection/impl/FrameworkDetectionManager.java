@@ -36,6 +36,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -253,7 +255,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
     if (dialog.isOK()) {
       notification.expire();
       List<DetectedFrameworkDescription> selected = dialog.getSelectedFrameworks();
-      FrameworkDetectionUtil.setupFrameworks(selected, myProject);
+      FrameworkDetectionUtil.setupFrameworks(selected, new PlatformModifiableModelsProvider(), new DefaultModulesProvider(myProject));
       for (DetectedFrameworkDescription description : selected) {
         final int detectorId = FrameworkDetectorRegistry.getInstance().getDetectorId(description.getDetector());
         myDetectedFrameworksData.putExistentFrameworkFiles(detectorId, description.getRelatedFiles());

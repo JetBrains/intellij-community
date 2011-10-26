@@ -50,10 +50,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableComputable;
@@ -246,11 +243,18 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       myRoot.removeAllChildren();
     }
 
+    addRootNodesFromExtensions(myRoot, myProject);
     //final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     //final LibrariesModifiableModel projectLibrariesProvider = new LibrariesModifiableModel(table);
     //myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, projectLibrariesProvider);
     //
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
+  }
+
+  private void addRootNodesFromExtensions(final MyNode root, final Project project) {
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.addRootNodes(root, project, TREE_UPDATER);
+    }
   }
 
   private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode) {
@@ -300,13 +304,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       myFacetEditorFacade.addFacetsNodes(module, moduleNode);
       addNodesFromExtensions(module, moduleNode);
     }
+    TreeUtil.sort(myRoot, getNodeComparator());
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
     return true;
   }
 
   @Override
   protected Comparator<MyNode> getNodeComparator() {
-    return NODE_COMPARATOR;
+    List<Comparator<MyNode>> comparators = ContainerUtil
+      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), new Function<ModuleStructureExtension, Comparator<MyNode>>() {
+        public Comparator<MyNode> fun(final ModuleStructureExtension moduleStructureExtension) {
+          return moduleStructureExtension.getNodeComparator();
+        }
+      });
+    comparators.add(NODE_COMPARATOR);
+    return new MergingComparator<MyNode>(comparators);
   }
 
   public void init(final StructureConfigurableContext context) {
@@ -729,7 +741,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           }
         };
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER));
+          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
         }
 
         return result.toArray(new AnAction[result.size()]);
@@ -884,4 +896,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       addModule();
     }
   }
+
+  private static class MergingComparator<T> implements Comparator<T> {
+    private final List<Comparator<T>> myDelegates;
+
+    public MergingComparator(final List<Comparator<T>> delegates) {
+      myDelegates = delegates;
+    }
+
+    public int compare(final T o1, final T o2) {
+      for (Comparator<T> delegate : myDelegates) {
+        int value = delegate.compare(o1, o2);
+        if (value != 0) return value;
+      }
+      return 0;
+    }
+  }
+
 }
