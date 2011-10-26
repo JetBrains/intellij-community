@@ -25,9 +25,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,33 +45,56 @@ public final class AndroidApt {
   private AndroidApt() {
   }
 
-  @NotNull
   public static Map<CompilerMessageCategory, List<String>> compile(@NotNull IAndroidTarget target,
-                                                                   @NotNull String manifestPath,
-                                                                   @NotNull String outDir,
-                                                                   @NotNull String[] resourceDirs,
-                                                                   @Nullable String assertsDir,
-                                                                   @Nullable String customPackage) throws IOException {
-    List<String> args = new ArrayList<String>();
+                                                                   @NotNull String manifestFileOsPath,
+                                                                   @NotNull String outDirOsPath,
+                                                                   @NotNull String[] resourceDirsOsPaths,
+                                                                   @NotNull String packageFolderOsPath,
+                                                                   @NotNull String libraryPackagesString,
+                                                                   boolean isLibrary) throws IOException {
+    /* We actually need to delete the manifest.java as it may become empty and
+    in this case aapt doesn't generate an empty one, but instead doesn't
+    touch it */
 
-    //noinspection deprecation
-    Collections.addAll(args, target.getPath(IAndroidTarget.AAPT), "package", "-m", "-J", outDir, "-M", manifestPath);
+    final File manifestJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.MANIFEST_JAVA_FILE_NAME);
+    if (manifestJavaFile.exists()) {
+      if (!manifestJavaFile.delete()) {
+        LOG.error("Unable to delete " + manifestJavaFile.getPath());
+      }
+    }
 
-    if (resourceDirs.length > 1) {
+    final List<String> args = new ArrayList<String>();
+
+    args.add(target.getPath(IAndroidTarget.AAPT));
+    args.add("package");
+    args.add("-m");
+
+    if (isLibrary) {
+      args.add("--non-constant-id");
+    }
+
+    if (resourceDirsOsPaths.length > 1) {
       args.add("--auto-add-overlay");
     }
-    for (String resourceDir : resourceDirs) {
+
+    if (libraryPackagesString.length() > 0) {
+      args.add("--extra-packages");
+      args.add(libraryPackagesString);
+    }
+
+    args.add("-J");
+    args.add(outDirOsPath);
+    args.add("-M");
+    args.add(manifestFileOsPath);
+
+    for (String libResFolderOsPath : resourceDirsOsPaths) {
       args.add("-S");
-      args.add(resourceDir);
+      args.add(libResFolderOsPath);
     }
-    if (customPackage != null) {
-      args.add("--custom-package");
-      args.add(customPackage);
-    }
-    if (assertsDir != null) {
-      Collections.addAll(args, "-A", assertsDir);
-    }
-    Collections.addAll(args, "-I", target.getPath(IAndroidTarget.ANDROID_JAR));
+
+    args.add("-I");
+    args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
+
     LOG.info(AndroidUtils.command2string(args));
     return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
   }

@@ -89,7 +89,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       for (GenerationItem item : generationItems) {
         File generatedFile = ((AptGenerationItem)item).myGeneratedFile;
         if (generatedFile != null) {
+
           CompilerUtil.refreshIOFile(generatedFile);
+          CompilerUtil.refreshIOFile(generatedFile.getParentFile());
+
           VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
           if (generatedVFile != null) {
             generatedVFiles.add(generatedVFile);
@@ -116,9 +119,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
         try {
           Map<CompilerMessageCategory, List<String>> messages = AndroidApt
-            .compile(aptItem.myAndroidTarget, aptItem.myManifestFile.getPath(), aptItem.mySourceRootPath, aptItem.myResourcesPaths,
-                     aptItem.myAssetsPath, aptItem.myCustomPackage ? aptItem.myPackage : null
-            );
+            .compile(aptItem.myAndroidTarget, aptItem.myManifestFile.getPath(), aptItem.mySourceRootPath, aptItem.myResourcesPaths, 
+                     aptItem.getPackageFolderPath(), aptItem.myLibraryPackagesString, aptItem.myIsLibrary);
+          
           AndroidCompileUtil.addMessages(context, messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(aptItem);
@@ -173,31 +176,31 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final Module myModule;
     final VirtualFile myManifestFile;
     final String[] myResourcesPaths;
-    final String myAssetsPath;
     final String mySourceRootPath;
     final IAndroidTarget myAndroidTarget;
     final File myGeneratedFile;
     final String myPackage;
-    final boolean myCustomPackage;
-
+    final String myLibraryPackagesString;
+    final boolean myIsLibrary;
+    
     private final boolean myFileExists;
 
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
                               @NotNull String[] resourcesPaths,
-                              @Nullable String assetsPath,
                               @NotNull String sourceRootPath,
                               @NotNull IAndroidTarget target,
                               @NotNull String aPackage,
-                              boolean customPackage) {
+                              @NotNull String libraryPackagesString,
+                              boolean isLibrary) {
       myModule = module;
       myManifestFile = manifestFile;
       myResourcesPaths = resourcesPaths;
-      myAssetsPath = assetsPath;
       mySourceRootPath = sourceRootPath;
       myAndroidTarget = target;
       myPackage = aPackage;
-      myCustomPackage = customPackage;
+      myLibraryPackagesString = libraryPackagesString;
+      myIsLibrary = isLibrary;
       myGeneratedFile =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
       myFileExists = myGeneratedFile.exists();
@@ -221,6 +224,11 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
     public boolean isTestSource() {
       return false;
+    }
+
+    @NotNull
+    public String getPackageFolderPath() {
+      return FileUtil.toSystemDependentName(mySourceRootPath + '/' + myPackage.replace('.', '/'));
     }
   }
 
@@ -262,8 +270,6 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             continue;
           }
 
-          VirtualFile assetsDir = !configuration.LIBRARY_PROJECT ? AndroidRootUtil.getAssetsDir(module) : null;
-
           VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
           if (manifestFile == null) {
             myContext.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
@@ -293,23 +299,33 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             continue;
           }
           AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
-          String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
 
-          final Set<String> packageSet = new HashSet<String>();
+          final String libPackagesString = getLibPackagesString(module, packageName);
 
-          items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
-                                        packageName, false));
-          packageSet.add(packageName);
-
-          for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
-            if (packageSet.add(libPackage)) {
-              items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
-                                              libPackage, true));
-            }
-          }
+          items.add(new AptGenerationItem(module, manifestFile, resPaths, sourceRootPath, target,
+                                          packageName, libPackagesString, facet.getConfiguration().LIBRARY_PROJECT));
         }
       }
       return items.toArray(new GenerationItem[items.size()]);
+    }
+
+    @NotNull
+    private static String getLibPackagesString(@NotNull Module module, @NotNull String packageName) {
+      final Set<String> packageSet = new HashSet<String>();
+      packageSet.add(packageName);
+
+      final StringBuilder libPackages = new StringBuilder();
+
+      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+        if (packageSet.add(libPackage)) {
+          if (libPackages.length() > 0) {
+            libPackages.append(':');
+          }
+          libPackages.append(libPackage);
+        }
+      }
+
+      return libPackages.toString();
     }
   }
 
