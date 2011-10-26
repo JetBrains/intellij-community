@@ -34,7 +34,7 @@ public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
   protected boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 &&
            (elements[0] instanceof PsiMethod && ((PsiMethod)elements[0]).isConstructor() || elements[0] instanceof PsiClass)
-           && elements[0].getLanguage() == JavaLanguage.INSTANCE;
+           && elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   protected RefactoringActionHandler getHandler(DataContext dataContext) {

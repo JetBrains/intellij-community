@@ -30,7 +30,7 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
     if (elements.length == 1) {
-      return elements[0] instanceof PsiClass && elements[0].getLanguage()==JavaLanguage.INSTANCE || isAcceptedField(elements[0]);
+      return elements[0] instanceof PsiClass && elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE) || isAcceptedField(elements[0]);
     }
     else if (elements.length > 1) {
       for (int idx = 0; idx < elements.length; idx++) {
@@ -49,7 +49,7 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
 
   private static boolean isAcceptedField(PsiElement element) {
     return element instanceof PsiField &&
-           element.getLanguage() == JavaLanguage.INSTANCE &&
+           element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
            ((PsiField)element).getContainingClass() != null;
   }
 }

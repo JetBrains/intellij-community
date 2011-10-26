@@ -31,7 +31,7 @@ public class InheritanceToDelegationAction extends BaseRefactoringAction {
     return elements.length == 1 &&
            elements[0] instanceof PsiClass &&
            !((PsiClass)elements[0]).isInterface() &&
-           elements[0].getLanguage() == JavaLanguage.INSTANCE;
+           elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
