@@ -54,6 +54,11 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     return new ProjectScopeImpl(myProject, myFileIndexFacade);
   }
 
+  @Override
+  public GlobalSearchScope buildContentScope() {
+    return new ContentSearchScope(myFileIndexFacade);
+  }
+
   private class CoreLibrariesScope extends GlobalSearchScope {
     @Override
     public boolean contains(VirtualFile file) {
@@ -73,6 +78,35 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     @Override
     public boolean isSearchInLibraries() {
       return true;
+    }
+  }
+
+  public static class ContentSearchScope extends GlobalSearchScope {
+
+    private final FileIndexFacade myFileIndexFacade;
+
+    public ContentSearchScope(FileIndexFacade fileIndexFacade) {
+      myFileIndexFacade = fileIndexFacade;
+    }
+
+    @Override
+    public boolean contains(VirtualFile file) {
+      return myFileIndexFacade.isInContent(file);
+    }
+
+    @Override
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return 0;
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return false;
     }
   }
 }
