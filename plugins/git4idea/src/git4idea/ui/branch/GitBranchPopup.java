@@ -135,7 +135,7 @@ class GitBranchPopup  {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout new branch", Messages.getQuestionIcon(),
+      final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch", Messages.getQuestionIcon(),
                                              "", GitNewBranchNameValidator.newInstance(myRepository));
       if (name != null) {
         new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
@@ -302,7 +302,7 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout remote branch", Messages.getQuestionIcon(),
+        final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepository));
         if (name != null) {
           new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewTrackingBranch(name, myRemoteBranchName);
