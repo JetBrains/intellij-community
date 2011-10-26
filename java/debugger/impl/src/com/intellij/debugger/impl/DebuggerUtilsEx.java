@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.sun.jdi.event.Event;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
@@ -373,6 +374,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
 
+  @Nullable
+  public static CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
+    final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
+      public CodeFragmentFactory compute() {
+        final List<CodeFragmentFactory> codeFragmentFactories = getCodeFragmentFactories(psiContext);
+        // the list always contains at least DefaultCodeFragmentFactory
+        return codeFragmentFactories.get(0);
+      }
+    });
+    return factory != null? new CodeFragmentFactoryContextWrapper(factory) : null;
+  }
+
   private static class SigReader {
     final String buffer;
     int pos = 0;
@@ -564,4 +577,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         return DebuggerBundle.message("status.thread.undefined");
     }
   }
+
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,12 @@ import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -39,8 +36,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author lex
@@ -74,14 +69,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     if (myCodeFragmentFactory != null) {
       return myCodeFragmentFactory;
     }
-    final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
-      public CodeFragmentFactory compute() {
-        final List<CodeFragmentFactory> codeFragmentFactories = DebuggerUtilsEx.getCodeFragmentFactories(psiContext);
-        // the list always contains at least DefaultCodeFragmentFactory
-        return codeFragmentFactories.get(0);
-      }
-    });
-    return factory != null? new CodeFragmentFactoryContextWrapper(factory) : null;
+    return DebuggerUtilsEx.getEffectiveCodeFragmentFactory(psiContext);
   }
 
   protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);

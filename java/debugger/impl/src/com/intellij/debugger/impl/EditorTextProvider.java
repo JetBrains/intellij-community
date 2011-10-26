@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,4 +31,7 @@ public interface EditorTextProvider {
 
   @Nullable
   TextWithImports getEditorText(PsiElement elementAtCaret);
+
+  @Nullable
+  Pair<PsiElement, TextRange> findExpression(PsiElement elementAtCaret, boolean allowMethodCalls);
 }
