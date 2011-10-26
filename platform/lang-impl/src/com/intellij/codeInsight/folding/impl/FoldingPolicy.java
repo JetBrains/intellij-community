@@ -35,7 +35,6 @@ public class FoldingPolicy {
   }
 
   @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getSignature(PsiElement element) {
     for(ElementSignatureProvider provider: Extensions.getExtensions(ElementSignatureProvider.EP_NAME)) {
       String signature = provider.getSignature(element);
@@ -43,12 +42,28 @@ public class FoldingPolicy {
     }
     return null;
   }
-
+  
   @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static PsiElement restoreBySignature(@NotNull PsiFile file, String signature) {
+  public static PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature) {
+    return restoreBySignature(file, signature, null);
+  }
+
+  /**
+   * Tries to restore target PSI element from the given file by the given signature.
+   * 
+   * @param file                   target PSI file
+   * @param signature              target element's signature
+   * @param processingInfoStorage  buffer used for tracing 'restore element' processing (if necessary)
+   * @return                       PSI element from the given PSI file that corresponds to the given signature (if found)
+   *                               <code>null</code> otherwise
+   */
+  @Nullable
+  public static PsiElement restoreBySignature(@NotNull PsiFile file,
+                                              @NotNull String signature,
+                                              @Nullable StringBuilder processingInfoStorage)
+  {
     for(ElementSignatureProvider provider: Extensions.getExtensions(ElementSignatureProvider.EP_NAME)) {
-      PsiElement result = provider.restoreBySignature(file, signature);
+      PsiElement result = provider.restoreBySignature(file, signature, processingInfoStorage);
       if (result != null) return result;
     }
     return null;

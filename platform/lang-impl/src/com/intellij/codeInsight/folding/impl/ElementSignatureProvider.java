@@ -37,13 +37,19 @@ public abstract class ElementSignatureProvider {
   public abstract String getSignature(PsiElement element);
 
   @Nullable
-  public PsiElement restoreBySignature(@NotNull PsiFile file, String signature) {
+  public PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature, @Nullable StringBuilder processingInfoStorage) {
     int semicolonIndex = signature.indexOf(';');
     PsiElement parent;
 
     if (semicolonIndex >= 0) {
       String parentSignature = signature.substring(semicolonIndex + 1);
-      parent = restoreBySignature(file, parentSignature);
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Restoring parent by signature '%s'...%n", parentSignature));
+      } 
+      parent = restoreBySignature(file, parentSignature, processingInfoStorage);
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Restored parent by signature '%s': %s%n", parentSignature, parent));
+      }
       if (parent == null) return null;
       signature = signature.substring(0, semicolonIndex);
     }
@@ -53,6 +59,11 @@ public abstract class ElementSignatureProvider {
 
     StringTokenizer tokenizer = new StringTokenizer(signature, "#");
     String type = tokenizer.nextToken();
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format(
+        "Restoring target element by signature '%s'. Parent: %s, same as the given parent: %b%n", signature, parent, parent == file
+      ));
+    }
     return restoreBySignatureTokens(file, parent, type, tokenizer);
   }
 
@@ -67,7 +78,7 @@ public abstract class ElementSignatureProvider {
 
     for (PsiElement child : children) {
       if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
-        T namedChild = (T)child;
+        T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
         if (Comparing.equal(name, childName)) {
@@ -88,7 +99,7 @@ public abstract class ElementSignatureProvider {
 
     for (PsiElement child : children) {
       if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
-        T namedChild = (T)child;
+        T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
         if (Comparing.equal(name, childName)) {

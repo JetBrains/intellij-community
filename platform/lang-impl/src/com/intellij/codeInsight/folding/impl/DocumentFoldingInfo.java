@@ -180,7 +180,11 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
 
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature);
         if (!psiElement.equals(restoredElement)){
-          LOG.error("element:" + psiElement +"; restoredElement:"+ restoredElement+"; signature: '" + signature + "'; file:" + psiElement.getContainingFile());
+          StringBuilder trace = new StringBuilder();
+          PsiElement restoredAgain = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature, trace);
+          LOG.error("element: " + psiElement +"; restoredElement: "+ restoredElement+"; signature: '" + signature
+                    + "'; file: " + psiElement.getContainingFile() + "; restored again: " + restoredAgain + 
+                    "; restore produces same results: " + (restoredAgain == restoredElement) + "; trace:\n" + trace);
         }
 
         Element e = new Element(ELEMENT_TAG);
@@ -193,7 +197,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         if (date == null) {
           date = getTimeStamp();
         }
-        if ("".equals(date)) continue;
+        if (date.isEmpty()) continue;
 
         e.setAttribute(DATE_ATT, date);
         e.setAttribute(EXPANDED_ATT, state.toString());
@@ -236,7 +240,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         if (date == null) {
           date = getTimeStamp();
         }
-        if ("".equals(date)) continue;
+        if (date.isEmpty()) continue;
 
         if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
         StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
