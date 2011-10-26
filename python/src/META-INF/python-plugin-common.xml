@@ -678,6 +678,8 @@
     <lang.fileViewProviderFactory language="Jinja2"
                                   implementationClass="com.jetbrains.jinja2.Jinja2FileViewProviderFactory"/>
     <annotator language="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2Annotator"/>
+    <useScopeEnlarger implementation="com.jetbrains.jinja2.findUsages.Jinja2UseScopeEnlarger"/>
+    <usageTypeProvider implementation="com.jetbrains.jinja2.findUsages.Jinja2UsageTypeProvider"/>
   </extensions>
 
   <extensionPoints>
