@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
@@ -29,11 +27,11 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public class TitlePanel extends JPanel {
-  private static final Color CNT_COLOR = new SameColor(184);
+  private static final Color CNT_COLOR = new SameColor(194);
   private static final Color BND_COLOR = CNT_COLOR;
 
-  public static final Color CNT_ACTIVE_COLOR = new Color(105, 128, 180);
-  public static final Color BND_ACTIVE_COLOR = CNT_ACTIVE_COLOR.brighter();
+  public static final Color CNT_ACTIVE_COLOR = new SameColor(148);
+  public static final Color BND_ACTIVE_COLOR = new SameColor(188);
 
   /* Gray-ish colors
   public static final Color CNT_ACTIVE_COLOR = new SameColor(120);
@@ -41,14 +39,8 @@ public class TitlePanel extends JPanel {
   */
 
   private boolean myActive = true;
-  private JComponent mySideButtons;
 
-  private final Icon mySeparatorActive = IconLoader.getIcon("/general/separator.png");
-  private final Icon mySeparatorInactive = IconLoader.getIcon("/general/inactiveSeparator.png");
-
-  public final static Color ACTIVE_SIDE_BUTTON_BG = new Color(179, 197, 231);
-  public final static Color INACTIVE_SIDE_BUTTON_BG = new Color(200, 200, 200);
-  public static final int STRUT = 0;
+  private static final int STRUT = 22;
 
   TitlePanel() {
     super(new BorderLayout());
@@ -85,41 +77,24 @@ public class TitlePanel extends JPanel {
     Color bndColor = active ? BND_ACTIVE_COLOR : BND_COLOR;
     Color cntColor = active ? CNT_ACTIVE_COLOR : CNT_COLOR;
 
-    g2d.setPaint(new GradientPaint(0, STRUT, bndColor, 0, getHeight(), cntColor));
-    if (mySideButtons.isVisible()) {
-      final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtons.getParent(), mySideButtons.getBounds(), this);
-      g2d.fillRect(0, STRUT, getWidth() - sideRec.width, getHeight());
+    g2d.setPaint(new GradientPaint(0, 0, bndColor, 0, getHeight(), cntColor));
 
-      g2d.setColor(UIUtil.getHeaderInactiveColor());
-      final Color buttonInnerColor = active ? ACTIVE_SIDE_BUTTON_BG : INACTIVE_SIDE_BUTTON_BG;
-      g2d.setPaint(new GradientPaint(sideRec.x, sideRec.y, Color.white, sideRec.x, (int)sideRec.getMaxY() - 1, buttonInnerColor));
-      g2d.fillRect(sideRec.x + 2, sideRec.y, sideRec.width - 2, sideRec.height);
+    g2d.fillRect(0, 0, getWidth(), getHeight());
 
-
-      Icon separator = active ? mySeparatorActive : mySeparatorInactive;
-      separator.paintIcon(this, g, sideRec.x, sideRec.y);
-      separator.paintIcon(this, g, sideRec.x, sideRec.y + 1);
-
-    } else {
-      g2d.fillRect(0, STRUT, getWidth(), getHeight());
-    }
+    g.setColor(Color.gray);
+    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
   }
 
-  public void addButtons(final JComponent buttons, JComponent sideButtons) {
-    mySideButtons = sideButtons;
-    mySideButtons.setBorder(new EmptyBorder(0, 6, 3, 6));
-
+  public void addButtons(final JComponent buttons) {
     final JPanel allButtons = new JPanel(new BorderLayout());
     allButtons.setOpaque(false);
 
     UIUtil.removeQuaquaVisualMarginsIn(buttons);
-    UIUtil.removeQuaquaVisualMarginsIn(sideButtons);
 
     allButtons.add(buttons, BorderLayout.CENTER);
-    allButtons.add(mySideButtons, BorderLayout.EAST);
 
     final NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
-    wrapper.add(Box.createVerticalStrut(STRUT), BorderLayout.NORTH);
+    wrapper.add(Box.createVerticalStrut(STRUT), BorderLayout.WEST);
     wrapper.add(allButtons, BorderLayout.CENTER);
 
     add(wrapper, BorderLayout.EAST);

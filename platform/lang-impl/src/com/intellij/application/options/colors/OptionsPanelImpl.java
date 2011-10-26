@@ -78,8 +78,8 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsList);
     scrollPane.setPreferredSize(new Dimension(230, 60));
     JPanel north = new JPanel(new BorderLayout());
-    north.add(scrollPane, BorderLayout.WEST);
-    north.add(optionsPanel, BorderLayout.CENTER);
+    north.add(scrollPane, BorderLayout.CENTER);
+    north.add(optionsPanel, BorderLayout.EAST);
     myOptionsPanel = optionsPanel;
     add(north, BorderLayout.NORTH);
   }

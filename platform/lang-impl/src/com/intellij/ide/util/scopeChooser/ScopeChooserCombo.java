@@ -49,6 +49,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,19 +200,24 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (suggestSearchInLibs) {
       result.add(GlobalSearchScope.allScope(project));
     }
-    result.add(GlobalSearchScopes.projectProductionScope(project));
-    result.add(GlobalSearchScopes.projectTestScope(project));
+
+    if (!PlatformUtils.isCidr()) { // TODO: fix these scopes in AppCode
+      result.add(GlobalSearchScopes.projectProductionScope(project));
+      result.add(GlobalSearchScopes.projectTestScope(project));
+    }
 
     if (dataContext != null) {
       PsiElement dataContextElement = getDataContextElement(dataContext);
 
       if (dataContextElement != null) {
-        Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
-        if (module == null) {
-          module = LangDataKeys.MODULE.getData(dataContext);
-        }
-        if (module != null) {
-          result.add(module.getModuleScope());
+        if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.
+          Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
+          if (module == null) {
+            module = LangDataKeys.MODULE.getData(dataContext);
+          }
+          if (module != null) {
+            result.add(module.getModuleScope());
+          }
         }
         if (dataContextElement.getContainingFile() != null) {
           result.add(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file")));

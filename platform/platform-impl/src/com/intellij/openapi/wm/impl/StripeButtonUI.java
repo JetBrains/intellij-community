@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.util.ui.SameColor;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -109,33 +110,14 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     boolean toBorder = true; // button.isSelected() || !button.getWindowInfo().isSplit();
 
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      final Graphics2D g2d = (Graphics2D) g;
-      final GradientPaint paint;
-      if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.BOTTOM == anchor) {
-        paint = new GradientPaint(0, 0, background.darker(), 0, button.getHeight(), background.brighter());
-      }
-      else {
-        paint = new GradientPaint(0, 0, background.darker(), button.getWidth(), 0, background.brighter());
-      }
-      g2d.setPaint(paint);
 
       if (toFill) {
-        g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+        g2.setColor(new SameColor(210));
+        g2.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
       }
 
       if (toBorder) {
-        g.setColor(Color.black);
-        g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      }
-    }
-    else {
-      if (toFill) {
-        g.setColor(background);
-        g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      }
-
-      if (toBorder) {
-        g.setColor(Color.GRAY);
+        g.setColor(Color.gray);
         g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
       }
     }

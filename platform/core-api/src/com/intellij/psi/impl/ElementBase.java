@@ -197,8 +197,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     }
 
+    @Nullable
     public PsiElement getElement() {
       SmartPsiElementPointer pointer = (SmartPsiElementPointer)getEqualityObjects()[0];
+      if (pointer.getProject().isDisposed()) return null;
+
       return pointer.getElement();
     }
 

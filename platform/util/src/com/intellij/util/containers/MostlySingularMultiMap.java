@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class MostlySingularMultiMap<K, V> implements Serializable {
+  private static final long serialVersionUID = 2784448345881807109L;
+
   private final Map<K, Object> myMap = new THashMap<K, Object>();
 
   public void add(K key, V value) {

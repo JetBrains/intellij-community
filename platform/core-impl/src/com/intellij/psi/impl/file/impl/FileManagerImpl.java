@@ -309,7 +309,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid());
+    LOG.assertTrue(vFile.isValid(), "Invalid file");
     if (myDisposed) {
       LOG.error("Project is already disposed: " + myManager.getProject());
     }

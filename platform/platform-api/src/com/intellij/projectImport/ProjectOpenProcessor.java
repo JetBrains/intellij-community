@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME = new ExtensionPointName<ProjectOpenProcessor>("com.intellij.projectOpenProcessor");
@@ -79,5 +80,9 @@ public abstract class ProjectOpenProcessor {
    */
   public boolean isStrongProjectInfoHolder() {
     return false;
+  }
+
+  public void refreshProjectFiles(File basedir) {
+
   }
 }

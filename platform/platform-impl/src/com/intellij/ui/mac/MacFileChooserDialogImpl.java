@@ -41,7 +41,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
   private static final int OK = 1;
 
   private static JDialog myFakeDialog;
-  private static List<VirtualFile> myResultFiles;
+  private static List<String> myResultPaths;
 
   private static FileChooserDescriptor myChooserDescriptor;
   private static boolean myFileChooserActive = false;
@@ -99,24 +99,38 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     }
   };
 
+  private static VirtualFile[] pathsToFiles(List<String> paths) {
+    if (paths == null) return VirtualFile.EMPTY_ARRAY;
+
+    ArrayList<VirtualFile> answer = new ArrayList<VirtualFile>();
+    for (String path : paths) {
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (file != null && file.isValid()) {
+        answer.add(file);
+      }
+    }
+
+    return VfsUtil.toVirtualFileArray(answer);
+  }
+
   private static final Callback OPEN_PANEL_DID_END = new Callback() {
     public void callback(ID self, String selector, ID openPanelDidEnd, ID returnCode, ID contextInfo) {
       processResult(returnCode, openPanelDidEnd);
 
       try {
-        if (myResultFiles != null) {
-          final VirtualFile[] chosenFiles = VfsUtil.toVirtualFileArray(myResultFiles);
+        if (myResultPaths != null) {
+          final ArrayList<String> chosenPaths = new ArrayList<String>(myResultPaths);
           final MacFileChooserCallback callback = mySheetCallback;
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              callback.onChosen(chosenFiles);
+              callback.onChosen(pathsToFiles(chosenPaths));
             }
           });
         }
       }
       finally {
         myFileChooserActive = false;
-        myResultFiles = null;
+        myResultPaths = null;
         mySheetCallback = null;
       }
 
@@ -208,7 +222,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       }
     });
 
-    final List<VirtualFile> resultFiles = new ArrayList<VirtualFile>();
+    final List<String> resultFiles = new ArrayList<String>();
     if (result != null && OK == result.intValue()) {
       ID fileNamesArray = invoke(panel, "filenames");
       ID enumerator = invoke(fileNamesArray, "objectEnumerator");
@@ -219,12 +233,11 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
         String s = Foundation.toStringViaUTF8(filename);
         if (s != null) {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(s);
-          if (virtualFile != null && virtualFile.isValid()) resultFiles.add(virtualFile);
+          resultFiles.add(s);
         }
       }
 
-      myResultFiles = resultFiles;
+      myResultPaths = resultFiles;
     }
   }
 
@@ -341,16 +354,11 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     myFakeDialog.setVisible(true);
 
     try {
-      if (myResultFiles == null) {
-        return new VirtualFile[0];
-      }
-      else {
-        return VfsUtil.toVirtualFileArray(myResultFiles);
-      }
+      return pathsToFiles(myResultPaths);
     }
     finally {
       myFileChooserActive = false;
-      myResultFiles = null;
+      myResultPaths = null;
     }
   }
 

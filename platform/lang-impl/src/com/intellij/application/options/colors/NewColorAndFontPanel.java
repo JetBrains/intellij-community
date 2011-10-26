@@ -39,7 +39,7 @@ public class NewColorAndFontPanel extends JPanel {
                               final OptionsPanel optionsPanel,
                               final PreviewPanel previewPanel,
                               final String category, final Collection<String> optionList, final ColorSettingsPage page) {
-    super(new BorderLayout());
+    super(new BorderLayout(0, 10));
     mySchemesPanel = schemesPanel;
     myOptionsPanel = optionsPanel;
     myPreviewPanel = previewPanel;
