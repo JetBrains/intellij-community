@@ -161,7 +161,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         myDownloadsLabel.setBackground(bg);
 
         
-        if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED) {
+        if (isDownloaded(pluginNode)) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
           myStatusLabel.setText("[Downloaded]");
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
