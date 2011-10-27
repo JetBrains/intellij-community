@@ -124,6 +124,9 @@ public class EditorActionUtil {
           if (c != ' ') break;
         }
       }
+      if (inTabs) {
+        tabsEnd = lineEnd;
+      } 
     }
     int oldLength = editor.offsetToLogicalPosition(spacesEnd).column;
     tabsEnd = editor.offsetToLogicalPosition(tabsEnd).column;
