@@ -59,9 +59,10 @@
 
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
-      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
+      <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction"/>
       <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
-      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="IntroduceVariable"/>
+      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
     </group>
 
     <group id="RefactoringMenu4">
@@ -82,10 +83,6 @@
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
-
-    <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
-    </action>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
       <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>

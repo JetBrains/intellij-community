@@ -63,6 +63,10 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
                               e.getDataContext(), getAidMethod(),
                               true, myActionPlace);
 
+    showPopup(e, popup);
+  }
+
+  protected void showPopup(AnActionEvent e, ListPopup popup) {
     popup.showCenteredInCurrentWindow(e.getData(PlatformDataKeys.PROJECT));
   }
 

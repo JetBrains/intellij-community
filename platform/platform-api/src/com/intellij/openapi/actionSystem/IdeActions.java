@@ -252,4 +252,5 @@ public interface IdeActions {
 
   String ACTION_UNDO = "$Undo";
   String ACTION_REDO = "$Redo";
+  String GROUP_REFACTOR = "RefactoringMenu";
 }
