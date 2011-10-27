@@ -37,7 +37,6 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.compiler.AndroidDexCompilerConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -52,18 +51,19 @@ import java.util.regex.Pattern;
 public class AndroidDxWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidDx");
 
-  @NonNls private static final String DEX_MAIN = "com.android.dx.command.dexer.Main";
-
   private static final Pattern WARNING_PATTERN = Pattern.compile(".*warning.*");
   private static final Pattern ERROR_PATTERN = Pattern.compile(".*error.*");
   private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
 
+  private AndroidDxWrapper() {
+  }
+
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public Map<CompilerMessageCategory, List<String>> execute(@NotNull Module module,
-                                                            @NotNull IAndroidTarget target,
-                                                            @NotNull String outputDir,
-                                                            @NotNull String[] compileTargets,
-                                                            @NotNull String[] excluded) {
+  public static Map<CompilerMessageCategory, List<String>> execute(@NotNull Module module,
+                                                                   @NotNull IAndroidTarget target,
+                                                                   @NotNull String outputDir,
+                                                                   @NotNull String[] compileTargets,
+                                                                   @NotNull String[] excluded) {
     String outFile = outputDir + File.separatorChar + "classes.dex";
 
     final Map<CompilerMessageCategory, List<String>> messages = new HashMap<CompilerMessageCategory, List<String>>(2);
@@ -71,7 +71,9 @@ public class AndroidDxWrapper {
     messages.put(CompilerMessageCategory.INFORMATION, new ArrayList<String>());
     messages.put(CompilerMessageCategory.WARNING, new ArrayList<String>());
 
+    @SuppressWarnings("deprecation")
     String dxJarPath = target.getPath(IAndroidTarget.DX_JAR);
+
     File dxJar = new File(dxJarPath);
     if (!dxJar.isFile()) {
       messages.get(CompilerMessageCategory.ERROR).add(AndroidBundle.message("android.file.not.exist.error", dxJarPath));
@@ -86,11 +88,6 @@ public class AndroidDxWrapper {
 
     parameters.setJdk(sdk);
     parameters.setMainClass(AndroidDxRunner.class.getName());
-    //ParametersList programParamList = parameters.getProgramParametersList();
-    ////params.add("--verbose");
-    //programParamList.add("--no-strict");
-    //programParamList.add("--output=" + outFile);
-    //programParamList.addAll(compileTargets);
 
     ParametersList programParamList = parameters.getProgramParametersList();
     programParamList.add(dxJarPath);
@@ -114,9 +111,11 @@ public class AndroidDxWrapper {
     classPath.add(PathUtil.getJarPathForClass(FileUtil.class));
 
     // delete file to check if it will exist after dex compilation
-    new File(outFile).delete();
+    if (!new File(outFile).delete()) {
+      LOG.info("Cannot delete file " + outFile);
+    }
 
-    Process process = null;
+    Process process;
     try {
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters, true);
       LOG.info(commandLine.getCommandLineString());
@@ -125,6 +124,7 @@ public class AndroidDxWrapper {
     catch (ExecutionException e) {
       messages.get(CompilerMessageCategory.ERROR).add("ExecutionException: " + e.getMessage());
       LOG.info(e);
+      return messages;
     }
 
     final OSProcessHandler handler = new OSProcessHandler(process, "");
