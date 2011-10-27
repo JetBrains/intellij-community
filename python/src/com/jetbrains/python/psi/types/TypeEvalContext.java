@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ public class TypeEvalContext {
   private String myTraceIndent = "";
   private final PsiFile myOrigin;
 
-  private final Map<PyExpression, PyType> myEvaluated = new HashMap<PyExpression, PyType>();
+  private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, PsiFile origin) {
     myAllowDataFlow = allowDataFlow;
@@ -111,15 +111,15 @@ public class TypeEvalContext {
   }
 
   @Nullable
-  public PyType getType(@NotNull PyExpression expr) {
+  public PyType getType(@NotNull PyTypedElement element) {
     synchronized (myEvaluated) {
-      if (myEvaluated.containsKey(expr)) {
-        return myEvaluated.get(expr);
+      if (myEvaluated.containsKey(element)) {
+        return myEvaluated.get(element);
       }
     }
-    PyType result = expr.getType(this);
+    PyType result = element.getType(this);
     synchronized (myEvaluated) {
-      myEvaluated.put(expr, result);
+      myEvaluated.put(element, result);
     }
     return result;
   }

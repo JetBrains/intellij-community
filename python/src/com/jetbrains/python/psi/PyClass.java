@@ -17,9 +17,8 @@ import java.util.List;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends
-  PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>, ScopeOwner, PyDecoratable
-{
+public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
+                                 ScopeOwner, PyDecoratable, PyTypedElement {
   ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
     @Override
     public PyClass[] create(int count) {
