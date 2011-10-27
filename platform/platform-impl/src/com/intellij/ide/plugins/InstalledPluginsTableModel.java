@@ -96,10 +96,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return 1;
   }
 
-  public void addData(List<IdeaPluginDescriptor> list) {
-    modifyData(list);
-  }
-
   private void reset(final List<IdeaPluginDescriptor> list) {
     for (IdeaPluginDescriptor ideaPluginDescriptor : list) {
       if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl) {
@@ -180,7 +176,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
-  public void modifyData(List<IdeaPluginDescriptor> list) {
+  public void updatePluginsList(List<IdeaPluginDescriptor> list) {
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.

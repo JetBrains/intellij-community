@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.ui.ScrollPaneFactory;
@@ -40,21 +41,25 @@ import java.util.LinkedHashSet;
  */
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   private PluginManagerMain installed;
-  private JButton myHttpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
 
   public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings) {
     super(uiSettings);
     this.installed = installed;
     init();
-  }
+    final JButton manageRepositoriesBtn = new JButton("Manage repositories...");
+    manageRepositoriesBtn.setMnemonic('m');
+    manageRepositoriesBtn.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
+          loadAvailablePlugins();
+        }
+      }
+    });
+    myActionsPanel.add(manageRepositoriesBtn);
 
-  @Override
-  protected JScrollPane createTable() {
-    pluginsModel = new AvailablePluginsTableModel();
-    pluginTable = new PluginTable(pluginsModel);
-    JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(pluginTable);
-    myActionsPanel.add(myHttpProxySettingsButton, BorderLayout.NORTH);
-    myHttpProxySettingsButton.addActionListener(new ActionListener() {
+    final JButton httpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
+    httpProxySettingsButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog();
         settingsDialog.pack();
@@ -64,6 +69,15 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         }
       }
     });
+    myActionsPanel.add(httpProxySettingsButton, BorderLayout.NORTH);
+  }
+
+  @Override
+  protected JScrollPane createTable() {
+    pluginsModel = new AvailablePluginsTableModel();
+    pluginTable = new PluginTable(pluginsModel);
+    JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(pluginTable);
+    
 
     return availableScrollPane;
   }

@@ -120,9 +120,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     return list;
   }
 
-  public abstract void addData(List<IdeaPluginDescriptor> list);
-
-  public abstract void modifyData(List<IdeaPluginDescriptor> list);
+  public abstract void updatePluginsList(List<IdeaPluginDescriptor> list);
 
   public void filter(List<IdeaPluginDescriptor> filtered){
     fireTableDataChanged();

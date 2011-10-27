@@ -100,7 +100,6 @@ public abstract class PluginManagerMain implements Disposable {
   protected PluginTableModel pluginsModel;
   protected PluginTable pluginTable;
 
-  private ArrayList<IdeaPluginDescriptor> pluginsList;
   private ActionToolbar myActionToolbar;
 
   protected final MyPluginsFilter myFilter = new MyPluginsFilter();
@@ -141,7 +140,6 @@ public abstract class PluginManagerMain implements Disposable {
     UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
       public void run() {
         requireShutdown = false;
-        pluginsList = null;
         TableUtil.ensureSelectionExists(getPluginTable());
       }
     });
@@ -182,15 +180,9 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void modifyPluginsList(ArrayList<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
-    if (pluginsList == null) {
-      pluginsModel.addData(list);
-    }
-    else {
-      pluginsModel.modifyData(list);
-    }
+    pluginsModel.updatePluginsList(list);
     pluginsModel.sort();
     pluginsModel.filter(myFilter.getFilter().toLowerCase());
-    pluginsList = list;
     if (selected != null) {
       select(selected);
     }
@@ -216,12 +208,18 @@ public abstract class PluginManagerMain implements Disposable {
       public Object construct() {
         try {
           list = RepositoryHelper.process(null);
+        }
+        catch (Exception e) {
+          error = e;
+        }
+        try {
           for (String host : UpdateSettings.getInstance().myPluginHosts) {
             final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
             UpdateChecker.checkPluginsHost(host, downloaded, false);
             for (PluginDownloader downloader : downloaded) {
               final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
               if (pluginNode != null) {
+                if (list == null) list = new ArrayList<IdeaPluginDescriptor>();
                 list.add(pluginNode);
               }
             }

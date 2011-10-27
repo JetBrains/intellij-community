@@ -22,13 +22,13 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,7 +38,6 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class AvailablePluginsTableModel extends PluginTableModel {
-  private final Map<PluginId, String> myUpdateVersions = new HashMap<PluginId, String>();
 
   public static final String ALL = "All";
   private String myCategory = ALL;
@@ -57,22 +56,6 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
     view = new ArrayList<IdeaPluginDescriptor>();
-  }
-
-  public void addData(List<IdeaPluginDescriptor> list) {
-    view.clear();
-    myAvailableCategories.clear();
-    //  For each downloadable plugin we need to know whether its counterpart
-    //  is already installed, and if yes compare the difference in versions:
-    //  availability of newer versions will be indicated separately.
-    for (IdeaPluginDescriptor descr : list) {
-      updateStatus(descr);
-      view.add(descr);
-      myAvailableCategories.add(descr.getCategory());
-      myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
-    }
-
-    fireTableDataChanged();
   }
 
   @Override
@@ -132,28 +115,17 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     }
   }
 
-  public void modifyData(List<IdeaPluginDescriptor> list) {
+  public void updatePluginsList(List<IdeaPluginDescriptor> list) {
+    view.clear();
+    myAvailableCategories.clear();
+
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.
     for (IdeaPluginDescriptor descr : list) {
       updateStatus(descr);
-      PluginId descrId = descr.getPluginId();
-      if (myUpdateVersions.containsKey(descrId)) {
-        String currVersion = myUpdateVersions.get(descrId);
-        int state = StringUtil.compareVersionNumbers(descr.getVersion(), currVersion);
-        if (state > 0) {
-          for (int i = 0; i < view.size(); i++) {
-            IdeaPluginDescriptor obsolete = view.get(i);
-            if (obsolete.getPluginId() == descrId) view.remove(obsolete);
-          }
-          view.add(descr);
-        }
-      }
-      else {
-        view.add(descr);
-        myUpdateVersions.put(descr.getPluginId(), descr.getVersion());
-      }
+      view.add(descr);
+      myAvailableCategories.add(descr.getCategory());
     }
 
     fireTableDataChanged();

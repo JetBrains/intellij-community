@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
@@ -100,16 +99,6 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     });
     myActionsPanel.add(installPluginFromFileSystem);
-
-    final JButton manageRepositoriesBtn = new JButton("Manage repositories...");
-    manageRepositoriesBtn.setMnemonic('m');
-    manageRepositoriesBtn.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable());
-      }
-    });
-    myActionsPanel.add(manageRepositoriesBtn);
   }
 
   @Override
