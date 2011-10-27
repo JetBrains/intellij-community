@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -30,6 +31,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
@@ -56,6 +58,7 @@ import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,7 +73,6 @@ public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
   private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
   private static final String SHOW_INHERITED_MEMBERS_PROPERTY = CreateTestDialog.class.getName() + ".includeInheritedMembers";
-  private static final String DEFAULT_LANGUAGE = CreateTestDialog.class.getName() + ".defaultLanguage";
 
   private final Project myProject;
   private final PsiClass myTargetClass;
@@ -171,20 +173,18 @@ public class CreateTestDialog extends DialogWrapper {
 
     TestGenerator[] generators = TestGenerator.EP_NAME.getExtensions();
     myLanguageCombo = new ComboBox(generators, -1);
-    final String defaultLanguage = getDefaultLanguage();
-    if (defaultLanguage != null) {
-      for (TestGenerator generator : generators) {
-        if (defaultLanguage.equals(generator.toString())) {
-          myLanguageCombo.setSelectedItem(generator);
-          break;
-        }
+    final Language curLang = myTargetClass.getLanguage();
+    for (TestGenerator generator : generators) {
+      if (curLang == generator.getLanguage()) {
+        myLanguageCombo.setSelectedItem(generator);
+        break;
       }
     }
 
     myTargetClassNameField = new EditorTextField(targetClass.getName() + "Test");
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(DocumentEvent e) {
         getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getClassName()));
       }
     });
@@ -247,14 +247,6 @@ public class CreateTestDialog extends DialogWrapper {
 
   private void saveDefaultLibraryName() {
     getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedFramework.getName());
-  }
-
-  private String getDefaultLanguage() {
-    return getProperties().getValue(DEFAULT_LANGUAGE);
-  }
-
-  private void saveDefaultLanguage() {
-    getProperties().setValue(DEFAULT_LANGUAGE, myLanguageCombo.getSelectedItem().toString());
   }
 
   private void restoreShowInheritedMembersStatus() {
@@ -416,6 +408,7 @@ public class CreateTestDialog extends DialogWrapper {
     return myTargetClassNameField.getText();
   }
 
+  @Nullable
   public String getSuperClassName() {
     String result = mySuperClassField.getText().trim();
     if (result.length() == 0) return null;
@@ -461,10 +454,10 @@ public class CreateTestDialog extends DialogWrapper {
 
     saveDefaultLibraryName();
     saveShowInheritedMembersStatus();
-    saveDefaultLanguage();
     super.doOKAction();
   }
 
+  @Nullable
   private PsiDirectory selectTargetDirectory() throws IncorrectOperationException {
     final String packageName = getPackageName();
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
@@ -493,6 +486,7 @@ public class CreateTestDialog extends DialogWrapper {
     }.execute().getResultObject();
   }
 
+  @Nullable
   private PsiDirectory chooseDefaultDirectory(String packageName) {
     for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
       for (SourceFolder f : e.getSourceFolders()) {

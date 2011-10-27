@@ -17,6 +17,8 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class JavaTestGenerator implements TestGenerator{
+public class JavaTestGenerator implements TestGenerator {
   public JavaTestGenerator() {
   }
 
@@ -91,11 +93,11 @@ public class JavaTestGenerator implements TestGenerator{
   }
 
   private static void addTestMethods(Editor editor,
-                              PsiClass targetClass,
-                              TestFramework descriptor,
-                              Collection<MemberInfo> methods,
-                              boolean generateBefore,
-                              boolean generateAfter) throws IncorrectOperationException {
+                                     PsiClass targetClass,
+                                     TestFramework descriptor,
+                                     Collection<MemberInfo> methods,
+                                     boolean generateBefore,
+                                     boolean generateAfter) throws IncorrectOperationException {
     if (generateBefore) {
       generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null);
     }
@@ -117,7 +119,11 @@ public class JavaTestGenerator implements TestGenerator{
     });
   }
 
-  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind, TestFramework descriptor, PsiClass targetClass, Editor editor, String name) {
+  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind,
+                                     TestFramework descriptor,
+                                     PsiClass targetClass,
+                                     Editor editor,
+                                     @Nullable String name) {
     PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass.getProject()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);
@@ -126,5 +132,10 @@ public class JavaTestGenerator implements TestGenerator{
   @Override
   public String toString() {
     return CodeInsightBundle.message("intention.create.test.dialog.java");
+  }
+
+  @Override
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 }

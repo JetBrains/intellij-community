@@ -59,6 +59,10 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__";
 
+  public abstract GrCodeReferenceElement createCodeReferenceElementFromClass(PsiClass aClass);
+
+  public abstract GrCodeReferenceElement createCodeReferenceElementFromText(String text);
+
   public static GroovyPsiElementFactory getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiElementFactory.class);
   }

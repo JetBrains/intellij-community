@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -75,47 +76,49 @@ public abstract class CreateClassActionBase implements IntentionAction {
   public static PsiClass createClassByType(final PsiDirectory directory,
                                            final String name,
                                            final PsiManager manager,
-                                           final PsiElement contextElement, final String templateName) {
-    return ApplicationManager.getApplication().runWriteAction(
-        new Computable<PsiClass>() {
-          public PsiClass compute() {
-            try {
-              PsiClass targetClass = null;
-              try {
-                PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName);
-                for (PsiElement element : file.getChildren()) {
-                  if (element instanceof PsiClass) {
-                    targetClass = ((PsiClass) element);
-                    break;
-                  }
-                }
-                if (targetClass == null) {
-                  throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
-                }
-              }
-              catch (final IncorrectOperationException e) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    Messages.showErrorDialog(
-                        GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
-                        GroovyBundle.message("cannot.create.class.error.title"));
-                  }
-                });
-                return null;
-              }
-              PsiModifierList modifiers = targetClass.getModifierList();
-              if (!JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
-                  modifiers != null) {
-                modifiers.setModifierProperty(PsiKeyword.PUBLIC, true);
-              }
-              return targetClass;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return null;
-            }
+                                           @Nullable final PsiElement contextElement, 
+                                           final String templateName) {
+    AccessToken accessToken = WriteAction.start();
+
+    try {
+      PsiClass targetClass = null;
+      try {
+        PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName);
+        for (PsiElement element : file.getChildren()) {
+          if (element instanceof PsiClass) {
+            targetClass = ((PsiClass)element);
+            break;
+          }
+        }
+        if (targetClass == null) {
+          throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
+        }
+      }
+      catch (final IncorrectOperationException e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(
+              GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
+              GroovyBundle.message("cannot.create.class.error.title"));
           }
         });
+        return null;
+      }
+      PsiModifierList modifiers = targetClass.getModifierList();
+      if (contextElement != null &&
+          !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
+          modifiers != null) {
+        modifiers.setModifierProperty(PsiKeyword.PUBLIC, true);
+      }
+      return targetClass;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Nullable

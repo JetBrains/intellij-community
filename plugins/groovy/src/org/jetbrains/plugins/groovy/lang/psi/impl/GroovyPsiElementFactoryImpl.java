@@ -465,7 +465,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createAnnotationFromText(annoText, null);
   }
 
-  public PsiFile createGroovyFile(String idText) {
+  public GroovyFile createGroovyFile(String idText) {
     return createGroovyFile(idText, false, null);
   }
 
@@ -551,6 +551,28 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return ((GrMethodCallExpression)file.getChildren()[0]);
+  }
+
+  @Override
+  public GrCodeReferenceElement createCodeReferenceElementFromClass(PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass) {
+      throw new IncorrectOperationException("cannot create code reference element for anonymous class " + aClass.getText());
+    }
+
+    return createCodeReferenceElementFromText(aClass.getQualifiedName());
+
+  }
+
+  @Override
+  public GrCodeReferenceElement createCodeReferenceElementFromText(String text) {
+    GroovyFile file = createGroovyFile("class X extends " + text + "{}");
+    PsiClass[] classes = file.getClasses();
+    if (classes.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
+    GrExtendsClause extendsClause = ((GrTypeDefinition)classes[0]).getExtendsClause();
+    if (extendsClause == null) throw new IncorrectOperationException("cannot create code reference element for class" + text);
+    GrCodeReferenceElement[] refElements = extendsClause.getReferenceElements();
+    if (refElements.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
+    return refElements[0];
   }
 
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {

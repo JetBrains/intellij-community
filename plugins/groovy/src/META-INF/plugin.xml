@@ -121,6 +121,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework"/>
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.annotator.ConfigureGroovyLibraryNotificationProvider"/>

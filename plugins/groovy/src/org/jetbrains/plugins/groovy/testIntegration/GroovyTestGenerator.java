@@ -16,25 +16,38 @@
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testIntegration.TestFramework;
+import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.testIntegration.createTest.CreateTestDialog;
-import com.intellij.testIntegration.createTest.JavaTestGenerator;
 import com.intellij.testIntegration.createTest.TestGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportPass;
+import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
+import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+
+import java.util.Collection;
 
 /**
  * @author Maxim.Medvedev
@@ -44,35 +57,42 @@ public class GroovyTestGenerator implements TestGenerator {
   @Nullable
   @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
-    final PsiClass test = (PsiClass)new JavaTestGenerator().generateTest(project, d);
-    if (test == null) return null;
-
     AccessToken accessToken = WriteAction.start();
-
     try {
-      final PsiFile file = test.getContainingFile();
-      final String name = file.getName();
-      final String newName = FileUtil.getNameWithoutExtension(name) + "." + GroovyFileType.DEFAULT_EXTENSION;
+      final PsiClass test = (PsiClass)PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
+        new Computable<PsiElement>() {
+          public PsiElement compute() {
+            try {
+              IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      try {
-        final PsiElement element = file.setName(newName);
+              GrTypeDefinition targetClass = (GrTypeDefinition)CreateClassActionBase.createClassByType(
+                d.getTargetDirectory(),
+                d.getClassName(),
+                PsiManager.getInstance(project),
+                null,
+                NewGroovyClassAction.GROOVY_CLASS);
 
-        final GroovyFile newFile = (GroovyFile)codeStyleManager.reformat(element);
-        GroovyUnusedImportPass.optimizeImports(project, newFile);
-        return newFile.getClasses()[0];
-      }
-      catch (IncorrectOperationException e) {
-        file.delete();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(project,
-                                     CodeInsightBundle.message("intention.error.cannot.create.class.message", d.getClassName()),
-                                     CodeInsightBundle.message("intention.error.cannot.create.class.title"));
+              addSuperClass(targetClass, project, d.getSuperClassName());
+
+              Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+              addTestMethods(editor,
+                             targetClass,
+                             d.getSelectedTestFrameworkDescriptor(),
+                             d.getSelectedMethods(),
+                             d.shouldGeneratedBefore(),
+                             d.shouldGeneratedAfter());
+              return targetClass;
+            }
+            catch (IncorrectOperationException e1) {
+              showErrorLater(project, d.getClassName());
+              return null;
+            }
           }
         });
-        return null;
-      }
+      if (test == null) return null;
+      GrReferenceAdjuster.shortenReferences(test);
+      CodeStyleManager.getInstance(project).reformat(test);
+      return test;
     }
     finally {
       accessToken.finish();
@@ -82,5 +102,76 @@ public class GroovyTestGenerator implements TestGenerator {
   @Override
   public String toString() {
     return GroovyIntentionsBundle.message("intention.crete.test.groovy");
+  }
+
+  @Override
+  public Language getLanguage() {
+    return GroovyFileType.GROOVY_LANGUAGE;
+  }
+
+  private static void addSuperClass(GrTypeDefinition targetClass, Project project, @Nullable String superClassName)
+    throws IncorrectOperationException {
+    if (superClassName == null) return;
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+
+    PsiClass superClass = findClass(project, superClassName);
+    GrCodeReferenceElement superClassRef;
+    if (superClass != null) {
+      superClassRef = factory.createCodeReferenceElementFromClass(superClass);
+    }
+    else {
+      superClassRef = factory.createCodeReferenceElementFromText(superClassName);
+    }
+    GrExtendsClause extendsClause = targetClass.getExtendsClause();
+    if (extendsClause == null) {
+      extendsClause = (GrExtendsClause)targetClass.addAfter(factory.createExtendsClause(), targetClass.getNameIdentifierGroovy());
+    }
+
+    extendsClause.add(superClassRef);
+  }
+
+  @Nullable
+  private static PsiClass findClass(Project project, String fqName) {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
+  }
+
+  private static void addTestMethods(Editor editor,
+                                     PsiClass targetClass,
+                                     TestFramework descriptor,
+                                     Collection<MemberInfo> methods,
+                                     boolean generateBefore,
+                                     boolean generateAfter) throws IncorrectOperationException {
+    if (generateBefore) {
+      generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null);
+    }
+    if (generateAfter) {
+      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, null);
+    }
+    for (MemberInfo m : methods) {
+      generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, editor, m.getMember().getName());
+    }
+  }
+
+  private static void showErrorLater(final Project project, final String targetClassName) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Messages.showErrorDialog(project,
+                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
+      }
+    });
+  }
+
+  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind,
+                                     TestFramework descriptor,
+                                     PsiClass targetClass,
+                                     Editor editor,
+                                     @Nullable String name) {
+    GroovyPsiElementFactory f = GroovyPsiElementFactory.getInstance(targetClass.getProject());
+    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiType.VOID));
+    PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);
   }
 }

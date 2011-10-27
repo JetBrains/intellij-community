@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntegration.createTest;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -37,4 +38,6 @@ public interface TestGenerator {
    * should return text to show in dialog
    */
   String toString();
+
+  Language getLanguage();
 }
