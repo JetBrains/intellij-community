@@ -197,17 +197,18 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       return;
     }
 
-    if (e.getButton() != MouseEvent.BUTTON1) return;
+    if (e.getButton() == MouseEvent.BUTTON1) {
+      if (MouseEvent.MOUSE_PRESSED == e.getID()) {
+        myPressedPoint = e.getPoint();
+        myPressedWhenSelected = isSelected();
+      }
+      else if (MouseEvent.MOUSE_RELEASED == e.getID()) {
+        finishDragging();
+        myPressedPoint = null;
+        myDragButtonImage = null;
+      }
+    }
 
-    if (MouseEvent.MOUSE_PRESSED == e.getID()) {
-      myPressedPoint = e.getPoint();
-      myPressedWhenSelected = isSelected();
-    }
-    else if (MouseEvent.MOUSE_RELEASED == e.getID()) {
-      finishDragging();
-      myPressedPoint = null;
-      myDragButtonImage = null;
-    }
     super.processMouseEvent(e);
   }
 
