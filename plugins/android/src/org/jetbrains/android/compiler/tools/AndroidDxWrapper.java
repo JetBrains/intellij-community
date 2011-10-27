@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidDx1 {
+public class AndroidDxWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidDx");
 
   @NonNls private static final String DEX_MAIN = "com.android.dx.command.dexer.Main";

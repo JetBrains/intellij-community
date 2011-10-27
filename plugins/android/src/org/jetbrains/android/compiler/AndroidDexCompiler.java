@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.compiler.tools.AndroidDx1;
+import org.jetbrains.android.compiler.tools.AndroidDxWrapper;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -279,7 +279,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             continue;
           }
 
-          AndroidDx1 dxTool = new AndroidDx1();
+          AndroidDxWrapper dxTool = new AndroidDxWrapper();
           String outputDirPath = FileUtil.toSystemDependentName(dexItem.myClassDir.getPath());
           String[] files = new String[dexItem.myFiles.size()];
           int i = 0;
