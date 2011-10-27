@@ -87,7 +87,7 @@ class RunConfigurable extends BaseConfigurable {
   private Configurable mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
   private final JTextField myRecentsLimit = new JTextField("5");
-  private Map<ConfigurationType, Configurable> myStoredComponents = new HashMap<ConfigurationType, Configurable>();
+  private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
 
   public RunConfigurable(final Project project) {
     this(project, null);
@@ -206,32 +206,26 @@ class RunConfigurable extends BaseConfigurable {
           else if (userObject instanceof SingleConfigurationConfigurable) {
             updateRightPanel((SingleConfigurationConfigurable<RunConfiguration>)userObject);
           }
-          else if (userObject instanceof ConfigurationType || userObject instanceof String) {
-            final DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
-            if (parent.isRoot()) {
-              drawPressAddButtonMessage(userObject instanceof String ? null : (ConfigurationType)userObject);
-            } else {
-              final ConfigurationType type = (ConfigurationType)userObject;
-              ConfigurationFactory[] factories = type.getConfigurationFactories();
-              if (factories.length == 1) {
-                Configurable configurable = myStoredComponents.get(type);
-                if (configurable == null){
-                  configurable = new TemplateConfigurable(RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate(factories[0]));
-                  myStoredComponents.put(type, configurable);
-                  configurable.reset();
+          else {
+            if (userObject instanceof ConfigurationType || userObject instanceof String) {
+              final DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
+              if (parent.isRoot()) {
+                drawPressAddButtonMessage(userObject instanceof String ? null : (ConfigurationType)userObject);
+              } else {
+                final ConfigurationType type = (ConfigurationType)userObject;
+                ConfigurationFactory[] factories = type.getConfigurationFactories();
+                if (factories.length == 1) {
+                  final ConfigurationFactory factory = factories[0];
+                  showTemplateConfigurabel(factory);
                 }
-                updateRightPanel(configurable);
-              }
-              else {
-                drawPressAddButtonMessage((ConfigurationType)userObject);
+                else {
+                  drawPressAddButtonMessage((ConfigurationType)userObject);
+                }
               }
             }
-          }
-          else if (userObject instanceof ConfigurationFactory) {
-            TemplateConfigurable configurable = new TemplateConfigurable(
-              RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate((ConfigurationFactory)userObject));
-            configurable.reset();
-            updateRightPanel(configurable);
+            else if (userObject instanceof ConfigurationFactory) {
+              showTemplateConfigurabel((ConfigurationFactory)userObject);
+            }
           }
         }
         updateDialog();
@@ -272,6 +266,16 @@ class RunConfigurable extends BaseConfigurable {
     });
     sortTree(myRoot);
     ((DefaultTreeModel)myTree.getModel()).reload();
+  }
+
+  private void showTemplateConfigurabel(ConfigurationFactory factory) {
+    Configurable configurable = myStoredComponents.get(factory);
+    if (configurable == null){
+      configurable = new TemplateConfigurable(RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate(factory));
+      myStoredComponents.put(factory, configurable);
+      configurable.reset();
+    }
+    updateRightPanel(configurable);
   }
 
   public void setRunDialog(final RunDialogBase runDialog) {
