@@ -802,8 +802,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           dialogBuilder.setOkOperation(new Runnable() {
             @Override
             public void run() {
-              if (component.getNameValue().length() == 0) {
+              final String name = component.getNameValue();
+              if (name.length() == 0) {
                 Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
+                return;
+              }
+              if (getModule(name) != null) {
+                Messages.showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
                 return;
               }
 
