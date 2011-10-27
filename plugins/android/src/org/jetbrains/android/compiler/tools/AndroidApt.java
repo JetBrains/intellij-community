@@ -20,6 +20,8 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +49,7 @@ public final class AndroidApt {
   }
 
   public static Map<CompilerMessageCategory, List<String>> compile(@NotNull IAndroidTarget target,
+                                                                   int platformToolsRevision,
                                                                    @NotNull String manifestFileOsPath,
                                                                    @NotNull String aPackage,
                                                                    @NotNull String outDirOsPath,
@@ -82,13 +85,40 @@ public final class AndroidApt {
       }
     }
 
+    if (platformToolsRevision < 0 || platformToolsRevision > 7) {
+      return doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, isLibrary);
+    }
+    else {
+      final Map<CompilerMessageCategory, List<String>> fullMap = new HashMap<CompilerMessageCategory, List<String>>();
+
+      Map<CompilerMessageCategory, List<String>> map;
+
+      map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, null, false);
+      AndroidCompileUtil.addMessages(fullMap, map);
+
+      for (String libPackage : libPackages) {
+        map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, libPackage, false);
+        AndroidCompileUtil.addMessages(fullMap, map);
+      }
+      return map;
+    }
+  }
+
+  private static Map<CompilerMessageCategory, List<String>> doCompile(@NotNull IAndroidTarget target,
+                                                                      @NotNull String manifestFileOsPath,
+                                                                      @NotNull String outDirOsPath,
+                                                                      @NotNull String[] resourceDirsOsPaths,
+                                                                      @NotNull String[] extraPackages,
+                                                                      @Nullable String customPackage,
+                                                                      boolean nonConstantIds)
+    throws IOException {
     final List<String> args = new ArrayList<String>();
 
     args.add(target.getPath(IAndroidTarget.AAPT));
     args.add("package");
     args.add("-m");
 
-    if (isLibrary) {
+    if (nonConstantIds) {
       args.add("--non-constant-id");
     }
 
@@ -96,9 +126,14 @@ public final class AndroidApt {
       args.add("--auto-add-overlay");
     }
 
-    if (libPackages.length > 0) {
+    if (extraPackages.length > 0) {
       args.add("--extra-packages");
-      args.add(toPackagesString(libPackages));
+      args.add(toPackagesString(extraPackages));
+    }
+    
+    if (customPackage != null) {
+      args.add("--custom-package");
+      args.add(customPackage);
     }
 
     args.add("-J");
@@ -153,6 +188,7 @@ public final class AndroidApt {
   }
 
   public static Map<CompilerMessageCategory, List<String>> packageResources(@NotNull IAndroidTarget target,
+                                                                            int platformToolsRevision,
                                                                             @NotNull String manifestPath,
                                                                             @NotNull String[] resPaths,
                                                                             @Nullable String osAssetsPath,
@@ -173,7 +209,10 @@ public final class AndroidApt {
     }
 
     args.add("-f");
-    args.add("--no-crunch");
+
+    if (platformToolsRevision < 0 || platformToolsRevision > 7) {
+      args.add("--no-crunch");
+    }
 
     if (resPaths.length > 1) {
       args.add("--auto-add-overlay");

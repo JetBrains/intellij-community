@@ -110,6 +110,8 @@ public abstract class AndroidSdk {
 
   public abstract IAndroidTarget findTargetByHashString(@NotNull String hashString);
 
+  public abstract int getPlatformToolsRevision();
+
   @Nullable
   public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
     path = FileUtil.toSystemDependentName(path);
@@ -121,7 +123,7 @@ public abstract class AndroidSdk {
 
     SdkManager manager = SdkManager.createManager(path + File.separatorChar, log);
     if (manager != null) {
-      return new AndroidSdkImpl(manager);
+      return new AndroidSdkImpl(manager, path);
     }
     return null;
   }

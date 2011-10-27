@@ -31,6 +31,7 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -70,17 +71,21 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
         if (outputDir != null) {
           String outputPath = getOutputFile(module, outputDir).getPath();
-          IAndroidTarget target = configuration.getAndroidTarget();
-          if (target != null) {
+          
+          final AndroidPlatform platform = configuration.getAndroidPlatform();
+          
+          if (platform != null) {
             String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
             String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet, true);
+            final IAndroidTarget target = platform.getTarget();
+            final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
 
             if (resourcesDirPaths.length == 0) {
               context.addMessage(CompilerMessageCategory.WARNING, "Resource directory not found for module " + module.getName(),
                                  null, -1, -1);
             }
 
-            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath,
+            items.add(new MyItem(module, target, platformToolsRevision, manifestFile, resourcesDirPaths, assetsDirPath, outputPath,
                                  configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
             //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
@@ -148,6 +153,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                 : item.myOutputPath;
 
       Map<CompilerMessageCategory, List<String>> messages = AndroidApt.packageResources(item.myAndroidTarget,
+                                                                                        item.myPlatformToolsRevision,
                                                                                         preprocessedManifestFile.getPath(),
                                                                                         item.myResourceDirPaths,
                                                                                         item.myAssetsDirPath,
@@ -243,9 +249,11 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     private final boolean myFileExists;
     private final boolean myGenerateUnsignedApk;
     private boolean myReleaseBuild;
+    final int myPlatformToolsRevision;
 
     private MyItem(Module module,
                    IAndroidTarget androidTarget,
+                   int platformToolsRevision,
                    VirtualFile manifestFile,
                    String[] resourceDirPaths,
                    String assetsDirPath,
@@ -254,6 +262,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                    boolean releaseBuild) {
       myModule = module;
       myAndroidTarget = androidTarget;
+      myPlatformToolsRevision = platformToolsRevision;
       myManifestFile = manifestFile;
       myResourceDirPaths = resourceDirPaths;
       myAssetsDirPath = assetsDirPath;
@@ -272,7 +281,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, myFileExists, myGenerateUnsignedApk, myReleaseBuild);
+      return new MyValidityState(myModule, myFileExists, myGenerateUnsignedApk, myReleaseBuild, myPlatformToolsRevision);
     }
   }
 
@@ -280,12 +289,18 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     private final boolean myOutputFileExists;
     private final boolean myGenerateUnsignedApk;
     private final boolean myReleaseBuild;
+    private final int myPlatformToolsRevision;
 
-    public MyValidityState(Module module, boolean outputFileExists, boolean generateUnsignedApk, boolean releaseBuild) {
+    public MyValidityState(Module module,
+                           boolean outputFileExists,
+                           boolean generateUnsignedApk,
+                           boolean releaseBuild,
+                           int platformToolsRevision) {
       super(module);
       myOutputFileExists = outputFileExists;
       myGenerateUnsignedApk = generateUnsignedApk;
       myReleaseBuild = releaseBuild;
+      myPlatformToolsRevision = platformToolsRevision;
     }
 
     public MyValidityState(DataInput is) throws IOException {
@@ -293,6 +308,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myGenerateUnsignedApk = is.readBoolean();
       myReleaseBuild = is.readBoolean();
       myOutputFileExists = true;
+      myPlatformToolsRevision = is.readInt();
     }
 
     @Override
@@ -310,6 +326,9 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       if (myReleaseBuild != otherState1.myReleaseBuild) {
         return false;
       }
+      if (myPlatformToolsRevision != otherState1.myPlatformToolsRevision) {
+        return false;
+      }
       return super.equalsTo(otherState);
     }
 
@@ -318,6 +337,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       super.save(os);
       os.writeBoolean(myGenerateUnsignedApk);
       os.writeBoolean(myReleaseBuild);
+      os.writeInt(myPlatformToolsRevision);
     }
   }
 }

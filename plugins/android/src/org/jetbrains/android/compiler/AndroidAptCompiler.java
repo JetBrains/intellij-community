@@ -35,6 +35,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -114,10 +115,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
 
         try {
-
-          Map<CompilerMessageCategory, List<String>> messages = AndroidApt
-            .compile(aptItem.myAndroidTarget, aptItem.myManifestFile.getPath(), aptItem.myPackage, aptItem.mySourceRootPath, aptItem
-              .myResourcesPaths, aptItem.myLibraryPackages, aptItem.myIsLibrary);
+          Map<CompilerMessageCategory, List<String>> messages = AndroidApt.compile(aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision,
+                                                                                   aptItem.myManifestFile.getPath(), aptItem.myPackage,
+                                                                                   aptItem.mySourceRootPath, aptItem.myResourcesPaths,
+                                                                                   aptItem.myLibraryPackages, aptItem.myIsLibrary);
           
           AndroidCompileUtil.addMessages(context, messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -187,12 +188,14 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final boolean myIsLibrary;
     
     private final Set<String> myNonExistingFiles;
+    final int myPlatformToolsRevision;
 
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
                               @NotNull String[] resourcesPaths,
                               @NotNull String sourceRootPath,
                               @NotNull IAndroidTarget target,
+                              int platformToolsRevision,
                               @NotNull String aPackage,
                               @NotNull String[] libPackages,
                               boolean isLibrary) {
@@ -205,6 +208,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myLibraryPackages = libPackages;
       myIsLibrary = isLibrary;
       myGeneratedFiles = new File[libPackages.length + 1];
+      myPlatformToolsRevision = platformToolsRevision;
       
       myGeneratedFiles[0] =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
@@ -232,7 +236,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, myNonExistingFiles);
+      return new MyValidityState(myModule, myNonExistingFiles, myPlatformToolsRevision);
     }
 
     public Module getModule() {
@@ -275,12 +279,15 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             continue;
           }
 
-          IAndroidTarget target = configuration.getAndroidTarget();
-          if (target == null) {
+          final AndroidPlatform platform = configuration.getAndroidPlatform();
+          if (platform == null) {
             myContext.addMessage(CompilerMessageCategory.ERROR,
                                  AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
             continue;
           }
+
+          final IAndroidTarget target = platform.getTarget();
+          final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
 
           String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet, false);
           if (resPaths.length <= 0) {
@@ -319,7 +326,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
           final String[] libPackages = getLibPackages(module, packageName);
 
-          items.add(new AptGenerationItem(module, manifestFile, resPaths, sourceRootPath, target,
+          items.add(new AptGenerationItem(module, manifestFile, resPaths, sourceRootPath, target, platformToolsRevision,
                                           packageName, libPackages, facet.getConfiguration().LIBRARY_PROJECT));
         }
       }
@@ -346,10 +353,12 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   private static class MyValidityState extends ResourcesValidityState {
     private final String myCustomGenPathR;
     private final Set<String> myNonExistingFiles;
+    private final int myPlatformToolsRevision;
 
-    MyValidityState(@NotNull Module module, @NotNull Set<String> nonExistingFiles) {
+    MyValidityState(@NotNull Module module, @NotNull Set<String> nonExistingFiles, int platformToolsRevision) {
       super(module);
       myNonExistingFiles = nonExistingFiles;
+      myPlatformToolsRevision = platformToolsRevision;
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet == null) {
         myCustomGenPathR = "";
@@ -365,6 +374,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myCustomGenPathR = path != null ? path : "";
 
       myNonExistingFiles = Collections.emptySet();
+      myPlatformToolsRevision = is.readInt();
     }
 
     @Override
@@ -377,6 +387,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       if (!otherState1.myNonExistingFiles.equals(myNonExistingFiles)) {
         return false;
       }
+      if (myPlatformToolsRevision != otherState1.myPlatformToolsRevision) {
+        return false;
+      }
       if (!super.equalsTo(otherState)) {
         return false;
       }
@@ -387,6 +400,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     public void save(DataOutput os) throws IOException {
       super.save(os);
       os.writeUTF(myCustomGenPathR);
+      os.writeInt(myPlatformToolsRevision);
     }
   }
 }

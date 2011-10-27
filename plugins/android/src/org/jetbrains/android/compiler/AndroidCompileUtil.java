@@ -72,6 +72,18 @@ public class AndroidCompileUtil {
     addMessages(context, messages, null);
   }
 
+  public static void addMessages(@NotNull Map<CompilerMessageCategory, List<String>> messages,
+                                 @NotNull Map<CompilerMessageCategory, List<String>> toAdd) {
+    for (Map.Entry<CompilerMessageCategory, List<String>> entry : toAdd.entrySet()) {
+      List<String> list = messages.get(entry.getKey());
+      if (list == null) {
+        list = new ArrayList<String>();
+        messages.put(entry.getKey(), list);
+      }
+      list.addAll(entry.getValue());
+    }
+  }
+
   static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages,
                           @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {

@@ -16,7 +16,10 @@
 
 package org.jetbrains.android.sdk;
 
+import com.android.io.FileWrapper;
 import com.android.sdklib.*;
+import com.android.sdklib.internal.project.ProjectProperties;
+import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +35,32 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidSdkImpl extends AndroidSdk {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidSdkImpl");
   private final SdkManager mySdkManager;
   private IAndroidTarget[] myTargets = null;
+  
+  private final int myPlatformToolsRevision;
 
-  public AndroidSdkImpl(@NotNull SdkManager sdkManager) {
+  public AndroidSdkImpl(@NotNull SdkManager sdkManager, @NotNull String sdkDirOsPath) {
     mySdkManager = sdkManager;
+
+    final File platformToolsPropFile =
+      new File(sdkDirOsPath + File.separatorChar + SdkConstants.FD_PLATFORM_TOOLS + File.separatorChar + SdkConstants.FN_SOURCE_PROP);
+    int platformToolsRevision = -1;
+    if (platformToolsPropFile.exists() && platformToolsPropFile.isFile()) {
+      final Map<String, String> map =
+        ProjectProperties.parsePropertyFile(new FileWrapper(platformToolsPropFile), new MessageBuildingSdkLog());
+      final String revision = map.get("Pkg.Revision");
+      if (revision != null) {
+        try {
+          platformToolsRevision = Integer.parseInt(revision);
+        }
+        catch (NumberFormatException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    myPlatformToolsRevision = platformToolsRevision > 0 ? platformToolsRevision : -1;
   }
 
   @NotNull
@@ -74,6 +98,10 @@ public class AndroidSdkImpl extends AndroidSdk {
   @NotNull
   public SdkManager getSdkManager() {
     return mySdkManager;
+  }
+
+  public int getPlatformToolsRevision() {
+    return myPlatformToolsRevision;
   }
 
   private static class MyTargetWrapper implements IAndroidTarget {
