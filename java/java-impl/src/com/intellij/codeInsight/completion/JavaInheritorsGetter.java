@@ -67,7 +67,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   private void generateVariants(final CompletionParameters parameters, final PrefixMatcher prefixMatcher,
                                 final ExpectedTypeInfo[] infos, final Consumer<LookupElement> consumer) {
 
-    addArrayTypes(parameters.getPosition(), infos, prefixMatcher, consumer);
+    addArrayTypes(parameters.getPosition(), infos, consumer);
 
     processInheritors(parameters, extractClassTypes(infos), prefixMatcher, new Consumer<PsiType>() {
       public void consume(final PsiType type) {
@@ -80,11 +80,10 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   private static void addArrayTypes(PsiElement identifierCopy,
-                                    ExpectedTypeInfo[] infos, PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
+                                    ExpectedTypeInfo[] infos, final Consumer<LookupElement> consumer) {
 
     for (final PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
-      if (type instanceof PsiArrayType && matcher.prefixMatches(type.getCanonicalText())) {
-
+      if (type instanceof PsiArrayType) {
         final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
