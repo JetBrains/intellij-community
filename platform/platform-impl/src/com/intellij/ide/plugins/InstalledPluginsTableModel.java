@@ -479,7 +479,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       gn.weightx = 1;
       gn.fill = GridBagConstraints.HORIZONTAL;
       myPanel.add(Box.createHorizontalBox(), gn);
-      gn.gridy = 1;
+      gn.fill = GridBagConstraints.NONE;
+      gn.weightx = 0;
+      gn.anchor = GridBagConstraints.EAST;
       myPanel.add(myBundledLabel, gn);
     }
 
