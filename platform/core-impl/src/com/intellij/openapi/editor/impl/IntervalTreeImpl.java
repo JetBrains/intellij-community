@@ -184,7 +184,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
             }
             IntervalNode<E> parent = node.getParent();
             if (parent == null) {
-              break;  // can happen when remove node and explicitly set valid to true (e.g. in RangeMarkerTree)
+              return deltaUp;  // can happen when remove node and explicitly set valid to true (e.g. in RangeMarkerTree)
             }
             path = (path << 1) |  (parent.getLeft() == node ? 0 : 1);
             node = parent;
