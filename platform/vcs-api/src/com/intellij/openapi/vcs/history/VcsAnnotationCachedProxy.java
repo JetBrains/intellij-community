@@ -84,7 +84,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
 
     final VcsCacheableAnnotationProvider cacheableAnnotationProvider = (VcsCacheableAnnotationProvider)annotationProvider;
-    VcsAnnotation vcsAnnotation = myCache.get(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file), myVcs.getKeyInstanceMethod(), revisionNumber);
+
+    VcsAnnotation vcsAnnotation = null;
+    if (revisionNumber != null) {
+      vcsAnnotation = myCache.get(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file), myVcs.getKeyInstanceMethod(), revisionNumber);
+    }
 
     if (vcsAnnotation != null) {
       final VcsHistoryProvider historyProvider = myVcs.getVcsHistoryProvider();
@@ -100,7 +104,10 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
 
     final FileAnnotation fileAnnotation = delegate.compute();
     vcsAnnotation = cacheableAnnotationProvider.createCacheable(fileAnnotation);
-    myCache.put(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
+
+    if (revisionNumber != null) {
+      myCache.put(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
+    }
 
     if (myVcs.getVcsHistoryProvider() instanceof VcsCacheableHistorySessionFactory) {
       loadHistoryInBackgroundToCache(revisionNumber, filePath, vcsAnnotation);
