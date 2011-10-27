@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -92,10 +93,13 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       if (!selected) {
         XSourcePosition position = stackFrame.getSourcePosition();
         if (position != null) {
-          PsiFile f = myPsiManager.findFile(position.getFile());
-          if (f != null) {
-            Color c = myColorsManager.getFileColor(f);
-            if (c != null) setBackground(c);
+          final VirtualFile virtualFile = position.getFile();
+          if (virtualFile.isValid()) {
+            PsiFile f = myPsiManager.findFile(virtualFile);
+            if (f != null) {
+              Color c = myColorsManager.getFileColor(f);
+              if (c != null) setBackground(c);
+            }
           }
         }
       }
