@@ -112,9 +112,6 @@ public class GitChangeProvider implements ChangeProvider {
       return false;
     }
     final GitVersion version = vcs.getVersion();
-    if (version == null) {
-      return false;
-    }
     return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(version);
   }
 

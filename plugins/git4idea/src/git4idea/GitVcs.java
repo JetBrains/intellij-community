@@ -131,7 +131,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
-  private GitVersion myVersion; // version of Git which this plugin uses.
+  private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -495,13 +495,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * @return the version number of Git, which is used by IDEA. <code>null</code> can be returned if the GitVcs hasn't yet activated.
+   * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
    */
-  @Nullable
+  @NotNull
   public GitVersion getVersion() {
-    if (myVersion == null) {
-      checkVersion();
-    }
     return myVersion;
   }
 
