@@ -21,9 +21,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
@@ -240,7 +240,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   protected static Font getNameFont() {
-    Font f = new JLabel().getFont();
-    return f.deriveFont(Math.min(14.f, f.getSize() * 1.1f));
+    return UIUtil.getLabelFont();
   }
 }
