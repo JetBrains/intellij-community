@@ -37,6 +37,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
+import com.sun.jdi.VoidValue;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -220,7 +222,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
                 return EvaluatorBuilderImpl.build(expressionToEvaluate, ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
               }
             });
-            final String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));
+            final Value eval = evaluator.evaluate(context);
+            final String result = eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval);
             buf.append(result);
           }
           catch (EvaluateException e) {
