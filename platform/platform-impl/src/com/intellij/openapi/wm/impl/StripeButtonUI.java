@@ -106,40 +106,22 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final Color background = button.getBackground();
 
-    boolean toFill = true; // button.isSelected() || !button.getWindowInfo().isSplit(); // do not draw split button bg
-    boolean toBorder = true; // button.isSelected() || !button.getWindowInfo().isSplit();
+    boolean toFill = true;
+    Color toBorder = model.isRollover() ? Color.gray : null;
 
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
 
       if (toFill) {
         g2.setColor(new SameColor(210));
-        g2.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+        g2.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 7, 5, 5);
       }
 
-      if (toBorder) {
-        g.setColor(Color.gray);
-        g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      }
+      toBorder = toBorder != null ? toBorder.darker() : Color.gray;
     }
 
-    if (model.isRollover()) {
-      if (!model.isArmed() && !model.isPressed() && !model.isSelected()) {
-        final Graphics2D g2d = (Graphics2D) g;
-        final GradientPaint paint;
-        if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.BOTTOM == anchor) {
-          paint = new GradientPaint(0, 0, background, 0, button.getHeight(), Color.white);
-        }
-        else {
-          paint = new GradientPaint(0, 0, background, button.getWidth(), 0, Color.white);
-        }
-        g2d.setPaint(paint);
-        g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      }
-
-      if (toBorder) {
-        g.setColor(Color.darkGray);
-        g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      }
+    if (toBorder != null) {
+      g.setColor(toBorder);
+      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 7, 5, 5);
     }
 
     AffineTransform tr=null;

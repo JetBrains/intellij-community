@@ -678,13 +678,14 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       return caretPosition;
     }
 
-    VisualPosition startPosition = marker.getStartPosition();
-    VisualPosition endPosition = marker.getEndPosition();
-    if (startPosition == null || endPosition == null) {
-      return caretPosition;
+    if (marker.isEndPositionIsLead()) {
+      VisualPosition result = marker.getEndPosition();
+      return result == null ? getSelectionEndPosition() : result;
+    } 
+    else {
+      VisualPosition result = marker.getStartPosition();
+      return result == null ? getSelectionStartPosition() : result;
     }
-    
-    return marker.isEndPositionIsLead() ? endPosition : startPosition;
   }
 
   @Override

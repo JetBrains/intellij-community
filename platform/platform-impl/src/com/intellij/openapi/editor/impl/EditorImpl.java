@@ -3198,10 +3198,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     return logicalToVisualPosition(logicalPos, true);
   }
+  
+  // TODO den remove before v.11 is released.
+  private final ThreadLocal<Integer> stackDepth = new ThreadLocal<Integer>();
 
+  // TODO den remove before v.11 is released.
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
+    stackDepth.set(0);
+    return doLogicalToVisualPosition(logicalPos, softWrapAware);
+  }
+  
+  private VisualPosition doLogicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
     assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled() && !mySoftWrapModel.isSoftWrappingEnabled()) {
       return new VisualPosition(logicalPos.line, logicalPos.column);
@@ -3214,7 +3223,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (offset < getDocument().getTextLength()) {
         offset = outermostCollapsed.getStartOffset();
         LogicalPosition foldStart = offsetToLogicalPosition(offset);
-        return logicalToVisualPosition(foldStart);
+        // TODO den remove before v.11 is released.
+        Integer depth = stackDepth.get();
+        if (depth >= 0) {
+          stackDepth.set(depth + 1);
+          if (depth > 15) {
+            LOG.error(String.format(
+              "Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '%s'. State: %s",
+              logicalPos, dumpState()
+            ));
+            stackDepth.set(-1);
+          }
+        }
+        // TODO den unwrap before v.11 is released.
+        try {
+          return doLogicalToVisualPosition(foldStart, true);
+        }
+        finally {
+          depth = stackDepth.get();
+          if (depth > 0) {
+            stackDepth.set(depth - 1);
+          }
+        }
       }
       else {
         offset = outermostCollapsed.getEndOffset() + 3;  // WTF?
@@ -3711,6 +3741,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
+            // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
+            // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
+            // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
+            // lead selection point.
+            if (selectionModel.hasSelection()) {
+              if (newCaretOffset >= selectionModel.getSelectionEnd()) {
+                oldSelectionStart = selectionModel.getSelectionStart();
+                oldVisLeadSelectionStart = selectionModel.getSelectionStartPosition();
+              }
+              else if (newCaretOffset <= selectionModel.getSelectionStart()) {
+                oldSelectionStart = selectionModel.getSelectionEnd();
+                oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
+              }
+            }
             if (oldVisLeadSelectionStart != null) {
               selectionModel.setSelection(oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             }

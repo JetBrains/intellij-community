@@ -554,6 +554,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void killRingSave() {
     doAction("EditorKillRingSave");
   }
+
+  protected static void unindent() {
+    doAction("EditorUnindentSelection");
+  }
   
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());

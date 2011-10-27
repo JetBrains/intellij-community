@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
@@ -25,18 +26,19 @@ import java.awt.*;
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @author max
  */
 public class TitlePanel extends JPanel {
-  private static final Color CNT_COLOR = new SameColor(194);
+  private static final Color CNT_COLOR = new SameColor(adjustBackgroundToSystem(194));
   private static final Color BND_COLOR = CNT_COLOR;
 
-  public static final Color CNT_ACTIVE_COLOR = new SameColor(148);
-  public static final Color BND_ACTIVE_COLOR = new SameColor(188);
+  public static final Color CNT_ACTIVE_COLOR = new SameColor(adjustBackgroundToSystem(148));
+  public static final Color BND_ACTIVE_COLOR = new SameColor(adjustBackgroundToSystem(188));
 
-  /* Gray-ish colors
-  public static final Color CNT_ACTIVE_COLOR = new SameColor(120);
-  public static final Color BND_ACTIVE_COLOR = new SameColor(160);
-  */
+  private static int adjustBackgroundToSystem(int mac_value) {
+    if (SystemInfo.isMac) return mac_value;
+    return mac_value * 941 / 784;
+  }
 
   private boolean myActive = true;
 
