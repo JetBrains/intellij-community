@@ -351,6 +351,12 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     }
   }
 
+  public boolean isEmpty() {
+    List<Object> children = new ArrayList<Object>();
+    collectChildren(myBuilder.getTreeStructure().getRootElement(), children);
+    return children.isEmpty();
+  }
+
   private class MyStructure extends AbstractTreeStructure {
     private final Project myProject;
 
