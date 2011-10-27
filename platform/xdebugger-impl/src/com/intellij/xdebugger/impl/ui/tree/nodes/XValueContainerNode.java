@@ -121,7 +121,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myMessageChildren = null;
     myTemporaryMessageChildren = null;
     myValueChildren = null;
-    fireNodeChildrenChanged();
+    fireNodeStructureChanged();
   }
 
   public void setErrorMessage(final @NotNull String errorMessage) {

@@ -64,7 +64,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     }
     myChildren = newChildren;
     myLoadedChildren = null;
-    fireNodeChildrenChanged();
+    fireNodeStructureChanged();
   }
 
   protected List<? extends TreeNode> getChildren() {
@@ -100,11 +100,11 @@ public class WatchesRootNode extends XDebuggerTreeNode {
         myChildren.set(i, newNode);
         if (newNode instanceof XValueContainerNode<?>) {
           myLoadedChildren = null;
-          fireNodeChildrenChanged();
+          fireNodeStructureChanged(newNode);
           myTree.childrenLoaded(this, Collections.<XValueContainerNode<?>>singletonList((XValueContainerNode<?>)newNode), false);
         }
         else {
-          fireNodeChildrenChanged();
+          fireNodeStructureChanged(newNode);
         }
         return;
       }
@@ -117,11 +117,12 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     WatchMessageNode message = evaluator != null ? WatchMessageNode.createEvaluatingNode(myTree, this, expression) : WatchMessageNode.createMessageNode(myTree, this, expression);
     if (index == -1) {
       myChildren.add(message);
+      index = myChildren.size() - 1;
     }
     else {
       myChildren.add(index, message);
     }
-    fireNodeChildrenChanged();
+    fireNodeInserted(index);
     if (navigateToWatchNode) {
       myTree.scrollPathToVisible(message.getPath());
     }
@@ -130,24 +131,30 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     }
   }
 
+  private void fireNodeInserted(int index) {
+    myTree.getTreeModel().nodesWereInserted(this, new int[]{index});
+  }
+
   public int removeChildNode(XDebuggerTreeNode node) {
     int index = myChildren.indexOf(node);
     myChildren.remove(node);
     myLoadedChildren = null;
-    fireNodeChildrenChanged();
+    fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
     return index;
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
+    final int[] indices = getNodesIndices(nodes);
+    final TreeNode[] removed = getChildNodes(indices);
     myChildren.removeAll(nodes);
     myLoadedChildren = null;
-    fireNodeChildrenChanged();
+    fireNodesRemoved(indices, removed);
   }
 
   public void removeAllChildren() {
     myChildren.clear();
     myLoadedChildren = null;
-    fireNodeChildrenChanged();
+    fireNodeStructureChanged();
   }
 
   public void addNewWatch() {
@@ -159,11 +166,12 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     int index = node != null ? myChildren.indexOf(node) : -1;
     if (index == -1) {
       myChildren.add(messageNode);
+      fireNodeInserted(myChildren.size() - 1);
     }
     else {
       myChildren.set(index, messageNode);
+      fireNodeStructureChanged(messageNode);
     }
-    fireNodeChildrenChanged();
     WatchInplaceEditor editor = new WatchInplaceEditor(this, messageNode, "watch", node);
     editor.show();
   }

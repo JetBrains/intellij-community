@@ -211,6 +211,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myText.append(XDebuggerUIConstants.MODIFYING_VALUE_MESSAGE, XDebuggerUIConstants.MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES);
     setLeaf(true);
-    fireNodeChildrenChanged();
+    fireNodeStructureChanged();
   }
 }

@@ -138,8 +138,12 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return ints;
   }
 
-  protected void fireNodeChildrenChanged() {
-    myTree.getTreeModel().nodeStructureChanged(this);
+  protected void fireNodeStructureChanged() {
+    fireNodeStructureChanged(this);
+  }
+
+  protected void fireNodeStructureChanged(final TreeNode node) {
+    myTree.getTreeModel().nodeStructureChanged(node);
   }
 
   public XDebuggerTree getTree() {
