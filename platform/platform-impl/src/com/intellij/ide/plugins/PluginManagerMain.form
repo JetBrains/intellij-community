@@ -21,7 +21,7 @@
             <constraints border-constraint="Center"/>
             <properties>
               <continuousLayout value="true"/>
-              <oneTouchExpandable value="true"/>
+              <oneTouchExpandable value="false"/>
             </properties>
             <border type="empty"/>
             <children>
