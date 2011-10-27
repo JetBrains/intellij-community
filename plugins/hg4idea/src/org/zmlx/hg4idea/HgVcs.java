@@ -260,7 +260,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public void activate() {
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getExecutableValidator().checkExecutableAndShowDialogIfNeeded();
+      getExecutableValidator().checkExecutableAndNotifyIfNeeded();
     }
 
     // status bar
@@ -372,7 +372,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgExecutableValidator getExecutableValidator() {
     synchronized (myExecutableValidatorLock) {
       if (myExecutableValidator == null) {
-        myExecutableValidator = new HgExecutableValidator(myProject);
+        myExecutableValidator = new HgExecutableValidator(myProject, this);
       }
       return myExecutableValidator;
     }

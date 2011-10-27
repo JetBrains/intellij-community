@@ -45,7 +45,13 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Type UNDEFINED means that the type doesn't matter in certain condition.
    */
   public static enum Type {
-    UNDEFINED, UNIX, MSYS, CYGWIN
+    UNIX,
+    MSYS,
+    CYGWIN,
+    /** The type doesn't matter or couldn't be detected. */
+    UNDEFINED,
+    /** Information about Git version is unavailable because the GitVcs hasn't fully initialized yet, or because Git executable is invalid. */
+    NULL
   }
 
   /**
@@ -53,13 +59,19 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public static final GitVersion MIN = new GitVersion(1, 6, 0, 0);
 
+  /**
+   * Special version with a special Type which indicates, that Git version information is unavailable.
+   * Probably, because of invalid executable, or when GitVcs hasn't fully initialized yet.
+   */
+  public static final GitVersion NULL = new GitVersion(0, 0, 0, 0, Type.NULL);
+
   private static final Pattern FORMAT = Pattern.compile("git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\-\\d\\w]*", Pattern.CASE_INSENSITIVE);
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 
-  private final int myMajor; // Major version number
-  private final int myMinor; // Minor version number
-  private final int myRevision; // Revision number
-  private final int myPatchLevel; // Patch level
+  private final int myMajor;
+  private final int myMinor;
+  private final int myRevision;
+  private final int myPatchLevel;
   private final Type myType;
 
   private final int myHashCode;
@@ -145,7 +157,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * @return true if the version is supported by the plugin
    */
   public boolean isSupported() {
-    return compareTo(MIN) >= 0;
+    return getType() != Type.NULL && compareTo(MIN) >= 0;
   }
 
   /**
@@ -183,8 +195,13 @@ public final class GitVersion implements Comparable<GitVersion> {
    * (msys git 1.7.3).compareTo(cygwin git 1.7.3) == 0
    * BUT
    * (msys git 1.7.3).equals(cygwin git 1.7.3) == false
+   * 
+   * {@link GitVersion#NULL} is less than any other not-NULL version. 
    */
-  public int compareTo(final GitVersion o) {
+  public int compareTo(@NotNull GitVersion o) {
+    if (o.getType() == Type.NULL) {
+      return (getType() == Type.NULL ? 0 : 1);
+    }
     int d = myMajor - o.myMajor;
     if (d != 0) {
       return d;
@@ -222,6 +239,10 @@ public final class GitVersion implements Comparable<GitVersion> {
 
   public Type getType() {
     return myType;
+  }
+
+  public boolean isNull() {
+    return getType() == Type.NULL;
   }
 
 }

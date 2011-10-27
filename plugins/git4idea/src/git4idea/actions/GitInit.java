@@ -74,10 +74,13 @@ public class GitInit extends DumbAwareAction {
       }
     }
 
+    GitVcs vcs = GitVcs.getInstance(project);
     try {
       Git.init(project, root);
     } catch (VcsException ex) {
-      GitUIUtil.showOperationErrors(project, Collections.singleton(ex), "git init");
+      if (vcs == null || vcs.getExecutableValidator().isExecutableValid()) {
+        GitUIUtil.showOperationErrors(project, Collections.singleton(ex), "git init");
+      }
       return;
     }
 
@@ -89,8 +92,7 @@ public class GitInit extends DumbAwareAction {
     }
     final String path = root.equals(baseDir) ? "" : root.getPath();
     final Project finalProject = project;
-    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(finalProject, GitBundle.getString("common.refreshing")) {
-
+    GitVcs.runInBackground(new Task.Backgroundable(finalProject, GitBundle.getString("common.refreshing")) {
       public void run(@NotNull ProgressIndicator indicator) {
         refreshAndConfigureVcsMappings(finalProject, root, path);
       }

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.Git;
+import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
@@ -102,15 +104,27 @@ public class GitCheckoutProvider implements CheckoutProvider {
   }
 
   private static boolean doClone(ProgressIndicator indicator, Project project, String directoryName, String parentDirectory, String sourceRepositoryURL) {
-    final VirtualFile root = mkdir(project, directoryName, parentDirectory);
-    if (root == null) { return false; }
-    if (!init(project, root)) { return false; }
-    if (!addRemote(project, root, sourceRepositoryURL)) { return false; }
-    if (!fetch(project, root, indicator)) { return false; }
-    return checkout(project, root);
+    File dir = mkdir(project, directoryName, parentDirectory);
+    if (dir == null) {
+      return false;
+    }
+    VirtualFile root = VcsUtil.getVirtualFileWithRefresh(dir);
+    if (root != null &&
+        init(project, root) &&
+        addRemote(project, root, sourceRepositoryURL) &&
+        fetch(project, root, indicator) &&
+        checkout(project, root)) {
+      return true;
+    }
+    cleanup(dir);
+    return false;
   }
 
-  private static @Nullable VirtualFile mkdir(Project project, String directoryName, String parentDirectory) {
+  private static void cleanup(@NotNull File dir) {
+    FileUtil.delete(dir);
+  }
+
+  private static @Nullable File mkdir(Project project, String directoryName, String parentDirectory) {
     final File dir = new File(parentDirectory, directoryName);
     if (dir.exists()) {
       GitUIUtil.notifyError(project, "Couldn't clone", "Directory <code>" + dir + "</code> already exists.");
@@ -120,8 +134,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
       GitUIUtil.notifyError(project, "Couldn't clone", "Can't create directory <code>" + dir + "</code>");
       return null;
     }
-
-    return VcsUtil.getVirtualFileWithRefresh(dir);
+    return dir;
   }
 
   private static boolean init(Project project, VirtualFile root) {
@@ -129,7 +142,10 @@ public class GitCheckoutProvider implements CheckoutProvider {
       Git.init(project, root);
     } catch (VcsException e) {
       LOG.info("init ", e);
-      GitUIUtil.notifyError(project, "Couldn't clone", "Couldn't <code>git init</code> in <code>" + root.getPresentableUrl() + "</code>", true, e);
+      GitVcs vcs = GitVcs.getInstance(project);
+      if (vcs == null || vcs.getExecutableValidator().isExecutableValid()) { // invalid executable will be notified in GitHandler.start()
+        GitUIUtil.notifyError(project, "Couldn't clone", "Couldn't <code>git init</code> in <code>" + root.getPresentableUrl() + "</code>", true, e);
+      }
       return false;
     }
     return true;

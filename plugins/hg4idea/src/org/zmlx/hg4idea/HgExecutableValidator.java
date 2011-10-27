@@ -12,25 +12,21 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.util.ExecutableValidator;
+import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgVersionCommand;
 
 public class HgExecutableValidator extends ExecutableValidator {
 
   private final HgVcs myVcs;
 
-  public HgExecutableValidator(Project project) {
-    super(project, HgVcs.NOTIFICATION_GROUP_ID);
-    myVcs = HgVcs.getInstance(project);
-    setMessagesAndTitles(HgVcsMessages.message("hg4idea.executable.notification.title"),
-                         HgVcsMessages.message("hg4idea.executable.notification.description"),
-                         HgVcsMessages.message("hg4idea.executable.dialog.title"),
-                         HgVcsMessages.message("hg4idea.executable.dialog.description"),
-                         HgVcsMessages.message("hg4idea.executable.dialog.error"),
-                         HgVcsMessages.message("hg4idea.executable.filechooser.title"),
-                         HgVcsMessages.message("hg4idea.executable.filechooser.description"));
+  public HgExecutableValidator(@NotNull Project project, @NotNull HgVcs vcs) {
+    super(project,
+          HgVcsMessages.message("hg4idea.executable.notification.title"),
+          HgVcsMessages.message("hg4idea.executable.notification.description"));
+    myVcs = vcs;
   }
 
   @Override
@@ -38,19 +34,15 @@ public class HgExecutableValidator extends ExecutableValidator {
     return myVcs.getHgExecutable();
   }
 
+  @NotNull
   @Override
-  protected Configurable getConfigurable(Project project) {
-    return myVcs == null ? null : myVcs.getConfigurable();
+  protected Configurable getConfigurable() {
+    return myVcs.getConfigurable();
   }
 
   @Override
   public boolean isExecutableValid(String executable) {
     return new HgVersionCommand().isValid(executable, myVcs.getGlobalSettings().isRunViaBash());
-  }
-
-  @Override
-  protected void saveCurrentExecutable(String executable) {
-    myVcs.getGlobalSettings().setHgExecutable(executable);
   }
 
 }

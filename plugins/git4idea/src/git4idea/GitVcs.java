@@ -128,10 +128,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
   private GitReferenceTracker myReferenceTracker;
   private boolean isActivated; // If true, the vcs was activated
-  private GitExecutableValidator myExecutableValidator;
+  private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
-  private GitVersion myVersion; // version of Git which this plugin uses.
+  private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -169,6 +169,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
     myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
+    myExecutableValidator = new GitExecutableValidator(myProject, this);
   }
 
 
@@ -345,11 +346,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   protected void activate() {
     isActivated = true;
-    myExecutableValidator = new GitExecutableValidator(myProject);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
-      checkVersion();
+      if (myExecutableValidator.checkExecutableAndNotifyIfNeeded()) {
+        checkVersion();
+      }
     }
 
     if (!myProject.isDefault() && myRootTracker == null) {
@@ -483,23 +484,22 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
     } catch (Exception e) {
-      final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-      String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
-      if (!myProject.isDefault()) {
-        showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
+        final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+        String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
+        if (!myProject.isDefault()) {
+          showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        }
+        VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
-      VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
     }
   }
 
   /**
-   * @return the version number of Git, which is used by IDEA. <code>null</code> can be returned if the GitVcs hasn't yet activated.
+   * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
    */
-  @Nullable
+  @NotNull
   public GitVersion getVersion() {
-    if (myVersion == null) {
-      checkVersion();
-    }
     return myVersion;
   }
 
@@ -590,6 +590,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return isActivated;
   }
 
+  @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return myExecutableValidator;
   }

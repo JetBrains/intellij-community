@@ -325,19 +325,4 @@ public class GitCloneDialog extends DialogWrapper {
     return "reference.VersionControl.Git.CloneRepository";
   }
 
-  /**
-   * Prepare check repository handler. To do this ls-remote command is executed and attempts to match
-   * master tag. This will likely return only single entry or none, if there is no master
-   * branch. Stdout output is ignored. Stderr is used to construct exception message and shown
-   * in error message box if exit is negative.
-   *
-   * @param project the project
-   * @param url     the url to check
-   * @return a simple handler that does the task
-   */
-  private static GitSimpleHandler checkRepository(Project project, final String url) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, new File("."), GitCommand.LS_REMOTE);
-    handler.addParameters(url, "master");
-    return handler;
-  }
 }

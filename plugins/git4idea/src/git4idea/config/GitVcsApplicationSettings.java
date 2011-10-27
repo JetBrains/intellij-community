@@ -21,7 +21,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -60,6 +60,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   /**
    * @return the default executable name depending on the platform
    */
+  @NotNull
   public String defaultGit() {
     if (myState.myPathToGit == null) {
       String[] paths;
@@ -86,7 +87,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     return myState.myPathToGit;
   }
 
-  @Nullable
+  @NotNull
   public String getPathToGit() {
     return myState.myPathToGit == null ? defaultGit() : myState.myPathToGit;
   }

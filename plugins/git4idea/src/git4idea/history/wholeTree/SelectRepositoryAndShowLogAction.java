@@ -233,7 +233,7 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
 
     @Override
     public void onSuccess() {
-      if (myVersion.myVersion == null) return;
+      if (myVersion.myVersion.isNull()) return;
       if (myProject.isDisposed()) return;
       new MyDialog(myProject, myCorrectRoots).show();
     }
@@ -249,12 +249,8 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       GitVcs vcs = GitVcs.getInstance(myProject);
+      if (vcs == null) { return; }
       myVersion = vcs.getVersion();
-      if (myVersion == null) {
-        vcs.checkVersion();
-      }
-      myVersion = vcs.getVersion();
-      if (myVersion == null) return;
     }
   }
 
