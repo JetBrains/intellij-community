@@ -42,7 +42,6 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable {
   private JTextField myHeapSize;
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;
-  private JCheckBox myUseGroovycStubs;
   private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
 
@@ -101,19 +100,16 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable {
 
   public boolean isModified() {
     return !Comparing.equal(myConfig.getHeapSize(), myHeapSize.getText()) ||
-           myExcludes.isModified() ||
-           myConfig.isUseGroovycStubs() != myUseGroovycStubs.isSelected();
+           myExcludes.isModified();
   }
 
   public void apply() throws ConfigurationException {
     myExcludes.apply();
     myConfig.setHeapSize(myHeapSize.getText());
-    myConfig.setUseGroovycStubs(myUseGroovycStubs.isSelected());
   }
 
   public void reset() {
     myHeapSize.setText(myConfig.getHeapSize());
-    myUseGroovycStubs.setSelected(myConfig.isUseGroovycStubs());
     myExcludes.reset();
   }
 

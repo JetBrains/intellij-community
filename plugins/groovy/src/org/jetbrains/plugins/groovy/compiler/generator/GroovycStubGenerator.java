@@ -124,25 +124,20 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
     ((CompileContextEx)compileContext).assignModule(tempOutput, module, tests, this);
 
-    if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
-      runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
+    ProgressIndicator indicator = compileContext.getProgressIndicator();
+    indicator.pushState();
+
+    try {
+      final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, new HashSet<VirtualFile>(toCompile));
+      for (int i = 0; i < toCompile.size(); i++) {
+        indicator.setFraction((double)i / toCompile.size());
+
+        final Collection<VirtualFile> stubFiles = generateItems(generator, toCompile.get(i), tempOutput, compileContext, myProject);
+        ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
+      }
     }
-    else {
-      ProgressIndicator indicator = compileContext.getProgressIndicator();
-      indicator.pushState();
-
-      try {
-        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, new HashSet<VirtualFile>(toCompile));
-        for (int i = 0; i < toCompile.size(); i++) {
-          indicator.setFraction((double)i / toCompile.size());
-
-          final Collection<VirtualFile> stubFiles = generateItems(generator, toCompile.get(i), tempOutput, compileContext, myProject);
-          ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
-        }
-      }
-      finally {
-        indicator.popState();
-      }
+    finally {
+      indicator.popState();
     }
   }
 

@@ -36,14 +36,12 @@ import org.jdom.Element;
 )
 public class GroovyCompilerConfiguration implements PersistentStateComponent<GroovyCompilerConfiguration.MyStateBean>, Disposable {
   private String myHeapSize = "400";
-  private boolean myUseGroovycStubs = false;
   public boolean transformsOk = false;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
   public MyStateBean getState() {
     final MyStateBean bean = new MyStateBean();
     bean.heapSize = myHeapSize;
-    bean.useGroovycStubs = myUseGroovycStubs;
     bean.transformsOk = transformsOk;
     myExcludeFromStubGeneration.writeExternal(bean.excludes);
     return bean;
@@ -59,7 +57,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
 
   public void loadState(MyStateBean state) {
     myHeapSize = state.heapSize;
-    myUseGroovycStubs = state.useGroovycStubs;
     transformsOk = state.transformsOk;
 
     myExcludeFromStubGeneration.readExternal(state.excludes);
@@ -77,14 +74,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
     myHeapSize = heapSize;
   }
 
-  public boolean isUseGroovycStubs() {
-    return myUseGroovycStubs;
-  }
-
-  public void setUseGroovycStubs(boolean useGroovycStubs) {
-    myUseGroovycStubs = useGroovycStubs;
-  }
-
   public void dispose() {
     Disposer.dispose(myExcludeFromStubGeneration);
   }
@@ -93,8 +82,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
     public String heapSize = "400";
 
     @Tag("excludes") public Element excludes = new Element("aaa");
-
-    public boolean useGroovycStubs = false;
 
     public boolean transformsOk = false;
 
