@@ -833,7 +833,12 @@ public class ProjectWrapper {
                          final String setupScript,
                          final Map<String, String> pathVariables,
                          final boolean loadHistory) {
-    dependencyMapping = new Mappings();
+    try {
+      dependencyMapping = new Mappings(getMapDir());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     backendCallback = dependencyMapping.getCallback();
     affectedFiles = new HashSet<StringCache.S>();
 
@@ -868,6 +873,15 @@ public class ProjectWrapper {
     }
   }
 
+  private static File getMapDir () {
+    try {
+    return FileUtil.createTempDirectory(new File(myHomeDir + File.separator + myJPSDir), "mappings", "dir");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private ProjectWrapper(final BufferedReader r, final Set<StringCache.S> affected) {
     affectedFiles = affected;
     myProject = null;
@@ -894,7 +908,13 @@ public class ProjectWrapper {
 
     RW.readMany(r, StringCache.reader, affectedFiles);
 
-    dependencyMapping = new Mappings(r);
+    try {
+      dependencyMapping = new Mappings(getMapDir(), r);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    
     backendCallback = dependencyMapping.getCallback();
   }
 
@@ -1119,7 +1139,14 @@ public class ProjectWrapper {
           builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
         }
 
-        final Mappings delta = new Mappings();
+        Mappings delta;
+
+        try {
+          delta = new Mappings(getMapDir());
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
         final Callbacks.Backend deltaBackend = delta.getCallback();
 
         new Logger(flags) {
@@ -1234,7 +1261,15 @@ public class ProjectWrapper {
               cleared.addAll(toClean);
             }
 
-            final Mappings delta = new Mappings();
+            Mappings delta;
+
+            try {
+              delta = new Mappings(getMapDir());
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+
             final Callbacks.Backend deltaCallback = delta.getCallback();
 
             try {
