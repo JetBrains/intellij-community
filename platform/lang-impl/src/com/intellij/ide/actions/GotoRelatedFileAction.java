@@ -16,7 +16,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.*;
@@ -25,21 +24,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -76,53 +75,7 @@ public class GotoRelatedFileAction extends AnAction {
       itemsMap.put(item.getElement(), item);
     }
 
-    return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer() {
-                                {
-                                  setFocusBorderEnabled(false);
-                                }
-
-                                @Override
-                                public String getElementText(PsiElement element) {
-                                  String customName = itemsMap.get(element).getCustomName();
-                                  return customName != null ? customName : super.getElementText(element);
-                                }
-
-                                @Override
-                                protected Icon getIcon(PsiElement element) {
-                                  Icon customIcon = itemsMap.get(element).getCustomIcon();
-                                  return customIcon != null ? customIcon : super.getIcon(element);
-                                }
-
-                                @Override
-                                public String getContainerText(PsiElement element, String name) {
-                                  PsiFile file = element.getContainingFile();
-                                  return file != null && !getElementText(element).equals(file.getName())
-                                         ? "(" + file.getName() + ")"
-                                         : null;
-                                }
-
-                                @Override
-                                protected DefaultListCellRenderer getRightCellRenderer() {
-                                  return null;
-                                }
-
-                                @Override
-                                protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
-                                                                                     JList list,
-                                                                                     Object value,
-                                                                                     int index,
-                                                                                     boolean selected,
-                                                                                     boolean hasFocus) {
-                                  final GotoRelatedItem item = (GotoRelatedItem)value;
-                                  Color color = list.getForeground();
-                                  final SimpleTextAttributes nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
-                                  final String name = item.getCustomName();
-                                  if (name == null) return false;
-                                  renderer.append(name, nameAttributes);
-                                  renderer.setIcon(item.getCustomIcon());
-                                  return true;
-                                }
-                              }, title, new Processor<Object>() {
+    return getPsiElementPopup(elements, itemsMap, title, new Processor<Object>() {
       @Override
       public boolean process(Object element) {
         if (element instanceof PsiElement) {
@@ -138,9 +91,73 @@ public class GotoRelatedFileAction extends AnAction {
     );
   }
 
-  public static JBPopup getPsiElementPopup(final Object[] elements, final PsiElementListCellRenderer<PsiElement> renderer,
+  private static JBPopup getPsiElementPopup(final Object[] elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
                                            final String title, final Processor<Object> processor) {
+
+    final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
+          {
+            setFocusBorderEnabled(false);
+          }
+
+          @Override
+          public String getElementText(PsiElement element) {
+            String customName = itemsMap.get(element).getCustomName();
+            return customName != null ? customName : super.getElementText(element);
+          }
+
+          @Override
+          protected Icon getIcon(PsiElement element) {
+            Icon customIcon = itemsMap.get(element).getCustomIcon();
+            return customIcon != null ? customIcon : super.getIcon(element);
+          }
+
+          @Override
+          public String getContainerText(PsiElement element, String name) {
+            PsiFile file = element.getContainingFile();
+            return file != null && !getElementText(element).equals(file.getName())
+                   ? "(" + file.getName() + ")"
+                   : null;
+          }
+
+          @Override
+          protected DefaultListCellRenderer getRightCellRenderer() {
+            return null;
+          }
+
+          @Override
+          protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
+                                                               JList list,
+                                                               Object value,
+                                                               int index,
+                                                               boolean selected,
+                                                               boolean hasFocus) {
+            final GotoRelatedItem item = (GotoRelatedItem)value;
+            Color color = list.getForeground();
+            final SimpleTextAttributes nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+            final String name = item.getCustomName();
+            if (name == null) return false;
+            renderer.append(name, nameAttributes);
+            renderer.setIcon(item.getCustomIcon());
+            return true;
+          }
+        };
+    if (false) {
+      final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, Arrays.asList(elements)) {
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
+      }) {
+        @Override
+        protected ListCellRenderer getListElementRenderer() {
+          return renderer;
+        }
+      };
+      popup.setMinimumSize(new Dimension(200, -1));
+      return popup;
+    }
     final JList list = new JBList(elements);
+
     list.setCellRenderer(renderer);
 
     final Runnable runnable = new Runnable() {
