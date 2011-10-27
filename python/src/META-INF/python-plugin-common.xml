@@ -668,6 +668,7 @@
     <lang.findUsagesProvider language="Mako" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Mako"
                     implementationClass="com.jetbrains.mako.formatter.MakoFormattingModelBuilder"/>
+    <lang.psiStructureViewFactory language="Mako" implementationClass="com.jetbrains.mako.structureView.MakoStructureViewFactory"/>
 
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
