@@ -125,7 +125,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
       @Override
       public String getDisplayName() {
-        return "Available Plugins";
+        return "Browse Repositories";
       }
     };
   }
