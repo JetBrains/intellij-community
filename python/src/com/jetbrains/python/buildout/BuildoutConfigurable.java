@@ -48,10 +48,13 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     if (config == null) config = new BuildoutFacetConfiguration(null);
     mySettingsPanel = new BuildoutConfigPanel(myModule, config);
     myPlaceholder.add(mySettingsPanel, BorderLayout.CENTER);
-    myEnabledCheckbox.setSelected(! StringUtil.isEmptyOrSpaces(config.getScriptName()));
+    final boolean isEnabled = !StringUtil.isEmptyOrSpaces(config.getScriptName());
+    myEnabledCheckbox.setSelected(isEnabled);
+    updateFacetEnabled(isEnabled);
     myEnabledCheckbox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        UIUtil.setEnabled(mySettingsPanel, myEnabledCheckbox.isSelected(), true);
+        final boolean enabled = myEnabledCheckbox.isSelected();
+        updateFacetEnabled(enabled);
       }
     });
     mySettingsPanel.addFocusListener(
@@ -65,6 +68,11 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
         public void focusLost(FocusEvent focusEvent) { }
       }
     );
+  }
+
+  private void updateFacetEnabled(boolean enabled) {
+    mySettingsPanel.setFacetEnabled(enabled);
+    UIUtil.setEnabled(mySettingsPanel, enabled, true);
   }
 
   @Nls

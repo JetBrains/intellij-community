@@ -2,15 +2,11 @@ package com.jetbrains.python.actions;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,21 +26,7 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement elt = descriptor.getPsiElement();
     if (elt != null && elt instanceof PyNamedParameter && elt.isWritable()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          final PyNamedParameter the_self = PyElementGenerator.getInstance(project).createParameter(myNewName);
-          try {
-            // rename everything that referenced it
-            final PsiElement substitution = RenamePsiElementProcessor.forElement(elt).substituteElementToRename(elt, null);
-            new RenameProcessor(project, substitution, myNewName, false, true).run();
-            // rename the parameter
-            elt.replace(the_self);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      });
+      new RenameProcessor(project, elt, myNewName, false, true).run();
     }
   }
 

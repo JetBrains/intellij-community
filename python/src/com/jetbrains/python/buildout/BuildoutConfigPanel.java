@@ -34,6 +34,7 @@ public class BuildoutConfigPanel extends JPanel {
   private JTextArea myNoticeTextArea;
   private JPanel myErrorPanel;
   private final Module myModule;
+  private boolean myFacetEnabled = true;
   private BuildoutFacetConfiguration myConfiguration;
 
   public BuildoutConfigPanel(Module module, BuildoutFacetConfiguration config) {
@@ -53,6 +54,13 @@ public class BuildoutConfigPanel extends JPanel {
     initErrorValidation();
   }
 
+  public void setFacetEnabled(boolean facetEnabled) {
+    if (myFacetEnabled != facetEnabled) {
+      myFacetEnabled = facetEnabled;
+      initErrorValidation();
+    }
+  }
+
   private void initErrorValidation() {
     FacetErrorPanel facetErrorPanel = new FacetErrorPanel();
     myErrorPanel.add(facetErrorPanel.getComponent(), BorderLayout.CENTER);
@@ -60,6 +68,9 @@ public class BuildoutConfigPanel extends JPanel {
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
       @Override
       public ValidationResult check() {
+        if (!myFacetEnabled) {
+          return ValidationResult.OK;
+        }
         return validateScriptName(getScriptName());
       }
     }, myScript);
