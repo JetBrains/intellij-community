@@ -34,9 +34,11 @@ public class ConversionRunner {
   private boolean myProcessProjectFile;
   private boolean myProcessWorkspaceFile;
   private boolean myProcessRunConfigurations;
+  private boolean myProcessProjectLibraries;
   private final List<File> myModulesFilesToProcess = new ArrayList<File>();
   private final ProjectConverter myConverter;
   private final ConversionProcessor<RunManagerSettings> myRunConfigurationsConverter;
+  private final ConversionProcessor<ProjectLibrariesSettings> myProjectLibrariesConverter;
 
   public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
     myProvider = provider;
@@ -46,6 +48,7 @@ public class ConversionRunner {
     myProjectFileConverter = myConverter.createProjectFileConverter();
     myWorkspaceConverter = myConverter.createWorkspaceFileConverter();
     myRunConfigurationsConverter = myConverter.createRunConfigurationsConverter();
+    myProjectLibrariesConverter = myConverter.createProjectLibrariesConverter();
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
@@ -67,6 +70,9 @@ public class ConversionRunner {
     myProcessRunConfigurations = myRunConfigurationsConverter != null
                                  && myRunConfigurationsConverter.isConversionNeeded(myContext.getRunManagerSettings());
 
+    myProcessProjectLibraries = myProjectLibrariesConverter != null
+                                 && myProjectLibrariesConverter.isConversionNeeded(myContext.getProjectLibrariesSettings());
+
     return myProcessProjectFile || myProcessWorkspaceFile || myProcessRunConfigurations || !myModulesFilesToProcess.isEmpty();
   }
 
@@ -87,13 +93,18 @@ public class ConversionRunner {
       affectedFiles.add(myContext.getWorkspaceFile());
     }
     affectedFiles.addAll(myModulesFilesToProcess);
-    if (myProcessRunConfigurations) {
-      try {
+
+    try {
+      if (myProcessRunConfigurations) {
         affectedFiles.addAll(myContext.getRunManagerSettings().getAffectedFiles());
       }
-      catch (CannotConvertException ignored) {
+      if (myProcessProjectLibraries) {
+        affectedFiles.addAll(myContext.getProjectLibrariesSettings().getAffectedFiles());
       }
     }
+    catch (CannotConvertException ignored) {
+    }
+
     affectedFiles.addAll(myConverter.getAdditionalAffectedFiles());
     return affectedFiles;
   }
@@ -115,6 +126,10 @@ public class ConversionRunner {
       myRunConfigurationsConverter.preProcess(myContext.getRunManagerSettings());
     }
 
+    if (myProcessProjectLibraries) {
+      myProjectLibrariesConverter.preProcess(myContext.getProjectLibrariesSettings());
+    }
+
     myConverter.preProcessingFinished();
   }
 
@@ -133,6 +148,10 @@ public class ConversionRunner {
 
     if (myProcessRunConfigurations) {
       myRunConfigurationsConverter.process(myContext.getRunManagerSettings());
+    }
+
+    if (myProcessProjectLibraries) {
+      myProjectLibrariesConverter.process(myContext.getProjectLibrariesSettings());
     }
     myConverter.processingFinished();
   }
@@ -153,7 +172,10 @@ public class ConversionRunner {
     if (myProcessRunConfigurations) {
       myRunConfigurationsConverter.postProcess(myContext.getRunManagerSettings());
     }
-    
+
+    if (myProcessProjectLibraries) {
+      myProjectLibrariesConverter.postProcess(myContext.getProjectLibrariesSettings());
+    }
     myConverter.postProcessingFinished();
   }
 

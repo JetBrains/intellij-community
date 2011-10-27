@@ -35,7 +35,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +68,7 @@ public class ConversionContextImpl implements ConversionContext {
   private ComponentManagerSettings myCompilerManagerSettings;
   private ComponentManagerSettings myProjectRootManagerSettings;
   private ComponentManagerSettingsImpl myModulesSettings;
+  private ProjectLibrariesSettingsImpl myProjectLibrariesSettings;
 
   public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
@@ -162,7 +165,7 @@ public class ConversionContextImpl implements ConversionContext {
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public String collapsePath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
+  public static String collapsePath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
     final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
@@ -178,8 +181,7 @@ public class ConversionContextImpl implements ConversionContext {
     try {
       Element libraryElement = null;
       if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(level)) {
-        final ProjectLibrarySettingsImpl projectLibrarySettings = findProjectLibrarySettings(name);
-        libraryElement = projectLibrarySettings != null ? projectLibrarySettings.getLibraryElement() : null;
+        libraryElement = findProjectLibraryElement(name);
       }
       else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) {
         libraryElement = findGlobalLibraryElement(name);
@@ -254,7 +256,7 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   @Nullable
-  private Element findGlobalLibraryElement(String name) throws CannotConvertException {
+  private static Element findGlobalLibraryElement(String name) throws CannotConvertException {
     final File file = PathManager.getOptionsFile("applicationLibraries");
     if (file.exists()) {
       final Element root = JDomConvertingUtil.loadDocument(file).getRootElement();
@@ -267,22 +269,11 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   @Nullable
-  public ProjectLibrarySettingsImpl findProjectLibrarySettings(String libraryName) throws CannotConvertException {
-    if (myStorageScheme == StorageScheme.DEFAULT) {
-      final Element tableElement = getProjectSettings().getComponentElement("libraryTable");
-      if (tableElement != null) {
-        final Element element = findLibraryInTable(tableElement, libraryName);
-        return element != null ? new ProjectLibrarySettingsImpl(getProjectSettings().getFile(), element, this) : null;
-      }
-    }
-    else {
-      File libraryFile = new File(new File(mySettingsBaseDir, "libraries"), FileUtil.sanitizeFileName(libraryName) + ".xml");
-      if (libraryFile.exists()) {
-        SettingsXmlFile f = getOrCreateFile(libraryFile);
-        return new ProjectLibrarySettingsImpl(libraryFile, f.getRootElement().getChild(LibraryImpl.ELEMENT), this);
-      }
-    }
-    return null;
+  private Element findProjectLibraryElement(String name) throws CannotConvertException {
+    final Collection<? extends Element> libraries = getProjectLibrariesSettings().getProjectLibraries();
+    final Condition<Element> filter = JDomConvertingUtil.createElementWithAttributeFilter(LibraryImpl.ELEMENT,
+                                                                                          LibraryImpl.LIBRARY_NAME_ATTR, name);
+    return ContainerUtil.find(libraries, filter);
   }
 
   @Nullable
@@ -391,5 +382,23 @@ public class ConversionContextImpl implements ConversionContext {
       mySettingsFiles.put(file, settingsFile);
     }
     return settingsFile;
+  }
+
+  public ProjectLibrariesSettingsImpl getProjectLibrariesSettings() throws CannotConvertException {
+    if (myProjectLibrariesSettings == null) {
+      if (myStorageScheme == StorageScheme.DEFAULT) {
+        myProjectLibrariesSettings = new ProjectLibrariesSettingsImpl(myProjectFile, null, this);
+      }
+      else {
+        final File librariesDir = new File(mySettingsBaseDir, "libraries");
+        final File[] files = librariesDir.exists() ? librariesDir.listFiles(new FileFilter() {
+          public boolean accept(File file) {
+            return !file.isDirectory() && file.getName().endsWith(".xml");
+          }
+        }) : ArrayUtil.EMPTY_FILE_ARRAY;
+        myProjectLibrariesSettings = new ProjectLibrariesSettingsImpl(null, files, this);
+      }
+    }
+    return myProjectLibrariesSettings;
   }
 }
