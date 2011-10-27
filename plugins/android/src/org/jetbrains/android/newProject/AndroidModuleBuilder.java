@@ -71,7 +71,6 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import static com.android.sdklib.SdkConstants.FN_ANDROID_MANIFEST_XML;
-import static com.android.sdklib.SdkConstants.FN_DEFAULT_PROPERTIES;
 import static org.jetbrains.android.util.AndroidUtils.createChildDirectoryIfNotExist;
 
 /**
@@ -341,13 +340,13 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
       if (platform == null) {
-        Messages.showErrorDialog(project, "Cannot parse Android SDK: 'default.properties' won't be generated", CommonBundle.getErrorTitle());
+        Messages.showErrorDialog(project, "Cannot parse Android SDK: 'project.properties' won't be generated", CommonBundle.getErrorTitle());
         return;
       }
 
       Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
       properties.setProperty("TARGET", platform.getTarget().hashString());
-      AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, "default.properties", FN_DEFAULT_PROPERTIES, properties);
+      AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, "default.properties", "project.properties", properties);
     }
     catch (Exception e) {
       LOG.error(e);
