@@ -118,8 +118,11 @@ public class GroovycRunner {
       if (srcFiles.isEmpty()) return;
 
       if (forStubs) {
-        compilerConfiguration.getJointCompilationOptions().put("stubDir", compilerConfiguration.getTargetDirectory());
-        compilerConfiguration.getJointCompilationOptions().put("keepStubs", Boolean.TRUE);
+        HashMap options = new HashMap();
+        options.put("stubDir", compilerConfiguration.getTargetDirectory());
+        options.put("keepStubs", Boolean.TRUE);
+        compilerConfiguration.setJointCompilationOptions(options);
+
         compilerConfiguration.setTargetBytecode(CompilerConfiguration.POST_JDK5);
       }
 
@@ -407,8 +410,10 @@ public class GroovycRunner {
           System.out.println(PRESENTABLE_MESSAGE + "Generating Groovy stubs...");
           // clear javaSources field so that no javac is invoked
           try {
-            Field javaSources = JavaAwareCompilationUnit.class.getDeclaredField("javaSources");
-            Collection.class.getMethod("clear", new Class[0]).invoke(javaSources, new Object[0]);
+            Field field = JavaAwareCompilationUnit.class.getDeclaredField("javaSources");
+            field.setAccessible(true);
+            LinkedList javaSources = (LinkedList)field.get(this);
+            javaSources.clear();
           }
           catch (Exception e) {
             e.printStackTrace();

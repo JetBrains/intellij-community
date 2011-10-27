@@ -27,7 +27,6 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +46,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
 
   public GroovycOSProcessHandler(Process process, String s) {
-    super(process, s, Charset.forName("UTF-8"));
+    super(process, s, null);
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {
