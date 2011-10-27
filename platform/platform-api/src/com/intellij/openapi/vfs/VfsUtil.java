@@ -250,7 +250,12 @@ public class VfsUtil extends VfsUtilCore {
 
     for (String pathElement : path) {
       if (file == null) return null;
-      file = file.findChild(pathElement);
+      if ("..".equals(pathElement)) {
+        file = file.getParent();
+      }
+      else {
+        file = file.findChild(pathElement);
+      }
     }
 
     return file;
