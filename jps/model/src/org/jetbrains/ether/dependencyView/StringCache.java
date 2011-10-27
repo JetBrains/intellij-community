@@ -14,7 +14,7 @@ import java.util.Map;
  * Time: 2:03
  * To change this template use File | Settings | File Templates.
  */
-public class StringCache {
+class StringCache {
 
   public static class S implements Comparable<S>, RW.Writable, KeyDescriptor<S> {
     public final int index;

@@ -5,7 +5,6 @@ import org.codehaus.gant.GantBinding
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.Reporter
 import org.jetbrains.ether.dependencyView.Callbacks.Backend
-import org.jetbrains.ether.dependencyView.StringCache
 import org.jetbrains.jps.artifacts.ArtifactBuilder
 import org.jetbrains.jps.idea.OwnServiceLoader
 
@@ -270,7 +269,7 @@ class ProjectBuilder {
     buildModules(dependencies, includeTests)
   }
 
-  def clearChunk(ModuleChunk chunk, Collection<StringCache.S> files, ProjectWrapper pw) {
+  def clearChunk(ModuleChunk chunk, Collection<String> files, ProjectWrapper pw) {
     if (!dryRun) {
       if (files == null) {
         stage("Cleaning module ${chunk.name}")
@@ -280,7 +279,7 @@ class ProjectBuilder {
         stage("Cleaning output files for module ${chunk.name}")
 
         files.each {
-          binding.ant.delete(file: pw.getAbsolutePath(it.value))
+          binding.ant.delete(file: pw.getAbsolutePath(it))
         }
 
         chunk.modules.each {
@@ -299,7 +298,7 @@ class ProjectBuilder {
     buildChunk(chunk, tests, null, null, null)
   }
 
-  def buildChunk(ModuleChunk chunk, boolean tests, Collection<StringCache.S> files, Backend callback, ProjectWrapper pw) {
+  def buildChunk(ModuleChunk chunk, boolean tests, Collection<String> files, Backend callback, ProjectWrapper pw) {
     Set<ModuleChunk> compiledSet = tests ? compiledTestChunks : compiledChunks
     if (compiledSet.contains(chunk) && files == null) return
     compiledSet.add(chunk)
@@ -316,7 +315,7 @@ class ProjectBuilder {
     return getProjectPaths().getModuleOutputDir(module, tests)?.absolutePath
   }
 
-  private def compile(ModuleChunk chunk, boolean tests, Collection<StringCache.S> files, Backend callback, ProjectWrapper pw) {
+  private def compile(ModuleChunk chunk, boolean tests, Collection<String> files, Backend callback, ProjectWrapper pw) {
     List<String> chunkSources = filterNonExistingFiles(tests ? chunk.testRoots : chunk.sourceRoots, true)
     if (chunkSources.isEmpty()) return
 
@@ -324,7 +323,7 @@ class ProjectBuilder {
 
     if (files != null) {
       files.each {
-        sourceFiles << pw.getAbsolutePath(it.value)
+        sourceFiles << pw.getAbsolutePath(it)
       }
     }
 

@@ -1,10 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
-import com.intellij.openapi.util.Pair;
 import org.objectweb.asm.ClassReader;
-
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,9 +24,8 @@ public class Callbacks {
   }
 
   public interface Backend {
-    Collection<StringCache.S> getClassFiles();
-
+    Collection<String> getClassFiles();
     void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-    void associateForm(StringCache.S formName, StringCache.S className);
+    void associateForm(String formName, String className);
   }
 }

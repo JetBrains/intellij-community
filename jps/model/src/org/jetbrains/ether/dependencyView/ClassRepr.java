@@ -33,6 +33,10 @@ public class ClassRepr extends Proto {
   public final StringCache.S outerClassName;
   public final boolean isLocal;
 
+  public String getFileName () {
+    return fileName.value;
+  }
+
   public abstract class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
 

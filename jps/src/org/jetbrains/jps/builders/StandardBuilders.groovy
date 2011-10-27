@@ -6,8 +6,6 @@ import com.intellij.ant.PrefixedPath
 import org.apache.tools.ant.BuildListener
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.AntListener
-import org.jetbrains.ether.dependencyView.StringCache
-import org.jetbrains.ether.dependencyView.StringCache.S
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 import org.jetbrains.jps.*
 
@@ -292,7 +290,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         final String formRelPath = state.projectWrapper.getRelativePath(formFile);
         final String classRelPath = state.projectWrapper.getRelativePath(classFile);
 
-        state.callback.associateForm(StringCache.get(formRelPath), StringCache.get(classRelPath));
+        state.callback.associateForm(formRelPath, classRelPath);
       }
     }
 
@@ -349,10 +347,10 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 
       if (pw != null) {
         for (Module m: moduleChunk.elements) {
-          final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
-          for (S name: names) {
-            if (name.value.endsWith(".form")) {
-              formFiles.add(new File(pw.getAbsolutePath(name.value)));
+          final Set<String> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
+          for (String name: names) {
+            if (name.endsWith(".form")) {
+              formFiles.add(new File(pw.getAbsolutePath(name)))
             }
           }
         }
@@ -403,10 +401,10 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       }.traverse(new File(state.targetFolder))
     }
     else {
-      final Collection<StringCache.S> classes = state.callback.getClassFiles()
+      final Collection<String> classes = state.callback.getClassFiles()
 
       classes.each {
-        InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it.value + ".class"), state.loader)
+        InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it + ".class"), state.loader)
       }
     }
   }

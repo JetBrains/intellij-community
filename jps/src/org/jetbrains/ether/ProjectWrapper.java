@@ -1,10 +1,11 @@
 package org.jetbrains.ether;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.gant.GantBinding;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jetbrains.ether.dependencyView.*;
+import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.ether.dependencyView.ClassRepr;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.resolvers.PathEntry;
@@ -56,10 +57,10 @@ public class ProjectWrapper {
       this.stream = flags.logStream();
     }
 
-    public void logFilePaths(PrintStream stream, Collection<StringCache.S> paths) {
+    public void logFilePaths(PrintStream stream, Collection<String> paths) {
       List<String> strings = new ArrayList<String>(paths.size());
-      for (StringCache.S path : paths) {
-        strings.add(FileUtil.toSystemIndependentName(getRelativePath(path.toString())));
+      for (String path : paths) {
+        strings.add(FileUtil.toSystemIndependentName(getRelativePath(path)));
       }
       logMany(stream, strings);
     }
@@ -279,20 +280,20 @@ public class ProjectWrapper {
   };
 
   public class FileWrapper implements RW.Writable {
-    final StringCache.S myName;
+    final String myName;
     final long myModificationTime;
 
     FileWrapper(final File f) {
-      myName = StringCache.get(f.getAbsolutePath());
+      myName = f.getAbsolutePath();
       myModificationTime = f.lastModified();
     }
 
     FileWrapper(final BufferedReader r) {
-      myName = StringCache.get(RW.readString(r));
+      myName = RW.readString(r);
       myModificationTime = RW.readLong(r);
     }
 
-    public StringCache.S getName() {
+    public String getName() {
       return myName;
     }
 
@@ -301,9 +302,9 @@ public class ProjectWrapper {
     }
 
     public void write(final BufferedWriter w) {
-      final StringCache.S name = getName();
+      final String name = getName();
 
-      RW.writeln(w, name.value);
+      RW.writeln(w, name);
       RW.writeln(w, Long.toString(getStamp()));
     }
 
@@ -340,8 +341,8 @@ public class ProjectWrapper {
       final String myOutput;
       String myOutputStatus;
 
-      public Set<StringCache.S> getFiles() {
-        final Set<StringCache.S> result = new HashSet<StringCache.S>();
+      public Set<String> getFiles() {
+        final Set<String> result = new HashSet<String>();
 
         for (FileWrapper f : mySources.keySet()) {
           result.add(f.getName());
@@ -350,8 +351,8 @@ public class ProjectWrapper {
         return result;
       }
 
-      public Set<StringCache.S> getOutdatedFiles(final Properties past) {
-        final Set<StringCache.S> result = new HashSet<StringCache.S>();
+      public Set<String> getOutdatedFiles(final Properties past) {
+        final Set<String> result = new HashSet<String>();
 
         for (FileWrapper now : mySources.keySet()) {
           final FileWrapper than = past == null ? null : past.mySources.get(now);
@@ -364,8 +365,8 @@ public class ProjectWrapper {
         return result;
       }
 
-      public Set<StringCache.S> getRemovedFiles(final Properties past) {
-        final Set<StringCache.S> result = new HashSet<StringCache.S>();
+      public Set<String> getRemovedFiles(final Properties past) {
+        final Set<String> result = new HashSet<String>();
 
         if (past != null) {
           for (FileWrapper was : past.mySources.keySet()) {
@@ -485,19 +486,19 @@ public class ProjectWrapper {
     final Module myModule;
     final Set<LibraryWrapper> myLibraries;
 
-    public Set<StringCache.S> getOutdatedSources() {
+    public Set<String> getOutdatedSources() {
       return mySource.getOutdatedFiles(myHistory == null ? null : myHistory.getModule(myName).mySource);
     }
 
-    public Set<StringCache.S> getOutdatedTests() {
+    public Set<String> getOutdatedTests() {
       return myTest.getOutdatedFiles(myHistory == null ? null : myHistory.getModule(myName).myTest);
     }
 
-    public Set<StringCache.S> getRemovedSources() {
+    public Set<String> getRemovedSources() {
       return mySource.getRemovedFiles(myHistory == null ? null : myHistory.getModule(myName).mySource);
     }
 
-    public Set<StringCache.S> getRemovedTests() {
+    public Set<String> getRemovedTests() {
       return myTest.getRemovedFiles(myHistory == null ? null : myHistory.getModule(myName).myTest);
     }
 
@@ -579,7 +580,7 @@ public class ProjectWrapper {
       myDependsOn = null;
       myTestDependsOn = null;
       myName = m.getName();
-      myExcludes = new HashSet<String> (m.getExcludes());
+      myExcludes = new HashSet<String>(m.getExcludes());
       mySource = new Properties(m.getSourceRoots(), m.getOutputPath(), myExcludes);
       myTest = new Properties(m.getTestRoots(), m.getTestOutputPath(), myExcludes);
 
@@ -594,7 +595,7 @@ public class ProjectWrapper {
       return myName;
     }
 
-    public Set<StringCache.S> getOutdatedFiles(final boolean tests) {
+    public Set<String> getOutdatedFiles(final boolean tests) {
       if (tests) {
         return myTest.outputEmpty() ? getTests() : getOutdatedTests();
       }
@@ -602,7 +603,7 @@ public class ProjectWrapper {
       return mySource.outputEmpty() ? getSources() : getOutdatedSources();
     }
 
-    public Set<StringCache.S> getRemovedFiles(final boolean tests) {
+    public Set<String> getRemovedFiles(final boolean tests) {
       if (tests) {
         return getRemovedTests();
       }
@@ -610,7 +611,7 @@ public class ProjectWrapper {
       return getRemovedSources();
     }
 
-    public Set<StringCache.S> getSources(final boolean tests) {
+    public Set<String> getSources(final boolean tests) {
       if (tests) {
         return myTest.getFiles();
       }
@@ -630,11 +631,11 @@ public class ProjectWrapper {
       return myTest.getSources();
     }
 
-    public Set<StringCache.S> getSources() {
+    public Set<String> getSources() {
       return mySource.getFiles();
     }
 
-    public Set<StringCache.S> getTests() {
+    public Set<String> getTests() {
       return myTest.getFiles();
     }
 
@@ -814,7 +815,7 @@ public class ProjectWrapper {
 
   Mappings dependencyMapping;
   final Callbacks.Backend backendCallback;
-  final Set<StringCache.S> affectedFiles;
+  final Set<String> affectedFiles;
 
   final ProjectWrapper myHistory;
 
@@ -840,7 +841,7 @@ public class ProjectWrapper {
       throw new RuntimeException(e);
     }
     backendCallback = dependencyMapping.getCallback();
-    affectedFiles = new HashSet<StringCache.S>();
+    affectedFiles = new HashSet<String>();
 
     myProject = new GantBasedProject(binding == null ? new GantBinding() : binding);
     myProjectBuilder = myProject.getBuilder();
@@ -873,16 +874,16 @@ public class ProjectWrapper {
     }
   }
 
-  private static File getMapDir () {
+  private static File getMapDir() {
     try {
-    return FileUtil.createTempDirectory(new File(myHomeDir + File.separator + myJPSDir), "mappings", "dir");
+      return FileUtil.createTempDirectory(new File(myHomeDir + File.separator + myJPSDir), "mappings", "dir");
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private ProjectWrapper(final BufferedReader r, final Set<StringCache.S> affected) {
+  private ProjectWrapper(final BufferedReader r, final Set<String> affected) {
     affectedFiles = affected;
     myProject = null;
     myProjectBuilder = null;
@@ -906,7 +907,7 @@ public class ProjectWrapper {
       myModules.put(m.getName(), m);
     }
 
-    RW.readMany(r, StringCache.reader, affectedFiles);
+    RW.readMany(r, RW.myStringReader, affectedFiles);
 
     try {
       dependencyMapping = new Mappings(getMapDir(), r);
@@ -914,7 +915,7 @@ public class ProjectWrapper {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    
+
     backendCallback = dependencyMapping.getCallback();
   }
 
@@ -949,7 +950,7 @@ public class ProjectWrapper {
     RW.writeln(w, "Modules:");
     RW.writeln(w, getModules());
 
-    RW.writeln(w, affectedFiles, StringCache.fromS);
+    RW.writeln(w, affectedFiles, RW.fromString);
 
     dependencyMapping.write(w);
   }
@@ -958,7 +959,7 @@ public class ProjectWrapper {
     return myProjectSnapshot;
   }
 
-  private ProjectWrapper loadSnapshot(final Set<StringCache.S> affectedFiles) {
+  private ProjectWrapper loadSnapshot(final Set<String> affectedFiles) {
     initJPSDirectory();
 
     try {
@@ -1059,7 +1060,7 @@ public class ProjectWrapper {
 
   class BusyBeaver {
     final ProjectBuilder builder;
-    final Set<StringCache.S> compiledFiles = new HashSet<StringCache.S>();
+    final Set<String> compiledFiles = new HashSet<String>();
     final Set<Module> cleared = new HashSet<Module>();
 
     BusyBeaver(ProjectBuilder builder) {
@@ -1067,31 +1068,31 @@ public class ProjectWrapper {
     }
 
     BuildStatus iterativeCompile(final ModuleChunk chunk,
-                                 final Set<StringCache.S> sources,
-                                 final Set<StringCache.S> outdated,
-                                 final Set<StringCache.S> removed,
+                                 final Set<String> sources,
+                                 final Set<String> outdated,
+                                 final Set<String> removed,
                                  final Flags flags) {
-      final Collection<StringCache.S> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
-      final Set<StringCache.S> safeFiles = new HashSet<StringCache.S>();
+      final Collection<String> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
+      final Set<String> safeFiles = new HashSet<String>();
 
       if (outdated != null) {
-        for (StringCache.S s : outdated) {
+        for (String s : outdated) {
           assert (s != null);
         }
 
         filesToCompile.addAll(outdated);
 
-        for (StringCache.S f : outdated) {
-          if (f.value.endsWith(".form")) {
-            final StringCache.S sourceFileName = dependencyMapping.getJavaByForm(f);
+        for (String f : outdated) {
+          if (f.endsWith(".form")) {
+            final String sourceFileName = dependencyMapping.getJavaByForm(f);
 
             if (sourceFileName != null && !filesToCompile.contains(sourceFileName)) {
               safeFiles.add(sourceFileName);
               filesToCompile.add(sourceFileName);
             }
           }
-          else if (f.value.endsWith(".java")) {
-            final StringCache.S formFileName = dependencyMapping.getFormByJava(f);
+          else if (f.endsWith(".java")) {
+            final String formFileName = dependencyMapping.getFormByJava(f);
 
             if (formFileName != null) {
               filesToCompile.add(formFileName);
@@ -1103,24 +1104,24 @@ public class ProjectWrapper {
       filesToCompile.removeAll(compiledFiles);
 
       if (!filesToCompile.isEmpty() || removed != null) {
-        final Set<StringCache.S> outputFiles = new HashSet<StringCache.S>();
+        final Set<String> outputFiles = new HashSet<String>();
 
-        for (StringCache.S f : filesToCompile) {
+        for (String f : filesToCompile) {
           final Set<ClassRepr> classes = dependencyMapping.getClasses(f);
 
           if (classes != null) {
             for (ClassRepr cr : classes) {
-              outputFiles.add(cr.fileName);
+              outputFiles.add(cr.fileName.value);
             }
           }
         }
 
         if (removed != null) {
-          for (StringCache.S f : removed) {
+          for (String f : removed) {
             final Set<ClassRepr> classes = dependencyMapping.getClasses(f);
             if (classes != null) {
               for (ClassRepr cr : classes) {
-                outputFiles.add(cr.fileName);
+                outputFiles.add(cr.fileName.value);
               }
             }
           }
@@ -1172,10 +1173,26 @@ public class ProjectWrapper {
           compiledFiles.addAll(filesToCompile);
           affectedFiles.removeAll(filesToCompile);
 
-          final boolean incremental =
-            dependencyMapping.differentiate(delta, removed, filesToCompile, compiledFiles, affectedFiles, safeFiles);
+          final Collection<File> files = new HashSet<File>();
+          final Collection<File> compiled = new HashSet<File>();
 
-          dependencyMapping.integrate(delta, filesToCompile, removed);
+          for (String f : filesToCompile) {
+            files.add(new File(f));
+          }
+
+          for (String f : compiledFiles) {
+            compiled.add(new File(f));
+          }
+
+          final Collection<File> affected = new HashSet<File>();
+          
+          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected, safeFiles);
+          
+          for (File a : affected) {
+            affectedFiles.add(FileUtil.toSystemIndependentName(a.getAbsolutePath()));
+          }
+
+          dependencyMapping.integrate(delta, files, removed);
 
           if (!incremental) {
             affectedFiles.addAll(sources);
@@ -1213,11 +1230,11 @@ public class ProjectWrapper {
         final Set<Module> chunkModules = c.getElements();
 
         if (!DefaultGroovyMethods.intersect(modules, chunkModules).isEmpty()) {
-          final Set<StringCache.S> removedSources = new HashSet<StringCache.S>();
+          final Set<String> removedSources = new HashSet<String>();
 
           if (incremental) {
-            final Set<StringCache.S> chunkSources = new HashSet<StringCache.S>();
-            final Set<StringCache.S> outdatedSources = new HashSet<StringCache.S>();
+            final Set<String> chunkSources = new HashSet<String>();
+            final Set<String> outdatedSources = new HashSet<String>();
 
             for (Module m : chunkModules) {
               final ModuleWrapper mw = getModule(m.getName());
@@ -1280,7 +1297,7 @@ public class ProjectWrapper {
               return BuildStatus.FAILURE;
             }
 
-            final Set<StringCache.S> allFiles = new HashSet<StringCache.S>();
+            final Set<String> allFiles = new HashSet<String>();
 
             for (Module m : c.getElements()) {
               final ModuleWrapper module = getModule(m.getName());
@@ -1288,7 +1305,13 @@ public class ProjectWrapper {
               allFiles.addAll(module.getSources(flags.tests()));
             }
 
-            dependencyMapping.integrate(delta, allFiles, removedSources);
+            final Collection<File> files = new HashSet<File>();
+
+            for (String f : allFiles) {
+              files.add(new File(f));
+            }
+
+            dependencyMapping.integrate(delta, files, removedSources);
 
             for (Module m : chunkModules) {
               Reporter.reportBuildSuccess(m, flags.tests());
