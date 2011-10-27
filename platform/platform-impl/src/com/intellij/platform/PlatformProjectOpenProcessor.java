@@ -124,6 +124,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     else {
       projectDir.mkdirs();
     }
+
+    if (project == null) {
+      project = projectManager.newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
+    }
+
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
