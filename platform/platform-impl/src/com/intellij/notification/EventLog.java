@@ -127,12 +127,10 @@ public class EventLog implements Notifications {
       if (content.startsWith("<") && !content.startsWith("<a ")) {
         showMore = true;
       }
-      else {
-        if (StringUtil.isNotEmpty(mainText)) {
-          mainText += ": ";
-        }
-        mainText += content;
+      if (StringUtil.isNotEmpty(mainText)) {
+        mainText += ": ";
       }
+      mainText += content;
     }
 
     int nlIndex = eolIndex(mainText);
