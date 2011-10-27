@@ -16,14 +16,12 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
-import org.codehaus.groovy.ast.ClassNode;
-import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
-import org.codehaus.groovy.tools.javac.JavaAwareResolveVisitor;
-import org.codehaus.groovy.tools.javac.JavaStubGenerator;
+import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
@@ -118,6 +116,12 @@ public class GroovycRunner {
       final String[] finalOutput = new String[1];
       fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File, finalOutput);
       if (srcFiles.isEmpty()) return;
+
+      if (forStubs) {
+        compilerConfiguration.getJointCompilationOptions().put("stubDir", compilerConfiguration.getTargetDirectory());
+        compilerConfiguration.getJointCompilationOptions().put("keepStubs", Boolean.TRUE);
+        compilerConfiguration.setTargetBytecode(CompilerConfiguration.POST_JDK5);
+      }
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
       final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration, finalOutput[0]);
@@ -334,6 +338,14 @@ public class GroovycRunner {
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(config);
 
+    try {
+      if (forStubs) {
+        return createStubGenerator(config, classLoader);
+      }
+    }
+    catch (NoClassDefFoundError ignore) { // older groovy distributions just don't have stub generation capability
+    }
+
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
       public Enumeration getResources(String name) throws IOException {
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
@@ -363,7 +375,7 @@ public class GroovycRunner {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovyc: ") + getPhaseDescription());
+            System.out.println(PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
           }
         }
       };
@@ -375,46 +387,38 @@ public class GroovycRunner {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovyc: ") + getPhaseDescription());
+            System.out.println(PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
           }
         }
       };
     }
-    if (forStubs) {
-      try {
-        addStubGeneration(config, unit);
-      }
-      catch (LinkageError e) {
-        //older groovy distributions, just don't generate stubs
-      }
-    }
     return unit;
   }
 
-  private static void addStubGeneration(CompilerConfiguration config, final CompilationUnit unit) {
-    //todo reuse JavaStubCompilationUnit in groovy 1.7
-    boolean useJava5 = config.getTargetBytecode().equals(CompilerConfiguration.POST_JDK5);
-    final JavaStubGenerator stubGenerator = new JavaStubGenerator(config.getTargetDirectory(), false, useJava5);
-
-    //but JavaStubCompilationUnit doesn't have this...
-    unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
-      public void call(SourceUnit source, GeneratorContext context, ClassNode node) throws CompilationFailedException {
-        new JavaAwareResolveVisitor(unit).startResolving(node, source);
-      }
-    }, Phases.CONVERSION);
-
-    unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
-      public void call(final SourceUnit source, final GeneratorContext context, final ClassNode node) throws CompilationFailedException {
-        final String name = node.getNameWithoutPackage();
-        System.out.println(PRESENTABLE_MESSAGE + "Generating stub for " + name);
-        try {
-          stubGenerator.generateClass(node);
+  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader) {
+    JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
+      public void gotoPhase(int phase) throws CompilationFailedException {
+        if (phase == Phases.SEMANTIC_ANALYSIS) {
+          System.out.println(PRESENTABLE_MESSAGE + "Generating Groovy stubs...");
+          // clear javaSources field so that no javac is invoked
+          try {
+            Field javaSources = JavaAwareCompilationUnit.class.getDeclaredField("javaSources");
+            Collection.class.getMethod("clear", new Class[0]).invoke(javaSources, new Object[0]);
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
         }
-        catch (FileNotFoundException e) {
-          source.addException(e);
+        else if (phase <= Phases.ALL) {
+          System.out.println(PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
         }
+
+        super.gotoPhase(phase);
       }
-    },Phases.CONVERSION);
+
+    };
+    unit.addSources(new String[]{"SomeClass.java"});
+    return unit;
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {
