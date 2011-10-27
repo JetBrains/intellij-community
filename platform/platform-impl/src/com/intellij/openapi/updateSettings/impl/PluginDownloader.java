@@ -68,7 +68,7 @@ public class PluginDownloader {
   //additional settings
   private String myDescription;
   private List<PluginId> myDepends;
-  private String myChangeNotes;
+  private IdeaPluginDescriptor myDescriptor;
 
   public PluginDownloader(final String pluginId, final String pluginUrl, final String pluginVersion) {
     myPluginId = pluginId;
@@ -134,7 +134,9 @@ public class PluginDownloader {
               return true;
             }
           });
-          descriptor = PluginManager.loadDescriptor(new File(outputDir, myPluginId), PluginManager.PLUGIN_XML);
+          final File[] files = outputDir.listFiles();
+          assert files != null && files.length == 1;
+          descriptor = PluginManager.loadDescriptor(files[0], PluginManager.PLUGIN_XML);
         }
         finally {
           FileUtil.delete(outputDir);
@@ -160,8 +162,7 @@ public class PluginDownloader {
       if (untilBuild != null && untilBuild.compareTo(currentBuildNumber) < 0) {
         return false;
       }
-      setDescription(descriptor.getDescription());
-      setChangeNotes(descriptor.getChangeNotes());
+      setDescriptor(descriptor);
      }
     return true;
   }
@@ -344,14 +345,6 @@ public class PluginDownloader {
     return myDepends;
   }
 
-  public void setChangeNotes(String changeNotes) {
-    myChangeNotes = changeNotes;
-  }
-
-  public String getChangeNotes() {
-    return myChangeNotes;
-  }
-
   public static PluginDownloader createDownloader(IdeaPluginDescriptor pluginDescriptor) throws UnsupportedEncodingException {
     final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
     @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
@@ -360,7 +353,10 @@ public class PluginDownloader {
     if (pluginDescriptor instanceof PluginNode && ((PluginNode)pluginDescriptor).getDownloadUrl() != null){
       url = ((PluginNode)pluginDescriptor).getDownloadUrl();
     }
-    return new PluginDownloader(pluginDescriptor.getPluginId().getIdString(), url, null, null, pluginDescriptor.getName());
+    final PluginDownloader downloader =
+      new PluginDownloader(pluginDescriptor.getPluginId().getIdString(), url, null, null, pluginDescriptor.getName());
+    downloader.setDescriptor(pluginDescriptor);
+    return downloader;
   }
 
   @Nullable
@@ -424,9 +420,16 @@ public class PluginDownloader {
       node.setDownloadUrl(pluginFile.getUrl());
       node.setDepends(downloader.getDepends(), null);
       node.setDescription(downloader.getDescription());
-      node.setChangeNotes(downloader.getChangeNotes());
       return node;
     }
     return null;
+  }
+
+  public void setDescriptor(IdeaPluginDescriptor descriptor) {
+    myDescriptor = descriptor;
+  }
+
+  public IdeaPluginDescriptor getDescriptor() {
+    return myDescriptor;
   }
 }

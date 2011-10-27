@@ -18,7 +18,6 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
@@ -72,9 +71,9 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         final int selectedRow = entryTable.getSelectedRow();
         if (selectedRow != -1) {
           final PluginDownloader selection = getValueAt(selectedRow);
-          final PluginNode pluginNode = PluginDownloader.createPluginNode("", selection);
-          if (pluginNode != null) {
-            PluginManagerMain.pluginInfoUpdate(pluginNode, null, myDescriptionPanel);
+          final IdeaPluginDescriptor descriptor = selection.getDescriptor();
+          if (descriptor != null) {
+            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel);
           }
         }
       }
