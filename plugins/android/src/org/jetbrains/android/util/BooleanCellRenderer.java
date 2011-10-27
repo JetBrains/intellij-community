@@ -33,7 +33,12 @@ public class BooleanCellRenderer extends DefaultTableCellRenderer {
                                                  int column) {
     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     if (value instanceof Boolean) {
-      setText((Boolean)value ? "yes" : "<html><font color='red'>no</font></html>");
+      if (table.isEnabled()) {
+        setText((Boolean)value ? "yes" : "<html><font color='red'>no</font></html>");
+      }
+      else {
+        setText((Boolean)value ? "yes" : "no");
+      }
     }
     return this;
   }
