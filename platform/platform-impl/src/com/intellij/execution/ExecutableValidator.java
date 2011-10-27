@@ -104,7 +104,9 @@ public abstract class ExecutableValidator {
     myNotificationGroup.createNotification("", prepareDescription(), NotificationType.ERROR,
       new NotificationListener() {
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          showSettingsAndExpireIfFixed(notification);
+          if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+            showSettingsAndExpireIfFixed(notification);
+          }
         }
       }
     ).notify(myProject.isDefault() ? null : myProject);
