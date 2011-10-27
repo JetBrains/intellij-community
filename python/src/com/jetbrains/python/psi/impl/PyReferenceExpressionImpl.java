@@ -322,9 +322,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
     }
-    if (target instanceof PyClass) {
-      return new PyClassType((PyClass)target, true);
-    }
     if (target instanceof PyTypedElement) {
       return context.getType((PyTypedElement)target);
     }

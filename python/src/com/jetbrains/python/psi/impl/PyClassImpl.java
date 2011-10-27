@@ -30,6 +30,9 @@ import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +54,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
     }
   };
+
+  @Override
+  public PyType getType(@NotNull TypeEvalContext context) {
+    return new PyClassType(this, true);
+  }
 
   private class NewStyleCachedValueProvider implements CachedValueProvider<Boolean> {
     @Override
