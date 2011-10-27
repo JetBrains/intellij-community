@@ -21,6 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -35,11 +36,13 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 
@@ -56,8 +59,7 @@ public class DeviceChooser implements Disposable {
   private volatile boolean myProcessSelectionFlag = true;
   private IDevice[] myOldDevices = EMPTY_DEVICE_ARRAY;
 
-  @Nullable
-  private JPanel myPanel;
+  private JComponent myPanel;
   private JBTable myDeviceTable;
 
   private final AndroidFacet myFacet;
@@ -71,6 +73,10 @@ public class DeviceChooser implements Disposable {
                        @Nullable Condition<IDevice> filter) {
     myFacet = facet;
     myFilter = filter;
+    
+    myDeviceTable = new JBTable();
+    myPanel = ScrollPaneFactory.createScrollPane(myDeviceTable);
+    myPanel.setPreferredSize(new Dimension(450, 220));
 
     myDeviceTable.setModel(new MyDeviceTableModel(EMPTY_DEVICE_ARRAY));
     myDeviceTable.setSelectionMode(multipleSelection ?
@@ -177,7 +183,7 @@ public class DeviceChooser implements Disposable {
   }
 
   @Nullable
-  public JPanel getPanel() {
+  public JComponent getPanel() {
     return myPanel;
   }
 
