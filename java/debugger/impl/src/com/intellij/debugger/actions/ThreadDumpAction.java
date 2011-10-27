@@ -276,7 +276,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     }
   }
 
-  private static String renderLocation(final Location location) {
+  public static String renderLocation(final Location location) {
     String sourceName;
     try {
       sourceName = location.sourceName();

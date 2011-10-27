@@ -23,6 +23,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -40,6 +41,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -355,22 +357,45 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   public String getEventMessage(LocatableEvent event) {
     final Location location = event.location();
+    String sourceName = "Unknown Source";
     try {
-      return DebuggerBundle.message(
-        "status.line.breakpoint.reached", 
-        location.declaringType().name() + "." + location.method().name(), 
-        location.sourceName(), 
-        getLineIndex() + 1
-      );
+      sourceName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      final String sourceName = getSourcePosition().getFile().getName();
-      return DebuggerBundle.message(
-        "status.line.breakpoint.reached", 
-        location.declaringType().name() + "." + location.method().name(), 
-        sourceName, 
-        getLineIndex() + 1
+      sourceName = getSourcePosition().getFile().getName();
+    }
+
+    final boolean printFullTrace = Registry.is("debugger.breakpoint.message.full.trace");
+
+    StringBuilder builder = new StringBuilder();
+    if (printFullTrace) {
+      builder.append(DebuggerBundle.message(
+        "status.line.breakpoint.reached.full.trace",
+        location.declaringType().name() + "." + location.method().name())
       );
+      try {
+        final List<StackFrame> frames = event.thread().frames();
+        renderTrace(frames, builder);
+      }
+      catch (IncompatibleThreadStateException e) {
+        builder.append("Stacktrace not available: ").append(e.getMessage());
+      }
+    }
+    else {
+      builder.append(DebuggerBundle.message(
+        "status.line.breakpoint.reached",
+        location.declaringType().name() + "." + location.method().name(),
+        sourceName,
+        getLineIndex() + 1
+      ));
+    }
+    return builder.toString();
+  }
+
+  private static void renderTrace(List<StackFrame> frames, StringBuilder buffer) {
+    for (final StackFrame stackFrame : frames) {
+      final Location location = stackFrame.location();
+      buffer.append("\n\t  ").append(ThreadDumpAction.renderLocation(location));
     }
   }
 
