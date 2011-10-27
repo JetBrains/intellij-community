@@ -24,6 +24,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -80,7 +81,8 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     });
     setCheckboxColumnName("");
     myDescriptionPanel.setPreferredSize(new Dimension(400, -1));
-    myDescriptionPanel.setContentType("text/html");
+    myDescriptionPanel.setEditable(false);
+    myDescriptionPanel.setContentType(UIUtil.HTML_MIME);
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionPanel);
     add(scrollPane, BorderLayout.EAST);
