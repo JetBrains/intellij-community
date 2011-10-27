@@ -28,6 +28,6 @@ public class GroovyTemplatesProvider implements DefaultLiveTemplatesProvider{
 
   @Override
   public String[] getHiddenLiveTemplateFiles() {
-    return new String[0];
+    return null;
   }
 }
