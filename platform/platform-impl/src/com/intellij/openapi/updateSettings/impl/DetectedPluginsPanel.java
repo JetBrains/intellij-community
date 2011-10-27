@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -83,8 +84,12 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     myDescriptionPanel.setEditable(false);
     myDescriptionPanel.setContentType(UIUtil.HTML_MIME);
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionPanel);
-    add(scrollPane, BorderLayout.EAST);
+    removeAll();
+
+    final Splitter splitter = new Splitter(false);
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(entryTable));
+    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myDescriptionPanel));
+    add(splitter, BorderLayout.CENTER);
   }
 
   public String getCheckboxColumnName() {
