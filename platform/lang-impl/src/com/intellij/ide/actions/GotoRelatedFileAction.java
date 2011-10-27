@@ -150,8 +150,13 @@ public class GotoRelatedFileAction extends AnAction {
 
         final JPanel panelWithMnemonic = new JPanel(new BorderLayout());
         final int mnemonic = getMnemonic(value, itemsMap);
-        final JLabel label = new JLabel(mnemonic != -1 ? mnemonic + "." : "");
+        final JLabel label = new JLabel("");
+        if (mnemonic != -1) {
+          label.setText(mnemonic + ".");
+          label.setDisplayedMnemonicIndex(0);
+        }
         label.setPreferredSize(new JLabel("8.").getPreferredSize());
+
         final JComponent leftRenderer = (JComponent)component.getComponents()[0];
         component.remove(leftRenderer);
         panelWithMnemonic.setBackground(leftRenderer.getBackground());
