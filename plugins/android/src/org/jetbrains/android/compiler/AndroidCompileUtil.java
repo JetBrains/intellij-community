@@ -43,6 +43,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -402,13 +403,31 @@ public class AndroidCompileUtil {
     }
     
     final List<String> result = new ArrayList<String>();
+
+    doCollectResourceDirs(facet, collectResCacheDirs, result);
+    
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+      doCollectResourceDirs(depFacet, collectResCacheDirs, result);
+    }
+    return ArrayUtil.toStringArray(result);
+  }
+
+  private static void doCollectResourceDirs(AndroidFacet facet, boolean collectResCacheDirs, List<String> result) {
     final Module module = facet.getModule();
 
     if (collectResCacheDirs) {
-      final String resCacheDirOsPath = findResourcesCacheDirectory(module, false);
-      if (resCacheDirOsPath != null) {
-        LOG.info("PNG cache not found for module " + module.getName());
-        result.add(resCacheDirOsPath);
+      final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+      final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+
+      if (platformToolsRevision < 0 || platformToolsRevision > 7) {
+        // png cache is supported since platform-tools-r8
+        final String resCacheDirOsPath = findResourcesCacheDirectory(module, false);
+        if (resCacheDirOsPath != null) {
+          result.add(resCacheDirOsPath);
+        }
+        else {
+          LOG.info("PNG cache not found for module " + module.getName());
+        }
       }
     }
 
@@ -416,24 +435,6 @@ public class AndroidCompileUtil {
     if (resourcesDir != null) {
       result.add(resourcesDir.getPath());
     }
-    
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
-      final Module depModule = depFacet.getModule();
-      
-      if (collectResCacheDirs) {
-        final String depResCacheDirPath = findResourcesCacheDirectory(depModule, false);
-        if (depResCacheDirPath != null) {
-          LOG.info("PNG cache not found for module " + depModule.getName());
-          result.add(depResCacheDirPath);
-        }
-      }
-
-      final VirtualFile depResourceDir = AndroidAptCompiler.getResourceDirForApkCompiler(depModule, depFacet);
-      if (depResourceDir != null) {
-        result.add(depResourceDir.getPath());
-      }
-    }
-    return ArrayUtil.toStringArray(result);
   }
 
   @Nullable
