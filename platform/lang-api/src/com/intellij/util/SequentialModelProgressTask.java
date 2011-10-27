@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,15 +32,16 @@ import java.lang.reflect.InvocationTargetException;
  * @since 9/27/11 2:52 PM
  */
 public class SequentialModelProgressTask extends Task.Modal {
-
   private static final Logger LOG = Logger.getInstance("#" + SequentialModelProgressTask.class.getName());
   
+  private static final long DEFAULT_MIN_ITERATION_MIN_TIME = 500;
+
   /**
-   * We want to perform formatting by big chunks at EDT. However, there is a possible case that particular formatting iteration
-   * is executed in short amount of time. Hence, we may want to execute more than one formatting action during single EDT iteration.
-   * Current constant holds min amount of time to spend to formatting.
+   * We want to perform the task by big chunks at EDT. However, there is a possible case that particular task iteration
+   * is executed in short amount of time. Hence, we may want to execute more than one chunk during single EDT iteration.
+   * This field holds min amount of time (in milliseconds) to spend to performing the task.
    */
-  private static final long ITERATION_MIN_TIMES_MILLIS = 500;
+  private long myMinIterationTime = DEFAULT_MIN_ITERATION_MIN_TIME;
 
   private final String myTitle;
 
@@ -33,7 +49,11 @@ public class SequentialModelProgressTask extends Task.Modal {
   private SequentialTask myTask;
 
   public SequentialModelProgressTask(@Nullable Project project, @NotNull String title) {
-    super(project, title, true);
+    this(project, title, true);
+  }
+
+  public SequentialModelProgressTask(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
+    super(project, title, canBeCancelled);
     myTitle = title;
   }
 
@@ -71,7 +91,7 @@ public class SequentialModelProgressTask extends Task.Modal {
         public void run() {
           long start = System.currentTimeMillis();
           try {
-            while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS) {
+            while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
               task.iteration();
             }
           }
@@ -82,6 +102,10 @@ public class SequentialModelProgressTask extends Task.Modal {
         }
       });
     }
+  }
+
+  public void setMinIterationTime(long minIterationTime) {
+    myMinIterationTime = minIterationTime;
   }
 
   public void setTask(@Nullable SequentialTask task) {
