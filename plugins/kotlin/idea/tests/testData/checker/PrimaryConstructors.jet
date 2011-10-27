@@ -1,0 +1,14 @@
+class <error>X</error> {
+  val <error>x</error> : Int
+}
+
+open class Y() {
+  val x : Int = 2
+}
+
+class Y1 {
+  val x : Int get() = 1
+}
+
+class Z : Y<error>()</error> {
+}
