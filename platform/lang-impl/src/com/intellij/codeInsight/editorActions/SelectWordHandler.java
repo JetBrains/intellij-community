@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,6 +122,20 @@ public class SelectWordHandler extends EditorActionHandler {
       element = element.getNextSibling();
       if (element == null) return;
       caretOffset = element.getTextRange().getStartOffset();
+    }
+
+    if (element instanceof OuterLanguageElement) {
+      PsiElement elementInOtherTree = file.getViewProvider().findElementAt(element.getTextOffset(), element.getLanguage());
+      assert elementInOtherTree == null || elementInOtherTree.getContainingFile() != element.getContainingFile();
+      
+      while (elementInOtherTree != null && elementInOtherTree.getPrevSibling() == null) {
+        elementInOtherTree = elementInOtherTree.getParent();
+      }
+      
+      if (elementInOtherTree != null) {
+        assert elementInOtherTree.getTextOffset() == caretOffset;
+        element = elementInOtherTree;
+      }
     }
 
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
