@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidDxWrapper;
-import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
@@ -57,21 +56,6 @@ import java.util.*;
  * @author Alexey Efimov
  */
 public class AndroidDexCompiler implements ClassPostProcessingCompiler {
-
-  /*private static void saveDocuments() {
-    final Application application = ApplicationManager.getApplication();
-    Runnable runnable = new Runnable() {
-      public void run() {
-        application.saveAll();
-      }
-    };
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeAndWait(runnable, ModalityState.defaultModalityState());
-    }
-  }*/
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
@@ -180,86 +164,6 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  /*private static void collectClassFilesInLibraryModules(AndroidFacet facet, Collection<String> result) {
-    HashSet<AndroidFacet> visited = new HashSet<AndroidFacet>();
-    visited.add(facet);
-    HashSet<String> packages = new HashSet<String>();
-    Manifest manifest = facet.getManifest();
-    String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
-    packages.add(aPackage);
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), false)) {
-      collectRClassFiles(depFacet, result, visited, packages);
-    }
-  }*/
-
-  private static void collectRClassFiles(AndroidFacet facet,
-                                         Collection<String> result,
-                                         Set<AndroidFacet> visited,
-                                         Set<String> parentPackages) {
-    if (!visited.add(facet)) {
-      return;
-    }
-    CompilerModuleExtension extension = CompilerModuleExtension.getInstance(facet.getModule());
-    String thisPackage = null;
-    if (extension != null) {
-      VirtualFile outputDir = extension.getCompilerOutputPath();
-      if (outputDir != null) {
-        HashSet<String> packages = new HashSet<String>(parentPackages);
-        thisPackage = collectPackages(facet, packages, new HashSet<AndroidFacet>());
-        collectRClassFiles(outputDir, result, packages);
-      }
-    }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), false)) {
-      boolean added = false;
-      if (thisPackage != null) {
-        added = parentPackages.add(thisPackage);
-      }
-      collectRClassFiles(depFacet, result, visited, parentPackages);
-      if (added) {
-        parentPackages.remove(thisPackage);
-      }
-    }
-  }
-
-  @Nullable
-  private static String collectPackages(AndroidFacet facet, Set<String> result, Set<AndroidFacet> visited) {
-    if (!visited.add(facet)) {
-      return null;
-    }
-    Manifest manifest = facet.getManifest();
-    String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
-    if (aPackage != null) {
-      result.add(aPackage);
-    }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), true)) {
-      collectPackages(depFacet, result, visited);
-    }
-    return aPackage;
-  }
-
-  private static void collectRClassFiles(VirtualFile outDir, Collection<String> result, Collection<String> packages) {
-    for (String aPackage : packages) {
-      if (aPackage != null) {
-        String parentPath = outDir.getPath() + '/' + aPackage.replace('.', '/');
-        VirtualFile parentDir = LocalFileSystem.getInstance().findFileByPath(parentPath);
-        if (parentDir != null) {
-          for (VirtualFile child : parentDir.getChildren()) {
-            if (child.getFileType() == StdFileTypes.CLASS) {
-              if (isRJavaFile(child)) {
-                result.add(FileUtil.toSystemDependentName(child.getPath()));
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static boolean isRJavaFile(VirtualFile file) {
-    String name = file.getNameWithoutExtension();
-    return name.equals(AndroidUtils.R_CLASS_NAME) || name.startsWith(AndroidUtils.R_CLASS_NAME + "$");
-  }
-
   private final static class ProcessAction implements Computable<ProcessingItem[]> {
     private final CompileContext myContext;
     private final ProcessingItem[] myItems;
@@ -279,7 +183,6 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             continue;
           }
 
-          AndroidDxWrapper dxTool = new AndroidDxWrapper();
           String outputDirPath = FileUtil.toSystemDependentName(dexItem.myClassDir.getPath());
           String[] files = new String[dexItem.myFiles.size()];
           int i = 0;
@@ -287,16 +190,9 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             files[i++] = FileUtil.toSystemDependentName(file.getPath());
           }
 
-          /*for (String excludedFile : dexItem.myExcludedFiles) {
-            File f = new File(excludedFile);
-            if (f.exists()) {
-              f.delete();
-            }
-          }*/
+          Map<CompilerMessageCategory, List<String>> messages = AndroidDxWrapper
+            .execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files, ArrayUtil.toStringArray(dexItem.myExcludedFiles));
 
-          Map<CompilerMessageCategory, List<String>> messages =
-            dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files,
-                           ArrayUtil.toStringArray(dexItem.myExcludedFiles));
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(dexItem);
