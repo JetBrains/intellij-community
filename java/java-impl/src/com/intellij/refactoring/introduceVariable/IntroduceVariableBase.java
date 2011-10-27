@@ -71,7 +71,7 @@ import java.util.*;
  * @author dsl
  * Date: Nov 15, 2002
  */
-public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
+public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 

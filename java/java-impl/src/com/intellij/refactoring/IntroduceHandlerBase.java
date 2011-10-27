@@ -29,7 +29,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author dsl
  */
-public abstract class IntroduceHandlerBase {
+public abstract class IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.IntroduceHandlerBase");
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {

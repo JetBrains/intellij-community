@@ -78,7 +78,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
+public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
   static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private JBPopup myEnclosingMethodsPopup;
