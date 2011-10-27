@@ -29,15 +29,20 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class GotoRelatedItem {
-
+  private final int myMnemonic;
   private final PsiElement myElement;
 
-  public GotoRelatedItem(@NotNull PsiElement element) {
+  protected GotoRelatedItem(@Nullable PsiElement element, final int mnemonic) {
     myElement = element;
+    myMnemonic = mnemonic;
+  }
+  
+  public GotoRelatedItem(@NotNull PsiElement element) {
+    this(element, -1);
   }
 
   protected GotoRelatedItem() {
-    myElement = null;
+    this(null, -1);
   }
 
   public void navigate() {
@@ -57,6 +62,10 @@ public class GotoRelatedItem {
   @Nullable
   public PsiElement getElement() {
     return myElement;
+  }
+
+  public int getMnemonic() {
+    return myMnemonic;
   }
 
   public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements) {

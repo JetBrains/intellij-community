@@ -23,13 +23,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
@@ -94,91 +95,100 @@ public class GotoRelatedFileAction extends AnAction {
   private static JBPopup getPsiElementPopup(final Object[] elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
                                            final String title, final Processor<Object> processor) {
 
+    final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
-          {
-            setFocusBorderEnabled(false);
-          }
+      {
+        setFocusBorderEnabled(false);
+      }
 
-          @Override
-          public String getElementText(PsiElement element) {
-            String customName = itemsMap.get(element).getCustomName();
-            return customName != null ? customName : super.getElementText(element);
-          }
+      @Override
+      public String getElementText(PsiElement element) {
+        String customName = itemsMap.get(element).getCustomName();
+        return (customName != null ? customName : super.getElementText(element));
+      }
 
-          @Override
-          protected Icon getIcon(PsiElement element) {
-            Icon customIcon = itemsMap.get(element).getCustomIcon();
-            return customIcon != null ? customIcon : super.getIcon(element);
-          }
+      @Override
+      protected Icon getIcon(PsiElement element) {
+        Icon customIcon = itemsMap.get(element).getCustomIcon();
+        return customIcon != null ? customIcon : super.getIcon(element);
+      }
 
-          @Override
-          public String getContainerText(PsiElement element, String name) {
-            PsiFile file = element.getContainingFile();
-            return file != null && !getElementText(element).equals(file.getName())
-                   ? "(" + file.getName() + ")"
-                   : null;
-          }
+      @Override
+      public String getContainerText(PsiElement element, String name) {
+        PsiFile file = element.getContainingFile();
+        return file != null && !getElementText(element).equals(file.getName())
+               ? "(" + file.getName() + ")"
+               : null;
+      }
 
-          @Override
-          protected DefaultListCellRenderer getRightCellRenderer() {
-            return null;
-          }
+      @Override
+      protected DefaultListCellRenderer getRightCellRenderer() {
+        return null;
+      }
 
-          @Override
-          protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
-                                                               JList list,
-                                                               Object value,
-                                                               int index,
-                                                               boolean selected,
-                                                               boolean hasFocus) {
-            final GotoRelatedItem item = (GotoRelatedItem)value;
-            Color color = list.getForeground();
-            final SimpleTextAttributes nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
-            final String name = item.getCustomName();
-            if (name == null) return false;
-            renderer.append(name, nameAttributes);
-            renderer.setIcon(item.getCustomIcon());
-            return true;
-          }
-        };
-    if (false) {
-      final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, Arrays.asList(elements)) {
-        @Override
-        public boolean isSpeedSearchEnabled() {
-          return true;
-        }
-      }) {
-        @Override
-        protected ListCellRenderer getListElementRenderer() {
-          return renderer;
-        }
-      };
-      popup.setMinimumSize(new Dimension(200, -1));
-      return popup;
-    }
-    final JList list = new JBList(elements);
+      @Override
+      protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
+                                                           JList list,
+                                                           Object value,
+                                                           int index,
+                                                           boolean selected,
+                                                           boolean hasFocus) {
+        final GotoRelatedItem item = (GotoRelatedItem)value;
+        Color color = list.getForeground();
+        final SimpleTextAttributes nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+        final String name = item.getCustomName();
+        if (name == null) return false;
+        renderer.append(name, nameAttributes);
+        renderer.setIcon(item.getCustomIcon());
+        return true;
+      }
 
-    list.setCellRenderer(renderer);
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final JPanel component = (JPanel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (!hasMnemonic.get()) return component;
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        int[] ids = list.getSelectedIndices();
-        if (ids == null || ids.length == 0) return;
-        for (Object element : list.getSelectedValues()) {
-          if (element != null) {
-            processor.process(element);
-          }
-        }
+        final JPanel panelWithMnemonic = new JPanel(new BorderLayout());
+        final int mnemonic = getMnemonic(value, itemsMap);
+        final JLabel label = new JLabel(mnemonic != -1 ? mnemonic + "." : "");
+        label.setPreferredSize(new JLabel("8.").getPreferredSize());
+        final JComponent leftRenderer = (JComponent)component.getComponents()[0];
+        component.remove(leftRenderer);
+        panelWithMnemonic.setBackground(leftRenderer.getBackground());
+        label.setBackground(leftRenderer.getBackground());
+        panelWithMnemonic.add(label, BorderLayout.WEST);
+        panelWithMnemonic.add(leftRenderer, BorderLayout.CENTER);
+        component.add(panelWithMnemonic);
+        return component;
       }
     };
+    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, Arrays.asList(elements)) {
+      @Override
+      public boolean isSpeedSearchEnabled() {
+        return true;
+      }
 
-    PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    if (title != null) {
-      builder.setTitle(title);
+      @Override
+      public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
+        processor.process(selectedValue);
+        return super.onChosen(selectedValue, finalChoice);
+      }
+    }) {
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return renderer;
+      }
+    };
+    popup.setMinimumSize(new Dimension(200, -1));
+    for (GotoRelatedItem item : itemsMap.values()) {
+      final int mnemonic = item.getMnemonic();
+      if (mnemonic != -1) {
+        final Action action = createNumberAction(mnemonic, popup, itemsMap, processor);
+        popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke(String.valueOf(mnemonic)), action);
+        hasMnemonic.set(true);
+      }
     }
-    renderer.installSpeedSearch(builder, true);
-    builder.setMinSize(new Dimension(200, -1));
-    return builder.setItemChoosenCallback(runnable).createPopup();
+    return popup;
   }
 
   @NotNull
@@ -205,5 +215,30 @@ public class GotoRelatedFileAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(LangDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
+  }
+
+  private static Action createNumberAction(final int mnemonic,
+                                           final ListPopupImpl listPopup,
+                                           final Map<PsiElement, GotoRelatedItem> itemsMap,
+                                           final Processor<Object> processor) {
+      return new AbstractAction() {
+        public void actionPerformed(ActionEvent e) {
+          for (final Object item : listPopup.getListStep().getValues()) {
+            if (getMnemonic(item, itemsMap) == mnemonic) {
+              listPopup.setFinalRunnable(new Runnable() {
+                @Override
+                public void run() {
+                  processor.process(item);
+                }
+              });
+              listPopup.closeOk(null);
+            }
+          }
+        }
+      };
+    }
+
+  private static int getMnemonic(Object item, Map<PsiElement, GotoRelatedItem> itemsMap) {
+    return (item instanceof GotoRelatedItem ? (GotoRelatedItem)item : itemsMap.get((PsiElement)item)).getMnemonic();
   }
 }
