@@ -15,8 +15,7 @@
  */
 package com.intellij.core;
 
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.DefaultASTFactory;
+import com.intellij.lang.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -49,7 +48,19 @@ public class CoreASTFactory extends ASTFactory implements DefaultASTFactory {
 
   @Override
   @NotNull
-  public LeafElement createLeaf(IElementType type, CharSequence text) {
+  public LeafElement createLeaf(final IElementType type, final CharSequence text) {
+    final Language lang = type.getLanguage();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    if (parserDefinition != null) {
+      if (parserDefinition.getCommentTokens().contains(type)) {
+        return createComment(type, text);
+      }
+    }
+
     return new LeafPsiElement(type, text);
+  }
+
+  public LeafElement createComment(IElementType type, CharSequence text) {
+    return new PsiCoreCommentImpl(type, text);
   }
 }

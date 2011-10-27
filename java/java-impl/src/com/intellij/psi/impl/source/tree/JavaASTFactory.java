@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.lang.DefaultASTFactory;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocTokenImpl;
@@ -30,6 +32,8 @@ import com.intellij.psi.tree.java.IJavaElementType;
  * @author max
  */
 public class JavaASTFactory extends ASTFactory implements Constants {
+  private final DefaultASTFactory myDefaultASTFactory = ServiceManager.getService(DefaultASTFactory.class);
+
   @Override
   public CompositeElement createComposite(final IElementType type) {
     if (type == DOC_TAG_VALUE_TOKEN) {
@@ -42,7 +46,7 @@ public class JavaASTFactory extends ASTFactory implements Constants {
   @Override
   public LeafElement createLeaf(final IElementType type, final CharSequence text) {
     if (type == C_STYLE_COMMENT || type == END_OF_LINE_COMMENT) {
-      return new PsiCommentImpl(type, text);
+      return myDefaultASTFactory.createComment(type, text);
     }
     else if (type == IDENTIFIER) {
       return new PsiIdentifierImpl(text);

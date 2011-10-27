@@ -19,20 +19,9 @@ import com.intellij.core.CoreASTFactory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NotNull;
 
 public class DefaultASTFactoryImpl extends CoreASTFactory implements DefaultASTFactory {
-  @Override
-  @NotNull
-  public LeafElement createLeaf(final IElementType type, final CharSequence text) {
-    final Language lang = type.getLanguage();
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    if (parserDefinition != null) {
-      if (parserDefinition.getCommentTokens().contains(type)) {
-        return new PsiCommentImpl(type, text);
-      }
-    }
-
-    return super.createLeaf(type, text);
+  public LeafElement createComment(IElementType type, CharSequence text) {
+    return new PsiCommentImpl(type, text);
   }
 }

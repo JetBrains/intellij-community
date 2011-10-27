@@ -15,10 +15,14 @@
  */
 package com.intellij.lang;
 
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.tree.IElementType;
+
 /**
  * Marker interface for retrieving the service which provides a default implementation of ASTFactory.
  *
  * @author yole
  */
 public interface DefaultASTFactory {
+  LeafElement createComment(IElementType type, CharSequence text);
 }
