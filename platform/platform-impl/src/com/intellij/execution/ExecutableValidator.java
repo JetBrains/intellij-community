@@ -140,4 +140,8 @@ public abstract class ExecutableValidator {
     return true;
   }
   
+  public boolean isExecutableValid() {
+    return isExecutableValid(getCurrentExecutable());
+  }
+  
 }
