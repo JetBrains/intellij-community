@@ -429,9 +429,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
 
     IdeEventQueue queue = IdeEventQueue.getInstance();
-    if (!queue.containsDispatcher(this) && myPreprocessorActive) {
+    if (!queue.containsDispatcher(this) && (myPreprocessorActive || isVisible())) {
       queue.addDispatcher(this, null);
-    } else if (queue.containsDispatcher(this) && !myPreprocessorActive) {
+    } else if (queue.containsDispatcher(this) && !myPreprocessorActive && !isVisible()) {
       queue.removeDispatcher(this);
     }
 
