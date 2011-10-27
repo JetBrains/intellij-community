@@ -47,6 +47,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
   private final Map<String, String> myToolWindowCapable = new java.util.LinkedHashMap<String, String>();
   private final MessageBus myMessageBus;
+  public boolean SHOW_BALLOONS = true;
 
   public static NotificationsConfigurationImpl getNotificationsConfigurationImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();

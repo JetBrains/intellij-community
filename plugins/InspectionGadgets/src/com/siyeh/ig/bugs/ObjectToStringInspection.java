@@ -186,7 +186,7 @@ public class ObjectToStringInspection extends BaseInspection {
         return true;
       }
       final String className = aClass.getQualifiedName();
-      if ("java.lang.Object".equals(className)) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
         return false;
       }
       final PsiMethod[] methods = aClass.getMethods();

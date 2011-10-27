@@ -87,7 +87,7 @@ public class ConfusingMainMethodInspection extends BaseInspection {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType parameterType = parameters[0].getType();
-      if (!TypeUtils.typeEquals("java.lang.String" + "[]",
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING + "[]",
                                 parameterType)) {
         registerMethodError(aMethod);
       }

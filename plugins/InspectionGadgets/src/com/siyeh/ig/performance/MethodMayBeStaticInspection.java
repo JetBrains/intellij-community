@@ -213,7 +213,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
         }
         final PsiType returnType = method.getReturnType();
         if (returnType == null ||
-            !returnType.equalsToText("java.lang.Object")) {
+            !returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
           return false;
         }
         final PsiParameterList parameterList =

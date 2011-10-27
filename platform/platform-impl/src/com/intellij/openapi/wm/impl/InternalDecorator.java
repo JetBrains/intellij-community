@@ -384,7 +384,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
     setBorder(new InnerPanelBorder(myToolWindow));
-    setBackground(new SameColor(200));
+    if (SystemInfo.isMac) {
+      setBackground(new SameColor(200));
+    }
 
     // Add listeners
     registerKeyboardAction(new ActionListener() {

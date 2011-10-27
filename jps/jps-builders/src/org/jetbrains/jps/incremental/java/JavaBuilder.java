@@ -15,7 +15,10 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FileProcessor;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -55,9 +58,6 @@ public class JavaBuilder extends Builder{
   };
 
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
-  private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
-  private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
-
   private final EmbeddedJavac myJavacCompiler;
 
   public JavaBuilder(ExecutorService tasksExecutor) {
@@ -154,21 +154,9 @@ public class JavaBuilder extends Builder{
       }
       upToDateForms.clear();
 
-      final Set<File> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
-      final Set<String> removedPaths; // only collect them in make mode
-      if (removed == null || removed.isEmpty()){
-        removedPaths = Collections.emptySet();
-      }
-      else {
-        removedPaths = new HashSet<String>();
-        for (File file : removed) {
-          removedPaths.add(file.getPath());
-        }
-      }
-
       context.deleteCorrespondingClasses(filesToCompile);
 
-      return compile(context, chunk, filesToCompile, formsToCompile, removedPaths);
+      return compile(context, chunk, filesToCompile, formsToCompile);
     }
     catch (Exception e) {
       String message = e.getMessage();
@@ -202,12 +190,12 @@ public class JavaBuilder extends Builder{
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms, Set<String> removedSources) throws Exception {
+  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms) throws Exception {
     ExitCode exitCode = ExitCode.OK;
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
-    if (!hasSourcesToCompile && removedSources.isEmpty()) {
+    if (!hasSourcesToCompile && !context.hasRemovedSources()) {
       return exitCode;
     }
 
@@ -223,20 +211,6 @@ public class JavaBuilder extends Builder{
     final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk);
-
-    final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
-
-    Set<File> allCompiledFiles = ALL_COMPILED_FILES_KEY.get(context);
-    if (allCompiledFiles == null) {
-      allCompiledFiles = new HashSet<File>();
-      ALL_COMPILED_FILES_KEY.set(context, allCompiledFiles);
-    }
-
-    Set<File> allAffectedFiles = ALL_AFFECTED_FILES_KEY.get(context);
-    if (allAffectedFiles == null) {
-      allAffectedFiles = new HashSet<File>();
-      ALL_AFFECTED_FILES_KEY.set(context, allAffectedFiles);
-    }
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -281,43 +255,13 @@ public class JavaBuilder extends Builder{
       outputSink.writePendingData();
 
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
-      final Mappings globalMappings = context.getMappings();
+      DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
 
-      if (context.isMake()) {
-        DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
-
-        // mark as affected all files that were dirty before compilation
-        allAffectedFiles.addAll(files);
-        // accumulate all successfully compiled in this round
-        allCompiledFiles.addAll(successfullyCompiled);
-        // unmark as affected all successfully compiled
-        allAffectedFiles.removeAll(successfullyCompiled);
-
-        final boolean incremental = globalMappings.differentiate(
-          delta, removedSources, successfullyCompiled, allCompiledFiles, allAffectedFiles
-        );
-
-        if (incremental) {
-          final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
-          newlyAffectedFiles.removeAll(allCompiledFiles);
-          for (File file : newlyAffectedFiles) {
-            tsStorage.markDirty(file);
-          }
-          if (chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles)) {
-            exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-          }
-        }
-        else {
-          exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-          context.setDirty(chunk, true);
-        }
+      if (updateMappings(context, delta, chunk, files, successfullyCompiled)) {
+        exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
 
-      globalMappings.integrate(delta, successfullyCompiled, removedSources);
-
-      for (File file : successfullyCompiled) {
-        tsStorage.saveStamp(file);
-      }
+      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
       for (File file : successfulForms) {
         tsStorage.saveStamp(file);
       }

@@ -26,6 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -234,7 +235,7 @@ public class WelcomeScreen implements Disposable {
     myMainPanel.add(docsPanel);
 
     // Accept dropping of project file/dir from file manager and open that project
-    DnDManager.getInstance().registerTarget(new OpenProjectDropTarget(myWelcomePanel), myWelcomePanel);
+    myWelcomePanel.setTransferHandler(new OpenProjectTransferHandler(myWelcomePanel));
   }
 
   private JComponent setUpRecentProjectsPanel(IdeRootPane rootPane, AnAction[] recentProjectsActions) {
@@ -873,43 +874,35 @@ public class WelcomeScreen implements Disposable {
     return scrollPane;
   }
 
-  private static class OpenProjectDropTarget implements DnDNativeTarget {
-    private final JPanel myComponent;
+  private static class OpenProjectTransferHandler extends TransferHandler {
+    private final JComponent myComponent;
 
-    private OpenProjectDropTarget(JPanel component) {
+    public OpenProjectTransferHandler(final JComponent component) {
       myComponent = component;
     }
 
-    @Override
-    public void cleanUpOnLeave() {
+    public boolean canImport(final TransferSupport support) {
+      return FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors());
     }
 
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-    }
-
-    @Override
-    public void drop(DnDEvent event) {
-      String projectPath = getProjectPath(event);
-      assert projectPath != null;
-      ReopenProjectAction action = new ReopenProjectAction(projectPath, projectPath);
-      DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
-      AnActionEvent e = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-      action.actionPerformed(e);
-    }
-
-    @Override
-    public boolean update(DnDEvent event) {
-      event.setDropPossible(getProjectPath(event) != null);
-      return false;
+    public boolean importData(final TransferSupport support) {
+      final String projectPath = getProjectPath(support);
+      if (projectPath == null) return false;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          ReopenProjectAction action = new ReopenProjectAction(projectPath, projectPath);
+          DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
+          AnActionEvent e = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+          action.actionPerformed(e);
+        }
+      });
+      return true;
     }
 
     @Nullable
-    private static String getProjectPath(DnDEvent event) {
-      if (!FileCopyPasteUtil.isFileListFlavorSupported(event)) return null;
-      Object attachedObject = event.getAttachedObject();
-      if (!(attachedObject instanceof EventInfo)) return null;
-      List<File> files = FileCopyPasteUtil.getFileList(((EventInfo)attachedObject).getTransferable());
+    private static String getProjectPath(final TransferSupport support) {
+      if (!FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors())) return null;
+      List<File> files = FileCopyPasteUtil.getFileList(support.getTransferable());
       if (files == null) return null;
       File file = ContainerUtil.getFirstItem(files);
       return file != null && isProjectFileOrDir(file) ? file.getAbsolutePath() : null;

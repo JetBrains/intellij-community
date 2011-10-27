@@ -265,7 +265,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             return false;
           }
           return InheritanceUtil.isInheritor(containingClass,
-                                             "java.lang.AbstractStringBuilder");
+                                             CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER);
         }
         else if ("valueOf".equals(methodName)) {
           if (arguments.length != 1) {
@@ -273,7 +273,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
           }
           final String qualifiedName =
             containingClass.getQualifiedName();
-          return "java.lang.String".equals(qualifiedName);
+          return CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName);
         }
         if (!"print".equals(methodName) &&
             !"println".equals(methodName)) {
@@ -306,7 +306,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         }
         final String qualifiedName = containingClass.getQualifiedName();
         if ("java.util.Formatter".equals(qualifiedName) ||
-            "java.lang.String".equals(qualifiedName)) {
+            CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
           return true;
         }
         if (InheritanceUtil.isInheritor(containingClass,

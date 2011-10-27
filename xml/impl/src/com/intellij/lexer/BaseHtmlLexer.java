@@ -60,9 +60,6 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     public void handleElement(Lexer lexer) {
       final CharSequence buffer = lexer.getBufferSequence();
       final char firstCh = buffer.charAt(lexer.getTokenStart());
-      // support for style in any attribute that ends with style
-      //final int i = lexer.getTokenEnd() - "style".length();
-      //final char ch = i > lexer.getTokenStart() ? buffer[i]:firstCh;
 
       if (seenScript && !seenTag) {
         seenContentType = false;
@@ -79,9 +76,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
         return;
       }
 
-      if ( /*ch !='s' &&*/
-          firstCh !='o' && firstCh !='s' &&
-          (!caseInsensitive || (/*ch !='S' &&*/ firstCh !='S' && firstCh !='O') )
+      if (firstCh !='o' && firstCh !='s' &&
+          (!caseInsensitive || (firstCh !='S' && firstCh !='O') )
           ) {
         return; // optimization
       }
@@ -89,7 +85,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       String name = TreeUtil.getTokenText(lexer);
       if (caseInsensitive) name = name.toLowerCase();
 
-      final boolean style = name.equals(TOKEN_STYLE); //name.endsWith("style");
+      final boolean style = name.equals(TOKEN_STYLE);
       final int state = getState() & BASE_STATE_MASK;
       final boolean script = name.equals(TOKEN_SCRIPT) || 
                        ((name.startsWith(TOKEN_ON) && name.indexOf(':') == -1 && !isHtmlTagState(state)));
@@ -97,7 +93,9 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       if (style || script) {
         // encountered tag name in end of tag
         if (seenTag) {
-          seenTag = false;
+          if (isHtmlTagState(state)) {
+            seenTag = false;
+          }
           return;
         }
 

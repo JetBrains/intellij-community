@@ -3,7 +3,7 @@ package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 import java.util.*;
 import java.io.FileInputStream;
 
-public class MismatchedCollectionQueryUpdateInspection {
+public class MismatchedCollectionQueryUpdate {
     private Set foo = new HashSet();
     private Set foo2 = new HashSet();
     private Set bar ;
@@ -122,4 +122,28 @@ public class MismatchedCollectionQueryUpdateInspection {
             return null;
         }
     }
+
+  private static String foos() {
+    final List bar = new ArrayList();
+    bar.add("okay");
+    return "not " + bar + "";
+  }
+
+  private Set foo = new HashSet();
+
+  public void foo()
+  {
+    final Set localFoo = foo;
+  }
+
+  public void foofoo()
+  {
+    final Map<String, String> anotherMap = new HashMap<String, String>();
+    final SortedMap<String, String> map = new TreeMap<String, String>(anotherMap);
+    final Iterator<String> it = map.keySet().iterator();
+    while(it.hasNext()){
+      Object o = it.next();
+
+    }
+  }
 }

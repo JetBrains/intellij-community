@@ -55,16 +55,7 @@ public class BuilderRegistry {
   }
 
   public void shutdown() {
-    try {
-      for (List<Builder> builders : myBuilders.values()) {
-        for (Builder builder : builders) {
-          builder.cleanupResources();
-        }
-      }
-    }
-    finally {
-      myTasksExecutor.shutdownNow();
-    }
+    myTasksExecutor.shutdownNow();
   }
 
 }

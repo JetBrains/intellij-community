@@ -84,7 +84,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
       PsiElement stmt = PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
         @Override
         public boolean value(PsiElement element11) {
-          return PsiUtil.isExpressionStatement(element11.getParent());
+          return PsiUtil.isExpressionStatement(element11);
         }
       });
 

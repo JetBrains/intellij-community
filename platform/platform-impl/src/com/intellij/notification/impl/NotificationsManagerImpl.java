@@ -171,10 +171,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     String groupId = notification.getGroupId();
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
-    if (EventLog.isEventLogVisible(project) && settings.isShouldLog()) {
-      return;
-    }
-
     NotificationDisplayType type = settings.getDisplayType();
     String toolWindowId = NotificationsConfigurationImpl.getNotificationsConfigurationImpl().getToolWindowId(groupId);
     if (type == NotificationDisplayType.TOOL_WINDOW &&
@@ -191,7 +187,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       case STICKY_BALLOON:
       case BALLOON:
       default:
-        notifyByBalloon(notification, type, project);
+        if (NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS) {
+          notifyByBalloon(notification, type, project);
+        }
         break;
       case TOOL_WINDOW:
         MessageType messageType = notification.getType() == NotificationType.ERROR
