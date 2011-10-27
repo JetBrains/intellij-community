@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,12 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+public class OtherTabsAndIndentsProvider extends CodeStyleSettingsProvider {
   @NotNull
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.general")) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.other.tabs.and.indents")) {
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new GeneralCodeStylePanel(settings);
+        return new OtherTabsAndIndentsPanel(settings);
       }
 
       public Icon getIcon() {
@@ -49,11 +49,11 @@ public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider 
 
   @Override
   public String getConfigurableDisplayName() {
-    return ApplicationBundle.message("title.general");
+    return ApplicationBundle.message("title.other.tabs.and.indents");
   }
 
   @Override
   public DisplayPriority getPriority() {
-    return DisplayPriority.COMMON_SETTINGS;
+    return DisplayPriority.OTHER_SETTINGS;
   }
 }
