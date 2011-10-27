@@ -41,6 +41,7 @@ public class LabelTextReplacingUtil {
       if (child instanceof JLabel) {
         final JLabel label = (JLabel)child;
         String oldText = label.getText();
+        if (oldText == null) continue;
         String newText = StringUtil.replace(oldText, "$PRODUCT$", ApplicationNamesInfo.getInstance().getProductName());
         newText = StringUtil.replace(newText, "$FULLNAME$", ApplicationNamesInfo.getInstance().getFullProductName());
         label.setText(newText);
