@@ -68,8 +68,8 @@ public class HighlightNamesUtil {
 
   @Nullable
   public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, final EditorColorsScheme colorsScheme) {
-    HighlightInfoType type = getClassNameHighlightType(aClass);
-    if (type != null && elementToHighlight != null) {
+    HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
+    if (elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
       TextRange range = elementToHighlight.getTextRange();
       if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
@@ -154,7 +154,11 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static HighlightInfoType getClassNameHighlightType(PsiClass aClass) {
+  @NotNull
+  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @Nullable PsiElement element) {
+    if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnonymousClass) {
+      return HighlightInfoType.ANONYMOUS_CLASS_NAME;
+    }
     if (aClass != null) {
       if (aClass.isAnnotationType()) return HighlightInfoType.ANNOTATION_NAME;
       if (aClass.isInterface()) return HighlightInfoType.INTERFACE_NAME;

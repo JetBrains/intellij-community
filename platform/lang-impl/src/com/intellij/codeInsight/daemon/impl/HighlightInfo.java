@@ -149,13 +149,16 @@ public class HighlightInfo implements Segment {
     return EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type,
+                                                  @NotNull PsiElement element,
+                                                  @Nullable String description)
+  {
     return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
   }
 
   @Nullable
   @NonNls
-  public static String htmlEscapeToolTip(String description) {
+  public static String htmlEscapeToolTip(@Nullable String description) {
     return description == null ? null : "<html><body>"+ XmlStringUtil.escapeString(description)+"</body></html>";
   }
 
@@ -292,6 +295,7 @@ public class HighlightInfo implements Segment {
     if (type == HighlightInfoType.INTERFACE_NAME) return false;
     if (type == HighlightInfoType.ABSTRACT_CLASS_NAME) return false;
     if (type == HighlightInfoType.CLASS_NAME) return false;
+    if (type == HighlightInfoType.ANONYMOUS_CLASS_NAME) return false;
     return true;
   }
 
