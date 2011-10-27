@@ -128,7 +128,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
   private GitReferenceTracker myReferenceTracker;
   private boolean isActivated; // If true, the vcs was activated
-  private GitExecutableValidator myExecutableValidator;
+  private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
   private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
@@ -169,6 +169,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
     myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
+    myExecutableValidator = new GitExecutableValidator(myProject, this);
   }
 
 
@@ -345,11 +346,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   protected void activate() {
     isActivated = true;
-    myExecutableValidator = new GitExecutableValidator(myProject, this);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myExecutableValidator.checkExecutableAndNotifyIfNeeded();
-      checkVersion();
+      if (myExecutableValidator.checkExecutableAndNotifyIfNeeded()) {
+        checkVersion();
+      }
     }
 
     if (!myProject.isDefault() && myRootTracker == null) {
@@ -589,6 +590,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return isActivated;
   }
 
+  @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return myExecutableValidator;
   }

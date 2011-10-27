@@ -183,17 +183,21 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
-    GitHistoryUtils.history(myProject, path, null, new Consumer<GitFileRevision>() {
-      public void consume(GitFileRevision gitFileRevision) {
-        partner.acceptRevision(gitFileRevision);
-      }
-    }, new Consumer<VcsException>() {
-      public void consume(VcsException e) {
-        if (validator.checkExecutableAndNotifyIfNeeded()) {
-          partner.reportException(e);
+    try {
+      GitHistoryUtils.history(myProject, path, null, new Consumer<GitFileRevision>() {
+        public void consume(GitFileRevision gitFileRevision) {
+          partner.acceptRevision(gitFileRevision);
         }
-      }
-    });
+      }, new Consumer<VcsException>() {
+        public void consume(VcsException e) {
+          if (validator.checkExecutableAndNotifyIfNeeded()) {
+            partner.reportException(e);
+          }
+        }
+      });
+    } catch (VcsException e) {
+      validator.showNotificationOrThrow(e);
+    }
   }
 
   /**

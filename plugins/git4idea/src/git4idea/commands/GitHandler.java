@@ -412,6 +412,7 @@ public abstract class GitHandler {
       startHandlingStreams();
     }
     catch (Throwable t) {
+      myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded();
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }

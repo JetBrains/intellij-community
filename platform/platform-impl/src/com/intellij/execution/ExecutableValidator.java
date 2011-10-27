@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,25 +24,29 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
 /**
- * Validates the given external executable. If it is not valid, shows notification to fix it.
+ * Validates the given external executable.
+ * If it is not valid, shows notification to fix it.
+ * Notification balloon in the upper right corner is shown only the first time. After it is shown in the toolwindow group.
+ * This is done, because it is hard to discover whether notification balloon is showing or not, and showing several balloons about a single
+ * problem is a bad idea.
  *
  * @author Kirill Likhodedov
  */
 public abstract class ExecutableValidator {
-  
-  private final NotificationGroup myNotificationGroup = new NotificationGroup("External Executable Critical Failures", NotificationDisplayType.STICKY_BALLOON, true);
+
+  public static final String NOTIFICATION_ID = "External Executable Critical Failures";
+  private final NotificationGroup myNotificationGroup = new NotificationGroup(NOTIFICATION_ID, NotificationDisplayType.TOOL_WINDOW, true,
+                                                                              ToolWindowId.VCS);
 
   private final Project myProject;
   private final String myNotificationErrorTitle;
   private final String myNotificationErrorDescription;
-
-  private Notification myNotification;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
@@ -97,29 +101,15 @@ public abstract class ExecutableValidator {
       return;
     }
 
-    final String description = prepareDescription();
-    final Notification newNotification = myNotificationGroup.createNotification("", description, NotificationType.ERROR,
+    myNotificationGroup.createNotification("", prepareDescription(), NotificationType.ERROR,
       new NotificationListener() {
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           showSettingsAndExpireIfFixed(notification);
         }
-      });
-
-    // expire() needs to be called from AWT thread.
-    // we also want to be sure that previous notification expires before new one is shown (and assigned to myNotification).
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myNotification != null && !myNotification.isExpired()) {
-          // don't store this notification twice, but redisplay it again so that popup appears.
-          myNotification.expire();
-        }
-        myNotification = newNotification;
-        Notifications.Bus.notify(myNotification, myProject.isDefault() ? null : myProject);
       }
-    });
+    ).notify(myProject);
   }
-
+  
   @NotNull
   private String prepareDescription() {
     String executable = getCurrentExecutable();
