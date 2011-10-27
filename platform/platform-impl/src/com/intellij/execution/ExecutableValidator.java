@@ -107,7 +107,7 @@ public abstract class ExecutableValidator {
           showSettingsAndExpireIfFixed(notification);
         }
       }
-    ).notify(myProject);
+    ).notify(myProject.isDefault() ? null : myProject);
   }
   
   @NotNull
