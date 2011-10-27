@@ -16,6 +16,7 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
+import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
@@ -111,10 +112,9 @@ public class GroovycRunner {
       final List compilerMessages = new ArrayList();
       final List patchers = new ArrayList();
       final List srcFiles = new ArrayList();
-      final Map class2File = new HashMap();
 
       final String[] finalOutput = new String[1];
-      fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File, finalOutput);
+      fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, finalOutput);
       if (srcFiles.isEmpty()) return;
 
       if (forStubs) {
@@ -126,7 +126,7 @@ public class GroovycRunner {
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
       final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration, finalOutput[0]);
       addSources(forStubs, srcFiles, unit);
-      runPatchers(patchers, compilerMessages, class2File, unit);
+      runPatchers(patchers, compilerMessages, unit);
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: compiling...");
       final List compiledFiles = GroovyCompilerWrapper.compile(compilerMessages, forStubs, unit);
@@ -173,7 +173,7 @@ public class GroovycRunner {
   }
 
   private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List patchers, List compilerMessages,
-                                         List srcFiles, Map class2File, String[] finalOutput) {
+                                         List srcFiles, String[] finalOutput) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -192,10 +192,6 @@ public class GroovycRunner {
 
         final File file = new File(reader.readLine());
         srcFiles.add(file);
-        while (!END.equals(line = reader.readLine())) {
-          class2File.put(line, file);
-        }
-
       }
 
       while (line != null) {
@@ -269,9 +265,18 @@ public class GroovycRunner {
     }
   }
 
-  private static void runPatchers(List patchers, List compilerMessages, Map class2File, CompilationUnit unit) {
+  private static void runPatchers(List patchers, List compilerMessages, CompilationUnit unit) {
     if (!patchers.isEmpty()) {
-      final PsiAwareResourceLoader loader = new PsiAwareResourceLoader(class2File);
+      final AstAwareResourceLoader loader = new AstAwareResourceLoader();
+      unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
+        public void call(SourceUnit source) throws CompilationFailedException {
+          File file = new File(source.getName());
+          List classes = source.getAST().getClasses();
+          for (int i = 0; i < classes.size(); i++) {
+            loader.myClass2File.put(((ClassNode)classes.get(i)).getName(), file);
+          }
+        }
+      }, Phases.CONVERSION);
       for (int i = 0; i < patchers.size(); i++) {
         final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patchers.get(i);
         try {

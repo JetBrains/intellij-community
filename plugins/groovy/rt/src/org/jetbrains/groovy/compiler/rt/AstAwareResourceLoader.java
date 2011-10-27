@@ -18,16 +18,18 @@ package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyResourceLoader;
 
-import java.util.Map;
-import java.net.URL;
-import java.net.MalformedURLException;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-public class PsiAwareResourceLoader implements GroovyResourceLoader {
-  private final Map myClass2File;
+public class AstAwareResourceLoader implements GroovyResourceLoader {
+  final Map myClass2File;
 
-  PsiAwareResourceLoader(Map class2File) {
-    myClass2File = class2File;
+  AstAwareResourceLoader() {
+    myClass2File = Collections.synchronizedMap(new HashMap());
   }
 
   public URL loadGroovySource(String className) throws MalformedURLException {

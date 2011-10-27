@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Chunk;
@@ -77,7 +76,6 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -333,21 +331,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     for (final VirtualFile item : virtualFiles) {
       printer.println(GroovycRunner.SRC_FILE);
       printer.println(FileUtil.toSystemDependentName(item.getPath()));
-
-      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
-        if (file instanceof GroovyFileBase) {
-          for (PsiClass psiClass : ((GroovyFileBase)file).getClasses()) {
-            printer.println(psiClass.getQualifiedName());
-          }
-        }
-      } 
-      finally {
-        accessToken.finish();
-      }
-
-      printer.println(GroovycRunner.END);
     }
 
     if (!patchers.isEmpty()) {
