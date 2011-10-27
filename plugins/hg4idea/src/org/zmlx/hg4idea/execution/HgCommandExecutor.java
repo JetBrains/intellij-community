@@ -154,13 +154,9 @@ public final class HgCommandExecutor {
         passReceiver.saveCredentials();
       }
     } catch (ShellCommandException e) {
-      if (!myIsSilent) {
-        if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-          // if the problem was not with invalid executable - show error.
-          showError(e);
-          LOG.info(e.getMessage(), e);
-        }
-      } else {
+      if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        // if the problem was not with invalid executable - show error.
+        showError(e);
         LOG.info(e.getMessage(), e);
       }
       return null;
