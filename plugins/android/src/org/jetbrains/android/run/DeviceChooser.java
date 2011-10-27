@@ -49,7 +49,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
 public class DeviceChooser implements Disposable {
   private static final String[] COLUMN_TITLES = new String[]{"Serial Number", "AVD name", "State", "Compatible"};
   public static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
-  
+
   private final List<DeviceChooserListener> myListeners = new ArrayList<DeviceChooserListener>();
   private final Alarm myRefreshingAlarm = new Alarm(this);
 
@@ -156,7 +156,7 @@ public class DeviceChooser implements Disposable {
           selectedRows.add(i);
         }
       }
-      
+
       myProcessSelectionFlag = false;
       myDeviceTable.setModel(new MyDeviceTableModel(devices));
       if (selectedRows.size() == 0 && devices.length > 0) {
@@ -226,6 +226,10 @@ public class DeviceChooser implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public void setEnabled(boolean enabled) {
+    myDeviceTable.setEnabled(enabled);
   }
 
   @NotNull

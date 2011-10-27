@@ -138,7 +138,7 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
   private void updateEnabled() {
     myAvdCombo.setEnabled(myLaunchEmulatorRadioButton.isSelected());
     myAvdLabel.setEnabled(myLaunchEmulatorRadioButton.isSelected());
-    myDeviceChooser.getDeviceTable().setEnabled(myChooserRunningDeviceRadioButton.isSelected());
+    myDeviceChooser.setEnabled(myChooserRunningDeviceRadioButton.isSelected());
     updateOkButton();
   }
 
