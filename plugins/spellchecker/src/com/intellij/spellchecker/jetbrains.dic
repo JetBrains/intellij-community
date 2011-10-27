@@ -199,6 +199,7 @@ mediumint
 mediumtext
 metadata
 middleint
+millis
 minextents
 minimizable
 minvalue
