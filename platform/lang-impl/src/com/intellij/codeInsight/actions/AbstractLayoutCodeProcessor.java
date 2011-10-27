@@ -42,7 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SequentialModelProgressTask;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,7 +239,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     return new Runnable() {
       public void run() {
-        SequentialModelProgressTask progressTask = new SequentialModelProgressTask(myProject, myCommandName);
+        SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, myCommandName);
         ReformatFilesTask reformatFilesTask = new ReformatFilesTask(tasks);
         reformatFilesTask.setCompositeTask(progressTask);
         progressTask.setTask(reformatFilesTask);
@@ -496,7 +496,7 @@ public abstract class AbstractLayoutCodeProcessor {
     private final List<FutureTask<Boolean>> myTasks;
     private final int                       myTotalTasksNumber;
     
-    private SequentialModelProgressTask myCompositeTask;
+    private SequentialModalProgressTask myCompositeTask;
 
     ReformatFilesTask(@NotNull List<FutureTask<Boolean>> tasks) {
       myTasks = tasks;
@@ -551,7 +551,7 @@ public abstract class AbstractLayoutCodeProcessor {
       myTasks.clear(); 
     }
 
-    public void setCompositeTask(@Nullable SequentialModelProgressTask compositeTask) {
+    public void setCompositeTask(@Nullable SequentialModalProgressTask compositeTask) {
       myCompositeTask = compositeTask;
     }
   }

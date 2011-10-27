@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.SequentialModelProgressTask;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Denis Zhdanov
  * @since 2/10/11 3:00 PM
  */
-public class FormattingProgressTask extends SequentialModelProgressTask implements FormattingProgressCallback {
+public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
 
   /**
    * Holds flag that indicates whether formatting was cancelled by end-user or not.
