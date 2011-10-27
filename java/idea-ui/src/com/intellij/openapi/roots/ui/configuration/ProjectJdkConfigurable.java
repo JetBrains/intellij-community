@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -138,7 +137,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     return !Comparing.equal(projectJdk, getSelectedProjectJdk());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
   }
 

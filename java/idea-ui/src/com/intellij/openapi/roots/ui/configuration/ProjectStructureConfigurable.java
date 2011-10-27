@@ -275,6 +275,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public void apply() throws ConfigurationException {
     for (Configurable each : myName2Config) {
+      if (each instanceof BaseStructureConfigurable && each.isModified()) {
+        ((BaseStructureConfigurable)each).checkCanApply();
+      }
+    }
+    for (Configurable each : myName2Config) {
       if (each.isModified()) {
         each.apply();
       }

@@ -244,16 +244,11 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
         final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
         LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
-        try {
-          myProjectJdkConfigurable.apply();
+        myProjectJdkConfigurable.apply();
 
-          if (myProjectName != null) {
-            ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
-            if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
-          }
-        }
-        catch (ConfigurationException e) {
-          //cant't be
+        if (myProjectName != null) {
+          ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
+          if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
         }
       }
     });

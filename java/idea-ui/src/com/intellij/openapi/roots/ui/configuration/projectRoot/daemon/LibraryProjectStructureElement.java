@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +116,11 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     return getSourceOrThis() == (((LibraryProjectStructureElement)o).getSourceOrThis());
   }
 
-  @NotNull 
+  public ActionCallback navigate() {
+    return createPlace().navigate();
+  }
+
+  @NotNull
   private Library getSourceOrThis() {
     final InvocationHandler invocationHandler = Proxy.isProxyClass(myLibrary.getClass()) ? Proxy.getInvocationHandler(myLibrary) : null;
     final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor ?
@@ -176,7 +181,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
         }
         myContext.getDaemonAnalyzer().queueUpdate(LibraryProjectStructureElement.this);
         final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(myContext.getProject());
-        createPlace().navigate().doWhenDone(new Runnable() {
+        navigate().doWhenDone(new Runnable() {
           @Override
           public void run() {
             final NamedConfigurable configurable = structureConfigurable.getConfigurableFor(myLibrary).getSelectedConfugurable();

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -165,6 +166,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myContext.getDaemonAnalyzer().clear();
 
     Disposer.dispose(this);
+  }
+
+  public void checkCanApply() throws ConfigurationException {
   }
 
   protected void addCollapseExpandActions(final List<AnAction> result) {

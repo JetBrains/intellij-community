@@ -31,10 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.ui.NonEmptyInputValidator;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -89,6 +86,17 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return isModified || super.isModified();
   }
 
+  @Override
+  public void checkCanApply() throws ConfigurationException {
+    super.checkCanApply();
+    for (LibraryConfigurable configurable : getLibraryConfigurables()) {
+      if (configurable.getDisplayName().isEmpty()) {
+        ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();
+        throw new ConfigurationException("Library name is not specified");
+      }
+    }
+  }
+
   public void reset() {
     super.reset();
     myTree.setRootVisible(false);
@@ -102,17 +110,25 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    for (LibraryConfigurable libraryConfigurable : getLibraryConfigurables()) {
+      result.add(new LibraryProjectStructureElement(myContext, libraryConfigurable.getEditableObject()));
+    }
+    return result;
+  }
+
+  private List<LibraryConfigurable> getLibraryConfigurables() {
     //todo[nik] improve
+    List<LibraryConfigurable> libraryConfigurables = new ArrayList<LibraryConfigurable>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final TreeNode node = myRoot.getChildAt(i);
       if (node instanceof MyNode) {
         final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
         if (configurable instanceof LibraryConfigurable) {
-          result.add(new LibraryProjectStructureElement(myContext, ((LibraryConfigurable)configurable).getEditableObject()));
+          libraryConfigurables.add((LibraryConfigurable)configurable);
         }
       }
     }
-    return result;
+    return libraryConfigurables;
   }
 
   private void createLibrariesNode(final StructureLibraryTableModifiableModelProvider modelProvider) {
@@ -266,7 +282,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         sb.append("\n\nAre you sure you want to delete this library?");
 
         if (DialogWrapper.OK_EXIT_CODE == Messages.showOkCancelDialog(myProject, sb.toString(),
-                                    "Confirm library deletion", Messages.getQuestionIcon())) {
+                                    "Confirm Library Deletion", Messages.getQuestionIcon())) {
 
           final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
           for (final ProjectStructureElementUsage usage : usages) {
