@@ -66,7 +66,7 @@ public class GitUIUtil {
       desc += "<hr/>" + StringUtil.join(messages, "<br/>");
     }
     NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
-    group.createNotification(title, desc, type, null).notify(project);
+    group.createNotification(title, desc, type, null).notify(project.isDefault() ? null : project);
   }
 
   public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
