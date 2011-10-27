@@ -318,6 +318,7 @@ public class EventLog implements Notifications {
           ShowSettingsUtil.getInstance().editConfigurable(project, new NotificationsConfigurable());
         }
       });
+      group.add(new DisplayBalloons());
       group.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
         @Override
         protected Editor getEditor(AnActionEvent e) {
@@ -350,6 +351,21 @@ public class EventLog implements Notifications {
       toolWindow.getContentManager().addContent(content);
     }
 
+    private static class DisplayBalloons extends ToggleAction implements DumbAware {
+      public DisplayBalloons() {
+        super("Show balloons", "Enable or suppress notification balloons", IconLoader.getIcon("/general/balloon.png"));
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS = state;
+      }
+    }
   }
 
   private static class NotificationHyperlinkInfo implements HyperlinkInfo {
