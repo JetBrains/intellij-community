@@ -3741,6 +3741,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
+            // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
+            // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
+            // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
+            // lead selection point.
+            if (selectionModel.hasSelection()) {
+              if (newCaretOffset >= selectionModel.getSelectionEnd()) {
+                oldSelectionStart = selectionModel.getSelectionStart();
+                oldVisLeadSelectionStart = selectionModel.getSelectionStartPosition();
+              }
+              else if (newCaretOffset <= selectionModel.getSelectionStart()) {
+                oldSelectionStart = selectionModel.getSelectionEnd();
+                oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
+              }
+            }
             if (oldVisLeadSelectionStart != null) {
               selectionModel.setSelection(oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             }
