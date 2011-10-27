@@ -171,6 +171,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
     String text = document.getText();
     int nextLineFeed = text.indexOf('\n', caretOffset + 1);
+    if (nextLineFeed == -1) nextLineFeed = text.length();
     CodeStyleManager.getInstance(project).reformatText(file, caretOffset, nextLineFeed);
 
     return true;

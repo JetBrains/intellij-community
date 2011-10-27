@@ -243,5 +243,33 @@ def c = { a ->
 
   }
 
+  public void testGeese1() {
+    doTest '''[1, 2, 3, 4].
+    toSet().
+    findAllXxx {
+      it > 2
+      foo {<caret>}
+    }''',
+            '''[1, 2, 3, 4].
+    toSet().
+    findAllXxx {
+      it > 2
+      foo {
+        <caret>
+    } }'''
+
+  }
+
+  public void testGeese2() {
+    doTest '''foo {
+  bar {<caret>}
+}
+''', '''foo {
+  bar {
+    <caret>
+} }
+'''
+  }
+
 }
 

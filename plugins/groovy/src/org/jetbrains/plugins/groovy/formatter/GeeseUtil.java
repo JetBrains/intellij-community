@@ -24,6 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Map;
@@ -99,6 +102,17 @@ public class GeeseUtil {
 
     //search for start of the line
     cur = parent;
+    if (cur.getParent() instanceof GrMethodCall) {
+      GrMethodCall call = (GrMethodCall)cur.getParent();
+      GrExpression invoked = call.getInvokedExpression();
+      if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression)invoked).getReferenceNameElement() != null) {
+        cur = ((GrReferenceExpression)invoked).getReferenceNameElement();
+      }
+      else {
+        cur = call;
+      }
+    }
+    cur = PsiTreeUtil.getDeepestFirst(cur);
     while (!PsiUtil.isNewLine(next = PsiTreeUtil.prevLeaf(cur, true))) {
       if (next == null) break;
       cur = next;
