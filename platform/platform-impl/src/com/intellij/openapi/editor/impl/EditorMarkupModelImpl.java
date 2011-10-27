@@ -305,6 +305,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void dispose() {
+    if (myErrorStripeRenderer instanceof Disposable)  {
+      Disposer.dispose((Disposable)myErrorStripeRenderer);
+    }
     myErrorStripeRenderer = null;
     super.dispose();
   }
