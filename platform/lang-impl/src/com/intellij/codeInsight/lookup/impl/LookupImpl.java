@@ -134,6 +134,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private JButton myScrollBarIncreaseButton;
   private boolean myStartCompletionWhenNothingMatches;
   private boolean myResizePending;
+  private int myMaximumHeight = Integer.MAX_VALUE;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -656,10 +657,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return matcher;
   }
 
-  /**
-   * @return point in layered pane coordinate system.
-   */
-  private Point calculatePosition() {
+  // in layered pane coordinate system.
+  private Rectangle calculatePosition() {
     Dimension dim = getComponent().getPreferredSize();
     int lookupStart = getLookupStart();
     if (lookupStart < 0 || lookupStart > myEditor.getDocument().getTextLength()) {
@@ -677,7 +676,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (!isPositionedAboveCaret()) {
       int shiftLow = screenRectangle.height - (location.y + dim.height);
-      myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height;
+      myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height && location.y >= dim.height;
     }
     if (isPositionedAboveCaret()) {
       location.y -= dim.height + myEditor.getLineHeight();
@@ -695,8 +694,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (rootPane == null) {
       LOG.error(myEditor.isDisposed() + "; shown=" + myShown + "; disposed=" + myDisposed + "; editorShowing=" + myEditor.getContentComponent().isShowing());
     }
+    Rectangle candidate = new Rectangle(location, dim);
+    ScreenUtil.cropRectangleToFitTheScreen(candidate);
+    
     SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
-    return location;
+    return new Rectangle(location.x, location.y, dim.width, candidate.height);
   }
 
   public void finishLookup(final char completionChar) {
@@ -856,7 +858,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     getComponent().setBorder(null);
     updateScrollbarVisibility();
 
-    Point p = calculatePosition();
+    Rectangle bounds = calculatePosition();
+    myMaximumHeight = bounds.height;
+    Point p = bounds.getLocation();
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
 
@@ -1298,11 +1302,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateScrollbarVisibility();
 
       if (myResizePending) {
+        myMaximumHeight = Integer.MAX_VALUE;
+      }
+      Rectangle rectangle = calculatePosition();
+      myMaximumHeight = rectangle.height;
+      
+      if (myResizePending) {
         myResizePending = false;
         pack();
       }
-
-      updateLookupLocation();
+      HintManagerImpl.updateLocation(this, myEditor, rectangle.getLocation());
 
       if (reused || selectionVisible) {
         ensureSelectionVisible();
@@ -1311,7 +1320,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void updateLookupLocation() {
-    HintManagerImpl.updateLocation(this, myEditor, calculatePosition());
+    Rectangle rectangle = calculatePosition();
+    myMaximumHeight = rectangle.height;
+    HintManagerImpl.updateLocation(this, myEditor, rectangle.getLocation());
   }
 
   private void updateScrollbarVisibility() {
@@ -1380,7 +1391,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           int width = Math.max(myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width + maxCellWidth,
                                myAdComponent.getAdComponent().getPreferredSize().width);
           return new Dimension(Math.min(width, UISettings.getInstance().MAX_LOOKUP_WIDTH),
-                               mainPanel.getPreferredSize().height);
+                               Math.min(mainPanel.getPreferredSize().height, myMaximumHeight));
         }
 
         @Override
