@@ -206,9 +206,15 @@ public class RequestHint {
               return myDepth;
             }
             if (myDepth == StepRequest.STEP_INTO) {
-              // check if we are still at the line from which the stepping begun
-              if (filesEqual && myFrameCount == frameCount && myPosition.getLine() != locationPosition.getLine()) {
-                return STOP;
+              if (filesEqual) {
+                // we are actually one or more frames upper than the original frame, should stop
+                if (myFrameCount > frameCount) {
+                  return STOP;
+                }
+                // check if we are still at the line from which the stepping begun
+                if (myFrameCount == frameCount && myPosition.getLine() != locationPosition.getLine()) {
+                  return STOP;
+                }
               }
             }
             return null;
@@ -218,7 +224,7 @@ public class RequestHint {
           return resultDepth.intValue();
         }
       }
-      // the rest of the code makes sence for depth == STEP_INTO only
+      // the rest of the code makes sense for depth == STEP_INTO only
 
       if (myDepth == StepRequest.STEP_INTO) {
         final DebuggerSettings settings = DebuggerSettings.getInstance();
