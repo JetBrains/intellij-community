@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,6 +79,12 @@ public abstract class JavaTestFramework implements TestFramework {
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
     return false;
+  }
+
+  @Override
+  @NotNull
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 
   @Nullable

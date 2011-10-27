@@ -419,7 +419,7 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="testGenerator"
-                  interface="com.intellij.testIntegration.createTest.TestGenerator"/>
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="lang.smartEnterProcessor"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>

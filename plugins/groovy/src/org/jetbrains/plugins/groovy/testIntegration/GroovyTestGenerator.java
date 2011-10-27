@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -37,7 +36,6 @@ import com.intellij.testIntegration.createTest.CreateTestDialog;
 import com.intellij.testIntegration.createTest.TestGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
@@ -102,11 +100,6 @@ public class GroovyTestGenerator implements TestGenerator {
   @Override
   public String toString() {
     return GroovyIntentionsBundle.message("intention.crete.test.groovy");
-  }
-
-  @Override
-  public Language getLanguage() {
-    return GroovyFileType.GROOVY_LANGUAGE;
   }
 
   private static void addSuperClass(GrTypeDefinition targetClass, Project project, @Nullable String superClassName)

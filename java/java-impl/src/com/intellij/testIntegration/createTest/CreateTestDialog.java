@@ -22,7 +22,6 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -39,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
@@ -82,7 +80,6 @@ public class CreateTestDialog extends DialogWrapper {
   private TestFramework mySelectedFramework;
 
   private final List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
-  private ComboBox myLanguageCombo;
   private EditorTextField myTargetClassNameField;
   private ReferenceEditorWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
@@ -170,16 +167,6 @@ public class CreateTestDialog extends DialogWrapper {
         myFixLibraryPanel.setVisible(false);
       }
     });
-
-    TestGenerator[] generators = TestGenerator.EP_NAME.getExtensions();
-    myLanguageCombo = new ComboBox(generators, -1);
-    final Language curLang = myTargetClass.getLanguage();
-    for (TestGenerator generator : generators) {
-      if (curLang == generator.getLanguage()) {
-        myLanguageCombo.setSelectedItem(generator);
-        break;
-      }
-    }
 
     myTargetClassNameField = new EditorTextField(targetClass.getName() + "Test");
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -292,8 +279,11 @@ public class CreateTestDialog extends DialogWrapper {
       librariesPanel.add(b);
     }
 
+    
+    int gridy = 1;
+    
     constr.insets = insets(4);
-    constr.gridy = 1;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.testing.library")), constr);
@@ -310,25 +300,14 @@ public class CreateTestDialog extends DialogWrapper {
     myFixLibraryPanel.add(myFixLibraryButton, BorderLayout.EAST);
 
     constr.insets = insets(1);
-    constr.gridy = 2;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     panel.add(myFixLibraryPanel, constr);
 
     constr.gridheight = 1;
 
-    constr.insets = insets(1);
-    constr.gridy = 3;
-    constr.gridx = 0;
-    constr.weightx = 0;
-    constr.gridwidth = 1;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.language")), constr);
-
-    constr.gridx = 1;
-    constr.weightx = 1;
-    panel.add(myLanguageCombo, constr);
-
     constr.insets = insets(6);
-    constr.gridy = 4;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
     constr.gridwidth = 1;
@@ -339,7 +318,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(myTargetClassNameField, constr);
 
     constr.insets = insets(1);
-    constr.gridy = 5;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.super.class")), constr);
@@ -349,7 +328,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(mySuperClassField, constr);
 
     constr.insets = insets(1);
-    constr.gridy = 6;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label")), constr);
@@ -362,7 +341,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(targetPackagePanel, constr);
 
     constr.insets = insets(6);
-    constr.gridy = 7;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.generate")), constr);
@@ -372,11 +351,11 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(myGenerateBeforeBox, constr);
 
     constr.insets = insets(1);
-    constr.gridy = 8;
+    constr.gridy = gridy++;
     panel.add(myGenerateAfterBox, constr);
 
     constr.insets = insets(6);
-    constr.gridy = 9;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods")), constr);
@@ -386,7 +365,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(myShowInheritedMethodsBox, constr);
 
     constr.insets = insets(1, 8);
-    constr.gridy = 10;
+    constr.gridy = gridy++;
     constr.gridx = 0;
     constr.gridwidth = GridBagConstraints.REMAINDER;
     constr.fill = GridBagConstraints.BOTH;
@@ -507,11 +486,6 @@ public class CreateTestDialog extends DialogWrapper {
   @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.dialogs.createTest");
-  }
-
-  @NotNull
-  TestGenerator getGenerator() {
-    return (TestGenerator)myLanguageCombo.getSelectedItem();
   }
 
   private class MyChooseSuperClassAction implements ActionListener {

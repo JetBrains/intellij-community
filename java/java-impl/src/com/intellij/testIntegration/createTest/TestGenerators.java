@@ -15,23 +15,15 @@
  */
 package com.intellij.testIntegration.createTest;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.LanguageExtension;
 
 /**
- * @author Maxim.Medvedev
+ * @author Max Medvedev
  */
-public interface TestGenerator {
-  /**
-   *
-   * @return generated test (i.e. PsiClass)
-   */
-  @Nullable
-  PsiElement generateTest(final Project project, final CreateTestDialog d);
+public class TestGenerators extends LanguageExtension<TestGenerator> {
+  public static final TestGenerators INSTANCE = new TestGenerators();
 
-  /**
-   * should return text to show in dialog
-   */
-  String toString();
+  private TestGenerators() {
+    super("com.intellij.testGenerator", new JavaTestGenerator());
+  }
 }

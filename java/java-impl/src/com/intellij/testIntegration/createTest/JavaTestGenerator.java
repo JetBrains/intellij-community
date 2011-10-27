@@ -17,8 +17,6 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -132,10 +130,5 @@ public class JavaTestGenerator implements TestGenerator {
   @Override
   public String toString() {
     return CodeInsightBundle.message("intention.create.test.dialog.java");
-  }
-
-  @Override
-  public Language getLanguage() {
-    return JavaLanguage.INSTANCE;
   }
 }

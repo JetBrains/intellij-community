@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiClass;
@@ -138,5 +139,11 @@ public class GroovyTestFramework extends JavaTestFramework {
   @Override
   public boolean isTestMethod(PsiElement element) {
     return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
+  }
+
+  @Override
+  @NotNull
+  public Language getLanguage() {
+    return GroovyFileType.GROOVY_LANGUAGE;
   }
 }
