@@ -448,11 +448,15 @@ public class AndroidUtils {
                                                @Nullable Integer timeout) throws ExecutionException {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
-    handler.addProcessListener(new ProcessAdapter() {
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        messageBuilder.append(event.getText());
-      }
-    });
+
+    if (timeout != null && timeout != 0) {
+      handler.addProcessListener(new ProcessAdapter() {
+        public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+          messageBuilder.append(event.getText());
+        }
+      });
+    }
+
     handler.startNotify();
     try {
       if (timeout != null) {
@@ -472,8 +476,11 @@ public class AndroidUtils {
       return ExecutionStatus.TIMEOUT;
     }
 
-    String message = messageBuilder.toString();
-    LOG.info(message);
+    if (timeout != null && timeout != 0) {
+      String message = messageBuilder.toString();
+      LOG.info(message);
+    }
+
     int exitCode = handler.getProcess().exitValue();
     return exitCode == 0 ? ExecutionStatus.SUCCESS : ExecutionStatus.ERROR;
   }
