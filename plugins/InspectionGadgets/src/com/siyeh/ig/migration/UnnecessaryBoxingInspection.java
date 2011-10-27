@@ -210,7 +210,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     private static boolean canBeUnboxed(PsiExpression expression) {
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        parent = parent.getParent();
+      }
       if (parent instanceof PsiExpressionStatement ||
           parent instanceof PsiReferenceExpression) {
         return false;
