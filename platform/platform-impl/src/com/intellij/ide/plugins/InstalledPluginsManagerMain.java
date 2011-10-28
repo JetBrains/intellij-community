@@ -82,6 +82,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           }
         };
         descriptor.setTitle("Choose Plugin File");
+        descriptor.setDescription("JAR and ZIP archives are accepted");
         final VirtualFile virtualFile = FileChooser.chooseFile(myActionsPanel, descriptor);
         if (virtualFile != null) {
           final File file = VfsUtil.virtualToIoFile(virtualFile);
