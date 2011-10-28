@@ -51,6 +51,7 @@ class JUnitStatusLine extends TestStatusLine {
         process.removeProcessListener(this);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            myStateInfo.setTerminated(myState);
             if (!myTestsBuilt && myProgressBar.getFraction() == 0.0) {
               myProgressBar.setColor(ColorProgressBar.RED);
               myProgressBar.setFraction(1.0);
@@ -68,6 +69,7 @@ class JUnitStatusLine extends TestStatusLine {
     private int myDefects = 0;
     private String myCurrentTestName = "";
     private StateEvent myDoneEvent;
+    private boolean myTerminated = false;
 
     public void setDone(final StateEvent event) {
       myDoneEvent = event;
@@ -87,7 +89,7 @@ class JUnitStatusLine extends TestStatusLine {
 
     public void updateLabel(final JLabel label) {
       final StringBuffer buffer = new StringBuffer();
-      if (myDoneEvent != null) {
+      if (myDoneEvent != null && myTerminated) {
         String termMessage = generateTermMessage(getTestCount(0));
         buffer.append(termMessage);
         final String comment = myDoneEvent.getComment();
@@ -95,7 +97,7 @@ class JUnitStatusLine extends TestStatusLine {
           buffer.append(" (" + comment + ")");
         }
       } else {
-        buffer.append(ExecutionBundle.message("junit.runing.info.status.running.number.with.name", getTestCount(1), myCurrentTestName));
+        buffer.append(ExecutionBundle.message("junit.runing.info.status.running.number.with.name", getTestCount(myDoneEvent != null ? 0 : 1), myCurrentTestName));
       }
       label.setText(buffer.toString());
     }
@@ -114,6 +116,11 @@ class JUnitStatusLine extends TestStatusLine {
         case DONE: return ExecutionBundle.message("junit.runing.info.status.done.count", testCount);
         default: return ExecutionBundle.message("junit.runing.info.status.terminated.count", testCount);
       }
+    }
+
+    public void setTerminated(JLabel stateLabel) {
+      myTerminated = true;
+      updateLabel(stateLabel);
     }
   }
 
