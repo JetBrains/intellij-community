@@ -113,4 +113,22 @@ public class CoreLocalVirtualFile extends VirtualFile {
   public long getModificationStamp() {
     return 0;
   }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    CoreLocalVirtualFile that = (CoreLocalVirtualFile)o;
+
+    if (myIoFile != null ? !myIoFile.equals(that.myIoFile) : that.myIoFile != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myIoFile != null ? myIoFile.hashCode() : 0;
+  }
 }

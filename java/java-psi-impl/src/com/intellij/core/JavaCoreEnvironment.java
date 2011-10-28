@@ -63,13 +63,16 @@ public class JavaCoreEnvironment extends CoreEnvironment {
   }
 
   public void addToClasspath(File path) {
-    myFileManager.addToClasspath(path);
     final VirtualFile root = path.isFile()
                              ? myJarFileSystem.findFileByPath(path + "!/")
                              : getLocalFileSystem().findFileByPath(path.getPath());
 
     if (root != null) {
+      myFileManager.addToClasspath(path);
       myFileIndexFacade.addLibraryRoot(root);
+    }
+    else {
+      throw new IllegalArgumentException("trying to add non-existing file to classpath: " + path);
     }
   }
 }
