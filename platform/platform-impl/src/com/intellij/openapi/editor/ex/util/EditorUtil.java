@@ -389,8 +389,10 @@ public class EditorUtil {
         char c = text.charAt(i);
         if (c == '\n' || c == '\r') {
           String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
-          LOG.error(String.format("Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d%s",
-                                  c, i, start, offset, tabSize, editorInfo));
+          LOG.error(String.format(
+            "Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d. Text holder class: %s%s",
+            c, i, start, offset, tabSize, text.getClass(), editorInfo
+          ));
         }
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;

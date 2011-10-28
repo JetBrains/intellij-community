@@ -2468,15 +2468,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public CharSequence dumpState() {
-    StringBuilder documentInfo = new StringBuilder();
-    for (int line = 0; line < myDocument.getLineCount(); line++) {
-      documentInfo.append(line).append(": ").append(myDocument.getLineStartOffset(line)).append("-")
-        .append(myDocument.getLineEndOffset(line)).append(", ");
-    }
-    if (documentInfo.length() > 0) {
-      documentInfo.setLength(documentInfo.length() - 1);
-    }
-    return "soft wraps data: " + getSoftWrapModel() + ", folding data: " + getFoldingModel() + ", document info: " + documentInfo;
+    return "use soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off") +  ", soft wraps data: " + getSoftWrapModel()
+           + ", folding data: " + getFoldingModel() + ", document info: " + myDocument.dumpState();
   }
   
   private class CachedFontContent {

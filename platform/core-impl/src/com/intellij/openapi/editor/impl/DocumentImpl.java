@@ -795,6 +795,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myRangeMarkers.processOverlappingWith(start, end, processor);
   }
 
+  @NotNull
+  public String dumpState() {
+    StringBuilder result = new StringBuilder();
+    result.append("deferred mode: ").append(myText.isDeferredChangeMode() ? "on" : "off");
+    result.append(", intervals:\n");
+    for (int line = 0; line < getLineCount(); line++) {
+      result.append(line).append(": ").append(getLineStartOffset(line)).append("-")
+        .append(getLineEndOffset(line)).append(", ");
+    }
+    if (result.length() > 0) {
+      result.setLength(result.length() - 1);
+    }
+    return result.toString();
+  }
+  
   private static class MyCharArray extends CharArray {
     public MyCharArray() {
       super(0);
