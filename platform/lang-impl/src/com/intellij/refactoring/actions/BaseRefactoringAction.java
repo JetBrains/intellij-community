@@ -54,6 +54,10 @@ public abstract class BaseRefactoringAction extends AnAction {
     return true;
   }
 
+  protected boolean hasAvailableHandler(DataContext dataContext) {
+    return getHandler(dataContext) != null;
+  }
+
   @Nullable
   protected abstract RefactoringActionHandler getHandler(DataContext dataContext);
 

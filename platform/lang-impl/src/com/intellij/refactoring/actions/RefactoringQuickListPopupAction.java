@@ -39,7 +39,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
         if (child instanceof Separator) {
           group.add(child);
         }
-        else if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).getHandler(dataContext) != null) {
+        else if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext)) {
           final Presentation presentation = new Presentation();
           final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
           child.update(event);
