@@ -36,22 +36,22 @@ public class VcsBalloonProblemNotifier implements Runnable {
   private final MessageType myMessageType;
   private final boolean myShowOverChangesView;
 
-  public VcsBalloonProblemNotifier(@NotNull final Project project, final String message, final MessageType messageType) {
+  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType) {
     this(project, message, messageType, true);
   }
 
-  public VcsBalloonProblemNotifier(@NotNull final Project project, final String message, final MessageType messageType, boolean showOverChangesView) {
+  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType, boolean showOverChangesView) {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
     myShowOverChangesView = showOverChangesView;
   }
 
-  public static void showOverChangesView(@NotNull final Project project, final String message, final MessageType type) {
+  public static void showOverChangesView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
     show(project, message, type, true);
   }
 
-  public static void showOverVersionControlView(@NotNull final Project project, final String message, final MessageType type) {
+  public static void showOverVersionControlView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
     show(project, message, type, false);
   }
 
