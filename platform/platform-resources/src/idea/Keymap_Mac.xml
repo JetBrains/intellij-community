@@ -443,6 +443,11 @@
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
 
+    <action id="Console.History.Next" /> <!-- Disables meta up -->
+    <action id="Console.History.Previous" /> <!-- Disables meta down -->
+    <action id="Console.TableResult.Reload" />
+
+
     <action id="EditorScrollUp"/> <!-- Disables meta up -->
     <action id="EditorScrollDown"/>  <!-- Disables meta down -->
     <action id="FindWordAtCaret"/> <!-- Disables meta F3 -->
@@ -486,6 +491,14 @@
     <action id="Forward">
       <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+    </action>
+
+    <action id="NextProjectWindow">
+      <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+    </action>
+
+    <action id="PreviousProjectWindow">
+      <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
     </action>
 
   </keymap>
