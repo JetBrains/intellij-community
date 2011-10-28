@@ -19,9 +19,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -74,6 +76,24 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     final PsiReference reference = element.getReference();
     if (reference == null) return null;
     return reference.resolve();
+  }
+
+  @Override
+  protected boolean hasAvailableHandler(DataContext dataContext) {
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return false;
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final PsiElement targetMember;
+    if (editor != null) {
+      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) return false;
+      targetMember = findTargetMember(file, editor);
+    } else {
+      final PsiElement[] elements = getPsiElementArray(dataContext);
+      if (elements.length != 1) return false;
+      targetMember = findTargetMember(elements[0]);
+    }
+    return targetMember != null && getChangeSignatureHandler(targetMember.getLanguage()) != null;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
