@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
@@ -37,42 +35,33 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testOneNewParameter() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING)});
+    doTest(new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING));
   }
 
   public void testRemoveParameter() throws Exception {
-    doTest(new SimpleInfo[0]);
+    doTest();
   }
 
   public void testInsertParameter() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(0),
-      new SimpleInfo("p", -1, "5", "-3", PsiType.INT),
-      new SimpleInfo(1)
-                                 });
+    doTest(new SimpleInfo(0),
+           new SimpleInfo("p", -1, "5", "-3", PsiType.INT),
+           new SimpleInfo(1));
   }
 
   public void testInsertOptionalParameter() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(0),
-      new SimpleInfo(1),
-      new SimpleInfo("p", -1, "5", "-3", PsiType.INT)
-                                 });
+    doTest(new SimpleInfo(0),
+           new SimpleInfo(1),
+           new SimpleInfo("p", -1, "5", "-3", PsiType.INT));
   }
 
   public void testNamedParametersRemove() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(1),
-      new SimpleInfo(2)
-                                 });
+    doTest(new SimpleInfo(1),
+           new SimpleInfo(2));
   }
 
   public void testNamedParametersOrder1() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(0),
-      new SimpleInfo(2)
-                                 });
+    doTest(new SimpleInfo(0),
+           new SimpleInfo(2));
   }
 
   /*public void testNamedParametersOrder2() throws Exception {
@@ -92,17 +81,13 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }*/
 
   public void testMoveNamedParameters() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(1),
-      new SimpleInfo(0)
-                                 });
+    doTest(new SimpleInfo(1),
+           new SimpleInfo(0));
   }
 
   public void testMoveVarArgParameters() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(1),
-      new SimpleInfo(0)
-                                 });
+    doTest(new SimpleInfo(1),
+           new SimpleInfo(0));
   }
 
   public void testChangeVisibilityAndName() throws Exception {
@@ -110,28 +95,20 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testImplicitConstructorInConstructor() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo("p", -1, "5", null, PsiType.INT)
-                                 });
+    doTest(new SimpleInfo("p", -1, "5", null, PsiType.INT));
   }
 
   public void testImplicitConstructorForClass() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo("p", -1, "5", null, PsiType.INT)
-                                 });
+    doTest(new SimpleInfo("p", -1, "5", null, PsiType.INT));
   }
 
   public void testAnonymousClassUsage() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo("p", -1, "5", null, PsiType.INT)
-                                 });
+    doTest(new SimpleInfo("p", -1, "5", null, PsiType.INT));
   }
 
   public void testGroovyDocReferences() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(0),
-      new SimpleInfo(2)
-                                 });
+    doTest(new SimpleInfo(0),
+           new SimpleInfo(2));
   }
 
   public void testOverriders() throws Exception {
@@ -139,7 +116,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testParameterRename() throws Exception {
-    doTest(new SimpleInfo[]{new SimpleInfo("newP", 0)});
+    doTest(new SimpleInfo("newP", 0));
   }
 
   public void testAddReturnType() throws Exception {
@@ -197,39 +174,39 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testTypeParameters() throws Exception {
-    doTest(new SimpleInfo[]{new SimpleInfo("list", -1, "null", null, "java.util.List<T>"), new SimpleInfo(0)});
+    doTest(new SimpleInfo("list", -1, "null", null, "java.util.List<T>"), new SimpleInfo(0));
   }
 
   public void testEnumConstructor() throws Exception {
-    doTest(new SimpleInfo[]{new SimpleInfo("a", -1, "2", null, PsiType.INT)});
+    doTest(new SimpleInfo("a", -1, "2", null, PsiType.INT));
   }
 
   public void testMoveArrayToTheEnd() throws Exception {
-    doTest(new SimpleInfo[] {new SimpleInfo(1), new SimpleInfo(0)});
+    doTest(new SimpleInfo(1), new SimpleInfo(0));
   }
 
   public void testReplaceVarargWithArray() throws Exception {
-    doTest(new SimpleInfo[]{new SimpleInfo("l", 1, null, null, "List<T>[]"), new SimpleInfo(0)});
+    doTest(new SimpleInfo("l", 1, null, null, "List<T>[]"), new SimpleInfo(0));
   }
 
   public void testReplaceVarargWithArray2() throws Exception {
-    doTest(new SimpleInfo[]{new SimpleInfo("l", 1, null, null, "Map<T, E>[]"), new SimpleInfo(0)});
+    doTest(new SimpleInfo("l", 1, null, null, "Map<T, E>[]"), new SimpleInfo(0));
   }
 
   public void testConstructorCall() {
-    doTest(new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiType.INT)});
+    doTest(new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiType.INT));
   }
 
   public void testNoArgInCommandCall() {
-    doTest(new SimpleInfo[0]);
+    doTest();
   }
 
   public void testClosureArgs() {
-    doTest(new SimpleInfo[]{new SimpleInfo(0)});
+    doTest(new SimpleInfo(0));
   }
 
   public void testRemoveSingleClosureArgument() {
-    doTest(new SimpleInfo[0]);
+    doTest();
   }
   
   public void testNewExpr() {
@@ -242,6 +219,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
 
   public void testDefaultInitializerInJava() {
     doTest(new SimpleInfo("p", -1, "", "1", ""));
+  }
+  
+  public void testChangeType() {
+    doTest(PsiModifier.PUBLIC, "foo", "List<String>", new SimpleInfo[0], new ThrownExceptionInfo[0], false);
   }
 
   private PsiType createType(String typeText) {
@@ -262,8 +243,8 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   private void doTest(String newVisibility,
-                      String newName,
-                      String newReturnType,
+                      @Nullable String newName,
+                      @Nullable String newReturnType,
                       SimpleInfo[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
                       final boolean generateDelegate) {

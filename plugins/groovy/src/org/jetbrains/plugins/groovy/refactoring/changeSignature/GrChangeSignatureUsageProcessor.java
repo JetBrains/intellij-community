@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     final GrCodeBlock codeBlock = GroovyPsiElementFactory.getInstance(method.getProject()).createMethodBodyFromText(buffer.toString());
     newMethod.setBlock(codeBlock);
-    newMethod.getModifierList().setModifierProperty(GrModifier.ABSTRACT, false);
+    newMethod.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
 
     CodeStyleManager.getInstance(method.getProject()).reformat(newMethod);
     return processPrimaryMethodInner(grInfo, method, null);
@@ -175,7 +175,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     buffer.append(");");
   }
 
-  private static boolean processPrimaryMethodInner(JavaChangeInfo changeInfo, GrMethod method, PsiMethod baseMethod) {
+  private static boolean processPrimaryMethodInner(JavaChangeInfo changeInfo, GrMethod method, @Nullable PsiMethod baseMethod) {
     if (changeInfo.isNameChanged()) {
       String newName = baseMethod == null ? changeInfo.getNewName() :
                        RefactoringUtil.suggestNewOverriderName(method.getName(), baseMethod.getName(), changeInfo.getNewName());
@@ -205,13 +205,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
       else {
         PsiType type = newReturnType.getType(context, method.getManager());
-        final PsiType oldReturnType = method.getReturnType();
-        if (!TypesUtil
-          .isAssignableByMethodCallConversion(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type
-          method.setReturnType(substitutor.substitute(type));
-          if (oldReturnTypeElement==null) {
-            modifierList.setModifierProperty(GrModifier.DEF, false);;
-          }
+        method.setReturnType(substitutor.substitute(type));
+        if (oldReturnTypeElement == null) {
+          modifierList.setModifierProperty(GrModifier.DEF, false);
         }
       }
     }
@@ -371,8 +367,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       .createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", null);
 
     GrModifierList list = constructor.getModifierList();
-    if (psiClass.hasModifierProperty(GrModifier.PRIVATE)) list.setModifierProperty(GrModifier.PRIVATE, true);
-    if (psiClass.hasModifierProperty(GrModifier.PROTECTED)) list.setModifierProperty(GrModifier.PROTECTED, true);
+    if (psiClass.hasModifierProperty(PsiModifier.PRIVATE)) list.setModifierProperty(PsiModifier.PRIVATE, true);
+    if (psiClass.hasModifierProperty(PsiModifier.PROTECTED)) list.setModifierProperty(PsiModifier.PROTECTED, true);
     if (!list.hasExplicitVisibilityModifiers()) {
       list.setModifierProperty(GrModifier.DEF, true);
     }

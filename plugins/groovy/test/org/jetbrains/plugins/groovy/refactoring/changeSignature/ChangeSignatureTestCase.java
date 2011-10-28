@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -152,11 +153,11 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
       this(null, oldIndex);
     }
 
-    SimpleInfo(String newName, int oldIndex) {
+    SimpleInfo(@Nullable String newName, int oldIndex) {
       this(newName, oldIndex, "", null, "");
     }
 
-    SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, String type) {
+    SimpleInfo(String newName, int oldIndex, String defaultValue, @Nullable String defaultInitializer, String type) {
       myOldIndex = oldIndex;
       myNewName = newName;
       myDefaultValue = defaultValue;
