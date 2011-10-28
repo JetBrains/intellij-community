@@ -450,9 +450,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
       if (methods == null) {
         for (PsiClass c : classes) {
-          if (!results.containsKey(c)) {
-            results.put(c, new LinkedHashSet<PsiMethod>());
-          }
+          results.put(c, new LinkedHashSet<PsiMethod>());
         }
       }
       for (PsiMember psiMember : membersToCheckNow) {
