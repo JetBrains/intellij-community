@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -67,6 +68,12 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
       if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
         return null;
       }
+    }
+
+    while (element != null &&
+           element.getPrevSibling() != null &&
+           TokenSets.WHITE_SPACES_SET.contains(element.getPrevSibling().getNode().getElementType())) {
+      element = element.getPrevSibling();
     }
 
     return element;
