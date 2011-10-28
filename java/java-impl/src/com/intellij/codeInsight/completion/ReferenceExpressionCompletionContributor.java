@@ -480,7 +480,7 @@ public class ReferenceExpressionCompletionContributor {
         final Document document = editor.getDocument();
         final int tailOffset = startOffset + item.getLookupString().length();
         final Project project = editor.getProject();
-        //PsiDocumentManager.getInstance(project).commitDocument(document);
+        context.commitDocument();
         final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         try {
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, startOffset, tailOffset);
