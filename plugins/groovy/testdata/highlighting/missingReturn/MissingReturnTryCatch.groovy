@@ -1,5 +1,5 @@
 class Test {
-  def r() {
+  Object r() {
     try {
       return 2
     } catch (e) {

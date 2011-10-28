@@ -37,6 +37,7 @@ public class MissingReturnTest extends LightCodeInsightFixtureTestCase {
   public void testEndlessLoop2() throws Throwable {doTest();}
   public void testExceptionWithFinally() throws Throwable {doTest();}
   public void testOnlyAssert() throws Throwable {doTest();}
+  public void testImplicitReturnNull() throws Throwable {doTest();}
 
   private void doTest() throws Exception {
     myFixture.enableInspections(new MissingReturnInspection());

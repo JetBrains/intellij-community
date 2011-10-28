@@ -95,6 +95,10 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   }
 
   public static boolean methodMissesSomeReturns(GrControlFlowOwner block, boolean mustReturnValue) {
+    if (!mustReturnValue) {
+      return false;
+    }
+
     final Ref<Boolean> always = new Ref<Boolean>(true);
     final Ref<Boolean> hasExplicitReturn = new Ref<Boolean>(false);
     final Ref<Boolean> sometimes = new Ref<Boolean>(false);
@@ -136,8 +140,12 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
         return true;
       }
     });
-    final boolean returnSomething = hasExplicitReturn.get() || mustReturnValue;
-    return returnSomething && ((mustReturnValue && !sometimes.get()) || (sometimes.get() && !always.get()));
+
+    if (!sometimes.get()) {
+      return true;
+    }
+
+    return sometimes.get() && !always.get();
   }
 
   private static void addNoReturnMessage(GrCodeBlock block, ProblemsHolder holder) {
