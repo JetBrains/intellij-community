@@ -79,7 +79,8 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     if (facetInfo == null) return Collections.emptyList();
 
     final List<Facet> removed = new ArrayList<Facet>();
-    List<FacetInfo> children = treeModel.getChildren(facetInfo);
+    List<FacetInfo> childrenList = treeModel.getChildren(facetInfo);
+    FacetInfo[] children = childrenList.toArray(new FacetInfo[childrenList.size()]);
     for (FacetInfo child : children) {
       Facet childInfo = myInfo2Facet.get(child);
       if (childInfo != null) {
