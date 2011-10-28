@@ -29,9 +29,11 @@ import java.awt.event.InputEvent;
 */
 public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectPath;
+  private final String myProjectName;
 
   public ReopenProjectAction(final String projectPath, final String projectName) {
     myProjectPath = projectPath;
+    myProjectName = projectName;
 
     String _text = projectPath;
     if (projectName != null) {
@@ -53,5 +55,13 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
   public String getProjectPath() {
     return myProjectPath;
+  }
+  
+  public boolean hasPath() {
+    return myProjectPath.equals(myProjectName);
+  }
+
+  public String getProjectName() {
+    return myProjectName;
   }
 }

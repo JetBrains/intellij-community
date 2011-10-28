@@ -258,8 +258,13 @@ public class WelcomeScreen implements Disposable {
       actionLabel.append(". ", new SimpleTextAttributes(0, CAPTION_COLOR));
       actionLabel.append(action.getTemplatePresentation().getText(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
 
-      if (action instanceof ReopenProjectAction) {
-        String path = FileUtil.getLocationRelativeToUserHome(((ReopenProjectAction)action).getProjectPath());
+      if (action instanceof ReopenProjectAction && !((ReopenProjectAction) action).hasPath()) {
+        String path = ((ReopenProjectAction)action).getProjectPath();
+        File pathFile = new File(path);
+        if (pathFile.isDirectory() && pathFile.getName().equals(((ReopenProjectAction)action).getProjectName())) {
+          path = pathFile.getParent();
+        }
+        path = FileUtil.getLocationRelativeToUserHome(path);
         actionLabel.append("   " + path, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, Color.GRAY));
       }
 
