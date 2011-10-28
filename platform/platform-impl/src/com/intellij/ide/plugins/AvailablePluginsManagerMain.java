@@ -101,10 +101,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    if (!inToolbar) {
-      actionGroup.add(new ActionInstallPlugin(this, installed));
-    }
     actionGroup.add(new RefreshAction());
+    actionGroup.add(new ActionInstallPlugin(this, installed));
     if (inToolbar) {
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());

@@ -149,11 +149,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   protected ActionGroup getActionGroup(boolean inToolbar) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new RefreshAction());
-    if (!inToolbar) {
-      actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
-      actionGroup.add(new ActionInstallPlugin(this, this));
-    }
-    else {
+    actionGroup.add(new ActionInstallPlugin(this, this));
+    actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
+    if (inToolbar) {
       actionGroup.add(new MyFilterEnabledAction());
       //actionGroup.add(new MyFilterBundleAction());
     }
