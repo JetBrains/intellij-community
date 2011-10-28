@@ -655,14 +655,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
-        List<HierarchicalMethodSignature> superMethodSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
-        if (!superMethodSignatures.isEmpty()) {
-          if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
-          if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, method.getContainingClass()));
-          if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-            if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true));
-            if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
+        try {
+          List<HierarchicalMethodSignature> superMethodSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+          if (!superMethodSignatures.isEmpty()) {
+            if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
+            if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, method.getContainingClass()));
+            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+              if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true));
+              if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
+            }
           }
+        }
+        catch (IndexNotReadyException ignored) {
         }
       }
       PsiClass aClass = method.getContainingClass();
@@ -875,8 +879,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
       PsiExpressionList list = methodCallExpression.getArgumentList();
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, myResolveHelper, list, expression)) {
-        HighlightInfo info = HighlightMethodUtil.checkAmbiguousMethodCall(expression, results, list, resolved, result, methodCallExpression, myResolveHelper);
-        myHolder.add(info);
+        try {
+          HighlightInfo info = HighlightMethodUtil.checkAmbiguousMethodCall(expression, results, list, resolved, result, methodCallExpression, myResolveHelper);
+          myHolder.add(info);
+        }
+        catch (IndexNotReadyException ignored) {
+        }
       }
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExpressionRequired(expression, resultForIncompleteCode));
@@ -999,7 +1007,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitVariable(PsiVariable variable) {
     super.visitVariable(variable);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
+    try {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
+    }
+    catch (IndexNotReadyException ignored) {
+    }
   }
 
   private boolean isReassigned(@NotNull PsiVariable variable) {
