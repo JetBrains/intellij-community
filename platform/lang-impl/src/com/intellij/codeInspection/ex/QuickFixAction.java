@@ -16,8 +16,9 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -36,8 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -110,6 +109,7 @@ public class QuickFixAction extends AnAction {
   }
 
 
+  protected void applyFix(Project project, CommonProblemDescriptor[] descriptors, Set<PsiElement> ignoredElements) {}
   private void doApplyFix(final Project project,
                           final CommonProblemDescriptor[] descriptors) {
     final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
@@ -139,38 +139,7 @@ public class QuickFixAction extends AnAction {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
-              for (CommonProblemDescriptor descriptor : descriptors) {
-                if (descriptor == null) continue;
-                final QuickFix[] fixes = descriptor.getFixes();
-                if (fixes != null) {
-                  for (QuickFix fix : fixes) {
-                    if (fix != null) {
-                      final QuickFixAction quickFixAction = QuickFixAction.this;
-                      if (quickFixAction instanceof LocalQuickFixWrapper) {
-                        QuickFix unwrapped = ((LocalQuickFixWrapper)quickFixAction).getFix();
-
-                        if (!unwrapped.getClass().isInstance(fix)) continue;
-                        if (unwrapped instanceof IntentionWrapper && fix instanceof IntentionWrapper &&
-                            !(((IntentionWrapper) unwrapped).getAction().getClass().isInstance(((IntentionWrapper) fix).getAction()))) {
-                          continue;
-                        }
-                      }
-
-                      final long startCount = tracker.getModificationCount();
-                      //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
-                      fix.applyFix(project, descriptor);
-                      if (startCount != tracker.getModificationCount()) {
-                        DaemonCodeAnalyzer.getInstance(project).restart();
-                        ((DescriptorProviderInspection)myTool).ignoreProblem(descriptor, fix);
-                        if (descriptor instanceof ProblemDescriptor) {
-                          ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              applyFix(project, descriptors, ignoredElements);
             }
           });
         }

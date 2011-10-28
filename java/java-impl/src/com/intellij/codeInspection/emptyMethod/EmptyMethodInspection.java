@@ -21,8 +21,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -319,7 +317,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            SafeDeleteHandler.invoke(project, PsiUtilBase.toPsiElementArray(psiElements), false);
+            SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
           }
         });
       }
@@ -327,13 +325,13 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   }
 
 
-  private class DeleteMethodQuickFix implements LocalQuickFix {
+  private class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
     private final ProblemDescriptionsProcessor myProcessor;
-    private final boolean myNeedToDEleteHierarchy;
+    private final boolean myNeedToDeleteHierarchy;
 
     public DeleteMethodQuickFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
       myProcessor = processor;
-      myNeedToDEleteHierarchy = needToDeleteHierarchy;
+      myNeedToDeleteHierarchy = needToDeleteHierarchy;
     }
 
     @NotNull
@@ -342,28 +340,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     }
 
     public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-      if (refElement.isValid() && refElement instanceof RefMethod) {
-        final List<RefElement> refElements = new ArrayList<RefElement>(1);
-        RefMethod refMethod = (RefMethod)refElement;
-        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
-        if (myNeedToDEleteHierarchy) {
-          deleteHierarchy(refMethod, psiElements, refElements);
-        } else {
-          deleteMethod(refMethod, psiElements, refElements);
-        }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            SafeDeleteHandler.invoke(project, PsiUtilBase.toPsiElementArray(psiElements), false, new Runnable() {
-              public void run() {
-                QuickFixAction
-                  .removeElements(refElements.toArray(new RefElement[refElements.size()]), project, (InspectionTool)myProcessor);
-              }
-            });
-          }
-        });
-      }
+       applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<PsiElement>(), null);
     }
 
     @NotNull
@@ -371,20 +348,43 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
       return getName();
     }
 
-    private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result, List<RefElement> refElements) {
+    private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
       RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);
       for (RefMethod refDerived : refMethods) {
-        deleteMethod(refDerived, result, refElements);
+        deleteMethod(refDerived, result);
       }
-      deleteMethod(refMethod, result, refElements);
+      deleteMethod(refMethod, result);
     }
 
-    private void deleteMethod(RefMethod refMethod, List<PsiElement> result, List<RefElement> refElements) {
-      refElements.add(refMethod);
+    private void deleteMethod(RefMethod refMethod, List<PsiElement> result) {
       PsiElement psiElement = refMethod.getElement();
       if (psiElement == null) return;
       if (!result.contains(psiElement)) result.add(psiElement);
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project,
+                         @NotNull final CommonProblemDescriptor[] descriptors,
+                         final List<PsiElement> psiElementsToIgnore,
+                         final Runnable refreshViews) {
+      for (CommonProblemDescriptor descriptor : descriptors) {
+        RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
+        if (refElement.isValid() && refElement instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod)refElement;
+          if (myNeedToDeleteHierarchy) {
+            deleteHierarchy(refMethod, psiElementsToIgnore);
+          }
+          else {
+            deleteMethod(refMethod, psiElementsToIgnore);
+          }
+        }
+      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
+        }
+      });
     }
   }
 }

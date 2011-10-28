@@ -16,10 +16,20 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author max
@@ -27,6 +37,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix myFix;
   private String myText;
+
   public LocalQuickFixWrapper(QuickFix fix, DescriptorProviderInspection tool) {
     super(fix.getName(), tool);
     myTool = tool;
@@ -48,26 +59,6 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     myText = text;
   }
 
-  protected boolean applyFix(RefElement[] refElements) {
-   /* dead code ?!
-     for (RefElement refElement : refElements) {
-      ProblemDescriptor[] problems = myTool.getDescriptions(refElement);
-      if (problems != null) {
-        PsiElement psiElement = refElement.getElement();
-        if (psiElement != null) {
-          for (ProblemDescriptor problem : problems) {
-            LocalQuickFix fix = problem.getFix();
-            if (fix != null) {
-              fix.applyFix(psiElement.getProject(), problem);
-              myTool.ignoreProblem(refElement, problem);
-            }
-          }
-        }
-      }
-    }*/
-
-    return true;
-  }
 
   protected boolean isProblemDescriptorsAcceptable() {
     return true;
@@ -75,5 +66,80 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   public QuickFix getFix() {
     return myFix;
+  }
+
+  @Nullable
+  protected QuickFix getWorkingQuickFix(QuickFix[] fixes) {
+    for (QuickFix fix : fixes) {
+      if (!myFix.getClass().isInstance(fix)) continue;
+      if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper &&
+          !(((IntentionWrapper)myFix).getAction().getClass().isInstance(((IntentionWrapper)fix).getAction()))) {
+        continue;
+      }
+      return fix;
+    }
+    return null;
+  }
+
+  protected boolean applyFix(RefElement[] refElements) {
+    throw new UnsupportedOperationException("");
+  }
+
+  @Override
+  protected void applyFix(final Project project, final CommonProblemDescriptor[] descriptors, final Set<PsiElement> ignoredElements) {
+    final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
+    if (myFix instanceof BatchQuickFix) {
+      final ArrayList<PsiElement> collectedElementsToIgnore = new ArrayList<PsiElement>();
+      final Runnable refreshViews = new Runnable() {
+        @Override
+        public void run() {
+          DaemonCodeAnalyzer.getInstance(project).restart();
+          for (CommonProblemDescriptor descriptor : descriptors) {
+            ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()));
+          }
+
+          final RefManager refManager = myTool.getContext().getRefManager();
+          final RefElement[] refElements = new RefElement[collectedElementsToIgnore.size()];
+          for (int i = 0, collectedElementsToIgnoreSize = collectedElementsToIgnore.size(); i < collectedElementsToIgnoreSize; i++) {
+            refElements[i] = refManager.getReference(collectedElementsToIgnore.get(i));
+          }
+
+          removeElements(refElements, project, myTool);
+        }
+      };
+
+      ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
+      return;
+    }
+
+    boolean restart = false;
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      if (descriptor == null) continue;
+      final QuickFix[] fixes = descriptor.getFixes();
+      if (fixes != null) {
+        final QuickFix fix = getWorkingQuickFix(fixes);
+        if (fix != null) {
+          final long startCount = tracker.getModificationCount();
+          //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
+          fix.applyFix(project, descriptor);
+          if (startCount != tracker.getModificationCount()) {
+            restart = true;
+            ignore(ignoredElements, descriptor, fix);
+          }
+        }
+      }
+    }
+    if (restart) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
+  }
+
+  private void ignore(Set<PsiElement> ignoredElements, CommonProblemDescriptor descriptor, QuickFix fix) {
+    if (fix != null) {
+      ((DescriptorProviderInspection)myTool).ignoreProblem(descriptor, fix);
+    }
+    if (descriptor instanceof ProblemDescriptor) {
+      ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());
+    }
   }
 }
