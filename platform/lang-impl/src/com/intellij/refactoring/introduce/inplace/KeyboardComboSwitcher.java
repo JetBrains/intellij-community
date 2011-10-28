@@ -65,7 +65,9 @@ public class KeyboardComboSwitcher {
       @Override
       public void actionPerformed(ActionEvent e) {
         moveFocusBack[0] = true;
-        ToolWindowManager.getInstance(project).activateEditorComponent();
+        if (!project.isDisposed()) {
+          ToolWindowManager.getInstance(project).activateEditorComponent();
+        }
       }
     });
   }
