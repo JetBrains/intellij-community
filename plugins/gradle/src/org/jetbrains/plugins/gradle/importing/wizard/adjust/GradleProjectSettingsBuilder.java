@@ -35,13 +35,16 @@ public class GradleProjectSettingsBuilder {
   }
   
   private final JPanel             myResult            = new JPanel(new GridBagLayout());
-  private final GridBagConstraints myConstraint   = new GridBagConstraints();
+  private final GridBagConstraints myKeyConstraint = new GridBagConstraints();
+  private final GridBagConstraints myValueConstraint = new GridBagConstraints();
 
   public GradleProjectSettingsBuilder() {
-    myConstraint.anchor = GridBagConstraints.WEST;
-    myConstraint.gridwidth = GridBagConstraints.REMAINDER;
-    myConstraint.weightx = 1;
-    myConstraint.fill = GridBagConstraints.HORIZONTAL;
+    myKeyConstraint.anchor = myValueConstraint.anchor = GridBagConstraints.WEST;
+    myKeyConstraint.gridwidth = myValueConstraint.gridwidth = GridBagConstraints.REMAINDER;
+    myKeyConstraint.weightx = myValueConstraint.weightx = 1;
+    myKeyConstraint.fill = myValueConstraint.fill = GridBagConstraints.HORIZONTAL;
+    myKeyConstraint.insets.top = InsetSize.NORMAL.getValue();
+    myValueConstraint.insets.top = InsetSize.SMALL.getValue();
   }
 
   public void add(@NotNull JComponent component) {
@@ -55,8 +58,10 @@ public class GradleProjectSettingsBuilder {
    * @param insetSize   top insets to use
    */
   public void add(@NotNull JComponent component, @NotNull InsetSize insetSize) {
-    myConstraint.insets.top = insetSize.getValue();
-    myResult.add(component, myConstraint);
+    int insetsToRestore = myValueConstraint.insets.top;
+    myValueConstraint.insets.top = insetSize.getValue();
+    myResult.add(component, myValueConstraint);
+    myValueConstraint.insets.top = insetsToRestore;
   }
   
   /**
@@ -67,11 +72,8 @@ public class GradleProjectSettingsBuilder {
    * @param control   GUI control for managing target setting's value
    */
   public void add(@NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String labelKey, @NotNull JComponent control) {
-    myConstraint.insets.top = InsetSize.NORMAL.getValue();
-    JLabel label = new JLabel(GradleBundle.message(labelKey));
-    myResult.add(label, myConstraint);
-    myConstraint.insets.top = InsetSize.SMALL.getValue();
-    myResult.add(control, myConstraint);
+    myResult.add(new JLabel(GradleBundle.message(labelKey)), myKeyConstraint);
+    myResult.add(control, myValueConstraint);
   }
 
   /**
@@ -81,10 +83,20 @@ public class GradleProjectSettingsBuilder {
    * @param valueComponent  control that holds available property values and (possibly) allows to choose between them
    */
   public void add(@NotNull JComponent keyComponent, @NotNull JComponent valueComponent) {
-    myConstraint.insets.top = InsetSize.NORMAL.getValue();
-    myResult.add(keyComponent, myConstraint);
-    myConstraint.insets.top = InsetSize.SMALL.getValue();
-    myResult.add(valueComponent, myConstraint);
+    myResult.add(keyComponent, myKeyConstraint);
+    myResult.add(valueComponent, myValueConstraint);
+  }
+
+  /**
+   * Allows to define whether 'key'/'value' components ({@link #add(String, JComponent)}, {@link #add(JComponent, JComponent)})
+   * should be located on the same line.
+   * 
+   * @param sameRow  flag that defines whether 'key'/'value' components should be located on the same line
+   */
+  public void setKeyAndValueControlsOnSameRow(boolean sameRow) {
+    myKeyConstraint.gridwidth = sameRow ? 1 : GridBagConstraints.REMAINDER;
+    myKeyConstraint.weightx = sameRow ? 0 : 1;
+    myValueConstraint.insets.top = sameRow ? InsetSize.NORMAL.getValue() : InsetSize.SMALL.getValue(); 
   }
   
   /**
