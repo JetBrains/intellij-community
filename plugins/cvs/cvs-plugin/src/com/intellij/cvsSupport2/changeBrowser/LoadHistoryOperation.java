@@ -29,7 +29,10 @@ import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
@@ -105,7 +108,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
       return;
     }
     final LogInformation logInfo = (LogInformation)info;
-    final LogInformationWrapper wrapper = LogInformationWrapper.wrap(myEnvironment.getRepository(), logInfo);
+    final LogInformationWrapper wrapper = LogInformationWrapper.wrap(myEnvironment.getRepository(), myModule, logInfo);
     if (wrapper == null) {
       return;
     }
