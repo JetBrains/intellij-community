@@ -113,7 +113,10 @@ public class GroovyDslScript {
 
   private static boolean isApplicable(@NotNull GroovyDslExecutor executor, GroovyClassDescriptor descriptor, final ProcessingContext ctx) {
     List<Pair<ContextFilter,Closure>> enhancers = executor.getEnhancers();
-    assert enhancers != null : "null enhancers";
+    if (enhancers == null) {
+      LOG.error("null enhancers");
+      return false;
+    }
     for (Pair<ContextFilter, Closure> pair : enhancers) {
       if (pair.first.isApplicable(descriptor, ctx)) {
         return true;
