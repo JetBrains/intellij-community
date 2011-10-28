@@ -41,7 +41,9 @@ public class TitlePanel extends CaptionPanel {
     myInactive = inactive;
 
     myLabel = new EngravedLabel();
-    myLabel.setFont(myLabel.getFont().deriveFont(12f));
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      myLabel.setFont(myLabel.getFont().deriveFont(12f));
+    }
     myLabel.setForeground(Color.black);
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
