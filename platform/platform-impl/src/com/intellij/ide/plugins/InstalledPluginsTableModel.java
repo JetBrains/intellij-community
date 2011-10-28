@@ -212,6 +212,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     int state = StringUtil.compareVersionNumbers(descr.getVersion(), existing.getVersion());
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
+    final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().myInstalledPlugins;
+    if (!installedPlugins.contains(idString)){
+      installedPlugins.add(idString);
+    }
     final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();
     if (state > 0 && !PluginManager.isIncompatible(descr) && !updatedPlugins.contains(descr.getPluginId())) {
       NewVersions2Plugins.put(pluginId, 1);

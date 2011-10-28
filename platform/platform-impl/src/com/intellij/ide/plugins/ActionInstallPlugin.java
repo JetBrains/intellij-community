@@ -97,7 +97,10 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       try {
         if (PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view)) {
           for (PluginNode pluginNode : list) {
-            PluginManagerUISettings.getInstance().myInstalledPlugins.add(pluginNode.getPluginId().getIdString());
+            final String idString = pluginNode.getPluginId().getIdString();
+            if (!PluginManagerUISettings.getInstance().myInstalledPlugins.contains(idString)) {
+              PluginManagerUISettings.getInstance().myInstalledPlugins.add(idString);
+            }
           }
           installed.getPluginsModel().updatePluginsList(new ArrayList<IdeaPluginDescriptor>(list));
           installed.setRequireShutdown(true);
