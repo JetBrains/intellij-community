@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,21 @@
  */
 package com.intellij.spellchecker.inspection;
 
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+
 /**
- * Created by IntelliJ IDEA.
- * User: Ekaterina Shliakhovetskaja
+ * @author yole
  */
-public class XmlWithMistakesInspectionTest extends LightSpellCheckerTestCase {
-  @Override
-  protected String getBasePath() {
-    return SpellcheckerInspectionTestCase.getSpellcheckerTestDataPath() + "/inspection/xmlWithMistakes";
+public abstract class LightSpellCheckerTestCase extends LightPlatformCodeInsightFixtureTestCase  {
+  protected void doTest(final String file) {
+    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.configureByFile(file);
+    myFixture.testHighlighting(false, false, true);
   }
 
-  public void testXml() {
-    doTest("test.xml");
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
   }
 }
-
-

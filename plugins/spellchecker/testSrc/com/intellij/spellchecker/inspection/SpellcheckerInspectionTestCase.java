@@ -25,7 +25,7 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class SpellcheckerInspectionTestCase extends CodeInsightFixtureTestCase {
-  protected static String getSpellcheckerTestDataPath() {
+  public static String getSpellcheckerTestDataPath() {
     return PluginPathManager.getPluginHomePathRelative("spellchecker") + "/testData";
   }
 
