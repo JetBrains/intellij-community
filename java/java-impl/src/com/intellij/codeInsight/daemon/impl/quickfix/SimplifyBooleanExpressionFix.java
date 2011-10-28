@@ -253,7 +253,12 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
           simplifyBinary(tokenType, r, lExpr);
         }
         else {
-          resultExpression = null;
+          final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
+          if (javaToken != null) {
+            resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
+          } else {
+            resultExpression = null;
+          }
         }
         if (resultExpression != null) {
           lExpr = resultExpression;
