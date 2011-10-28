@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.tree.TreePath;
 
 /**
@@ -36,6 +37,14 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     myNode = node;
     myTree = myNode.getTree();
     myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition());
+  }
+
+  @Override
+  protected void onHidden() {
+    final ComboPopup popup = myExpressionEditor.getComboBox().getPopup();
+    if (popup != null && popup.isVisible()) {
+      popup.hide();
+    }
   }
 
   protected JComponent getPreferredFocusedComponent() {

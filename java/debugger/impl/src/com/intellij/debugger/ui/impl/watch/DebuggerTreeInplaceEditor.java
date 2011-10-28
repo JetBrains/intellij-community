@@ -41,14 +41,12 @@ public abstract class DebuggerTreeInplaceEditor extends TreeInplaceEditor {
   }
 
   @Override
-  public void show() {
+  protected void onShown() {
     myNode.getTree().onEditorShown(myNode);
-    super.show();
   }
 
   @Override
-  protected void remove() {
+  protected void onHidden() {
     myNode.getTree().onEditorHidden(myNode);
-    super.remove();
   }
 }

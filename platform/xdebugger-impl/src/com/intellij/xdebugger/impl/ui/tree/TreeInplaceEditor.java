@@ -56,17 +56,18 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   protected abstract JTree getTree();
 
   public void doOKAction() {
-    remove();
+    hide();
   }
 
   public void cancelEditing() {
-    remove();
+    hide();
   }
 
-  protected void remove() {
+  private void hide() {
     if (!isShown()) {
       return;
     }
+    onHidden();
     for (Runnable action : myRemoveActions) {
       action.run();
     }
@@ -79,9 +80,12 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     tree.requestFocus();
   }
 
+  protected void onHidden() {
+  }
+
   protected abstract Project getProject();
 
-  public void show() {
+  public final void show() {
     LOG.assertTrue(myInplaceEditorComponent == null, "editor is not released");
     final JTree tree = getTree();
     tree.scrollPathToVisible(getNodePath());
@@ -194,6 +198,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         defaultToolkit.removeAWTEventListener(TreeInplaceEditor.this);
       }
     });
+    onShown();
+  }
+
+  protected void onShown() {
   }
 
   public void eventDispatched(AWTEvent event) {
