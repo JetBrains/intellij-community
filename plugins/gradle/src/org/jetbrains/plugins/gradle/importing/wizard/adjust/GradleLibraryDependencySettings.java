@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
-import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleLibraryDependency;
 
@@ -12,44 +12,27 @@ import javax.swing.*;
  */
 public class GradleLibraryDependencySettings implements GradleProjectStructureNodeSettings {
 
-  private final GradleLibraryDependency myDependency;
   private final GradleLibrarySettings   myLibrarySettings;
-  private final JCheckBox               myExportedCheckBox;
-  private final JComboBox               myScopeComboBox;
+  private final Runnable                myRefreshCallback;
+  private final Runnable                myValidateCallback;
   private final JComponent              myComponent;
 
   public GradleLibraryDependencySettings(@NotNull GradleLibraryDependency dependency) {
-    myDependency = dependency;
-    myLibrarySettings = new GradleLibrarySettings(dependency.getLibrary());
+    myLibrarySettings = new GradleLibrarySettings(dependency.getTarget());
     
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    builder.setKeyAndValueControlsOnSameRow(true);
     builder.add(myLibrarySettings.getComponent(), GradleProjectSettingsBuilder.InsetSize.NONE);
-    myExportedCheckBox = setupExported(builder);
-    myScopeComboBox = setupScope(builder);
+    Pair<Runnable,Runnable> pair = GradleAdjustImportSettingsUtil.configureCommonDependencyControls(builder, dependency);
+    myRefreshCallback = pair.first;
+    myValidateCallback = pair.second;
     myComponent = builder.build();
     refresh();
   }
 
-  @NotNull
-  private static JCheckBox setupExported(@NotNull GradleProjectSettingsBuilder builder) {
-    JCheckBox result = new JCheckBox();
-    builder.add("gradle.import.structure.settings.label.export", result);
-    return result;
-  }
-  
-  @NotNull
-  private static JComboBox setupScope(@NotNull GradleProjectSettingsBuilder builder) {
-    JComboBox result = new JComboBox(DependencyScope.values());
-    builder.add("gradle.import.structure.settings.label.scope", result);
-    return result;
-  }
-  
   @Override
   public void refresh() {
     myLibrarySettings.refresh();
-    myExportedCheckBox.setSelected(myDependency.isExported());
-    myScopeComboBox.setSelectedItem(myDependency.getScope());
+    myRefreshCallback.run();
   }
 
   @Override
@@ -57,8 +40,7 @@ public class GradleLibraryDependencySettings implements GradleProjectStructureNo
     if (!myLibrarySettings.validate()) {
       return false;
     }
-    myDependency.setExported(myExportedCheckBox.isSelected());
-    myDependency.setScope((DependencyScope)myScopeComboBox.getSelectedItem());
+    myValidateCallback.run();
     return true;
   }
 

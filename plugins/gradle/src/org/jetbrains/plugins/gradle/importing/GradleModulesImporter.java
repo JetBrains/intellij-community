@@ -259,7 +259,7 @@ public class GradleModulesImporter {
       dependency.invite(new GradleEntityVisitorAdapter() {
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
-          ModuleOrderEntry orderEntry = model.addModuleOrderEntry(modules.get(dependency.getModule()));
+          ModuleOrderEntry orderEntry = model.addModuleOrderEntry(modules.get(dependency.getTarget()));
           orderEntry.setExported(dependency.isExported());
           orderEntry.setScope(dependency.getScope());
         }
@@ -412,7 +412,7 @@ public class GradleModulesImporter {
       GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
-          GradleLibrary gradleLibrary = dependency.getLibrary();
+          GradleLibrary gradleLibrary = dependency.getTarget();
           Library intellijLibrary = libraryMappings.get(gradleLibrary);
           if (intellijLibrary == null) {
             GradleLog.LOG.warn(String.format(

@@ -57,12 +57,12 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
-        visit(dependency.getModule());
+        visit(dependency.getTarget());
       }
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        visit(dependency.getLibrary());
+        visit(dependency.getTarget());
       }
     });
     return result.get();
@@ -117,7 +117,8 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
-        visit(dependency.getModule());
+        setupController(dependency, treeModel, treeNodes);
+        result.set(new GradleModuleDependencySettings(dependency));
       }
 
       @Override
