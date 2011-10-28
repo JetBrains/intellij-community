@@ -1,6 +1,7 @@
 package org.jetbrains.android.importDependencies;
 
 import com.intellij.CommonBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
@@ -9,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -24,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +49,7 @@ public class ImportDependenciesUtil {
   private ImportDependenciesUtil() {
   }
 
-  public static void importDependencies(@NotNull Module module,
+  public static void importDependencies(@NotNull final Module module,
                                         final boolean updateBackwardDependencies) {
     synchronized (LOCK) {
       final Project project = module.getProject();
@@ -55,22 +58,42 @@ public class ImportDependenciesUtil {
 
       if (project.getUserData(WAIT_FOR_IMPORTING_DEPENDENCIES_KEY) != Boolean.TRUE) {
         project.putUserData(WAIT_FOR_IMPORTING_DEPENDENCIES_KEY, Boolean.TRUE);
+
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                importDependenciesForMarkedModules(project, updateBackwardDependencies);
-              }
-            });
+            // todo: this doesn't work in module configurator after 'Apply' button pressed
+            if (module.isLoaded()) {
+              importDependenciesForMarkedModules(project, updateBackwardDependencies);
+            }
+            else {
+              final MessageBusConnection connection = module.getMessageBus().connect();
+              connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+                @Override
+                public void moduleAdded(final Project project, final Module addedModule) {
+                  if (module.equals(addedModule)) {
+                    connection.disconnect();
+                    importDependenciesForMarkedModules(project, updateBackwardDependencies);
+                  }
+                }
+              });
+            }
           }
         });
       }
     }
   }
 
-  private static void importDependenciesForMarkedModules(Project project, boolean updateBackwardDependencies) {
+  private static void importDependenciesForMarkedModules(final Project project, final boolean updateBackwardDependencies) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        doImportDependenciesForMarkedModules(project, updateBackwardDependencies);
+      }
+    });
+  }
+
+  private static void doImportDependenciesForMarkedModules(Project project, boolean updateBackwardDependencies) {
     if (project.getUserData(WAIT_FOR_IMPORTING_DEPENDENCIES_KEY) != Boolean.TRUE) {
       return;
     }
