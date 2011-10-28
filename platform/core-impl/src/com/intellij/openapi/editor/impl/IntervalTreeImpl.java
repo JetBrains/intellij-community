@@ -207,7 +207,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
             if (node == this) break;
             node = (path & 1) == 0 ? node.getLeft() : node.getRight();
             path >>= 1;
-            if (node == null) continue restart; // can only happen in case of concurrently modification
+            if (node == null) return deltaUp; // can only happen in case of concurrently modification
           }
 
           assert deltaUp == 0 || !allDeltasAreNull;
