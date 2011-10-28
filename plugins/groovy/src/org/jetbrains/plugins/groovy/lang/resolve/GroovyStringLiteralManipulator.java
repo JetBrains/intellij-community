@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
 
   public TextRange getRangeInElement(final GrLiteral element) {
     final String text = element.getText();
+    if (!(element.getValue() instanceof String)) return super.getRangeInElement(element);
     return getLiteralRange(text);
   }
 
