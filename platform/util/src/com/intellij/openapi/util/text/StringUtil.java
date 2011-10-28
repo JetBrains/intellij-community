@@ -478,7 +478,7 @@ public class StringUtil {
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
-      if (!Character.isLetterOrDigit(prevChar)) {
+      if (!Character.isLetterOrDigit(prevChar) && prevChar != '\'') {
         if (Character.isLetterOrDigit(currChar)) {
           if (!Character.isUpperCase(currChar)) {
             int j = i;

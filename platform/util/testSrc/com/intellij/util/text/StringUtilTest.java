@@ -107,4 +107,8 @@ public class StringUtilTest extends TestCase {
     assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(1, 5)));
     assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(1, 2)));
   }
+  
+  public void testTitleCase() {
+    assertEquals("Couldn't Connect to Debugger", StringUtil.wordsToBeginFromUpperCase("Couldn't connect to debugger"));
+  }
 }
