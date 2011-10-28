@@ -29,7 +29,7 @@ class <symbolName descr="null" type="CLASS_NAME">a</symbolName> {
  }
  void <symbolName descr="null" type="METHOD_DECLARATION">ff</symbolName>(<symbolName descr="null" type="INTERFACE_NAME">Runnable</symbolName> <symbolName descr="null" type="PARAMETER">r</symbolName>) {
    <symbolName descr="null" type="METHOD_CALL">ff</symbolName>(
-    new <symbolName descr="null" type="INTERFACE_NAME">java.lang.Runnable</symbolName>()
+    new <symbolName descr="null" type="ANONYMOUS_CLASS_NAME">java.lang.Runnable</symbolName>()
        {
          public void <symbolName descr="null" type="METHOD_DECLARATION">run</symbolName>() {}
          int <symbolName descr="null" type="INSTANCE_FIELD">instance</symbolName> = 0;
