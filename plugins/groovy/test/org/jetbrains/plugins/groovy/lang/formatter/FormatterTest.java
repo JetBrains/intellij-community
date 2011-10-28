@@ -222,6 +222,10 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testGeese1() {doGeeseTest();}
   public void testGeese2() {doGeeseTest();}
   public void testGeese3() {doGeeseTest();}
+  public void testGeese4() {doGeeseTest();}
+  public void testGeese5() {doGeeseTest();}
+  public void testGeese6() {doGeeseTest();}
+  public void testGeese7() {doGeeseTest();}
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);

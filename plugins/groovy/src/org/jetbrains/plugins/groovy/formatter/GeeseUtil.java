@@ -81,15 +81,21 @@ public class GeeseUtil {
     return next;
   }
 
-  static Alignment calculateRBraceAlignment(PsiElement psi, Map<PsiElement, Alignment> alignments) {
+  @Nullable
+  static Alignment calculateRBraceAlignment(PsiElement rBrace, Map<PsiElement, Alignment> alignments) {
     int leadingBraceCount = 0;
-    PsiElement next = psi;
-    while (isClosureRBrace(next = getPreviousNonWhitespaceToken(next))) {
+    PsiElement next;
+
+    if (!isClosureContainLF(rBrace)) return null;
+
+    for (next = getPreviousNonWhitespaceToken(rBrace);
+         isClosureRBrace(next) && isClosureContainLF(next);
+         next = getPreviousNonWhitespaceToken(next)) {
       leadingBraceCount++;
     }
 
-    PsiElement cur = psi;
-    while (isClosureRBrace(next = getNextNonWhitespaceToken(cur))) {
+    PsiElement cur = rBrace;
+    for (next = getNextNonWhitespaceToken(cur); isClosureRBrace(next); next = getNextNonWhitespaceToken(cur)) {
       cur = next;
     }
 
@@ -115,7 +121,15 @@ public class GeeseUtil {
     cur = PsiTreeUtil.getDeepestFirst(cur);
     while (!PsiUtil.isNewLine(next = PsiTreeUtil.prevLeaf(cur, true))) {
       if (next == null) break;
+      if (next.getNode().getElementType() == TokenType.WHITE_SPACE && PsiTreeUtil.prevLeaf(next) == null) break; //if cur is first word in the text, whitespace could be before it
       cur = next;
+    }
+
+    int startOffset = cur.getTextRange().getStartOffset();
+    int endOffset=rBrace.getTextRange().getStartOffset();
+
+    if (rBrace.getContainingFile().getText().substring(startOffset, endOffset).indexOf('\n') < 0) {
+      return null;
     }
 
     //PsiElement statement = PsiUtil.findEnclosingStatement(parent);
@@ -125,5 +139,10 @@ public class GeeseUtil {
       alignments.put(cur, alignment);
     }
     return alignment;
+  }
+
+  public static boolean isClosureContainLF(PsiElement rBrace) {
+    PsiElement parent = rBrace.getParent();
+    return parent.getText().indexOf('\n') >= 0;
   }
 }

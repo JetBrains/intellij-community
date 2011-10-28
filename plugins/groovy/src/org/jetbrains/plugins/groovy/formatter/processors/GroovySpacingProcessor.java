@@ -63,6 +63,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GDOC_TAG;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCLOSABLE_BLOCK_OP;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCOLON;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_ASTERISKS;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
@@ -160,7 +161,17 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitClosure(GrClosableBlock closure) {
     ASTNode rBraceAtTheEnd = GeeseUtil.getClosureRBraceAtTheEnd(myChild1);
     if (myGroovySettings.USE_FLYING_GEESE_BRACES && myChild2.getElementType() == mRCURLY && rBraceAtTheEnd != null) {
-      myResult = Spacing.createSpacing(0, 0, 0, true, 100, 0);
+      String text = rBraceAtTheEnd.getTreeParent().getText();
+      if (text.indexOf('\n') < 0) {
+        /* the case:
+       foo {
+         bar {print x}<we are here>}
+        */
+        myResult = Spacing.createSpacing(1, 1, 1, false, 1);
+      }
+      else {
+        myResult = Spacing.createSpacing(0, 0, 0, true, 100, 0);
+      }
     }
     else if ((myChild1.getElementType() == mLCURLY &&
               myChild2.getElementType() != PARAMETERS_LIST &&
