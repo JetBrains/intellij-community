@@ -66,6 +66,12 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     return true;
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setVisible(e.getPlace() == ActionPlaces.MAIN_MENU);
+  }
+
   protected String getPopupTitle(AnActionEvent e) {
     return "Refactor This";
   }
