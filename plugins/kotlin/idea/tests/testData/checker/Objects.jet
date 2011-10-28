@@ -1,0 +1,83 @@
+namespace toplevelObjectDeclarations {
+  open class Foo(y : Int) {
+    open fun foo() : Int = 1
+  }
+
+  class T : <error>Foo</error> {}
+
+  object A : <error>Foo</error> {
+    val x : Int = 2
+
+    fun test() : Int {
+      return x + foo()
+    }
+  }
+
+  object B : <error>A</error> {}
+
+  val x = A.foo()
+
+  val y = object : Foo(x) {
+    {
+      x + 12
+    }
+
+    override fun foo() : Int = 1
+  }
+
+  val z = y.foo()
+}
+
+namespace nestedObejcts {
+  object A {
+    val b = B
+    val d = A.B.A
+
+    object B {
+      val a = A
+      val e = B.A
+
+      object A {
+        val a = A
+        val b = B
+        val x = nestedObejcts.A.B.A
+        val y = this<error>@A</error>
+      }
+    }
+
+  }
+  object B {
+    val b = B
+    val c = A.B
+  }
+
+  val a = A
+  val b = B
+  val c = A.B
+  val d = A.B.A
+  val e = B.<error>A</error>.B
+}
+
+namespace localObjects {
+  object A {
+    val x : Int = 0
+  }
+
+  open class Foo {
+    fun foo() : Int = 1
+  }
+
+  fun test() {
+    A.x
+    val b = object : Foo {
+    }
+    b.foo()
+
+    object B {
+      fun foo() {}
+    }
+    B.foo()
+  }
+
+  val bb = <error>B</error>.foo()
+}
