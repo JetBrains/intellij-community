@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
@@ -37,17 +38,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
+  private static final String NAV_BAR_POPUP = "NAV_BAR_POPUP";
   private final NavBarPanel myPanel;
   private int myIndex;
+  private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
 
-  public NavBarPopup(NavBarPanel panel, Object[] siblings, final int selectedIndex) {
+  public NavBarPopup(final NavBarPanel panel, Object[] siblings, final int selectedIndex) {
     super(createPopupContent(panel, siblings));
     myPanel = panel;
     myIndex = selectedIndex;
@@ -92,6 +96,11 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         ((JBListWithHintProvider)o).hideHint();
       }
     }
+    //noinspection unchecked
+    for (Disposable disposable : ((List<Disposable>)getList().getClientProperty(DISPOSED_OBJECTS))) {
+      Disposer.dispose(disposable);
+    }
+    Disposer.dispose(this);
   }
 
   public void show(final NavBarItem item) {
@@ -129,11 +138,14 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         return panel.getData(dataId);
       }
     });
+    final List<Disposable> disposables = new ArrayList<Disposable>();
+    list.putClientProperty(DISPOSED_OBJECTS, disposables);
     list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
       @NotNull
       @Override
       public JComponent fun(Object obj) {
-        final NavBarItem navBarItem = new NavBarItem(panel, obj);
+        final NavBarItem navBarItem = new NavBarItem(panel, obj, null);
+        disposables.add(navBarItem);
         return navBarItem;
       }
     });

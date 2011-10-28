@@ -311,7 +311,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return super.getPreferredSize();
     }
     else {
-      final NavBarItem item = new NavBarItem(this, null, 0);
+      final NavBarItem item = new NavBarItem(this, null, 0, null);
       final Dimension size = item.getPreferredSize();
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
@@ -819,7 +819,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       JBList list = myNodePopup.getList();
       for (int i = 0; i < list.getModel().getSize(); i++) {
         Object eachElement = list.getModel().getElementAt(i);
-        String text = new NavBarItem(this, eachElement).getText();
+        String text = new NavBarItem(this, eachElement, myNodePopup).getText();
         int selectedIndex = list.getSelectedIndex();
         if (selectedIndex != -1 && eachElement.equals(list.getSelectedValue())) {
           popupText.append("[" + text + "]");

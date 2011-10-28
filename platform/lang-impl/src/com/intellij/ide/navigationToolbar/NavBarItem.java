@@ -38,6 +38,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   private static Image SEPARATOR_ACTIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorActive.png"));
   private static Image SEPARATOR_PASSIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorPassive.png"));
   private static Image SEPARATOR_GRADIENT = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorGradient.png"));
+  //private static int count = 0;
 
   private final String myText;
   private final SimpleTextAttributes myAttributes;
@@ -48,7 +49,9 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final boolean isPopupElement;
   private JBInsets myPadding;
 
-  public NavBarItem(NavBarPanel panel, Object object, int idx) {
+  public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
+    //count++;
+    //System.out.println(count);
     myPanel = panel;
     myObject = object;
     myIndex = idx;
@@ -71,7 +74,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
       myIcon = PlatformIcons.DIRECTORY_OPEN_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
-    Disposer.register(panel, this);
+    Disposer.register(parent == null ? panel : parent, this);
 
     setOpaque(false);
     setFont(UIUtil.isUnderAquaLookAndFeel() ? UIUtil.getLabelFont().deriveFont(11.0f) : getFont());
@@ -92,8 +95,8 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
    * @param panel
    * @param object
    */
-  public NavBarItem(NavBarPanel panel, Object object) {
-    this(panel, object, -1);
+  public NavBarItem(NavBarPanel panel, Object object, Disposable parent) {
+    this(panel, object, -1, parent);
   }
 
   public Object getObject() {
@@ -302,6 +305,8 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   @Override
   public void dispose() {
+    //count--;
+    //System.out.println(count);
   }
     
 
