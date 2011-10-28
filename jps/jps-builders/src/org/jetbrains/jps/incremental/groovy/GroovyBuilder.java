@@ -11,6 +11,7 @@ import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
@@ -18,9 +19,7 @@ import org.jetbrains.jps.incremental.storage.TimestampStorage;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.objectweb.asm.ClassReader;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -34,7 +33,7 @@ public class GroovyBuilder extends Builder {
 
   public GroovyBuilder(boolean forStubs) {
     myForStubs = forStubs;
-    myBuilderName = BUILDER_NAME + (forStubs ? "(stubs)" : "(classes)");
+    myBuilderName = BUILDER_NAME + (forStubs ? "-stubs" : "-classes");
   }
 
   public String getName() {
@@ -67,11 +66,18 @@ public class GroovyBuilder extends Builder {
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath()); //groovy_rt.jar
 
       final File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
+      final Module representativeModule = chunk.getModules().iterator().next();
       final File dir = myForStubs ?
-                 FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) : //todo clear on delete, add to javac sourcepath right now
-                 context.getProjectPaths().getModuleOutputDir(chunk.getModules().iterator().next(), context.isCompilingTests());
+                 FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) :
+                 context.getProjectPaths().getModuleOutputDir(representativeModule, context.isCompilingTests());
+
       assert dir != null;
+
       fillFileWithGroovycParameters(tempFile, dir.getPath(), toCompile);
+
+      if (myForStubs) {
+        JavaBuilder.addTempSourcePathRoot(context, dir);
+      }
 
       // todo cmd.add("-bootclasspath");
       //todo module jdk path
@@ -130,29 +136,31 @@ public class GroovyBuilder extends Builder {
         }
       }
       finally {
-        final Mappings delta = new Mappings();
-        final List<File> successfullyCompiledFiles = new ArrayList<File>();
-
-        if (!successfullyCompiled.isEmpty()) {
-          final Callbacks.Backend callback = delta.getCallback();
-          final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
-
+        if (myForStubs) {
           for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
-            final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
-            final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-            storage.update(outputPath, sourcePath);
-
-            if (!myForStubs) {
-              callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFile(new File(outputPath))));
-            }
-
-            successfullyCompiledFiles.add(new File(sourcePath));
+            tsStorage.saveStamp(new File(item.sourcePath));
           }
         }
+        else {
+          final Mappings delta = new Mappings();
+          final List<File> successfullyCompiledFiles = new ArrayList<File>();
+          if (!successfullyCompiled.isEmpty()) {
+            final Callbacks.Backend callback = delta.getCallback();
+            final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
 
-        final boolean needSecondPass = !myForStubs && updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
-        if (needSecondPass) {
-          exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
+            for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
+              final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
+              final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
+              storage.update(outputPath, sourcePath);
+              callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
+              successfullyCompiledFiles.add(new File(sourcePath));
+            }
+          }
+
+          final boolean needSecondPass = updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
+          if (needSecondPass) {
+            exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
+          }
         }
       }
 
@@ -164,23 +172,27 @@ public class GroovyBuilder extends Builder {
   }
 
   private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<File> files) throws IOException {
-    String fileText = "";
-    for (File file : files) {
-      fileText += "src_file\n";
-      fileText += file.getPath() + "\n";
+    final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
+    try {
+      for (File file : files) {
+        writer.write("src_file\n");
+        writer.write(file.getPath());
+        writer.write("\n");
+      }
+
+      //todo patchers
+      writer.write("encoding\n");
+      writer.write("UTF-8\n");  //todo encoding
+      writer.write("outputpath\n");
+      writer.write(outputDir);
+      writer.write("\n");
+      writer.write("finaloutputpath\n");
+      writer.write(outputDir);
+      writer.write("\n");
     }
-
-    //todo patchers
-    fileText += "encoding\n";
-    fileText += "UTF-8\n"; //todo encoding
-    fileText += "outputpath\n";
-    fileText += outputDir + "\n";
-    fileText += "finaloutputpath\n";
-    fileText += outputDir + "\n";
-
-    FileWriter writer = new FileWriter(tempFile);
-    writer.write(fileText);
-    writer.close();
+    finally {
+      writer.close();
+    }
   }
 
   public String getDescription() {

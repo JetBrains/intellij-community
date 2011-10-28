@@ -46,7 +46,15 @@ public class EmbeddedJavac {
     myClassProcessors.add(processor);
   }
 
-  public boolean compile(Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, CompileContext compileContext, final DiagnosticOutputConsumer outConsumer, final OutputFileConsumer outputSink) {
+  public boolean compile(Collection<String> options,
+                         final Collection<File> sources,
+                         Collection<File> classpath,
+                         Collection<File> platformClasspath,
+                         Collection<File> sourcePath,
+                         Map<File, Set<File>> outputDirToRoots,
+                         CompileContext compileContext,
+                         final DiagnosticOutputConsumer outConsumer,
+                         final OutputFileConsumer outputSink) {
     final FileManagerContext context = new FileManagerContext(compileContext, outConsumer, outputSink); // todo
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
@@ -64,6 +72,11 @@ public class EmbeddedJavac {
     }
     if (!platformClasspath.isEmpty()) {
       if (!fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, platformClasspath)) {
+        return false;
+      }
+    }
+    if (!sourcePath.isEmpty()) {
+      if (!fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath)) {
         return false;
       }
     }

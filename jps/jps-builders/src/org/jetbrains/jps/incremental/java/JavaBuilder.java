@@ -100,6 +100,17 @@ public class JavaBuilder extends Builder{
     return "Java Builder";
   }
 
+  private static final Key<Set<File>> TEMPORARY_SOURCE_ROOTS_KEY = Key.create("_additional_source_roots_");
+
+  public static void addTempSourcePathRoot(CompileContext context, File root) {
+    Set<File> roots = TEMPORARY_SOURCE_ROOTS_KEY.get(context);
+    if (roots == null) {
+      roots = new HashSet<File>();
+      TEMPORARY_SOURCE_ROOTS_KEY.set(context, roots);
+    }
+    roots.add(root);
+  }
+
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
@@ -218,8 +229,11 @@ public class JavaBuilder extends Builder{
     Collection<File> successfulForms = Collections.emptyList();
     try {
       if (hasSourcesToCompile) {
-        // todo: before compile, basing on Mappings, delete all classes that correspond to files being compiled
-        final boolean compiledOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, context, diagnosticSink, outputSink);
+        final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context,Collections.<File>emptySet());
+
+        final boolean compiledOk = myJavacCompiler.compile(
+          options, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink
+        );
 
         final Collection<File> chunkSourcePath = ProjectPaths.getSourcePathsWithDependents(chunk, context.isCompilingTests());
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
@@ -267,21 +281,16 @@ public class JavaBuilder extends Builder{
       }
     }
 
-    return exitCode;
-  }
-
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
-    final Ref<Boolean> result = new Ref<Boolean>(false);
-    context.processFiles(chunk, new FileProcessor() {
-      public boolean apply(Module module, File file, String sourceRoot) throws Exception {
-        if (affected.contains(file)) {
-          result.set(true);
-          return false;
+    if (exitCode != ExitCode.ADDITIONAL_PASS_REQUIRED) {
+      final Set<File> tempRoots = TEMPORARY_SOURCE_ROOTS_KEY.get(context);
+      TEMPORARY_SOURCE_ROOTS_KEY.set(context, null);
+      if (tempRoots != null) {
+        for (File root : tempRoots) {
+          FileUtil.delete(root);
         }
-        return true;
       }
-    });
-    return result.get();
+    }
+    return exitCode;
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Collection<File> chunkSourcePath, OutputFilesSink outputSink)

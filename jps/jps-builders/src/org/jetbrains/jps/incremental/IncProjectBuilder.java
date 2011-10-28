@@ -54,7 +54,8 @@ public class IncProjectBuilder {
         if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
           // force rebuild
           context.processMessage(new CompilerMessage(
-            JPS_SERVER_NAME, BuildMessage.Kind.INFO, "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
+            JPS_SERVER_NAME, BuildMessage.Kind.INFO,
+            "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
           );
           runBuild(createContext(new CompileScope(scope.getProject()), false));
         }
@@ -65,7 +66,13 @@ public class IncProjectBuilder {
 
     }
     catch (ProjectBuildException e) {
-      context.processMessage(new ProgressMessage(e.getMessage()));
+      final Throwable cause = e.getCause();
+      if (cause == null) {
+        context.processMessage(new ProgressMessage(e.getMessage()));
+      }
+      else {
+        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, cause));
+      }
     }
     finally {
       context.processMessage(new ProgressMessage("Build complete"));
@@ -238,7 +245,7 @@ public class IncProjectBuilder {
           builder.cleanupResources(context, chunk);
         }
       }
-      context.clearFileCache();
+      context.onChunkBuildComplete(chunk);
       Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
     }
   }

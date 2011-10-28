@@ -11,9 +11,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -30,6 +28,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final BuildDataManager myDataManager;
   private final Mappings myMappings;
   private final Set<Module> myDirtyModules = new HashSet<Module>();
+  private final Map<Module, Collection<File>> myTempSourceRoots = new HashMap<Module, Collection<File>>();
 
   private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
     @NotNull
@@ -121,13 +120,29 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myCompilingTests;
   }
 
-  public void setCompilingTests(boolean compilingTests) {
+  void setCompilingTests(boolean compilingTests) {
     myCompilingTests = compilingTests;
-    clearFileCache();
+    myFilesCache.clear();
+    for (Collection<File> roots : myTempSourceRoots.values()) {
+      if (roots != null) {
+        for (File root : roots) {
+          FileUtil.delete(root);
+        }
+      }
+    }
+    myTempSourceRoots.clear();
   }
 
-  public void clearFileCache() {
+  void onChunkBuildComplete(@NotNull ModuleChunk chunk) {
     myFilesCache.clear();
+    for (Module module : chunk.getModules()) {
+      final Collection<File> roots = myTempSourceRoots.remove(module);
+      if (roots != null) {
+        for (File root : roots) {
+          FileUtil.delete(root);
+        }
+      }
+    }
   }
 
   public CompileScope getScope() {
@@ -174,6 +189,16 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
+  public void registerTempSourceRoot(Module module, File root) {
+    Collection<File> roots = myTempSourceRoots.get(module);
+    if (roots == null) {
+      roots = new HashSet<File>();
+      myTempSourceRoots.put(module, roots);
+    }
+    roots.add(root);
+  }
+
+
   /** @noinspection unchecked*/
   private FSSnapshot buildSnapshot(Module module) {
     final Set<File> excludes = new HashSet<File>();
@@ -185,6 +210,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     for (String srcRoot : roots) {
       final FSSnapshot.Root root = snapshot.addRoot(new File(srcRoot), srcRoot);
       buildStructure(root.getNode(), excludes);
+    }
+    final Collection<File> tempRoots = myTempSourceRoots.get(module);
+    if (tempRoots != null) {
+      for (File tempRoot : tempRoots) {
+        final FSSnapshot.Root root = snapshot.addRoot(tempRoot, FileUtil.toSystemIndependentName(tempRoot.getPath()));
+        buildStructure(root.getNode(), excludes);
+      }
     }
     return snapshot;
   }
