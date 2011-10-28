@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,10 @@ public class ClassInnerStuffCache {
 
     final Map<String, PsiClass> cachedInners = new THashMap<String, PsiClass>();
     for (final PsiClass psiClass : classes) {
-      cachedInners.put(psiClass.getName(), psiClass);
+      final String name = psiClass.getName();
+      if (!(psiClass instanceof ExternallyDefinedPsiElement) || !cachedInners.containsKey(name)) {
+        cachedInners.put(name, psiClass);
+      }
     }
     return cachedInners;
   }
