@@ -270,7 +270,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                                                                  public void pass(String s) {
                                                                    setErrorText(s);
                                                                  }
-                                                               }, myClassPackageChooser.getChildComponent());
+                                                               }, myHavePackages ? myWithBrowseButtonReference.getChildComponent() : myClassPackageChooser.getChildComponent());
     UIUtil.setEnabled(myTargetPanel, getSourceRoots().length > 0 && isMoveToPackage() && !isTargetDirectoryFixed, true);
     validateButtons();
     myHelpID = helpID;
