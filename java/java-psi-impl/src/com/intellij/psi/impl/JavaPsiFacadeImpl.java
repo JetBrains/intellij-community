@@ -341,8 +341,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         public boolean processInReadAction(final VirtualFile dir) {
           if (!scope.contains(dir)) return true;
           PsiDirectory psiDir = psiManager.findDirectory(dir);
-          assert psiDir != null;
-          return consumer.process(psiDir);
+          return psiDir == null || consumer.process(psiDir);
         }
       });
       return true;
