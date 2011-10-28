@@ -203,18 +203,19 @@ public abstract class PluginManagerMain implements Disposable {
 
     new SwingWorker() {
       ArrayList<IdeaPluginDescriptor> list = null;
-      Exception error;
+      final List<String> errorMessages = new ArrayList<String>();
 
       public Object construct() {
         try {
           list = RepositoryHelper.process(null);
         }
         catch (Exception e) {
-          error = e;
+          LOG.info(e);
+          errorMessages.add(e.getMessage());
         }
-        try {
-          for (String host : UpdateSettings.getInstance().myPluginHosts) {
-            final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
+        for (String host : UpdateSettings.getInstance().myPluginHosts) {
+          final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
+          try {
             UpdateChecker.checkPluginsHost(host, downloaded, false);
             for (PluginDownloader downloader : downloaded) {
               final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
@@ -224,9 +225,10 @@ public abstract class PluginManagerMain implements Disposable {
               }
             }
           }
-        }
-        catch (Exception e) {
-          error = e;
+          catch (Exception e) {
+            LOG.info(e);
+            errorMessages.add(e.getMessage());
+          }
         }
         return list;
       }
@@ -239,11 +241,10 @@ public abstract class PluginManagerMain implements Disposable {
               propagateUpdates(list);
               setDownloadStatus(false);
             }
-            else if (error != null) {
-              LOG.info(error);
+            else if (!errorMessages.isEmpty()) {
               setDownloadStatus(false);
               if (0 == Messages.showOkCancelDialog(
-                IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
+                IdeBundle.message("error.list.of.plugins.was.not.loaded", StringUtil.join(errorMessages, ", ")),
                 IdeBundle.message("title.plugins"),
                 CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText(), Messages.getErrorIcon())) {
                 loadPluginsFromHostInBackground();
