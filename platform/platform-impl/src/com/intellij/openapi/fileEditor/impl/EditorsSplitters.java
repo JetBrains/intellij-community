@@ -30,10 +30,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
@@ -136,7 +133,8 @@ public class EditorsSplitters extends JPanel {
       final Project project = ((IdeFrameImpl)frame).getProject();
       if (project != null) {
         if (!project.isInitialized()) return true;
-        return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW).isVisible();
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+        return toolWindow != null && toolWindow.isVisible();
       }
     }
     
