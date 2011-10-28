@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.awt.event.InputEvent;
 
@@ -35,13 +36,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     myProjectPath = projectPath;
     myProjectName = projectName;
 
-    String _text = projectPath;
-    if (projectName != null) {
-      _text = String.format("%s", projectName);
-    }
-
     final Presentation presentation = getTemplatePresentation();
-    presentation.setText(_text, false);
+    String text = myProjectPath.equals(myProjectName) ? FileUtil.getLocationRelativeToUserHome(myProjectPath) : myProjectName;
+    presentation.setText(text, false);
     presentation.setDescription(projectPath);
   }
 
