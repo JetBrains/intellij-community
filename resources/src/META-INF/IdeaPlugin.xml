@@ -675,6 +675,11 @@
       <category>Numbers</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
+      <category>Strings</category>
+    </intentionAction>
+
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
 
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>

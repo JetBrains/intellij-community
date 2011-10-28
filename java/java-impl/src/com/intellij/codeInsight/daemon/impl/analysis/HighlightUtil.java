@@ -33,10 +33,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -52,6 +49,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -883,6 +881,8 @@ public class HighlightUtil {
     return null;
   }
 
+  private static final Key<Boolean> TOO_BIG_CHAR_LITERAL_KEY = Key.create("too.big.char.literal");
+
   public static String getLiteralExpressionParsingError(final PsiLiteralExpression expression) {
     final Object value = expression.getValue();
     final PsiElement literal = expression.getFirstChild();
@@ -959,13 +959,18 @@ public class HighlightUtil {
         else {
           return JavaErrorMessages.message("illegal.line.end.in.character.literal");
         }
-        StringBuilder chars = new StringBuilder();
-        boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
+        final StringBuilder chars = StringBuilderSpinAllocator.alloc();
+        final boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
         if (!success) return JavaErrorMessages.message("illegal.escape.character.in.character.literal");
-        if (chars.length() > 1) {
+        final int length = chars.length();
+        StringBuilderSpinAllocator.dispose(chars);
+        if (length > 1) {
+          literal.putUserData(TOO_BIG_CHAR_LITERAL_KEY, Boolean.TRUE);
           return JavaErrorMessages.message("too.many.characters.in.character.literal");
         }
-        else if (chars.length() == 0) return JavaErrorMessages.message("empty.character.literal");
+        else if (length == 0) {
+          return JavaErrorMessages.message("empty.character.literal");
+        }
       }
     }
     else if (type == JavaTokenType.STRING_LITERAL) {
@@ -1023,12 +1028,17 @@ public class HighlightUtil {
 
     if (PsiLiteralExpressionImpl.REAL_LITERALS.contains(type)) {
       if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
-        return Arrays.asList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+        return Collections.singletonList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       }
     }
     if (PsiLiteralExpressionImpl.NUMERIC_LITERALS.contains(type)) {
       if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX) || text.contains("_"))) {
-        return Arrays.asList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_7));
+        return Collections.singletonList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_7));
+      }
+    }
+    if (type == JavaTokenType.CHARACTER_LITERAL) {
+      if (Boolean.TRUE.equals(literal.getUserData(TOO_BIG_CHAR_LITERAL_KEY))) {
+        return Collections.singletonList(new ConvertToStringLiteralAction());
       }
     }
 
