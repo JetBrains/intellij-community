@@ -178,8 +178,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public void reset() {
-    super.reset();
     myFacetTypeEditors.clear();
+    super.reset();
     TreeUtil.expandAll(myTree);
   }
 
