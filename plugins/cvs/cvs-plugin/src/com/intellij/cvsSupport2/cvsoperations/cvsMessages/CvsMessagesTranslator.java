@@ -45,6 +45,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
 
   @NonNls private static final CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{
     new CvsMessagePattern("cvs [* aborted]*"),
+    new CvsMessagePattern("Usage: cvs* server*"),
     new CvsMessagePattern("cvs* server: invalid option*"),
     new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
     new CvsMessagePattern("cvs* update: could not merge revision * of *: No such file or directory"),

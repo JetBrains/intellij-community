@@ -48,6 +48,7 @@ import java.util.*;
 public class CvsAnnotationProvider implements AnnotationProvider{
 
   @NonNls private static final String INVALID_OPTION_F = "invalid option -- F";
+  @NonNls private static final String USAGE_CVSNTSRV_SERVER = "Usage: cvsntsrv server";
 
   private final Project myProject;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -129,7 +130,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       }
       for (VcsException error : result.getErrors()) {
         for (String message : error.getMessages()) {
-          if (message.contains(INVALID_OPTION_F)) {
+          if (message.contains(INVALID_OPTION_F) || message.contains(USAGE_CVSNTSRV_SERVER)) {
             AnnotateOperation.doesNotSupportAnnotateBinary(root);
             return executeOperation(cvsLightweightFile, revision, root, false);
           }

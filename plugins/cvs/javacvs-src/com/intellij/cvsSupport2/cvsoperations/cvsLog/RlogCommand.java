@@ -18,11 +18,11 @@ package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.log.LogMessageParser;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -68,7 +68,6 @@ public class RlogCommand extends AbstractCommand {
     }
 
     requests.addArgumentRequest(myLogDefaultBranch, "-b");
-      
     requests.addArgumentRequest(myModuleName);
 
     final ICvsListener parser = new LogMessageParser(eventSender, clientEnvironment.getCvsFileSystem());
@@ -79,9 +78,7 @@ public class RlogCommand extends AbstractCommand {
     finally {
       parser.unregisterListeners(listenerRegistry);
     }
-
   }
-
 
   public void setMyLogDefaultBranch(boolean logDefaultBranch) {
     myLogDefaultBranch = logDefaultBranch;
