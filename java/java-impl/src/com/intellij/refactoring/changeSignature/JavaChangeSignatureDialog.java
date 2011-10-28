@@ -340,8 +340,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             UIUtil.addInsets(anyVarPanel, new Insets(0,0,8,0));
             additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
             //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
-            add(additionalPanel, BorderLayout.SOUTH);
           }
+          add(additionalPanel, BorderLayout.SOUTH);
         }
       }
 
