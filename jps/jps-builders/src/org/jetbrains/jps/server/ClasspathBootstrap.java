@@ -74,6 +74,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(TIntHash.class));  // trove
     cp.add(getResourcePath(FileUtil.class));  // util module
     cp.add(getResourcePath(Pointer.class));  // jna.jar
+    cp.add(getResourcePath(com.google.common.collect.MapMaker.class));  // guava
     cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons

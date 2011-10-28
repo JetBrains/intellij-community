@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="module" module-name="forms-compiler" />
     <orderEntry type="module" module-name="notNull" />
+    <orderEntry type="module" module-name="groovy-rt" />
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="NanoXML" level="project" />
@@ -28,7 +29,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="module" module-name="groovy-rt" />
+    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="java-runtime" scope="RUNTIME" />
   </component>
 </module>
