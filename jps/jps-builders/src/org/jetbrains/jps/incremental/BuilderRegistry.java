@@ -35,7 +35,8 @@ public class BuilderRegistry {
       }
     });
 
-    // todo: some builder registration mechanism needed
+    // todo: some builder registration mechanism for plugins needed
+
     myBuilders.get(BuilderCategory.TRANSLATOR).add(new GroovyBuilder(true));
     myBuilders.get(BuilderCategory.TRANSLATOR).add(new JavaBuilder(myTasksExecutor));
     myBuilders.get(BuilderCategory.TRANSLATOR).add(new ResourcesBuilder());

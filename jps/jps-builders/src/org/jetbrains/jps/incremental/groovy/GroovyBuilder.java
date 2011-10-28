@@ -30,20 +30,22 @@ import java.util.*;
 public class GroovyBuilder extends Builder {
   public static final String BUILDER_NAME = "groovy";
   private final boolean myForStubs;
+  private final String myBuilderName;
 
   public GroovyBuilder(boolean forStubs) {
     myForStubs = forStubs;
+    myBuilderName = BUILDER_NAME + (forStubs ? "(stubs)" : "(classes)");
   }
 
   public String getName() {
-    return BUILDER_NAME;
+    return myBuilderName;
   }
 
   public Builder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     ExitCode exitCode = ExitCode.OK;
     final List<File> toCompile = new ArrayList<File>();
     try {
-      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME + myForStubs);
+      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(getName());
       context.processFiles(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
@@ -106,7 +108,7 @@ public class GroovyBuilder extends Builder {
                                      : BuildMessage.Kind.INFO;
           context.processMessage(
             new org.jetbrains.jps.incremental.messages.CompilerMessage(
-              BUILDER_NAME, kind, message.getMessage(), message.getUrl(), -1, -1, -1, message.getLineNum(), message.getColumnNum())
+              getName(), kind, message.getMessage(), message.getUrl(), -1, -1, -1, message.getLineNum(), message.getColumnNum())
           );
         }
 
@@ -115,7 +117,7 @@ public class GroovyBuilder extends Builder {
         final StringBuffer unparsedBuffer = handler.getStdErr();
         if (unparsedBuffer.length() != 0) {
           context.processMessage(
-            new org.jetbrains.jps.incremental.messages.CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, unparsedBuffer.toString())
+            new org.jetbrains.jps.incremental.messages.CompilerMessage(getName(), BuildMessage.Kind.ERROR, unparsedBuffer.toString())
           );
           hasMessages = true;
         }
@@ -123,7 +125,7 @@ public class GroovyBuilder extends Builder {
         final int exitValue = handler.getProcess().exitValue();
         if (!hasMessages && exitValue != 0) {
           context.processMessage(new org.jetbrains.jps.incremental.messages.CompilerMessage(
-            BUILDER_NAME, BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue
+            getName(), BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue
           ));
         }
       }
