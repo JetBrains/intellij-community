@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package org.jetbrains.plugins.groovy.intentions.utils;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,8 +55,7 @@ public class ParenthesesUtils {
 
   private static final int NUM_PRECEDENCES = 18;
 
-  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence =
-      new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
+  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
 
   static {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mPLUS, ADDITIVE_PRECEDENCE);
@@ -80,6 +77,7 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mLT, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mLE, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mEQUAL, EQUALITY_PRECEDENCE);
+    s_binaryOperatorPrecedence.put(GroovyTokenTypes.kIN, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
   }
