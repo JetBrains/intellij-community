@@ -39,6 +39,7 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -438,6 +439,28 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     public void updateWithMap(final int inputId, final Map<K, TIntArrayList> newData, Callable<Collection<K>> oldKeysGetter) throws StorageException {
       super.updateWithMap(inputId, newData, oldKeysGetter);
     }
+  }
+
+  public static <Key, Psi extends PsiElement> Collection<Psi> safeGet(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                      @NotNull Key key,
+                                                                      final Project project,
+                                                                      final GlobalSearchScope scope,
+                                                                      Class<Psi> requiredClass) {
+    Collection<Psi> collection = getInstance().get(indexKey, key, project, scope);
+    for (Iterator<Psi> iterator = collection.iterator(); iterator.hasNext(); ) {
+      Psi psi = iterator.next();
+      if (!requiredClass.isInstance(psi)) {
+        iterator.remove();
+
+        VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
+        LOG.error("Invalid stub element type in index: " + faultyContainer + ". found: " + psi);
+        if (faultyContainer != null && faultyContainer.isValid()) {
+          FileBasedIndex.getInstance().requestReindex(faultyContainer);
+        }
+      }
+    }
+    
+    return collection;
   }
 
 }

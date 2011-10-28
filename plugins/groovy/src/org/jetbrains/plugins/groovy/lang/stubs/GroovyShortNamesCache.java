@@ -21,10 +21,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
@@ -96,14 +96,11 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   private List<PsiClass> addClasses(String name, GlobalSearchScope scope, boolean inSource) {
     final List<PsiClass> result = new ArrayList<PsiClass>(getScriptClassesByFQName(name, scope, inSource));
 
-    final Collection<? extends PsiElement> classes = StubIndex
-      .getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, inSource ? new GrSourceFilterScope(scope) : scope);
-    if (!classes.isEmpty()) {
+    for (PsiElement psiClass : StubIndexImpl.safeGet(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
+                                                     inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {
       //hashcode doesn't guarantee equals
-      for (PsiElement psiClass : classes) {
-        if (!JavaFileManagerImpl.notClass(psiClass) && name.equals(((PsiClass)psiClass).getQualifiedName())) {
-          result.add((PsiClass)psiClass);
-        }
+      if (name.equals(((PsiClass)psiClass).getQualifiedName())) {
+        result.add((PsiClass)psiClass);
       }
     }
     return result;

@@ -187,7 +187,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return result.toArray(new PsiClass[count]);
   }
 
-  public static boolean notClass(final PsiElement found) {
+  private static boolean notClass(final PsiElement found) {
     if (found instanceof PsiClass) return false;
 
     VirtualFile faultyContainer = PsiUtilBase.getVirtualFile(found);

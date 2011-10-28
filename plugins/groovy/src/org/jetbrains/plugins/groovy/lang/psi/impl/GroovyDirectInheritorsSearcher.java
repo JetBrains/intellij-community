@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,7 @@ import java.util.Collection;
  * @author ven
  */
 class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+
   public GroovyDirectInheritorsSearcher() {
   }
 
@@ -49,8 +51,8 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     final String name = clazz.getName();
     if (name == null) return GrTypeDefinition.EMPTY_ARRAY;
     final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
-    final Collection<GrReferenceList> refLists = StubIndex.getInstance().get(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope);
-    for (GrReferenceList list : refLists) {
+    for (GrReferenceList list : StubIndexImpl.safeGet(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
+                                                      GrReferenceList.class)) {
       final PsiElement parent = list.getParent();
       if (parent instanceof GrTypeDefinition) {
         inheritors.add(GrClassSubstitutor.getSubstitutedClass(((GrTypeDefinition)parent)));
