@@ -2,7 +2,6 @@ package org.jetbrains.jps.incremental.groovy;
 
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
@@ -11,10 +10,7 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.incremental.Builder;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FileProcessor;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
@@ -25,10 +21,7 @@ import org.objectweb.asm.ClassReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -72,21 +65,21 @@ public class GroovyBuilder extends Builder {
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath()); //groovy_rt.jar
 
       final File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
-
-      List<String> cmd = new ArrayList<String>();
-      cmd.add(SystemProperties.getJavaHome() + "/bin/java"); //todo module jdk path
-      // todo cmd.add("-bootclasspath");
-      cmd.add("-cp");
-      cmd.add(StringUtil.join(cp, File.pathSeparator)); //todo too long cmd line
-      cmd.add("org.jetbrains.groovy.compiler.rt.GroovycRunner");
-      cmd.add(myForStubs ? "stubs" : "groovyc");
-      cmd.add(tempFile.getPath());
-
-      File dir = myForStubs ?
+      final File dir = myForStubs ?
                  FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) : //todo clear on delete, add to javac sourcepath right now
                  context.getProjectPaths().getModuleOutputDir(chunk.getModules().iterator().next(), context.isCompilingTests());
       assert dir != null;
       fillFileWithGroovycParameters(tempFile, dir.getPath(), toCompile);
+
+      // todo cmd.add("-bootclasspath");
+      //todo module jdk path
+      final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
+        SystemProperties.getJavaHome() + "/bin/java",
+        "org.jetbrains.groovy.compiler.rt.GroovycRunner",
+        Collections.<String>emptyList(),
+        cp,
+        Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
+      );
 
       context.deleteCorrespondingClasses(toCompile);
 

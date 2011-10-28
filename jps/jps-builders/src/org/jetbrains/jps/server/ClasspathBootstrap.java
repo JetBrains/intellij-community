@@ -92,6 +92,14 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
 
+    try {
+      final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
+      cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
+    }
+    catch (Throwable ignored) {
+
+    }
+
     //final File jpsRuntime = new File(jpsFacadeJar.getParentFile(), JPS_RUNTIME_PATH);
     //final File[] files = jpsRuntime.listFiles();
     //if (files != null) {

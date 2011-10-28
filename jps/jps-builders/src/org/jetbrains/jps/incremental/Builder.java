@@ -68,13 +68,15 @@ public abstract class Builder {
 
       final Mappings globalMappings = context.getMappings();
 
+      final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
+
       final boolean incremental = globalMappings.differentiate(
         delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
       );
 
       if (incremental) {
         final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
-        newlyAffectedFiles.removeAll(allCompiledFiles);
+        newlyAffectedFiles.removeAll(affectedBeforeDif);
         if (!newlyAffectedFiles.isEmpty()) {
           for (File file : newlyAffectedFiles) {
             tsStorage.markDirty(file);
