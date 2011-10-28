@@ -166,6 +166,13 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       if (newGetterName.equals(getterId)) {
         getter = null;
         newGetterName = null;
+      } else {
+        for (PsiMethod method : getter.findDeepestSuperMethods()) {
+          if (method instanceof PsiCompiledElement) {
+            getter = null;
+            break;
+          }
+        }
       }
     }
 
@@ -180,6 +187,13 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       }
       else if (newSetterParameterName.equals(setter.getParameterList().getParameters()[0].getName())) {
         shouldRenameSetterParameter = false;
+      } else {
+        for (PsiMethod method : setter.findDeepestSuperMethods()) {
+          if (method instanceof PsiCompiledElement) {
+            setter = null;
+            break;
+          }
+        }
       }
     }
 
@@ -214,6 +228,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     for (PsiMethod method : methodPrototype.findDeepestSuperMethods()) {
       OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
         public boolean process(PsiMethod psiMethod) {
+          RenameProcessor.assertNonCompileElement(psiMethod);
           allRenames.put(psiMethod, newName);
           return true;
         }

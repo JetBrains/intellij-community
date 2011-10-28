@@ -200,7 +200,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static void assertNonCompileElement(PsiElement element) {
+  protected static void assertNonCompileElement(PsiElement element) {
     LOG.assertTrue(!(element instanceof PsiCompiledElement));
   }
 
