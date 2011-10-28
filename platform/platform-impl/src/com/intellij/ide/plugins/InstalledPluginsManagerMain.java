@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -62,12 +63,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        new SingleConfigurableEditor(myActionsPanel, createAvailableConfigurable()) {
-          @Override
-          protected Action[] createActions() {
-            return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
-          }
-        }.show();
+        final PluginManagerConfigurable configurable = createAvailableConfigurable();
+        new SingleConfigurableEditor(myActionsPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false).show();
       }
     });
     myActionsPanel.add(button);

@@ -24,6 +24,7 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -68,14 +69,9 @@ public class AdjustArrayRangeAction extends DebuggerAction {
       title = title + " " + label.substring(index);
     }
     final ArrayRenderer clonedRenderer = renderer.clone();
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new NamedArrayConfigurable(title, clonedRenderer)) {
-      protected Action[] createActions() {
-        final String helpTopic = getConfigurable().getHelpTopic();
-        return (helpTopic != null)?
-               new Action[]{getOKAction(), getCancelAction(), getHelpAction()} : 
-               new Action[]{getOKAction(), getCancelAction()};
-      }
-    };
+    final NamedArrayConfigurable configurable = new NamedArrayConfigurable(title, clonedRenderer);
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable,
+                                                                   ShowSettingsUtilImpl.createDimensionKey(configurable), false);
     editor.show();
 
     if(editor.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

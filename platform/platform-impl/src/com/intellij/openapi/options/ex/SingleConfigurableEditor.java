@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SingleConfigurableEditor extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.SingleConfigurableEditor");
@@ -43,11 +45,16 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private Configurable myConfigurable;
   private JComponent myCenterPanel;
   private String myDimensionKey;
+  private final boolean myShowApplyButton;
   private boolean myChangesWereApplied;
 
-  public SingleConfigurableEditor(Project project, Configurable configurable, @NonNls String dimensionKey) {
+  public SingleConfigurableEditor(Project project,
+                                  Configurable configurable,
+                                  @NonNls String dimensionKey,
+                                  final boolean showApplyButton) {
     super(project, true);
     myDimensionKey = dimensionKey;
+    myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
 
     myProject = project;
@@ -56,9 +63,13 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable.reset();
   }
 
-  public SingleConfigurableEditor(Component parent, Configurable configurable, String dimensionServiceKey) {
+  public SingleConfigurableEditor(Component parent,
+                                  Configurable configurable,
+                                  String dimensionServiceKey,
+                                  final boolean showApplyButton) {
     super(parent, true);
     myDimensionKey = dimensionServiceKey;
+    myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
 
     myParentComponent = parent;
@@ -67,12 +78,12 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable.reset();
   }
 
-  public Configurable getConfigurable() {
-    return myConfigurable;
+  public SingleConfigurableEditor(Project project, Configurable configurable, @NonNls String dimensionKey) {
+    this(project, configurable, dimensionKey, true);
   }
 
-  public Project getProject() {
-    return myProject;
+  public SingleConfigurableEditor(Component parent, Configurable configurable, String dimensionServiceKey) {
+    this(parent, configurable, dimensionServiceKey, true);
   }
 
   public SingleConfigurableEditor(Project project, Configurable configurable) {
@@ -81,6 +92,14 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   public SingleConfigurableEditor(Component parent, Configurable configurable) {
     this(parent, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable));
+  }
+
+  public Configurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   private static String createTitleString(Configurable configurable) {
@@ -99,12 +118,16 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   protected Action[] createActions() {
+    List<Action> actions = new ArrayList<Action>();
+    actions.add(getOKAction());
+    actions.add(getCancelAction());
+    if (myShowApplyButton) {
+      actions.add(new ApplyAction());
+    }
     if (myConfigurable.getHelpTopic() != null) {
-      return new Action[]{getOKAction(), getCancelAction(), new ApplyAction(), getHelpAction()};
+      actions.add(getHelpAction());
     }
-    else {
-      return new Action[]{getOKAction(), getCancelAction(), new ApplyAction()};
-    }
+    return actions.toArray(new Action[actions.size()]);
   }
 
   protected void doHelpAction() {
