@@ -31,8 +31,8 @@ import java.lang.reflect.InvocationTargetException;
  * @author Denis Zhdanov
  * @since 9/27/11 2:52 PM
  */
-public class SequentialModelProgressTask extends Task.Modal {
-  private static final Logger LOG = Logger.getInstance("#" + SequentialModelProgressTask.class.getName());
+public class SequentialModalProgressTask extends Task.Modal {
+  private static final Logger LOG = Logger.getInstance("#" + SequentialModalProgressTask.class.getName());
   
   private static final long DEFAULT_MIN_ITERATION_MIN_TIME = 500;
 
@@ -48,11 +48,11 @@ public class SequentialModelProgressTask extends Task.Modal {
   private ProgressIndicator myIndicator;
   private SequentialTask myTask;
 
-  public SequentialModelProgressTask(@Nullable Project project, @NotNull String title) {
+  public SequentialModalProgressTask(@Nullable Project project, @NotNull String title) {
     this(project, title, true);
   }
 
-  public SequentialModelProgressTask(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
+  public SequentialModalProgressTask(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
     myTitle = title;
   }
