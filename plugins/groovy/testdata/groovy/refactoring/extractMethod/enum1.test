@@ -13,7 +13,7 @@ enum E {
         <caret>testMethod()
     }
 
-    private def testMethod() {
+    private testMethod() {
         def e = C
     }
 }

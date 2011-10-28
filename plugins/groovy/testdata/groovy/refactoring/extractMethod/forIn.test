@@ -11,7 +11,7 @@ void aaa(Map map) {
     }
 }
 
-private def testMethod(Map.Entry<String, String> versionEntry) {
+private testMethod(Map.Entry<String, String> versionEntry) {
     String name = versionEntry.getKey();
     System.out.println(name)
 }

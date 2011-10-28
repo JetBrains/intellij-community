@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,8 +297,9 @@ public class ExtractMethodUtil {
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
-    String typeText = getTypeString(helper, false);
-    buffer.append(getModifierString(helper));
+    String modifier = getModifierString(helper);
+    String typeText = getTypeString(helper, false, modifier);
+    buffer.append(modifier);
     buffer.append(typeText);
     buffer.append(name);
     buffer.append("(");
@@ -385,15 +386,21 @@ public class ExtractMethodUtil {
     return ArrayUtil.toStringArray(params);
   }
 
-  static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation) {
+  static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation, String modifier) {
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
     String typeText = forPresentation ? type.getPresentableText() : type.getCanonicalText();
     String returnType = typeText == null || typeText.equals("void") || typeText.equals("Object") || !helper.specifyType() ? "" : typeText;
     if (returnType.length() == 0) {
-      typeText = "def ";
-    } else {
+      if (modifier.length() == 0) {
+        typeText = "def ";
+      }
+      else {
+        typeText = "";
+      }
+    }
+    else {
       typeText = returnType + " ";
     }
     return typeText;

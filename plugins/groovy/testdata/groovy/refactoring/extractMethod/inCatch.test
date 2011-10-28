@@ -8,6 +8,6 @@ catch(Exception e) {
     testMethod(e)
 }
 
-private def testMethod(Exception e) {
+private testMethod(Exception e) {
     print e
 }

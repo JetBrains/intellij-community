@@ -9,7 +9,7 @@ def foo = {
     <caret>testMethod(x, y)
 }
 
-private def testMethod(int x, int y) {
+private testMethod(int x, int y) {
     println(x + y)
     foo(x, y)
 }

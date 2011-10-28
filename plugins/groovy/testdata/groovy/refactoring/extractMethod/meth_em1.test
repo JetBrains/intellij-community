@@ -13,7 +13,7 @@ protected static def getGeneratedFileNames(String name, int boo) {
     names
 }
 
-private static def testMethod(ArrayList<String> names, int boo, String name, foo) {
+private static testMethod(ArrayList<String> names, int boo, String name, foo) {
     println(names.toString() + boo + name)
     println(names + foo)
 }

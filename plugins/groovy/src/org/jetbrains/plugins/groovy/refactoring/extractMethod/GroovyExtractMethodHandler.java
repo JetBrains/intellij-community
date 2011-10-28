@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,12 +232,12 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     return statement0.getManager().areElementsEquivalent(lastFromBlock, lastStatement);
   }
 
-  private void runRefactoring(final String methodName,
-                              @NotNull final ExtractMethodInfoHelper helper,
-                              @NotNull final GrMemberOwner owner,
-                              final GrStatementOwner declarationOwner,
-                              final Editor editor,
-                              final PsiElement startElement) {
+  private static void runRefactoring(final String methodName,
+                                     @NotNull final ExtractMethodInfoHelper helper,
+                                     @NotNull final GrMemberOwner owner,
+                                     final GrStatementOwner declarationOwner,
+                                     final Editor editor,
+                                     final PsiElement startElement) {
 
     final GrMethod method = ExtractMethodUtil.createMethodByHelper(methodName, helper);
     final Runnable runnable = new Runnable() {
@@ -302,7 +302,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   }
 
-  private GroovyExtractMethodDialog getDialog(@NotNull final ExtractMethodInfoHelper helper) {
+  private static GroovyExtractMethodDialog getDialog(@NotNull final ExtractMethodInfoHelper helper) {
     GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(helper, helper.getProject());
     dialog.show();
     return dialog;

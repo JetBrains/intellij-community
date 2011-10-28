@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -38,6 +38,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.EventListener;
 
@@ -57,7 +58,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private JTextArea mySignatureArea;
   private VisibilityPanel myVisibilityPanel;
   private ParameterTablePanel myParameterTablePanel;
-  private JButton buttonOK;
+//  private JButton buttonOK;
 
   public GroovyExtractMethodDialog(ExtractMethodInfoHelper helper, Project project) {
     super(project, true);
@@ -67,7 +68,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myParameterTablePanel.init(this, myHelper);
 
     setModal(true);
-    getRootPane().setDefaultButton(buttonOK);
+//    getRootPane().setDefaultButton(buttonOK);
     setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
     init();
     setUpDialog();
@@ -115,7 +116,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myNameField.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     myNameField.addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
@@ -149,6 +150,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
   }
 
+  @Nullable
   protected String getEnteredName() {
     String text = myNameField.getText();
     if (text != null && text.trim().length() > 0) {
@@ -209,9 +211,10 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
    */
   void updateSignature() {
     if (mySignatureArea == null) return;
-    @NonNls StringBuffer buffer = new StringBuffer();
-    buffer.append(ExtractMethodUtil.getModifierString(myHelper));
-    buffer.append(ExtractMethodUtil.getTypeString(myHelper, true));
+    @NonNls StringBuilder buffer = new StringBuilder();
+    String modifier = ExtractMethodUtil.getModifierString(myHelper);
+    buffer.append(modifier);
+    buffer.append(ExtractMethodUtil.getTypeString(myHelper, true, modifier));
     String name = getEnteredName() == null ? "" : getEnteredName();
     buffer.append(name);
     buffer.append("(");
@@ -228,8 +231,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   ExtractMethodSettings getSettings() {
-    final GroovyExtractMethodDialog dialog = GroovyExtractMethodDialog.this;
-    return new MyExtractMethodSettings(dialog);
+    return new MyExtractMethodSettings(this);
   }
 
   private static class MyExtractMethodSettings implements ExtractMethodSettings {

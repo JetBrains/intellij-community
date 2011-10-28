@@ -22,7 +22,7 @@ while (true) {
     }
 }
 
-private def testMethod() {
+private testMethod() {
     cl = { continue; }
     cl.call()
 }

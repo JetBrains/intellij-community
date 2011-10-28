@@ -8,7 +8,7 @@ def foo() {
     testMethod()
 }
 
-private def testMethod() {
+private testMethod() {
     if (abc) {
         println 'def'
     }
