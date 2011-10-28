@@ -405,9 +405,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   protected static LineBreakpoint create(Project project, Document document, int lineIndex) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null) return null;
+    if (virtualFile == null) {
+      return null;
+    }
 
-    LineBreakpoint breakpoint = new LineBreakpoint(project, createHighlighter(project, document, lineIndex));
+    final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
+    if (highlighter == null) {
+      return null;
+    }
+
+    LineBreakpoint breakpoint = new LineBreakpoint(project, highlighter);
     return (LineBreakpoint)breakpoint.init();
   }
 
