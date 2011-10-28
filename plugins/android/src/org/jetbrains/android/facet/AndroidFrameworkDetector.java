@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
@@ -43,7 +44,7 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
   }
 
   @Override
-  public void setupFacet(@NotNull final AndroidFacet facet, ModifiableRootModel model) {
+  public void setupFacet(@NotNull final AndroidFacet facet, final ModifiableRootModel model) {
     final Module module = facet.getModule();
     final Project project = module.getProject();
 
@@ -54,8 +55,12 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
         final Module module = facet.getModule();
         AndroidSdkUtils.setupAndroidPlatformInNeccessary(module);
 
+        if (model != null && !model.isDisposed() && model.isWritable()) {
+          model.setSdk(ModuleRootManager.getInstance(module).getSdk());
+        }
+
         final String androidLibraryPropValue = AndroidUtils.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
-          
+
         if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
           facet.getConfiguration().LIBRARY_PROJECT = true;
         }
