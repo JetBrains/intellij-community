@@ -25,12 +25,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -45,6 +47,11 @@ public class ConvertFromGeeseBracesIntention extends Intention {
   private static final PsiElementPredicate MY_PREDICATE = new PsiElementPredicate() {
     @Override
     public boolean satisfiedBy(PsiElement element) {
+      if (!CodeStyleSettingsManager.getInstance(element.getProject()).getCurrentSettings()
+        .getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES) {
+        return false;
+      }
+
       IElementType elementType = element.getNode().getElementType();
       if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
         element = PsiTreeUtil.prevLeaf(element);
