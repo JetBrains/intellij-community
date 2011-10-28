@@ -44,6 +44,8 @@
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
     <string>@@build@@</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
 
     <key>LSArchitecturePriority</key>
     <array>
