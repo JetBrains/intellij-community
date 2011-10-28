@@ -226,8 +226,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     if (initialTargetDirectorySourceRoot == null) {
       items.add(null);
     }
-    final DirectoryChooser.ItemWrapper selection = initial != null || items.contains(null) || items.isEmpty() ? initial 
-                                                                                                              : oldOne != null ? oldOne : items.get(0);
+    final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);
     final ComboBoxModel model = comboBox.getModel();
     if (model instanceof CollectionComboBoxModel) {
       boolean sameModel = model.getSize() == items.size();
@@ -257,6 +256,32 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     });
     comboBox.setModel(new CollectionComboBoxModel(items, selection));
+  }
+
+  @Nullable
+  private static DirectoryChooser.ItemWrapper chooseSelection(final VirtualFile initialTargetDirectorySourceRoot,
+                                                              final ProjectFileIndex fileIndex,
+                                                              final ArrayList<DirectoryChooser.ItemWrapper> items,
+                                                              final DirectoryChooser.ItemWrapper initial,
+                                                              final DirectoryChooser.ItemWrapper oldOne) {
+    if (initial != null || items.contains(null) || items.isEmpty()) {
+      return initial;
+    }
+    else {
+      if (oldOne != null) {
+        return oldOne;
+      }
+      else if (initialTargetDirectorySourceRoot != null) {
+        final boolean inTest = fileIndex.isInTestSourceContent(initialTargetDirectorySourceRoot);
+        for (DirectoryChooser.ItemWrapper item : items) {
+          final VirtualFile virtualFile = item.getDirectory().getVirtualFile();
+          if (fileIndex.isInTestSourceContent(virtualFile) == inTest) {
+            return item;
+          }
+        }
+      }
+    }
+    return items.get(0);
   }
 
   private static boolean areItemsEquivalent(DirectoryChooser.ItemWrapper oItem, DirectoryChooser.ItemWrapper itemWrapper) {
