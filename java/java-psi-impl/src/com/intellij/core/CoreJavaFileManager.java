@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -34,12 +35,14 @@ import java.util.List;
  * @author yole
  */
 public class CoreJavaFileManager implements JavaFileManager {
+  private final CoreLocalFileSystem myLocalFileSystem;
   private final CoreJarFileSystem myJarFileSystem;
   private final List<File> myClasspath = new ArrayList<File>();
   private final PsiManager myPsiManager;
 
-  public CoreJavaFileManager(PsiManager psiManager, CoreJarFileSystem jarFileSystem) {
+  public CoreJavaFileManager(PsiManager psiManager, CoreLocalFileSystem localFileSystem, CoreJarFileSystem jarFileSystem) {
     myPsiManager = psiManager;
+    myLocalFileSystem = localFileSystem;
     myJarFileSystem = jarFileSystem;
   }
 
@@ -47,14 +50,22 @@ public class CoreJavaFileManager implements JavaFileManager {
   public PsiPackage findPackage(@NotNull String packageName) {
     String dirName = packageName.replace(".", "/");
     for (File file : myClasspath) {
-      if (file.isFile()) {
-        VirtualFile classDir = myJarFileSystem.findFileByPath(file.getPath() + "!/" + dirName);
-        if (classDir != null) {
-          return new PsiPackageImpl(myPsiManager, packageName);
-        }
+      VirtualFile classDir = findUnderClasspathEntry(file, dirName);
+      if (classDir != null) {
+        return new PsiPackageImpl(myPsiManager, packageName);
       }
     }
     return null;
+  }
+
+  @Nullable
+  private VirtualFile findUnderClasspathEntry(File classpathEntry, String relativeName) {
+    if (classpathEntry.isFile()) {
+       return myJarFileSystem.findFileByPath(classpathEntry.getPath() + "!/" + relativeName);
+    }
+    else {
+      return myLocalFileSystem.findFileByPath(new File(classpathEntry, relativeName).getPath());
+    }
   }
 
   @Override
@@ -71,17 +82,16 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Nullable
   private PsiClass findClassInClasspathEntry(String qName, File file) {
     String fileName = qName.replace(".", "/") + ".class";
-    if (file.isFile()) {
-      VirtualFile classFile = myJarFileSystem.findFileByPath(file.getPath() + "!/" + fileName);
-      if (classFile != null) {
-        PsiFile psiFile = myPsiManager.findFile(classFile);
-        if (!(psiFile instanceof PsiJavaFile)) {
-          throw new UnsupportedOperationException("no java file for .class");
-        }
-        final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-        if (classes.length == 1) {
-          return classes[0];
-        }
+    VirtualFile classFile = findUnderClasspathEntry(file, fileName);
+    
+    if (classFile != null) {
+      PsiFile psiFile = myPsiManager.findFile(classFile);
+      if (!(psiFile instanceof PsiJavaFile)) {
+        throw new UnsupportedOperationException("no java file for .class");
+      }
+      final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
+      if (classes.length == 1) {
+        return classes[0];
       }
     }
     return null;

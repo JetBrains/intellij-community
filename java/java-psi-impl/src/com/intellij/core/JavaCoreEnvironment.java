@@ -48,7 +48,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
 
-    myFileManager = new CoreJavaFileManager(myPsiManager, myJarFileSystem);
+    myFileManager = new CoreJavaFileManager(myPsiManager, getLocalFileSystem(), myJarFileSystem);
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
     registerComponentInstance(myProject.getPicoContainer(),
                               JavaPsiFacade.class,
@@ -64,7 +64,10 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
   public void addToClasspath(File path) {
     myFileManager.addToClasspath(path);
-    final VirtualFile root = myJarFileSystem.findFileByPath(path + "!/");
+    final VirtualFile root = path.isFile()
+                             ? myJarFileSystem.findFileByPath(path + "!/")
+                             : getLocalFileSystem().findFileByPath(path.getPath());
+
     if (root != null) {
       myFileIndexFacade.addLibraryRoot(root);
     }
