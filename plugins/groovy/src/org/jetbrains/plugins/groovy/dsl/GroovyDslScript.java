@@ -20,11 +20,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -38,7 +41,7 @@ public class GroovyDslScript {
   private final String myPath;
   private final CachedValue<FactorTree> myMaps;
 
-  public GroovyDslScript(final Project project, @Nullable VirtualFile file, GroovyDslExecutor executor, String path) {
+  public GroovyDslScript(final Project project, @Nullable VirtualFile file, @NotNull GroovyDslExecutor executor, String path) {
     this.project = project;
     this.file = file;
     this.executor = executor;
@@ -108,8 +111,10 @@ public class GroovyDslScript {
     return CustomMembersHolder.EMPTY;
   }
 
-  private static boolean isApplicable(GroovyDslExecutor executor, GroovyClassDescriptor descriptor, final ProcessingContext ctx) {
-    for (Pair<ContextFilter, Closure> pair : executor.getEnhancers()) {
+  private static boolean isApplicable(@NotNull GroovyDslExecutor executor, GroovyClassDescriptor descriptor, final ProcessingContext ctx) {
+    List<Pair<ContextFilter,Closure>> enhancers = executor.getEnhancers();
+    assert enhancers != null : "null enhancers";
+    for (Pair<ContextFilter, Closure> pair : enhancers) {
       if (pair.first.isApplicable(descriptor, ctx)) {
         return true;
       }
