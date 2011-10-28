@@ -271,6 +271,11 @@ public class SplitterTest extends TestCase {
     correctListToCheck(PlainTextSplitter.getInstance(), text);
   }
 
+  public void testUrlThenSpaces() {
+    String text = "http://www.jetbrains.com/idea asdasdasd sdfsdf";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasdasd", "sdfsdf");
+  }
+
   public void testWordBeforeDelimiter() {
     String text = "badd,";
     correctListToCheck(PlainTextSplitter.getInstance(), text, "badd");

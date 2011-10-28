@@ -15,7 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +125,7 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   public static void checkCancelled() {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
   }
 
 

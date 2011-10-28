@@ -40,7 +40,7 @@ public class PlainTextSplitter extends BaseSplitter {
 
   @NonNls
   private static final Pattern URL =
-    Pattern.compile("((ftp|http|file|https)://([^/]+)(/.*)?(/.*))");
+    Pattern.compile("((ftp|http|file|https)://([^/]+)(/\\w*)?(/\\w*))");
 
 
   @Override
