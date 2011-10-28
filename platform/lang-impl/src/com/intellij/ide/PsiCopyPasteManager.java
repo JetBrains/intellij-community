@@ -22,6 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -52,9 +55,18 @@ public class PsiCopyPasteManager {
   private MyData myRecentData;
   private final CopyPasteManagerEx myCopyPasteManager;
 
-  public PsiCopyPasteManager(CopyPasteManager copyPasteManager) {
+  public PsiCopyPasteManager(CopyPasteManager copyPasteManager, ProjectManager projectManager) {
     myCopyPasteManager = (CopyPasteManagerEx) copyPasteManager;
+    projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        if (myRecentData != null && myRecentData.getProject() == project) {
+          myRecentData = null;
+        }
+      }
+    });
   }
+    
 
   @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
@@ -201,6 +213,14 @@ public class PsiCopyPasteManager {
 
     public boolean isCopied() {
       return myIsCopied;
+    }
+    
+    @Nullable
+    public Project getProject() {
+      if (myElements == null || myElements.length == 0) {
+        return null;
+      }
+      return myElements [0].getProject();
     }
   }
 
