@@ -476,7 +476,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void checkVersion() {
     final String executable = myAppSettings.getPathToGit();
     try {
-      myVersion = null; // to set to null if next statement will fail
       myVersion = GitVersion.identifyVersion(executable);
       if (!myVersion.isSupported() && !myProject.isDefault()) {
         String message = GitBundle.message("vcs.unsupported.version", myVersion, GitVersion.MIN);
