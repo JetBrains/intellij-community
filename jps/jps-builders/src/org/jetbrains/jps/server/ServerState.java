@@ -98,11 +98,7 @@ class ServerState {
       toCompile.addAll(project.getModules().values());
     }
 
-    final CompileScope compileScope = new CompileScope(project) {
-      public Collection<Module> getAffectedModules() {
-        return toCompile;
-      }
-    };
+    final CompileScope compileScope = new CompileScope(project, toCompile);
 
     final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
     if (msgHandler != null) {

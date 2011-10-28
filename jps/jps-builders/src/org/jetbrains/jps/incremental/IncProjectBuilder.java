@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -42,31 +43,26 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake) {
-    final CompileContext context = new CompileContext(
-      scope, myProjectName, isMake, myMappings, myProductionChunks, myTestChunks, new MessageHandler() {
 
-      public void processMessage(BuildMessage msg) {
-        for (MessageHandler h : myMessageHandlers) {
-          h.processMessage(msg);
+    final CompileContext context = createContext(scope, isMake);
+    try {
+
+      try {
+        runBuild(context);
+      }
+      catch (ProjectBuildException e) {
+        if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
+          // force rebuild
+          context.processMessage(new CompilerMessage(
+            JPS_SERVER_NAME, BuildMessage.Kind.INFO, "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
+          );
+          runBuild(createContext(new CompileScope(scope.getProject()), false));
+        }
+        else {
+          throw e;
         }
       }
-    });
-    try {
-      cleanOutputRoots(scope, context);
 
-      context.processMessage(new ProgressMessage("Running 'before' tasks"));
-      runTasks(context, myBuilderRegistry.getBeforeTasks());
-
-      context.setCompilingTests(false);
-      context.processMessage(new ProgressMessage("Building production sources"));
-      buildChunks(context, myProductionChunks);
-
-      context.setCompilingTests(true);
-      context.processMessage(new ProgressMessage("Building test sources"));
-      buildChunks(context, myTestChunks);
-
-      context.processMessage(new ProgressMessage("Running 'after' tasks"));
-      runTasks(context, myBuilderRegistry.getAfterTasks());
     }
     catch (ProjectBuildException e) {
       context.processMessage(new ProgressMessage(e.getMessage()));
@@ -91,7 +87,38 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void cleanOutputRoots(CompileScope scope, CompileContext context) {
+  private void runBuild(CompileContext context) throws ProjectBuildException {
+    cleanOutputRoots(context);
+
+    context.processMessage(new ProgressMessage("Running 'before' tasks"));
+    runTasks(context, myBuilderRegistry.getBeforeTasks());
+
+    context.setCompilingTests(false);
+    context.processMessage(new ProgressMessage("Building production sources"));
+    buildChunks(context, myProductionChunks);
+
+    context.setCompilingTests(true);
+    context.processMessage(new ProgressMessage("Building test sources"));
+    buildChunks(context, myTestChunks);
+
+    context.processMessage(new ProgressMessage("Running 'after' tasks"));
+    runTasks(context, myBuilderRegistry.getAfterTasks());
+  }
+
+  private CompileContext createContext(CompileScope scope, boolean isMake) {
+    return new CompileContext(
+      scope, myProjectName, isMake, myMappings, myProductionChunks, myTestChunks, new MessageHandler() {
+
+      public void processMessage(BuildMessage msg) {
+        for (MessageHandler h : myMessageHandlers) {
+          h.processMessage(msg);
+        }
+      }
+    });
+  }
+
+  private static void cleanOutputRoots(CompileContext context) {
+    final CompileScope scope = context.getScope();
     final Collection<Module> allProjectModules = scope.getProject().getModules().values();
     final Collection<Module> modulesToClean = new HashSet<Module>();
 
@@ -198,6 +225,9 @@ public class IncProjectBuilder {
       for (BuilderCategory category : BuilderCategory.values()) {
         runBuilders(context, chunk, myBuilderRegistry.getBuilders(category));
       }
+    }
+    catch (ProjectBuildException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);

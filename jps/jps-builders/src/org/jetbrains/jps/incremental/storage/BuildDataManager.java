@@ -2,6 +2,9 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.Paths;
 
 import java.io.File;
@@ -62,7 +65,12 @@ public class BuildDataManager {
   public void clean() {
     synchronized (myBuilderToStampStorageMap) {
       try {
-        closeTimestampStorages();
+        final BuilderRegistry registry = BuilderRegistry.getInstance();
+        for (BuilderCategory category : BuilderCategory.values()) {
+          for (Builder builder : registry.getBuilders(category)) {
+            cleanTimestampStorage(builder.getName());
+          }
+        }
       }
       finally {
         myOutputToSourceMap.wipe();
@@ -70,19 +78,17 @@ public class BuildDataManager {
     }
   }
 
-  public void cleanTimestampStorage(String builderName) {
-    synchronized (myBuilderToStampStorageMap) {
-      final TimestampStorage storage = myBuilderToStampStorageMap.remove(builderName);
-      if (storage != null) {
-        try {
-          storage.close();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
+  private void cleanTimestampStorage(String builderName) {
+    final TimestampStorage storage = myBuilderToStampStorageMap.remove(builderName);
+    if (storage != null) {
+      try {
+        storage.close();
       }
-      FileUtil.delete(Paths.getBuilderDataRoot(myProjectName, builderName));
+      catch (IOException e) {
+        LOG.info(e);
+      }
     }
+    FileUtil.delete(Paths.getBuilderDataRoot(myProjectName, builderName));
   }
 
   public void close() {

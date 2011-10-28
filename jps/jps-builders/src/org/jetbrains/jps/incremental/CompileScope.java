@@ -5,21 +5,30 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
-public abstract class CompileScope {
+public class CompileScope {
 
   private final Project myProject;
+  private final Collection<Module> myModules;
 
-  protected CompileScope(Project project) {
-    myProject = project;
+  public CompileScope(Project project) {
+    this(project, project.getModules().values());
   }
 
-  public abstract Collection<Module> getAffectedModules();
+  public CompileScope(Project project, Collection<Module> modules) {
+    myProject = project;
+    myModules = modules;
+  }
+
+  public Collection<Module> getAffectedModules() {
+    return Collections.unmodifiableCollection(myModules);
+  }
 
   public boolean isAffected(ModuleChunk chunk) {
     final Set<Module> modules = chunk.getModules();
