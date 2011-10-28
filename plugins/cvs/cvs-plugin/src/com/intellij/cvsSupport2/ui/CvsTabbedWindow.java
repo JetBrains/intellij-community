@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
+import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
+import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -30,6 +33,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
+import com.intellij.ui.errorView.ContentManagerProvider;
+import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -173,10 +178,16 @@ public class CvsTabbedWindow {
     return myOutput;
   }
 
-  public ErrorTreeView addErrorsTreeView(ErrorTreeView view) {
+  public ErrorTreeView getErrorsTreeView() {
     if (myErrorsView == null) {
-      addTab(CvsBundle.message("tab.title.errors"), view.getComponent(), true, false, true, false, null, "cvs.errors");
-      myErrorsView = view;
+      myErrorsView = ErrorViewFactory.SERVICE.getInstance()
+        .createErrorTreeView(myProject, null, true, new AnAction[]{(DefaultActionGroup)ActionManager.getInstance().getAction("CvsActions")},
+                             new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()}, new ContentManagerProvider() {
+          public ContentManager getParentContent() {
+            return getContentManager();
+          }
+        });
+      addTab(CvsBundle.message("tab.title.errors"), myErrorsView.getComponent(), true, false, true, false, null, "cvs.errors");
     }
     return myErrorsView;
   }
@@ -206,5 +217,33 @@ public class CvsTabbedWindow {
 
   public Editor getOutput() {
     return myOutput;
+  }
+
+  private static class GlobalCvsSettingsAction extends AnAction {
+    public GlobalCvsSettingsAction() {
+      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, IconLoader.getIcon("/nodes/cvs_global.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      new ConfigureCvsGlobalSettingsDialog().show();
+    }
+  }
+
+  private class ReconfigureCvsRootAction extends AnAction {
+    public ReconfigureCvsRootAction() {
+      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, IconLoader.getIcon("/nodes/cvs_roots.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      super.update(e);
+      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
+      e.getPresentation().setEnabled(data instanceof CvsException);
+
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
+      CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)data).getCvsRoot(), myProject);
+    }
   }
 }

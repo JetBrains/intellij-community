@@ -18,15 +18,8 @@ package com.intellij.cvsSupport2.cvsExecution;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
-import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
-import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
@@ -38,14 +31,10 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.errorView.ContentManagerProvider;
-import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -218,16 +207,7 @@ public class CvsOperationExecutor {
       tabbedWindow.hideErrors();
     }
     else {
-      ErrorTreeView errorTreeView = tabbedWindow.addErrorsTreeView(
-        ErrorViewFactory.SERVICE.getInstance().createErrorTreeView(
-          myProject, null, true,
-          new AnAction[]{(DefaultActionGroup)ActionManager.getInstance().getAction("CvsActions")},
-          new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()},
-          new ContentManagerProvider() {
-            public ContentManager getParentContent() {
-              return tabbedWindow.getContentManager();
-            }
-          }));
+      ErrorTreeView errorTreeView = tabbedWindow.getErrorsTreeView();
       for (final VcsException exception : errors) {
         final String groupName = DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ' ' + handler.getTitle();
         if (exception.isWarning()) {
@@ -325,34 +305,6 @@ public class CvsOperationExecutor {
     @Override
     public boolean canNavigateToSource() {
       return false;
-    }
-  }
-
-  private static class GlobalCvsSettingsAction extends AnAction {
-    public GlobalCvsSettingsAction() {
-      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, IconLoader.getIcon("/nodes/cvs_global.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      new ConfigureCvsGlobalSettingsDialog().show();
-    }
-  }
-
-  private class ReconfigureCvsRootAction extends AnAction {
-    public ReconfigureCvsRootAction() {
-      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, IconLoader.getIcon("/nodes/cvs_roots.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      super.update(e);
-      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
-      e.getPresentation().setEnabled(data instanceof CvsException);
-
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
-      CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)data).getCvsRoot(), myProject);
     }
   }
 
