@@ -28,6 +28,7 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.ContinuationFinalTasksInserter;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
@@ -49,6 +50,7 @@ public class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
   private final Project myProject;
+  private final GitVcs myVcs;
   private final Set<VirtualFile> myRoots;
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
@@ -65,6 +67,7 @@ public class GitUpdateProcess {
                           @NotNull Set<VirtualFile> roots, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myRoots = roots;
+    myVcs = GitVcs.getInstance(project);
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator;
     myMerger = new GitMerger(myProject);
@@ -207,7 +210,9 @@ public class GitUpdateProcess {
       fetcher.fetch(root);
     }
     if (!fetcher.isSuccess()) {
-      GitUIUtil.notifyMessage(myProject, "Update failed", "Couldn't fetch", NotificationType.ERROR, true, fetcher.getErrors());
+      if (myVcs.getExecutableValidator().isExecutableValid()) {
+        GitUIUtil.notifyMessage(myProject, "Update failed", "Couldn't fetch", NotificationType.ERROR, true, fetcher.getErrors());
+      }
       return false;
     }
     return true;

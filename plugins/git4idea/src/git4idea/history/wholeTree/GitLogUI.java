@@ -96,6 +96,8 @@ public class GitLogUI implements Disposable {
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, UIUtil.getTableForeground());
   public static final String GIT_LOG_TABLE_PLACE = "git log table";
   private final Project myProject;
+  private final GitVcs myVcs;
+
   private BigTableTableModel myTableModel;
   private DetailsCache myDetailsCache;
   private final Mediator myMediator;
@@ -151,6 +153,7 @@ public class GitLogUI implements Disposable {
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
+    myVcs = GitVcs.getInstance(project);
     myMediator = mediator;
     myCommentSearchContext = new CommentSearchContext();
     myUsersSearchContext = new ArrayList<String>();
@@ -248,7 +251,9 @@ public class GitLogUI implements Disposable {
       @Override
       public void acceptException(Exception e) {
         LOG.info(e);
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
+        if (myVcs.getExecutableValidator().isExecutableValid()) {
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
+        }
       }
 
       @Override
