@@ -169,7 +169,9 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         new LibraryConfigurable(myContext.createModifiableModelProvider(level), library, myContext, TREE_UPDATER);
       final MyNode node = new MyNode(configurable);
       addNode(node, myRoot);
-      myContext.getDaemonAnalyzer().queueUpdate(new LibraryProjectStructureElement(myContext, library));
+      final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
+      daemonAnalyzer.queueUpdate(new LibraryProjectStructureElement(myContext, library));
+      daemonAnalyzer.queueUpdateForAllElementsWithErrors();
     }
   }
 

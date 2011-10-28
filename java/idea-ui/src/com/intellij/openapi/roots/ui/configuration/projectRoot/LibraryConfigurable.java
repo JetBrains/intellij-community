@@ -66,10 +66,9 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
         return getLibraryEditor();
       }
     });
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
     myLibraryEditorComponent.addListener(new Runnable() {
       public void run() {
-        context.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
+        myContext.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
       }
     });
     return myLibraryEditorComponent.getComponent();
@@ -103,6 +102,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   public void setDisplayName(final String name) {
     if (!myUpdatingName) {
       getLibraryEditor().setName(name);
+      myContext.getDaemonAnalyzer().queueUpdateForAllElementsWithErrors();
     }
   }
 

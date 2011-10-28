@@ -46,6 +46,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   private final ModulesConfigurator myConfigurator;
   private String myModuleName;
   private final ModuleProjectStructureElement myProjectStructureElement;
+  private final StructureConfigurableContext myContext;
 
   public ModuleConfigurable(ModulesConfigurator modulesConfigurator,
                             Module module,
@@ -54,8 +55,8 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     myModule = module;
     myModuleName = myModule.getName();
     myConfigurator = modulesConfigurator;
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
-    myProjectStructureElement = new ModuleProjectStructureElement(context, myModule);
+    myContext = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
+    myProjectStructureElement = new ModuleProjectStructureElement(myContext, myModule);
   }
 
   public void setDisplayName(String name) {
@@ -72,6 +73,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     myConfigurator.moduleRenamed(myModule, myModuleName, name);
     myModuleName = name;
     myConfigurator.setModified(!Comparing.strEqual(myModuleName, myModule.getName()));
+    myContext.getDaemonAnalyzer().queueUpdateForAllElementsWithErrors();
   }
 
   @Override
