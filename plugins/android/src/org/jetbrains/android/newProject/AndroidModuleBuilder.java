@@ -116,7 +116,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
-                  createProject(project, contentRoot, sourceRoot, facet);
+                  createProject(contentRoot, sourceRoot, facet);
                 }
               });
             }
@@ -126,7 +126,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     }
   }
 
-  private void createProject(Project project, VirtualFile contentRoot, VirtualFile sourceRoot, AndroidFacet facet) {
+  private void createProject(VirtualFile contentRoot, VirtualFile sourceRoot, AndroidFacet facet) {
     if (myProjectType == ProjectType.APPLICATION) {
       createDirectoryStructure(contentRoot, sourceRoot, facet);
     }
@@ -177,123 +177,121 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
     IAndroidTarget target = platform.getTarget();
 
-    if (target != null) {
-      final String androidToolPath =
-        platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName());
+    final String androidToolPath =
+      platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName());
 
-      if (!new File(androidToolPath).exists()) {
-        return false;
-      }
+    if (!new File(androidToolPath).exists()) {
+      return false;
+    }
 
-      final GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(FileUtil.toSystemDependentName(androidToolPath));
+    final GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath(FileUtil.toSystemDependentName(androidToolPath));
 
-      commandLine.addParameter("create");
+    commandLine.addParameter("create");
 
-      switch (myProjectType) {
-        case APPLICATION:
-          commandLine.addParameter("project");
-          break;
-        case LIBRARY:
-          commandLine.addParameter("lib-project");
-          break;
-        case TEST:
-          commandLine.addParameter("test-project");
-          break;
-      }
+    switch (myProjectType) {
+      case APPLICATION:
+        commandLine.addParameter("project");
+        break;
+      case LIBRARY:
+        commandLine.addParameter("lib-project");
+        break;
+      case TEST:
+        commandLine.addParameter("test-project");
+        break;
+    }
 
-      commandLine.addParameters("--name");
-      commandLine.addParameter(getAntProjectName(module.getName()));
+    commandLine.addParameters("--name");
+    commandLine.addParameter(getAntProjectName(module.getName()));
 
-      commandLine.addParameters("--path");
-      commandLine.addParameter(FileUtil.toSystemDependentName(contentRoot.getPath()));
+    commandLine.addParameters("--path");
+    commandLine.addParameter(FileUtil.toSystemDependentName(contentRoot.getPath()));
 
-      if (myProjectType == ProjectType.APPLICATION || myProjectType == ProjectType.LIBRARY) {
-        String apiLevel = target.hashString();
-        commandLine.addParameter("--target");
-        commandLine.addParameter(apiLevel);
-        commandLine.addParameter("--package");
-        commandLine.addParameter(myPackageName);
-      }
+    if (myProjectType == ProjectType.APPLICATION || myProjectType == ProjectType.LIBRARY) {
+      String apiLevel = target.hashString();
+      commandLine.addParameter("--target");
+      commandLine.addParameter(apiLevel);
+      commandLine.addParameter("--package");
+      commandLine.addParameter(myPackageName);
+    }
 
-      if (myProjectType == ProjectType.APPLICATION) {
-        commandLine.addParameter("--activity");
-        commandLine.addParameter(myActivityName);
-      }
-      else if (myProjectType == ProjectType.TEST) {
-        String moduleDirPath = AndroidRootUtil.getModuleDirPath(myTestedModule);
-        assert moduleDirPath != null;
-        commandLine.addParameter("--main");
-        commandLine.addParameter(FileUtil.toSystemDependentName(moduleDirPath));
-      }
+    if (myProjectType == ProjectType.APPLICATION) {
+      commandLine.addParameter("--activity");
+      commandLine.addParameter(myActivityName);
+    }
+    else if (myProjectType == ProjectType.TEST) {
+      String moduleDirPath = AndroidRootUtil.getModuleDirPath(myTestedModule);
+      assert moduleDirPath != null;
+      commandLine.addParameter("--main");
+      commandLine.addParameter(FileUtil.toSystemDependentName(moduleDirPath));
+    }
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final Project project = module.getProject();
-          AndroidUtils.runExternalTool(project, commandLine, true, null);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final Project project = module.getProject();
+        AndroidUtils.runExternalTool(project, commandLine, true, null);
 
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-            public void run() {
-              FileDocumentManager.getInstance().saveAllDocuments();
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+          public void run() {
+            FileDocumentManager.getInstance().saveAllDocuments();
+          }
+        });
+        contentRoot.refresh(false, true);
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+
+            if (contentRoot.findChild(SdkConstants.FN_ANDROID_MANIFEST_XML) == null) {
+              AndroidUtils.printMessageToConsole(project, "The project wasn't generated by 'android' tool.",
+                                                 ConsoleViewContentType.ERROR_OUTPUT);
             }
-          });
-          contentRoot.refresh(false, true);
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-              if (contentRoot.findChild(SdkConstants.FN_ANDROID_MANIFEST_XML) == null) {
-                AndroidUtils.printMessageToConsole(project, "The project wasn't generated by 'android' tool.",
-                                                   ConsoleViewContentType.ERROR_OUTPUT);
-              }
-
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    if (project.isDisposed()) {
-                      return;
-                    }
-                    if (myProjectType == ProjectType.APPLICATION) {
-                      assignApplicationName(facet);
-                      createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
-                      createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
-                    }
-                    VirtualFile srcDir = contentRoot.findChild(SdkConstants.FD_SOURCES);
-                    if (srcDir != sourceRoot && sourceRoot != null && srcDir != null) {
-                      moveContentAndRemoveDir(project, srcDir, sourceRoot);
-                    }
-                  }
-                  catch (IOException e) {
-                    LOG.error(e);
-                  }
-                }
-              });
-
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  if (project.isDisposed() || facet.getModule().isDisposed()) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  if (project.isDisposed()) {
                     return;
                   }
-
-                  if (myTargetSelectionMode != null) {
-                    if (myProjectType == ProjectType.APPLICATION) {
-                      addRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
-                    }
-                    else if (myProjectType == ProjectType.TEST) {
-                      addTestRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
-                    }
+                  if (myProjectType == ProjectType.APPLICATION) {
+                    assignApplicationName(facet);
+                    createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
+                    createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
+                  }
+                  VirtualFile srcDir = contentRoot.findChild(SdkConstants.FD_SOURCES);
+                  if (srcDir != sourceRoot && sourceRoot != null && srcDir != null) {
+                    moveContentAndRemoveDir(project, srcDir, sourceRoot);
                   }
                 }
-              });
-            }
-          });
-        }
-      });
-    }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
+              }
+            });
+
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                if (project.isDisposed() || facet.getModule().isDisposed()) {
+                  return;
+                }
+
+                if (myTargetSelectionMode != null) {
+                  if (myProjectType == ProjectType.APPLICATION) {
+                    addRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
+                  }
+                  else if (myProjectType == ProjectType.TEST) {
+                    addTestRunConfiguration(facet, myTargetSelectionMode, myPreferredAvd);
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+    });
     return true;
   }
 
