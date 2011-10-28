@@ -253,7 +253,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
 
   public static boolean hasNewerVersion(PluginId descr) {
-    return NewVersions2Plugins.containsKey(descr);
+    return NewVersions2Plugins.containsKey(descr) ||
+           PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(descr.getIdString());
   }
 
   public static boolean wasUpdated(PluginId descr) {
@@ -509,8 +510,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         if (descriptor.isDeleted()) {
           myNameLabel.setIcon(IconLoader.getIcon("/actions/clean.png"));
         }
-        else if (hasNewerVersion(myPluginDescriptor.getPluginId()) || 
-                 PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(idString)) {
+        else if (hasNewerVersion(myPluginDescriptor.getPluginId())) {
           myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
           myPanel.setToolTipText("Newer version of the plugin is available");
         }
