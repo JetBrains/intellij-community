@@ -148,12 +148,10 @@ public class IOResourceInspection extends ResourceInspection {
 
   private class IOResourceVisitor extends BaseInspectionVisitor {
 
-    IOResourceVisitor() {
-    }
+    IOResourceVisitor() {}
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (!isIOResourceFactoryMethodCall(expression)) {
         return;
       }
@@ -171,8 +169,7 @@ public class IOResourceInspection extends ResourceInspection {
 
     private void checkExpression(PsiExpression expression) {
       final PsiElement parent = getExpressionParent(expression);
-      if (parent instanceof PsiReturnStatement ||
-          parent instanceof PsiResourceVariable) {
+      if (parent instanceof PsiReturnStatement || parent instanceof PsiResourceVariable) {
         return;
       }
       if (parent instanceof PsiExpressionList) {
@@ -180,14 +177,12 @@ public class IOResourceInspection extends ResourceInspection {
         if (grandParent instanceof PsiAnonymousClass) {
           grandParent = grandParent.getParent();
         }
-        if (grandParent instanceof PsiNewExpression &&
-            isIOResource((PsiNewExpression)grandParent)) {
+        if (grandParent instanceof PsiNewExpression && isIOResource((PsiNewExpression)grandParent)) {
           return;
         }
       }
       final PsiVariable boundVariable = getVariable(parent);
-      final PsiElement containingBlock =
-        PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
+      final PsiElement containingBlock = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
       if (containingBlock == null) {
         return;
       }
@@ -204,27 +199,21 @@ public class IOResourceInspection extends ResourceInspection {
     }
   }
 
-  public static boolean isIOResourceFactoryMethodCall(
-    PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
-    @NonNls final String methodName =
-      methodExpression.getReferenceName();
+  public static boolean isIOResourceFactoryMethodCall(PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    @NonNls final String methodName = methodExpression.getReferenceName();
     if (!"getResourceAsStream".equals(methodName)) {
       return false;
     }
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null) {
       return false;
     }
-    return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                "java.lang.Class", "java.lang.ClassLoader") != null;
+    return TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_CLASS, "java.lang.ClassLoader") != null;
   }
 
   public boolean isIOResource(PsiExpression expression) {
-    return TypeUtils.expressionHasTypeOrSubtype(expression, IO_TYPES) !=
-           null && !isIgnoredType(expression);
+    return TypeUtils.expressionHasTypeOrSubtype(expression, IO_TYPES) != null && !isIgnoredType(expression);
   }
 
   private boolean isIgnoredType(PsiExpression expression) {

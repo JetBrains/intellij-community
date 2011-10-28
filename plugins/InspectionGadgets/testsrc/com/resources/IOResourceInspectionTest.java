@@ -10,7 +10,7 @@ import com.siyeh.ig.resources.IOResourceInspection;
 /**
  * @author Alexey
  */
-public class IOResourceTest extends IGInspectionTestCase {
+public class IOResourceInspectionTest extends IGInspectionTestCase {
 
   @Override
   protected Sdk getTestProjectSdk() {

@@ -61,40 +61,29 @@ public abstract class ResourceInspection extends BaseInspection {
     return parent;
   }
 
-  protected static boolean isSafelyClosed(@Nullable PsiVariable variable,
-                                          PsiElement context,
-                                          boolean insideTryAllowed) {
+  protected static boolean isSafelyClosed(@Nullable PsiVariable variable, PsiElement context, boolean insideTryAllowed) {
     if (variable == null) {
       return false;
     }
-    PsiStatement statement =
-      PsiTreeUtil.getParentOfType(context, PsiStatement.class);
+    PsiStatement statement = PsiTreeUtil.getParentOfType(context, PsiStatement.class);
     if (statement == null) {
       return false;
     }
-    PsiStatement nextStatement =
-      PsiTreeUtil.getNextSiblingOfType(statement,
-                                       PsiStatement.class);
+    PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
     if (insideTryAllowed) {
-      PsiStatement parentStatement =
-        PsiTreeUtil.getParentOfType(statement, PsiStatement.class);
-      while (parentStatement != null &&
-             !(parentStatement instanceof PsiTryStatement)) {
-        parentStatement =
-          PsiTreeUtil.getParentOfType(parentStatement,
-                                      PsiStatement.class);
+      PsiStatement parentStatement = PsiTreeUtil.getParentOfType(statement, PsiStatement.class);
+      while (parentStatement != null && !(parentStatement instanceof PsiTryStatement)) {
+        parentStatement = PsiTreeUtil.getParentOfType(parentStatement, PsiStatement.class);
       }
       if (parentStatement != null) {
-        final PsiTryStatement tryStatement =
-          (PsiTryStatement)parentStatement;
+        final PsiTryStatement tryStatement = (PsiTryStatement)parentStatement;
         if (isResourceClosedInFinally(tryStatement, variable)) {
           return true;
         }
       }
     }
     while (nextStatement == null) {
-      statement = PsiTreeUtil.getParentOfType(statement,
-                                              PsiStatement.class, true);
+      statement = PsiTreeUtil.getParentOfType(statement, PsiStatement.class, true);
       if (statement == null) {
         return false;
       }
@@ -102,9 +91,7 @@ public abstract class ResourceInspection extends BaseInspection {
       if (parent instanceof PsiIfStatement) {
         statement = (PsiStatement)parent;
       }
-      nextStatement =
-        PsiTreeUtil.getNextSiblingOfType(statement,
-                                         PsiStatement.class);
+      nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
     }
     if (!(nextStatement instanceof PsiTryStatement)) {
       // exception in next statement can prevent closing of the resource

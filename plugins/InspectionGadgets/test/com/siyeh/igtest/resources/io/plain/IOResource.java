@@ -2,7 +2,7 @@ package com.siyeh.igtest.resources.io.plain;
 
 import java.io.*;
 
-public class IOResourceInspection {
+public class IOResource {
     public void foo() throws FileNotFoundException {
        new FileInputStream("bar");
     }
@@ -147,4 +147,15 @@ public class IOResourceInspection {
     void resourceAsStream() {
         String.class.getResourceAsStream("bla");
     }
+
+  public static void c() throws IOException {
+    InputStream in = new FileInputStream("");
+    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("asd"));
+    try {
+      writer.write(0);
+    } finally {
+      in.close();
+      writer.close();
+    }
+  }
 }
