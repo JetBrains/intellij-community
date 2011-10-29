@@ -35,10 +35,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -111,6 +108,8 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected void init() {
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
+
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
     JScrollPane installedScrollPane = createTable();
