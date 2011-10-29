@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.plugins.intelliLang.inject.quickedit.CheckRegExpForm">
+  <grid id="a29f0" binding="myRootPanel" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="376" height="134"/>
+    </constraints>
+    <properties/>
+    <border type="empty">
+      <size top="0" left="1" bottom="0" right="1"/>
+    </border>
+    <children>
+      <grid id="c2a42" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="5de69" class="com.intellij.ui.components.JBLabel">
+            <constraints border-constraint="South"/>
+            <properties>
+              <alignmentX value="0.5"/>
+              <componentStyle value="SMALL"/>
+              <horizontalTextPosition value="0"/>
+              <text value="Red means Sample does not match RegExp"/>
+            </properties>
+          </component>
+          <grid id="a052" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="b7b2b" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="North"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="d8697" class="com.intellij.ui.EditorTextField" binding="myRegExp" custom-create="true">
+                    <constraints border-constraint="Center"/>
+                    <properties/>
+                  </component>
+                  <component id="b01c9" class="javax.swing.JLabel">
+                    <constraints border-constraint="West"/>
+                    <properties>
+                      <alignmentX value="1.0"/>
+                      <preferredSize width="55" height="16"/>
+                      <text value="RegExp:"/>
+                    </properties>
+                  </component>
+                  <grid id="aab68" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="South"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="47807" class="com.intellij.ui.EditorTextField" binding="mySampleText" custom-create="true">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                      </component>
+                      <component id="ec7ec" class="javax.swing.JLabel">
+                        <constraints border-constraint="West"/>
+                        <properties>
+                          <alignmentX value="1.0"/>
+                          <preferredSize width="55" height="16"/>
+                          <text value="Sample:"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

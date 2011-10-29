@@ -41,6 +41,8 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -50,13 +52,17 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.PositionTracker;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,27 +73,20 @@ import java.util.Set;
  * fragment's complete prefix and suffix in non-editable areas and allows to edit the fragment
  * without having to consider any additional escaping rules (e.g. when editing regexes in String
  * literals).
+ * 
+ * @author Gregory Shrago
+ * @author Konstantin Bulenkov
  */
 public class QuickEditAction implements IntentionAction, LowPriorityAction {
-
   private String myLastLanguageName;
 
-  @NotNull
-  public String getText() {
-    return "Edit "+ StringUtil.notNullize(myLastLanguageName, "Injected")+" Fragment";
-  }
-
-  @NotNull
-  public String getFamilyName() {
-    return "Edit Injected Fragment";
-  }
-
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getRangePair(file, editor.getCaretModel().getOffset()) != null;
+    return getRangePair(file, editor) != null;
   }
 
   @Nullable
-  private Pair<PsiElement, TextRange> getRangePair(final PsiFile file, final int offset) {
+  protected Pair<PsiElement, TextRange> getRangePair(final PsiFile file, final Editor editor) {
+    final int offset = editor.getCaretModel().getOffset();
     final PsiLanguageInjectionHost host =
       PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) return null;
@@ -107,7 +106,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
-    final Pair<PsiElement, TextRange> pair = getRangePair(file, offset);
+    final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     assert pair != null;
     final PsiFile injectedFile = (PsiFile)pair.first;
     final int injectedOffset = ((DocumentWindow)PsiDocumentManager.getInstance(project).getDocument(injectedFile)).hostToInjected(offset);
@@ -119,20 +118,41 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
   }
 
   private static final Key<MyHandler> QUICK_EDIT_HANDLER = Key.create("QUICK_EDIT_HANDLER");
+
   @NotNull
-  private static MyHandler getHandler(Project project, PsiFile injectedFile, Editor editor, PsiFile origFile) {
+  private MyHandler getHandler(Project project, PsiFile injectedFile, Editor editor, PsiFile origFile) {
     MyHandler handler = injectedFile.getUserData(QUICK_EDIT_HANDLER);
     if (handler != null && handler.isValid()) {
       return handler;
     }
-    injectedFile.putUserData(QUICK_EDIT_HANDLER, handler = new MyHandler(project, injectedFile, origFile, editor.getDocument()));
+    handler = new MyHandler(project, injectedFile, origFile, editor);
+    injectedFile.putUserData(QUICK_EDIT_HANDLER, handler);
     return handler;
   }
+  
+  protected boolean isShowInBalloon() {
+    return false;
+  }
+  
+  @Nullable
+  protected JComponent createBalloonComponent(PsiFile file, Ref<Balloon> ref) {
+    return null;
+  }
 
-  private static class MyHandler extends DocumentAdapter implements Disposable {
+  @NotNull
+  public String getText() {
+    return "Edit "+ StringUtil.notNullize(myLastLanguageName, "Injected")+" Fragment";
+  }
 
+  @NotNull
+  public String getFamilyName() {
+    return "Edit Injected Fragment";
+  }    
+
+  private class MyHandler extends DocumentAdapter implements Disposable {
     private final Project myProject;
     private final PsiFile myInjectedFile;
+    private final Editor myEditor;
     private final Document myOrigDocument;
     private final PsiFile myNewFile;
     private final LightVirtualFile myNewVirtualFile;
@@ -142,10 +162,11 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     private EditorWindow mySplittedWindow;
     private boolean myReleased;
 
-    private MyHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Document origDocument) {
+    private MyHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Editor editor) {
       myProject = project;
       myInjectedFile = injectedFile;
-      myOrigDocument = origDocument;
+      myEditor = editor;
+      myOrigDocument = editor.getDocument();
       final Place shreds = InjectedLanguageUtil.getShreds(myInjectedFile);
       final FileType fileType = injectedFile.getFileType();
       final Language language = injectedFile.getLanguage();
@@ -210,13 +231,42 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     }
 
     public void navigate(int injectedOffset) {
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-      final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
-      if (editors.length == 0) {
-        final EditorWindow curWindow = fileEditorManager.getCurrentWindow();
-        mySplittedWindow = curWindow.split(SwingConstants.HORIZONTAL, false, myNewVirtualFile, true);
+      if (isShowInBalloon()) {
+        Ref<Balloon> ref = Ref.create(null);
+        final JComponent component = createBalloonComponent(myNewFile, ref);
+        if (component != null) {
+          final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
+            .setShadow(true)
+            .setAnimationCycle(0)
+            .setHideOnClickOutside(true)
+            .setHideOnKeyOutside(true)
+            .setHideOnAction(false)
+            .setFillColor(UIUtil.getControlColor())
+            .createBalloon();
+          ref.set(balloon);
+          Disposer.register(myNewFile.getProject(), balloon);
+          balloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+            @Override
+            public RelativePoint recalculateLocation(Balloon object) {
+              final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+              final Point screenPoint = target.getScreenPoint();
+              int y = screenPoint.y;
+              if (target.getPoint().getY() > myEditor.getLineHeight() + balloon.getPreferredSize().getHeight()) {
+                y -= myEditor.getLineHeight();
+              }
+              return new RelativePoint(new Point(screenPoint.x, y));
+            }
+          }, Balloon.Position.above);
+        }
+      } else {
+        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+        final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
+        if (editors.length == 0) {
+          final EditorWindow curWindow = fileEditorManager.getCurrentWindow();
+          mySplittedWindow = curWindow.split(SwingConstants.HORIZONTAL, false, myNewVirtualFile, true);
+        }
+        fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       }
-      fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
     }
 
     @Override
