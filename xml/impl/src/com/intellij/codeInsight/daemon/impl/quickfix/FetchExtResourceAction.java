@@ -375,7 +375,9 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                 candidateName = e.getText().substring(1,e.getTextLength()-1);
               } else if (e instanceof XmlToken &&
                          candidateName != null &&
-                         ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC
+                         ( ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC ||
+                           ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
+                         )
                          ) {
                 if (!result.contains(candidateName)) {
                   result.add(candidateName);

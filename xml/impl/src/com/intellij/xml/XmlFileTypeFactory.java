@@ -32,7 +32,7 @@ public class XmlFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
     consumer.consume(XHtmlFileType.INSTANCE, "xhtml");
-    consumer.consume(DTDFileType.INSTANCE, "dtd;ent;mod");
+    consumer.consume(DTDFileType.INSTANCE, "dtd;ent;mod;elt");
 
     consumer.consume(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;xul;xslt;rng");
     TypedHandler.registerBaseLanguageQuoteHandler(XMLLanguage.class, TypedHandler.getQuoteHandlerForType(XmlFileType.INSTANCE));
