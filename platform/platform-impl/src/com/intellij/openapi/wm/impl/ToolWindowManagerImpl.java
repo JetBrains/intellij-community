@@ -45,10 +45,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
@@ -2131,8 +2128,27 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       else {
         activateToolWindow(activeId, forced, true);
       }
+
+      return new ActionCallback.Done();
+    } else {
+      Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (activeWindow != null) {
+        JRootPane root = null;
+        if (activeWindow instanceof JDialog) {
+          root = ((JDialog)activeWindow).getRootPane();
+        } else if (activeWindow instanceof JFrame) {
+          root = ((JFrame)activeWindow).getRootPane();
+        }
+
+        if (root != null) {
+          JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(root);
+          if (toFocus != null) {
+            return IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus, forced);
+          }
+        }
+      }
     }
-    return new ActionCallback.Done();
+    return new ActionCallback.Rejected();
   }
 
 
