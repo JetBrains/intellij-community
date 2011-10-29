@@ -241,7 +241,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
   
   public JComponent getPreferredFocusedComponent() {
-    return myTree;
+    return myShowFlatten ? myList : myTree;
   }
 
   public Dimension getPreferredSize() {
