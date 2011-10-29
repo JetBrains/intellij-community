@@ -159,4 +159,6 @@ public final class Matcher {
   void testBinary() {doTest()}
   void testSafeCast() {doTest()}
   void testNewExpr() {doTest()}
+
+  void testMapNameAlreadyused() {doTest()}
 }
