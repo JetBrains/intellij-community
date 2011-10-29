@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,11 +57,22 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
       if (focusTraversalPolicy.getClass().getName().indexOf("LegacyGlueFocusTraversalPolicy") >=0) {
         return component;
       }
-      final Component defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
+
+      Component defaultComponent;
+      if (focusTraversalPolicy instanceof LayoutFocusTraversalPolicyExt) {
+        final LayoutFocusTraversalPolicyExt extPolicy = (LayoutFocusTraversalPolicyExt)focusTraversalPolicy;
+        defaultComponent = extPolicy.queryImpl(new Computable<Component>() {
+          @Override
+          public Component compute() {
+            return extPolicy.getDefaultComponent(component);
+          }
+        });
+      } else {
+        defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
+      }
+
       if (defaultComponent instanceof JComponent) {
         return (JComponent)defaultComponent;
-      }else{
-        return null;
       }
     }
 

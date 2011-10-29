@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   private boolean myNoDefaultComponent;
   private Object myNoDefaultComponentRequestor;
 
+  private boolean myQueryImpl = false;
+
   public void setNoDefaultComponent(boolean noDefaultComponent, Object requestor) {
     if (noDefaultComponent) {
       myNoDefaultComponent = noDefaultComponent;
@@ -46,6 +49,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public boolean isNoDefaultComponent() {
+    if (myQueryImpl) return false;
+
     return myNoDefaultComponent || Registry.is("actionSystem.noDefaultComponent");
   }
 
@@ -157,5 +162,15 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
 
   protected Component getComponentBeforeImpl(final Container focusCycleRoot, final Component aComponent) {
     return super.getComponentBefore(focusCycleRoot, aComponent);
+  }
+  
+  public Component queryImpl(Computable<Component> runnable) {
+    try {
+      myQueryImpl = true;
+      return runnable.compute();
+    }
+    finally {
+      myQueryImpl = false;
+    }
   }
 }
