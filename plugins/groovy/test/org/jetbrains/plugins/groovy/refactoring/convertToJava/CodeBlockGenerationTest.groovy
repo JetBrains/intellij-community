@@ -161,4 +161,6 @@ public final class Matcher {
   void testNewExpr() {doTest()}
 
   void testMapNameAlreadyused() {doTest()}
+
+  void testEmptyMap() {doTest()}
 }

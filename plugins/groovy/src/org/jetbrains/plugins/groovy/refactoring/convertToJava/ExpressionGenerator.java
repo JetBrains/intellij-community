@@ -1147,8 +1147,14 @@ public class ExpressionGenerator extends Generator {
 
     if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
       final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
-      if (candidate.getElement() != null || !PsiUtil.isLValue(expression)) {
-        invokeMethodByResolveResult(selectedExpression, candidate, "getAt", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
+      PsiElement element = candidate.getElement();
+      if (element != null || !PsiUtil.isLValue(expression)) {                     //see the case of l-value in assignment expression
+        if (element instanceof GrGdkMethod && ((GrGdkMethod)element).getStaticMethod().getParameterList().getParameters()[0].getType().equalsToText("java.util.Map<K,V>")) {
+          invokeMethodByName(selectedExpression, "get", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
+        }
+        else {
+          invokeMethodByResolveResult(selectedExpression, candidate, "getAt", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
+        }
         return;
       }
     }
@@ -1224,9 +1230,16 @@ public class ExpressionGenerator extends Generator {
     LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiArrayType);
 
     if (listOrMap.isMap()) {
-      String varName = generateMapVariableDeclaration(listOrMap, type);
-      generateMapElementInsertions(listOrMap, varName);
-      builder.append(varName);
+      if (listOrMap.getNamedArguments().length == 0) {
+        builder.append(" = new ");
+        writeType(builder, type, listOrMap);
+        builder.append("()");
+      }
+      else {
+        String varName = generateMapVariableDeclaration(listOrMap, type);
+        generateMapElementInsertions(listOrMap, varName);
+        builder.append(varName);
+      }
     }
     else {
       boolean isActuallyList = type instanceof GrTupleType;
