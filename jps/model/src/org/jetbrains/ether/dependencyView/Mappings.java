@@ -2,7 +2,6 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.ClassReader;
@@ -24,9 +23,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Mappings implements RW.Writable {
-  private final File rootFile;
-  private final File stringCacheFile;
-  private final PersistentStringEnumerator stringCache;
+  private final DependencyContext context;
 
   private static FoxyMap.CollectionConstructor<ClassRepr> classSetConstructor = new FoxyMap.CollectionConstructor<ClassRepr>() {
     public Collection<ClassRepr> create() {
@@ -40,23 +37,24 @@ public class Mappings implements RW.Writable {
     }
   };
 
-  private static FoxyMap.CollectionConstructor<StringCache.S> stringSetConstructor = new FoxyMap.CollectionConstructor<StringCache.S>() {
-    public Collection<StringCache.S> create() {
-      return new HashSet<StringCache.S>();
-    }
-  };
+  private static FoxyMap.CollectionConstructor<DependencyContext.S> stringSetConstructor =
+    new FoxyMap.CollectionConstructor<DependencyContext.S>() {
+      public Collection<DependencyContext.S> create() {
+        return new HashSet<DependencyContext.S>();
+      }
+    };
 
-  private final FoxyMap<StringCache.S, StringCache.S> classToSubclasses;
-  private final FoxyMap<StringCache.S, ClassRepr> sourceFileToClasses;
-  private final Map<StringCache.S, UsageRepr.Cluster> sourceFileToUsages;
-  private final FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToAnnotationUsages;
-  private final Map<StringCache.S, StringCache.S> classToSourceFile;
-  private final FoxyMap<StringCache.S, StringCache.S> classToClassDependency;
-  private final Map<StringCache.S, StringCache.S> formToClass;
-  private final Map<StringCache.S, StringCache.S> classToForm;
+  private final FoxyMap<DependencyContext.S, DependencyContext.S> classToSubclasses;
+  private final FoxyMap<DependencyContext.S, ClassRepr> sourceFileToClasses;
+  private final Map<DependencyContext.S, UsageRepr.Cluster> sourceFileToUsages;
+  private final FoxyMap<DependencyContext.S, UsageRepr.Usage> sourceFileToAnnotationUsages;
+  private final Map<DependencyContext.S, DependencyContext.S> classToSourceFile;
+  private final FoxyMap<DependencyContext.S, DependencyContext.S> classToClassDependency;
+  private final Map<DependencyContext.S, DependencyContext.S> formToClass;
+  private final Map<DependencyContext.S, DependencyContext.S> classToForm;
 
   @Override
-  public void write(BufferedWriter w) {
+  public void write(final BufferedWriter w) {
     FoxyMap.write(w, classToSubclasses);
     FoxyMap.write(w, sourceFileToClasses);
     RW.writeMap(w, sourceFileToUsages);
@@ -65,75 +63,89 @@ public class Mappings implements RW.Writable {
     FoxyMap.write(w, classToClassDependency);
   }
 
-  public Mappings() {    // Temporary
-    this.rootFile = null;
-    stringCacheFile = null;
-    stringCache = null;
-    classToSubclasses = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
-    sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
-    sourceFileToUsages = new HashMap<StringCache.S, UsageRepr.Cluster>();
-    sourceFileToAnnotationUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
-    classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
-    classToClassDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
-    formToClass = new HashMap<StringCache.S, StringCache.S>();
-    classToForm = new HashMap<StringCache.S, StringCache.S>();
+  private Mappings(final DependencyContext context) {
+    this.context = context;
 
+    classToSubclasses = new FoxyMap<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    sourceFileToClasses = new FoxyMap<DependencyContext.S, ClassRepr>(classSetConstructor);
+    sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
+    sourceFileToAnnotationUsages = new FoxyMap<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
+    classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToClassDependency = new FoxyMap<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
-  public Mappings(final File rootFile) throws IOException {
-    this.rootFile = rootFile;
-    stringCacheFile = new File(rootFile, "strings");
+  public Mappings() {
+    try {
+      context = new DependencyContext(FileUtil.createTempDirectory("temp", "dir"));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
-    FileUtil.createIfDoesntExist(stringCacheFile);
+    classToSubclasses = new FoxyMap<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    sourceFileToClasses = new FoxyMap<DependencyContext.S, ClassRepr>(classSetConstructor);
+    sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
+    sourceFileToAnnotationUsages = new FoxyMap<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
+    classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToClassDependency = new FoxyMap<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
+  }
 
-    stringCache = new PersistentStringEnumerator(stringCacheFile, true);
+  public Mappings(final File rootDir) {
+    context = new DependencyContext(rootDir);
 
-    classToSubclasses = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
-    sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
-    sourceFileToUsages = new HashMap<StringCache.S, UsageRepr.Cluster>();
-    sourceFileToAnnotationUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
-    classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
-    classToClassDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
-    formToClass = new HashMap<StringCache.S, StringCache.S>();
-    classToForm = new HashMap<StringCache.S, StringCache.S>();
+    classToSubclasses = new FoxyMap<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    sourceFileToClasses = new FoxyMap<DependencyContext.S, ClassRepr>(classSetConstructor);
+    sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
+    sourceFileToAnnotationUsages = new FoxyMap<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
+    classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToClassDependency = new FoxyMap<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
   public Mappings(final BufferedReader r) { // Temporary
-    this.rootFile = null;
-    stringCacheFile = null;
-    stringCache = null;
+    try {
+      context = new DependencyContext(FileUtil.createTempDirectory("temp", "dir"));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
-    classToSubclasses = FoxyMap.read(r, StringCache.reader, StringCache.reader, stringSetConstructor);
-    sourceFileToClasses = FoxyMap.read(r, StringCache.reader, ClassRepr.reader, classSetConstructor);
-    sourceFileToUsages = RW.readMap(r, StringCache.reader, UsageRepr.clusterReader, new HashMap<StringCache.S, UsageRepr.Cluster>());
-    sourceFileToAnnotationUsages = FoxyMap.read(r, StringCache.reader, UsageRepr.reader, usageSetConstructor);
-    classToSourceFile = RW.readMap(r, StringCache.reader, StringCache.reader, new HashMap<StringCache.S, StringCache.S>());
-    classToClassDependency = FoxyMap.read(r, StringCache.reader, StringCache.reader, stringSetConstructor);
-    formToClass = new HashMap<StringCache.S, StringCache.S>();
-    classToForm = new HashMap<StringCache.S, StringCache.S>();
+    classToSubclasses = FoxyMap.read(r, context.reader, context.reader, stringSetConstructor);
+    sourceFileToClasses = FoxyMap.read(r, context.reader, ClassRepr.reader(context), classSetConstructor);
+    sourceFileToUsages =
+      RW.readMap(r, context.reader, UsageRepr.clusterReader(context), new HashMap<DependencyContext.S, UsageRepr.Cluster>());
+    sourceFileToAnnotationUsages = FoxyMap.read(r, context.reader, UsageRepr.reader(context), usageSetConstructor);
+    classToSourceFile = RW.readMap(r, context.reader, context.reader, new HashMap<DependencyContext.S, DependencyContext.S>());
+    classToClassDependency = FoxyMap.read(r, context.reader, context.reader, stringSetConstructor);
+    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
-  public Mappings(final File rootFile, final BufferedReader r) throws IOException {
-    this.rootFile = rootFile;
-    stringCacheFile = new File(rootFile, "strings");
+  public Mappings(final File rootDir, final BufferedReader r) {
+    context = new DependencyContext(rootDir);
+    classToSubclasses = FoxyMap.read(r, context.reader, context.reader, stringSetConstructor);
+    sourceFileToClasses = FoxyMap.read(r, context.reader, ClassRepr.reader(context), classSetConstructor);
+    sourceFileToUsages =
+      RW.readMap(r, context.reader, UsageRepr.clusterReader(context), new HashMap<DependencyContext.S, UsageRepr.Cluster>());
+    sourceFileToAnnotationUsages = FoxyMap.read(r, context.reader, UsageRepr.reader(context), usageSetConstructor);
+    classToSourceFile = RW.readMap(r, context.reader, context.reader, new HashMap<DependencyContext.S, DependencyContext.S>());
+    classToClassDependency = FoxyMap.read(r, context.reader, context.reader, stringSetConstructor);
+    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
+  }
 
-    FileUtil.createIfDoesntExist(stringCacheFile);
-
-    stringCache = new PersistentStringEnumerator(stringCacheFile, true);
-
-    classToSubclasses = FoxyMap.read(r, StringCache.reader, StringCache.reader, stringSetConstructor);
-    sourceFileToClasses = FoxyMap.read(r, StringCache.reader, ClassRepr.reader, classSetConstructor);
-    sourceFileToUsages = RW.readMap(r, StringCache.reader, UsageRepr.clusterReader, new HashMap<StringCache.S, UsageRepr.Cluster>());
-    sourceFileToAnnotationUsages = FoxyMap.read(r, StringCache.reader, UsageRepr.reader, usageSetConstructor);
-    classToSourceFile = RW.readMap(r, StringCache.reader, StringCache.reader, new HashMap<StringCache.S, StringCache.S>());
-    classToClassDependency = FoxyMap.read(r, StringCache.reader, StringCache.reader, stringSetConstructor);
-    formToClass = new HashMap<StringCache.S, StringCache.S>();
-    classToForm = new HashMap<StringCache.S, StringCache.S>();
+  public Mappings createDelta(){
+    return new Mappings(context);
   }
 
   private void compensateRemovedContent(final Collection<File> compiled) {
     for (File file : compiled) {
-      final StringCache.S key = StringCache.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+      final DependencyContext.S key = context.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
       if (!sourceFileToClasses.containsKey(key)) {
         sourceFileToClasses.put(key, new HashSet<ClassRepr>());
       }
@@ -141,8 +153,8 @@ public class Mappings implements RW.Writable {
   }
 
   @Nullable
-  private ClassRepr getReprByName(final StringCache.S name) {
-    final StringCache.S source = classToSourceFile.get(name);
+  private ClassRepr getReprByName(final DependencyContext.S name) {
+    final DependencyContext.S source = classToSourceFile.get(name);
 
     if (source != null) {
       final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(source);
@@ -170,27 +182,27 @@ public class Mappings implements RW.Writable {
       this.delta = delta;
     }
 
-    void appendDependents(final Set<ClassRepr> classes, final Set<StringCache.S> result) {
+    void appendDependents(final Set<ClassRepr> classes, final Set<DependencyContext.S> result) {
       if (classes == null) {
         return;
       }
 
       for (ClassRepr c : classes) {
-        final Collection<StringCache.S> depClasses = delta.classToClassDependency.foxyGet(c.name);
+        final Collection<DependencyContext.S> depClasses = delta.classToClassDependency.foxyGet(c.name);
 
         if (depClasses != null) {
-          for (StringCache.S className : depClasses) {
+          for (DependencyContext.S className : depClasses) {
             result.add(className);
           }
         }
       }
     }
 
-    void propagateMemberAccessRec(final Collection<StringCache.S> acc,
+    void propagateMemberAccessRec(final Collection<DependencyContext.S> acc,
                                   final boolean isField,
                                   final boolean root,
-                                  final StringCache.S name,
-                                  final StringCache.S reflcass) {
+                                  final DependencyContext.S name,
+                                  final DependencyContext.S reflcass) {
       final ClassRepr repr = reprByName(reflcass);
 
       if (repr != null) {
@@ -208,29 +220,31 @@ public class Mappings implements RW.Writable {
           acc.add(reflcass);
         }
 
-        final Collection<StringCache.S> subclasses = classToSubclasses.foxyGet(reflcass);
+        final Collection<DependencyContext.S> subclasses = classToSubclasses.foxyGet(reflcass);
 
         if (subclasses != null) {
-          for (StringCache.S subclass : subclasses) {
+          for (DependencyContext.S subclass : subclasses) {
             propagateMemberAccessRec(acc, isField, false, name, subclass);
           }
         }
       }
     }
 
-    Collection<StringCache.S> propagateMemberAccess(final boolean isField, final StringCache.S name, final StringCache.S className) {
-      final Set<StringCache.S> acc = new HashSet<StringCache.S>();
+    Collection<DependencyContext.S> propagateMemberAccess(final boolean isField,
+                                                          final DependencyContext.S name,
+                                                          final DependencyContext.S className) {
+      final Set<DependencyContext.S> acc = new HashSet<DependencyContext.S>();
 
       propagateMemberAccessRec(acc, isField, true, name, className);
 
       return acc;
     }
 
-    Collection<StringCache.S> propagateFieldAccess(final StringCache.S name, final StringCache.S className) {
+    Collection<DependencyContext.S> propagateFieldAccess(final DependencyContext.S name, final DependencyContext.S className) {
       return propagateMemberAccess(true, name, className);
     }
 
-    Collection<StringCache.S> propagateMethodAccess(final StringCache.S name, final StringCache.S className) {
+    Collection<DependencyContext.S> propagateMethodAccess(final DependencyContext.S name, final DependencyContext.S className) {
       return propagateMemberAccess(false, name, className);
     }
 
@@ -239,9 +253,9 @@ public class Mappings implements RW.Writable {
 
       new Object() {
         public void run(final ClassRepr c) {
-          final StringCache.S[] supers = c.getSupers();
+          final DependencyContext.S[] supers = c.getSupers();
 
-          for (StringCache.S succName : supers) {
+          for (DependencyContext.S succName : supers) {
             final ClassRepr r = reprByName(succName);
 
             if (r != null) {
@@ -274,9 +288,9 @@ public class Mappings implements RW.Writable {
 
       new Object() {
         public void run(final ClassRepr c) {
-          final StringCache.S[] supers = c.getSupers();
+          final DependencyContext.S[] supers = c.getSupers();
 
-          for (StringCache.S succName : supers) {
+          for (DependencyContext.S succName : supers) {
             final ClassRepr r = reprByName(succName);
 
             if (r != null) {
@@ -304,7 +318,7 @@ public class Mappings implements RW.Writable {
       return result;
     }
 
-    ClassRepr reprByName(final StringCache.S name) {
+    ClassRepr reprByName(final DependencyContext.S name) {
       if (delta != null) {
         final ClassRepr r = delta.getReprByName(name);
 
@@ -316,7 +330,7 @@ public class Mappings implements RW.Writable {
       return getReprByName(name);
     }
 
-    boolean isInheritorOf(final StringCache.S who, final StringCache.S whom) {
+    boolean isInheritorOf(final DependencyContext.S who, final DependencyContext.S whom) {
       if (who.equals(whom)) {
         return true;
       }
@@ -324,7 +338,7 @@ public class Mappings implements RW.Writable {
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
-        for (StringCache.S s : repr.getSupers()) {
+        for (DependencyContext.S s : repr.getSupers()) {
           if (isInheritorOf(s, whom)) {
             return true;
           }
@@ -334,7 +348,7 @@ public class Mappings implements RW.Writable {
       return false;
     }
 
-    boolean fieldVisible(final StringCache.S className, final FieldRepr field) {
+    boolean fieldVisible(final DependencyContext.S className, final FieldRepr field) {
       final ClassRepr r = reprByName(className);
 
       if (r != null) {
@@ -348,12 +362,12 @@ public class Mappings implements RW.Writable {
       return false;
     }
 
-    void affectSubclasses(final StringCache.S className,
+    void affectSubclasses(final DependencyContext.S className,
                           final Collection<File> affectedFiles,
                           final Collection<UsageRepr.Usage> affectedUsages,
-                          final Collection<StringCache.S> dependants,
+                          final Collection<DependencyContext.S> dependants,
                           final boolean usages) {
-      final StringCache.S fileName = classToSourceFile.get(className);
+      final DependencyContext.S fileName = classToSourceFile.get(className);
 
       if (fileName == null) {
         return;
@@ -367,74 +381,79 @@ public class Mappings implements RW.Writable {
         }
       }
 
-      final Collection<StringCache.S> depClasses = classToClassDependency.foxyGet(fileName);
+      final Collection<DependencyContext.S> depClasses = classToClassDependency.foxyGet(fileName);
 
       if (depClasses != null) {
         dependants.addAll(depClasses);
       }
 
-      affectedFiles.add(new File(fileName.value));
+      affectedFiles.add(new File(fileName.getValue()));
 
-      final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
+      final Collection<DependencyContext.S> directSubclasses = classToSubclasses.foxyGet(className);
 
       if (directSubclasses != null) {
-        for (StringCache.S subClass : directSubclasses) {
+        for (DependencyContext.S subClass : directSubclasses) {
+          System.out.println("className: " + className.getValue() + ", subclass : " + subClass.getValue());
+          System.out.println("className.index: " + className.index  + ", subclass.index : " + subClass.index);
+          System.out.println("className.equals(subClass)=" + className.equals(subClass));
+          assert(false); //!className.equals(subClass));
           affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
         }
       }
     }
 
     void affectFieldUsages(final FieldRepr field,
-                           final Collection<StringCache.S> subclasses,
+                           final Collection<DependencyContext.S> subclasses,
                            final UsageRepr.Usage rootUsage,
                            final Set<UsageRepr.Usage> affectedUsages,
-                           final Set<StringCache.S> dependents) {
+                           final Set<DependencyContext.S> dependents) {
       affectedUsages.add(rootUsage);
 
-      for (StringCache.S p : subclasses) {
-        final Collection<StringCache.S> deps = classToClassDependency.foxyGet(p);
+      for (DependencyContext.S p : subclasses) {
+        final Collection<DependencyContext.S> deps = classToClassDependency.foxyGet(p);
 
         if (deps != null) {
           dependents.addAll(deps);
         }
 
-        affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(p) : field.createUsage(p));
+        affectedUsages
+          .add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(context, p) : field.createUsage(context, p));
       }
     }
 
     void affectMethodUsages(final MethodRepr method,
-                            final Collection<StringCache.S> subclasses,
+                            final Collection<DependencyContext.S> subclasses,
                             final UsageRepr.Usage rootUsage,
                             final Set<UsageRepr.Usage> affectedUsages,
-                            final Set<StringCache.S> dependents) {
+                            final Set<DependencyContext.S> dependents) {
       affectedUsages.add(rootUsage);
 
-      for (StringCache.S p : subclasses) {
-        final Collection<StringCache.S> deps = classToClassDependency.foxyGet(p);
+      for (DependencyContext.S p : subclasses) {
+        final Collection<DependencyContext.S> deps = classToClassDependency.foxyGet(p);
 
         if (deps != null) {
           dependents.addAll(deps);
         }
 
-        affectedUsages.add(method.createUsage(p));
+        affectedUsages.add(method.createUsage(context, p));
       }
     }
 
-    void affectAll(final StringCache.S className, final Collection<File> affectedFiles) {
-      final Set<StringCache.S> dependants = (Set<StringCache.S>)classToClassDependency.foxyGet(className);
+    void affectAll(final DependencyContext.S className, final Collection<File> affectedFiles) {
+      final Set<DependencyContext.S> dependants = (Set<DependencyContext.S>)classToClassDependency.foxyGet(className);
 
       if (dependants != null) {
-        for (StringCache.S depClass : dependants) {
-          final StringCache.S depFile = classToSourceFile.get(depClass);
+        for (DependencyContext.S depClass : dependants) {
+          final DependencyContext.S depFile = classToSourceFile.get(depClass);
           if (depFile != null) {
-            affectedFiles.add(new File(depFile.value));
+            affectedFiles.add(new File(depFile.getValue()));
           }
         }
       }
     }
 
     public abstract class UsageConstraint {
-      public abstract boolean checkResidence(final StringCache.S residence);
+      public abstract boolean checkResidence(final DependencyContext.S residence);
     }
 
     public class PackageConstraint extends UsageConstraint {
@@ -445,20 +464,20 @@ public class Mappings implements RW.Writable {
       }
 
       @Override
-      public boolean checkResidence(final StringCache.S residence) {
+      public boolean checkResidence(final DependencyContext.S residence) {
         return !ClassRepr.getPackageName(residence).equals(packageName);
       }
     }
 
     public class InheritanceConstraint extends UsageConstraint {
-      public final StringCache.S rootClass;
+      public final DependencyContext.S rootClass;
 
-      public InheritanceConstraint(final StringCache.S rootClass) {
+      public InheritanceConstraint(final DependencyContext.S rootClass) {
         this.rootClass = rootClass;
       }
 
       @Override
-      public boolean checkResidence(final StringCache.S residence) {
+      public boolean checkResidence(final DependencyContext.S residence) {
         return !isInheritorOf(residence, rootClass);
       }
     }
@@ -471,7 +490,7 @@ public class Mappings implements RW.Writable {
       }
 
       @Override
-      public boolean checkResidence(final StringCache.S residence) {
+      public boolean checkResidence(final DependencyContext.S residence) {
         return !x.checkResidence(residence);
       }
     }
@@ -486,36 +505,20 @@ public class Mappings implements RW.Writable {
       }
 
       @Override
-      public boolean checkResidence(final StringCache.S residence) {
+      public boolean checkResidence(final DependencyContext.S residence) {
         return x.checkResidence(residence) && y.checkResidence(residence);
       }
     }
   }
 
-  private static Set<StringCache.S> cachePaths(final Collection<String> x) {
-    final Set<StringCache.S> y = new HashSet<StringCache.S>();
-    for (String s : x) {
-      y.add(StringCache.get(FileUtil.toSystemIndependentName(s)));
-    }
-    return y;
-  }
-
-  private static Set<StringCache.S> cacheFiles(final Collection<File> x) {
-    final Set<StringCache.S> y = new HashSet<StringCache.S>();
-    for (File s : x) {
-      y.add(StringCache.get(FileUtil.toSystemIndependentName(s.getAbsolutePath())));
-    }
-    return y;
-  }
-
   public boolean differentiate(final Mappings delta,
-                                 final Collection<String> removed,
-                                 final Collection<File> filesToCompile,
-                                 final Collection<File> compiledFiles,
-                                 final Collection<File> affectedFiles){
-    return differentiate(delta, removed,  filesToCompile, compiledFiles,  affectedFiles, null);
+                               final Collection<String> removed,
+                               final Collection<File> filesToCompile,
+                               final Collection<File> compiledFiles,
+                               final Collection<File> affectedFiles) {
+    return differentiate(delta, removed, filesToCompile, compiledFiles, affectedFiles, null);
   }
-  
+
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
@@ -530,7 +533,7 @@ public class Mappings implements RW.Writable {
 
     if (removed != null) {
       for (String file : removed) {
-        final Collection<ClassRepr> classes = sourceFileToClasses.foxyGet(StringCache.get(file));
+        final Collection<ClassRepr> classes = sourceFileToClasses.foxyGet(context.get(file));
 
         if (classes != null) {
           for (ClassRepr c : classes) {
@@ -540,14 +543,14 @@ public class Mappings implements RW.Writable {
       }
     }
 
-    for (StringCache.S fileName : delta.sourceFileToClasses.keySet()) {
-      if (safeFiles != null && safeFiles.contains(fileName.value)) {
+    for (DependencyContext.S fileName : delta.sourceFileToClasses.keySet()) {
+      if (safeFiles != null && safeFiles.contains(fileName.getValue())) {
         continue;
       }
 
       final Set<ClassRepr> classes = (Set<ClassRepr>)delta.sourceFileToClasses.foxyGet(fileName);
       final Set<ClassRepr> pastClasses = (Set<ClassRepr>)sourceFileToClasses.foxyGet(fileName);
-      final Set<StringCache.S> dependants = new HashSet<StringCache.S>();
+      final Set<DependencyContext.S> dependants = new HashSet<DependencyContext.S>();
 
       self.appendDependents(pastClasses, dependants);
 
@@ -643,14 +646,14 @@ public class Mappings implements RW.Writable {
 
         for (MethodRepr m : diff.methods().removed()) {
           final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = u.findOverridenMethods(m, it);
-          final Collection<StringCache.S> propagated = u.propagateMethodAccess(m.name, it.name);
+          final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
 
           if (overridenMethods.size() == 0) {
-            u.affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+            u.affectMethodUsages(m, propagated, m.createUsage(context, it.name), affectedUsages, dependants);
           }
 
           if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
-            for (StringCache.S p : propagated) {
+            for (DependencyContext.S p : propagated) {
               final ClassRepr s = u.reprByName(p);
 
               if (s != null) {
@@ -675,10 +678,10 @@ public class Mappings implements RW.Writable {
                 }
 
                 if (allAbstract && visited) {
-                  final StringCache.S source = classToSourceFile.get(p);
+                  final DependencyContext.S source = classToSourceFile.get(p);
 
                   if (source != null) {
-                    affectedFiles.add(new File(source.value));
+                    affectedFiles.add(new File(source.getValue()));
                   }
                 }
               }
@@ -693,29 +696,29 @@ public class Mappings implements RW.Writable {
 
           if (it.isAnnotation()) {
             if (d.defaultRemoved()) {
-              final List<StringCache.S> l = new LinkedList<StringCache.S>();
+              final List<DependencyContext.S> l = new LinkedList<DependencyContext.S>();
               l.add(m.name);
               annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
             }
           }
           else if (d.base() != Difference.NONE || throwsChanged) {
             if (d.packageLocalOn()) {
-              final UsageRepr.Usage usage = m.createUsage(it.name);
+              final UsageRepr.Usage usage = m.createUsage(context, it.name);
 
               affectedUsages.add(usage);
               usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
             }
 
-            final Collection<StringCache.S> propagated = u.propagateMethodAccess(m.name, it.name);
+            final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
-              u.affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+              u.affectMethodUsages(m, propagated, m.createUsage(context, it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
-                u.affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+                u.affectMethodUsages(m, propagated, m.createUsage(context, it.name), affectedUsages, dependants);
 
                 if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
@@ -730,7 +733,7 @@ public class Mappings implements RW.Writable {
 
                 if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
-                  u.affectMethodUsages(m, propagated, m.createUsage(it.name), usages, dependants);
+                  u.affectMethodUsages(m, propagated, m.createUsage(context, it.name), usages, dependants);
 
                   for (UsageRepr.Usage usage : usages) {
                     usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
@@ -752,32 +755,32 @@ public class Mappings implements RW.Writable {
           final boolean fPLocal = !fPrivate && !fProtected && !fPublic;
 
           if (!fPrivate) {
-            final Collection<StringCache.S> subClasses = (Set<StringCache.S>)classToSubclasses.foxyGet(it.name);
+            final Collection<DependencyContext.S> subClasses = classToSubclasses.foxyGet(it.name);
 
             if (subClasses != null) {
-              for (final StringCache.S subClass : subClasses) {
+              for (final DependencyContext.S subClass : subClasses) {
                 final ClassRepr r = u.reprByName(subClass);
-                final StringCache.S sourceFileName = classToSourceFile.get(subClass);
+                final DependencyContext.S sourceFileName = classToSourceFile.get(subClass);
 
                 if (r != null && sourceFileName != null) {
                   if (r.isLocal) {
-                    affectedFiles.add(new File(sourceFileName.value));
+                    affectedFiles.add(new File(sourceFileName.getValue()));
                   }
                   else {
-                    final StringCache.S outerClass = r.outerClassName;
+                    final DependencyContext.S outerClass = r.outerClassName;
 
-                    if (outerClass.value != null) {
+                    if (outerClass.getValue() != null) {
                       if (u.fieldVisible(outerClass, f)) {
-                        affectedFiles.add(new File(sourceFileName.value));
+                        affectedFiles.add(new File(sourceFileName.getValue()));
                       }
                     }
                   }
                 }
 
-                final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, subClass);
-                u.affectFieldUsages(f, propagated, f.createUsage(subClass), affectedUsages, dependants);
+                final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, subClass);
+                u.affectFieldUsages(f, propagated, f.createUsage(context, subClass), affectedUsages, dependants);
 
-                final Collection<StringCache.S> deps = classToClassDependency.foxyGet(subClass);
+                final Collection<DependencyContext.S> deps = classToClassDependency.foxyGet(subClass);
 
                 if (deps != null) {
                   dependants.addAll(deps);
@@ -798,10 +801,10 @@ public class Mappings implements RW.Writable {
             final boolean ffPLocal = !ffPrivate && !ffProtected && !ffPublic;
 
             if (!ffPrivate) {
-              final Collection<StringCache.S> propagated = o.propagateFieldAccess(ff.name, cc.name);
+              final Collection<DependencyContext.S> propagated = o.propagateFieldAccess(ff.name, cc.name);
               final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
-              u.affectFieldUsages(ff, propagated, ff.createUsage(cc.name), localUsages, dependants);
+              u.affectFieldUsages(ff, propagated, ff.createUsage(context, cc.name), localUsages, dependants);
 
               if (fPrivate || (fPublic && (ffPublic || ffPLocal)) || (fProtected && ffProtected) || (fPLocal && ffPLocal)) {
 
@@ -835,8 +838,8 @@ public class Mappings implements RW.Writable {
             return false;
           }
 
-          final Collection<StringCache.S> propagated = u.propagateFieldAccess(f.name, it.name);
-          u.affectFieldUsages(f, propagated, f.createUsage(it.name), affectedUsages, dependants);
+          final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, it.name);
+          u.affectFieldUsages(f, propagated, f.createUsage(context, it.name), affectedUsages, dependants);
         }
 
         for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
@@ -850,26 +853,26 @@ public class Mappings implements RW.Writable {
           }
 
           if (d.base() != Difference.NONE) {
-            final Collection<StringCache.S> propagated = u.propagateFieldAccess(field.name, it.name);
+            final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(field.name, it.name);
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
-              u.affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
+              u.affectFieldUsages(field, propagated, field.createUsage(context, it.name), affectedUsages, dependants);
             }
             else if ((d.base() & Difference.ACCESS) > 0) {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
-                u.affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
+                u.affectFieldUsages(field, propagated, field.createUsage(context, it.name), affectedUsages, dependants);
               }
               else {
                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
-                  u.affectFieldUsages(field, propagated, field.createAssignUsage(it.name), affectedUsages, dependants);
+                  u.affectFieldUsages(field, propagated, field.createAssignUsage(context, it.name), affectedUsages, dependants);
                 }
 
                 if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && (d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
-                  u.affectFieldUsages(field, propagated, field.createUsage(it.name), usages, dependants);
+                  u.affectFieldUsages(field, propagated, field.createUsage(context, it.name), usages, dependants);
 
                   for (UsageRepr.Usage usage : usages) {
                     usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
@@ -888,24 +891,24 @@ public class Mappings implements RW.Writable {
       }
 
       for (ClassRepr c : classDiff.added()) {
-        final Collection<StringCache.S> depClasses = classToClassDependency.foxyGet(c.name);
+        final Collection<DependencyContext.S> depClasses = classToClassDependency.foxyGet(c.name);
 
         if (depClasses != null) {
-          for (StringCache.S depClass : depClasses) {
-            final StringCache.S fName = classToSourceFile.get(depClass);
+          for (DependencyContext.S depClass : depClasses) {
+            final DependencyContext.S fName = classToSourceFile.get(depClass);
 
             if (fName != null) {
-              affectedFiles.add(new File(fName.value));
+              affectedFiles.add(new File(fName.getValue()));
             }
           }
         }
       }
 
       if (dependants != null) {
-        final Set<StringCache.S> dependentFiles = new HashSet<StringCache.S>();
+        final Set<DependencyContext.S> dependentFiles = new HashSet<DependencyContext.S>();
 
-        for (StringCache.S depClass : dependants) {
-          final StringCache.S file = classToSourceFile.get(depClass);
+        for (DependencyContext.S depClass : dependants) {
+          final DependencyContext.S file = classToSourceFile.get(depClass);
 
           if (file != null) {
             dependentFiles.add(file);
@@ -915,8 +918,8 @@ public class Mappings implements RW.Writable {
         dependentFiles.removeAll(compiledFiles);
 
         filewise:
-        for (StringCache.S depFile : dependentFiles) {
-          if (affectedFiles.contains(depFile)) {
+        for (DependencyContext.S depFile : dependentFiles) {
+          if (affectedFiles.contains(new File(depFile.getValue()))) {
             continue filewise;
           }
 
@@ -933,14 +936,14 @@ public class Mappings implements RW.Writable {
                 final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                 if (constraint == null) {
-                  affectedFiles.add(new File(depFile.value));
+                  affectedFiles.add(new File(depFile.getValue()));
                   continue filewise;
                 }
                 else {
-                  final Set<StringCache.S> residenceClasses = depCluster.getResidence(usage);
-                  for (StringCache.S residentName : residenceClasses) {
+                  final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
+                  for (DependencyContext.S residentName : residenceClasses) {
                     if (constraint.checkResidence(residentName)) {
-                      affectedFiles.add(new File(depFile.value));
+                      affectedFiles.add(new File(depFile.getValue()));
                       continue filewise;
                     }
                   }
@@ -955,7 +958,7 @@ public class Mappings implements RW.Writable {
               for (UsageRepr.Usage usage : annotationUsages) {
                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
                   if (query.satisfies(usage)) {
-                    affectedFiles.add(new File(depFile.value));
+                    affectedFiles.add(new File(depFile.getValue()));
                     continue filewise;
                   }
                 }
@@ -972,7 +975,7 @@ public class Mappings implements RW.Writable {
   public void integrate(final Mappings delta, final Collection<File> compiled, final Collection<String> removed) {
     if (removed != null) {
       for (String file : removed) {
-        final StringCache.S key = StringCache.get(file);
+        final DependencyContext.S key = context.get(file);
         final Set<ClassRepr> classes = (Set<ClassRepr>)sourceFileToClasses.foxyGet(key);
         final UsageRepr.Cluster cluster = sourceFileToUsages.get(key);
         final Set<UsageRepr.Usage> usages = cluster == null ? null : cluster.getUsages();
@@ -983,14 +986,14 @@ public class Mappings implements RW.Writable {
             classToSourceFile.remove(cr.name);
             classToClassDependency.remove(cr.name);
 
-            for (StringCache.S superSomething : cr.getSupers()) {
+            for (DependencyContext.S superSomething : cr.getSupers()) {
               classToSubclasses.removeFrom(superSomething, cr.name);
             }
 
             if (usages != null) {
               for (UsageRepr.Usage u : usages) {
                 if (u instanceof UsageRepr.ClassUsage) {
-                  final Set<StringCache.S> residents = cluster.getResidence(u);
+                  final Set<DependencyContext.S> residents = cluster.getResidence(u);
 
                   if (residents != null && residents.contains(cr.name)) {
                     classToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
@@ -1014,18 +1017,18 @@ public class Mappings implements RW.Writable {
     sourceFileToAnnotationUsages.putAll(delta.sourceFileToAnnotationUsages);
     classToSourceFile.putAll(delta.classToSourceFile);
 
-    for (StringCache.S file : delta.classToClassDependency.keySet()) {
-      final Collection<StringCache.S> now = delta.classToClassDependency.foxyGet(file);
-      final Collection<StringCache.S> past = classToClassDependency.foxyGet(file);
+    for (DependencyContext.S file : delta.classToClassDependency.keySet()) {
+      final Collection<DependencyContext.S> now = delta.classToClassDependency.foxyGet(file);
+      final Collection<DependencyContext.S> past = classToClassDependency.foxyGet(file);
 
       if (past == null) {
         classToClassDependency.put(file, now);
       }
       else {
-        final Collection<StringCache.S> removeSet = new HashSet<StringCache.S>();
+        final Collection<DependencyContext.S> removeSet = new HashSet<DependencyContext.S>();
 
         for (File c : compiled) {
-          removeSet.add(StringCache.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+          removeSet.add(context.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
         }
 
         removeSet.removeAll(now);
@@ -1039,12 +1042,12 @@ public class Mappings implements RW.Writable {
     }
   }
 
-  private void updateFormToClass(final StringCache.S formName, final StringCache.S className) {
+  private void updateFormToClass(final DependencyContext.S formName, final DependencyContext.S className) {
     formToClass.put(formName, className);
     classToForm.put(className, formName);
   }
 
-  private void updateSourceToUsages(final StringCache.S source, final UsageRepr.Cluster usages) {
+  private void updateSourceToUsages(final DependencyContext.S source, final UsageRepr.Cluster usages) {
     final UsageRepr.Cluster c = sourceFileToUsages.get(source);
 
     if (c == null) {
@@ -1055,7 +1058,7 @@ public class Mappings implements RW.Writable {
     }
   }
 
-  private void updateSourceToAnnotationUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
+  private void updateSourceToAnnotationUsages(final DependencyContext.S source, final Set<UsageRepr.Usage> usages) {
     sourceFileToAnnotationUsages.put(source, usages);
   }
 
@@ -1064,25 +1067,26 @@ public class Mappings implements RW.Writable {
       public Collection<String> getClassFiles() {
         final HashSet<String> result = new HashSet<String>();
 
-        for (StringCache.S s : classToSourceFile.keySet()) {
-          result.add(s.value);
+        for (DependencyContext.S s : classToSourceFile.keySet()) {
+          result.add(s.getValue());
         }
 
         return result;
       }
 
       public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
-        final StringCache.S classFileNameS = StringCache.get(classFileName);
-        final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
+        final DependencyContext.S classFileNameS = context.get(classFileName);
+        final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result =
+          new ClassfileAnalyzer(context).analyze(classFileNameS, cr);
         final ClassRepr repr = result.first;
         final UsageRepr.Cluster localUsages = result.second.first;
         final Set<UsageRepr.Usage> localAnnotationUsages = result.second.second;
 
-        final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().value);
-        final StringCache.S sourceFileNameS = StringCache.get(srcFileName);
+        final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().getValue());
+        final DependencyContext.S sourceFileNameS = context.get(srcFileName);
 
         if (repr != null) {
-          final StringCache.S className = repr.name;
+          final DependencyContext.S className = repr.name;
 
           for (UsageRepr.Usage u : localUsages.getUsages()) {
             classToClassDependency.put(u.getOwner(), className);
@@ -1093,7 +1097,7 @@ public class Mappings implements RW.Writable {
           classToSourceFile.put(repr.name, sourceFileNameS);
           sourceFileToClasses.put(sourceFileNameS, repr);
 
-          for (StringCache.S s : repr.getSupers()) {
+          for (DependencyContext.S s : repr.getSupers()) {
             classToSubclasses.put(s, repr.name);
           }
         }
@@ -1108,23 +1112,23 @@ public class Mappings implements RW.Writable {
       }
 
       public void associateForm(String formName, String className) {
-        updateFormToClass(StringCache.get(formName), StringCache.get(className));
+        updateFormToClass(context.get(formName), context.get(className));
       }
     };
   }
 
   @Nullable
   public Set<ClassRepr> getClasses(final String sourceFileName) {
-    return (Set<ClassRepr>)sourceFileToClasses.foxyGet(StringCache.get(sourceFileName));
+    return (Set<ClassRepr>)sourceFileToClasses.foxyGet(context.get(sourceFileName));
   }
 
   @Nullable
   public String getJavaByForm(final String formFileName) {
-    final StringCache.S classFileName = formToClass.get(StringCache.get(formFileName));
+    final DependencyContext.S classFileName = formToClass.get(context.get(formFileName));
 
     assert classFileName != null;
 
-    return classToSourceFile.get(classFileName).value;
+    return classToSourceFile.get(classFileName).getValue();
   }
 
   @Nullable
@@ -1133,10 +1137,10 @@ public class Mappings implements RW.Writable {
 
     if (classes != null) {
       for (ClassRepr c : classes) {
-        final StringCache.S formName = classToForm.get(c.name);
+        final DependencyContext.S formName = classToForm.get(c.name);
 
         if (formName != null) {
-          return formName.value;
+          return formName.getValue();
         }
       }
     }

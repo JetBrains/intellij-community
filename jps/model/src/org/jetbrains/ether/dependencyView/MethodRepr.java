@@ -17,7 +17,7 @@ import java.util.Set;
  * Time: 5:03
  * To change this template use File | Settings | File Templates.
  */
-public class MethodRepr extends ProtoMember {
+class MethodRepr extends ProtoMember {
   private static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
   public final TypeRepr.AbstractType[] argumentTypes;
@@ -79,7 +79,7 @@ public class MethodRepr extends ProtoMember {
     };
   }
 
-  public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+  public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
     type.updateClassUsages(owner, s);
 
     for (int i = 0; i < argumentTypes.length; i++) {
@@ -93,16 +93,22 @@ public class MethodRepr extends ProtoMember {
     }
   }
 
-  public MethodRepr(final int a, final String n, final String s, final String d, final String[] e, final Object value) {
-    super(a, s, StringCache.get(n), TypeRepr.getType(Type.getReturnType(d)), value);
-    exceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(e, new HashSet<TypeRepr.AbstractType>());
-    argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
+  public MethodRepr(final DependencyContext context,
+                    final int a,
+                    final DependencyContext.S n,
+                    final DependencyContext.S s,
+                    final String d,
+                    final String[] e,
+                    final Object value) {
+    super(a, s, n, TypeRepr.getType(context, Type.getReturnType(d)), value);
+    exceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, e, new HashSet<TypeRepr.AbstractType>());
+    argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
   }
 
-  public MethodRepr(final BufferedReader r) {
-    super(r);
-    argumentTypes = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
-    exceptions = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
+  public MethodRepr(final DependencyContext context, final BufferedReader r) {
+    super(context, r);
+    argumentTypes = RW.readMany(r, TypeRepr.reader(context), new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
+    exceptions = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
   }
 
   public void write(final BufferedWriter w) {
@@ -111,11 +117,13 @@ public class MethodRepr extends ProtoMember {
     RW.writeln(w, exceptions);
   }
 
-  public static RW.Reader<MethodRepr> reader = new RW.Reader<MethodRepr>() {
-    public MethodRepr read(final BufferedReader r) {
-      return new MethodRepr(r);
-    }
-  };
+  public static RW.Reader<MethodRepr> reader(final DependencyContext context) {
+    return new RW.Reader<MethodRepr>() {
+      public MethodRepr read(final BufferedReader r) {
+        return new MethodRepr(context, r);
+      }
+    };
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -132,7 +140,7 @@ public class MethodRepr extends ProtoMember {
     return 31 * (31 * Arrays.hashCode(argumentTypes) + type.hashCode()) + name.hashCode();
   }
 
-  public UsageRepr.Usage createUsage(final StringCache.S owner) {
+  public UsageRepr.Usage createUsage(final DependencyContext context, final DependencyContext.S owner) {
     final StringBuilder buf = new StringBuilder();
 
     buf.append("(");
@@ -144,6 +152,6 @@ public class MethodRepr extends ProtoMember {
     buf.append(")");
     buf.append(type.getDescr());
 
-    return UsageRepr.createMethodUsage(name.value, owner.value, buf.toString());
+    return UsageRepr.createMethodUsage(context,  name, owner, buf.toString());
   }
 }

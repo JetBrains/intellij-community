@@ -12,7 +12,7 @@ import java.io.IOException;
  * Time: 17:12
  * To change this template use File | Settings | File Templates.
  */
-public class PackageNameSelector {
+class PackageNameSelector {
   String buffer = null;
   int index = 0;
   BufferedReader reader = null;

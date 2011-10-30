@@ -11,7 +11,7 @@ import java.util.*;
  * Time: 17:39
  * To change this template use File | Settings | File Templates.
  */
-public abstract class Difference {
+abstract class Difference {
   public static final int NONE = 0;
   public static final int ACCESS = 1;
   public static final int TYPE = 2;
@@ -20,13 +20,10 @@ public abstract class Difference {
   public static final int SUPERCLASS = 16;
 
   public interface Specifier<T> {
-    public Collection<T> added();
-
-    public Collection<T> removed();
-
-    public Collection<Pair<T, Difference>> changed();
-
-    public boolean unchanged();
+    Collection<T> added();
+    Collection<T> removed();
+    Collection<Pair<T, Difference>> changed();
+    boolean unchanged();
   }
 
   public static <T> Specifier<T> make(final Set<T> past, final Set<T> now) {

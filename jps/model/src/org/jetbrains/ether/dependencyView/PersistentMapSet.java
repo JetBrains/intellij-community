@@ -18,10 +18,7 @@ package org.jetbrains.ether.dependencyView;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import org.jetbrains.ether.RW;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -33,8 +30,8 @@ import java.util.*;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-public class PersistentMapSet<X> extends PersistentHashMap<StringCache.S, Set<X>> {
-  public PersistentMapSet(File file, KeyDescriptor<StringCache.S> sKeyDescriptor, DataExternalizer<Set<X>> valueExternalizer)
+class PersistentMapSet<X> extends PersistentHashMap<DependencyContext.S, Set<X>> {
+  public PersistentMapSet(File file, KeyDescriptor<DependencyContext.S> sKeyDescriptor, DataExternalizer<Set<X>> valueExternalizer)
     throws IOException {
     super(file, sKeyDescriptor, valueExternalizer);
   }

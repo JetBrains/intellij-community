@@ -12,7 +12,7 @@ import java.io.BufferedWriter;
  * Time: 19:54
  * To change this template use File | Settings | File Templates.
  */
-public abstract class ProtoMember extends Proto {
+abstract class ProtoMember extends Proto {
   public final TypeRepr.AbstractType type;
   public final Object value;
 
@@ -21,8 +21,8 @@ public abstract class ProtoMember extends Proto {
   }
 
   protected ProtoMember(final int access,
-                        final String signature,
-                        final StringCache.S name,
+                        final DependencyContext.S signature,
+                        final DependencyContext.S name,
                         final TypeRepr.AbstractType t,
                         final Object value) {
     super(access, signature, name);
@@ -52,9 +52,9 @@ public abstract class ProtoMember extends Proto {
     return null;
   }
 
-  protected ProtoMember(final BufferedReader r) {
-    super(r);
-    type = TypeRepr.reader.read(r);
+  protected ProtoMember(final DependencyContext context, final BufferedReader r) {
+    super(context, r);
+    type = TypeRepr.reader(context).read(r);
     value = readTyped(r, RW.readString(r));
   }
 

@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-public class FoxyMap<K, V> implements Map<K, Object> {
+class FoxyMap<K, V> implements Map<K, Object> {
 
   public static <X extends RW.Writable, Y extends RW.Writable> void write (final BufferedWriter w, final FoxyMap<X, Y> m){
     RW.writeln(w, Integer.toString(m.size()));

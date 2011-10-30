@@ -14,34 +14,36 @@ import java.util.*;
  * Time: 3:54
  * To change this template use File | Settings | File Templates.
  */
-public class TypeRepr {
+class TypeRepr {
+  private TypeRepr () {
+
+  }
 
   public static abstract class AbstractType implements RW.Writable {
-    public abstract void updateClassUsages(StringCache.S owner, UsageRepr.Cluster s);
-
+    public abstract void updateClassUsages(DependencyContext.S owner, UsageRepr.Cluster s);
     public abstract String getDescr();
   }
 
   public static class PrimitiveType extends AbstractType {
-    public final StringCache.S type;
+    public final DependencyContext.S type;
 
     @Override
     public String getDescr() {
-      return type.value;
+      return type.getValue();
     }
 
     @Override
-    public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
 
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "primitive");
-      RW.writeln(w, type.value);
+      RW.writeln(w, type.getValue());
     }
 
-    PrimitiveType(final String type) {
-      this.type = StringCache.get(type);
+    PrimitiveType(final DependencyContext.S type) {
+      this.type = type;
     }
 
     @Override
@@ -79,7 +81,7 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
       elementType.updateClassUsages(owner, s);
     }
 
@@ -109,41 +111,31 @@ public class TypeRepr {
   }
 
   public static class ClassType extends AbstractType {
-    public final StringCache.S className;
+    public final DependencyContext.S className;
     public final AbstractType[] typeArgs;
 
     @Override
     public String getDescr() {
-      return "L" + className.value + ";";
+      return "L" + className.getValue() + ";";
     }
 
     @Override
-    public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
-      s.addUsage(owner.value, UsageRepr.createClassUsage(className));
+    public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
+      s.addUsage(owner, UsageRepr.createClassUsage(className));
     }
 
-    ClassType(final BufferedReader r) {
-      className = StringCache.get(RW.readString(r));
-      final Collection<AbstractType> args = RW.readMany(r, reader, new LinkedList<AbstractType>());
+    ClassType (final DependencyContext context, final BufferedReader r) {
+      className = context.get(RW.readString(r));
+      final Collection<AbstractType> args = RW.readMany(r, reader (context), new LinkedList<AbstractType>());
       typeArgs = args.toArray(new AbstractType[args.size()]);
     }
 
-    ClassType(final String className) {
-      this.className = StringCache.get(className);
-      typeArgs = new AbstractType[0];
-    }
-
-    ClassType(final StringCache.S className) {
+    ClassType(final DependencyContext.S className) {
       this.className = className;
       typeArgs = new AbstractType[0];
     }
 
-    ClassType(final String className, final AbstractType[] typeArgs) {
-      this.className = StringCache.get(className);
-      this.typeArgs = typeArgs;
-    }
-
-    ClassType(final StringCache.S className, final AbstractType[] typeArgs) {
+    ClassType(final DependencyContext.S className, final AbstractType[] typeArgs) {
       this.className = className;
       this.typeArgs = typeArgs;
     }
@@ -170,53 +162,35 @@ public class TypeRepr {
 
     public void write(BufferedWriter w) {
       RW.writeln(w, "class");
-      RW.writeln(w, className.value);
+      RW.writeln(w, className.getValue());
       RW.writeln(w, typeArgs);
     }
   }
 
-  public static ClassType createClassType(final String s) {
+  public static Collection<AbstractType> createClassType (final DependencyContext context, final String[] args, final Collection<AbstractType> acc) {
+    if (args != null) {
+      for (String a : args) {
+        acc.add(createClassType(context.get(a)));    
+      }      
+    }
+    
+    return acc;  
+  }
+  
+  public static Collection<AbstractType> createClassType (final DependencyContext context, final Collection<String> args, final Collection<AbstractType> acc) {
+      if (args != null) {
+        for (String a : args) {
+          acc.add(createClassType(context.get(a)));    
+        }      
+      }
+      
+      return acc;  
+    }
+  
+  public static ClassType createClassType(final DependencyContext.S s) {
     return (ClassType)getType(new ClassType(s));
   }
-
-  public static ClassType createClassType(final StringCache.S s) {
-    return (ClassType)getType(new ClassType(s));
-  }
-
-  public static ClassType[] createClassType(final String[] s) {
-    if (s == null) {
-      return null;
-    }
-
-    final ClassType[] types = new ClassType[s.length];
-
-    for (int i = 0; i < types.length; i++) {
-      types[i] = createClassType(s[i]);
-    }
-
-    return types;
-  }
-
-  public static Collection<AbstractType> createClassType(final String[] s, final Collection<AbstractType> acc) {
-    if (s != null) {
-      for (String ss : s) {
-        acc.add(createClassType(ss));
-      }
-    }
-
-    return acc;
-  }
-
-  public static Collection<AbstractType> createClassType(final Collection<String> s, final Collection<AbstractType> acc) {
-    if (s != null) {
-      for (String ss : s) {
-        acc.add(createClassType(ss));
-      }
-    }
-
-    return acc;
-  }
-
+    
   private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
 
   private static AbstractType getType(final AbstractType t) {
@@ -231,36 +205,36 @@ public class TypeRepr {
     return t;
   }
 
-  public static AbstractType getType(final String descr) {
-    final Type t = Type.getType(descr);
+  public static AbstractType getType(final DependencyContext context, final DependencyContext.S descr) {
+    final Type t = Type.getType(descr.getValue());
 
     switch (t.getSort()) {
       case Type.OBJECT:
-        return getType(new ClassType(t.getClassName().replaceAll("\\.", "/")));
+        return getType(new ClassType(context.get(t.getClassName().replaceAll("\\.", "/"))));
 
       case Type.ARRAY:
-        return getType(new ArrayType(getType(t.getElementType())));
+        return getType(new ArrayType(getType(context, t.getElementType())));
 
       default:
         return getType(new PrimitiveType(descr));
     }
   }
 
-  public static AbstractType getType(final Type t) {
-    return getType(t.getDescriptor());
+  public static AbstractType getType(final DependencyContext context, final Type t) {
+    return getType(context, context.get(t.getDescriptor()));
   }
 
-  public static AbstractType[] getType(final Type[] t) {
+  public static AbstractType[] getType(final DependencyContext context, final Type[] t) {
     final AbstractType[] r = new AbstractType[t.length];
 
     for (int i = 0; i < r.length; i++) {
-      r[i] = getType(t[i]);
+      r[i] = getType(context, t[i]);
     }
 
     return r;
   }
 
-  public static AbstractType[] getType(final String[] t) {
+  public static AbstractType[] getType(final DependencyContext context, final String[] t) {
     if (t == null) {
       return null;
     }
@@ -268,42 +242,44 @@ public class TypeRepr {
     final AbstractType[] types = new AbstractType[t.length];
 
     for (int i = 0; i < types.length; i++) {
-      types[i] = getType(Type.getType(t[i]));
+      types[i] = getType(context, Type.getType(t[i]));
     }
 
     return types;
   }
 
-  public static RW.Reader<AbstractType> reader = new RW.Reader<AbstractType>() {
-    public AbstractType read(final BufferedReader r) {
-      AbstractType elementType = null;
-      int level = 0;
+  public static RW.Reader<AbstractType> reader (final DependencyContext context) {
+    return new RW.Reader<AbstractType>() {
+      public AbstractType read(final BufferedReader r) {
+        AbstractType elementType = null;
+        int level = 0;
 
-      while (true) {
-        final String tag = RW.readString(r);
+        while (true) {
+          final String tag = RW.readString(r);
 
-        if (tag.equals("primitive")) {
-          elementType = getType(new PrimitiveType(RW.readString(r)));
-          break;
+          if (tag.equals("primitive")) {
+            elementType = getType(new PrimitiveType(context.get(RW.readString(r))));
+            break;
+          }
+
+          if (tag.equals("class")) {
+            elementType = getType(new ClassType(context, r));
+            break;
+          }
+
+          if (tag.equals("array")) {
+            level++;
+          }
         }
 
-        if (tag.equals("class")) {
-          elementType = getType(new ClassType(r));
-          break;
+        for (int i = 0; i < level; i++) {
+          elementType = getType(new ArrayType(elementType));
         }
 
-        if (tag.equals("array")) {
-          level++;
-        }
+        return elementType;
       }
-
-      for (int i = 0; i < level; i++) {
-        elementType = getType(new ArrayType(elementType));
-      }
-
-      return elementType;
-    }
-  };
+    };
+  }
 
   public static RW.ToWritable<AbstractType> fromAbstractType = new RW.ToWritable<AbstractType>() {
     public RW.Writable convert(final AbstractType x) {

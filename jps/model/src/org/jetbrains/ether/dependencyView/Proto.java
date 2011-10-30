@@ -13,27 +13,28 @@ import java.io.BufferedWriter;
  * Time: 17:57
  * To change this template use File | Settings | File Templates.
  */
-public abstract class Proto implements RW.Writable {
+abstract class Proto implements RW.Writable {
   public final int access;
-  public final StringCache.S signature;
-  public final StringCache.S name;
+  public final DependencyContext.S signature;
+  public final DependencyContext.S name;
 
-  protected Proto(final int access, final String signature, final StringCache.S name) {
+  protected Proto(final int access, final DependencyContext.S signature, final DependencyContext.S name) {
     this.access = access;
-    this.signature = StringCache.get(signature != null ? signature : "");
+    this.signature = signature;
     this.name = name;
   }
 
-  protected Proto(final BufferedReader r) {
+  protected Proto(final DependencyContext context, final BufferedReader r) {
     access = RW.readInt(r);
-    signature = StringCache.get(RW.readString(r));
-    name = StringCache.get(RW.readString(r));
+    final String sig = RW.readString(r);
+    signature = context.get(sig);
+    name = context.get(RW.readString(r));
   }
 
   public void write(final BufferedWriter w) {
     RW.writeln(w, Integer.toString(access));
-    RW.writeln(w, signature.value);
-    RW.writeln(w, name.value);
+    RW.writeln(w, signature.getValue());
+    RW.writeln(w, name.getValue());
   }
 
   public Difference difference(final Proto past) {

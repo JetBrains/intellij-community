@@ -3,7 +3,6 @@ package org.jetbrains.ether.dependencyView;
 import org.jetbrains.ether.RW;
 
 import java.io.BufferedReader;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,17 +11,17 @@ import java.util.Set;
  * Time: 4:56
  * To change this template use File | Settings | File Templates.
  */
-public class FieldRepr extends ProtoMember {
-  public void updateClassUsages(final StringCache.S owner, final UsageRepr.Cluster s) {
+class FieldRepr extends ProtoMember {
+  public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
     type.updateClassUsages(owner, s);
   }
 
-  public FieldRepr(final int a, final String n, final String d, final String s, final Object v) {
-    super(a, s, StringCache.get(n), TypeRepr.getType(d), v);
+  public FieldRepr(final DependencyContext context, final int a, final DependencyContext.S n, final DependencyContext.S d, final DependencyContext.S s, final Object v) {
+    super(a, s, n, TypeRepr.getType(context, d), v);
   }
 
-  public FieldRepr(final BufferedReader r) {
-    super(r);
+  public FieldRepr(final DependencyContext context, final BufferedReader r) {
+    super(context, r);
   }
 
   @Override
@@ -40,17 +39,19 @@ public class FieldRepr extends ProtoMember {
     return 31 * name.hashCode();
   }
 
-  public static RW.Reader<FieldRepr> reader = new RW.Reader<FieldRepr>() {
-    public FieldRepr read(final BufferedReader r) {
-      return new FieldRepr(r);
-    }
-  };
-
-  public UsageRepr.Usage createUsage(final StringCache.S owner) {
-    return UsageRepr.createFieldUsage(name.value, owner.value, type.getDescr());
+  public static RW.Reader<FieldRepr> reader (final DependencyContext context) {
+    return new RW.Reader<FieldRepr>() {
+      public FieldRepr read(final BufferedReader r) {
+        return new FieldRepr(context, r);
+      }                       
+    };
   }
 
-  public UsageRepr.Usage createAssignUsage(final StringCache.S owner) {
-    return UsageRepr.createFieldAssignUsage(name.value, owner.value, type.getDescr());
+  public UsageRepr.Usage createUsage(final DependencyContext context, final DependencyContext.S owner) {
+    return UsageRepr.createFieldUsage(context, name, owner, context.get(type.getDescr()));
+  }
+
+  public UsageRepr.Usage createAssignUsage(final DependencyContext context, final DependencyContext.S owner) {
+    return UsageRepr.createFieldAssignUsage(context, name, owner, context.get(type.getDescr()));
   }
 }

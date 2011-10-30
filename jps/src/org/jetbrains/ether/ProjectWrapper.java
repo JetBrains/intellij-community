@@ -834,12 +834,7 @@ public class ProjectWrapper {
                          final String setupScript,
                          final Map<String, String> pathVariables,
                          final boolean loadHistory) {
-    try {
-      dependencyMapping = new Mappings(getMapDir());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    dependencyMapping = new Mappings(getMapDir());
     backendCallback = dependencyMapping.getCallback();
     affectedFiles = new HashSet<String>();
 
@@ -909,13 +904,7 @@ public class ProjectWrapper {
 
     RW.readMany(r, RW.myStringReader, affectedFiles);
 
-    try {
-      dependencyMapping = new Mappings(getMapDir(), r);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
+    dependencyMapping = new Mappings(getMapDir(), r);
     backendCallback = dependencyMapping.getCallback();
   }
 
@@ -1111,7 +1100,7 @@ public class ProjectWrapper {
 
           if (classes != null) {
             for (ClassRepr cr : classes) {
-              outputFiles.add(cr.fileName.value);
+              outputFiles.add(cr.fileName.getValue());
             }
           }
         }
@@ -1121,7 +1110,7 @@ public class ProjectWrapper {
             final Set<ClassRepr> classes = dependencyMapping.getClasses(f);
             if (classes != null) {
               for (ClassRepr cr : classes) {
-                outputFiles.add(cr.fileName.value);
+                outputFiles.add(cr.fileName.getValue());
               }
             }
           }
@@ -1140,14 +1129,7 @@ public class ProjectWrapper {
           builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
         }
 
-        Mappings delta;
-
-        try {
-          delta = new Mappings(getMapDir());
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        final Mappings delta = dependencyMapping.createDelta();
         final Callbacks.Backend deltaBackend = delta.getCallback();
 
         new Logger(flags) {
@@ -1278,15 +1260,7 @@ public class ProjectWrapper {
               cleared.addAll(toClean);
             }
 
-            Mappings delta;
-
-            try {
-              delta = new Mappings(getMapDir());
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-
+            final Mappings delta = dependencyMapping.createDelta();
             final Callbacks.Backend deltaCallback = delta.getCallback();
 
             try {

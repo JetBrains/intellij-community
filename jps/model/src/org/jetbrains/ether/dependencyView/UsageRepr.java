@@ -15,7 +15,7 @@ import java.util.*;
  * Time: 5:11
  * To change this template use File | Settings | File Templates.
  */
-public class UsageRepr {
+class UsageRepr {
   private final static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
   private final static Map<Usage, Usage> map = new HashMap<Usage, Usage>();
@@ -33,17 +33,17 @@ public class UsageRepr {
 
   public static class Cluster implements RW.Writable {
     final Set<Usage> usages = new HashSet<Usage>();
-    final Map<Usage, Set<StringCache.S>> residentialMap = new HashMap<Usage, Set<StringCache.S>>();
+    final Map<Usage, Set<DependencyContext.S>> residentialMap = new HashMap<Usage, Set<DependencyContext.S>>();
 
     public Cluster() {
     }
 
-    public Cluster(final BufferedReader r) {
+    public Cluster(final DependencyContext context, final BufferedReader r) {
       final int size = RW.readInt(r);
 
       for (int i = 0; i < size; i++) {
-        final Usage u = reader.read(r);
-        final Set<StringCache.S> s = (Set<StringCache.S>)RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
+        final Usage u = reader(context).read(r);
+        final Set<DependencyContext.S> s = (Set<DependencyContext.S>)RW.readMany(r, context.reader, new HashSet<DependencyContext.S>());
 
         usages.add(u);
         residentialMap.put(u, s);
@@ -59,17 +59,15 @@ public class UsageRepr {
       }
     }
 
-    public void addUsage(final String residence, final Usage usage) {
-      final StringCache.S r = StringCache.get(residence);
-
-      Set<StringCache.S> s = residentialMap.get(usage);
+    public void addUsage(final DependencyContext.S residence, final Usage usage) {
+      Set<DependencyContext.S> s = residentialMap.get(usage);
 
       if (s == null) {
-        s = new HashSet<StringCache.S>();
+        s = new HashSet<DependencyContext.S>();
         residentialMap.put(usage, s);
       }
 
-      s.add(r);
+      s.add(residence);
       usages.add(usage);
     }
 
@@ -77,16 +75,16 @@ public class UsageRepr {
       return usages;
     }
 
-    public Set<StringCache.S> getResidence(final Usage usage) {
+    public Set<DependencyContext.S> getResidence(final Usage usage) {
       return residentialMap.get(usage);
     }
 
     public void updateCluster(final Cluster c) {
       usages.addAll(c.getUsages());
-      for (Map.Entry<Usage, Set<StringCache.S>> e : c.residentialMap.entrySet()) {
+      for (Map.Entry<Usage, Set<DependencyContext.S>> e : c.residentialMap.entrySet()) {
         final Usage u = e.getKey();
-        final Set<StringCache.S> v = e.getValue();
-        final Set<StringCache.S> s = residentialMap.get(u);
+        final Set<DependencyContext.S> v = e.getValue();
+        final Set<DependencyContext.S> s = residentialMap.get(u);
 
         if (s == null) {
           residentialMap.put(u, v);
@@ -103,46 +101,46 @@ public class UsageRepr {
   }
 
   public static abstract class Usage implements RW.Writable {
-    public abstract StringCache.S getOwner();
+    public abstract DependencyContext.S getOwner();
   }
 
   public static abstract class FMUsage extends Usage {
-    public final StringCache.S name;
-    public final StringCache.S owner;
+    public final DependencyContext.S name;
+    public final DependencyContext.S owner;
 
     @Override
-    public StringCache.S getOwner() {
+    public DependencyContext.S getOwner() {
       return owner;
     }
 
-    protected FMUsage(final String n, final String o) {
-      name = StringCache.get(n);
-      owner = StringCache.get(o);
+    protected FMUsage(final DependencyContext.S n, final DependencyContext.S o) {
+      name = n;
+      owner = o;
     }
 
-    protected FMUsage(final BufferedReader r) {
-      name = StringCache.get(RW.readString(r));
-      owner = StringCache.get(RW.readString(r));
+    protected FMUsage(final DependencyContext context, final BufferedReader r) {
+      name = context.get(RW.readString(r));
+      owner = context.get(RW.readString(r));
     }
   }
 
   public static class FieldUsage extends FMUsage {
     public final TypeRepr.AbstractType type;
 
-    private FieldUsage(final String n, final String o, final String d) {
+    private FieldUsage(final DependencyContext context, final DependencyContext.S n, final DependencyContext.S o, final DependencyContext.S d) {
       super(n, o);
-      type = TypeRepr.getType(d);
+      type = TypeRepr.getType(context, d);
     }
 
-    private FieldUsage(final BufferedReader r) {
-      super(r);
-      type = TypeRepr.reader.read(r);
+    private FieldUsage(final DependencyContext context, final BufferedReader r) {
+      super(context, r);
+      type = TypeRepr.reader(context).read(r);
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "fieldUsage");
-      RW.writeln(w, name.value);
-      RW.writeln(w, owner.value);
+      RW.writeln(w, name.getValue());
+      RW.writeln(w, owner.getValue());
       type.write(w);
     }
 
@@ -163,18 +161,18 @@ public class UsageRepr {
   }
 
   public static class FieldAssignUsage extends FieldUsage {
-    private FieldAssignUsage(final String n, final String o, final String d) {
-      super(n, o, d);
+    private FieldAssignUsage(final DependencyContext context, final DependencyContext.S n, final DependencyContext.S o, final DependencyContext.S d) {
+      super(context, n, o, d);
     }
 
-    private FieldAssignUsage(final BufferedReader r) {
-      super(r);
+    private FieldAssignUsage(final DependencyContext context, final BufferedReader r) {
+      super(context, r);
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "fieldAssignUsage");
-      RW.writeln(w, name.value);
-      RW.writeln(w, owner.value);
+      RW.writeln(w, name.getValue());
+      RW.writeln(w, owner.getValue());
       type.write(w);
     }
 
@@ -198,22 +196,22 @@ public class UsageRepr {
     public final TypeRepr.AbstractType[] argumentTypes;
     public final TypeRepr.AbstractType returnType;
 
-    private MethodUsage(final String n, final String o, final String d) {
+    private MethodUsage(final DependencyContext context, final DependencyContext.S n, final DependencyContext.S o, final String d) {
       super(n, o);
-      argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
-      returnType = TypeRepr.getType(Type.getReturnType(d));
+      argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
+      returnType = TypeRepr.getType(context, Type.getReturnType(d));
     }
 
-    private MethodUsage(final BufferedReader r) {
-      super(r);
-      argumentTypes = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
-      returnType = TypeRepr.reader.read(r);
+    private MethodUsage(final DependencyContext context, final BufferedReader r) {
+      super(context, r);
+      argumentTypes = RW.readMany(r, TypeRepr.reader(context), new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
+      returnType = TypeRepr.reader(context).read(r);
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "methodUsage");
-      RW.writeln(w, name.value);
-      RW.writeln(w, owner.value);
+      RW.writeln(w, name.getValue());
+      RW.writeln(w, owner.getValue());
       RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
       returnType.write(w);
     }
@@ -243,33 +241,29 @@ public class UsageRepr {
   }
 
   public static class ClassUsage extends Usage {
-    final StringCache.S className;
+    final DependencyContext.S className;
 
     @Override
-    public StringCache.S getOwner() {
+    public DependencyContext.S getOwner() {
       return className;
     }
 
-    private ClassUsage(final String n) {
-      className = StringCache.get(n);
-    }
-
-    private ClassUsage(final StringCache.S n) {
+    private ClassUsage(final DependencyContext.S n) {
       className = n;
     }
 
-    private ClassUsage(final BufferedReader r) {
-      className = StringCache.get(RW.readString(r));
+    private ClassUsage(final DependencyContext context, final BufferedReader r) {
+      className = context.get(RW.readString(r));
     }
 
-    private ClassUsage(final BufferedReader r, boolean b) {
+    private ClassUsage(final DependencyContext context, final BufferedReader r, boolean b) {
       super();
-      className = StringCache.get(RW.readString(r));
+      className = context.get(RW.readString(r));
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classUsage");
-      RW.writeln(w, className.value);
+      RW.writeln(w, className.getValue());
     }
 
     @Override
@@ -289,24 +283,24 @@ public class UsageRepr {
   }
 
   public static class ClassExtendsUsage extends Usage {
-    protected final StringCache.S className;
+    protected final DependencyContext.S className;
 
     @Override
-    public StringCache.S getOwner() {
+    public DependencyContext.S getOwner() {
       return className;
     }
 
-    public ClassExtendsUsage(final StringCache.S n) {
+    public ClassExtendsUsage(final DependencyContext.S n) {
       className = n;
     }
 
-    public ClassExtendsUsage(final BufferedReader r) {
-      className = StringCache.get(RW.readString(r));
+    public ClassExtendsUsage(final DependencyContext context, final BufferedReader r) {
+      className = context.get(RW.readString(r));
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classExtendsUsage");
-      RW.writeln(w, className.value);
+      RW.writeln(w, className.getValue());
     }
 
     @Override
@@ -328,17 +322,17 @@ public class UsageRepr {
   }
 
   public static class ClassNewUsage extends ClassExtendsUsage {
-    public ClassNewUsage(StringCache.S n) {
+    public ClassNewUsage(DependencyContext.S n) {
       super(n);
     }
 
-    public ClassNewUsage(BufferedReader r) {
-      super(r);
+    public ClassNewUsage(final DependencyContext context, final BufferedReader r) {
+      super(context, r);
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classNewUsage");
-      RW.writeln(w, className.value);
+      RW.writeln(w, className.getValue());
     }
 
     @Override
@@ -365,7 +359,7 @@ public class UsageRepr {
     };
 
     final TypeRepr.ClassType type;
-    final Collection<StringCache.S> usedArguments;
+    final Collection<DependencyContext.S> usedArguments;
     final Collection<ElementType> usedTargets;
 
     public boolean satisfies(final Usage usage) {
@@ -379,7 +373,7 @@ public class UsageRepr {
         boolean argumentsSatisfy = false;
 
         if (usedArguments != null) {
-          final Collection<StringCache.S> arguments = new HashSet<StringCache.S>(usedArguments);
+          final Collection<DependencyContext.S> arguments = new HashSet<DependencyContext.S>(usedArguments);
 
           arguments.removeAll(annotationUsage.usedArguments);
 
@@ -403,21 +397,21 @@ public class UsageRepr {
     }
 
     private AnnotationUsage(final TypeRepr.ClassType type,
-                            final Collection<StringCache.S> usedArguments,
+                            final Collection<DependencyContext.S> usedArguments,
                             final Collection<ElementType> targets) {
       this.type = type;
       this.usedArguments = usedArguments;
       this.usedTargets = targets;
     }
 
-    private AnnotationUsage(final BufferedReader r) {
-      type = (TypeRepr.ClassType)TypeRepr.reader.read(r);
-      usedArguments = RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
+    private AnnotationUsage(final DependencyContext context, final BufferedReader r) {
+      type = (TypeRepr.ClassType)TypeRepr.reader(context).read(r);
+      usedArguments = RW.readMany(r, context.reader, new HashSet<DependencyContext.S>());
       usedTargets = RW.readMany(r, elementTypeReader, new HashSet<ElementType>());
     }
 
     @Override
-    public StringCache.S getOwner() {
+    public DependencyContext.S getOwner() {
       return type.className;
     }
 
@@ -451,72 +445,72 @@ public class UsageRepr {
     }
   }
 
-  public static Usage createFieldUsage(final String name, final String owner, final String descr) {
-    return getUsage(new FieldUsage(name, owner, descr));
+  public static Usage createFieldUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final DependencyContext.S descr) {
+    return getUsage(new FieldUsage(context, name, owner, descr));
   }
 
-  public static Usage createFieldAssignUsage(final String name, final String owner, final String descr) {
-    return getUsage(new FieldAssignUsage(name, owner, descr));
+  public static Usage createFieldAssignUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final DependencyContext.S descr) {
+    return getUsage(new FieldAssignUsage(context, name, owner, descr));
   }
 
-  public static Usage createMethodUsage(final String name, final String owner, final String descr) {
-    return getUsage(new MethodUsage(name, owner, descr));
+  public static Usage createMethodUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final String descr) {
+    return getUsage(new MethodUsage(context, name, owner, descr));
   }
 
-  public static Usage createClassUsage(final String name) {
+  public static Usage createClassUsage(final DependencyContext.S name) {
     return getUsage(new ClassUsage(name));
   }
 
-  public static Usage createClassUsage(final StringCache.S name) {
-    return getUsage(new ClassUsage(name));
-  }
 
-  public static Usage createClassExtendsUsage(final StringCache.S name) {
+  public static Usage createClassExtendsUsage(final DependencyContext.S name) {
     return getUsage(new ClassExtendsUsage(name));
   }
 
-  public static Usage createClassNewUsage(final StringCache.S name) {
+  public static Usage createClassNewUsage(final DependencyContext.S name) {
     return getUsage(new ClassNewUsage(name));
   }
 
   public static Usage createAnnotationUsage(final TypeRepr.ClassType type,
-                                            final Collection<StringCache.S> usedArguments,
+                                            final Collection<DependencyContext.S> usedArguments,
                                             final Collection<ElementType> targets) {
     return getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
-  public static RW.Reader<Usage> reader = new RW.Reader<Usage>() {
+  public static RW.Reader<Usage> reader (final DependencyContext context) {    
+   return new RW.Reader<Usage>() {
     public Usage read(final BufferedReader r) {
       final String tag = RW.readString(r);
 
       if (tag.equals("classUsage")) {
-        return getUsage(new ClassUsage(r));
+        return getUsage(new ClassUsage(context, r));
       }
       else if (tag.equals("fieldUsage")) {
-        return getUsage(new FieldUsage(r));
+        return getUsage(new FieldUsage(context, r));
       }
       else if (tag.equals("fieldAssignUsage")) {
-        return getUsage(new FieldAssignUsage(r));
+        return getUsage(new FieldAssignUsage(context, r));
       }
       else if (tag.equals("methodUsage")) {
-        return getUsage(new MethodUsage(r));
+        return getUsage(new MethodUsage(context, r));
       }
       else if (tag.equals("classExtendsUsage")) {
-        return getUsage(new ClassExtendsUsage(r));
+        return getUsage(new ClassExtendsUsage(context, r));
       }
       else if (tag.equals("classNewUsage")) {
-        return getUsage(new ClassNewUsage(r));
+        return getUsage(new ClassNewUsage(context, r));
       }
       else {
-        return getUsage(new AnnotationUsage(r));
+        return getUsage(new AnnotationUsage(context, r));
       }
     }
   };
+  }
 
-  public static RW.Reader<Cluster> clusterReader = new RW.Reader<Cluster>() {
+  public static RW.Reader<Cluster> clusterReader (final DependencyContext context) {return new RW.Reader<Cluster>() {
     @Override
-    public Cluster read(BufferedReader r) {
-      return new Cluster(r);
+    public Cluster read(final BufferedReader r) {
+      return new Cluster(context, r);
     }
   };
+  }
 }

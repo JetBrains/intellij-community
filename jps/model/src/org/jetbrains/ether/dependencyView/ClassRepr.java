@@ -19,8 +19,8 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
-  public final StringCache.S sourceFileName;
-  public final StringCache.S fileName;
+  public final DependencyContext.S sourceFileName;
+  public final DependencyContext.S fileName;
   public final TypeRepr.AbstractType superClass;
   public final Set<TypeRepr.AbstractType> interfaces;
   public final Set<TypeRepr.AbstractType> nestedClasses;
@@ -30,28 +30,21 @@ public class ClassRepr extends Proto {
   public final Set<FieldRepr> fields;
   public final Set<MethodRepr> methods;
 
-  public final StringCache.S outerClassName;
+  public final DependencyContext.S outerClassName;
   public final boolean isLocal;
 
   public String getFileName () {
-    return fileName.value;
+    return fileName.getValue();
   }
 
   public abstract class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
-
     public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
-
     public abstract Specifier<FieldRepr> fields();
-
     public abstract Specifier<MethodRepr> methods();
-
     public abstract Specifier<ElementType> targets();
-
     public abstract boolean retentionChanged();
-
     public abstract boolean extendsAdded();
-
     public boolean no() {
       return base() == NONE &&
              interfaces().unchanged() &&
@@ -77,7 +70,7 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = ((TypeRepr.ClassType)((ClassRepr)past).superClass).className.value;
+        final String pastSuperName = ((TypeRepr.ClassType)((ClassRepr)past).superClass).className.getValue();
         return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
       }
 
@@ -135,8 +128,8 @@ public class ClassRepr extends Proto {
     };
   }
 
-  public StringCache.S[] getSupers() {
-    final StringCache.S[] result = new StringCache.S[interfaces.size() + 1];
+  public DependencyContext.S[] getSupers() {
+    final DependencyContext.S[] result = new DependencyContext.S[interfaces.size() + 1];
 
     result[0] = ((TypeRepr.ClassType)superClass).className;
 
@@ -164,50 +157,51 @@ public class ClassRepr extends Proto {
     }
   }
 
-  public ClassRepr(final int a,
-                   final StringCache.S sn,
-                   final StringCache.S fn,
-                   final StringCache.S n,
-                   final String sig,
-                   final String sup,
+  public ClassRepr(final DependencyContext context,
+                   final int a,
+                   final DependencyContext.S sn,
+                   final DependencyContext.S fn,
+                   final DependencyContext.S n,
+                   final DependencyContext.S sig,
+                   final DependencyContext.S sup,
                    final String[] i,
                    final Collection<String> ns,
                    final Set<FieldRepr> f,
                    final Set<MethodRepr> m,
                    final Set<ElementType> targets,
                    final RetentionPolicy policy,
-                   final String outerClassName,
+                   final DependencyContext.S outerClassName,
                    final boolean localClassFlag) {
     super(a, sig, n);
     fileName = fn;
     sourceFileName = sn;
     superClass = TypeRepr.createClassType(sup);
-    interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(i, new HashSet<TypeRepr.AbstractType>());
-    nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(ns, new HashSet<TypeRepr.AbstractType>());
+    interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
+    nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
     fields = f;
     methods = m;
     this.targets = targets;
     this.policy = policy;
-    this.outerClassName = StringCache.get(outerClassName);
+    this.outerClassName = outerClassName;
     this.isLocal = localClassFlag;
   }
 
-  public ClassRepr(final BufferedReader r) {
-    super(r);
-    fileName = StringCache.get(RW.readString(r));
-    sourceFileName = StringCache.get(RW.readString(r));
-    superClass = TypeRepr.reader.read(r);
-    interfaces = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
-    nestedClasses = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
-    fields = (Set<FieldRepr>)RW.readMany(r, FieldRepr.reader, new HashSet<FieldRepr>());
-    methods = (Set<MethodRepr>)RW.readMany(r, MethodRepr.reader, new HashSet<MethodRepr>());
+  public ClassRepr(final DependencyContext context, final BufferedReader r) {
+    super(context, r);
+    fileName = context.get(RW.readString(r));
+    sourceFileName = context.get(RW.readString(r));
+    superClass = TypeRepr.reader(context).read(r);
+    interfaces = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
+    nestedClasses = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
+    fields = (Set<FieldRepr>)RW.readMany(r, FieldRepr.reader(context), new HashSet<FieldRepr>());
+    methods = (Set<MethodRepr>)RW.readMany(r, MethodRepr.reader(context), new HashSet<MethodRepr>());
     targets = (Set<ElementType>)RW.readMany(r, UsageRepr.AnnotationUsage.elementTypeReader, new HashSet<ElementType>());
 
     final String s = RW.readString(r);
 
     policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-    outerClassName = StringCache.get(RW.readString(r));
+    outerClassName = context.get(RW.readString(r));
     isLocal = RW.readString(r).equals("true");
   }
 
@@ -215,16 +209,18 @@ public class ClassRepr extends Proto {
     return (access & Opcodes.ACC_ANNOTATION) > 0;
   }
 
-  public static RW.Reader<ClassRepr> reader = new RW.Reader<ClassRepr>() {
-    public ClassRepr read(final BufferedReader r) {
-      return new ClassRepr(r);
-    }
-  };
+  public static RW.Reader<ClassRepr> reader (final DependencyContext context) {
+    return new RW.Reader<ClassRepr>() {
+      public ClassRepr read(final BufferedReader r) {
+        return new ClassRepr(context, r);
+      }
+    };
+  }
 
   public void write(final BufferedWriter w) {
     super.write(w);
-    RW.writeln(w, fileName.value);
-    RW.writeln(w, sourceFileName.value);
+    RW.writeln(w, fileName.getValue());
+    RW.writeln(w, sourceFileName.getValue());
     superClass.write(w);
     RW.writeln(w, interfaces);
     RW.writeln(w, nestedClasses);
@@ -232,7 +228,7 @@ public class ClassRepr extends Proto {
     RW.writeln(w, methods);
     RW.writeln(w, targets, UsageRepr.AnnotationUsage.elementTypeToWritable);
     RW.writeln(w, policy == null ? "" : policy.toString());
-    RW.writeln(w, outerClassName.value);
+    RW.writeln(w, outerClassName.getValue());
     RW.writeln(w, isLocal ? "true" : "false");
   }
 
@@ -260,7 +256,7 @@ public class ClassRepr extends Proto {
     return UsageRepr.createClassUsage(name);
   }
 
-  public StringCache.S getSourceFileName() {
+  public DependencyContext.S getSourceFileName() {
     return sourceFileName;
   }
 
@@ -268,8 +264,8 @@ public class ClassRepr extends Proto {
     return getPackageName(name);
   }
 
-  public static String getPackageName(final StringCache.S s) {
-    return getPackageName(s.value);
+  public static String getPackageName(final DependencyContext.S s) {
+    return getPackageName(s.getValue());
 
   }
 
@@ -283,7 +279,7 @@ public class ClassRepr extends Proto {
     return raw.substring(0, index);
   }
 
-  public FieldRepr findField(final StringCache.S name) {
+  public FieldRepr findField(final DependencyContext.S name) {
     for (FieldRepr f : fields) {
       if (f.name.equals(name)) {
         return f;
