@@ -6,13 +6,13 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
@@ -107,32 +107,20 @@ public class GroovyBuilder extends Builder {
 
         final List<CompilerMessage> messages = handler.getCompilerMessages();
         for (CompilerMessage message : messages) {
-          BuildMessage.Kind kind = message.getCategory().equals(CompilerMessage.ERROR)
-                                   ? BuildMessage.Kind.ERROR
-                                   : message.getCategory().equals(CompilerMessage.WARNING)
-                                     ? BuildMessage.Kind.WARNING
-                                     : BuildMessage.Kind.INFO;
-          context.processMessage(
-            new org.jetbrains.jps.incremental.messages.CompilerMessage(
-              getName(), kind, message.getMessage(), message.getUrl(), -1, -1, -1, message.getLineNum(), message.getColumnNum())
-          );
+          context.processMessage(message);
         }
 
         boolean hasMessages = !messages.isEmpty();
 
         final StringBuffer unparsedBuffer = handler.getStdErr();
         if (unparsedBuffer.length() != 0) {
-          context.processMessage(
-            new org.jetbrains.jps.incremental.messages.CompilerMessage(getName(), BuildMessage.Kind.ERROR, unparsedBuffer.toString())
-          );
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, unparsedBuffer.toString()));
           hasMessages = true;
         }
 
         final int exitValue = handler.getProcess().exitValue();
         if (!hasMessages && exitValue != 0) {
-          context.processMessage(new org.jetbrains.jps.incremental.messages.CompilerMessage(
-            getName(), BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue
-          ));
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue));
         }
       }
       finally {

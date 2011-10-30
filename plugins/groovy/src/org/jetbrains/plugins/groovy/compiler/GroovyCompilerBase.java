@@ -71,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
@@ -204,16 +205,15 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         toRecompile.add(vFile);
       }
 
-      final List<CompilerMessage> messages = processHandler.getCompilerMessages();
-      for (CompilerMessage compilerMessage : messages) {
-        final CompilerMessageCategory category;
-        category = getMessageCategory(compilerMessage);
+      final List<org.jetbrains.jps.incremental.messages.CompilerMessage> messages = processHandler.getCompilerMessages();
+      for (org.jetbrains.jps.incremental.messages.CompilerMessage compilerMessage : messages) {
+        final CompilerMessageCategory category = getMessageCategory(compilerMessage);
 
-        final String url = compilerMessage.getUrl();
+        final String url = compilerMessage.getSourcePath();
 
-        compileContext.addMessage(category, compilerMessage.getMessage(), VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)),
-                                  compilerMessage.getLineNum(),
-                                  compilerMessage.getColumnNum());
+        compileContext.addMessage(category, compilerMessage.getMessageText(), VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)),
+                                  (int)compilerMessage.getLine(),
+                                  (int)compilerMessage.getColumn());
       }
 
       boolean hasMessages = !messages.isEmpty();
@@ -299,14 +299,12 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return tests ? compileContext.getModuleOutputDirectoryForTests(module) : compileContext.getModuleOutputDirectory(module);
   }
 
-  private static CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
-    String category;
-    category = compilerMessage.getCategory();
+  private static CompilerMessageCategory getMessageCategory(org.jetbrains.jps.incremental.messages.CompilerMessage compilerMessage) {
+    BuildMessage.Kind category = compilerMessage.getKind();
 
-    if (CompilerMessage.ERROR.equals(category)) return CompilerMessageCategory.ERROR;
-    if (CompilerMessage.INFORMATION.equals(category)) return CompilerMessageCategory.INFORMATION;
-    if (CompilerMessage.STATISTICS.equals(category)) return CompilerMessageCategory.STATISTICS;
-    if (CompilerMessage.WARNING.equals(category)) return CompilerMessageCategory.WARNING;
+    if (BuildMessage.Kind.ERROR.equals(category)) return CompilerMessageCategory.ERROR;
+    if (BuildMessage.Kind.INFO.equals(category)) return CompilerMessageCategory.INFORMATION;
+    if (BuildMessage.Kind.WARNING.equals(category)) return CompilerMessageCategory.WARNING;
 
     return CompilerMessageCategory.ERROR;
   }

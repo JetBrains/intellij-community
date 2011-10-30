@@ -23,8 +23,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -139,7 +140,13 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
           columnInt = 0;
         }
 
-        compilerMessages.add(new CompilerMessage(category, message, url, lineInt, columnInt));
+        BuildMessage.Kind kind = category.equals(org.jetbrains.groovy.compiler.rt.CompilerMessage.ERROR)
+                                 ? BuildMessage.Kind.ERROR
+                                 : category.equals(org.jetbrains.groovy.compiler.rt.CompilerMessage.WARNING)
+                                   ? BuildMessage.Kind.WARNING
+                                   : BuildMessage.Kind.INFO;
+
+        compilerMessages.add(new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt));
       }
     }
   }
