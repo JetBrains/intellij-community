@@ -125,7 +125,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     String suffix = getEncodedSuffix();
     if (name instanceof String) {
       final String nameStr = (String)name;
-      return pattern.regionMatches(ignoreCase, 0, nameStr, 0, nameStr.length()) &&
+      return pattern.length() == nameStr.length() + suffix.length() &&
+             pattern.regionMatches(ignoreCase, 0, nameStr, 0, nameStr.length()) &&
              pattern.regionMatches(ignoreCase, nameStr.length(), suffix, 0, suffix.length());
     }
 
