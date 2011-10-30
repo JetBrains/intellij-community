@@ -188,7 +188,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
-      if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
+      if (parentClass != null && !"java.lang.Object".equals(parentClass.getQualifiedName())) {
         classes.add(parentClass);
       }
     }
