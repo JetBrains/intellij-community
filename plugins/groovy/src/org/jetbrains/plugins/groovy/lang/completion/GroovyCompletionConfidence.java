@@ -22,11 +22,15 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author peter
@@ -34,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyCompletionConfidence extends CompletionConfidence {
 
   private static boolean isPossibleClosureParameter(GrReferenceExpression ref) {
-    return PsiJavaPatterns.psiElement().withParent(GrClosableBlock.class).afterLeaf("{").accepts(ref) || GroovyCompletionContributor.isInPossibleClosureParameter(ref);
+    return psiElement().withParent(GrClosableBlock.class).afterLeaf("{").accepts(ref) || GroovyCompletionContributor.isInPossibleClosureParameter(ref);
   }
 
   @NotNull
@@ -44,9 +48,12 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
 
     if (position.getParent() instanceof GrReferenceExpression) {
       final GrReferenceExpression ref = (GrReferenceExpression)position.getParent();
-      final GrExpression expression = ref.getQualifierExpression();
-      if (expression == null) {
+      final GrExpression qualifier = ref.getQualifierExpression();
+      if (qualifier == null) {
         if (isPossibleClosureParameter(ref)) return ThreeState.NO;
+        if (psiElement().afterLeaf(psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
+          return ThreeState.NO;
+        }
 
         GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(ref);
         if (runtimeQualifier != null && runtimeQualifier.getType() == null) {
@@ -56,7 +63,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
         return ThreeState.YES;
       }
 
-      if (expression.getType() == null) {
+      if (qualifier.getType() == null) {
         return ThreeState.NO;
       }
       return ThreeState.YES;
