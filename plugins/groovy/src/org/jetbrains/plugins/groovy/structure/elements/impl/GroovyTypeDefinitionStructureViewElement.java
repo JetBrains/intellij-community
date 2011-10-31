@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,21 @@ package org.jetbrains.plugins.groovy.structure.elements.impl;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureViewElement {
-  private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.structure.elements.impl.GroovyTypeDefinitionStructureViewElement");
   public GroovyTypeDefinitionStructureViewElement(GrTypeDefinition typeDefinition) {
     super(typeDefinition);
   }
@@ -52,7 +49,7 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
       return EMPTY_ARRAY;
     }
 
-    List<GroovyStructureViewElement> children = new ArrayList<GroovyStructureViewElement>();
+    Set<GroovyStructureViewElement> children = new LinkedHashSet<GroovyStructureViewElement>();
 
     //adding statements for type definition
     final GrTypeDefinition typeDefinition = (GrTypeDefinition)myElement;
@@ -67,17 +64,20 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
 
     for (PsiField field : typeDefinition.getAllFields()) {
       final boolean contains = fields.contains(field);
-      if (contains || !field.hasModifierProperty(GrModifier.PRIVATE)) {
+      if (contains || !field.hasModifierProperty(PsiModifier.PRIVATE)) {
         children.add(new GroovyVariableStructureViewElement(field, !contains));
       }
     }
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    ContainerUtil.addAll(methods, typeDefinition.getMethods());
+    ContainerUtil.addAll(methods, typeDefinition.getGroovyMethods());
 
     for (PsiMethod method : typeDefinition.getAllMethods()) {
       if (!method.isPhysical()) continue;
 
+      if (method instanceof GrReflectedMethod) {
+        method = ((GrReflectedMethod)method).getBaseMethod();
+      }
       if (methods.contains(method)) {
         children.add(new GroovyMethodStructureViewElement(method, false));
       }
