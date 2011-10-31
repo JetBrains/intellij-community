@@ -306,6 +306,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertEquals("foo", ((PsiNamedElement)element).getName());
   }
 
+  // PY-4844
+  public void testCythonFromModuleCImportExternStar() {
+    assertResolvesTo(CythonVariable.class, "foo");
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
