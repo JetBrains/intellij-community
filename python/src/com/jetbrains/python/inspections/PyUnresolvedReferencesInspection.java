@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonNames;
+import com.jetbrains.cython.types.CythonBuiltinType;
 import com.jetbrains.cython.types.CythonType;
 import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
@@ -431,7 +432,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                   actions.add(new AddFunctionQuickFix(ref_text, (PyFile)file));
                 }
               }
-              else if (qtype instanceof CythonType && reference instanceof PyOperatorReferenceImpl) {
+              else if (qtype instanceof CythonBuiltinType ||
+                       (qtype instanceof CythonType && reference instanceof PyOperatorReferenceImpl)) {
                 return;
               }
               else {
