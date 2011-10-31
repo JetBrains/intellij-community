@@ -156,7 +156,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
     getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
-  public void _testAlignClosureBraceWithCall() throws Throwable { doTest(); }
+  public void testAlignClosureBraceWithCall() throws Throwable { doTest(); }
   public void testFlyingGeese() throws Throwable { doTest(); }
   public void testSpaceAfterTypeCast() throws Throwable {
     getGroovySettings().SPACE_AFTER_TYPE_CAST = false;
