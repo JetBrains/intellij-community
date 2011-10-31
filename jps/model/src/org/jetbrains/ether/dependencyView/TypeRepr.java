@@ -191,9 +191,11 @@ class TypeRepr {
     return (ClassType)getType(new ClassType(s));
   }
     
-  private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
+  //private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
 
   private static AbstractType getType(final AbstractType t) {
+    return t;
+    /*
     final AbstractType r = map.get(t);
 
     if (r != null) {
@@ -203,6 +205,7 @@ class TypeRepr {
     map.put(t, t);
 
     return t;
+    */
   }
 
   public static AbstractType getType(final DependencyContext context, final DependencyContext.S descr) {

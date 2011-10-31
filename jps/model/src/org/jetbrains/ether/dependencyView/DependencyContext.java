@@ -20,10 +20,10 @@ class DependencyContext {
   private final static String stringTableName = "strings.tab"; 
   private final PersistentStringEnumerator enumerator;
   
-  private final static Map<String, Integer> map = new HashMap<String, Integer>();
-  private final static Map<Integer, String> imap = new HashMap<Integer, String>();
+  private final Map<String, Integer> map = new HashMap<String, Integer>();
+  private final Map<Integer, String> imap = new HashMap<Integer, String>();
 
-  private static int index = 0;
+  private int index = 0;
 
   DependencyContext(final File rootDir) {
     final File file = new File(FileUtil.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + stringTableName));
@@ -102,20 +102,21 @@ class DependencyContext {
     }
 
     public String getValue() {
-      return imap.get(index);
+      //return imap.get(index);
       
-      /*
+
       try {
         return enumerator.valueOf(index);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      */
+
     }
   }
 
   public S get(final String s) {
+    /*
     final Integer i = map.get(s);
     
     if (i == null) {
@@ -126,8 +127,8 @@ class DependencyContext {
     }
     
     return new S(i);
+    */
 
-    /*
    try {
       final int i = enumerator.enumerate(s);
 
@@ -136,7 +137,7 @@ class DependencyContext {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    */
+
   }
 
   public RW.Reader<S> reader = new RW.Reader<S>() {

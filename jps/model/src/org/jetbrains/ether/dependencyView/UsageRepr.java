@@ -18,9 +18,11 @@ import java.util.*;
 class UsageRepr {
   private final static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
-  private final static Map<Usage, Usage> map = new HashMap<Usage, Usage>();
+  //private final static Map<Usage, Usage> map = new HashMap<Usage, Usage>();
 
   private static Usage getUsage(final Usage u) {
+    return u;
+    /*
     final Usage r = map.get(u);
 
     if (r == null) {
@@ -28,7 +30,7 @@ class UsageRepr {
       return u;
     }
 
-    return r;
+    return r;*/
   }
 
   public static class Cluster implements RW.Writable {
