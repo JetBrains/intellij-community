@@ -22,8 +22,6 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
@@ -45,11 +43,8 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 
-    ImageFileEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
-        imageEditor = ImageEditorManagerImpl.createImageEditor(project, file);
-
-        // Append file listener
-        VirtualFileManager.getInstance().addVirtualFileListener(imageEditor);
+    ImageFileEditorImpl(@NotNull Project project, @NotNull ImageContentProvider contentProvider) {
+        imageEditor = ImageEditorManagerImpl.createImageEditor(project, contentProvider);
 
         // Set background and grid default options
         Options options = OptionsManager.getInstance().getOptions();
@@ -126,7 +121,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     }
 
     public void dispose() {
-        VirtualFileManager.getInstance().removeVirtualFileListener(imageEditor);
         ImageEditorManagerImpl.releaseImageEditor(imageEditor);
     }
 
