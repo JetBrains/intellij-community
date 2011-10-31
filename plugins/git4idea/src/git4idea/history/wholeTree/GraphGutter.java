@@ -468,7 +468,7 @@ public class GraphGutter {
       }
     },
     calm() {
-      final Color darker2 = UIUtil.getTableSelectionBackground().darker();
+      final Color darker2 = new Color(35,107,178);
       final Color darker = new Color(255,128,0);
       
       @Override
