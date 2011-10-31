@@ -54,30 +54,35 @@ public abstract class DependenciesHandlerBase {
       builders.add(createDependenciesBuilder(scope));
     }
 
-    ProgressManager.getInstance().run(
-      new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
+    final Task task;
+    if (canStartInBackground()) {
+      task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
         public void run(@NotNull final ProgressIndicator indicator) {
-          for (DependenciesBuilder builder : builders) {
-            builder.analyze();
-          }
+          perform(builders);
         }
 
         public void onSuccess() {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (shouldShowDependenciesPanel(builders)) {
-                final String displayName = getPanelDisplayName(builders.get(0).getScope());
-                DependenciesPanel panel = new DependenciesPanel(DependenciesHandlerBase.this.myProject, builders, myExcluded);
-                Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
-                content.setDisposer(panel);
-                panel.setContent(content);
-                DependenciesToolWindow.getInstance(DependenciesHandlerBase.this.myProject).addContent(content);
-              }
-            }
-          });
+          DependenciesHandlerBase.this.onSuccess(builders);
         }
-      });
+      };
+    } else {
+      task = new Task.Modal(myProject, getProgressTitle(), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          perform(builders);
+        }
+
+        @Override
+        public void onSuccess() {
+          DependenciesHandlerBase.this.onSuccess(builders);
+        }
+      };
+    }
+    ProgressManager.getInstance().run(task);
+  }
+
+  protected boolean canStartInBackground() {
+    return true;
   }
 
   protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
@@ -89,4 +94,26 @@ public abstract class DependenciesHandlerBase {
   protected abstract String getPanelDisplayName(AnalysisScope scope);
 
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
+
+  private static void perform(List<DependenciesBuilder> builders) {
+    for (DependenciesBuilder builder : builders) {
+      builder.analyze();
+    }
+  }
+
+  private void onSuccess(final List<DependenciesBuilder> builders) {
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (shouldShowDependenciesPanel(builders)) {
+          final String displayName = getPanelDisplayName(builders.get(0).getScope());
+          DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
+          Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
+          content.setDisposer(panel);
+          panel.setContent(content);
+          DependenciesToolWindow.getInstance(myProject).addContent(content);
+        }
+      }
+    });
+  }
 }
