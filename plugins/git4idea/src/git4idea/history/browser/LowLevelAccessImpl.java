@@ -38,6 +38,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -136,9 +137,31 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         }
         refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
       }
-    } else {
-      LOG.info("Can not load cached branches information");
+     } else {
+      // repo is not under root
+      final List<GitBranch> allBranches = new ArrayList<GitBranch>();
+      final GitBranch current = GitBranch.list(myProject, myRoot, true, true, allBranches, null);
+      for (GitBranch branch : allBranches) {
+        if (branch.isRemote()) {
+          String name = branch.getName();
+          name = name.startsWith("remotes/") ? name.substring("remotes/".length()) : name;
+          refs.addRemote(name);
+        } else {
+          refs.addLocal(branch.getName());
+        }
+      }
+      refs.setCurrent(current);
+      if (current != null) {
+        GitBranch tracked = current.tracked(myProject, myRoot);
+        String fullName = tracked == null ? null : tracked.getFullName();
+        fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
+        refs.setTrackedRemote(fullName);
+      }
+      refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
     }
+
+    final VcsRevisionNumber head = GitHistoryUtils.getCurrentRevision(myProject, new FilePathImpl(myRoot), "HEAD", true);
+    refs.setHead(AbstractHash.create(head.asString()));
     return refs;
   }
 

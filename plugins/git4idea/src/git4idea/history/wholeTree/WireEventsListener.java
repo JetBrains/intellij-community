@@ -16,6 +16,7 @@ package git4idea.history.wholeTree;
  * @author irengrig
  */
 public interface WireEventsListener {
+  void setWireStartsNumber(int row, final int number);
   void wireStarts(int row);
   void wireEnds(int row);
   void setEnds(int row, int[] commitEnds);

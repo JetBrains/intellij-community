@@ -135,7 +135,7 @@ public class MediatorImpl implements Mediator {
                      final Collection<String> startingPoints,
                      final GitLogFilters filters, final boolean topoOrder) {
     myTicket.increment();
-    myTableWrapper.reset(filters.isEmpty());
+    myTableWrapper.reset(filters.isEmpty(), startingPoints.isEmpty());
     myController.reset();
 
     /*if (filters.isEmpty()) {
@@ -314,11 +314,11 @@ public class MediatorImpl implements Mediator {
     }
 
     @CalledInAwt
-    public void reset(boolean noFilters) {
+    public void reset(boolean noFilters, boolean noStartingPoints) {
       mySuspend = false;
       myForcedStop = false;
       myRecentCut = 0;
-      myTableModel.clear(noFilters);
+      myTableModel.clear(noFilters, noStartingPoints);
     }
 
     @CalledInAwt

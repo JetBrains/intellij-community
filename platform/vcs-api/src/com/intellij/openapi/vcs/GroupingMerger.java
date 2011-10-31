@@ -32,6 +32,7 @@ public abstract class GroupingMerger<T, S> {
     return true;
   }
 
+  protected abstract void willBeRecountFrom(int idx, int wasSize);
   protected abstract S getGroup(final T t);
   protected abstract T wrapGroup(final S s, T item);
   protected abstract void oldBecame(final int was, final int is);
@@ -46,7 +47,10 @@ public abstract class GroupingMerger<T, S> {
 
   public int firstPlusSecond(final StepList<T> first, final ReadonlyList<T> second, final Comparator<T> comparator,
                              final int idxFrom) {
-    if (second.getSize() == 0) return first.getSize();
+    final int wasSize = first.getSize();
+    if (second.getSize() == 0) {
+      return wasSize;
+    }
     int idx;
     if (idxFrom == -1) {
       idx = stolenBinarySearch(first, second.get(0), comparator, 0);
@@ -66,6 +70,7 @@ public abstract class GroupingMerger<T, S> {
       myCurrentGroup = getGroup(first.get(idx - 1));
     }
     final int finalIdx = idx;
+    willBeRecountFrom(idx, wasSize);
     merge(remergePart, second, comparator, new PairConsumer<T, Integer>() {
             @Override
             public void consume(T t, Integer integer) {

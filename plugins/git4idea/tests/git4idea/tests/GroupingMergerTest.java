@@ -38,6 +38,10 @@ public class GroupingMergerTest extends TestCase {
 
     final GroupingMerger<Integer, String> merger = new GroupingMerger<Integer, String>() {
       @Override
+      protected void willBeRecountFrom(int idx, int wasSize) {
+      }
+
+      @Override
       protected String getGroup(Integer integer) {
         return "";
       }
