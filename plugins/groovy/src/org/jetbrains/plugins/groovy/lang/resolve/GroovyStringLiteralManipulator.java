@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteral> {
@@ -56,7 +57,9 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
 
   public TextRange getRangeInElement(final GrLiteral element) {
     final String text = element.getText();
-    if (!(element.getValue() instanceof String)) return super.getRangeInElement(element);
+    if (element instanceof GrLiteralImpl && !(element.getValue() instanceof String)) {
+      return super.getRangeInElement(element);
+    }
     return getLiteralRange(text);
   }
 
