@@ -468,6 +468,21 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitMethod(GrMethod method) {
     checkMethodDefinitionModifiers(myHolder, method);
     checkInnerMethod(myHolder, method);
+    checkMethodParameters(myHolder, method);
+  }
+
+  private static void checkMethodParameters(AnnotationHolder holder, GrMethod method) {
+    if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+
+    for (GrParameter parameter : method.getParameters()) {
+      GrExpression initializerGroovy = parameter.getInitializerGroovy();
+      if (initializerGroovy != null) {
+        PsiElement assignOperator = parameter.getNameIdentifierGroovy();
+        TextRange textRange =
+          new TextRange(assignOperator.getTextRange().getEndOffset(), initializerGroovy.getTextRange().getEndOffset());
+        holder.createErrorAnnotation(textRange, GroovyBundle.message("default.initializers.are.not.allowed.in.abstract.method"));
+      }
+    }
   }
 
   @Nullable
