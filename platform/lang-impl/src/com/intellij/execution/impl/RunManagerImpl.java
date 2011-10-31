@@ -342,7 +342,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void setSelectedConfiguration(final RunnerAndConfigurationSettings configuration) {
     mySelectedConfiguration = configuration == null ? null : getUniqueName(configuration.getConfiguration());
-    if (configuration != null) invalidateConfigurationIcon(configuration);
+    if (configuration != null) {
+      for (Map.Entry<String, RunnerAndConfigurationSettings> each : myConfigurations.entrySet()) {
+        if (each.getValue() == configuration) {
+          myConfigurations.put(mySelectedConfiguration, configuration);
+          break;
+        }
+      }
+      invalidateConfigurationIcon(configuration);
+    }
     fireRunConfigurationSelected();
   }
 
@@ -372,7 +380,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       addConfigurationElement(parentNode, runnerAndConfigurationSettings);
     }
 
-    final Collection<RunnerAndConfigurationSettings> configurations = getStableConfigurations().values();
+    final Collection<RunnerAndConfigurationSettings> configurations = getStableConfigurations();
     for (RunnerAndConfigurationSettings configuration : configurations) {
       if (!isConfigurationShared(configuration)) {
         addConfigurationElement(parentNode, configuration);
@@ -643,7 +651,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     setSelectedConfiguration(configuration);
   }
 
-  public Map<String, RunnerAndConfigurationSettings> getStableConfigurations() {
+  Collection<RunnerAndConfigurationSettings> getStableConfigurations() {
     final Map<String, RunnerAndConfigurationSettings> result =
         new LinkedHashMap<String, RunnerAndConfigurationSettings>(myConfigurations);
     for (Iterator<Map.Entry<String, RunnerAndConfigurationSettings>> it = result.entrySet().iterator(); it.hasNext();) {
@@ -652,7 +660,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         it.remove();
       }
     }
-    return result;
+    return result.values();
   }
 
   public boolean isTemporary(final RunConfiguration configuration) {
