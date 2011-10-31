@@ -757,7 +757,8 @@ public class BigTableTableModel extends AbstractTableModel {
     myActiveRoots.clear();
     myActiveRoots.addAll(files);
     for (TreeHighlighter highlighter : myTreeHighlighter.values()) {
-      highlighter.reset();
+      //highlighter.reset();
+      highlighter.update(0);
     }
 
     calculateAdditions();
