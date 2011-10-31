@@ -215,7 +215,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     {
       return false;
     }
-    myProject.setProjectFileDirectoryPath(myProjectCompileOutputLocationField.getText());
+    myProject.setProjectFileDirectoryPath(myProjectConfigLocationField.getText());
     
     if (!validateDirLocation(myProjectCompileOutputLocationField, "gradle.import.text.error.undefined.project.compile.output.location",
                              "gradle.import.text.error.file.project.compile.output.location"))
