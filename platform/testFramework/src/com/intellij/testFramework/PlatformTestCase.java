@@ -246,7 +246,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile("temp_" + getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile("tmp_" + getName()+"_", ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }
