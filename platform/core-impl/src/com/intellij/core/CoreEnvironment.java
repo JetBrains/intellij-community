@@ -194,6 +194,10 @@ public class CoreEnvironment {
     return myLocalFileSystem;
   }
 
+  public CoreJarFileSystem getJarFileSystem() {
+    return myJarFileSystem;
+  }
+
   public void addLibraryRoot(VirtualFile file) {
     myFileIndexFacade.addLibraryRoot(file);
   }
