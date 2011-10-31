@@ -254,7 +254,7 @@ public class QuickFixAction extends AnAction {
   private static void refreshViews(final Project project, final RefElement[] refElements, final InspectionTool tool) {
     final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
     for (RefElement element : refElements) {
-      final PsiElement psiElement = element.getElement();
+      final PsiElement psiElement = element != null ? element.getElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         ignoredElements.add(psiElement);
       }
