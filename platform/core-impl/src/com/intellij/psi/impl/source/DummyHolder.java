@@ -51,6 +51,7 @@ public class DummyHolder extends PsiFileImpl {
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table, Boolean validity, Language language) {
     super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
+    myLanguage = language;
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
     myTable = table != null ? table : IdentityCharTable.INSTANCE;
@@ -64,7 +65,6 @@ public class DummyHolder extends PsiFileImpl {
       clearCaches();
     }
     myExplicitlyValid = validity;
-    myLanguage = language;
   }
 
   public DummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
@@ -146,8 +146,7 @@ public class DummyHolder extends PsiFileImpl {
     dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);
     final FileElement treeClone = (FileElement)calcTreeElement().clone();
     psiFile.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
-    if(isPhysical()) psiFile.myOriginalFile = this;
-    else psiFile.myOriginalFile = myOriginalFile;
+    psiFile.myOriginalFile = isPhysical() ? this : myOriginalFile;
     treeClone.setPsi(psiFile);
     return psiFile;
   }

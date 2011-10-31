@@ -123,9 +123,9 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   public void rootChanged(PsiFile psiFile) {
   }
 
-  public void setDummyHolder(final DummyHolder dummyHolder) {
+  public void setDummyHolder(@NotNull DummyHolder dummyHolder) {
     myHolder = dummyHolder;
-    //myLightVirtualFile.setContent(null, getContents(), false);
+    myLightVirtualFile.setFileType(dummyHolder.getFileType());
   }
 
   @Override

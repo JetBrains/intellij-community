@@ -262,6 +262,16 @@ public class FileUtil {
     return buffer.toByteArray();
   }
 
+  public static boolean processFirstBytes(@NotNull InputStream stream, int length, @NotNull Processor<ByteSequence> processor) throws IOException {
+    final byte[] bytes = BUFFER.get();
+    assert bytes.length >= length : "Cannot process more than " + bytes.length + " in one call, requested:" + length;
+
+    int n = stream.read(bytes, 0, length);
+    if (n <= 0) return false;
+
+    return processor.process(new ByteSequence(bytes, 0, n));
+  }
+
   @NotNull
   public static byte[] loadFirst(@NotNull InputStream stream, int maxLength) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();

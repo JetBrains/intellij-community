@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -56,4 +59,30 @@ public abstract class FileTypeRegistry {
    */
   @NotNull
   public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
+
+  /**
+   * Tries to detect whether the file is text or not by analyzing its content.
+   * @param file to analyze
+   * @return {@link com.intellij.openapi.fileTypes.PlainTextFileType} if file looks like text,
+   *          or another file type if some file type detector identified the file
+   *          or the {@link UnknownFileType} if file looks like binary or was unable to analyze.
+   */
+  @NotNull
+  public abstract FileType detectFileTypeFromContent(@NotNull VirtualFile file);
+
+  /**
+   * Pluggable file type detector by content
+   */
+  public interface FileTypeDetector {
+    ExtensionPointName<FileTypeDetector> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeDetector");
+    /**
+     * Detects file type by its content
+     * @param file to analyze
+     * @param firstBytes of the file for identifying its file type
+     * @param firstCharsIfText - characters, converted from first bytes parameter if the file content was determined to be text, or null otherwise
+     * @return detected file type, or null if was unable to detect
+     */
+    @Nullable
+    FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
+  }
 }

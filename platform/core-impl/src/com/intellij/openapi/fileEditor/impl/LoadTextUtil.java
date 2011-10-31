@@ -17,7 +17,10 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -26,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +124,7 @@ public final class LoadTextUtil {
   }
 
   private static Charset doDetectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content);
+    Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
     if (guessed != null && guessed.first != null) return guessed.first;
 
     FileType fileType = virtualFile.getFileType();
@@ -136,7 +138,7 @@ public final class LoadTextUtil {
   }
 
   @Nullable("null means no luck, otherwise it's tuple(guessed encoding, hint about content if was unable to guess, BOM)")
-  private static Trinity<Charset, CharsetToolkit.GuessedEncoding,byte[]> guessFromContent(VirtualFile virtualFile, byte[] content) {
+  public static Trinity<Charset, CharsetToolkit.GuessedEncoding,byte[]> guessFromContent(VirtualFile virtualFile, byte[] content, int length) {
     EncodingRegistry settings = EncodingRegistry.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;
@@ -150,7 +152,7 @@ public final class LoadTextUtil {
         if (bom == null) bom = CharsetToolkit.UTF8_BOM;
         return Trinity.create(charset, null, bom);
       }
-      CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
+      CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(length);
       if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
         setCharsetWasDetectedFromBytes(virtualFile, true);
         return Trinity.create(CharsetToolkit.UTF8_CHARSET,null,null); //UTF detected, ignore all directives
@@ -167,10 +169,10 @@ public final class LoadTextUtil {
     }
     try {
       if (CharsetToolkit.hasUTF16LEBom(content)) {
-        return Pair.create(Charset.forName("UTF-16LE"), CharsetToolkit.UTF16LE_BOM);
+        return Pair.create(CharsetToolkit.UTF_16LE_CHARSET, CharsetToolkit.UTF16LE_BOM);
       }
       if (CharsetToolkit.hasUTF16BEBom(content)) {
-        return Pair.create(Charset.forName("UTF-16BE"), CharsetToolkit.UTF16BE_BOM);
+        return Pair.create(CharsetToolkit.UTF_16BE_CHARSET, CharsetToolkit.UTF16BE_BOM);
       }
     }
     catch (UnsupportedCharsetException ignore) {
@@ -412,30 +414,5 @@ public final class LoadTextUtil {
   }
   public static void setCharsetWasDetectedFromBytes(@NotNull VirtualFile virtualFile, boolean flag) {
     virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, flag ? Boolean.TRUE : null);
-  }
-
-  @NotNull
-  public static FileType detectFromContent(@NotNull VirtualFile file) {
-    try {
-      if (file.isDirectory() || file.isSpecialFile() || file.getLength()==0) return UnknownFileType.INSTANCE;
-      if (SingleRootFileViewProvider.isTooLarge(file)) return UnknownFileType.INSTANCE;
-      byte[] bytes = file.contentsToByteArray();
-      Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(file, bytes);
-      if (guessed == null) return UnknownFileType.INSTANCE;
-      file.setBOM(guessed.third);
-      if (guessed.first != null) {
-        return PlainTextFileType.INSTANCE; // charset was detected unambiguously
-      }
-      // use wild guess
-      CharsetToolkit.GuessedEncoding guess = guessed.second;
-      return guess == null || guess == CharsetToolkit.GuessedEncoding.INVALID_UTF8 ? UnknownFileType.INSTANCE : PlainTextFileType.INSTANCE;
-    }
-    catch (FileNotFoundException e) {
-      return UnknownFileType.INSTANCE;
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return UnknownFileType.INSTANCE;
-    }
   }
 }

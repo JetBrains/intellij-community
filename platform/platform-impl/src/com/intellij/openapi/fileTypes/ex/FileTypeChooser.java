@@ -136,7 +136,7 @@ public class FileTypeChooser extends DialogWrapper {
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
-      type = getKnownFileTypeOrAssociate(file.getName());
+        type = getKnownFileTypeOrAssociate(file.getName());
     }
     return type;
   }

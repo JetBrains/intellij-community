@@ -63,7 +63,7 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     }
   }
 
-  public void processQueue() {
+  private void processQueue() {
     while(true){
       MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
       if (ref == null) {

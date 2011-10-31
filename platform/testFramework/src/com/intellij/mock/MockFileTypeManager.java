@@ -167,4 +167,10 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   public boolean isFileOfType(VirtualFile file, FileType type) {
    return false;
   }
+
+  @NotNull
+  @Override
+  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
+    return UnknownFileType.INSTANCE;
+  }
 }
