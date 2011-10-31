@@ -170,7 +170,7 @@ class TypeRepr {
   public static Collection<AbstractType> createClassType (final DependencyContext context, final String[] args, final Collection<AbstractType> acc) {
     if (args != null) {
       for (String a : args) {
-        acc.add(createClassType(context.get(a)));    
+        acc.add(createClassType(context, context.get(a)));    
       }      
     }
     
@@ -180,21 +180,21 @@ class TypeRepr {
   public static Collection<AbstractType> createClassType (final DependencyContext context, final Collection<String> args, final Collection<AbstractType> acc) {
       if (args != null) {
         for (String a : args) {
-          acc.add(createClassType(context.get(a)));    
+          acc.add(createClassType(context, context.get(a)));    
         }      
       }
       
       return acc;  
     }
   
-  public static ClassType createClassType(final DependencyContext.S s) {
-    return (ClassType)getType(new ClassType(s));
+  public static ClassType createClassType(final DependencyContext context, final DependencyContext.S s) {
+    return (ClassType)context.getType(new ClassType(s));
   }
     
   //private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
 
-  private static AbstractType getType(final AbstractType t) {
-    return t;
+ // private static AbstractType getType(final AbstractType t) {
+  //  return t;
     /*
     final AbstractType r = map.get(t);
 
@@ -206,20 +206,20 @@ class TypeRepr {
 
     return t;
     */
-  }
+  //}
 
   public static AbstractType getType(final DependencyContext context, final DependencyContext.S descr) {
     final Type t = Type.getType(descr.getValue());
 
     switch (t.getSort()) {
       case Type.OBJECT:
-        return getType(new ClassType(context.get(t.getClassName().replaceAll("\\.", "/"))));
+        return context.getType(new ClassType(context.get(t.getClassName().replaceAll("\\.", "/"))));
 
       case Type.ARRAY:
-        return getType(new ArrayType(getType(context, t.getElementType())));
+        return context.getType(new ArrayType(getType(context, t.getElementType())));
 
       default:
-        return getType(new PrimitiveType(descr));
+        return context.getType(new PrimitiveType(descr));
     }
   }
 
@@ -261,12 +261,12 @@ class TypeRepr {
           final String tag = RW.readString(r);
 
           if (tag.equals("primitive")) {
-            elementType = getType(new PrimitiveType(context.get(RW.readString(r))));
+            elementType = context.getType(new PrimitiveType(context.get(RW.readString(r))));
             break;
           }
 
           if (tag.equals("class")) {
-            elementType = getType(new ClassType(context, r));
+            elementType = context.getType(new ClassType(context, r));
             break;
           }
 
@@ -276,7 +276,7 @@ class TypeRepr {
         }
 
         for (int i = 0; i < level; i++) {
-          elementType = getType(new ArrayType(elementType));
+          elementType = context.getType(new ArrayType(elementType));
         }
 
         return elementType;

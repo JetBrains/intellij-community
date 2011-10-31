@@ -175,7 +175,7 @@ public class ClassRepr extends Proto {
     super(a, sig, n);
     fileName = fn;
     sourceFileName = sn;
-    superClass = TypeRepr.createClassType(sup);
+    superClass = TypeRepr.createClassType(context, sup);
     interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
     nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
     fields = f;

@@ -428,7 +428,7 @@ class ClassfileAnalyzer {
         @Override
         public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
           if (type != null) {
-            TypeRepr.createClassType(context.get(type)).updateClassUsages(name, usages);
+            TypeRepr.createClassType(context, context.get(type)).updateClassUsages(name, usages);
           }
 
           super.visitTryCatchBlock(start, end, handler, type);
@@ -436,7 +436,7 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitTypeInsn(int opcode, String type) {
-          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(context, context.get(type)) : TypeRepr.createClassType(context.get(type));
+          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(context, context.get(type)) : TypeRepr.createClassType(context, context.get(type));
 
           if (opcode == Opcodes.NEW) {
             usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(((TypeRepr.ClassType)typ).className));
