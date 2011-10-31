@@ -24,6 +24,8 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
@@ -58,6 +60,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -375,7 +378,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final TextRange range = insertedElement.getTextRange();
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
-      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
+      Attachment _fileCopy = new Attachment(initContext.getFile().getOriginalFile().getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
+      Attachment copyTree = new Attachment(initContext.getFile().getOriginalFile().getViewProvider().getVirtualFile().getPath() + " syntactic tree",
+                                           DebugUtil.psiToString(fileCopy, false));
+      Attachment elementText = new Attachment("Element at caret", insertedElement.getText());
+      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range, "Inconsistent completion tree", null, Arrays.asList(_fileCopy, copyTree, elementText)));
     }
 
     return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
