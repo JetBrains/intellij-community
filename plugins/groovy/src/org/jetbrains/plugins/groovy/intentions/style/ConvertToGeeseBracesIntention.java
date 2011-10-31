@@ -58,7 +58,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
         element = PsiTreeUtil.prevLeaf(element);
       }
 
-      if (!isClosureRBrace(element)) return false;
+      if (!isClosureRBrace(element) || !isClosureContainLF(element)) return false;
 
       TextRange range = findRange(element);
 
@@ -88,7 +88,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
     if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
       element = PsiTreeUtil.prevLeaf(element);
     }
-    LOG.assertTrue(isClosureRBrace(element));
+    LOG.assertTrue(isClosureRBrace(element) && isClosureContainLF(element));
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
