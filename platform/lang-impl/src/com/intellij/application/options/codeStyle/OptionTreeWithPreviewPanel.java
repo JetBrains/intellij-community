@@ -69,7 +69,10 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
-    myPanel.add(ScrollPaneFactory.createScrollPane(myOptionsTree),
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsTree);
+    scrollPane.setPreferredSize(new Dimension(350, -1));
+    scrollPane.setMinimumSize(new Dimension(350, -1));
+    myPanel.add(scrollPane,
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                        new Insets(0, 0, 0, 5), 0, 0));
 
