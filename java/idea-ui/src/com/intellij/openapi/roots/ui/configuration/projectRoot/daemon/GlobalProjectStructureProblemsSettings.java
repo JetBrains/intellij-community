@@ -23,7 +23,7 @@ import com.intellij.openapi.components.Storage;
  */
 @State(
   name = "ProjectStructureProblems",
-  storages = {@Storage(file = "$WORKSPACE_FILE$")}
+  storages = {@Storage(file = "$APP_CONFIG$/projectStructureProblems.xml")}
 )
-public class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettingsBase {
+public class GlobalProjectStructureProblemsSettings extends ProjectStructureProblemsSettingsBase {
 }

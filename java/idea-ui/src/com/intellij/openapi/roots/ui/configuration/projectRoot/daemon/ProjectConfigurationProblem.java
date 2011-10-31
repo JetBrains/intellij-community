@@ -32,9 +32,18 @@ class ProjectConfigurationProblem extends ConfigurationError {
 
   public ProjectConfigurationProblem(ProjectStructureProblemDescription description, Project project) {
     super(computeMessage(description), computeDescription(description),
-          ProjectStructureProblemsSettings.getInstance(project).isIgnored(description));
+          getSettings(project, description.getProblemLevel()).isIgnored(description));
     myDescription = description;
     myProject = project;
+  }
+
+  private static ProjectStructureProblemsSettings getSettings(Project project, ProjectStructureProblemDescription.ProblemLevel problemLevel) {
+    if (problemLevel == ProjectStructureProblemDescription.ProblemLevel.PROJECT) {
+      return ProjectStructureProblemsSettings.getProjectInstance(project);
+    }
+    else {
+      return ProjectStructureProblemsSettings.getGlobalInstance();
+    }
   }
 
   private static String computeDescription(ProjectStructureProblemDescription description) {
@@ -47,9 +56,9 @@ class ProjectConfigurationProblem extends ConfigurationError {
   }
 
   @Override
-  public void ignore(boolean b) {
-    super.ignore(b);
-    ProjectStructureProblemsSettings.getInstance(myProject).setIgnored(myDescription, b);
+  public void ignore(boolean ignored) {
+    super.ignore(ignored);
+    getSettings(myProject, myDescription.getProblemLevel()).setIgnored(myDescription, ignored);
   }
 
   @Override

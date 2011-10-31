@@ -59,11 +59,14 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
                                   final OrderRootType type, Object rootName, final ProjectStructureProblemType problemType) {
     final List<String> invalidUrls = library.getInvalidRootUrls(type);
     if (!invalidUrls.isEmpty()) {
-      final String libraryName = library.getName();
-      final String description = createInvalidRootsDescription(invalidUrls, libraryName);
+      final String description = createInvalidRootsDescription(invalidUrls, library.getName());
       final PlaceInProjectStructure place = createPlace();
-      problemsHolder.registerProblem(ProjectBundle.message("project.roots.error.message.invalid.roots", rootName, invalidUrls.size()), description, problemType,
-                                     place, new RemoveInvalidRootsQuickFix(library, type, invalidUrls));
+      final String message = ProjectBundle.message("project.roots.error.message.invalid.roots", rootName, invalidUrls.size());
+      ProjectStructureProblemDescription.ProblemLevel level = library.getTable().getTableLevel().equals(LibraryTablesRegistrar.PROJECT_LEVEL)
+                                                              ? ProjectStructureProblemDescription.ProblemLevel.PROJECT : ProjectStructureProblemDescription.ProblemLevel.GLOBAL;
+      problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
+                                                                            problemType, level,
+                                                                            Collections.singletonList(new RemoveInvalidRootsQuickFix(library, type, invalidUrls))));
     }
   }
 
@@ -127,8 +130,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
-    return new ProjectStructureProblemDescription(getPresentableName() + " is not used", null, createPlace(), fixes,
-                                                  ProjectStructureProblemType.unused("unused-library"));
+    return new ProjectStructureProblemDescription(getPresentableName() + " is not used", null, createPlace(),
+                                                  ProjectStructureProblemType.unused("unused-library"), fixes
+    );
   }
 
   @Override
