@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.diff.BackgroundOperatingDiffElement;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffModel;
 import com.intellij.ide.diff.DirDiffSettings;
@@ -26,14 +27,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +127,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
     fireTableDataChanged();
     myUpdating.set(false);
-    int index = -1;
+    int index;
     if (!selectedElements.isEmpty() && (index = myElements.indexOf(selectedElements.get(0))) != -1) {
       myTable.getSelectionModel().setSelectionInterval(index, index);
       TableUtil.scrollSelectionToVisible(myTable);
@@ -226,7 +228,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     Runnable balloonShower = new Runnable() {
       @Override
       public void run() {
-        Balloon balloon = PopupFactoryImpl.getInstance().createHtmlTextBalloonBuilder(htmlContent, MessageType.WARNING, null).
+        Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(htmlContent, MessageType.WARNING, null).
           setShowCallout(false).setHideOnClickOutside(true).setHideOnAction(true).setHideOnFrameResize(true).setHideOnKeyOutside(true).
           createBalloon();
         final Rectangle rect = myPanel.getPanel().getBounds();
@@ -495,53 +497,103 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return mySettings;
   }
 
-  public void performCopyTo(DirDiffElement element) {
+  public void performCopyTo(final DirDiffElement element) {
     final DiffElement<?> source = element.getSource();
     if (source != null) {
-      final String path = element.getParentNode().getPath();
-
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
-        final DiffElement<?> diffElement = source.copyTo(myTrg, path);
-        if (diffElement != null) {
-          final DTree node = element.getNode();
-          final int row = myElements.indexOf(element);
-          if (getSettings().showEqual) {
-            node.setType(DType.EQUAL);
-            node.setTarget(diffElement);
-            element.updateTargetFromSource(source);
-            fireTableRowsUpdated(row, row);
-          } else {
-            removeElement(element);
+      if (source instanceof BackgroundOperatingDiffElement) {
+        final Ref<String> errorMessage = new Ref<String>();
+        final Ref<DiffElement> diff = new Ref<DiffElement>();
+        Runnable onFinish = new Runnable() {
+          @Override
+          public void run() {
+            if (!Disposer.isDisposed(DirDiffTableModel.this)) {
+              DiffElement newElement = diff.get();
+              refreshElementAfterCopyTo(newElement, element);
+              if (!errorMessage.isNull()) {
+                reportException(errorMessage.get());
+              }
+            }
           }
+        };
+        ((BackgroundOperatingDiffElement)source).copyTo(myTrg, errorMessage, diff, onFinish, element.getTarget() != null);
+      }
+      else {
+        final String path = element.getParentNode().getPath();
+
+        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+        try {
+          final DiffElement<?> diffElement = source.copyTo(myTrg, path);
+          refreshElementAfterCopyTo(diffElement, element);
         }
-      } finally {
-        token.finish();
+        finally {
+          token.finish();
+        }
       }
     }
   }
 
-  public void performCopyFrom(DirDiffElement element) {
+  private void refreshElementAfterCopyTo(DiffElement newElement, DirDiffElement element) {
+    if (newElement != null) {
+      final DTree node = element.getNode();
+      final int row = myElements.indexOf(element);
+      if (getSettings().showEqual) {
+        node.setType(DType.EQUAL);
+        node.setTarget(newElement);
+        element.updateSourceFromTarget(newElement);
+        fireTableRowsUpdated(row, row);
+      }
+      else {
+        removeElement(element);
+      }
+    }
+  }
+
+  public void performCopyFrom(final DirDiffElement element) {
     final DiffElement<?> target = element.getTarget();
     if (target != null) {
-      final String path = element.getParentNode().getPath();
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
-        final DiffElement<?> diffElement = target.copyTo(mySrc, path);
-        if (diffElement != null) {
-          final DTree node = element.getNode();
-          final int row = myElements.indexOf(element);
-          if (getSettings().showEqual) {
-            node.setType(DType.EQUAL);
-            node.setSource(diffElement);
-            element.updateSourceFromTarget(target);
-            fireTableRowsUpdated(row, row);
-          } else {
-            removeElement(element);
+      if (target instanceof BackgroundOperatingDiffElement) {
+        final Ref<String> errorMessage = new Ref<String>();
+        final Ref<DiffElement> diff = new Ref<DiffElement>();
+        Runnable onFinish = new Runnable() {
+          @Override
+          public void run() {
+            if (!Disposer.isDisposed(DirDiffTableModel.this)) {
+              refreshElementAfterCopyFrom(element, diff.get());
+              if (!errorMessage.isNull()) {
+                reportException(errorMessage.get());
+              }
+            }
           }
+        };
+        ((BackgroundOperatingDiffElement)target).copyTo(mySrc, errorMessage, diff, onFinish, element.getSource() != null);
+      }
+      else {
+        final String path = element.getParentNode().getPath();
+
+        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+        try {
+          final DiffElement<?> diffElement = target.copyTo(mySrc, path);
+          refreshElementAfterCopyFrom(element, diffElement);
         }
-      } finally {
-        token.finish();
+        finally {
+          token.finish();
+        }
+      }
+    }
+  }
+
+  private void refreshElementAfterCopyFrom(DirDiffElement element, DiffElement newElement) {
+    if (newElement != null) {
+      final DTree node = element.getNode();
+      final int row = myElements.indexOf(element);
+      if (getSettings().showEqual) {
+        node.setType(DType.EQUAL);
+        node.setSource(newElement);
+        element.updateTargetFromSource(newElement);
+        fireTableRowsUpdated(row, row);
+      }
+      else {
+        removeElement(element);
       }
     }
   }
@@ -560,7 +612,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         el.getParentNode().remove(el.getNode());
         myElements.remove(row - 1);
         start = row - 1;
-      } else if (myElements.get(row).isSeparator() && row > 0 && myElements.get(row - 1).isSeparator()) {
+      } else if (row != myElements.size() && myElements.get(row).isSeparator() && row > 0 && myElements.get(row - 1).isSeparator()) {
         final DirDiffElement el = myElements.get(row - 1);
         el.getParentNode().remove(el.getNode());
         myElements.remove(row - 1);
@@ -570,23 +622,50 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  public void performDelete(DirDiffElement element) {
+  public void performDelete(final DirDiffElement element) {
     final DiffElement source = element.getSource();
     final DiffElement target = element.getTarget();
-    final int index = myElements.indexOf(element);
-    if (index != -1) {
-      removeElement(element);
-    }
-    final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-    try {
+    LOG.assertTrue(source == null || target == null);
+    if (source instanceof BackgroundOperatingDiffElement || target instanceof BackgroundOperatingDiffElement) {
+      final Ref<String> errorMessage = new Ref<String>();
+      Runnable onFinish = new Runnable() {
+        @Override
+        public void run() {
+          if (!Disposer.isDisposed(DirDiffTableModel.this)) {
+            if (!errorMessage.isNull()) {
+              reportException(errorMessage.get());
+            }
+            else {
+              if (myElements.indexOf(element) != -1) {
+                removeElement(element);
+              }
+            }
+          }
+        }
+      };
       if (source != null) {
-        source.delete();
+        ((BackgroundOperatingDiffElement)source).delete(errorMessage, onFinish);
       }
-      if (target != null) {
-        target.delete();
+      else {
+        ((BackgroundOperatingDiffElement)target).delete(errorMessage, onFinish);
       }
-    } finally {
-      token.finish();
+    }
+    else {
+      if (myElements.indexOf(element) != -1) {
+        removeElement(element);
+      }
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      try {
+        if (source != null) {
+          source.delete();
+        }
+        if (target != null) {
+          target.delete();
+        }
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 

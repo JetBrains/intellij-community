@@ -15,18 +15,22 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
+import com.intellij.ide.diff.BackgroundOperatingDiffElement;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.diff.impl.dir.DirDiffElement;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class SynchronizeDiff extends DirDiffAction {
-  private boolean mySelectedOnly;
+  private final boolean mySelectedOnly;
 
   public SynchronizeDiff(DirDiffTableModel model, boolean selectedOnly) {
     super(model,
@@ -36,10 +40,31 @@ public class SynchronizeDiff extends DirDiffAction {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    if (e.getPresentation().isEnabled() &&
+        (getModel().getSourceDir() instanceof BackgroundOperatingDiffElement ||
+         getModel().getTargetDir() instanceof BackgroundOperatingDiffElement)) {
+      List<DirDiffElement> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();
+      synchronized (elements){
+      for (DirDiffElement dirDiffElement : elements) {
+        if ((dirDiffElement.getSource() == null || dirDiffElement.getSource().isOperationsEnabled()) &&
+            (dirDiffElement.getTarget() == null || dirDiffElement.getTarget().isOperationsEnabled())) {
+          e.getPresentation().setEnabled(true);
+          return;
+        }
+      }
+      }
+      e.getPresentation().setEnabled(false);
+    }
+  }
+
+  @Override
   protected void updateState(boolean state) {
     if (mySelectedOnly) {
       getModel().synchronizeSelected();
-    } else {
+    }
+    else {
       getModel().synchronizeAll();
     }
   }
