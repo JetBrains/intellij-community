@@ -112,9 +112,8 @@ public class LookupManagerImpl extends LookupManager {
       assert item != null;
     }
 
-    final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
-    lookup.showLookup();
-    return lookup;
+    LookupImpl lookup = createLookup(editor, items, prefix, arranger);
+    return lookup.showLookup() ? lookup : null;
   }
 
   public LookupImpl createLookup(final Editor editor,

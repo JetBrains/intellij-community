@@ -494,6 +494,8 @@ public class TemplateState implements Disposable {
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
     final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems);
+    if (lookup == null) return;
+
     if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && myEditor.getUserData(VariableInplaceRenamer.INPLACE_RENAMER) == null) {
       lookup.setStartCompletionWhenNothingMatches(true);
     }

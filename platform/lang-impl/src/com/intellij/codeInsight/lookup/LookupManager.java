@@ -44,14 +44,17 @@ public abstract class LookupManager {
     return InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor()) == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
   }
 
+  @Nullable
   public LookupEx showLookup(Editor editor, @NotNull LookupElement... items) {
     return showLookup(editor, items, "", LookupArranger.DEFAULT);
   }
 
+  @Nullable
   public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, String prefix) {
     return showLookup(editor, items, prefix, LookupArranger.DEFAULT);
   }
 
+  @Nullable
   public abstract LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, String prefix, @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
