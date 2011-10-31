@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonNames;
+import com.jetbrains.cython.types.CythonBuiltinType;
+import com.jetbrains.cython.types.CythonType;
 import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -108,7 +110,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
-      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
+      if (MakoLanguage._isDisabledFor(node)) {
         return;
       }
       checkSlots(node);
@@ -213,7 +215,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
-      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
+      if (MakoLanguage._isDisabledFor(node)) {
         return;
       }
       if (node instanceof PyReferenceOwner) {
@@ -429,6 +431,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 if (file instanceof PyFile) {
                   actions.add(new AddFunctionQuickFix(ref_text, (PyFile)file));
                 }
+              }
+              else if (qtype instanceof CythonBuiltinType ||
+                       (qtype instanceof CythonType && reference instanceof PyOperatorReferenceImpl)) {
+                return;
               }
               else {
                 description_buf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));

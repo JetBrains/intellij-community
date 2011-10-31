@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -63,6 +64,9 @@ public class PyCallByClassInspection extends PyInspection {
 
     @Override
     public void visitPyCallExpression(PyCallExpression call) {
+      if (CythonLanguageDialect._isDisabledFor(call)) {
+        return;
+      }
       PyExpression callee = call.getCallee();
       if (callee instanceof PyQualifiedExpression) {
         PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
