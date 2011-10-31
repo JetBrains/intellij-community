@@ -321,8 +321,10 @@ public class TreeHighlighter {
     includedWires.addAll(myIncludedWires);
     myIncludedWires.clear();
 
+    int lastEventIdx = myIdx;
     while (iterator2.hasNext() && ! includedWires.isEmpty()) {
       final WireEventI event = iterator2.next();
+      lastEventIdx = event.getCommitIdx();
       final Set<Integer> ends = new HashSet<Integer>();
       final int self = myModel.getCommitAt(event.getCommitIdx()).getWireNumber();
       ends.add(self);
@@ -361,6 +363,11 @@ public class TreeHighlighter {
       if (event.getWaitStartsNumber() == 0 && myIncludedWires.isEmpty()) {
         myIdx = event.getCommitIdx();
       }
+    }
+
+    // todo rather last chain idx
+    if (runningIdx < lastEventIdx) {
+      fillCommits(runningIdx, lastEventIdx, includedWires);
     }
 
     if (myIncludedWires.isEmpty()) {
