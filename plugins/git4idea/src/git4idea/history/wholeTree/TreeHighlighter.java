@@ -36,15 +36,16 @@ public class TreeHighlighter {
   private final BigTableTableModel myModel;
   private final Set<Integer> myIncludedWires;
   private final boolean mySingleRoot;
-  private Iterator<WireEventI> myIterator;
   private boolean myInitialized;
 
   private final static int ourIndexInterval = 200;
   private final TreeMap<Integer, Set<Integer>> myIndexOfGrey;
   private final TreeMap<Integer, Set<Integer>> myIndexOfGreyNotReady;
+  private boolean myDumb;
 
   public TreeHighlighter(BigTableTableModel model, VirtualFile root, final int idx) {
     myModel = model;
+    myDumb = false;
     myRoot = root;
     myInitIdx = idx;
     myInitialized = false;
@@ -57,11 +58,19 @@ public class TreeHighlighter {
   }
 
   public void setPoint(AbstractHash point) {
+    myDumb = false;
     myPoint = point;
+    myParents.clear();
+    myIndexOfGrey.clear();
+    myIndexOfGreyNotReady.clear();
+    myInitIdx = -1;
+    myIdx = -1;
+    myIncludedWires.clear();
+    myInitialized = false;
   }
 
   public boolean isIncluded(final AbstractHash idx) {
-    return myParents.contains(idx);
+    return myDumb ? true : myParents.contains(idx);
   }
 
   private boolean init() {
@@ -86,6 +95,7 @@ public class TreeHighlighter {
   
   public Map<Integer, Set<Integer>> getGreyForInterval(final int from, final int to, int repoCorrection, final Set<Integer> wireModificationSet) {
     assert from < to;
+    if (myDumb) return null;
 
     final Set<Integer> firstUsed;
     final WireEventsIterator eventsIterator;
@@ -150,17 +160,21 @@ public class TreeHighlighter {
       }
 
       // including event idx
-      HashSet<Integer> value = new HashSet<Integer>();
+      HashSet<Integer> value;
+      value = new HashSet<Integer>();
       for (Integer integer : firstUsed) {
         value.add(integer + repoCorrection);
       }
       for (int i = idx; i <= event.getCommitIdx(); i++) {
         if (i == myInitIdx) {
           final int wireNumber = myModel.getCommitAt(myInitIdx).getWireNumber();
-          if (! firstUsed.contains(wireNumber + repoCorrection)) {
+          if (! value.contains(wireNumber + repoCorrection)) {
             wireModificationSet.add(myInitIdx);
-            firstUsed.add(wireNumber + repoCorrection);
-            value = new HashSet<Integer>(firstUsed);
+            firstUsed.add(wireNumber);
+            value = new HashSet<Integer>();
+            for (Integer integer : firstUsed) {
+              value.add(integer + repoCorrection);
+            }
           }
         }
         result.put(i, value);
@@ -300,15 +314,15 @@ public class TreeHighlighter {
     final Map<VirtualFile,WireEventsIterator> groupIterators = myModel.getAllGroupIterators(myIdx);
     final WireEventsIterator eventsIterator = groupIterators.get(myRoot);
 
-    myIterator = eventsIterator.getWireEventsIterator();
+    Iterator<WireEventI> iterator2 = eventsIterator.getWireEventsIterator();
 
     int runningIdx = myIdx;
     final Set<Integer> includedWires = new HashSet<Integer>();
     includedWires.addAll(myIncludedWires);
     myIncludedWires.clear();
 
-    while (myIterator.hasNext() && ! includedWires.isEmpty()) {
-      final WireEventI event = myIterator.next();
+    while (iterator2.hasNext() && ! includedWires.isEmpty()) {
+      final WireEventI event = iterator2.next();
       final Set<Integer> ends = new HashSet<Integer>();
       final int self = myModel.getCommitAt(event.getCommitIdx()).getWireNumber();
       ends.add(self);
@@ -371,5 +385,17 @@ public class TreeHighlighter {
     myIdx = -1;
     myInitIdx = -1;
     myInitialized = false;
+  }
+
+  public void setDumb() {
+    myDumb = true;
+  }
+
+  public boolean isDumb() {
+    return myDumb;
+  }
+
+  public AbstractHash getPoint() {
+    return myPoint;
   }
 }

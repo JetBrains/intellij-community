@@ -256,7 +256,17 @@ public class BigTableTableModel extends AbstractTableModel {
   public void setHead(VirtualFile root, AbstractHash headHash) {
     final TreeHighlighter treeHighlighter = myTreeHighlighter.get(root);
     if (treeHighlighter != null) {
+      if (! treeHighlighter.isDumb() && headHash.equals(treeHighlighter.getPoint())) return;  // already ok
       treeHighlighter.setPoint(headHash);
+      treeHighlighter.update(0);
+    }
+  }
+
+  public void setDumbHighlighter(VirtualFile root) {
+    final TreeHighlighter treeHighlighter = myTreeHighlighter.get(root);
+    if (treeHighlighter != null) {
+      if (treeHighlighter.isDumb()) return;
+      treeHighlighter.setDumb();
     }
   }
   

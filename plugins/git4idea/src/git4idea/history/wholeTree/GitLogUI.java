@@ -69,6 +69,7 @@ import git4idea.process.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -815,6 +816,15 @@ public class GitLogUI implements Disposable {
       group.add(new Separator());
       group.add(myCopyHashAction);
       group.add(myMyShowTreeAction);
+      final MyHighlightCurrent myHighlightCurrent = new MyHighlightCurrent();
+      final CustomShortcutSet customShortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, SystemInfo.isMac
+                                                                                                  ? KeyEvent.META_DOWN_MASK
+                                                                                                  : KeyEvent.CTRL_DOWN_MASK));
+      myHighlightCurrent.registerCustomShortcutSet(customShortcutSet, myJBTable);
+      myHighlightCurrent.registerCustomShortcutSet(customShortcutSet, myGraphGutter.getComponent());
+
+      group.add(myHighlightCurrent);
+      group.add(new MyHighlightActionGroup());
       final MyToggleCommitMark toggleCommitMark = new MyToggleCommitMark();
       toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myJBTable);
       toggleCommitMark.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)),
@@ -1803,7 +1813,6 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myDateOrder;
     private final GitLogSettings mySettings;
     private final DumbAwareAction myTopoOrder;
-    private final DumbAwareAction myHighlightHead;
     private final Icon myMarkIcon;
 
     public MyTreeSettings() {
@@ -1831,19 +1840,6 @@ public class GitLogUI implements Disposable {
         public void update(AnActionEvent e) {
           super.update(e);
           e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? VcsUtil.ourNotDot : VcsUtil.ourDot);
-        }
-      };
-
-      myHighlightHead = new DumbAwareAction("Current branch colored") {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          myGraphGutter.setCurrentBranchColored(! myGraphGutter.isCurrentBranchColored());
-        }
-
-        @Override
-        public void update(AnActionEvent e) {
-          super.update(e);
-          e.getPresentation().setIcon(myGraphGutter.isCurrentBranchColored() ? myMarkIcon : null);
         }
       };
 
@@ -1913,7 +1909,6 @@ public class GitLogUI implements Disposable {
       }
       dab.add(myMultiColorAction);
       dab.add(myCalmAction);
-      dab.add(myHighlightHead);
       dab.add(new Separator());
       dab.add(myRootsForTreeAction);
       return dab;
@@ -2006,6 +2001,151 @@ public class GitLogUI implements Disposable {
       final boolean enabled = myRootsUnderVcs.size() > 1;
       e.getPresentation().setEnabled(enabled);
       e.getPresentation().setVisible(enabled);
+    }
+  }
+
+  public class MyHighlightCurrent extends DumbAwareAction {
+    public MyHighlightCurrent() {
+      super("Highlight current");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (selectedRows.length != 1) {
+        return;
+      }
+      final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+      if (commitAt.holdsDecoration()) {
+        return;
+      }
+      final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
+      myTableModel.setHead(root, commitAt.getHash());
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      weNeedOneCommitSelected(e);
+    }
+  }
+
+  private void weNeedOneCommitSelected(AnActionEvent e) {
+    final int[] selectedRows = myJBTable.getSelectedRows();
+    if (selectedRows.length != 1) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+    if (commitAt.holdsDecoration()) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    e.getPresentation().setEnabled(true);
+  }
+
+  public class MyHighlightActionGroup extends ActionGroup {
+    private final DumbAwareAction myAllHeads;
+    private final DumbAwareAction myClearAll;
+    private final DumbAwareAction myHead;
+    private final DumbAwareAction myClear;
+//    private final DumbAwareAction myCurrent;
+    private final AnAction[] myAnActions;
+
+    public MyHighlightActionGroup() {
+      super("Highlight...", true);
+
+    myAllHeads = new DumbAwareAction("All Heads") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        for (VirtualFile root : myTableModel.getActiveRoots()) {
+          final SymbolicRefs symbolicRefs = myRefs.get(root);
+          if (symbolicRefs == null) continue;
+          final AbstractHash headHash = symbolicRefs.getHeadHash();
+          if (headHash == null) continue;
+          myTableModel.setHead(root, headHash);
+        }
+      }
+    };
+    myClearAll = new DumbAwareAction("Clear All") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        for (VirtualFile root : myTableModel.getActiveRoots()) {
+          myTableModel.setDumbHighlighter(root);
+        }
+      }
+    };
+    myHead = new DumbAwareAction("HEAD") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int[] selectedRows = myJBTable.getSelectedRows();
+        if (selectedRows.length != 1) {
+          return;
+        }
+        final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+        if (commitAt.holdsDecoration()) {
+          return;
+        }
+        final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
+        final SymbolicRefs symbolicRefs = myRefs.get(root);
+        if (symbolicRefs == null) return;
+        final AbstractHash headHash = symbolicRefs.getHeadHash();
+        if (headHash == null) return;
+        myTableModel.setHead(root, headHash);
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        weNeedOneCommitSelected(e);
+      }
+    };
+    myClear = new DumbAwareAction("Clear") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int[] selectedRows = myJBTable.getSelectedRows();
+        if (selectedRows.length != 1) {
+          return;
+        }
+        final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+        if (commitAt.holdsDecoration()) {
+          return;
+        }
+        final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
+        myTableModel.setDumbHighlighter(root);
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        weNeedOneCommitSelected(e);
+      }
+    };
+    /*myCurrent = new DumbAwareAction("Current") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int[] selectedRows = myJBTable.getSelectedRows();
+        if (selectedRows.length != 1) {
+          return;
+        }
+        final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+        if (commitAt.holdsDecoration()) {
+          return;
+        }
+        final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
+        myTableModel.setHead(root, commitAt.getHash());
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        weNeedOneCommitSelected(e);
+      }
+    };*/
+
+      myAnActions = new AnAction[]{myAllHeads, myClearAll, new Separator(), myHead, myClear};
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return myAnActions;
     }
   }
 

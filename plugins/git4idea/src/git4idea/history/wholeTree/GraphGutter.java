@@ -248,6 +248,9 @@ public class GraphGutter {
     }
     
     private Color getConnectorColor(Graphics g, Set<Integer> selected, int i, Integer wire, Map<Integer, Set<Integer>> grey) {
+      if (grey == null) {
+        return selected.contains(i) ? Color.white : myStyle.getColorForWire(wire);
+      }
       final Set<Integer> integers = grey.get(i);
       if (myCurrentBranchColored && (integers == null || ! integers.contains(wire))) {
         return OUTLINE_NOT_INCLUDED;
