@@ -1299,7 +1299,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   private void selectBlockNodeByRange(TextRange range, boolean selectParentIfNotFound) {
-    if(myBlockTreeBuilder ==null )return;
+    if (myBlockTreeBuilder == null || !myBlockStructurePanel.isVisible()) {
+      return;
+    }
     BlockTreeNode node = (BlockTreeNode)myBlockTreeBuilder.getTreeStructure().getRootElement();
     main_loop:
     while (true) {
