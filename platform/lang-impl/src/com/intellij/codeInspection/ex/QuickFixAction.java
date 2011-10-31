@@ -187,6 +187,7 @@ public class QuickFixAction extends AnAction {
     refreshViews(project, refElements, tool);
     final ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
     for (RefElement refElement : refElements) {
+      if (refElement == null) continue;
       refElement.getRefManager().removeRefElement(refElement, deletedRefs);
     }
   }
