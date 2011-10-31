@@ -45,8 +45,8 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
         latest = null;
       }
     }
-    windowAction.dispose();
     remove(windowAction);
+    windowAction.dispose();
   }
 
   public boolean isEnabled() {
