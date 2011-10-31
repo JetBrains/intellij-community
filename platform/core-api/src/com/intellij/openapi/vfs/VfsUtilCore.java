@@ -20,7 +20,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 public class VfsUtilCore {
   /**
@@ -150,5 +154,30 @@ public class VfsUtilCore {
       stream.write(bom);
     }
     return stream;
+  }
+
+  public static void visitChildrenRecursively(@NotNull VirtualFile file, VirtualFileVisitor visitor) {
+    visitChildrenRecursively(file, visitor, null);
+  }
+
+  private static void visitChildrenRecursively(@NotNull VirtualFile file,
+                                               VirtualFileVisitor visitor,
+                                               @Nullable Set<VirtualFile> visitedSymlinks) {
+
+    if (!visitor.visitFile(file)) return;
+    if (file.isSymLink()) {
+      if (visitedSymlinks == null) {
+        visitedSymlinks = new HashSet<VirtualFile>();
+      }
+      if (!visitedSymlinks.add(file)) {
+        visitor.afterChildrenVisited(file);
+        return;
+      }
+    }
+    VirtualFile[] children = file.getChildren();
+    for (VirtualFile child : children) {
+      visitChildrenRecursively(child, visitor, visitedSymlinks);
+    }
+    visitor.afterChildrenVisited(file);
   }
 }

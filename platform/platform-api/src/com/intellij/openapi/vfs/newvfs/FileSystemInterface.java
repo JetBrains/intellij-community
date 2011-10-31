@@ -42,6 +42,8 @@ public interface FileSystemInterface {
   void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException;
 
   boolean isSymLink(@NotNull VirtualFile file);
+  @Nullable
+  String resolveSymLink(@NotNull VirtualFile file);
 
   boolean isSpecialFile(@NotNull VirtualFile file);
 

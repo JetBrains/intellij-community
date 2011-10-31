@@ -58,6 +58,11 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   }
 
   @Override
+  public String resolveSymLink(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @Override
   public boolean isSpecialFile(@NotNull final VirtualFile file) {
     return false;
   }

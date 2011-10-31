@@ -212,6 +212,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return false;
   }
 
+  @Nullable
+  public String resolveSymLink() {
+    return null;
+  }
+
   /**
    * Checks whether this file is a special (e.g. FIFO or device) file.
    *

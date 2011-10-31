@@ -24,9 +24,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -322,6 +320,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return (FSRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
   }
 
+  public static boolean isSymLink(final int id) {
+    assert id > 0;
+    return (FSRecords.getFlags(id) & IS_SYMLINK) != 0;
+  }
+
   private static int getParent(final int id) {
     assert id > 0;
     return FSRecords.getParent(id);
@@ -361,6 +364,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   @Override
   public boolean isSymLink(@NotNull VirtualFile file) {
     return (FSRecords.getFlags(getFileId(file)) & IS_SYMLINK) != 0;
+  }
+
+  @Override
+  public String resolveSymLink(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

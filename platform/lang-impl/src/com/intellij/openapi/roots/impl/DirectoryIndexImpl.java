@@ -353,7 +353,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
 
       if (!parentInfo.getOrderEntries().isEmpty()) {
-        state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
+        state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo);
       }
       return state;
     }
@@ -427,29 +427,59 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       return info;
     }
 
-    private void fillMapWithModuleContent(VirtualFile dir, Module module, VirtualFile contentRoot) {
-      if (isExcluded(contentRoot, dir)) return;
-      if (isIgnored(dir)) return;
+    private void fillMapWithModuleContent(VirtualFile root, final Module module, final VirtualFile contentRoot) {
 
-      DirectoryInfo info = getOrCreateDirInfo(dir);
+      VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
+        
+        @Override
+        protected DirectoryInfo updateInfo(VirtualFile file) {
+          if (isExcluded(contentRoot, file)) return null;
+          if (isIgnored(file)) return null;
 
-      if (info.module != null) { // module contents overlap
-        DirectoryInfo parentInfo = myDirToInfoMap.get(dir.getParent());
-        if (parentInfo == null || !info.module.equals(parentInfo.module)) return; // content of another module is below this module's content
-      }
+          DirectoryInfo info = getOrCreateDirInfo(file);
 
-      VirtualFile[] children = dir.getChildren();
-      for (VirtualFile child : children) {
-        if (child.isDirectory()) {
-          fillMapWithModuleContent(child, module, contentRoot);
+          if (info.module != null) { // module contents overlap
+            DirectoryInfo parentInfo = myDirToInfoMap.get(file.getParent());
+            if (parentInfo == null || !info.module.equals(parentInfo.module)) return null;
+          }
+
+          return info;
         }
-      }
 
-      // important to change module AFTER processing children - to handle overlapping modules
-      info.module = module;
-      info.contentRoot = contentRoot;
+        @Override
+        protected void afterChildrenVisited(DirectoryInfo info) {
+          info.module = module;
+          info.contentRoot = contentRoot;
+        }
+      });
     }
 
+    private abstract class DirectoryVisitor extends VirtualFileVisitor {
+
+      private Stack<DirectoryInfo> myDirectoryInfoStack = new Stack<DirectoryInfo>();
+      
+      @Override
+      public boolean visitFile(VirtualFile file) {
+        if (!file.isDirectory()) return false;
+        DirectoryInfo info = updateInfo(file);
+        if (info != null) {
+          myDirectoryInfoStack.push(info);
+          return true;
+        }
+        return false; 
+      }
+
+      @Override
+      public void afterChildrenVisited(VirtualFile file) {
+        afterChildrenVisited(myDirectoryInfoStack.pop());
+      }
+
+      @Nullable
+      protected abstract DirectoryInfo updateInfo(VirtualFile file);
+
+      protected void afterChildrenVisited(DirectoryInfo info) {}
+    }
+    
     private boolean isExcluded(VirtualFile root, VirtualFile dir) {
       Set<String> excludes = myExcludeRootsMap.get(root);
       return excludes != null && excludes.contains(dir.getUrl());
@@ -494,28 +524,45 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    private void fillMapWithModuleSource(VirtualFile dir, Module module, String packageName, VirtualFile sourceRoot, boolean isTestSource) {
-      DirectoryInfo info = myDirToInfoMap.get(dir);
-      if (info == null) return;
-      if (!module.equals(info.module)) return;
+    private void fillMapWithModuleSource(final VirtualFile dir, final Module module, final String packageName, final VirtualFile sourceRoot, final boolean isTestSource) {
+      
+      VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
+        
+        private Stack<String> myPackages = new Stack<String>();
 
-      if (info.isInModuleSource) { // module sources overlap
-        String definedPackage = myDirToPackageName.get(dir);
-        if (definedPackage != null && definedPackage.length() == 0) return; // another source root starts here
-      }
+        @Override
+        protected DirectoryInfo updateInfo(VirtualFile file) {
+          DirectoryInfo info = myDirToInfoMap.get(file);
+          if (info == null) return null;
+          if (!module.equals(info.module)) return null;
 
-      info.isInModuleSource = true;
-      info.isTestSource = isTestSource;
-      info.sourceRoot = sourceRoot;
-      setPackageName(dir, packageName);
+          if (info.isInModuleSource) { // module sources overlap
+            String definedPackage = myDirToPackageName.get(file);
+            if (definedPackage != null && definedPackage.length() == 0) return null; // another source root starts here
+          }
 
-      VirtualFile[] children = dir.getChildren();
-      for (VirtualFile child : children) {
-        if (child.isDirectory()) {
-          String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-          fillMapWithModuleSource(child, module, childPackageName, sourceRoot, isTestSource);
+          info.isInModuleSource = true;
+          info.isTestSource = isTestSource;
+          info.sourceRoot = sourceRoot;
+
+          String currentPackage;
+          if (myPackages.isEmpty()) {
+            currentPackage = packageName;
+          }
+          else {
+            currentPackage = getPackageNameForSubdir(myPackages.peek(), file.getName());
+          }
+          myPackages.push(currentPackage);
+          setPackageName(file, currentPackage);
+          return info;
         }
-      }
+
+        @Override
+        protected void afterChildrenVisited(DirectoryInfo info) {
+          super.afterChildrenVisited(info);
+          myPackages.pop();
+        }
+      });
     }
 
     private void initLibrarySources(Module module, ProgressIndicator progress) {
@@ -623,7 +670,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, null, null);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, null);
           }
         }
         else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
@@ -645,19 +692,19 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
-        fillMapWithOrderEntries(vRoot, entries, null, null, null, null, null);
+        fillMapWithOrderEntries(vRoot, entries, null, null, null, null);
       }
 
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
-        fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, null, null);
+        fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, null);
       }
 
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
-        fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, null, null);
+        fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, null);
       }
     }
 
@@ -690,41 +737,50 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    private void fillMapWithOrderEntries(VirtualFile dir,
-                                         Collection<OrderEntry> orderEntries,
-                                         Module module,
-                                         VirtualFile libraryClassRoot,
-                                         VirtualFile librarySourceRoot,
-                                         DirectoryInfo parentInfo,
-                                         final List<OrderEntry> oldParentEntries) {
-      if (isIgnored(dir)) return;
+    private void fillMapWithOrderEntries(final VirtualFile root,
+                                         final Collection<OrderEntry> orderEntries,
+                                         final Module module,
+                                         final VirtualFile libraryClassRoot,
+                                         final VirtualFile librarySourceRoot,
+                                         final DirectoryInfo parentInfo) {
+      
+      VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
 
-      DirectoryInfo info = myDirToInfoMap.get(dir); // do not create it here!
-      if (info == null) return;
+        private Stack<List<OrderEntry>> myEntries = new Stack<List<OrderEntry>>();
 
-      if (module != null) {
-        if (info.module != module) return;
-        if (!info.isInModuleSource) return;
-      }
-      else if (libraryClassRoot != null) {
-        if (info.libraryClassRoot != libraryClassRoot) return;
-        if (info.isInModuleSource) return;
-      }
-      else if (librarySourceRoot != null) {
-        if (!info.isInLibrarySource) return;
-        if (info.sourceRoot != librarySourceRoot) return;
-        if (info.libraryClassRoot != null) return;
-      }
+        @Override
+        protected DirectoryInfo updateInfo(VirtualFile dir) {
+          if (isIgnored(dir)) return null;
 
-      final List<OrderEntry> oldEntries = info.getOrderEntries();
-      info.addOrderEntries(orderEntries, parentInfo, oldParentEntries);
+          DirectoryInfo info = myDirToInfoMap.get(dir); // do not create it here!
+          if (info == null) return null;
 
-      final VirtualFile[] children = dir.getChildren();
-      for (VirtualFile child : children) {
-        if (child.isDirectory()) {
-          fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, info, oldEntries);
+          if (module != null) {
+            if (info.module != module) return null;
+            if (!info.isInModuleSource) return null;
+          }
+          else if (libraryClassRoot != null) {
+            if (info.libraryClassRoot != libraryClassRoot) return null;
+            if (info.isInModuleSource) return null;
+          }
+          else if (librarySourceRoot != null) {
+            if (!info.isInLibrarySource) return null;
+            if (info.sourceRoot != librarySourceRoot) return null;
+            if (info.libraryClassRoot != null) return null;
+          }
+
+          List<OrderEntry> oldParentEntries = myEntries.isEmpty() ? null : myEntries.peek();
+          final List<OrderEntry> oldEntries = info.getOrderEntries();
+          myEntries.push(oldEntries);
+          info.addOrderEntries(orderEntries, parentInfo, oldParentEntries);
+          return info;
         }
-      }
+
+        @Override
+        protected void afterChildrenVisited(DirectoryInfo info) {
+          myEntries.pop();
+        }
+      });
     }
 
     private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {

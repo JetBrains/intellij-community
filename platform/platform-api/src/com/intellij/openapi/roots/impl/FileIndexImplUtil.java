@@ -17,26 +17,34 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class FileIndexImplUtil {
   private FileIndexImplUtil() {
   }
 
-  public static boolean iterateRecursively(@NotNull VirtualFile root, @NotNull VirtualFileFilter filter, @NotNull ContentIterator iterator){
-    if (!root.isValid() || !filter.accept(root)) return true;
+  public static boolean iterateRecursively(@NotNull final VirtualFile root, @NotNull final VirtualFileFilter filter, @NotNull final ContentIterator iterator){
 
-    if (!iterator.processFile(root)) return false;
+    try {
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(VirtualFile file) {
+          if (!file.isValid() || !filter.accept(file)) return true;
 
-    if (root.isDirectory()){
-      VirtualFile[] children = root.getChildren();
-      for (VirtualFile child : children) {
-        if (!iterateRecursively(child, filter, iterator)) return false;
-      }
+          if (!iterator.processFile(file)) throw new StopItException();
+          return true;
+        }
+      });
+      return true;
     }
-
-    return true;
+    catch (StopItException e) {
+      return false;
+    }
   }
+
+  private static class StopItException extends RuntimeException {}
 }

@@ -186,6 +186,11 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
   }
 
   @Override
+  public String resolveSymLink(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @Override
   public boolean isSpecialFile(@NotNull VirtualFile file) {
     return false;
   }

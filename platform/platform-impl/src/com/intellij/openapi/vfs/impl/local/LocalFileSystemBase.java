@@ -179,6 +179,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
+  public String resolveSymLink(@NotNull VirtualFile file) {
+    return SymLinkUtil.resolveSymLink(file.getPath());
+  }
+
+  @Override
   public boolean isSpecialFile(@NotNull final VirtualFile file) {
     final File ioFile = convertToIOFile(file);
     return ioFile.exists() && !ioFile.isFile() && !ioFile.isDirectory();
