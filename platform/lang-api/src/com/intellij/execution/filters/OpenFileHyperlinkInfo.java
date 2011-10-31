@@ -75,10 +75,13 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
       public Integer compute() {
         Document document = FileDocumentManager.getInstance().getDocument(file);
         if (document != null) {
-          int lineStartOffset = document.getLineStartOffset(documentLine);
-          int lineEndOffset = document.getLineEndOffset(documentLine);
-          int fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset);
-          return lineStartOffset + fixedColumn;
+          int lineCount = document.getLineCount();
+          if (0 <= documentLine && documentLine < lineCount) {
+            int lineStartOffset = document.getLineStartOffset(documentLine);
+            int lineEndOffset = document.getLineEndOffset(documentLine);
+            int fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset);
+            return lineStartOffset + fixedColumn;
+          }
         }
         return -1;
       }
