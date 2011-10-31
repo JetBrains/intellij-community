@@ -19,7 +19,8 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibrary
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
@@ -27,7 +28,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
@@ -50,48 +50,30 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final LibraryEx library = (LibraryEx)myContext.getLibraryModel(myLibrary);
     if (library == null || library.isDisposed()) return;
 
-    //final String libraryName = library.getName();
-    reportInvalidRoots(problemsHolder, library, OrderRootType.CLASSES, ProjectStructureProblemType.error("library-invalid-classes-path"));
-    reportInvalidRoots(problemsHolder, library, OrderRootType.SOURCES, ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
-    reportInvalidRoots(problemsHolder, library, JavadocOrderRootType.getInstance(), ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
-    //if (!invalidClasses.isEmpty()) {
-    //  final String description = createInvalidRootsDescription(invalidClasses, libraryName);
-    //  problemsHolder.registerProblem(ProjectBundle.message("project.roots.error.message.invalid.classes.roots", invalidClasses.size()), description, ProjectStructureProblemType.error("library-invalid-classes-path"),
-    //                                 createPlace(),
-    //                                 new RemoveInvalidRootsQuickFix(Collections.singletonMap(OrderRootType.CLASSES, invalidClasses),
-    //                                                                library));
-    //}
-    //final List<String> invalidJavadocs = library.getInvalidRootUrls(JavadocOrderRootType.getInstance());
-    //final List<String> invalidSources = library.getInvalidRootUrls(OrderRootType.SOURCES);
-    //if (!invalidJavadocs.isEmpty() || !invalidSources.isEmpty()) {
-    //  final Map<OrderRootType, List<String>> invalidRoots = new HashMap<OrderRootType, List<String>>();
-    //  invalidRoots.put(OrderRootType.SOURCES, invalidSources);
-    //  invalidRoots.put(JavadocOrderRootType.getInstance(), invalidJavadocs);
-    //  final String description = createInvalidRootsDescription(ContainerUtil.concat(invalidJavadocs, invalidSources), libraryName);
-    //  problemsHolder.registerProblem(ProjectBundle.message("project.roots.error.message.invalid.source.javadoc.roots", invalidJavadocs.size()+invalidSources.size()), description,
-    //                                 ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"),
-    //                                 createPlace(),
-    //                                 new RemoveInvalidRootsQuickFix(invalidRoots, library));
-    //}
+    reportInvalidRoots(problemsHolder, library, OrderRootType.CLASSES, "classes", ProjectStructureProblemType.error("library-invalid-classes-path"));
+    reportInvalidRoots(problemsHolder, library, OrderRootType.SOURCES, "sources", ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
+    reportInvalidRoots(problemsHolder, library, JavadocOrderRootType.getInstance(), "javadoc", ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
   }
 
-  private void reportInvalidRoots(ProjectStructureProblemsHolder problemsHolder,
-                                  LibraryEx library,
-                                  final OrderRootType type, final ProjectStructureProblemType problemType) {
-    final List<String> invalidClasses = library.getInvalidRootUrls(type);
-    for (String url : invalidClasses) {
-      problemsHolder.registerProblem("invalid path '" + url + "'", null, problemType,
-                                     createPlace(), new RemoveInvalidRootsQuickFix(Collections.singletonMap(type, Collections.singletonList(url)), library));
+  private void reportInvalidRoots(ProjectStructureProblemsHolder problemsHolder, LibraryEx library,
+                                  final OrderRootType type, Object rootName, final ProjectStructureProblemType problemType) {
+    final List<String> invalidUrls = library.getInvalidRootUrls(type);
+    if (!invalidUrls.isEmpty()) {
+      final String libraryName = library.getName();
+      final String description = createInvalidRootsDescription(invalidUrls, libraryName);
+      final PlaceInProjectStructure place = createPlace();
+      problemsHolder.registerProblem(ProjectBundle.message("project.roots.error.message.invalid.roots", rootName, invalidUrls.size()), description, problemType,
+                                     place, new RemoveInvalidRootsQuickFix(library, type, invalidUrls));
     }
   }
 
   private static String createInvalidRootsDescription(List<String> invalidClasses, String libraryName) {
     StringBuilder buffer = new StringBuilder();
     buffer.append("<html>");
-    buffer.append("Library '").append(libraryName).append("' has broken paths:");
+    buffer.append("Library '").append(libraryName).append("' has broken " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
       buffer.append("<br>&nbsp;&nbsp;");
-      buffer.append(VfsUtil.urlToPath(url));
+      buffer.append(PathUtil.toPresentableUrl(url));
     }
     buffer.append("</html>");
     return buffer.toString();
@@ -160,24 +142,24 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   private class RemoveInvalidRootsQuickFix extends ConfigurationErrorQuickFix {
-    private final Map<OrderRootType, List<String>> myInvalidRoots;
     private final Library myLibrary;
+    private final OrderRootType myType;
+    private final List<String> myInvalidUrls;
 
-    public RemoveInvalidRootsQuickFix(Map<OrderRootType, List<String>> invalidRoots, Library library) {
-      super("Remove invalid roots");
-      myInvalidRoots = invalidRoots;
+    public RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
+      super("Remove invalid " + StringUtil.pluralize("root", invalidUrls.size()));
       myLibrary = library;
+      myType = type;
+      myInvalidUrls = invalidUrls;
     }
 
     @Override
     public void performFix() {
       final LibraryTable.ModifiableModel libraryTable = myContext.getModifiableLibraryTable(myLibrary.getTable());
       if (libraryTable instanceof LibrariesModifiableModel) {
-        for (OrderRootType rootType : myInvalidRoots.keySet()) {
-          for (String invalidRoot : myInvalidRoots.get(rootType)) {
-            final ExistingLibraryEditor libraryEditor = ((LibrariesModifiableModel)libraryTable).getLibraryEditor(myLibrary);
-            libraryEditor.removeRoot(invalidRoot, rootType);
-          }
+        for (String invalidRoot : myInvalidUrls) {
+          final ExistingLibraryEditor libraryEditor = ((LibrariesModifiableModel)libraryTable).getLibraryEditor(myLibrary);
+          libraryEditor.removeRoot(invalidRoot, myType);
         }
         myContext.getDaemonAnalyzer().queueUpdate(LibraryProjectStructureElement.this);
         final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(myContext.getProject());
