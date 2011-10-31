@@ -40,6 +40,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -240,8 +241,9 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
 
     AccessToken token = WriteAction.start();
     try {
+      ModulesProvider updatedModulesProvider = fromProjectStructure ? modulesProvider : new DefaultModulesProvider(project);
       for (ProjectConfigurationUpdater updater : myUpdaters) {
-        updater.updateProject(project, modelsProvider, modulesProvider);
+        updater.updateProject(project, modelsProvider, updatedModulesProvider);
       }
     }
     finally {
