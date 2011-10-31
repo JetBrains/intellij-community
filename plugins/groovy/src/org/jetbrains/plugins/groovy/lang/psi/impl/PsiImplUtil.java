@@ -532,7 +532,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiType inferExpectedTypeForDiamond(GrNewExpression diamondNew) {
+  public static PsiType inferExpectedTypeForDiamond(GrExpression diamondNew) {
     PsiElement pparent = PsiUtil.skipParentheses(diamondNew.getParent(), true);
     if (pparent instanceof GrAssignmentExpression &&
         PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), diamondNew, false)) {

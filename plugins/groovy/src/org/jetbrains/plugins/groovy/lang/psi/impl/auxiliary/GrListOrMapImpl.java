@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -169,6 +171,25 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       final HashMap<String, PsiType> stringEntries = new HashMap<String, PsiType>();
       final ArrayList<Pair<PsiType, PsiType>> otherEntries = new ArrayList<Pair<PsiType, PsiType>>();
       GrNamedArgument[] namedArgs = listOrMap.getNamedArguments();
+
+      if (namedArgs.length == 0) {
+        PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond(listOrMap);
+
+        if (lType instanceof PsiClassType && InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_MAP)) {
+          PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)lType).resolveGenerics();
+          PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
+          
+          PsiClass map = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, scope);
+          PsiClass hashMap = facade.findClass(GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope);
+          if (map!=null && hashMap != null) {
+            PsiSubstitutor mapSubstitutor = PsiSubstitutor.EMPTY.
+              put(hashMap.getTypeParameters()[0], substitutor.substitute(map.getTypeParameters()[0])).
+              put(hashMap.getTypeParameters()[1], substitutor.substitute(map.getTypeParameters()[1]));
+            return facade.getElementFactory().createType(hashMap, mapSubstitutor);
+          }
+        }
+      }
+
       for (GrNamedArgument namedArg : namedArgs) {
         final GrArgumentLabel label = namedArg.getLabel();
         final GrExpression expression = namedArg.getExpression();
@@ -189,11 +210,32 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
 
     private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
+      GlobalSearchScope scope = listOrMap.getResolveScope();
+
+      if (initializers.length == 0) {
+        PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond(listOrMap);
+
+        if (lType instanceof PsiClassType && InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST)) {
+          PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)lType).resolveGenerics();
+          PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
+          
+          PsiClass list = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, scope);
+          PsiClass arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, scope);
+
+          if (list != null && arrayList != null) {
+            PsiSubstitutor arrayListSubstitutor =
+              PsiSubstitutor.EMPTY.put(arrayList.getTypeParameters()[0], substitutor.substitute(list.getTypeParameters()[0]));
+            return facade.getElementFactory().createType(arrayList, arrayListSubstitutor);
+          }
+        }
+      }
+
       PsiType[] result = new PsiType[initializers.length];
       for (int i = 0; i < result.length; i++) {
         result[i] = initializers[i].getType();
       }
-      return new GrTupleType(result, JavaPsiFacade.getInstance(listOrMap.getProject()), listOrMap.getResolveScope());
+      return new GrTupleType(result, facade, scope);
     }
 
   }
