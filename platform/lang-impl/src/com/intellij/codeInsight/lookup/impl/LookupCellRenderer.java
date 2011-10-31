@@ -121,7 +121,12 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
-    item.renderElement(presentation);
+    if (item.isValid()) {
+      item.renderElement(presentation);
+    } else {
+      presentation.setItemTextForeground(Color.RED);
+      presentation.setItemText("Invalid");
+    }
 
     myNameComponent.clear();
     myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
