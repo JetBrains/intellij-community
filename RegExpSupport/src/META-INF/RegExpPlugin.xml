@@ -9,12 +9,5 @@
     <lang.braceMatcher language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpBraceMatcher"/>
     <lang.surroundDescriptor language="RegExp" implementationClass="org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor"/>
     <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
-
-    <!--
-    <intentionAction>
-      <className>org.intellij.plugins.intelliLang.inject.quickedit.CheckRegExpIntentionAction</className>
-      <category>Declaration</category>
-    </intentionAction>
-    -->
   </extensions>
 </idea-plugin>
