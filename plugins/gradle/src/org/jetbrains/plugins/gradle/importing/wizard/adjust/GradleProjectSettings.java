@@ -210,7 +210,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
       return false;
     }
     
-    if (!validateDirLocation(myProjectConfigLocationField, "gradle.import.text.error.undefined.config.location",
+    if (!validateDirLocation(myProjectConfigLocationField, "gradle.import.text.error.project.undefined.config.location",
                              "gradle.import.text.error.file.config.location"))
     {
       return false;
