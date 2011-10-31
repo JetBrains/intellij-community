@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
@@ -31,13 +32,21 @@ import java.util.Map;
  * @author peter
  */
 public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.guess.impl.ExpressionTypeMemoryState");
   public static final TObjectHashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new TObjectHashingStrategy<PsiExpression>() {
     public int computeHashCode(PsiExpression object) {
       return object.getNode().getElementType().hashCode();
     }
 
     public boolean equals(PsiExpression o1, PsiExpression o2) {
-      return CodeInsightUtil.areExpressionsEquivalent(o1, o2);
+      if (CodeInsightUtil.areExpressionsEquivalent(o1, o2)) {
+        if (computeHashCode(o1) != computeHashCode(o2)) {
+          LOG.error("different hashCodes: " + o1 + "; " + o2 + "; " + computeHashCode(o1) + "!=" + computeHashCode(o2));
+        }
+
+        return true;
+      }
+      return false;
     }
   };
   private final Map<PsiExpression, PsiType> myStates = new THashMap<PsiExpression, PsiType>(EXPRESSION_HASHING_STRATEGY);
