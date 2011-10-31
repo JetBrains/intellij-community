@@ -3,6 +3,8 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.cython.types.CythonClassType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -40,6 +42,9 @@ public class PyCallingNonCallableInspection extends PyInspection {
     public void visitPyCallExpression(PyCallExpression node) {
       super.visitPyCallExpression(node);
       final PyExpression callee = node.getCallee();
+      if (CythonLanguageDialect._isDisabledFor(node)) {
+        return;
+      }
       if (callee != null && !PyNames.CLASS.equals(callee.getName())) {
         // All classes are callable, but getType() for a class is special-cased to return the class itself instead of a metaclass, so we
         // cannot rely on types here
