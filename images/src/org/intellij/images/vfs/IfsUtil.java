@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,34 +58,21 @@ public final class IfsUtil {
    * @return true if file image is loaded.
    * @throws java.io.IOException if image can not be loaded
    */
-  private static boolean refresh(@NotNull VirtualFile file) throws IOException {
+  private static boolean refresh(@NotNull final VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
     SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
     if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
       try {
         final byte[] content = file.contentsToByteArray();
-        InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-        ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-        try {
-          Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
-          if (imageReaders.hasNext()) {
-            ImageReader imageReader = imageReaders.next();
-            try {
-              file.putUserData(FORMAT_KEY, imageReader.getFormatName());
-              ImageReadParam param = imageReader.getDefaultReadParam();
-              imageReader.setInput(imageInputStream, true, true);
-              int minIndex = imageReader.getMinIndex();
-              BufferedImage image = imageReader.read(minIndex, param);
-              file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
-              return true;
-            } finally {
-              imageReader.dispose();
-            }
+        final boolean loaded = processBytes(content, new PairConsumer<String, BufferedImage>() {
+          public void consume(final String formatName, final BufferedImage image) {
+            file.putUserData(FORMAT_KEY, formatName);
+            file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
           }
-        } finally {
-          imageInputStream.close();
-        }
-      } finally {
+        });
+        if (loaded) return true;
+      }
+      finally {
         // We perform loading no more needed
         file.putUserData(TIMESTAMP_KEY, file.getTimeStamp());
       }
@@ -92,6 +80,33 @@ public final class IfsUtil {
     return false;
   }
 
+  public static boolean processBytes(final byte[] content, PairConsumer<String, BufferedImage> consumer) throws IOException {
+    InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
+    ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
+    try {
+      Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
+      if (imageReaders.hasNext()) {
+        ImageReader imageReader = imageReaders.next();
+        try {
+          final String formatName = imageReader.getFormatName();
+          ImageReadParam param = imageReader.getDefaultReadParam();
+          imageReader.setInput(imageInputStream, true, true);
+          int minIndex = imageReader.getMinIndex();
+          BufferedImage image = imageReader.read(minIndex, param);
+          consumer.consume(formatName, image);
+          return true;
+        }
+        finally {
+          imageReader.dispose();
+        }
+      }
+    }
+    finally {
+      imageInputStream.close();
+    }
+    return false;
+  }
+  
   @Nullable
   public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
     refresh(file);
