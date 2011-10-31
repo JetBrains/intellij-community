@@ -173,7 +173,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
     private AnimatedIcon myIcon = new AnimatedIcon("Macro recording") {
       {
-        init(new Icon[] {IconLoader.getIcon("/ide/macroToolbar1.png"), IconLoader.getIcon("/ide/macroToolbar2.png")}, IconLoader.getIcon("/ide/macroToolbar1.png"), 800);
+        init(new Icon[] {
+          IconLoader.getIcon("/ide/macro/recording_1.png"),
+          IconLoader.getIcon("/ide/macro/recording_2.png"),
+          IconLoader.getIcon("/ide/macro/recording_3.png"),
+          IconLoader.getIcon("/ide/macro/recording_4.png")},
+             IconLoader.getIcon("/ide/macro/recording_1.png"), 1000);
       }
     };
     private StatusBar myStatusBar;
