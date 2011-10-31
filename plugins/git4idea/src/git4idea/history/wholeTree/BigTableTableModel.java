@@ -215,6 +215,7 @@ public class BigTableTableModel extends AbstractTableModel {
   public int getCorrectedWire(final CommitI commitI) {
     if (mySkeletonBuilder == null) return -1;
     final VirtualFile file = commitI.selectRepository(myRootsHolder.getRoots());
+    if (! myAdditions.containsKey(file)) return commitI.getWireNumber();
     return myAdditions.get(file) + commitI.getWireNumber();
   }
 
@@ -297,7 +298,7 @@ public class BigTableTableModel extends AbstractTableModel {
     WiresGroupIterator(int firstIdxAbs, VirtualFile root) {
       myFirstIdxAbs = firstIdxAbs;
       myRoot = root;
-      myOffset = myAdditions.get(myRoot);
+      myOffset = myAdditions.containsKey(myRoot) ? myAdditions.get(myRoot) : 0;
 
       myFirstUsed = new ArrayList<Integer>();
       TreeNavigationImpl navigation = myNavigation.get(myRoot);
