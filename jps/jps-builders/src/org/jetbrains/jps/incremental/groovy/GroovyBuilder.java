@@ -60,7 +60,7 @@ public class GroovyBuilder extends Builder {
       }
 
       final List<String> cp = new ArrayList<String>();
-      for (File file : context.getProjectPaths().getCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake())) {
+      for (File file : context.getProjectPaths().getCompilationClasspath(chunk, context.isCompilingTests(), false)) {
         cp.add(FileUtil.toSystemIndependentName(file.getPath()));
       }
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath()); //groovy_rt.jar
