@@ -15,7 +15,6 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
-import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -47,14 +46,9 @@ public class CompositeOperation extends CvsOperation {
   }
 
   public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
-    CvsEntriesManager.getInstance().lockSynchronizationActions();
-    try{
-      for (final CvsOperation cvsOperation : getSubOperations()) {
-        myCurrentOperation = cvsOperation;
-        myCurrentOperation.execute(executionEnvironment, underReadAction);
-      }
-    } finally {
-      CvsEntriesManager.getInstance().unlockSynchronizationActions();
+    for (final CvsOperation cvsOperation : getSubOperations()) {
+      myCurrentOperation = cvsOperation;
+      myCurrentOperation.execute(executionEnvironment, underReadAction);
     }
   }
 

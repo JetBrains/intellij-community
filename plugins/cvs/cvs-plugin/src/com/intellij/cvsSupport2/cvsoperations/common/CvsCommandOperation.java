@@ -102,21 +102,14 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                            CvsExecutionEnvironment cvsExecutionEnvironment);
 
   @Override
-  public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException,
-                                                                           CommandAbortedException {
-    CvsEntriesManager.getInstance().lockSynchronizationActions();
-    try {
-      if (runInExclusiveLock()) {
-        synchronized (CvsOperation.class) {
-          doExecute(executionEnvironment, underReadAction);
-        }
-      }
-      else {
+  public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
+    if (runInExclusiveLock()) {
+      synchronized (CvsOperation.class) {
         doExecute(executionEnvironment, underReadAction);
       }
     }
-    finally {
-      CvsEntriesManager.getInstance().unlockSynchronizationActions();
+    else {
+      doExecute(executionEnvironment, underReadAction);
     }
   }
 
