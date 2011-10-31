@@ -4,6 +4,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.*;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -26,9 +27,10 @@ public class GradleProjectStructureFactory {
   /** Shared instance of the current (stateless) class. */
   public static final GradleProjectStructureFactory INSTANCE = new GradleProjectStructureFactory();
 
-  private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/ideaProject.png");
-  private static final Icon MODULE_ICON  = IconLoader.getIcon("/nodes/ModuleOpen.png");
-  private static final Icon LIB_ICON     = IconLoader.getIcon("/nodes/ppLib.png");
+  private static final Icon PROJECT_ICON      = IconLoader.getIcon("/nodes/ideaProject.png");
+  private static final Icon MODULE_ICON       = IconLoader.getIcon("/nodes/ModuleOpen.png");
+  private static final Icon CONTENT_ROOT_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
+  private static final Icon LIB_ICON          = IconLoader.getIcon("/nodes/ppLib.png");
 
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
@@ -47,7 +49,10 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleContentRoot contentRoot) {
-        // TODO den implement 
+        result.set(new GradleProjectStructureNodeDescriptor(
+          contentRoot,
+          GradleBundle.message("gradle.import.structure.tree.node.content.root"), CONTENT_ROOT_ICON
+        )); 
       }
 
       @Override
@@ -74,21 +79,6 @@ public class GradleProjectStructureFactory {
                                                           @NotNull final DefaultTreeModel treeModel,
                                                           @NotNull final Collection<GradleProjectStructureNode> treeNodes)
   {
-    // TODO den remove
-    final GradleProjectStructureNodeSettings toRemove = new GradleProjectStructureNodeSettings() {
-      @Override
-      public boolean validate() {
-        return true;
-      }
-      @Override
-      public void refresh() {
-      }
-      @NotNull
-      @Override
-      public JComponent getComponent() {
-        return new JLabel("xxxxxxxxx" + this);
-      }
-    };
     final Ref<GradleProjectStructureNodeSettings> result = new Ref<GradleProjectStructureNodeSettings>();
     entity.invite(new GradleEntityVisitor() {
       @Override
@@ -105,8 +95,7 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleContentRoot contentRoot) {
-        // TODO den implement
-        result.set(toRemove);
+        result.set(new GradleContentRootSettings(contentRoot));
       }
 
       @Override

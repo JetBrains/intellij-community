@@ -27,7 +27,6 @@ public class GradleProjectStructureNodeDescriptor extends NodeDescriptor<GradleE
 
   @Override
   public boolean update() {
-    // TODO den check
     return true;
   }
 
