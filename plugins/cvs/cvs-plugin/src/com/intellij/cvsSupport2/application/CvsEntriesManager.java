@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   private final Collection<CvsEntriesListener> myEntriesListeners = new ArrayList<CvsEntriesListener>();
   private int myIsActive = 0;
   private final Collection<String> myFilesToRefresh = new HashSet<String>();
-  private int mySynchronizationActionLocks = 0;
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new HashMap<String, CvsConnectionSettings>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
@@ -334,7 +333,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
   public boolean fileIsIgnored(VirtualFile file) {
-    VirtualFile parent = file.getParent();
+    final VirtualFile parent = file.getParent();
     if (parent == null) {
       return false;
     }
@@ -342,23 +341,14 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     return getFilter(parent).shouldBeIgnored(file.getName());
   }
 
-  public void lockSynchronizationActions() {
-    mySynchronizationActionLocks++;
-  }
-
-  public void unlockSynchronizationActions() {
-    LOG.assertTrue(mySynchronizationActionLocks > 0);
-    mySynchronizationActionLocks--;
-  }
-
   private void ensureFilesCached() {
-    String[] paths;
+    final String[] paths;
     synchronized (myFilesToRefresh) {
       paths = ArrayUtil.toStringArray(myFilesToRefresh);
       myFilesToRefresh.clear();
     }
     for (String path : paths) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
       if (virtualFile != null) virtualFile.getChildren();
     }
   }
