@@ -21,13 +21,14 @@ import org.jetbrains.annotations.Nullable;
  *
  * commits with 1 start and end just belongs to its wire
 */
-public class WireEvent {
+public class WireEvent implements WireEventI {
   private final int myCommitIdx;
   // wire # can be taken from commit
   @Nullable
   private int[] myCommitsEnds;      // branch point   |/.       -1 here -> start of a wire
   @Nullable
   private int[] myWireEnds;
+  private int myWaitStartsNumber;
   private int[] myCommitsStarts;    // merge commit   |\  parents here. -1 here -> no parents, i.e. break
 
   public WireEvent(final int commitIdx, final int[] commitsEnds) {
@@ -35,14 +36,25 @@ public class WireEvent {
     myCommitsEnds = commitsEnds;
     myCommitsStarts = ArrayUtil.EMPTY_INT_ARRAY;
     myWireEnds = null;
+    myWaitStartsNumber = 0;
   }
 
+  @Override
   public int getCommitIdx() {
     return myCommitIdx;
   }
 
   public void addStart(final int idx) {
     myCommitsStarts = ArrayUtil.append(myCommitsStarts, idx);
+    -- myWaitStartsNumber;
+  }
+
+  public int getWaitStartsNumber() {
+    return myWaitStartsNumber;
+  }
+
+  public void setWaitStartsNumber(int waitStartsNumber) {
+    myWaitStartsNumber = waitStartsNumber;
   }
 
   public void addWireEnd(final int idx) {
@@ -57,10 +69,7 @@ public class WireEvent {
     myWireEnds = wireEnds;
   }
 
-  public void setCommitsStarts(int[] commitsStarts) {
-    myCommitsStarts = commitsStarts;
-  }
-
+  @Override
   @Nullable
   public int[] getWireEnds() {
     return myWireEnds;
@@ -70,20 +79,24 @@ public class WireEvent {
     myCommitsEnds = ends;
   }
 
+  @Override
   @Nullable
   public int[] getCommitsEnds() {
     return myCommitsEnds;
   }
 
+  @Override
   public int[] getCommitsStarts() {
     return myCommitsStarts;
   }
 
   // no parent commit present in quantity or exists
+  @Override
   public boolean isEnd() {
     return myCommitsStarts.length == 1 && myCommitsStarts[0] == -1;
   }
 
+  @Override
   public boolean isStart() {
     return myCommitsEnds != null && myCommitsEnds.length == 1 && myCommitsEnds[0] == -1;
   }

@@ -270,6 +270,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs) {
         myRefs.put(root, symbolicRefs);
+        myTableModel.setHead(root, symbolicRefs.getHeadHash());
 
         myRecalculatedCommon.clear();
         if (myRefs.isEmpty()) return;
@@ -1802,9 +1803,12 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myDateOrder;
     private final GitLogSettings mySettings;
     private final DumbAwareAction myTopoOrder;
+    private final DumbAwareAction myHighlightHead;
+    private final Icon myMarkIcon;
 
     public MyTreeSettings() {
       myIcon = IconLoader.getIcon("/general/comboArrow.png");
+      myMarkIcon = IconLoader.findIcon("/actions/checked.png");
 
       myMultiColorAction = new DumbAwareAction("Multicolour") {
         @Override
@@ -1827,6 +1831,19 @@ public class GitLogUI implements Disposable {
         public void update(AnActionEvent e) {
           super.update(e);
           e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+        }
+      };
+
+      myHighlightHead = new DumbAwareAction("Current branch colored") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myGraphGutter.setCurrentBranchColored(! myGraphGutter.isCurrentBranchColored());
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(myGraphGutter.isCurrentBranchColored() ? myMarkIcon : null);
         }
       };
 
@@ -1896,6 +1913,7 @@ public class GitLogUI implements Disposable {
       }
       dab.add(myMultiColorAction);
       dab.add(myCalmAction);
+      dab.add(myHighlightHead);
       dab.add(new Separator());
       dab.add(myRootsForTreeAction);
       return dab;

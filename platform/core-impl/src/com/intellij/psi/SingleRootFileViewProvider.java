@@ -91,7 +91,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(VirtualFile file, Project project) {
+  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project) {
     if (file instanceof LightVirtualFile) {
       final Language language = ((LightVirtualFile)file).getLanguage();
       if (language != null) {
@@ -99,7 +99,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
     }
 
-    final FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
+    if (fileType == UnknownFileType.INSTANCE) {
+      fileType = FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
+    }
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLarge(file)) return PlainTextLanguage.INSTANCE;
 
@@ -229,7 +232,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         if (psiDir == null) return null;
       }
 
-      return createFile(project, vFile, vFile.getFileType());
+      FileType fileType = vFile.getFileType();
+      return createFile(project, vFile, fileType);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -248,12 +252,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  protected PsiFile createFile(final Project project, final VirtualFile vFile, final FileType fileType) {
-    if (fileType.isBinary() || vFile.isSpecialFile()) {
+  protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
+    if (fileType.isBinary() || file.isSpecialFile()) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
-
-    if (!isTooLarge(vFile)) {
+    if (!isTooLarge(file)) {
       final PsiFile psiFile = createFile(getBaseLanguage());
       if (psiFile != null) return psiFile;
     }

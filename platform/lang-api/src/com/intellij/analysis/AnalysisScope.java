@@ -360,6 +360,19 @@ public class AnalysisScope {
     return ProblemHighlightFilter.shouldHighlightFile(file);
   }
 
+  public boolean containsModule(Module module) {
+    switch (myType) {
+      case PROJECT:
+        return true;
+      case MODULE:
+        return myModule == module;
+      case MODULES:
+        return myModules.contains(module);
+      default:
+        return false;
+    }
+  }
+
   private static void doProcessFile(PsiElementVisitor visitor, PsiManager psiManager, PsiFile file) {
     file.accept(visitor);
     psiManager.dropResolveCaches();

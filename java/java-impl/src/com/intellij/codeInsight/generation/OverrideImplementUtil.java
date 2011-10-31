@@ -763,12 +763,9 @@ public class OverrideImplementUtil {
       if (o1 instanceof MethodSignatureBackedByPsiMethod && o2 instanceof MethodSignatureBackedByPsiMethod) {
         PsiMethod m1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
         PsiMethod m2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
-        PsiElement p1 = m1.getParent();
-        PsiElement p2 = m2.getParent();
-        if (p1 instanceof PsiClass && p2 instanceof PsiClass) {
-          final PsiClass c1 = (PsiClass)p1;
-          final PsiClass c2 = (PsiClass)p2;
-
+        PsiClass c1 = m1.getContainingClass();
+        PsiClass c2 = m2.getContainingClass();
+        if (c1 != null && c2 != null) {
           if (c1 == c2) {
             final List<PsiMethod> methods = Arrays.asList(c1.getMethods());
             return methods.indexOf(m1) - methods.indexOf(m2);

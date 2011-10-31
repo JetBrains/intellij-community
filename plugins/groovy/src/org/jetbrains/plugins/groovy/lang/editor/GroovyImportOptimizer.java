@@ -99,7 +99,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
 
       Map<String, String> annotations = new HashMap<String, String>();
-      
+
       // Getting aliased imports
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
       ArrayList<GrImportStatement> aliased = new ArrayList<GrImportStatement>();
@@ -121,8 +121,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         return;
       }
 
+      GroovyFile tempFile = (GroovyFile)PsiFileFactory.getInstance(myFile.getProject()).createFileFromText("a.groovy", "");
+
       for (GrImportStatement aliasedImport : aliased) {
-        myFile.addImport(aliasedImport);
+        tempFile.addImport(aliasedImport);
       }
       for (GrImportStatement newImport : newImports) {
         String imported = getImportReferenceText(newImport);
@@ -130,8 +132,19 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         if (imported != null && StringUtil.isNotEmpty(annos)) {
           newImport = factory.createImportStatementFromText(annos + " " + newImport.getText());
         }
-        
-        myFile.addImport(newImport);
+
+        tempFile.addImport(newImport);
+      }
+
+      String oldText = oldImports.isEmpty() ? "" :
+                       myFile.getText().substring(oldImports.get(0).getTextRange().getStartOffset(),
+                                                  oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset());
+      if (tempFile.getText().trim().equals(oldText)) {
+        return;
+      }
+
+      for (GrImportStatement statement : tempFile.getImportStatements()) {
+        myFile.addImport(statement);
       }
 
       myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
@@ -254,7 +267,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       for (String importedClass : importedClasses) {
         if (implicitlyImported.contains(importedClass) || innerClasses.contains(importedClass)) continue;
-        
+
         final String packageName = StringUtil.getPackageName(importedClass);
 
         if (!packageCountMap.containsKey(packageName)) packageCountMap.put(packageName, 0);

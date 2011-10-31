@@ -34,43 +34,41 @@ import java.awt.*;
 @SuppressWarnings({"ComponentNotRegistered"})
 public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
-  private ProjectWindowAction previous;
-  private ProjectWindowAction next;
+  private ProjectWindowAction myPrevious;
+  private ProjectWindowAction myNext;
 
   public ProjectWindowAction(@NotNull String projectName, ProjectWindowAction previous) {
     super(projectName);
     if (previous != null) {
-      this.previous = previous;
-      this.next = previous.next;
-      previous.next = this;
-      if (previous.previous == previous) {
-        previous.previous = this;
-      }
+      myPrevious = previous;
+      myNext = previous.myNext;
+      myNext.myPrevious = this;
+      myPrevious.myNext = this;
     } else {
-      this.previous = this;
-      this.next = this;
+      myPrevious = this;
+      myNext = this;
     }
   }
 
   public void dispose() {
-    if (previous == this) {
-      assert next == this;
+    if (myPrevious == this) {
+      assert myNext == this;
       return;
     }
-    if (next == this) {
+    if (myNext == this) {
       assert false;
       return;
     }
-    previous.next = next;
-    next.previous = previous;
+    myPrevious.myNext = myNext;
+    myNext.myPrevious = myPrevious;
   }
 
   public ProjectWindowAction getPrevious() {
-    return previous;
+    return myPrevious;
   }
 
   public ProjectWindowAction getNext() {
-    return next;
+    return myNext;
   }
 
   @Nullable
@@ -110,5 +108,10 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     }
     // bring the frame forward
     projectFrame.toFront();
+  }
+
+  @Override
+  public String toString() {
+    return getTemplatePresentation().getText() + " previous: " + myPrevious.getTemplatePresentation().getText() + " next: " + myNext.getTemplatePresentation().getText();
   }
 }

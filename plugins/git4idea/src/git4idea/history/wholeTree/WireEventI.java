@@ -15,20 +15,28 @@
  */
 package git4idea.history.wholeTree;
 
-import java.util.Iterator;
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 10/20/11
- * Time: 11:49 AM
- * To change this template use File | Settings | File Templates.
+ * Date: 10/26/11
+ * Time: 7:16 PM
  */
-public interface WireEventsIterator {
-  Integer getFloor();
+public interface WireEventI {
+  int getCommitIdx();
 
-  Iterator<WireEventI> getWireEventsIterator();
+  @Nullable
+  int[] getWireEnds();
 
-  List<Integer> getFirstUsed();
+  @Nullable
+  int[] getCommitsEnds();
+
+  int[] getCommitsStarts();
+
+  // no parent commit present in quantity or exists
+  boolean isEnd();
+
+  boolean isStart();
+  int getWaitStartsNumber();
 }

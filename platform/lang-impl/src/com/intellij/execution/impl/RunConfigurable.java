@@ -83,7 +83,7 @@ class RunConfigurable extends BaseConfigurable {
   private JComponent myToolbarComponent;
   private final Splitter mySplitter = new Splitter(false);
   private JPanel myWholePanel;
-  private StorageAccessors myConfig;
+  private final StorageAccessors myProperties = StorageAccessors.createGlobal("RunConfigurable");
   private Configurable mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
   private final JTextField myRecentsLimit = new JTextField("5");
@@ -481,7 +481,6 @@ class RunConfigurable extends BaseConfigurable {
 
   public JComponent createComponent() {
     myWholePanel = new JPanel(new BorderLayout());
-    myConfig = StorageAccessors.createGlobal("runConfigurationTab");
     mySplitter.setFirstComponent(createLeftPanel());
     mySplitter.setSecondComponent(myRightPanel);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
@@ -493,8 +492,7 @@ class RunConfigurable extends BaseConfigurable {
     d.height = Math.max(d.height, 600);
     myWholePanel.setPreferredSize(d);
 
-    final float value = myConfig.getFloat(DIVIDER_PROPORTION, 0.2f);
-    mySplitter.setProportion((int)value > 0 ? (float)(value / myWholePanel.getPreferredSize().getWidth()) : value);
+    mySplitter.setProportion(myProperties.getFloat(DIVIDER_PROPORTION, 0.3f));
 
     return myWholePanel;
   }
@@ -673,7 +671,8 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myRightPanel.removeAll();
-    myConfig.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
+    myProperties.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
+    mySplitter.dispose();
   }
 
   private void updateDialog() {

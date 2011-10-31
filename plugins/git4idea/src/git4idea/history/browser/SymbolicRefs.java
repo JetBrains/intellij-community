@@ -13,6 +13,7 @@
 package git4idea.history.browser;
 
 import git4idea.GitBranch;
+import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -27,6 +28,7 @@ public class SymbolicRefs {
   private final TreeSet<String> myRemoteBranches;
   private String myTrackedRemoteName;
   private String myUsername;
+  private AbstractHash myHeadHash;
 
   public SymbolicRefs() {
     myLocalBranches = new TreeSet<String>();
@@ -95,6 +97,14 @@ public class SymbolicRefs {
 
   public void setUsername(String username) {
     myUsername = username;
+  }
+
+  public void setHead(AbstractHash hash) {
+    myHeadHash = hash;
+  }
+
+  public AbstractHash getHeadHash() {
+    return myHeadHash;
   }
 
   public static enum Kind {

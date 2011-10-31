@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.*;
  * Date: 02.06.2008
  */
 public class GroovyGenerateEqualsHelper {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.GrGenerateEqualsHelper");
+  private static final Logger LOG = Logger.getInstance(GroovyGenerateEqualsHelper.class);
 
   private final PsiClass myClass;
   private final PsiField[] myEqualsFields;
@@ -133,7 +133,7 @@ public class GroovyGenerateEqualsHelper {
       if (myHashCodeFields.length > 0) {
         hashCode = createHashCode();
       } else {
-        hashCode = myFactory.createMethodFromText("int hashCode() {\nreturn 0;\n}");
+        hashCode = myFactory.createMethodFromText("int hashCode() {\nreturn 0\n}");
         if (!mySuperHasHashCode) {
           //    reformatCode(hashCode);
         }
@@ -157,9 +157,9 @@ public class GroovyGenerateEqualsHelper {
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
 
-  @NonNls private static final MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
-  @NonNls private static final MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false;\n");
-  @NonNls private static final MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false;\n");
+  @NonNls private static final MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false\n");
+  @NonNls private static final MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false\n");
+  @NonNls private static final MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false\n");
 
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
     final PsiType fieldType = field.getType();
@@ -190,23 +190,23 @@ public class GroovyGenerateEqualsHelper {
   private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
     if (myCheckParameterWithInstanceof) {
       buffer.append("if (!(").append(myParameterName).append(" instanceof ").append(myClass.getName()).append(")) " + "return ")
-        .append(returnValue).append(";\n");
+        .append(returnValue).append('\n');
     } else {
       buffer.append("if (").append("getClass() != ").append(myParameterName).append(".class) " + "return ").append(returnValue)
-        .append(";\n");
+        .append('\n');
     }
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
   private void addEqualsPrologue(@NonNls StringBuffer buffer) {
-    buffer.append("if (this.is(").append(myParameterName).append(")").append(") return true;\n");
+    buffer.append("if (this.is(").append(myParameterName).append(")").append(") return true\n");
     if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {
       addInstanceOfToText(buffer, Boolean.toString(false));
     } else {
       addInstanceOfToText(buffer, Boolean.toString(false));
       buffer.append("if (!super.equals(");
       buffer.append(myParameterName);
-      buffer.append(")) return false;\n");
+      buffer.append(")) return false\n");
     }
   }
 
@@ -223,7 +223,7 @@ public class GroovyGenerateEqualsHelper {
     buffer.append(myClass.getName());
     buffer.append(")");
     buffer.append(myParameterName);
-    buffer.append(";\n\n");
+    buffer.append("\n\n");
   }
 
   private boolean superMethodExists(MethodSignature methodSignature) {
@@ -284,7 +284,7 @@ public class GroovyGenerateEqualsHelper {
         }
       }
     }
-    buffer.append("\nreturn true;\n}");
+    buffer.append("\nreturn true\n}");
 
     GrMethod result = myFactory.createMethodFromText(buffer.toString());
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
@@ -293,7 +293,7 @@ public class GroovyGenerateEqualsHelper {
     try {
       result = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(result));
     } catch (IncorrectOperationException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
 
     return result;
@@ -315,7 +315,7 @@ public class GroovyGenerateEqualsHelper {
         } else {
           addFieldHashCode(buffer, field);
         }
-        buffer.append(";\n}");
+        buffer.append("\n}");
       } else if (myHashCodeFields.length > 0) {
         CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
         final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
@@ -329,7 +329,7 @@ public class GroovyGenerateEqualsHelper {
           addSuperHashCode(buffer);
           resultAssigned = true;
         }
-        buffer.append(";\n");
+        buffer.append("\n");
         String tempName = addTempDeclaration(buffer);
         for (PsiField field : myHashCodeFields) {
           addTempAssignment(field, buffer, tempName);
@@ -345,21 +345,21 @@ public class GroovyGenerateEqualsHelper {
           } else {
             addFieldHashCode(buffer, field);
           }
-          buffer.append(";\n");
+          buffer.append('\n');
           resultAssigned = true;
         }
         buffer.append("return ");
         buffer.append(resultName);
-        buffer.append(";\n}");
+        buffer.append("\n}");
       } else {
-        buffer.append("return 0;\n}");
+        buffer.append("return 0\n}");
       }
       PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString());
 
       try {
         hashCode = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(hashCode));
       } catch (IncorrectOperationException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
 
 //      reformatCode(hashCode);
@@ -381,7 +381,7 @@ public class GroovyGenerateEqualsHelper {
   private static void addTempForDoubleInitialization(PsiField field, StringBuilder buffer) {
     buffer.append(" = ").append(field.getName()).append(" != +0.0d ? Double.doubleToLongBits(");
     buffer.append(field.getName());
-    buffer.append(") : 0L;\n");
+    buffer.append(") : 0L\n");
   }
 
   @Nullable
@@ -390,7 +390,7 @@ public class GroovyGenerateEqualsHelper {
     for (PsiField hashCodeField : myHashCodeFields) {
       if (PsiType.DOUBLE.equals(hashCodeField.getType())) {
         final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-        buffer.append("long ").append(name).append(";\n");
+        buffer.append("long ").append(name).append("\n");
         return name;
       }
     }
@@ -455,6 +455,7 @@ public class GroovyGenerateEqualsHelper {
     }
   }
 
+  @Nullable
   static PsiMethod findMethod(PsiClass aClass, MethodSignature signature) {
     return MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
   }

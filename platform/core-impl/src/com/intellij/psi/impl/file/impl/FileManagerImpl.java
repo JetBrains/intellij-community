@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -40,7 +41,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class FileManagerImpl implements FileManager {
   private final FileIndexFacade myFileIndex;
 
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentSoftValueHashMap<VirtualFile, PsiDirectory>();
-  private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
+  private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentSoftValueHashMap<VirtualFile, FileViewProvider>();
 
   private boolean myInitialized = false;
   private boolean myDisposed = false;
@@ -91,12 +91,14 @@ public class FileManagerImpl implements FileManager {
     Disposer.register(manager.getProject(), this);
   }
 
+  private static final VirtualFile NULL = new CoreLocalVirtualFile(null,null);
   public void processQueue() {
-    myVFileToViewProviderMap.processQueue();
+    // just to call processQueue()
+    myVFileToViewProviderMap.remove(NULL);
   }
 
   @TestOnly
-  public ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
+  public ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     return myVFileToViewProviderMap;
   }
 
@@ -126,6 +128,7 @@ public class FileManagerImpl implements FileManager {
     if (myInitialized) {
       myConnection.disconnect();
     }
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     myDisposed = true;
   }
 
@@ -337,7 +340,10 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     LOG.assertTrue(myInitialized, "Access to psi files should be performed only after startup activity");
-    LOG.assertTrue(!myDisposed, "Access to psi files should not be performed after disposal");
+    if (myDisposed) {
+      LOG.error("Access to psi files should not be performed after project disposal: "+myManager.getProject());
+    }
+
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {

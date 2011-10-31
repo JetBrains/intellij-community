@@ -39,11 +39,17 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
       final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
       for (final Module dependency : declaredDependencies) {
-        if (scope.contains(dependency.getModuleFile())) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
-          if (modules == null || !modules.contains(dependency)) {
-            descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()),
-                                                            new RemoveModuleDependencyFix(module, dependency)));
+        if (modules == null || !modules.contains(dependency)) {
+         final CommonProblemDescriptor problemDescriptor;
+          if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
+            problemDescriptor = manager.createProblemDescriptor(
+              InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()),
+              new RemoveModuleDependencyFix(module, dependency));
+          } else {
+            problemDescriptor = manager.createProblemDescriptor(
+              InspectionsBundle.message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName(), dependency.getName()), null);
           }
+          descriptors.add(problemDescriptor);
         }
       }
       return descriptors.isEmpty() ? null : descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);

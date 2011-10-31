@@ -162,6 +162,9 @@ public class SkeletonBuilder {
         myAwaitingParents.putValue(parent, item);
         myBackIndex.putValue(item.myIdx, item);
       }
+      if (parents.size() > 1) {
+        mySkeleton.setWireStartsNumber(rowCount, parents.size());
+      }
     }
   }
 

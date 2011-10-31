@@ -185,6 +185,9 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       moduleMappings.put(module, moduleCopy);
       DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
+      for (GradleContentRoot contentRoot : moduleCopy.getContentRoots()) {
+        moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
+      }
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
         DefaultMutableTreeNode dependenciesNode

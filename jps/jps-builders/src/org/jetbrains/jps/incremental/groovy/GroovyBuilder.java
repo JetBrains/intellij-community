@@ -85,8 +85,7 @@ public class GroovyBuilder extends Builder {
         SystemProperties.getJavaHome() + "/bin/java",
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
         Collections.<String>emptyList(),
-        cp,
-        Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
+        cp, Arrays.asList("-Xmx384m"), Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 
       context.deleteCorrespondingClasses(toCompile);

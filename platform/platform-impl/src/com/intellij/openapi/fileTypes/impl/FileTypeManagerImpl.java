@@ -32,11 +32,18 @@ import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -49,6 +56,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -57,7 +68,8 @@ import java.util.*;
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
   private static final int VERSION = 11;
-  private static final Key<FileType> FILE_TYPE_KEY = Key.create("cached file type");
+  private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
+  private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -283,6 +295,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     FileType fileType = file.getUserData(FILE_TYPE_KEY);
     if (fileType != null) return fileType;
+    FileType detected = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
+    if (detected != null) {
+      return detected;
+    }
 
     final FileType assignedFileType = file instanceof LightVirtualFile? ((LightVirtualFile)file).getAssignedFileType() : null;
     if (assignedFileType != null) return assignedFileType;
@@ -293,12 +309,97 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (type.isMyFileType(file)) return type;
     }
 
-    FileType byName = getFileTypeByFileName(file.getName());
-    if (byName != UnknownFileType.INSTANCE) return byName;
+    return getFileTypeByFileName(file.getName());
+  }
 
-    FileType detected = LoadTextUtil.detectFromContent(file);
-    if (detected != UnknownFileType.INSTANCE) cacheFileType(file, detected);
-    return detected;
+  @NotNull
+  @Override
+  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
+    if (file.isDirectory() || !file.isValid() || file.isSpecialFile()) return UnknownFileType.INSTANCE;
+    FileType fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
+    if (fileType == null) {
+      fileType = detectFromContent(file);
+      file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, fileType);
+    }
+    return fileType;
+  }
+
+  private static class FileTypeDetectorHolder {
+    private static final FileTypeDetector[] FILE_TYPE_DETECTORS = Extensions.getExtensions(FileTypeDetector.EP_NAME);
+  }
+  private static final int DETECT_BUFFER_SIZE = 8192;
+  @NotNull
+  private static FileType detectFromContent(@NotNull final VirtualFile file) {
+    try {
+      final long length = file.getLength();
+      if (length == 0) {
+        return UnknownFileType.INSTANCE;
+      }
+      final Function<ByteSequence, FileType> detectProcessor = new Function<ByteSequence, FileType>() {
+
+        @Override
+        public FileType fun(ByteSequence byteSequence) {
+          boolean isText = guessIfText(file, byteSequence);
+          CharSequence text;
+          if (isText) {
+            byte[] bytes = Arrays.copyOf(byteSequence.getBytes(), byteSequence.getLength());
+            text = LoadTextUtil.getTextByBinaryPresentation(bytes, file);
+          }
+          else {
+            text = null;
+          }
+          for (FileTypeDetector detector : FileTypeDetectorHolder.FILE_TYPE_DETECTORS) {
+            FileType detected = detector.detect(file, byteSequence, text);
+            if (detected != null) return detected;
+          }
+
+          return isText ? PlainTextFileType.INSTANCE : UnknownFileType.INSTANCE;
+        }
+      };
+      FileType fileType;
+      if (length > DETECT_BUFFER_SIZE) {
+        VirtualFileSystem fileSystem = file.getFileSystem();
+        if (!(fileSystem instanceof FileSystemInterface)) return UnknownFileType.INSTANCE;
+
+        InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(file);
+        final Ref<FileType> detected = new Ref<FileType>();
+        FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
+          @Override
+          public boolean process(ByteSequence byteSequence) {
+            detected.set(detectProcessor.fun(byteSequence));
+            return true;
+          }
+        });
+         fileType = detected.get();
+      }
+      else {
+        byte[] bytes = file.contentsToByteArray();
+        fileType = detectProcessor.fun(new ByteSequence(bytes));
+      }
+
+      return fileType;
+    }
+    catch (FileNotFoundException e) {
+      return UnknownFileType.INSTANCE;
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return UnknownFileType.INSTANCE;
+    }
+  }
+
+  private static boolean guessIfText(VirtualFile file, ByteSequence byteSequence) {
+    byte[] bytes = byteSequence.getBytes();
+    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, bytes, byteSequence.getLength());
+    if (guessed == null) return false;
+    file.setBOM(guessed.third);
+    if (guessed.first != null) {
+      // charset was detected unambiguously
+      return true;
+    }
+    // use wild guess
+    CharsetToolkit.GuessedEncoding guess = guessed.second;
+    return guess != null && guess != CharsetToolkit.GuessedEncoding.INVALID_UTF8;
   }
 
   public boolean isFileOfType(VirtualFile file, FileType type) {

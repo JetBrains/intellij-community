@@ -6,6 +6,6 @@ def foo() {
     testMethod()
 }
 
-private def testMethod() {
+private testMethod() {
     [].collect { it }
 }

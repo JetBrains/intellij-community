@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -156,6 +157,9 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
           try {
             GradleProjectResolver resolver = manager.getFacade().getResolver();
             myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath(), false);
+          }
+          catch (ProcessCanceledException e) {
+            // Ignore
           }
           catch (Exception e) {
             Throwable unwrapped = RemoteUtil.unwrap(e);

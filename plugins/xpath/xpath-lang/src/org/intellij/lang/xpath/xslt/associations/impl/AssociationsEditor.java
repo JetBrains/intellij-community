@@ -14,17 +14,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.config.StorageAccessors;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,20 +49,23 @@ import java.util.Collections;
 import java.util.List;
 
 class AssociationsEditor {
-  private static final String KEY = "#XsltSupport.AssociationsEditor";
   private static final Icon LINK_OVERLAY = IconLoader.getIcon("/icons/association_small.png");
+  @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private JPanel myComponent;
   private JPanel myToolbar;
   private JBList myList;
   private Tree myTree;
-  private JSplitPane mySplitPane;
+  private Splitter mySplitter;
+  private final StorageAccessors myProperties = StorageAccessors.createGlobal("AssociationsEditor");
 
   private final AssociationsModel myListModel;
   private final TransactionalManager myManager;
   private final ProjectTreeBuilder myBuilder;
 
   public AssociationsEditor(final Project project, final TreeState oldState) {
+    initUI();
+
     myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
 
     final DefaultActionGroup group = new DefaultActionGroup();
@@ -110,21 +119,35 @@ class AssociationsEditor {
       }
     });
     myList.setModel(myListModel);
+
+  }
+
+  private void initUI() {
+    myComponent = new JPanel(new BorderLayout());
+    mySplitter = new Splitter(false, 0.3f);
+    myComponent.add(mySplitter, BorderLayout.CENTER);
+
+    JPanel leftPanel = new JPanel(new BorderLayout());
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT Files", false, false, true, new Insets(0, 0, 0, 0)));
+    myTree = new Tree();
+    myTree.setRootVisible(false);
+    myTree.setShowsRootHandles(false);
+    leftPanel.add(new JBScrollPane(myTree), BorderLayout.CENTER);
+    mySplitter.setFirstComponent(leftPanel);
+
+    JPanel rightPanel = new JPanel(new BorderLayout());
+    rightPanel.setBorder(IdeBorderFactory.createTitledBorder("Associated Files", false, false, true, new Insets(0, 0, 0, 0)));
+    myToolbar = new JPanel(new GridLayoutManager(1, 1));
+    rightPanel.add(myToolbar, BorderLayout.NORTH);
+    myList = new JBList();
     myList.setCellRenderer(new MyCellRenderer());
     myList.setMinimumSize(new Dimension(120, 200));
-
-    final int location = DimensionService.getInstance().getExtendedState(KEY);
-    if (location == -1) {
-      myList.setPreferredSize(myList.getMinimumSize());
-      mySplitPane.resetToPreferredSizes();
-    }
-    else {
-      mySplitPane.setDividerLocation(location);
-    }
-    mySplitPane.setBorder(null);
-
-
     myList.getEmptyText().setText("No associated files");
+    rightPanel.add(new JBScrollPane(myList), BorderLayout.CENTER);
+    mySplitter.setSecondComponent(rightPanel);
+
+    final float dividerProportion = myProperties.getFloat(DIVIDER_PROPORTION, 0.3f);
+    mySplitter.setProportion(dividerProportion);
   }
 
   private void expandTree(DefaultTreeModel newModel) {
@@ -183,7 +206,7 @@ class AssociationsEditor {
   }
 
   public void dispose() {
-    DimensionService.getInstance().setExtendedState(KEY, mySplitPane.getDividerLocation());
+    myProperties.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
     Disposer.dispose(myBuilder);
     myManager.dispose();
   }

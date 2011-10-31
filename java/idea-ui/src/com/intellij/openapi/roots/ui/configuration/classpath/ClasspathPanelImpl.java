@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -28,7 +31,9 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
-import com.intellij.openapi.roots.ui.configuration.*;
+import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
@@ -40,12 +45,19 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetHandler;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
@@ -65,8 +77,9 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final JBTable myEntryTable;
@@ -200,6 +213,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
                                              myEntryTable);
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
+    actionGroup.add(new AnalyzeDependencyAction());
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
@@ -261,24 +275,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     final ClasspathPanelAction removeAction = new ClasspathPanelAction(this) {
       @Override
       public void run() {
-        final List removedRows = TableUtil.removeSelectedItems(myEntryTable);
-        if (removedRows.isEmpty()) {
-          return;
-        }
-        for (final Object removedRow : removedRows) {
-          final ClasspathTableItem<?> item = (ClasspathTableItem<?>)((Object[])removedRow)[ClasspathTableModel.ITEM_COLUMN];
-          final OrderEntry orderEntry = item.getEntry();
-          if (orderEntry == null) {
-            continue;
-          }
-
-          getRootModel().removeOrderEntry(orderEntry);
-        }
-        final int[] selectedRows = myEntryTable.getSelectedRows();
-        myModel.fireTableDataChanged();
-        TableUtil.selectRows(myEntryTable, selectedRows);
-        final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
-        context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
+        removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
       }
     };
 
@@ -408,6 +405,26 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     });
 
     return panel;
+  }
+
+  private void removeSelectedItems(final List removedRows) {
+    if (removedRows.isEmpty()) {
+      return;
+    }
+    for (final Object removedRow : removedRows) {
+      final ClasspathTableItem<?> item = (ClasspathTableItem<?>)((Object[])removedRow)[ClasspathTableModel.ITEM_COLUMN];
+      final OrderEntry orderEntry = item.getEntry();
+      if (orderEntry == null) {
+        continue;
+      }
+
+      getRootModel().removeOrderEntry(orderEntry);
+    }
+    final int[] selectedRows = myEntryTable.getSelectedRows();
+    myModel.fireTableDataChanged();
+    TableUtil.selectRows(myEntryTable, selectedRows);
+    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
+    context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
   }
 
   @NotNull
@@ -673,6 +690,54 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       Point location = rect.getLocation();
       location.y += rect.height;
       return new RelativePoint(myEntryTable, location);
+    }
+  }
+  
+  private class AnalyzeDependencyAction extends AnAction {
+    private AnalyzeDependencyAction() {
+      super("Analyze This Dependency");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final OrderEntry selectedEntry = getSelectedEntry();
+      assert selectedEntry instanceof ModuleOrderEntry;
+      final Module module = ((ModuleOrderEntry)selectedEntry).getModule();
+      assert module != null;
+      new AnalyzeDependenciesOnSpecifiedTargetHandler(module.getProject(), new AnalysisScope(myState.getRootModel().getModule()),
+                                                      GlobalSearchScope.moduleScope(module)) {
+        @Override
+        protected boolean canStartInBackground() {
+          return false;
+        }
+
+        @Override
+        protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
+          for (DependenciesBuilder builder : builders) {
+            for (Set<PsiFile> files : builder.getDependencies().values()) {
+              if (!files.isEmpty()) {
+                Messages.showInfoMessage(myEntryTable,
+                                         "Dependencies were successfully collected in \"" +
+                                         ToolWindowId.DEPENDENCIES + "\" toolwindow",
+                                         FindBundle.message("find.pointcut.applications.not.found.title"));
+                return true;
+              }
+            }
+          }
+          if (Messages.showOkCancelDialog(myEntryTable,
+                                          "No code dependencies were found. Would you like to remove the dependency?",
+                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+            removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
+          }
+          return false;
+        }
+      }.analyze();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final OrderEntry entry = getSelectedEntry();
+      e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null);
     }
   }
 }

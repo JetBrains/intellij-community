@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -47,13 +48,11 @@ public class ConvertToStringLiteralAction implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element != null && PsiUtil.isJavaToken(element, JavaTokenType.CHARACTER_LITERAL)) {
-      final String text = element.getText();
+      final String text = StringUtil.unescapeStringCharacters(element.getText());
       final int length = text.length();
       if (length > 1 && text.charAt(0) == '\'' && text.charAt(length - 1) == '\'') {
-        final StringBuilder sb = new StringBuilder(text);
-        sb.replace(0, 1, "\"");
-        sb.replace(length - 1, length, "\"");
-        final PsiExpression expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(sb.toString(), null);
+        final String value = StringUtil.escapeStringCharacters(text.substring(1, length - 1));
+        final PsiExpression expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText('"' + value + '"', null);
         final PsiElement literal = expression.getFirstChild();
         if (literal != null && PsiUtil.isJavaToken(literal, JavaTokenType.STRING_LITERAL)) {
           element.replace(literal);

@@ -39,14 +39,16 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
     myRingIndex = new TreeMap<Integer, RingIndex>();
   }
 
+  public Set<Integer> getRingIndexPoints() {
+    return myRingIndex.keySet();
+  }
+
   public void recalcIndex(final ReadonlyList<CommitI> commits, final Convertor<Integer, List<Integer>> future) {
     if (myWireEvents.isEmpty()) return;
     Integer lastIndexKey = myRingIndex.isEmpty() ? null : myRingIndex.lastKey();
-    //System.out.println("=== recalc index from: " + lastIndexKey + " ====");
     final SortedMap<Integer, WireEvent> tail;
     final Ring<Integer> ring;
     if (lastIndexKey != null) {
-      //tail = myWireEvents.tailMap(lastIndexKey, false); // was like that
       tail = myWireEvents.tailMap(lastIndexKey, true);
       final int size = tail.size();
       if (size == 1) return;
@@ -60,7 +62,7 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
       ring = new Ring.IntegerRing();
       final List<Integer> used = ring.getUsed();
       myRingIndex.put(lastIndexKey, new RingIndex(used.toArray(new Integer[used.size()])));
-      WireEvent firstEvent = myWireEvents.firstEntry().getValue();
+      WireEventI firstEvent = myWireEvents.firstEntry().getValue();
       performOnRing(ring, firstEvent, commits, future.convert(firstEvent.getCommitIdx()));
       tail = myWireEvents.tailMap(lastIndexKey, false);
     }
@@ -75,12 +77,12 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
         cnt = 0;
         recordCommitIdx += myCommitIndexInterval;
       }
-      WireEvent event = tail.get(integer);
+      WireEventI event = tail.get(integer);
       performOnRing(ring, event, commits, future.convert(event.getCommitIdx()));
     }
   }
 
-  private void performOnRing(final Ring<Integer> ring, final WireEvent event, final ReadonlyList<CommitI> convertor,
+  private void performOnRing(final Ring<Integer> ring, final WireEventI event, final ReadonlyList<CommitI> convertor,
                              List<Integer> futureWireStarts) {
     final int[] wireEnds = event.getWireEnds();
     if (wireEnds != null) {
@@ -115,7 +117,7 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
     return myWireEvents.tailMap(rowInclusive).values();
   }
 
-  public WireEvent getEventForRow(int row) {
+  public WireEventI getEventForRow(int row) {
     return myWireEvents.get(row);
   }
   
@@ -139,7 +141,7 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
     //System.out.println("-----------------> row = " + row);
       final Iterator<WireEvent> iterator = createWireEventsIterator(entry.getKey());
       while (iterator.hasNext()) {
-        final WireEvent event = iterator.next();
+        final WireEventI event = iterator.next();
         if (event.getCommitIdx() >= row) {
           return ring;
         }
@@ -157,6 +159,16 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
       @Override
       public void consume(WireEvent wireEvent) {
         wireEvent.addStart(parentRow);
+      }
+    });
+  }
+
+  @Override
+  public void setWireStartsNumber(int row, final int number) {
+    modify(row, new Consumer<WireEvent>() {
+      @Override
+      public void consume(WireEvent wireEvent) {
+        wireEvent.setWaitStartsNumber(number);
       }
     });
   }
@@ -211,7 +223,7 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
   }
 
   private void modify(final int row, final Consumer<WireEvent> consumer) {
-    WireEvent event = myWireEvents.get(row);
+    WireEvent event = (WireEvent)myWireEvents.get(row);
     if (event == null) {
       event = new WireEvent(row, null);
       myWireEvents.put(row, event);
@@ -221,7 +233,7 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
 
   public void printSelf() {
     System.out.println("============== EVENTS =================");
-    for (WireEvent event : myWireEvents.values()) {
+    for (WireEventI event : myWireEvents.values()) {
       System.out.println(event.toString());
     }
     System.out.println("==============********=================");

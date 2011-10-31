@@ -516,4 +516,6 @@ class Bar {{
   public void testMemberShipOperatorCheck() {
     doTest(new GroovyInArgumentCheckInspection());
   }
+
+  void testDefaultInitializersAreNotAllowedInAbstractMethods() {doTest()}
 }

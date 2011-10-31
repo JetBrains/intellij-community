@@ -6,6 +6,6 @@ iii = null
 
 jjj = <caret>testMethod()
 
-private def testMethod() {
+private testMethod() {
     iii + 1
 }

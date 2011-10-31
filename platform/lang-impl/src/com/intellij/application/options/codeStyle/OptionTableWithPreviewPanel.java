@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -74,8 +75,11 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     initTables();
 
     myTreeTable = createOptionsTree(getSettings());
-    myPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable),
-                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+    JBScrollPane scrollPane = new JBScrollPane(myTreeTable);
+    scrollPane.setPreferredSize(new Dimension(400, -1));
+    scrollPane.setMinimumSize(new Dimension(400, -1));
+    myPanel.add(scrollPane
+      , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                        new Insets(0, 0, 0, 5), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();

@@ -2,6 +2,6 @@
 -----
 testMethod()
 
-private def testMethod() {
+private testMethod() {
     print 1.getClass()
 }

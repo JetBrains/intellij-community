@@ -19,7 +19,7 @@ class S {
 
         }
 
-    private def testMethod(Closure sin) {
+    private testMethod(Closure sin) {
         10.times {
             x -> sin x
         }

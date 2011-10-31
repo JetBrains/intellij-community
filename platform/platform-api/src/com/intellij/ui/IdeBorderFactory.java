@@ -196,4 +196,18 @@ public class IdeBorderFactory {
     }
   }
 
+  public static class PlainSmallWithoutIndentWithoutInsets {
+    private PlainSmallWithoutIndentWithoutInsets() {
+    }
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
+      return IdeBorderFactory.createTitledBorder(title, false, false, true, new Insets(5,0,0,0));
+    }
+  }
+
 }

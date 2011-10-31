@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -45,8 +46,7 @@ public class InlineMethodConflictSolver {
     while (!(parent instanceof GrVariableDeclarationOwner) && parent != null) {
       parent = parent.getParent();
     }
-    if (parent == null ||
-        (isValidName(startName, parent, call) && isValid(startName, otherNames))) {
+    if (parent == null || isValidName(startName, parent, call) && isValid(startName, otherNames)) {
       return startName;
     }
     do {
@@ -88,7 +88,7 @@ public class InlineMethodConflictSolver {
     }
   }
 
-  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, PsiElement call) {
+  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, @Nullable PsiElement call) {
 
     PsiElement child = startElement.getFirstChild();
     while (child != null) {

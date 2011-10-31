@@ -67,4 +67,10 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     myAllFileTypes.add(fileType);
     myExtensionsMap.put(extension, fileType);
   }
+
+  @NotNull
+  @Override
+  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
+    return UnknownFileType.INSTANCE;
+  }
 }

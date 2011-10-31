@@ -51,11 +51,10 @@ public class FileProcessingCompilerStateCache {
   }
 
   public void update(VirtualFile sourceFile, ValidityState extState) throws IOException {
-    if (!sourceFile.isValid()) {
-      LOG.error("Source file must be valid " + sourceFile.getPresentableUrl() +
-                ", state.getClass() = " + (extState != null ? extState.getClass().getName() : "null"));
+    if (sourceFile.isValid()) {
+      // only mark as up-to-date if the file did not become invalid during make
+      myCache.update(sourceFile.getUrl(), new MyState(sourceFile.getTimeStamp(), extState));
     }
-    myCache.update(sourceFile.getUrl(), new MyState(sourceFile.getTimeStamp(), extState));
   }
 
   public void remove(String url) throws IOException {

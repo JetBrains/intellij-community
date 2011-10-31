@@ -13,22 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.wholeTree;
-
-import java.util.Iterator;
-import java.util.List;
-
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/20/11
- * Time: 11:49 AM
- * To change this template use File | Settings | File Templates.
- */
-public interface WireEventsIterator {
-  Integer getFloor();
-
-  Iterator<WireEventI> getWireEventsIterator();
-
-  List<Integer> getFirstUsed();
-}
+def list = []
+int[] arr = []
+List<String> strings = []

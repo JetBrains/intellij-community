@@ -61,11 +61,11 @@ import java.lang.reflect.Modifier;
  * @author yole
  */
 public class CoreEnvironment {
-  private CoreFileTypeRegistry myFileTypeRegistry;
-  private CoreEncodingRegistry myEncodingRegistry;
+  private final CoreFileTypeRegistry myFileTypeRegistry;
+  private final CoreEncodingRegistry myEncodingRegistry;
   protected final MockApplication myApplication;
   protected MockProject myProject;
-  private CoreLocalFileSystem myLocalFileSystem;
+  private final CoreLocalFileSystem myLocalFileSystem;
   protected final CoreJarFileSystem myJarFileSystem;
   protected final MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
@@ -192,6 +192,10 @@ public class CoreEnvironment {
 
   public CoreLocalFileSystem getLocalFileSystem() {
     return myLocalFileSystem;
+  }
+
+  public CoreJarFileSystem getJarFileSystem() {
+    return myJarFileSystem;
   }
 
   public void addLibraryRoot(VirtualFile file) {

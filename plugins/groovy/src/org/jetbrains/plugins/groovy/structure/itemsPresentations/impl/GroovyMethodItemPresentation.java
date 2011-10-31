@@ -25,13 +25,14 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 31.10.2007
  */
-public class GroovyMethodItemPresentation extends GroovyItemPresentation implements ColoredItemPresentation{
+public class GroovyMethodItemPresentation extends GroovyItemPresentation implements ColoredItemPresentation {
   private final boolean isInherit;
   private final NotNullLazyValue<String> myPresentableText = new NotNullLazyValue<String>() {
     @NotNull
@@ -40,22 +41,27 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation impleme
       final PsiMethod method = (PsiMethod)myElement;
       StringBuilder presentableText = new StringBuilder();
       presentableText.append(method.getName());
-      presentableText.append(" ");
+      presentableText.append(' ');
 
       PsiParameterList paramList = method.getParameterList();
       PsiParameter[] parameters = paramList.getParameters();
 
-      presentableText.append("(");
+      presentableText.append('(');
       for (int i = 0; i < parameters.length; i++) {
         if (i > 0) presentableText.append(", ");
-        presentableText.append(parameters[i].getType().getPresentableText());
+
+        PsiParameter p = parameters[i];
+        boolean isOptional = p instanceof GrParameter && ((GrParameter)p).isOptional();
+        if (isOptional) presentableText.append('[');
+        presentableText.append(p.getType().getPresentableText());
+        if (isOptional) presentableText.append(']');
       }
-      presentableText.append(")");
+      presentableText.append(')');
 
       PsiType returnType = method.getReturnType();
 
       if (returnType != null) {
-        presentableText.append(":");
+        presentableText.append(':');
         presentableText.append(returnType.getPresentableText());
       }
 

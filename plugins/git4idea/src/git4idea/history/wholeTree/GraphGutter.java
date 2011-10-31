@@ -41,6 +41,7 @@ public class GraphGutter {
   private static final int ourInterLineWidth = 2; // todo!
   private static final int ourInterRepoLineWidth = 5;
   public static final int ourIndent = 2;
+  private boolean myCurrentBranchColored;
 
   private int myHeaderHeight;
   private int myRowHeight;
@@ -55,7 +56,8 @@ public class GraphGutter {
   public GraphGutter(BigTableTableModel model) {
     myModel = model;
     myComponent = new MyComponent();
-    myStyle = PresentationStyle.calm;
+    myStyle = PresentationStyle.multicolour;
+    myCurrentBranchColored = true;
   }
 
   public void setHeaderHeight(int headerHeight) {
@@ -91,6 +93,8 @@ public class GraphGutter {
     myStyle = style;
     myComponent.repaint();
   }
+
+  public static final Color OUTLINE_NOT_INCLUDED = new Color(180, 180, 180);
 
   // will lay near but not inside scroll pane
   class MyComponent extends JPanel {
@@ -141,20 +145,22 @@ public class GraphGutter {
                                         final int idxFrom,
                                         final int yOffset,
                                         final Set<Integer> wires,
-                                        @Nullable final WireEvent event,
-                                        HashSet<Integer> selected, final List<Integer> wiresGroups) {
+                                        @Nullable final WireEventI event,
+                                        HashSet<Integer> selected,
+                                        final List<Integer> wiresGroups,
+                                        Map<Integer, Set<Integer>> grey,
+                                        HashSet<Integer> wireModificationSet) {
       int rowYOffset = yOffset;
+      final int eventWire = myModel.getCorrectedWire(myModel.getCommitAt(event.getCommitIdx()));
       for (int i = idxFrom; i < event.getCommitIdx(); i++) {
+        final int commitWire = myModel.getCorrectedWire(myModel.getCommitAt(i));
         for (Integer wire : wires) {
-          g.setColor(selected.contains(i) ? Color.white : myStyle.getColorForWire(wire));
-          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-          doubleLine(g, startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
+          verticalLine(g, selected, wiresGroups, grey, rowYOffset, i, wire, wireModificationSet, wire == commitWire);
         }
         rowYOffset += myRowHeight;
       }
 
-      final int eventWire = myModel.getCorrectedWire(myModel.getCommitAt(event.getCommitIdx()));
-      g.setColor(selected.contains(event.getCommitIdx()) ? Color.white : myStyle.getColorForWire(eventWire));
+      g.setColor(getConnectorColor(g, selected, event.getCommitIdx(), eventWire, grey));
       int eventStartXPoint = startPoint(eventWire, wiresGroups) + ourLineWidth/2;
 
       final Set<Integer> skip = new HashSet<Integer>();
@@ -170,45 +176,94 @@ public class GraphGutter {
         doubleLine(g, eventStartXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight / 2);
       }
       
-      
       final int[] commitsStarts = event.getCommitsStarts();
-      if (commitsStarts != null) {
-        for (int commitsStart : commitsStarts) {
-          if (commitsStart == -1) continue;
-          final CommitI commitAt = myModel.getCommitAt(commitsStart);
-          final int wire = myModel.getCorrectedWire(commitAt);
-          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-          g.setColor(selected.contains(event.getCommitIdx()) ? Color.white : myStyle.getColorForWire(wire));
-          doubleLine(g, startXPoint, rowYOffset + myRowHeight, eventStartXPoint, rowYOffset + myRowHeight / 2);
-        }
-      }
       final int[] wireEnds = event.getWireEnds();
       if (wireEnds != null) {
         for (int end : wireEnds) {
           if (end == -1) continue;
           final int wire = myModel.getCorrectedWire(myModel.getCommitAt(end));
           skip.add(wire);
-          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-          g.setColor(selected.contains(event.getCommitIdx()) ? Color.white : myStyle.getColorForWire(wire));
-          doubleLine(g, startXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight / 2);
         }
       }
 
       for (Integer wire : wires) {
         if (skip.contains(wire)) continue;
-        int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
-        g.setColor(selected.contains(event.getCommitIdx()) ? Color.white : myStyle.getColorForWire(wire));
+        verticalLine(g, selected, wiresGroups, grey, rowYOffset, event.getCommitIdx(), wire, wireModificationSet, wire == eventWire);
+      }
+
+      if (commitsStarts != null) {
+        for (int commitsStart : commitsStarts) {
+          if (commitsStart == -1) continue;
+          final CommitI commitAt = myModel.getCommitAt(commitsStart);
+          final int wire = myModel.getCorrectedWire(commitAt);
+          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+          g.setColor(getConnectorColor(g, selected, event.getCommitIdx(), eventWire, grey));
+          doubleLine(g, startXPoint, rowYOffset + myRowHeight, eventStartXPoint, rowYOffset + myRowHeight / 2);
+        }
+      }
+      if (wireEnds != null) {
+        for (int end : wireEnds) {
+          if (end == -1) continue;
+          final int wire = myModel.getCorrectedWire(myModel.getCommitAt(end));
+          int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+          g.setColor(getConnectorColor(g, selected, event.getCommitIdx(), wire, grey));
+          doubleLine(g, startXPoint, rowYOffset, eventStartXPoint, rowYOffset + myRowHeight / 2);
+        }
+      }
+    }
+
+    private void verticalLine(Graphics g,
+                              HashSet<Integer> selected,
+                              List<Integer> wiresGroups,
+                              Map<Integer, Set<Integer>> grey,
+                              int rowYOffset, int i, Integer wire, HashSet<Integer> wireModificationSet, boolean isCommitWire) {
+      Color connectorColor = getConnectorColor(g, selected, i, wire, grey);
+      Color connectorStartColor = connectorColor;
+      if (isCommitWire && wireModificationSet.contains(i)) {
+        connectorStartColor = OUTLINE_NOT_INCLUDED;
+      }
+      int startXPoint = startPoint(wire, wiresGroups) + ourLineWidth/2;
+      if (connectorColor.equals(connectorStartColor)) {
+        g.setColor(connectorColor);
         doubleLine(g, startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight);
+      } else {
+        g.setColor(connectorStartColor);
+        doubleLine(g, startXPoint, rowYOffset, startXPoint, rowYOffset + myRowHeight/2);
+        g.setColor(connectorColor);
+        doubleLine(g, startXPoint, rowYOffset + myRowHeight/2, startXPoint, rowYOffset + myRowHeight);
+      }
+    }
+
+    //getPreviousAbsoluteIdx
+    private Color getConnectorStartColor(Graphics g, HashSet<Integer> selected, int i, Integer wire, Map<Integer, Set<Integer>> grey) {
+      final int prevIdx = myModel.getPreviousAbsoluteIdx(i);
+      if (prevIdx == -1) return getConnectorColor(g,selected, i,wire, grey);
+
+      final Set<Integer> integers = grey.get(prevIdx);
+      if (integers == null || ! integers.contains(wire)) {
+        return OUTLINE_NOT_INCLUDED;
+      } else {
+        return selected.contains(i) ? Color.white : myStyle.getColorForWire(wire);
       }
     }
     
+    private Color getConnectorColor(Graphics g, Set<Integer> selected, int i, Integer wire, Map<Integer, Set<Integer>> grey) {
+      final Set<Integer> integers = grey.get(i);
+      if (myCurrentBranchColored && (integers == null || ! integers.contains(wire))) {
+        return OUTLINE_NOT_INCLUDED;
+      } else {
+        return selected.contains(i) ? Color.white : myStyle.getColorForWire(wire);
+      }
+    }
+
     private void doubleLine(final Graphics g, final int x1, final int y1, final int x2, final int y2) {
       final Color color = g.getColor();
-      g.setColor(Color.gray.brighter());
       //g.drawLine(x1 - 1,y1,x2 - 1,y2);
+      //g.setColor(Color.gray.brighter());
+      g.drawLine(x1,y1,x2,y2);
+      //g.setColor(Color.gray.brighter());
       g.drawLine(x1 + 1, y1, x2 + 1, y2);
       g.setColor(color);
-      g.drawLine(x1,y1,x2,y2);
     }
 
     @Override
@@ -277,8 +332,11 @@ public class GraphGutter {
     }
 
     private void drawPoints(Graphics graphics, int lastIdx, int upBound, int idx, HashSet<Integer> selected, List<Integer> wiresGroups) {
-      final Color darker = UIUtil.getTableSelectionBackground().darker();
-      final Color fill = new Color(176,230,255);
+      final Color darker = new Color(35,107,178);
+      //final Color fill = new Color(176,230,255);
+      final Color fill = new Color(166,220,255);
+      final Color fillNotIncluded = new Color(200,200,200);
+
       while (idx <= lastIdx && idx < myModel.getRowCount()) {
         CommitI commitAt = myModel.getCommitAt(idx);
         final boolean contains = selected.contains(idx);
@@ -287,25 +345,42 @@ public class GraphGutter {
         if (! commitAt.holdsDecoration() && isInActiveRoots) {
           int correctedWire = myModel.getCorrectedWire(commitAt);
           int startXPoint = startPoint(correctedWire, wiresGroups);
-          graphics.setColor(contains ? Color.white : fill);
-          ((Graphics2D) graphics).fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
-          //graphics.setColor(contains ? Color.white : UIUtil.getTableSelectionBackground().brighter());
-
-          graphics.setColor(contains ? Color.white : UIUtil.getTableSelectionBackground());
-          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
-
-          if (! contains) {
-            graphics.setColor(Color.white);
-            ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4 + 1, diameter - 1, diameter - 1, 100, 90);
+          final boolean inCurrentBranch = myCurrentBranchColored ? myModel.isInCurrentBranch(idx) : true;
+          if (inCurrentBranch) {
+            //myStyle.getColorForWire(startXPoint)
+            if (PresentationStyle.calm.equals(myStyle)) {
+              graphics.setColor(fill);
+            } else {
+              graphics.setColor(myStyle.getColorForWire(correctedWire).brighter());
+            }
+          } else {
+            graphics.setColor(fillNotIncluded);
           }
+          graphics.fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
 
-          graphics.setColor(contains ? Color.white : darker);
-          ((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
+          //graphics.setColor(contains ? Color.white : UIUtil.getTableSelectionBackground());
+          /*if (contains) {
+            graphics.setColor(Color.white);
+          }
+          else {*/
+            if (inCurrentBranch) {
+              if (PresentationStyle.calm.equals(myStyle)) {
+                graphics.setColor(darker);
+              } else {
+                graphics.setColor(myStyle.getColorForWire(correctedWire));
+              }
+            }
+            else {
+              graphics.setColor(OUTLINE_NOT_INCLUDED);
+            }
+          //}
+          graphics.drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
+          graphics.drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
 
-          //graphics.drawString("" + correctedWire, startXPoint, upBound + myRowHeight);
-        } else {
-          //((Graphics2D) graphics).drawArc(startXPoint + ourLineWidth/2 - 2, upBound + myRowHeight/2 - 2, 4, 4, 0, 360);
-          //graphics.drawString("H", 0, upBound + myRowHeight);
+          if (inCurrentBranch) {
+            graphics.setColor(Color.white);
+            graphics.drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4 + 1, diameter - 1, diameter - 1, 100, 90);
+          }
         }
         ++ idx;
         upBound += myRowHeight;
@@ -319,12 +394,17 @@ public class GraphGutter {
         int idxFrom = idx;
         int yOff = upBound;
         Set<Integer> used = new HashSet<Integer>(eventsIterator.getFirstUsed());
-        final Iterator<WireEvent> iterator = eventsIterator.getWireEventsIterator();
+        final Iterator<WireEventI> iterator = eventsIterator.getWireEventsIterator();
+
+        final int repoCorrection = myModel.getRepoCorrection(entry.getKey());
+        final HashSet<Integer> wireModificationSet = new HashSet<Integer>();
+        final Map<Integer, Set<Integer>> grey = myModel.getGrey(entry.getKey(), idxFrom, lastIdx, repoCorrection, wireModificationSet);
+
         while (iterator.hasNext()) {
-          final WireEvent wireEvent = iterator.next();
+          final WireEventI wireEvent = iterator.next();
 
           if (wireEvent.getCommitIdx() >= idx) {
-            drawConnectorsFragment(graphics, idxFrom, yOff, used, wireEvent, selected, wiresGroups);
+            drawConnectorsFragment(graphics, idxFrom, yOff, used, wireEvent, selected, wiresGroups, grey, wireModificationSet);
             int delta = wireEvent.getCommitIdx() + 1 - idxFrom;
             delta = delta < 0 ? 0 : delta;
             yOff += delta * myRowHeight;
@@ -377,8 +457,8 @@ public class GraphGutter {
 
   public static enum PresentationStyle {
     multicolour() {
-      final Color[] ourColors = {new Color(255,128,0), new Color(0,255,128), new Color(128,0,255), new Color(255,0,0), new Color(0,0,255),
-        new Color(128,64,0), new Color(255,0,255), new Color(255,255,0), new Color(0, 255,255)};
+      final Color[] ourColors = {new Color(255,128,0), new Color(0,102,204), new Color(0, 130,130), new Color(255,45,45), new Color(64,64,255),
+        new Color(128,64,0), new Color(255,0,255), new Color(128,0,255)};
       @Override
       public Color getColorForWire(int wire) {
         return ourColors[wire % ourColors.length];
@@ -395,5 +475,13 @@ public class GraphGutter {
     };
 
     public abstract Color getColorForWire(int wire);
+  }
+
+  public boolean isCurrentBranchColored() {
+    return myCurrentBranchColored;
+  }
+
+  public void setCurrentBranchColored(boolean currentBranchColored) {
+    myCurrentBranchColored = currentBranchColored;
   }
 }

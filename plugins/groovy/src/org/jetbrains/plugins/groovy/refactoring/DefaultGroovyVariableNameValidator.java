@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
@@ -57,7 +60,7 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
 
   public DefaultGroovyVariableNameValidator(GroovyPsiElement context,
                                             Collection<String> restrictedNames,
-                                            boolean includeFields,
+                                            final boolean includeFields,
                                             final boolean checkIntoInner) {
     myContext = context;
     mySet.addAll(restrictedNames);
@@ -71,10 +74,16 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
       }
     }
 
-    context.accept(new GroovyRecursiveElementVisitor(){
+    GroovyPsiElement scope = PsiTreeUtil.getParentOfType(context, GrControlFlowOwner.class, GrMember.class);
+    if (scope == null) scope = context;
+
+    scope.accept(new GroovyRecursiveElementVisitor(){
       @Override
       public void visitVariable(GrVariable variable) {
-        mySet.add(variable.getName());
+        if (includeFields || !(variable instanceof PsiField)) {
+          mySet.add(variable.getName());
+        }
+        super.visitVariable(variable);
       }
 
       @Override

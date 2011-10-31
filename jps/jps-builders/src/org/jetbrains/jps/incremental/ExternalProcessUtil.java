@@ -30,10 +30,19 @@ public class ExternalProcessUtil {
     }
   }
 
-  public static List<String> buildJavaCommandLine(String javaExecutable, String mainClass, List<String> bootClasspath, List<String> classpath, List<String> programParams) {
+  public static List<String> buildJavaCommandLine(String javaExecutable,
+                                                  String mainClass,
+                                                  List<String> bootClasspath,
+                                                  List<String> classpath,
+                                                  List<String> vmParams,
+                                                  List<String> programParams) {
     final List<String> cmdLine = new ArrayList<String>();
 
     cmdLine.add(javaExecutable);
+
+    for (String param : vmParams) {
+      cmdLine.add(param);
+    }
 
     if (!bootClasspath.isEmpty()) {
       cmdLine.add("-bootclasspath");

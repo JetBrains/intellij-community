@@ -78,9 +78,14 @@ public class GitHistoryUtils {
    */
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
+    return getCurrentRevision(project, filePath, branch, false);
+  }
+
+  @Nullable
+  public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch, final boolean shortHash) throws VcsException {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
+    GitLogParser parser = shortHash ? new GitLogParser(project, SHORT_HASH, COMMIT_TIME) : new GitLogParser(project, HASH, COMMIT_TIME);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
@@ -100,7 +105,7 @@ public class GitHistoryUtils {
       return null;
     }
     record.setUsedHandler(h);
-    return new GitRevisionNumber(record.getHash(), record.getDate());
+    return shortHash ? new GitRevisionNumber(record.getShortHash(), record.getDate()) : new GitRevisionNumber(record.getHash(), record.getDate());
   }
 
   @Nullable

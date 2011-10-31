@@ -149,7 +149,7 @@ public final class Matcher {
 
   void testAnonymousFromMap() {doTest()}
   void testClosure() {doTest()}
-  void _testListAsArray() {doTest()}
+  void testListAsArray() {doTest()}
 
   void testUnresolvedArrayAccess() {doTest()}
   void testArrayAccess() {doTest()}
@@ -159,4 +159,9 @@ public final class Matcher {
   void testBinary() {doTest()}
   void testSafeCast() {doTest()}
   void testNewExpr() {doTest()}
+
+  void testMapNameAlreadyused() {doTest()}
+
+  void testEmptyMap() {doTest()}
+  void testEmptyList() {doTest()}
 }

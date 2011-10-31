@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.Ring;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.ReadonlyList;
@@ -58,7 +57,7 @@ public class SkeletonBuilderTest extends TestCase {
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
     for (int i = 0; i < 5; i++) {
-      final WireEvent we = iterator.next();
+      final WireEventI we = iterator.next();
       Assert.assertEquals(true, we.isEnd());
       Assert.assertEquals(true, we.isStart());
       Assert.assertEquals(i, we.getCommitIdx());
@@ -72,7 +71,7 @@ public class SkeletonBuilderTest extends TestCase {
 
     final Iterator<WireEvent> iterator2 = navigation.createWireEventsIterator(4);
     for (int i = 4; i < 5; i++) {
-      final WireEvent we = iterator2.next();
+      final WireEventI we = iterator2.next();
       Assert.assertEquals(true, we.isEnd());
       Assert.assertEquals(true, we.isStart());
       Assert.assertEquals(i, we.getCommitIdx());
@@ -80,7 +79,7 @@ public class SkeletonBuilderTest extends TestCase {
 
     final Iterator<WireEvent> iterator3 = navigation.createWireEventsIterator(2);
     for (int i = 2; i < 5; i++) {
-      final WireEvent we = iterator3.next();
+      final WireEventI we = iterator3.next();
       Assert.assertEquals(true, we.isEnd());
       Assert.assertEquals(true, we.isStart());
       Assert.assertEquals(i, we.getCommitIdx());
@@ -130,7 +129,7 @@ public class SkeletonBuilderTest extends TestCase {
     }
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
-    WireEvent we = iterator.next();
+    WireEventI we = iterator.next();
     Assert.assertEquals(true, we.isStart());
     Assert.assertEquals(0, we.getCommitIdx());
 
@@ -145,7 +144,7 @@ public class SkeletonBuilderTest extends TestCase {
     assertWires(navigation.getUsedWires(4, commits, builder.getFutureConvertor()).getUsed(), 0);
 
     final Iterator<WireEvent> iterator1 = navigation.createWireEventsIterator(4);
-    WireEvent we1 = iterator1.next();
+    WireEventI we1 = iterator1.next();
     Assert.assertEquals(true, we1.isEnd());
     Assert.assertEquals(4, we1.getCommitIdx());
   }
@@ -179,7 +178,7 @@ public class SkeletonBuilderTest extends TestCase {
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
     testFirstIteratorPart(iterator);
-    WireEvent we = iterator.next();
+    WireEventI we = iterator.next();
 
     Assert.assertEquals(6, we.getCommitIdx());
     final int[] commitsStarts = we.getCommitsStarts();
@@ -233,7 +232,7 @@ public class SkeletonBuilderTest extends TestCase {
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
     testFirstIteratorPart(iterator);
-    WireEvent we = iterator.next();
+    WireEventI we = iterator.next();
 
     Assert.assertEquals(6, we.getCommitIdx());
     final int[] commitsStarts = we.getCommitsStarts();
@@ -266,7 +265,7 @@ public class SkeletonBuilderTest extends TestCase {
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
     testFirstIteratorPart(iterator);
-    WireEvent we;
+    WireEventI we;
 
     assertWires(navigation.getUsedWires(0, commits, builder.getFutureConvertor()).getUsed());
     assertWires(navigation.getUsedWires(1, commits, builder.getFutureConvertor()).getUsed(), 0,1);
@@ -287,7 +286,7 @@ public class SkeletonBuilderTest extends TestCase {
   }
 
   private void testFirstIteratorPart(Iterator<WireEvent> iterator) {
-    WireEvent we = iterator.next();
+    WireEventI we = iterator.next();
     Assert.assertEquals(true, we.isStart());
     Assert.assertEquals(0, we.getCommitIdx());
     final int[] commitsStarts = we.getCommitsStarts();
@@ -323,7 +322,7 @@ public class SkeletonBuilderTest extends TestCase {
     }
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
-    WireEvent we = iterator.next();
+    WireEventI we = iterator.next();
     Assert.assertEquals(true, we.isStart());
     Assert.assertEquals(0, we.getCommitIdx());
 
@@ -359,7 +358,7 @@ public class SkeletonBuilderTest extends TestCase {
     assertWires(navigation.getUsedWires(8, commits, builder.getFutureConvertor()).getUsed(), 1);
 
     final Iterator<WireEvent> iterator1 = navigation.createWireEventsIterator(5);
-    WireEvent we1 = iterator1.next();
+    WireEventI we1 = iterator1.next();
 
     Assert.assertEquals(6, we1.getWireEnds()[0]);
     Assert.assertEquals(7, we1.getCommitIdx());
@@ -391,7 +390,7 @@ public class SkeletonBuilderTest extends TestCase {
     }
 
     final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
-    WireEvent we = iterator.next();
+    WireEventI we = iterator.next();
     Assert.assertEquals(true, we.isStart());
     Assert.assertEquals(0, we.getCommitIdx());
     int[] commitsStarts = we.getCommitsStarts();
@@ -447,7 +446,7 @@ public class SkeletonBuilderTest extends TestCase {
     assertWires(navigation.getUsedWires(9, commits, builder.getFutureConvertor()).getUsed(), 0, 1, 2);
 
     final Iterator<WireEvent> iterator1 = navigation.createWireEventsIterator(5);
-    WireEvent we1 = iterator1.next();
+    WireEventI we1 = iterator1.next();
     Assert.assertNull(we1.getWireEnds());
     Assert.assertEquals(5, we1.getCommitIdx());
     int[] commitsEnds1 = we1.getCommitsEnds();
@@ -744,7 +743,7 @@ public class SkeletonBuilderTest extends TestCase {
     model.setNumEventsInGroup(2);
     final VirtualFile[] arr = new VirtualFile[] {new MyVf(), new MyVf()};
     model.setRootsHolder(new RootsHolder(Arrays.asList(arr)));
-    model.clear(true);
+    model.clear(true, true);
 
     final List<List<AbstractHash>> parentsOne = new ArrayList<List<AbstractHash>>();
     final List<List<AbstractHash>> parentsTwo = new ArrayList<List<AbstractHash>>();
