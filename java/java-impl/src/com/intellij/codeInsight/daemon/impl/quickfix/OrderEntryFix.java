@@ -29,6 +29,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
@@ -179,7 +180,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     Set<Object> librariesToAdd = new THashSet<Object>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
-    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    final PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
       PsiFile psiFile = aClass.getContainingFile();
@@ -215,7 +216,13 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                 model.addModuleOrderEntry(classModule);
                 model.commit();
                 if (editor != null) {
-                  new AddImportAction(project, reference, editor, aClass).execute();
+                  final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
+                  for (PsiClass psiClass : classes) {
+                    if (ModuleUtil.findModuleForPsiElement(psiClass) == classModule) {
+                      targetClasses.add(psiClass);
+                    }
+                  }
+                  new AddImportAction(project, reference, editor, targetClasses.toArray(new PsiClass[targetClasses.size()])).execute();
                 }
               }
             };
