@@ -254,7 +254,7 @@ public class MyTestInjector {
         }
         if (host instanceof PsiCommentImpl) {
           String text = host.getText();
-          if (text.startsWith("/*-{") && text.endsWith("}-*/")) {
+          if (text.startsWith("/*--{") && text.endsWith("}--*/")) {
             TextRange textRange = new TextRange(4, text.length()-4);
             if (!(host.getParent()instanceof PsiMethod)) return;
             PsiMethod method = (PsiMethod)host.getParent();
