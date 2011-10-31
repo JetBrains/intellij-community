@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
@@ -921,7 +920,7 @@ public class ExpressionGenerator extends Generator {
 
 
     if (resolveResult.isInvokedOnProperty()) {
-      //property-style access to accesseor (e.g. qual.prop should be translated to qual.getProp())
+      //property-style access to accessor (e.g. qual.prop should be translated to qual.getProp())
       LOG.assertTrue(resolved instanceof PsiMethod);
       LOG.assertTrue(GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved));
       invokeMethodOn(
@@ -1150,11 +1149,23 @@ public class ExpressionGenerator extends Generator {
       PsiElement element = candidate.getElement();
       if (element != null || !PsiUtil.isLValue(expression)) {                     //see the case of l-value in assignment expression
         if (element instanceof GrGdkMethod && ((GrGdkMethod)element).getStaticMethod().getParameterList().getParameters()[0].getType().equalsToText("java.util.Map<K,V>")) {
-          invokeMethodByName(selectedExpression, "get", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
+          PsiClass map = JavaPsiFacade.getInstance(context.project).findClass(CommonClassNames.JAVA_UTIL_MAP, expression.getResolveScope());
+          if (map != null) {
+            PsiMethod[] gets = map.findMethodsByName("get", false);
+            invokeMethodOn(gets[0], selectedExpression, exprArgs, namedArgs, EMPTY_ARRAY, PsiSubstitutor.EMPTY, expression);
+            return;
+          }
         }
-        else {
-          invokeMethodByResolveResult(selectedExpression, candidate, "getAt", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
+        else if (element instanceof GrGdkMethod && ((GrGdkMethod)element).getStaticMethod().getParameterList().getParameters()[0].getType().equalsToText("java.util.List<T>")) {
+          PsiClass list = JavaPsiFacade.getInstance(context.project).findClass(CommonClassNames.JAVA_UTIL_LIST, expression.getResolveScope());
+          if (list != null) {
+            PsiMethod[] gets = list.findMethodsByName("get", false);
+            invokeMethodOn(gets[0], selectedExpression, exprArgs, namedArgs, EMPTY_ARRAY, PsiSubstitutor.EMPTY, expression);
+            return;
+          }
+          
         }
+        invokeMethodByResolveResult(selectedExpression, candidate, "getAt", exprArgs, namedArgs, EMPTY_ARRAY, this, expression);
         return;
       }
     }
@@ -1227,11 +1238,11 @@ public class ExpressionGenerator extends Generator {
     final PsiType type = listOrMap.getType();
 
     //can be PsiArrayType or GrLiteralClassType
-    LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiArrayType);
+    LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiArrayType || type instanceof PsiClassType);
 
     if (listOrMap.isMap()) {
       if (listOrMap.getNamedArguments().length == 0) {
-        builder.append(" = new ");
+        builder.append("new ");
         writeType(builder, type, listOrMap);
         builder.append("()");
       }
@@ -1242,21 +1253,31 @@ public class ExpressionGenerator extends Generator {
       }
     }
     else {
-      boolean isActuallyList = type instanceof GrTupleType;
+      boolean isArray = type instanceof PsiArrayType;
       builder.append("new ");
       writeType(builder, type, listOrMap);
-      if (isActuallyList) {
-        builder.append("(java.util.Arrays.asList(");
+      if (listOrMap.getInitializers().length == 0) {
+        if (isArray) {
+          builder.replace(builder.length() - 2, builder.length(), "[0]");
+        }
+        else {
+          builder.append("()");
+        }
       }
       else {
-        builder.append('{');
-      }
-      genInitializers(listOrMap);
-      if (isActuallyList) {
-        builder.append("))");
-      }
-      else {
-        builder.append('}');
+        if (isArray) {
+          builder.append('{');
+        }
+        else {
+          builder.append("(java.util.Arrays.asList(");
+        }
+        genInitializers(listOrMap);
+        if (isArray) {
+          builder.append('}');
+        }
+        else {
+          builder.append("))");
+        }
       }
     }
   }
