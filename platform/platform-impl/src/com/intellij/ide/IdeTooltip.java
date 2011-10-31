@@ -29,6 +29,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private Point myPoint;
 
   private Balloon.Position myPreferredPosition;
+  private Balloon.Layer myLayer;
 
   private JComponent myTipComponent;
 
@@ -48,6 +49,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private int myPositionChangeY;
 
   private Ui myUi;
+
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -219,6 +221,15 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public void setUi(Ui ui) {
     myUi = ui;
+  }
+
+  public IdeTooltip setLayer(Balloon.Layer layer) {
+    myLayer = layer;
+    return this;
+  }
+
+  public Balloon.Layer getLayer() {
+    return myLayer;
   }
 
   public boolean isInside(RelativePoint target) {

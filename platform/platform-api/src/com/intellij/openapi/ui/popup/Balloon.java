@@ -59,4 +59,8 @@ public interface Balloon extends Disposable {
     below, above, atLeft, atRight
   }
 
+  enum Layer {
+    normal, top
+  }
+
 }

@@ -147,8 +147,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private boolean myAnimationEnabled = true;
   private boolean myShadow = false;
+  private Layer myLayer;
 
-    public boolean isInsideBalloon(MouseEvent me) {
+  public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
   }
 
@@ -203,7 +204,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      String title,
                      Insets contentInsets,
                      boolean shadow,
-                     boolean smallVariant) {
+                     boolean smallVariant,
+                     Layer layer) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -220,7 +222,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myPositionChangeYShift = positionChangeYShift;
     myDialogMode = dialogMode;
     myTitle = title;
-
+    myLayer = layer != null ? layer : Layer.normal;
+    
     if (!myDialogMode) {
       new AwtVisitor(content) {
         @Override
@@ -264,6 +267,20 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     AbstractPosition pos = getAbstractPositionFor(position);
 
     show(target, pos);
+  }
+
+  public int getLayer() {
+    Integer result = JLayeredPane.DEFAULT_LAYER;
+    switch (myLayer) {
+      case normal:
+        result = JLayeredPane.DEFAULT_LAYER;
+        break;
+      case top:
+        result = JLayeredPane.DRAG_LAYER;
+        break;
+    }
+
+    return result;
   }
 
   private static AbstractPosition getAbstractPositionFor(Position position) {
@@ -505,7 +522,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     final int borderSize = getShadowBorderSize();
     myComp.setBorder(new EmptyBorder(borderSize, borderSize, borderSize, borderSize));
 
-    myLayeredPane.add(myComp, JLayeredPane.POPUP_LAYER);
+    myLayeredPane.add(myComp);
+    myLayeredPane.setLayer(myComp, getLayer());
     myPosition.updateBounds(this);
   }
 
@@ -943,7 +961,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
-      return new Point(targetPoint.x, targetPoint.y - shift);
+      return new Point(targetPoint.x, targetPoint.y + shift);
     }
 
     @Override
@@ -1073,7 +1091,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
-      return new Point(targetPoint.x - shift, targetPoint.y);
+      return new Point(targetPoint.x + shift, targetPoint.y);
     }
 
     @Override
@@ -1314,7 +1332,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     public void _setBounds(Rectangle bounds) {
       super.setBounds(bounds);
       if (myCloseRec.getParent() == null && getParent() != null) {
-        myLayeredPane.add(myCloseRec, JLayeredPane.DRAG_LAYER);
+        myLayeredPane.add(myCloseRec);
+        myLayeredPane.setLayer(myCloseRec, JLayeredPane.DRAG_LAYER);
       }
 
       if (isVisible() && myCloseRec.isVisible()) {
@@ -1464,7 +1483,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false));
+                                      new Insets(2, 2, 2, 2), true, false, Layer.normal));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

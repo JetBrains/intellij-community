@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -194,7 +195,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         setTipComponent(wrapper);
         return true;
       }
-    }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY);
+    }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
 
     show(tooltip, false);
   }
@@ -284,7 +285,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
       .setHideOnKeyOutside(!tooltip.isExplicitClose())
-      .setHideOnAction(!tooltip.isExplicitClose());
+      .setHideOnAction(!tooltip.isExplicitClose())
+      .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
     tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));

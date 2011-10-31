@@ -90,4 +90,7 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setSmallVariant(boolean smallVariant);
+  
+  @NotNull
+  BalloonBuilder setLayer(Balloon.Layer layer);
 }
