@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
 
 /**
  * Manages settings of {@link GradleModule gradle module} component.
@@ -139,7 +140,7 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
   @Override
   public void refresh() {
     myNameControl.setText(myModule.getName());
-    myModuleFileLocationField.setText(myModule.getModuleFilePath());
+    myModuleFileLocationField.setText(new File(myModule.getModuleFilePath()).getParent());
     if (myModule.isInheritProjectCompileOutputPath()) {
       myInheritProjectCompileOutputPathButton.setSelected(true);
     }
