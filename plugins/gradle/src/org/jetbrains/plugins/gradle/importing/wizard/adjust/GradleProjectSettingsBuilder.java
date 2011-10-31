@@ -77,14 +77,30 @@ public class GradleProjectSettingsBuilder {
   }
 
   /**
-   * Instructs current builder to expose target property using the given UI controls.
+   * Shortcut for calling {@link #add(JComponent, JComponent, InsetSize)} with {@link InsetSize#NORMAL}.
    * 
    * @param keyComponent    control that provides information about the target property (e.g. its name or description)
    * @param valueComponent  control that holds available property values and (possibly) allows to choose between them
    */
   public void add(@NotNull JComponent keyComponent, @NotNull JComponent valueComponent) {
+    add(keyComponent, valueComponent, InsetSize.NORMAL);
+  }
+  
+  /**
+   * Instructs current builder to expose target property using the given UI controls.
+   * 
+   * @param keyComponent    control that provides information about the target property (e.g. its name or description)
+   * @param valueComponent  control that holds available property values and (possibly) allows to choose between them
+   * @param insetSize       top vertical inset to use for the 'key' component
+   */
+  public void add(@NotNull JComponent keyComponent, @NotNull JComponent valueComponent, @NotNull InsetSize insetSize) {
+    int insetToRestore = myKeyConstraint.insets.top;
+    myKeyConstraint.insets.top = insetSize.getValue();
+    
     myResult.add(keyComponent, myKeyConstraint);
     myResult.add(valueComponent, myValueConstraint);
+
+    myKeyConstraint.insets.top = insetToRestore;
   }
 
   /**
