@@ -492,8 +492,7 @@ class RunConfigurable extends BaseConfigurable {
     d.height = Math.max(d.height, 600);
     myWholePanel.setPreferredSize(d);
 
-    final float value = myProperties.getFloat(DIVIDER_PROPORTION, 0.3f);
-    mySplitter.setProportion(value);
+    mySplitter.setProportion(myProperties.getFloat(DIVIDER_PROPORTION, 0.3f));
 
     return myWholePanel;
   }
@@ -673,6 +672,7 @@ class RunConfigurable extends BaseConfigurable {
     });
     myRightPanel.removeAll();
     myProperties.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
+    mySplitter.dispose();
   }
 
   private void updateDialog() {
