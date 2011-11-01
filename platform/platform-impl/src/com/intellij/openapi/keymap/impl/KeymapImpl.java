@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -549,6 +550,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     myName = keymapElement.getAttributeValue(NAME_ATTRIBUTE);
 
     Map<String, ArrayList<Shortcut>> id2shortcuts = new HashMap<String, ArrayList<Shortcut>>();
+    final boolean skipInserts = SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode();
     for (final Object o : keymapElement.getChildren()) {
       Element actionElement = (Element)o;
       if (ACTION.equals(actionElement.getName())) {
@@ -565,7 +567,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
             KeyStroke firstKeyStroke;
             String firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE);
-            if (SystemInfo.isMac && firstKeyStrokeStr.contains("INSERT")) continue;
+            if (skipInserts && firstKeyStrokeStr.contains("INSERT")) continue;
 
             if (firstKeyStrokeStr != null) {
               firstKeyStroke = ActionManagerEx.getKeyStroke(firstKeyStrokeStr);
