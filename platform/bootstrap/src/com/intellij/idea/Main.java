@@ -76,6 +76,10 @@ public class Main {
              (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 
+  public static boolean isUITraverser(final String[] args) {
+    return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
+  }
+
   public static boolean isCommandLine(final String[] args) {
     if (isHeadless(args)) return true;
     @NonNls final String diffAppCode = "diff";
