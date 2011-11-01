@@ -51,6 +51,8 @@ import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_LSHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_RSHIFT_SIGN;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
@@ -146,6 +148,9 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mGE, "compareTo");
     ourOperationsToOperatorNames.put(mLT, "compareTo");
     ourOperationsToOperatorNames.put(mLE, "compareTo");
+    ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
+    ourOperationsToOperatorNames.put(COMPOSITE_LSHIFT_SIGN, "leftShift");
+    ourOperationsToOperatorNames.put(COMPOSITE_RSHIFT_SIGN, "rightShift");
 
     ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
     ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");
