@@ -13,6 +13,9 @@ import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugProcess;
@@ -161,6 +164,11 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (pyState.isMultiprocessDebug()) {
       debugParams.addParameter("--multiproc");
     }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      debugParams.addParameter("--DEBUG_RECORD_SOCKET_READS");
+    }
+
     final String[] debuggerArgs = new String[]{
       "--client", "127.0.0.1",
       "--port", String.valueOf(serverLocalPort),
