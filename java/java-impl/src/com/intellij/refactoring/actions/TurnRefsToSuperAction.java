@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,7 +28,7 @@ public class TurnRefsToSuperAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && elements[0] instanceof PsiClass;
+    return elements.length == 1 && elements[0] instanceof PsiClass && elements[0].getLanguage() == JavaLanguage.INSTANCE;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
