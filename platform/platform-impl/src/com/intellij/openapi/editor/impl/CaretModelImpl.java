@@ -197,7 +197,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       if (documentInfo.length() > 0) {
         documentInfo.setLength(documentInfo.length() - 1);
       } 
-      LOG.error("caret moved to wrong offset. Requested:" + offset + " but actual:" + myOffset + ". " + myEditor.dumpState());
+      LOG.error(
+        "caret moved to wrong offset. Requested: offset=" + offset + ", logical position=" + myEditor.offsetToLogicalPosition(offset)
+        + " but actual: offset=" + myOffset + ", logical position=" + myLogicalCaret + "(" + myEditor.offsetToLogicalPosition(myOffset)
+        + "). " + myEditor.dumpState()
+      );
     }
   }
 
