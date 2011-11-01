@@ -220,7 +220,7 @@ public class LoadAlgorithm {
     private State(final Convertor<State, LoadTaskDescriptor> loaderFactory) {
       myContinuationTs = -1;
       myLoaderFactory = loaderFactory;
-      myValue = LoadType.TEST;
+      myValue = LoadType.SHORT;
       myLoadFull = false;
     }
 
