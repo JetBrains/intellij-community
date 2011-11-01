@@ -37,7 +37,7 @@ public class WorkingCopiesContent {
     myShownContent = contentFactory.createContent(copiesPanel.getComponent(), SvnBundle.message("dialog.show.svn.map.title"), true);
     myShownContent.setCloseable(false);
     cvcm.addContent(myShownContent);
-    myShownContent.setPreferredFocusableComponent(copiesPanel.getPrefferedFocusComponent());
+    myShownContent.setPreferredFocusableComponent(copiesPanel.getPreferredFocusedComponent());
   }
 
   public void deactivate() {

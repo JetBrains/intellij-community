@@ -66,7 +66,7 @@ public class ShowSvnMapAction extends AnAction implements DumbAware {
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
     toolWindow.activate(new Runnable() {
       public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(copiesPanel.getPrefferedFocusComponent(), true);
+        IdeFocusManager.getInstance(project).requestFocus(copiesPanel.getPreferredFocusedComponent(), true);
       }
     });
     /*SwingUtilities.invokeLater(new Runnable() {

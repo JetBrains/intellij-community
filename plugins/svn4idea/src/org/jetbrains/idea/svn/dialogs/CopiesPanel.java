@@ -123,12 +123,13 @@ public class CopiesPanel {
       }
     });
     myHolder = ScrollPaneFactory.createScrollPane(holderPanel);
+    myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
     refreshView.run();
     initView();
   }
 
-  public JComponent getPrefferedFocusComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myRefreshLabel;
   }
 

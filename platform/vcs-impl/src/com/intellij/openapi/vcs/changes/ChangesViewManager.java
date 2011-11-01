@@ -231,7 +231,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     mySplitter = new Splitter(false, 0.5f);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(scrollPane, BorderLayout.CENTER);
     mySplitter.setShowDividerControls(true);
     mySplitter.setFirstComponent(wrapper);
