@@ -181,7 +181,13 @@ class ServerMessageHandler extends SimpleChannelHandler {
         error = e;
       }
       finally {
-        final JpsRemoteProto.Message lastMessage;
+        finishBuild(error);
+      }
+    }
+
+    private void finishBuild(@Nullable Throwable error) {
+      JpsRemoteProto.Message lastMessage = null;
+      try {
         if (error != null) {
           Throwable cause = error.getCause();
           if (cause == null) {
@@ -201,7 +207,11 @@ class ServerMessageHandler extends SimpleChannelHandler {
         else {
           lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedEvent("build completed"));
         }
-
+      }
+      catch (Throwable e) {
+        lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createFailure(e.getMessage(), e));
+      }
+      finally {
         Channels.write(myChannelContext.getChannel(), lastMessage).addListener(new ChannelFutureListener() {
           public void operationComplete(ChannelFuture future) throws Exception {
             myBuildsInProgress.remove(myProjectPath);

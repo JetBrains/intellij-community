@@ -189,6 +189,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
+  // assuming the root file exists
   public void registerTempSourceRoot(Module module, File root) {
     Collection<File> roots = myTempSourceRoots.get(module);
     if (roots == null) {
@@ -208,8 +209,11 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     final FSSnapshot snapshot = new FSSnapshot(module);
     final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
     for (String srcRoot : roots) {
-      final FSSnapshot.Root root = snapshot.addRoot(new File(srcRoot), srcRoot);
-      buildStructure(root.getNode(), excludes);
+      final File rootFile = new File(srcRoot);
+      if (rootFile.exists()) {
+        final FSSnapshot.Root root = snapshot.addRoot(rootFile, srcRoot);
+        buildStructure(root.getNode(), excludes);
+      }
     }
     final Collection<File> tempRoots = myTempSourceRoots.get(module);
     if (tempRoots != null) {
