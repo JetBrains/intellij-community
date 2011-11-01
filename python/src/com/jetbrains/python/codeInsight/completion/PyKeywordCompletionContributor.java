@@ -217,7 +217,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));
 
-  private static final FilterPattern FIRST_ON_LINE = new FilterPattern(new StartOfLineFilter());
+  public static final FilterPattern FIRST_ON_LINE = new FilterPattern(new StartOfLineFilter());
 
   private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_AFTER_REF =
     psiElement()
@@ -319,7 +319,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   /**
    * Tail type that adds a space and a colon and puts cursor before colon. Used in things like "if".
    */
-  private static final TailType PRE_COLON = new TailType() {
+  public static final TailType PRE_COLON = new TailType() {
     public int processTail(Editor editor, int tailOffset) {
       tailOffset = insertChar(editor, insertChar(editor, tailOffset, ' '), ':');
       return moveCaret(editor, tailOffset, -1); // stand before ":"
