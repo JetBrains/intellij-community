@@ -29,9 +29,6 @@ public abstract class SpellcheckerInspectionTestCase extends CodeInsightFixtureT
     return PluginPathManager.getPluginHomePathRelative("spellchecker") + "/testData";
   }
 
-  @NonNls
-  protected String DATA_PATH = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/plugins/spellchecker/core/tests/testData";
-
   protected void doTest(String file, LocalInspectionTool... tools) throws Throwable {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(false, false, true, file);

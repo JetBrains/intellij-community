@@ -39,5 +39,7 @@ public class JavaSpellcheckingTest extends SpellcheckerInspectionTestCase {
     doTest("VarArgTest.java", getInspectionTools());
   }
 
-
+  public void testJapaneese() throws Throwable {
+    doTest(getTestName(false) + ".java", getInspectionTools());
+  }
 }
