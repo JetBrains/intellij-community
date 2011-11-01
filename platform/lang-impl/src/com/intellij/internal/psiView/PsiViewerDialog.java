@@ -1309,7 +1309,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @Nullable
   private BlockTreeNode findBlockNode(TextRange range, boolean selectParentIfNotFound) {
-    if (myBlockTreeBuilder == null) {
+    if (myBlockTreeBuilder == null || !myBlockStructurePanel.isVisible()) {
       return null;
     }
 
