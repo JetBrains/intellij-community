@@ -48,8 +48,8 @@ class IncrementalCacheUpdateEvent {
    * This constructor is assumed to be used during processing <b>before</b> the document change, i.e. it's assumed that
    * <code>'old'</code> offsets within the document {@link DocumentEvent#getDocument() denoted} by the given event object.
    * <p/>
-   * <code>'New'</code> offsets are assumed to be configured during {@link #updateNewOffsetsIfNecessary(Document)} processing
-   * that, in turn, is called <b>'after'</b> document change.
+   * <code>'New'</code> offsets are assumed to be configured during {@link #updateNewOffsetsIfNecessary(Document, FoldingModel)}
+   * processing that, in turn, is called <b>'after'</b> document change.
    * 
    * @param event   object that describes document change that caused cache update
    */

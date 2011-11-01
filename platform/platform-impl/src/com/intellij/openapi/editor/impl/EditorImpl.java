@@ -2469,7 +2469,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public CharSequence dumpState() {
     return "use soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off") +  ", soft wraps data: " + getSoftWrapModel()
-           + ", folding data: " + getFoldingModel() + ", document info: " + myDocument.dumpState();
+           + "\n\nfolding data: " + getFoldingModel() + "\n\ndocument info: " + myDocument.dumpState();
   }
   
   private class CachedFontContent {
