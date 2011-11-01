@@ -29,10 +29,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -64,6 +61,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
 import git4idea.process.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
@@ -80,6 +78,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -151,6 +150,8 @@ public class GitLogUI implements Disposable {
   private ActionPopupMenu myContextMenu;
   private final Set<AbstractHash> myMarked;
   private final Runnable myRefresh;
+  private JViewport myTableViewPort;
+  private GitLogUI.MyGotoCommitAction myMyGotoCommitAction;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -677,7 +678,8 @@ public class GitLogUI implements Disposable {
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
     myGraphGutter = new GraphGutter(myTableModel);
     myGraphGutter.setJBTable(myJBTable);
-    myGraphGutter.setTableViewPort(scrollPane.getViewport());
+    myTableViewPort = scrollPane.getViewport();
+    myGraphGutter.setTableViewPort(myTableViewPort);
     myGraphGutter.getComponent().addMouseListener(popupHandler);
 
     new AdjustComponentWhenShown() {
@@ -816,6 +818,11 @@ public class GitLogUI implements Disposable {
       group.add(new Separator());
       group.add(myCopyHashAction);
       group.add(myMyShowTreeAction);
+      group.add(myMyGotoCommitAction);
+      final CustomShortcutSet shortcutSet =
+        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.ALT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK));
+      myMyGotoCommitAction.registerCustomShortcutSet(shortcutSet, myJBTable);
+      myMyGotoCommitAction.registerCustomShortcutSet(shortcutSet, myGraphGutter.getComponent());
       final MyHighlightCurrent myHighlightCurrent = new MyHighlightCurrent();
       final CustomShortcutSet customShortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, SystemInfo.isMac
                                                                                                   ? KeyEvent.META_DOWN_MASK
@@ -871,8 +878,10 @@ public class GitLogUI implements Disposable {
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
+    myMyGotoCommitAction = new MyGotoCommitAction();
+    group.add(myMyGotoCommitAction);
     group.add(myRefreshAction);
-    // todo debug
+
     //group.add(new TestIndexAction());
     myMoreAction = new MoreAction() {
       @Override
@@ -2300,6 +2309,118 @@ public class GitLogUI implements Disposable {
     @Override
     public void update(AnActionEvent e) {
       commitCanBeUsedForCheckout(e);
+    }
+  }
+
+  public class MyGotoCommitAction extends DumbAwareAction {
+    public MyGotoCommitAction() {
+      super("Goto commit", "Goto commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/icons/goto.png"));
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final JTextField field = new JTextField(30);
+
+      final String[] gotoString = new String[1];
+      final JBPopup[] popup = new JBPopup[1];
+      field.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+            gotoString[0] = field.getText();
+            if (gotoString[0] != null) {
+              tryFind(gotoString[0]);
+            }
+            if (popup[0] != null) {
+              popup[0].cancel();
+            }
+          }
+        }
+      });
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(field, BorderLayout.CENTER);
+      final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, field);
+      popup[0] = builder.setTitle("Goto")
+        .setResizable(true)
+        .setFocusable(true)
+        .setMovable(true)
+        .setModalContext(true)
+        .setAdText("Commit hash, or reference, or regexp for commit message")
+        .setDimensionServiceKey(myProject, "Git.Log.Tree.Goto", true)
+        .setCancelOnClickOutside(true)
+        .addListener(new JBPopupListener() {
+          public void beforeShown(LightweightWindowEvent event) {
+            IdeFocusManager.findInstanceByContext(e.getDataContext()).requestFocus(field, true);
+          }
+
+          public void onClosed(LightweightWindowEvent event) {
+          }
+        })
+        .createPopup();
+      UIUtil.installPopupMenuColorAndFonts(popup[0].getContent());
+      UIUtil.installPopupMenuBorder(popup[0].getContent());
+      popup[0].showInBestPositionFor(e.getDataContext());
+    }
+
+    private void tryFind(String reference) {
+      reference = reference.trim();
+      final int idx = getIdx(reference);
+      if (idx == -1) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Nothing found for: \"" + reference + "\"", MessageType.WARNING);
+      } else {
+        myJBTable.getSelectionModel().addSelectionInterval(idx, idx);
+        final int scrollOffsetTop = myJBTable.getRowHeight() * idx - myTableViewPort.getHeight()/2;
+        myTableViewPort.setViewPosition(new Point(0, scrollOffsetTop));
+      }
+    }
+    
+    private int getIdx(String reference) {
+      if (! StringUtil.containsWhitespaces(reference)) {
+        final int commitByIteration = findCommitByIteration(reference);
+        if (commitByIteration != -1) return commitByIteration;
+      }
+      for (VirtualFile root : myRootsUnderVcs) {
+        final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, reference, null);
+        if (shaHash != null) {
+          final int commitByIteration = findCommitByIteration(shaHash.getValue());
+          if (commitByIteration != -1) return commitByIteration;
+        }
+      }
+      final Set<AbstractHash> hashes = new HashSet<AbstractHash>();
+      for (VirtualFile root : myRootsUnderVcs) {
+        final List<AbstractHash> abstractHashs = GitChangeUtils.commitExistsByComment(myProject, root, reference);
+        if (abstractHashs != null) {
+          hashes.addAll(abstractHashs);
+        }
+      }
+      if (! hashes.isEmpty()) {
+        final int commitByIteration = findCommitByIteration(hashes);
+        if (commitByIteration != -1) return commitByIteration;
+      }
+      return -1;
+    }
+
+    private int findCommitByIteration(Set<AbstractHash> references) {
+      for (int i = 0; i < myTableModel.getRowCount(); i++) {
+        final CommitI commitAt = myTableModel.getCommitAt(i);
+        if (commitAt.holdsDecoration()) continue;
+        if (references.contains(commitAt.getHash())) {
+          return i;
+        }
+      }
+      return -1;
+    }
+    
+    private int findCommitByIteration(String reference) {
+      for (int i = 0; i < myTableModel.getRowCount(); i++) {
+        final CommitI commitAt = myTableModel.getCommitAt(i);
+        if (commitAt.holdsDecoration()) continue;
+        final String string = commitAt.getHash().getString();
+        if (string.startsWith(reference) || reference.startsWith(string)) {
+          return i;
+        }
+      }
+      return -1;
     }
   }
 }

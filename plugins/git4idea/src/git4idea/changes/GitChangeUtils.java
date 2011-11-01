@@ -33,6 +33,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.history.browser.SHAHash;
+import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -346,16 +347,23 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static SHAHash commitExistsByComment(final Project project, final VirtualFile root, final String anyReference) {
+  public static List<AbstractHash> commitExistsByComment(final Project project, final VirtualFile root, final String anyReference) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
-    final String grepParam = "--grep=" + StringUtil.escapeQuotes(anyReference);
-    h.addParameters("--max-count=1", "--pretty=%H", "--all", "--encoding=UTF-8", grepParam, "--");
+    String escaped = StringUtil.escapeQuotes(anyReference);
+    escaped = StringUtil.escapeSlashes(escaped);
+    final String grepParam = "--grep=" + escaped;
+    h.addParameters("--regexp-ignore-case", "--pretty=%h", "--all", "--encoding=UTF-8", grepParam, "--");
     try {
       final String output = h.run().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return new SHAHash(output);
+      final String[] hashes = output.split("\n");
+      final List<AbstractHash> result = new ArrayList<AbstractHash>();
+      for (String hash : hashes) {
+        result.add(AbstractHash.create(hash));
+      }
+      return result;
     }
     catch (VcsException e) {
       return null;

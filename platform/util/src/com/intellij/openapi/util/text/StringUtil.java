@@ -1626,6 +1626,27 @@ public class StringUtil {
     }
   }
 
+  @NotNull
+  public static String escapeSlashes(@NotNull final String str) {
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(str);
+      escapeSlashes(buf);
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
+  }
+
+  public static void escapeSlashes(@NotNull final StringBuilder buf) {
+    int idx = 0;
+    while ((idx = indexOf(buf, '/', idx)) >= 0) {
+      buf.insert(idx, "\\");
+      idx += 2;
+    }
+  }
+
   public static void quote(@NotNull final StringBuilder builder) {
     quote(builder, '\"');
   }
