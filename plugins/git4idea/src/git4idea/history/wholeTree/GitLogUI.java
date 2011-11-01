@@ -2074,6 +2074,12 @@ public class GitLogUI implements Disposable {
           myTableModel.setHead(root, headHash);
         }
       }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
+      }
     };
     myClearAll = new DumbAwareAction("Clear All") {
       @Override
@@ -2081,6 +2087,12 @@ public class GitLogUI implements Disposable {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
           myTableModel.setDumbHighlighter(root);
         }
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
     myHead = new DumbAwareAction("HEAD") {
