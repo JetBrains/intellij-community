@@ -18,6 +18,7 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -436,6 +437,8 @@ public class GraphGutter {
           
           if (wireEvent.getCommitIdx() > lastIdx) break;
         }
+        drawConnectorsFragment(graphics, idxFrom, yOff, used, new WireEvent(lastIdx, ArrayUtil.EMPTY_INT_ARRAY), selected, wiresGroups,
+                               grey, wireModificationSet);
       }
     }
 

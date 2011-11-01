@@ -434,6 +434,10 @@ public class BigTableTableModel extends AbstractTableModel {
       return myFirstUsed;
     }
   }
+  
+  public int getLastForRoot(final VirtualFile root) {
+    return myRepoIdxMap.get(root).last();
+  }
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {

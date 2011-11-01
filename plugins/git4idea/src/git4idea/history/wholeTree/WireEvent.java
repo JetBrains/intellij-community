@@ -45,9 +45,6 @@ public class WireEvent implements WireEventI {
   }
 
   public void addStart(final int idx, int wireNumber) {
-    if (! (myFutureWireStarts.length > 0 || idx == -1)) {
-      System.out.println("123");
-    }
     assert myFutureWireStarts.length > 0 || idx == -1;
     myCommitsStarts = ArrayUtil.append(myCommitsStarts, idx);
     if (idx != -1) {
