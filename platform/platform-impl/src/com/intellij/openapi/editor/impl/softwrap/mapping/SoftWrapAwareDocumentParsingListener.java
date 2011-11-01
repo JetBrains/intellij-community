@@ -116,7 +116,7 @@ interface SoftWrapAwareDocumentParsingListener {
    * Notifies current listener that particular document region re-parsing has just finished.
    *
    * @param event   object that contains information about re-parsed document region
-   * @param normal  flag that indicates if recalculation is finished correctly. All information about changed region
+   * @param normal  flag that indicates if recalculation is finished correctly. All information about changed regions
    *                should be rolled back if this param value is <code>false</code>
    */
   void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal);

@@ -19,11 +19,19 @@ import java.util.Map;
 class DependencyContext {
   private final static String stringTableName = "strings.tab"; 
   private final PersistentStringEnumerator enumerator;
-  
-  private final Map<String, Integer> map = new HashMap<String, Integer>();
-  private final Map<Integer, String> imap = new HashMap<Integer, String>();
+  private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> typeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
 
-  private int index = 0;
+  TypeRepr.AbstractType getType(final TypeRepr.AbstractType t) {
+    final TypeRepr.AbstractType r = typeMap.get(t);
+
+    if (r != null) {
+      return r;
+    }
+
+    typeMap.put(t, t);
+
+    return t;
+  }
 
   DependencyContext(final File rootDir) {
     final File file = new File(FileUtil.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + stringTableName));
@@ -102,9 +110,6 @@ class DependencyContext {
     }
 
     public String getValue() {
-      //return imap.get(index);
-      
-
       try {
         return enumerator.valueOf(index);
       }
@@ -116,19 +121,6 @@ class DependencyContext {
   }
 
   public S get(final String s) {
-    /*
-    final Integer i = map.get(s);
-    
-    if (i == null) {
-      map.put(s, index++);
-      imap.put(index-1, s);
-      
-      return new S(index-1);
-    }
-    
-    return new S(i);
-    */
-
    try {
       final int i = enumerator.enumerate(s);
 

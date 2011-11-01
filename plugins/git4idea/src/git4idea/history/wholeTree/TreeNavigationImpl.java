@@ -108,6 +108,12 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
         ring.minus(commitWire);
       }
     }
+    final int[] futureWireStarts1 = event.getFutureWireStarts();
+    if (futureWireStarts1 != null && futureWireStarts1.length > 0) {
+      for (int i : futureWireStarts1) {
+        ring.minus(i);
+      }
+    }
     for (Integer wireStart : futureWireStarts) {
       ring.minus(wireStart);
     }
@@ -154,17 +160,17 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
   }
 
   @Override
-  public void addStartToEvent(int row, final int parentRow) {
+  public void addStartToEvent(int row, final int parentRow, final int wireNumber) {
     modify(row, new Consumer<WireEvent>() {
       @Override
       public void consume(WireEvent wireEvent) {
-        wireEvent.addStart(parentRow);
+        wireEvent.addStart(parentRow, wireNumber);
       }
     });
   }
 
   @Override
-  public void setWireStartsNumber(int row, final int number) {
+  public void setWireStartsNumber(int row, final Integer[] number) {
     modify(row, new Consumer<WireEvent>() {
       @Override
       public void consume(WireEvent wireEvent) {
@@ -191,7 +197,7 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
     modify(row, new Consumer<WireEvent>() {
       @Override
       public void consume(WireEvent wireEvent) {
-        wireEvent.addStart(-1);
+        wireEvent.addStart(-1, -1);
       }
     });
   }

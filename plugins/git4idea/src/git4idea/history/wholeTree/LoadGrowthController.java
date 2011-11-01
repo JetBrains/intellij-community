@@ -63,7 +63,7 @@ public class LoadGrowthController {
   public boolean isEverybodyLoadedMoreThan(final long time) {
     synchronized (myLock) {
       for (Long aLong : myPassedTimeMap.values()) {
-        if (aLong > time) return false;
+        if (aLong == -1 || aLong > time) return false;
       }
       return true;
     }

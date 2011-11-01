@@ -23,8 +23,12 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class ProjectStructureProblemsSettings {
-  public static ProjectStructureProblemsSettings getInstance(@NotNull Project project) {
+  public static ProjectStructureProblemsSettings getProjectInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectStructureProblemsSettings.class);
+  }
+
+  public static ProjectStructureProblemsSettings getGlobalInstance() {
+    return ServiceManager.getService(ProjectStructureProblemsSettings.class);
   }
 
   public abstract boolean isIgnored(@NotNull ProjectStructureProblemDescription description);

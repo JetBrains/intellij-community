@@ -136,16 +136,15 @@ public class LoadController implements Loader {
 
         try {
           final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-          if (repositoryForRoot == null) continue;
-          final String currentRevisionName = repositoryForRoot.getCurrentRevision();
+          final String currentRevisionName = repositoryForRoot == null ? null : repositoryForRoot.getCurrentRevision();
           final Pair<String, Long> pair = mySortOrder.get(root);
-          if (pair != null && pair.getFirst() != null && pair.getFirst().equals(currentRevisionName)) {
+          if (pair != null && pair.getFirst() != null && Comparing.equal(pair.getFirst(), currentRevisionName)) {
             continue;
           }
           final VcsRevisionNumber currentRevision = GitHistoryUtils.getCurrentRevision(myProject, new FilePathImpl(root), null);
           if (currentRevision != null) {
             mySortOrder.put(root,
-                            new Pair<String, Long>(currentRevisionName, ((GitRevisionNumber)currentRevision).getTimestamp().getTime()));
+                            new Pair<String, Long>(currentRevision.asString(), ((GitRevisionNumber)currentRevision).getTimestamp().getTime()));
             continue;
           }
           mySortOrder.put(root, new Pair<String, Long>(currentRevisionName, Long.MAX_VALUE));

@@ -89,7 +89,7 @@ public class SkeletonBuilder {
 
         if (waiting.isMerge()) {
           // put/update start event - now we know index so can create/update wire event
-          mySkeleton.addStartToEvent(waiting.myIdx, rowCount);
+          mySkeleton.addStartToEvent(waiting.myIdx, rowCount, waiting.getWire());
         }
 
         final Integer seized = mySeizedWires.get(waitingI.getWireNumber());
@@ -138,12 +138,15 @@ public class SkeletonBuilder {
       mySeizedWires.remove(wireNumber);
     } else {
       boolean selfUsed = false;
+      final List<Integer> parentWires = new ArrayList<Integer>();
       for (AbstractHash parent : parents) {
         WaitingItem item;
         Collection<WaitingItem> existing = myAwaitingParents.get(parent);
         if (existing != null && ! existing.isEmpty()) {
           // use its wire!
-          item = new WaitingItem(rowCount, existing.iterator().next().getWire(), parents.size() > 1);
+          final int wire = existing.iterator().next().getWire();
+          item = new WaitingItem(rowCount, wire, parents.size() > 1);
+          parentWires.add(wire);
         } else {
           // a start (head): no children. Use new wire
           Integer parentWire;
@@ -156,6 +159,7 @@ public class SkeletonBuilder {
             parentWire = myRing.getFree();
             mySkeleton.wireStarts(rowCount);
           }
+          parentWires.add(parentWire);
           myFutureSeizedWires.put(parentWire, parent);
           item = new WaitingItem(rowCount, parentWire, parents.size() > 1);
         }
@@ -163,7 +167,7 @@ public class SkeletonBuilder {
         myBackIndex.putValue(item.myIdx, item);
       }
       if (parents.size() > 1) {
-        mySkeleton.setWireStartsNumber(rowCount, parents.size());
+        mySkeleton.setWireStartsNumber(rowCount, parentWires.toArray(new Integer[parentWires.size()]));
       }
     }
   }

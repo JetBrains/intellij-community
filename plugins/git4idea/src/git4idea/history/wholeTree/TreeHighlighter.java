@@ -160,24 +160,9 @@ public class TreeHighlighter {
       }
 
       // including event idx
-      HashSet<Integer> value;
-      value = new HashSet<Integer>();
-      for (Integer integer : firstUsed) {
-        value.add(integer + repoCorrection);
-      }
+      HashSet<Integer> value = copyOfUsed(repoCorrection, firstUsed);
       for (int i = idx; i <= event.getCommitIdx(); i++) {
-        if (i == myInitIdx) {
-          final int wireNumber = myModel.getCommitAt(myInitIdx).getWireNumber();
-          if (! value.contains(wireNumber + repoCorrection)) {
-            wireModificationSet.add(myInitIdx);
-            firstUsed.add(wireNumber);
-            value = new HashSet<Integer>();
-            for (Integer integer : firstUsed) {
-              value.add(integer + repoCorrection);
-            }
-          }
-        }
-        result.put(i, value);
+        value = putForIdx(repoCorrection, wireModificationSet, firstUsed, result, value, i);
       }
       final CommitI eventCommit = myModel.getCommitAt(event.getCommitIdx());
       if (myParents.contains(eventCommit.getHash())) {
@@ -194,10 +179,43 @@ public class TreeHighlighter {
       idx = event.getCommitIdx() + 1;
       event = null;
     }
+    
+    HashSet<Integer> value = copyOfUsed(repoCorrection, firstUsed);
+    for (int i = idx; i < to; i++) {
+      value = putForIdx(repoCorrection, wireModificationSet, firstUsed, result, value, i);
+    }
 
     return result;
   }
-  
+
+  private HashSet<Integer> putForIdx(int repoCorrection,
+                                     Set<Integer> wireModificationSet,
+                                     Set<Integer> firstUsed,
+                                     HashMap<Integer, Set<Integer>> result, HashSet<Integer> value, int i) {
+    if (i == myInitIdx) {
+      final int wireNumber = myModel.getCommitAt(myInitIdx).getWireNumber();
+      if (! value.contains(wireNumber + repoCorrection)) {
+        wireModificationSet.add(myInitIdx);
+        firstUsed.add(wireNumber);
+        value = new HashSet<Integer>();
+        for (Integer integer : firstUsed) {
+          value.add(integer + repoCorrection);
+        }
+      }
+    }
+    result.put(i, value);
+    return value;
+  }
+
+  private HashSet<Integer> copyOfUsed(int repoCorrection, Set<Integer> firstUsed) {
+    HashSet<Integer> value;
+    value = new HashSet<Integer>();
+    for (Integer integer : firstUsed) {
+      value.add(integer + repoCorrection);
+    }
+    return value;
+  }
+
   private void recalcIndex() {
     if (myIdx == -1) return;
     Integer lastKey = myIndexOfGrey.isEmpty() ? null : myIndexOfGrey.lastKey();
@@ -277,12 +295,18 @@ public class TreeHighlighter {
       firstUsed.add(eventCommit.getWireNumber());
     }
     final int[] commitsStarts = event.getCommitsStarts();
+    final int[] futureWireStarts = event.getFutureWireStarts();
     if (myParents.contains(eventCommit.getHash())) {
       if (commitsStarts != null) {
         for (int commitsStart : commitsStarts) {
           if (commitsStart == -1) continue;
           final CommitI commitAt = myModel.getCommitAt(commitsStart);
           firstUsed.add(commitAt.getWireNumber());
+        }
+      }
+      if (futureWireStarts != null && futureWireStarts.length > 0) {
+        for (int futureWireStart : futureWireStarts) {
+          firstUsed.add(futureWireStart);
         }
       }
     }
@@ -365,9 +389,9 @@ public class TreeHighlighter {
       }
     }
 
-    // todo rather last chain idx
-    if (runningIdx < lastEventIdx) {
-      fillCommits(runningIdx, lastEventIdx, includedWires);
+    final int lastForRoot = myModel.getLastForRoot(myRoot);
+    if (runningIdx < lastForRoot) {
+      fillCommits(runningIdx, lastForRoot, includedWires);
     }
 
     if (myIncludedWires.isEmpty()) {

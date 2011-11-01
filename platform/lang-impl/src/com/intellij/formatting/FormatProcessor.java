@@ -297,12 +297,23 @@ class FormatProcessor {
     }
 
     List<TextChange> changes = new ArrayList<TextChange>();
+    int shift = 0;
+    int currentIterationShift = 0;
     for (LeafBlockWrapper block : blocksToModify) {
       WhiteSpace whiteSpace = block.getWhiteSpace();
       CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
         whiteSpace.generateWhiteSpace(indentOption), whiteSpace.getStartOffset(), whiteSpace.getEndOffset(), false
       );
-      changes.add(new TextChangeImpl(newWs, whiteSpace.getStartOffset(), whiteSpace.getEndOffset()));
+      if (changes.size() > 10000) {
+        CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
+        document.replaceString(0, document.getTextLength(), mergeResult);
+        shift += currentIterationShift;
+        currentIterationShift = 0;
+        changes.clear();
+      }
+      TextChangeImpl change = new TextChangeImpl(newWs, whiteSpace.getStartOffset() + shift, whiteSpace.getEndOffset() + shift);
+      currentIterationShift += change.getDiff();
+      changes.add(change);
     }
     CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
     document.replaceString(0, document.getTextLength(), mergeResult);
@@ -928,7 +939,13 @@ class FormatProcessor {
     else if (childAttributes == ChildAttributes.DELEGATE_TO_NEXT_CHILD) {
       AbstractBlockWrapper nextWrappedBlock;
       if (parent instanceof CompositeBlockWrapper) {
-        nextWrappedBlock = ((CompositeBlockWrapper)parent).getChildren().get(index);
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)parent).getChildren();
+        if (children != null && index < children.size()) {
+          nextWrappedBlock = children.get(index);
+        }
+        else {
+          return null;
+        }
       }
       else {
         nextWrappedBlock = ((LeafBlockWrapper)parent).getNextBlock();

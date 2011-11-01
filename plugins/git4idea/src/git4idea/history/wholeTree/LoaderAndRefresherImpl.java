@@ -151,7 +151,8 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     }*/
 
     myRepeatingLoadConsumer.reset();
-    int count = MediatorImpl.ourManyLoadedStep;
+    // !!!!!
+    int count = 340;
     boolean shouldFull = ! myHaveStructureFilter;
     if (LoadAlgorithm.LoadType.TEST.equals(loadType)) {
       count = ourFirstLoadCount;

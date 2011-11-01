@@ -52,7 +52,7 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
     if (name != null) {
       final List<String> invalidUrls = ((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES);
       if (!invalidUrls.isEmpty()) {
-        return ProjectBundle.message("project.roots.tooltip.library.misconfigured", name);
+        return ProjectBundle.message("project.roots.tooltip.library.has.broken.paths", name, invalidUrls.size());
       }
     }
 

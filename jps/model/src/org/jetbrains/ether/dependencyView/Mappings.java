@@ -393,10 +393,6 @@ public class Mappings implements RW.Writable {
 
       if (directSubclasses != null) {
         for (DependencyContext.S subClass : directSubclasses) {
-          System.out.println("className: " + className.getValue() + ", subclass : " + subClass.getValue());
-          System.out.println("className.index: " + className.index  + ", subclass.index : " + subClass.index);
-          System.out.println("className.equals(subClass)=" + className.equals(subClass));
-          assert(false); //!className.equals(subClass));
           affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
         }
       }
@@ -627,7 +623,7 @@ public class Mappings implements RW.Writable {
 
             if (!removedtargets.isEmpty()) {
               annotationQuery
-                .add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), null, removedtargets));
+                .add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(TypeRepr.createClassType(context, it.name), null, removedtargets));
             }
 
             for (MethodRepr m : diff.methods().added()) {
@@ -698,7 +694,7 @@ public class Mappings implements RW.Writable {
             if (d.defaultRemoved()) {
               final List<DependencyContext.S> l = new LinkedList<DependencyContext.S>();
               l.add(m.name);
-              annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
+              annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(TypeRepr.createClassType(context, it.name), l, null));
             }
           }
           else if (d.base() != Difference.NONE || throwsChanged) {

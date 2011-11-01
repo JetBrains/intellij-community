@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
+package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.psi.PsiModifier;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 
 /**
- * @author Maxim.Medvedev
+ * @author nik
  */
-public interface GrModifier extends PsiModifier {
-  @NonNls String DEF = "def";
-
-  String[] GROOVY_MODIFIERS =
-    {PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEF};
+@State(
+  name = "ProjectStructureProblems",
+  storages = {@Storage(file = "$APP_CONFIG$/projectStructureProblems.xml")}
+)
+public class GlobalProjectStructureProblemsSettings extends ProjectStructureProblemsSettingsBase {
 }

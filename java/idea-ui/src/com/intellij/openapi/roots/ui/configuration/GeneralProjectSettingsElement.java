@@ -107,7 +107,8 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     public CircularDependencyProblemDescription(@NotNull String message,
                                                 @NotNull String fullDescription,
                                                 @NotNull PlaceInProjectStructure place) {
-      super(message, null, place, Collections.<ConfigurationErrorQuickFix>emptyList(), ProjectStructureProblemType.warning("module-circular-dependency"));
+      super(message, null, place, ProjectStructureProblemType.warning("module-circular-dependency"),
+            Collections.<ConfigurationErrorQuickFix>emptyList());
       myFullDescription = fullDescription;
     }
 

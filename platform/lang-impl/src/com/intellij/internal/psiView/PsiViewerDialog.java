@@ -770,7 +770,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myPsiToBlockMap = new HashMap<PsiElement, BlockTreeNode>();
     final PsiElement psiFile = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
     initMap(rootNode, psiFile);
-    blockTreeStructure.setRoot(myPsiToBlockMap.get(rootElement));
+    final BlockTreeNode blockNode = findBlockNode(rootElement);
+    assert blockNode != null;
+    blockTreeStructure.setRoot(blockNode);
     myBlockTree.addTreeSelectionListener(new MyBlockTreeSelectionListener());
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
@@ -778,7 +780,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   @Nullable
-  private  Block buildBlocks(@NotNull PsiElement rootElement) {
+  private static Block buildBlocks(@NotNull PsiElement rootElement) {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(rootElement.getProject());
     if (formattingModelBuilder != null) {
@@ -891,21 +893,28 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
               myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
             }
           }
-              if (myBlockTreeBuilder != null && myPsiTree.hasFocus()) {
-                BlockTreeNode currentBlockNode = myPsiToBlockMap.get(element);
-                if (currentBlockNode != null) {
-                  selectBlockNode(currentBlockNode);
-                }
-                else {
-                  selectBlockNodeByRange(rangeInHostFile,true);
-                }
-              }
-            updateReferences(element);
+          if (myBlockTreeBuilder != null && myPsiTree.hasFocus()) {
+            BlockTreeNode currentBlockNode = findBlockNode(element);
+            if (currentBlockNode != null) {
+              selectBlockNode(currentBlockNode);
+            }
+          }
+          updateReferences(element);
         }
       }
     }
   }
 
+  @Nullable
+  private BlockTreeNode findBlockNode(PsiElement element) {
+    BlockTreeNode result = myPsiToBlockMap.get(element);
+    if (result == null) {
+      TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
+      result = findBlockNode(rangeInHostFile, true);
+    }
+    return result;
+  }
+  
   private void selectBlockNode(@Nullable BlockTreeNode currentBlockNode) {
     if (myBlockTreeBuilder == null) return;
     if (currentBlockNode != null) {
@@ -1209,9 +1218,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
       final PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), offset);
-      if (element != null && myBlockTreeBuilder !=null) {
-          TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
-          selectBlockNodeByRange(rangeInHostFile, true);
+      if (element != null && myBlockTreeBuilder != null) {
+        TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
+        selectBlockNode(findBlockNode(rangeInHostFile, true));
       }
       myPsiTreeBuilder.select(element);
     }
@@ -1232,7 +1241,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       if (element != null  && myBlockTreeBuilder != null) {
         if (myEditor.getContentComponent().hasFocus()) {
           TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
-          selectBlockNodeByRange(rangeInHostFile, true);
+          selectBlockNode(findBlockNode(rangeInHostFile, true));
           updateIntersectHighlighter(myHighlighter.getStartOffset(), myHighlighter.getEndOffset());
         }
       }
@@ -1298,16 +1307,17 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
   }
 
-  private void selectBlockNodeByRange(TextRange range, boolean selectParentIfNotFound) {
+  @Nullable
+  private BlockTreeNode findBlockNode(TextRange range, boolean selectParentIfNotFound) {
     if (myBlockTreeBuilder == null || !myBlockStructurePanel.isVisible()) {
-      return;
+      return null;
     }
+
     BlockTreeNode node = (BlockTreeNode)myBlockTreeBuilder.getTreeStructure().getRootElement();
     main_loop:
     while (true) {
       if (node.getBlock().getTextRange().equals(range)) {
-        selectBlockNode(node);
-        return;
+        return node;
       }
 
       for (BlockTreeNode child : node.getChildren()) {
@@ -1316,8 +1326,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
           continue main_loop;
         }
       }
-      selectBlockNode(selectParentIfNotFound ? node : null);
-      return;
+      return selectParentIfNotFound ? node : null;
     }
   }
 }

@@ -20,7 +20,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
                               @NotNull PlaceInProjectStructure place,
                               @Nullable ConfigurationErrorQuickFix fix) {
     final List<ConfigurationErrorQuickFix> fixes = fix != null ? Collections.singletonList(fix) : Collections.<ConfigurationErrorQuickFix>emptyList();
-    registerProblem(new ProjectStructureProblemDescription(message, description, place, fixes, problemType));
+    registerProblem(new ProjectStructureProblemDescription(message, description, place, problemType, fixes));
   }
 
   public void registerProblem(final @NotNull ProjectStructureProblemDescription description) {

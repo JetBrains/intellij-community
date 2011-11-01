@@ -423,6 +423,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public int getFoldedLinesCountBefore(int offset) {
+    if (myEditor.getDocument().isInEventsHandling()) {
+      return 0;
+    }
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 

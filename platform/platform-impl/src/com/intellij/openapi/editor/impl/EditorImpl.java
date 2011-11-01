@@ -1558,7 +1558,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   @NotNull
-  public Document getDocument() {
+  public DocumentEx getDocument() {
     return myDocument;
   }
 
@@ -2469,7 +2469,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public CharSequence dumpState() {
     return "use soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off") +  ", soft wraps data: " + getSoftWrapModel()
-           + ", folding data: " + getFoldingModel() + ", document info: " + myDocument.dumpState();
+           + "\n\nfolding data: " + getFoldingModel() + "\n\ndocument info: " + myDocument.dumpState();
   }
   
   private class CachedFontContent {
@@ -3247,7 +3247,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int line = logicalPos.line;
     int column = logicalPos.column;
 
-    line -= myFoldingModel.getFoldedLinesCountBefore(offset);
+    int foldedLinesCountBefore = myFoldingModel.getFoldedLinesCountBefore(offset);
+    line -= foldedLinesCountBefore;
+    if (line < 0) {
+      LOG.error(String.format(
+        "Given logical position: %s; matched line: %d; fold lines before: %d, state: %s",
+        logicalPos, line, foldedLinesCountBefore, dumpState()
+      ));
+    }
 
     FoldRegion[] topLevel = myFoldingModel.fetchTopLevel();
     LogicalPosition anchorFoldingPosition = logicalPos;
@@ -3265,10 +3272,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           break;
         }
       }
-    }
-
-    if (line < 0) {
-      LOG.error(String.format("Given logical position: %s; matched line: %d; state: %s", logicalPos, line, dumpState()));
     }
 
     VisualPosition softWrapUnawarePosition = new VisualPosition(line, Math.max(0, column));

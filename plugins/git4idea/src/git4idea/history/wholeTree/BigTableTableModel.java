@@ -401,6 +401,11 @@ public class BigTableTableModel extends AbstractTableModel {
             }
 
             @Override
+            public int[] getFutureWireStarts() {
+              return arraysConvertor.convert(next.getFutureWireStarts());
+            }
+
+            @Override
             public boolean isEnd() {
               return next.isEnd();
             }
@@ -428,6 +433,10 @@ public class BigTableTableModel extends AbstractTableModel {
     public List<Integer> getFirstUsed() {
       return myFirstUsed;
     }
+  }
+  
+  public int getLastForRoot(final VirtualFile root) {
+    return myRepoIdxMap.get(root).last();
   }
 
   @Override
@@ -558,10 +567,12 @@ public class BigTableTableModel extends AbstractTableModel {
 
       @Override
       protected void willBeRecountFrom(int idx, int wasSize) {
-        for (int i = idx; i < wasSize; i++) {
-          //myIdxMap.removeValue(i);
-          for (VirtualFile root : myOrder) {
-            myRepoIdxMap.get(root).remove(i);
+        if (mySkeletonBuilder != null) {
+          for (int i = idx; i < wasSize; i++) {
+            //myIdxMap.removeValue(i);
+            for (VirtualFile root : myOrder) {
+              myRepoIdxMap.get(root).remove(i);
+            }
           }
         }
       }

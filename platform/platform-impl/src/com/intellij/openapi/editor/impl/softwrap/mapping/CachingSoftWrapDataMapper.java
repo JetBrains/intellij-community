@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -54,6 +55,7 @@ import java.util.List;
  */
 public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAwareDocumentParsingListener {
 
+  private static final Logger LOG = Logger.getInstance("#" + CachingSoftWrapDataMapper.class.getName());
   private static final boolean DEBUG_SOFT_WRAP_PROCESSING = false;
   
   /** Caches information for the document visual line starts sorted in ascending order. */
@@ -444,6 +446,22 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
     applyStateChange(exactOffsetsDiff);
     
+    // TODO den remove before v.11 release
+    if (myCache.size() > 1) {
+      CacheEntry beforeLast = myCache.get(myCache.size() - 2);
+      CacheEntry last = myCache.get(myCache.size() - 1);
+      if (beforeLast.visualLine == last.visualLine
+          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1))
+      {
+        LOG.error(String.format(
+          "Detected invalid soft wraps recalculation. Event: %s, normal: %b.%n%nCurrent cache state: %s%n%nTail cache entries: %s%n%n"
+          + "Affected by change cache entries: %s%n%nBefore change state: %s%n%nAfter change state: %s",
+          event, normal, myCache, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
+          myBeforeChangeState, myAfterChangeState
+        ));
+      }
+    }
+    
     myAffectedByUpdateCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.clear();
 
@@ -540,9 +558,10 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
    *   <li>Region data recalculation is performed;</li>
    *   <li>Diff between current region state and remembered one is applied to the cache;</li>
    * </ol>
-   </pre>
+   * </pre>
+   * 
+   * @param offsetsDiff  offset shift to apply to the tail entries
    */
-  @SuppressWarnings("ForLoopReplaceableByForEach")
   private void applyStateChange(int offsetsDiff) {
     if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
       return;
@@ -568,8 +587,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
     // 'For-each' loop is not used here because this code is called quite often and profile shows the Iterator usage here
     // produces performance drawback.
-    for (int i = 0; i < myNotAffectedByUpdateTailCacheEntries.size(); i++) {
-      CacheEntry cacheEntry = myNotAffectedByUpdateTailCacheEntries.get(i);
+    for (CacheEntry cacheEntry : myNotAffectedByUpdateTailCacheEntries) {
       cacheEntry.visualLine += visualLinesDiff;
       cacheEntry.startLogicalLine += logicalLinesDiff;
       cacheEntry.endLogicalLine += logicalLinesDiff;
@@ -670,6 +688,14 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       foldedLines = 0;
       endCacheEntryIndex = 0;
       cacheShouldBeUpdated = true;
+    }
+
+    @Override
+    public String toString() {
+      return String.format(
+        "visual lines: %d, logical lines: %d, soft wrap lines: %d, fold lines: %d, cache entry indices: [%d-%d]",
+        visualLines, logicalLines, softWrapLines, foldedLines, startCacheEntryIndex, endCacheEntryIndex
+      );
     }
   }
 }

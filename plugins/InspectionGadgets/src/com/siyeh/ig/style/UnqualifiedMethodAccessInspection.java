@@ -65,7 +65,7 @@ public class UnqualifiedMethodAccessInspection extends BaseInspection {
         return;
       }
       final PsiMethod method = (PsiMethod)element;
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       registerError(expression);

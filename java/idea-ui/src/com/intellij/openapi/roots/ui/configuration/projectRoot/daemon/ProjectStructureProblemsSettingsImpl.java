@@ -15,16 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.containers.SortedList;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author nik
@@ -33,34 +25,5 @@ import java.util.List;
   name = "ProjectStructureProblems",
   storages = {@Storage(file = "$WORKSPACE_FILE$")}
 )
-public class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettings implements PersistentStateComponent<ProjectStructureProblemsSettingsImpl> {
-  @AbstractCollection(surroundWithTag = false, elementTag = "problem", elementValueAttribute = "id")
-  @Tag("ignored-problems")
-  public List<String> myIgnoredProblems = new SortedList<String>(String.CASE_INSENSITIVE_ORDER);
-
-  @Override
-  public ProjectStructureProblemsSettingsImpl getState() {
-    return this;
-  }
-
-  @Override
-  public void loadState(ProjectStructureProblemsSettingsImpl state) {
-    XmlSerializerUtil.copyBean(state, this);
-  }
-
-  @Override
-  public boolean isIgnored(@NotNull ProjectStructureProblemDescription description) {
-    return myIgnoredProblems.contains(description.getId());
-  }
-
-  @Override
-  public void setIgnored(@NotNull ProjectStructureProblemDescription description, boolean ignored) {
-    final String id = description.getId();
-    if (ignored) {
-      myIgnoredProblems.add(id);
-    }
-    else {
-      myIgnoredProblems.remove(id);
-    }
-  }
+public class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettingsBase {
 }

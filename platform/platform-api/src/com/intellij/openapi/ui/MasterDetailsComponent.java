@@ -92,13 +92,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   {
     TREE_UPDATER = new Runnable() {
       public void run() {
-        MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-        if (node != null) {
-          myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
-          myDetails.setText(node.getConfigurable().getBannerSlogan());
-          ((DefaultTreeModel)myTree.getModel()).reload(node);
-          fireItemsChangedExternally();
-        }
+        final TreePath selectionPath = myTree.getSelectionPath();
+        if (selectionPath == null) return;
+
+        MyNode node = (MyNode)selectionPath.getLastPathComponent();
+        if (node == null) return;
+
+        myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
+        myDetails.setText(node.getConfigurable().getBannerSlogan());
+        ((DefaultTreeModel)myTree.getModel()).reload(node);
+        fireItemsChangedExternally();
       }
     };
   }

@@ -229,7 +229,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   @Override
   public String toString() {
     return "visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset + ", fold regions: " 
-           + Arrays.toString(myFoldingData.getValues());
+           + Arrays.toString(myFoldingData.getValues()) + ", tab data: " + myTabPositions;
   }
 
   @Override

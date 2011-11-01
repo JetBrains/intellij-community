@@ -24,22 +24,37 @@ import java.util.List;
  * @author nik
  */
 public class ProjectStructureProblemDescription {
+  public enum ProblemLevel {PROJECT, GLOBAL}
   private final String myMessage;
   private final String myDescription;
   private final PlaceInProjectStructure myPlace;
   private final List<? extends ConfigurationErrorQuickFix> myFixes;
   private final ProjectStructureProblemType myProblemType;
+  private final ProblemLevel myProblemLevel;
 
   public ProjectStructureProblemDescription(@NotNull String message,
                                             @Nullable String description,
                                             @NotNull PlaceInProjectStructure place,
-                                            @NotNull List<? extends ConfigurationErrorQuickFix> fixes,
-                                            @NotNull ProjectStructureProblemType problemType) {
+                                            @NotNull ProjectStructureProblemType problemType,
+                                            @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
+    this(message, description, place, problemType, ProblemLevel.PROJECT, fixes);
+  }
+
+  public ProjectStructureProblemDescription(@NotNull String message,
+                                            @Nullable String description,
+                                            @NotNull PlaceInProjectStructure place,
+                                            @NotNull ProjectStructureProblemType problemType,
+                                            @NotNull ProblemLevel level, @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
     myMessage = message;
     myDescription = description;
     myPlace = place;
     myFixes = fixes;
     myProblemType = problemType;
+    myProblemLevel = level;
+  }
+
+  public ProblemLevel getProblemLevel() {
+    return myProblemLevel;
   }
 
   public String getMessage() {

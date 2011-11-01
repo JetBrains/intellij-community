@@ -344,6 +344,17 @@ public class GradleModulesImporter {
       return;
     }
     LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
+    // Clean existing libraries (if any).
+    try {
+      for (Library library : model.getLibraries()) {
+        model.removeLibrary(library);
+      }
+    }
+    finally {
+      model.commit();
+    }
+
+    model = projectLibraryTable.getModifiableModel();
     List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
     try {
       Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, model);
@@ -372,11 +383,6 @@ public class GradleModulesImporter {
   private static Map<GradleLibrary, Library> registerProjectLibraries(@NotNull GradleProject gradleProject,
                                                                       @NotNull LibraryTable.ModifiableModel librariesModel)
   {
-    // Clean existing libraries (if any).
-    for (Library library : librariesModel.getLibraries()) {
-      librariesModel.removeLibrary(library);
-    }
-    
     Map<GradleLibrary, Library> libraryMappings = new HashMap<GradleLibrary, Library>();
     for (GradleLibrary gradleLibrary : gradleProject.getLibraries()) {
       Library intellijLibrary = librariesModel.createLibrary(gradleLibrary.getName());

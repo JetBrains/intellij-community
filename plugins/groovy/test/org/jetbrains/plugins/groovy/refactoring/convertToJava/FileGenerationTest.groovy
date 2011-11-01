@@ -30,6 +30,16 @@ class FileGenerationTest extends LightGroovyTestCase {
   }
 
   private void doTest() {
+    myFixture.addClass("""package java.util;
+
+public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
+    public LinkedHashMap(int initialCapacity, float loadFactor) {}
+    public LinkedHashMap(int initialCapacity) {}
+    public LinkedHashMap() {}
+    public LinkedHashMap(Map<? extends K, ? extends V> m) {}
+    public LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) {}
+}""")
+
     final String testName = getTestName(true)
     final PsiFile file = myFixture.configureByFile("${testName}.groovy");
     assertInstanceOf file, GroovyFile
@@ -37,18 +47,6 @@ class FileGenerationTest extends LightGroovyTestCase {
     new ConvertToJavaProcessor(project, [file] as GroovyFile[]).run()
 
     myFixture.checkResultByFile("${testName}.java")
-  }
-
-  def length
-  @Override
-  protected void setUp() {
-    super.setUp()
-    length = System.currentTimeMillis()
-  }
-
-  @Override
-  protected void tearDown() {
-    super.tearDown()
   }
 
   void testEnum() {doTest()}
