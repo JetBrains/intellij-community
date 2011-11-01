@@ -41,6 +41,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class FileManagerImpl implements FileManager {
   private final FileIndexFacade myFileIndex;
 
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentSoftValueHashMap<VirtualFile, PsiDirectory>();
-  private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentSoftValueHashMap<VirtualFile, FileViewProvider>();
+  private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
   private boolean myInitialized = false;
   private boolean myDisposed = false;
