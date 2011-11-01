@@ -567,10 +567,12 @@ public class BigTableTableModel extends AbstractTableModel {
 
       @Override
       protected void willBeRecountFrom(int idx, int wasSize) {
-        for (int i = idx; i < wasSize; i++) {
-          //myIdxMap.removeValue(i);
-          for (VirtualFile root : myOrder) {
-            myRepoIdxMap.get(root).remove(i);
+        if (mySkeletonBuilder != null) {
+          for (int i = idx; i < wasSize; i++) {
+            //myIdxMap.removeValue(i);
+            for (VirtualFile root : myOrder) {
+              myRepoIdxMap.get(root).remove(i);
+            }
           }
         }
       }
