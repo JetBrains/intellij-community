@@ -163,8 +163,9 @@ class ServerMessageHandler extends SimpleChannelHandler {
             final JpsRemoteProto.Message.Response response;
             if (buildMessage instanceof CompilerMessage) {
               final CompilerMessage compilerMessage = (CompilerMessage)buildMessage;
+              final String text = compilerMessage.getCompilerName() + ": " + compilerMessage.getMessageText();
               response = ProtoUtil.createCompileMessageResponse(
-                compilerMessage.getKind(), compilerMessage.getMessageText(), compilerMessage.getSourcePath(),
+                compilerMessage.getKind(), text, compilerMessage.getSourcePath(),
                 compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
                 compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn()
               );

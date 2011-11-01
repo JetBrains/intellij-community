@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
@@ -311,7 +312,7 @@ public class JavaBuilder extends Builder{
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
     // todo: read full set of options from settings
-    return Arrays.asList("-g")/*Collections.emptyList()*/;
+    return Arrays.asList("-g", "-verbose")/*Collections.emptyList()*/;
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
@@ -511,7 +512,19 @@ public class JavaBuilder extends Builder{
     }
 
     public void outputLineAvailable(String line) {
-      myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
+      if (line != null) {
+        if (line.startsWith("[") && line.endsWith("]")) {
+          final String message = line.substring(1, line.length() - 1);
+          if (message.startsWith("parsing")) {
+            myContext.processMessage(new ProgressMessage("Parsing sources..."));
+          }
+          else {
+            if (!message.startsWith("total")) {
+              myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
+            }
+          }
+        }
+      }
     }
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
@@ -587,7 +600,7 @@ public class JavaBuilder extends Builder{
     }
 
     public List<OutputFileObject> getFileObjects() {
-      return myFileObjects;
+      return Collections.unmodifiableList(myFileObjects);
     }
 
     public void writePendingData() {
@@ -607,10 +620,10 @@ public class JavaBuilder extends Builder{
     }
 
     public Set<File> getSuccessfullyCompiled() {
-      return mySuccessfullyCompiled;
+      return Collections.unmodifiableSet(mySuccessfullyCompiled);
     }
 
-    private void writeToDisk(OutputFileObject fileObject) throws IOException {
+    private void writeToDisk(@NotNull OutputFileObject fileObject) throws IOException {
       final OutputFileObject.Content content = fileObject.getContent();
       if (content != null) {
         FileUtil.writeToFile(fileObject.getFile(), content.getBuffer(), content.getOffset(), content.getLength());
@@ -619,12 +632,15 @@ public class JavaBuilder extends Builder{
         throw new IOException("Missing content for file " + fileObject.getFile());
       }
 
-      myContext.processMessage(new ProgressMessage("Compiled " + fileObject.getFile().getPath()));
-
       final File source = fileObject.getSourceFile();
       if (source != null && !myProblematic.contains(source)) {
         mySuccessfullyCompiled.add(source);
+        final String className = fileObject.getClassName();
+        if (className != null) {
+          myContext.processMessage(new ProgressMessage("Compiled " + className));
+        }
       }
+
     }
 
     public void markError(OutputFileObject outputClassFile) {

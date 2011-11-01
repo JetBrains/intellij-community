@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -164,7 +165,7 @@ public class EmbeddedJavac {
       myOutConsumer.report(new PlainMessageDiagnostic(kind, message));
     }
 
-    public void consumeOutputFile(final OutputFileObject cls) {
+    public void consumeOutputFile(@NotNull final OutputFileObject cls) {
       incTaskCount();
       myTaskRunner.submit(new Runnable() {
         public void run() {

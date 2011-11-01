@@ -24,7 +24,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   interface Context {
     StandardJavaFileManager getStandardFileManager();
 
-    void consumeOutputFile(OutputFileObject obj);
+    void consumeOutputFile(@NotNull OutputFileObject obj);
 
     void reportMessage(final Diagnostic.Kind kind, String message);
 
@@ -63,10 +63,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       return a.equals(b);
     }
     return super.isSameFile(a, b);
-  }
-
-  public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
-    return super.list(location, packageName, kinds, recurse); // todo: must be optimized!
   }
 
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
