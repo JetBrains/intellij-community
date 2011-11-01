@@ -17,6 +17,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,6 +33,7 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
   private final AtomicReference<RemoteGradleProcessSettings> mySettings = new AtomicReference<RemoteGradleProcessSettings>();
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final AtomicLong myTtlMs = new AtomicLong(DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS);
+  private final AtomicInteger myCallsInProgressNumber = new AtomicInteger();
 
   public GradleApiFacadeImpl() {
     updateAutoShutdownTime();
@@ -83,8 +85,14 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     I proxy = (I)Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { interfaceClass }, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        updateAutoShutdownTime(); 
-        return method.invoke(result, args);
+        myCallsInProgressNumber.incrementAndGet();
+        try {
+          return method.invoke(result, args);
+        }
+        finally {
+          myCallsInProgressNumber.decrementAndGet();
+          updateAutoShutdownTime();
+        }
       }
     });
     try {
@@ -127,6 +135,10 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     myShutdownAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
+        if (myCallsInProgressNumber.get() > 0) {
+          updateAutoShutdownTime();
+          return;
+        }
         System.exit(0);
       }
     }, (int)myTtlMs.get());
