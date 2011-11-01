@@ -35,6 +35,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
@@ -77,8 +78,11 @@ public class DirDiffPanel implements Disposable {
     myDiffWindow = wnd;
     mySourceDirField.setText(model.getSourceDir().getPath());
     myTargetDirField.setText(model.getTargetDir().getPath());
+    mySourceDirField.setBorder(new EmptyBorder(0, 0, 0, 8));
+    myTargetDirField.setBorder(new EmptyBorder(0, 0, 0, 12));
     mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
     myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
+    myTargetDirLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
     myModel.setTable(myTable);
     myModel.setPanel(this);
     Disposer.register(this, myModel);
@@ -252,8 +256,10 @@ public class DirDiffPanel implements Disposable {
         }
       });
     } else {
+      Dimension preferredSize = mySourceDirField.getPreferredSize();
       mySourceDirField.setButtonEnabled(false);
       mySourceDirField.getButton().setVisible(false);
+      mySourceDirField.setPreferredSize(preferredSize);
     }
 
     if (trgChooser != null) {
@@ -274,8 +280,10 @@ public class DirDiffPanel implements Disposable {
         }
       });
     } else {
+      Dimension preferredSize = myTargetDirField.getPreferredSize();
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
+      myTargetDirField.setPreferredSize(preferredSize);
     }
   }
 
