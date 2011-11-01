@@ -39,4 +39,5 @@ public interface WireEventI {
 
   boolean isStart();
   int getWaitStartsNumber();
+  int[] getFutureWireStarts();
 }

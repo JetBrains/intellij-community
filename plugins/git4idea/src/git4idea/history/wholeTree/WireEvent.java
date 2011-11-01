@@ -28,7 +28,7 @@ public class WireEvent implements WireEventI {
   private int[] myCommitsEnds;      // branch point   |/.       -1 here -> start of a wire
   @Nullable
   private int[] myWireEnds;
-  private int myWaitStartsNumber;
+  private int[] myFutureWireStarts;
   private int[] myCommitsStarts;    // merge commit   |\  parents here. -1 here -> no parents, i.e. break
 
   public WireEvent(final int commitIdx, final int[] commitsEnds) {
@@ -36,7 +36,7 @@ public class WireEvent implements WireEventI {
     myCommitsEnds = commitsEnds;
     myCommitsStarts = ArrayUtil.EMPTY_INT_ARRAY;
     myWireEnds = null;
-    myWaitStartsNumber = 0;
+    myFutureWireStarts = ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   @Override
@@ -44,17 +44,45 @@ public class WireEvent implements WireEventI {
     return myCommitIdx;
   }
 
-  public void addStart(final int idx) {
+  public void addStart(final int idx, int wireNumber) {
+    if (! (myFutureWireStarts.length > 0 || idx == -1)) {
+      System.out.println("123");
+    }
+    assert myFutureWireStarts.length > 0 || idx == -1;
     myCommitsStarts = ArrayUtil.append(myCommitsStarts, idx);
-    -- myWaitStartsNumber;
+    if (idx != -1) {
+      if (myFutureWireStarts.length == 1) {
+        assert myFutureWireStarts[0] == wireNumber;
+        myFutureWireStarts = ArrayUtil.EMPTY_INT_ARRAY;
+      } else {
+        final int[] newArr = new int[myFutureWireStarts.length - 1];
+        int j = 0;
+        for (int i = 0; i < myFutureWireStarts.length; i++) {
+          int futureWireStart = myFutureWireStarts[i];
+          if (futureWireStart != wireNumber) {
+            newArr[j] = futureWireStart;
+            ++ j;
+          }
+        }
+        myFutureWireStarts = newArr;
+      }
+    }
   }
 
   public int getWaitStartsNumber() {
-    return myWaitStartsNumber;
+    return myFutureWireStarts.length;
   }
 
-  public void setWaitStartsNumber(int waitStartsNumber) {
-    myWaitStartsNumber = waitStartsNumber;
+  public int[] getFutureWireStarts() {
+    return myFutureWireStarts;
+  }
+
+  public void setWaitStartsNumber(Integer[] waitStarts) {
+    myFutureWireStarts = new int[waitStarts.length];
+    for (int i = 0; i < waitStarts.length; i++) {
+      Integer waitStart = waitStarts[i];
+      myFutureWireStarts[i] = waitStart;
+    }
   }
 
   public void addWireEnd(final int idx) {

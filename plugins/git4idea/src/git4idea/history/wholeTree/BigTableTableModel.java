@@ -401,6 +401,11 @@ public class BigTableTableModel extends AbstractTableModel {
             }
 
             @Override
+            public int[] getFutureWireStarts() {
+              return arraysConvertor.convert(next.getFutureWireStarts());
+            }
+
+            @Override
             public boolean isEnd() {
               return next.isEnd();
             }

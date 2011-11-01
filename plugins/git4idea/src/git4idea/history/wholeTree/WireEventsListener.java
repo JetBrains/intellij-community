@@ -16,11 +16,11 @@ package git4idea.history.wholeTree;
  * @author irengrig
  */
 public interface WireEventsListener {
-  void setWireStartsNumber(int row, final int number);
+  void setWireStartsNumber(int row, final Integer[] number);
   void wireStarts(int row);
   void wireEnds(int row);
   void setEnds(int row, int[] commitEnds);
   //void addWireEvent(int row, int[] branched);
-  void addStartToEvent(int row, int parentRow);
+  void addStartToEvent(int row, int parentRow, int wireNumber);
   void parentWireEnds(int row, int parentRow);
 }
