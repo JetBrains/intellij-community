@@ -1273,9 +1273,6 @@ if __name__ == '__main__':
     else:
         sys.stderr.write("pydev debugger: starting\n")
 
-
-
-
     debugger = PyDB()
     debugger.connect(setup['client'], port)
 
