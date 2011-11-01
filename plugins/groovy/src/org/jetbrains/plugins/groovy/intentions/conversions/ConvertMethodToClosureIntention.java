@@ -142,6 +142,8 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
+      if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) return false;
+
       GrMethod method;
       final PsiReference ref = element.getReference();
       if (ref != null) {
