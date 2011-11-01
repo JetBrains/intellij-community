@@ -24,6 +24,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
@@ -36,6 +38,14 @@ public class GroovyImplementationSearch implements QueryExecutor<PsiElement, Psi
       GrField property = ((GrAccessorMethod)source).getProperty();
       return consumer.process(property);
     }
+    else if (source instanceof GrMethod) {
+      GrReflectedMethod[] reflectedMethods = ((GrMethod)source).getReflectedMethods();
+      for (GrReflectedMethod reflectedMethod : reflectedMethods) {
+        PsiMethod[] implementations = MethodImplementationsSearch.getMethodImplementations(reflectedMethod);
+        if (!ContainerUtil.process(implementations, consumer)) return false;
+      }
+    }
+
     else if (source instanceof GrField) {
       for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)source)) {
 
