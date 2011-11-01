@@ -18,7 +18,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.io.File;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Map;
@@ -191,7 +191,6 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     if (gradleSettings == null) {
       return;
     }
-    intellijModule.setInheritProjectCompileOutputPath(gradleSettings.getInheritOutputDirs());
 
     File sourceCompileOutputPath = gradleSettings.getOutputDir();
     if (sourceCompileOutputPath != null) {
@@ -202,6 +201,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     if (testCompileOutputPath != null) {
       intellijModule.setCompileOutputPath(SourceType.TEST, testCompileOutputPath.getAbsolutePath());
     }
+    intellijModule.setInheritProjectCompileOutputPath(
+      gradleSettings.getInheritOutputDirs() || sourceCompileOutputPath == null || testCompileOutputPath == null
+    );
   }
 
   private static void populateDependencies(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule, 
