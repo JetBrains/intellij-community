@@ -315,7 +315,7 @@ public class GradleModulesImporter {
                 GradleProjectResolver resolver = manager.getFacade().getResolver();
                 GradleProject projectWithResolvedLibraries = resolver.resolveProjectInfo(gradleProjectPath, true);
                 gradleProjectRef.set(projectWithResolvedLibraries);
-                UIUtil.invokeLaterIfNeeded(setupExternalDependenciesTask);
+                ApplicationManager.getApplication().invokeLater(setupExternalDependenciesTask, ModalityState.NON_MODAL);
               }
               catch (Exception e) {
                 GradleLog.LOG.warn("Can't resolve external dependencies of the target gradle project (" + gradleProjectPath + ")", e);
