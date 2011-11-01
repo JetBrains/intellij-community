@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,8 +51,21 @@ import java.util.*;
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   private final Set<Pair<Object, SyncAction>> myActions = new LinkedHashSet<Pair<Object, SyncAction>>();
 
+  private long myModificationCount = 0;
+
+  private ModificationTracker myModificationTracker = new ModificationTracker() {
+    @Override
+    public long getModificationCount() {
+      return myModificationCount;
+    }
+  };
+
   public MvcModuleStructureSynchronizer(Project project) {
     super(project);
+  }
+
+  public ModificationTracker getFileAndRootsModificationTracker() {
+    return myModificationTracker;
   }
 
   public void initComponent() {
@@ -66,6 +80,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         queue(SyncAction.CreateAppStructureIfNeeded, myProject);
         queue(SyncAction.UpdateProjectStructure, myProject);
         queue(SyncAction.EnsureRunConfigurationExists, myProject);
+        myModificationCount++;
       }
     });
 
@@ -87,6 +102,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
       public void fileCreated(final VirtualFileEvent event) {
+        myModificationCount++;
+
         final VirtualFile file = event.getFile();
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName) || isApplicationDirectoryName(fileName)) {
@@ -155,6 +172,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
       @Override
       public void fileDeleted(VirtualFileEvent event) {
+        myModificationCount++;
+
         final VirtualFile file = event.getFile();
         if (isLibDirectory(file) || isLibDirectory(event.getParent())) {
           queue(SyncAction.UpdateProjectStructure, file);
@@ -169,6 +188,10 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         }
       }
     }));
+  }
+
+  public static MvcModuleStructureSynchronizer getInstance(Project project) {
+    return project.getComponent(MvcModuleStructureSynchronizer.class);
   }
 
   private static boolean isApplicationDirectoryName(String fileName) {
