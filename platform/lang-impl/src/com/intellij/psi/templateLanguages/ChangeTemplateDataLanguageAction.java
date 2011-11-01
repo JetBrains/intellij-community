@@ -38,7 +38,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     if (files != null && files.length > 1) {
       virtualFile = null;
     }
-    if (virtualFile == null) return;
+    if (virtualFile == null || virtualFile.isDirectory()) return;
 
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
