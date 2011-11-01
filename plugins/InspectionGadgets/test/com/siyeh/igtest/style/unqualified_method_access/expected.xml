@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnqualifiedMethodAccess.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance method call not qualified with 'this'</problem_class>
+    <description>Instance method call &lt;code&gt;foo&lt;/code&gt; is not qualified with 'this' #loc</description>
+  </problem>
+</problems>
