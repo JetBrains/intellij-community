@@ -181,7 +181,6 @@
     </action>
     <action id="NewElement">
       <keyboard-shortcut first-keystroke="meta N"/>
-      <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>
     <action id="NewElementSamePlace">
@@ -216,7 +215,6 @@
     </action>
     <action id="Generate">
       <keyboard-shortcut first-keystroke="meta N"/>
-      <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>
     <action id="EditorToggleColumnMode">
@@ -488,5 +486,45 @@
       <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
     </action>
 
+    <action id="NextProjectWindow">
+      <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+    </action>
+
+    <action id="PreviousProjectWindow">
+      <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
+    </action>
+
+    <action id="EditorCutLineEnd">
+      <keyboard-shortcut first-keystroke="control K" />
+    </action>
+    <action id="EditorDown">
+      <keyboard-shortcut first-keystroke="DOWN" />
+      <keyboard-shortcut first-keystroke="control N" />
+    </action>
+    <action id="EditorLeft">
+      <keyboard-shortcut first-keystroke="LEFT" />
+      <keyboard-shortcut first-keystroke="control B" />
+    </action>
+    <action id="EditorLineEnd">
+      <keyboard-shortcut first-keystroke="END" />
+      <keyboard-shortcut first-keystroke="meta RIGHT" />
+      <keyboard-shortcut first-keystroke="control E" />
+    </action>
+    <action id="EditorLineStart">
+      <keyboard-shortcut first-keystroke="HOME" />
+      <keyboard-shortcut first-keystroke="meta LEFT" />
+      <keyboard-shortcut first-keystroke="control A" />
+    </action>
+    <action id="EditorRight">
+      <keyboard-shortcut first-keystroke="RIGHT" />
+      <keyboard-shortcut first-keystroke="control F" />
+    </action>
+    <action id="EditorToggleColumnMode">
+      <keyboard-shortcut first-keystroke="shift meta 8" />
+    </action>
+    <action id="EditorUp">
+      <keyboard-shortcut first-keystroke="UP" />
+      <keyboard-shortcut first-keystroke="control P" />
+    </action>
   </keymap>
 </component>
