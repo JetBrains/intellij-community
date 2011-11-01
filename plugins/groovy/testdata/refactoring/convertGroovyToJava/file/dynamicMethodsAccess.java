@@ -1,7 +1,7 @@
 public class Abc extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
 public java.lang.Object foo() {
 invokeMethod("bar", new java.lang.Object[]{2});
-java.util.Map<java.lang.String, java.lang.Integer> map = new java.util.LinkedHashMap<java.lang.String, java.lang.Integer>(1);
+java.util.LinkedHashMap<java.lang.String, java.lang.Integer> map = new java.util.LinkedHashMap<java.lang.String, java.lang.Integer>(1);
 map.put("s", 4);
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(Abc.this, invokeMethod("bar", new java.lang.Object[]{map, 3}));
 java.lang.String s = "a";
