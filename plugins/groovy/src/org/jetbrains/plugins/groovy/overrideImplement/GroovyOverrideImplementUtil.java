@@ -50,10 +50,11 @@ public class GroovyOverrideImplementUtil {
   private static final String JAVA_LANG_OVERRIDE = "java.lang.Override";
 
   private static final String[] GROOVY_MODIFIERS = new String[]{
+    //PsiModifier.PUBLIC,
     PsiModifier.PROTECTED,
     PsiModifier.PRIVATE,
     PsiModifier.STATIC,
-    PsiModifier.ABSTRACT,
+    //PsiModifier.ABSTRACT,
     PsiModifier.FINAL,
     PsiModifier.SYNCHRONIZED,
   };

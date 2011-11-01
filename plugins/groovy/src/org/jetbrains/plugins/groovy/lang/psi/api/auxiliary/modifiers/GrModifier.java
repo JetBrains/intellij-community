@@ -23,4 +23,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public interface GrModifier extends PsiModifier {
   @NonNls String DEF = "def";
+
+  String[] GROOVY_MODIFIERS =
+    {PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEF};
 }

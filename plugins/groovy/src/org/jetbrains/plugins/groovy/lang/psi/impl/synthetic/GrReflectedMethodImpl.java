@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -81,9 +82,15 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   }
 
   private void initModifiers(GrMethod baseMethod, boolean isCategoryMethod) {
-    final GrModifierList modifierList = baseMethod.getModifierList();
     final GrLightModifierList myModifierList = ((GrLightModifierList)getModifierList());
-    for (PsiElement modifier : modifierList.getModifiers()) {
+
+    for (String modifier : GrModifier.GROOVY_MODIFIERS) {
+      if (baseMethod.hasModifierProperty(modifier)) {
+        myModifierList.addModifier(modifier);
+      }
+    }
+    
+    for (PsiElement modifier : baseMethod.getModifierList().getModifiers()) {
       if (modifier instanceof GrAnnotation) {
         final String qualifiedName = ((GrAnnotation)modifier).getQualifiedName();
         if (qualifiedName != null) {
@@ -92,9 +99,6 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         else {
           myModifierList.addAnnotation(((GrAnnotation)modifier).getShortName());
         }
-      }
-      else {
-        myModifierList.addModifier(modifier.getText());
       }
     }
 
