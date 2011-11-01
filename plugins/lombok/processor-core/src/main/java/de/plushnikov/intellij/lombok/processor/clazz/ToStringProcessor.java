@@ -50,9 +50,9 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
       builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
           PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
-      validateExcludeParam(psiClass, builder, excludeProperty);
+      validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
-    validateOfParam(psiClass, builder, ofProperty);
+    validateOfParam(psiClass, builder, psiAnnotation, ofProperty);
     validateCallSuperParam(psiAnnotation, psiClass, builder, "toString()");
 
     return result;

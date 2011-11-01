@@ -72,29 +72,54 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
     }
   }
 
-  protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, Collection<String> ofProperty) {
+  protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
         if (null == fieldByName) {
-          builder.addWarning(String.format("The field '%s' does not exist", fieldName));//TODO add QuickFix  : remove of param
+          final String newPropertyValue = calcNewPropertyValue(ofProperty, fieldName);
+          builder.addWarning(String.format("The field '%s' does not exist", fieldName),
+              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
         }
       }
     }
   }
 
-  protected void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, Collection<String> excludeProperty) {
+  protected void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> excludeProperty) {
     for (String fieldName : excludeProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
         if (null == fieldByName) {
-          builder.addWarning(String.format("The field '%s' does not exist", fieldName));//TODO add QuickFix  : remove exclude param
+          final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
+          builder.addWarning(String.format("The field '%s' does not exist", fieldName),
+              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
           if (fieldName.startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
-            builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName));//TODO add QuickFix  : remove exclude param
+            final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
+            builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName),
+                PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
           }
         }
       }
     }
+  }
+
+  private String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
+    String result = null;
+    final Collection<String> restProperties = new ArrayList<String>(allProperties);
+    restProperties.remove(fieldName);
+
+    if (!restProperties.isEmpty()) {
+      final StringBuilder builder = new StringBuilder();
+      builder.append('{');
+      for (final String property : restProperties) {
+        builder.append('"').append(property).append('"').append(',');
+      }
+      builder.deleteCharAt(builder.length() - 1);
+      builder.append('}');
+
+      result = builder.toString();
+    }
+    return result;
   }
 }
