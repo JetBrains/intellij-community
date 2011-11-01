@@ -110,6 +110,8 @@ public abstract class GroovyRefactoringUtil {
                                                             final Class<T> klass) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
+    if (element1 == null) return null;
+
     if (TokenSets.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
