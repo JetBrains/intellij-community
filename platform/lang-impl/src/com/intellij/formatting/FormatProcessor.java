@@ -928,7 +928,13 @@ class FormatProcessor {
     else if (childAttributes == ChildAttributes.DELEGATE_TO_NEXT_CHILD) {
       AbstractBlockWrapper nextWrappedBlock;
       if (parent instanceof CompositeBlockWrapper) {
-        nextWrappedBlock = ((CompositeBlockWrapper)parent).getChildren().get(index);
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)parent).getChildren();
+        if (children != null && index < children.size()) {
+          nextWrappedBlock = children.get(index);
+        }
+        else {
+          return null;
+        }
       }
       else {
         nextWrappedBlock = ((LeafBlockWrapper)parent).getNextBlock();
