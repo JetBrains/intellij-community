@@ -518,4 +518,5 @@ class Bar {{
   }
 
   void testDefaultInitializersAreNotAllowedInAbstractMethods() {doTest()}
+  void testConstructorTypeArgs(){doTest()}
 }

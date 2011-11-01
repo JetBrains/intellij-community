@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
@@ -197,6 +198,12 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @Override
   public GrArrayDeclaration getArrayDeclaration() {
     return findChildByClass(GrArrayDeclaration.class);
+  }
+
+  @Nullable
+  @Override
+  public GrTypeArgumentList getConstructorTypeArguments() {
+    return findChildByClass(GrTypeArgumentList.class);
   }
 
   @Nullable

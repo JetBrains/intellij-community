@@ -667,6 +667,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitNewExpression(GrNewExpression newExpression) {
+    GrTypeArgumentList constructorTypeArguments = newExpression.getConstructorTypeArguments();
+    if (constructorTypeArguments != null) {
+      myHolder.createErrorAnnotation(constructorTypeArguments, GroovyBundle.message("groovy.does.not.support.constructor.type.arguments"));
+    }
+
     final GrTypeElement typeElement = newExpression.getTypeElement();
 
     if (typeElement instanceof GrBuiltInTypeElement) {
