@@ -18,6 +18,7 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,6 +106,18 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)ancestor).getNameIdentifier();
       if (nameIdentifier != null && !PsiTreeUtil.isAncestor(ancestor, nameIdentifier, true)) {
         isAncestor = PsiTreeUtil.isAncestor(nameIdentifier.getParent(), place, false);
+      }
+    }
+
+    if (!isAncestor) {
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(place.getProject());
+      PsiLanguageInjectionHost host = injectedLanguageManager.getInjectionHost(place);
+      while (host != null) {
+        if (PsiTreeUtil.isAncestor(ancestor, host, false)) {
+          isAncestor = true;
+          break;
+        }
+        host = injectedLanguageManager.getInjectionHost(host);
       }
     }
     return isAncestor;
