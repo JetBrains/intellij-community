@@ -23,7 +23,12 @@ import com.intellij.openapi.util.Ref;
  */
 public interface BackgroundOperatingDiffElement {
 
-  void copyTo(DiffElement container, Ref<String> errorMessage, Ref<DiffElement> diffElement, Runnable onFinish, boolean targetExists);
+  void copyTo(DiffElement container,
+              Ref<String> errorMessage,
+              Ref<DiffElement> diffElement,
+              Runnable onFinish,
+              boolean targetExists,
+              String relativePath);
 
   void delete(Ref<String> errorMessage, Runnable onFinish);
 }

@@ -500,6 +500,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void performCopyTo(final DirDiffElement element) {
     final DiffElement<?> source = element.getSource();
     if (source != null) {
+      final String path = element.getParentNode().getPath();
+
       if (source instanceof BackgroundOperatingDiffElement) {
         final Ref<String> errorMessage = new Ref<String>();
         final Ref<DiffElement> diff = new Ref<DiffElement>();
@@ -515,11 +517,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             }
           }
         };
-        ((BackgroundOperatingDiffElement)source).copyTo(myTrg, errorMessage, diff, onFinish, element.getTarget() != null);
+        ((BackgroundOperatingDiffElement)source).copyTo(myTrg, errorMessage, diff, onFinish, element.getTarget() != null, path);
       }
       else {
-        final String path = element.getParentNode().getPath();
-
         final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
         try {
           final DiffElement<?> diffElement = source.copyTo(myTrg, path);
@@ -551,6 +551,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void performCopyFrom(final DirDiffElement element) {
     final DiffElement<?> target = element.getTarget();
     if (target != null) {
+      final String path = element.getParentNode().getPath();
+
       if (target instanceof BackgroundOperatingDiffElement) {
         final Ref<String> errorMessage = new Ref<String>();
         final Ref<DiffElement> diff = new Ref<DiffElement>();
@@ -565,11 +567,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             }
           }
         };
-        ((BackgroundOperatingDiffElement)target).copyTo(mySrc, errorMessage, diff, onFinish, element.getSource() != null);
+        ((BackgroundOperatingDiffElement)target).copyTo(mySrc, errorMessage, diff, onFinish, element.getSource() != null, path);
       }
       else {
-        final String path = element.getParentNode().getPath();
-
         final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
         try {
           final DiffElement<?> diffElement = target.copyTo(mySrc, path);
