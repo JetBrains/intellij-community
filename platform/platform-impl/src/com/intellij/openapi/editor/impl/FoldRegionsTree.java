@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.ArrayUtil;
@@ -149,7 +150,8 @@ abstract class FoldRegionsTree {
       FoldRegion region = myCachedTopLevelRegions[i];
       myCachedStartOffsets[i] = region.getStartOffset();
       myCachedEndOffsets[i] = region.getEndOffset() - 1;
-      sum += region.getDocument().getLineNumber(region.getEndOffset()) - region.getDocument().getLineNumber(region.getStartOffset());
+      Document document = region.getDocument();
+      sum += document.getLineNumber(region.getEndOffset()) - document.getLineNumber(region.getStartOffset());
       myCachedFoldedLines[i] = sum;
     }
   }
