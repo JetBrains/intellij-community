@@ -84,7 +84,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private boolean myTreeIsUpdating;
 
-  public static DataKey<FileChooserDialogImpl> KEY = DataKey.create("FileChooserDialog");
+  public static DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -398,8 +398,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return getSelectedFiles();
       }
-      else if (KEY.is(dataId)) {
-        return FileChooserDialogImpl.this;
+      else if (PATH_FIELD.is(dataId)) {
+        return new PathField() {
+          public void toggleVisible() {
+            toggleShowTextField();
+          }
+        };
       }
       else if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
