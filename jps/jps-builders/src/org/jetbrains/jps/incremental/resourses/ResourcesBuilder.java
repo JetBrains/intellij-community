@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental.resourses;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.CompilerConfiguration;
 import org.jetbrains.jps.Module;
@@ -19,6 +20,7 @@ import java.io.IOException;
  *         Date: 10/6/11
  */
 public class ResourcesBuilder extends Builder{
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
   public static final String BUILDER_NAME = "resources";
 
   public ResourcesBuilder() {
@@ -57,6 +59,7 @@ public class ResourcesBuilder extends Builder{
                 copyResource(context, module, file, sourceRoot, outputToSourceMapping);
               }
               catch (IOException e) {
+                LOG.info(e);
                 context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
                 return false;
               }
