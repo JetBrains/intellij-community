@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
 
   public void copyParameters(@NotNull PsiMethod method) {
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      GrLightParameter p = new GrLightParameter(parameter.getName(), parameter.getType(), this);
+      GrLightParameter p = new GrLightParameter(StringUtil.notNullize(parameter.getName()), parameter.getType(), this);
 
       if (parameter instanceof GrParameter) {
         p.setOptional(((GrParameter)parameter).isOptional());
