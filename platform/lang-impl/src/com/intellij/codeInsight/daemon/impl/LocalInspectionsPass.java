@@ -162,8 +162,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void addDescriptorsFromInjectedResults(Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper, InspectionManagerEx iManager) {
-    Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
@@ -174,16 +172,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       List<InspectionResult> resultList = entry.getValue();
       for (InspectionResult inspectionResult : resultList) {
         LocalInspectionTool tool = inspectionResult.tool;
-        HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), myFile).getSeverity();
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
 
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
           if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) continue;
-          HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
-          HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered, psiElement);
-          if (info == null) continue;
-          List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
+          List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorImpl)descriptor).getTextRange());
           for (TextRange editable : editables) {
             TextRange hostRange = documentRange.injectedToHost(editable);
             QuickFix[] fixes = descriptor.getFixes();
@@ -668,7 +662,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     };
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      if (!HighlightLevelUtil.shouldInspect(psiRoot)) {
+      if (psiRoot == null || !HighlightLevelUtil.shouldInspect(psiRoot)) {
         continue;
       }
       psiRoot.accept(visitor);
