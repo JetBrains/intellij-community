@@ -24,10 +24,11 @@ import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -560,7 +561,11 @@ public class TemplateState implements Disposable {
       }
     }
 
-    nextTab();
+    new WriteCommandAction(myProject) {
+      protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+        nextTab();
+      }
+    }.execute();
   }
 
   private void unblockDocument() {
