@@ -15,6 +15,10 @@ public class PySpellCheckerTest extends PyTestCase {
     doTest();
   }
 
+  public void testPlainTextSplitter3() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
     myFixture.configureByFile("inspections/spelling/" + getTestName(true) + ".py");
