@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -240,7 +241,19 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
                                               GrVariableDeclaration varDecl) throws IncorrectOperationException {
     LOG.assertTrue(context.occurrences.length > 0);
 
-    GrStatement anchorElement = (GrStatement)findAnchor(context, settings, context.occurrences, context.scope);
+    PsiElement anchor = findAnchor(context, settings, context.occurrences, context.scope);
+    if (!(anchor instanceof GrStatement)) {
+      StringBuilder error = new StringBuilder("scope:");
+      error.append(DebugUtil.psiToString(context.scope, true, false));
+
+      error.append("occurrences: ");
+      for (PsiElement occurrence : context.occurrences) {
+        error.append(DebugUtil.psiToString(occurrence, true, false));
+      }
+
+      LOG.error(error.toString());
+    }
+    GrStatement anchorElement = (GrStatement)anchor;
     LOG.assertTrue(anchorElement != null);
     PsiElement realContainer = anchorElement.getParent();
 
