@@ -35,7 +35,7 @@ target(compile: "Compile project") {
   loadProject()
 
   project.stage("Cleaning up sandbox folder")
-  ant.delete(dir: paths.sandbox)
+  forceDelete(paths.sandbox)
 
   [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core].each {
     ant.mkdir(dir: it)
