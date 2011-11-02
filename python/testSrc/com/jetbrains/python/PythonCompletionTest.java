@@ -461,4 +461,8 @@ public class PythonCompletionTest extends PyTestCase {
     assertTrue(strings.contains("lat"));
     assertTrue(strings.contains("long"));
   }
+  
+  public void testPrivateMemberType() {  // PY-4589
+    doTest();
+  }
 }
