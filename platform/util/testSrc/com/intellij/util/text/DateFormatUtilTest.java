@@ -94,7 +94,7 @@ public class DateFormatUtilTest extends TestCase {
     assertConvertedFormat("%H %I", "16 04");
     assertConvertedFormat("%M %S %F %p", "06 07 008 PM");
 
-    assertConvertedFormat("%z %Z", "+0300 MSK");
+    assertConvertedFormatMatches("%z %Z", "\\+\\d{4} \\w{3}");
 
     assertConvertedFormat(" foo bar ", " foo bar ");
     assertConvertedFormat(" 'foo''a'a'' '' ' ", " 'foo''a'a'' '' ' ");
@@ -114,6 +114,18 @@ public class DateFormatUtilTest extends TestCase {
     String converted = DateFormatUtil.convertMacPattern(pattern);
     try {
       assertEquals(expected, new SimpleDateFormat(converted).format(Clock.getTime()));
+    }
+    catch (Throwable e) {
+      System.out.println("cannot format with [" + converted + "]");
+      throw e;
+    }
+  }
+
+  private void assertConvertedFormatMatches(String pattern, String expectedPattern) throws Throwable {
+    String converted = DateFormatUtil.convertMacPattern(pattern);
+    try {
+      String actual = new SimpleDateFormat(converted).format(Clock.getTime());
+      assertTrue(actual, actual.matches(expectedPattern));
     }
     catch (Throwable e) {
       System.out.println("cannot format with [" + converted + "]");
