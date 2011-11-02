@@ -121,8 +121,8 @@ class UsageRepr {
     }
 
     protected FMUsage(final DependencyContext context, final BufferedReader r) {
-      name = context.get(RW.readString(r));
-      owner = context.get(RW.readString(r));
+      name = new DependencyContext.S(r);
+      owner = new DependencyContext.S(r);
     }
   }
 
@@ -141,8 +141,8 @@ class UsageRepr {
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "fieldUsage");
-      RW.writeln(w, name.getValue());
-      RW.writeln(w, owner.getValue());
+      RW.writeln(w, name.toString());
+      RW.writeln(w, owner.toString());
       type.write(w);
     }
 
@@ -173,8 +173,8 @@ class UsageRepr {
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "fieldAssignUsage");
-      RW.writeln(w, name.getValue());
-      RW.writeln(w, owner.getValue());
+      RW.writeln(w, name.toString());
+      RW.writeln(w, owner.toString());
       type.write(w);
     }
 
@@ -212,8 +212,8 @@ class UsageRepr {
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "methodUsage");
-      RW.writeln(w, name.getValue());
-      RW.writeln(w, owner.getValue());
+      RW.writeln(w, name.toString());
+      RW.writeln(w, owner.toString());
       RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
       returnType.write(w);
     }
@@ -255,17 +255,12 @@ class UsageRepr {
     }
 
     private ClassUsage(final DependencyContext context, final BufferedReader r) {
-      className = context.get(RW.readString(r));
-    }
-
-    private ClassUsage(final DependencyContext context, final BufferedReader r, boolean b) {
-      super();
-      className = context.get(RW.readString(r));
+      className = new DependencyContext.S(r);
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classUsage");
-      RW.writeln(w, className.getValue());
+      RW.writeln(w, className.toString());
     }
 
     @Override
@@ -297,12 +292,12 @@ class UsageRepr {
     }
 
     public ClassExtendsUsage(final DependencyContext context, final BufferedReader r) {
-      className = context.get(RW.readString(r));
+      className = new DependencyContext.S(r);
     }
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classExtendsUsage");
-      RW.writeln(w, className.getValue());
+      RW.writeln(w, className.toString());
     }
 
     @Override
@@ -334,7 +329,7 @@ class UsageRepr {
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classNewUsage");
-      RW.writeln(w, className.getValue());
+      RW.writeln(w, className.toString());
     }
 
     @Override

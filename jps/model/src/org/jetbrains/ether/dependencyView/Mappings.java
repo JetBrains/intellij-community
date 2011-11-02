@@ -387,7 +387,7 @@ public class Mappings implements RW.Writable {
         dependants.addAll(depClasses);
       }
 
-      affectedFiles.add(new File(fileName.getValue()));
+      affectedFiles.add(new File(context.getValue(fileName)));
 
       final Collection<DependencyContext.S> directSubclasses = classToSubclasses.foxyGet(className);
 
@@ -442,7 +442,7 @@ public class Mappings implements RW.Writable {
         for (DependencyContext.S depClass : dependants) {
           final DependencyContext.S depFile = classToSourceFile.get(depClass);
           if (depFile != null) {
-            affectedFiles.add(new File(depFile.getValue()));
+            affectedFiles.add(new File(context.getValue(depFile)));
           }
         }
       }
@@ -461,7 +461,7 @@ public class Mappings implements RW.Writable {
 
       @Override
       public boolean checkResidence(final DependencyContext.S residence) {
-        return !ClassRepr.getPackageName(residence).equals(packageName);
+        return !ClassRepr.getPackageName(context.getValue(residence)).equals(packageName);
       }
     }
 
@@ -540,7 +540,7 @@ public class Mappings implements RW.Writable {
     }
 
     for (DependencyContext.S fileName : delta.sourceFileToClasses.keySet()) {
-      if (safeFiles != null && safeFiles.contains(fileName.getValue())) {
+      if (safeFiles != null && safeFiles.contains(context.getValue(fileName))) {
         continue;
       }
 
@@ -677,7 +677,7 @@ public class Mappings implements RW.Writable {
                   final DependencyContext.S source = classToSourceFile.get(p);
 
                   if (source != null) {
-                    affectedFiles.add(new File(source.getValue()));
+                    affectedFiles.add(new File(context.getValue(source)));
                   }
                 }
               }
@@ -760,16 +760,14 @@ public class Mappings implements RW.Writable {
 
                 if (r != null && sourceFileName != null) {
                   if (r.isLocal) {
-                    affectedFiles.add(new File(sourceFileName.getValue()));
+                    affectedFiles.add(new File(context.getValue(sourceFileName)));
                   }
                   else {
                     final DependencyContext.S outerClass = r.outerClassName;
 
-                    if (outerClass.getValue() != null) {
                       if (u.fieldVisible(outerClass, f)) {
-                        affectedFiles.add(new File(sourceFileName.getValue()));
+                        affectedFiles.add(new File(context.getValue(sourceFileName)));
                       }
-                    }
                   }
                 }
 
@@ -894,7 +892,7 @@ public class Mappings implements RW.Writable {
             final DependencyContext.S fName = classToSourceFile.get(depClass);
 
             if (fName != null) {
-              affectedFiles.add(new File(fName.getValue()));
+              affectedFiles.add(new File(context.getValue(fName)));
             }
           }
         }
@@ -915,7 +913,7 @@ public class Mappings implements RW.Writable {
 
         filewise:
         for (DependencyContext.S depFile : dependentFiles) {
-          if (affectedFiles.contains(new File(depFile.getValue()))) {
+          if (affectedFiles.contains(new File(context.getValue(depFile)))) {
             continue filewise;
           }
 
@@ -932,14 +930,14 @@ public class Mappings implements RW.Writable {
                 final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                 if (constraint == null) {
-                  affectedFiles.add(new File(depFile.getValue()));
+                  affectedFiles.add(new File(context.getValue(depFile)));
                   continue filewise;
                 }
                 else {
                   final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
                   for (DependencyContext.S residentName : residenceClasses) {
                     if (constraint.checkResidence(residentName)) {
-                      affectedFiles.add(new File(depFile.getValue()));
+                      affectedFiles.add(new File(context.getValue(depFile)));
                       continue filewise;
                     }
                   }
@@ -954,7 +952,7 @@ public class Mappings implements RW.Writable {
               for (UsageRepr.Usage usage : annotationUsages) {
                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
                   if (query.satisfies(usage)) {
-                    affectedFiles.add(new File(depFile.getValue()));
+                    affectedFiles.add(new File(context.getValue(depFile)));
                     continue filewise;
                   }
                 }
@@ -1064,7 +1062,7 @@ public class Mappings implements RW.Writable {
         final HashSet<String> result = new HashSet<String>();
 
         for (DependencyContext.S s : classToSourceFile.keySet()) {
-          result.add(s.getValue());
+          result.add(context.getValue(s));
         }
 
         return result;
@@ -1078,7 +1076,7 @@ public class Mappings implements RW.Writable {
         final UsageRepr.Cluster localUsages = result.second.first;
         final Set<UsageRepr.Usage> localAnnotationUsages = result.second.second;
 
-        final String srcFileName = sourceFileName.get(repr == null ? null : repr.getSourceFileName().getValue());
+        final String srcFileName = sourceFileName.get(repr == null ? null : context.getValue(repr.getSourceFileName()));
         final DependencyContext.S sourceFileNameS = context.get(srcFileName);
 
         if (repr != null) {
@@ -1124,7 +1122,7 @@ public class Mappings implements RW.Writable {
 
     assert classFileName != null;
 
-    return classToSourceFile.get(classFileName).getValue();
+    return context.getValue(classToSourceFile.get(classFileName));
   }
 
   @Nullable
@@ -1136,11 +1134,15 @@ public class Mappings implements RW.Writable {
         final DependencyContext.S formName = classToForm.get(c.name);
 
         if (formName != null) {
-          return formName.getValue();
+          return context.getValue(formName);
         }
       }
     }
 
     return null;
+  }
+
+  public void close (){
+    context.close();
   }
 }

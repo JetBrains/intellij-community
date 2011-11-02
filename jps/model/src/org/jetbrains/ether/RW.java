@@ -58,7 +58,7 @@ public class RW {
   }
 
   public interface ToWritable<T> {
-    public Writable convert(T x);
+    Writable convert(T x);
   }
 
   public static <T> void writeln(final BufferedWriter w, final T[] c, final ToWritable<T> t) {

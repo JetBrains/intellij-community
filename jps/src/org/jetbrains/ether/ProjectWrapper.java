@@ -834,8 +834,6 @@ public class ProjectWrapper {
                          final String setupScript,
                          final Map<String, String> pathVariables,
                          final boolean loadHistory) {
-    dependencyMapping = new Mappings(getMapDir());
-    backendCallback = dependencyMapping.getCallback();
     affectedFiles = new HashSet<String>();
 
     myProject = new GantBasedProject(binding == null ? new GantBinding() : binding);
@@ -848,11 +846,14 @@ public class ProjectWrapper {
 
     final String loadPath = dirBased ? getAbsolutePath(myIDEADir) : prjDir;
 
-    myProjectSnapshot =
-      myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
-
     IdeaProjectLoader
       .loadFromPath(myProject, loadPath, pathVariables != null ? pathVariables : Collections.<String, String>emptyMap(), setupScript);
+
+    myProjectSnapshot =
+              myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
+
+    dependencyMapping = new Mappings(getMapDir());
+    backendCallback = dependencyMapping.getCallback();
 
     for (Module m : myProject.getModules().values()) {
       myModules.put(m.getName(), new ModuleWrapper(m));
@@ -869,13 +870,16 @@ public class ProjectWrapper {
     }
   }
 
-  private static File getMapDir() {
-    try {
-      return FileUtil.createTempDirectory(new File(myHomeDir + File.separator + myJPSDir), "mappings", "dir");
+  private File getMapDir() {
+    final File f = new File(myProjectSnapshot + ".dir");
+
+    if (f.exists()) {
+      return f;
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+
+    assert (f.mkdir());
+
+    return f;
   }
 
   private ProjectWrapper(final BufferedReader r, final Set<String> affected) {
@@ -1024,6 +1028,7 @@ public class ProjectWrapper {
   }
 
   public void save() {
+    dependencyMapping.close();
     saveSnapshot();
   }
 
@@ -1100,7 +1105,7 @@ public class ProjectWrapper {
 
           if (classes != null) {
             for (ClassRepr cr : classes) {
-              outputFiles.add(cr.fileName.getValue());
+              outputFiles.add(cr.getFileName());
             }
           }
         }
@@ -1110,7 +1115,7 @@ public class ProjectWrapper {
             final Set<ClassRepr> classes = dependencyMapping.getClasses(f);
             if (classes != null) {
               for (ClassRepr cr : classes) {
-                outputFiles.add(cr.fileName.getValue());
+                outputFiles.add(cr.getFileName());
               }
             }
           }
@@ -1167,9 +1172,9 @@ public class ProjectWrapper {
           }
 
           final Collection<File> affected = new HashSet<File>();
-          
+
           final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected, safeFiles);
-          
+
           for (File a : affected) {
             affectedFiles.add(FileUtil.toSystemIndependentName(a.getAbsolutePath()));
           }

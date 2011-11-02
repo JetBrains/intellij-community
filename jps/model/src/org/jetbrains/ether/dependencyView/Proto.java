@@ -26,15 +26,14 @@ abstract class Proto implements RW.Writable {
 
   protected Proto(final DependencyContext context, final BufferedReader r) {
     access = RW.readInt(r);
-    final String sig = RW.readString(r);
-    signature = context.get(sig);
-    name = context.get(RW.readString(r));
+    signature = new DependencyContext.S(r);
+    name = new DependencyContext.S(r);
   }
 
   public void write(final BufferedWriter w) {
     RW.writeln(w, Integer.toString(access));
-    RW.writeln(w, signature.getValue());
-    RW.writeln(w, name.getValue());
+    RW.writeln(w, signature.toString());
+    RW.writeln(w, name.toString());
   }
 
   public Difference difference(final Proto past) {

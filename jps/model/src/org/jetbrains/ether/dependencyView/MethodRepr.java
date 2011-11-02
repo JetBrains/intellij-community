@@ -146,11 +146,11 @@ class MethodRepr extends ProtoMember {
     buf.append("(");
 
     for (TypeRepr.AbstractType t : argumentTypes) {
-      buf.append(t.getDescr());
+      buf.append(t.getDescr(context));
     }
 
     buf.append(")");
-    buf.append(type.getDescr());
+    buf.append(type.getDescr(context));
 
     return UsageRepr.createMethodUsage(context,  name, owner, buf.toString());
   }

@@ -48,10 +48,10 @@ class FieldRepr extends ProtoMember {
   }
 
   public UsageRepr.Usage createUsage(final DependencyContext context, final DependencyContext.S owner) {
-    return UsageRepr.createFieldUsage(context, name, owner, context.get(type.getDescr()));
+    return UsageRepr.createFieldUsage(context, name, owner, context.get(type.getDescr(context)));
   }
 
   public UsageRepr.Usage createAssignUsage(final DependencyContext context, final DependencyContext.S owner) {
-    return UsageRepr.createFieldAssignUsage(context, name, owner, context.get(type.getDescr()));
+    return UsageRepr.createFieldAssignUsage(context, name, owner, context.get(type.getDescr(context)));
   }
 }

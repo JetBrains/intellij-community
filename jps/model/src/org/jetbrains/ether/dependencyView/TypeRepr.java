@@ -21,15 +21,15 @@ class TypeRepr {
 
   public static abstract class AbstractType implements RW.Writable {
     public abstract void updateClassUsages(DependencyContext.S owner, UsageRepr.Cluster s);
-    public abstract String getDescr();
+    public abstract String getDescr(DependencyContext context);
   }
 
   public static class PrimitiveType extends AbstractType {
     public final DependencyContext.S type;
 
     @Override
-    public String getDescr() {
-      return type.getValue();
+    public String getDescr(final DependencyContext context) {
+      return context.getValue(type);
     }
 
     @Override
@@ -39,7 +39,7 @@ class TypeRepr {
 
     public void write(final BufferedWriter w) {
       RW.writeln(w, "primitive");
-      RW.writeln(w, type.getValue());
+      RW.writeln(w, type.toString());
     }
 
     PrimitiveType(final DependencyContext.S type) {
@@ -76,8 +76,8 @@ class TypeRepr {
     }
 
     @Override
-    public String getDescr() {
-      return "[" + elementType.getDescr();
+    public String getDescr(final DependencyContext context) {
+      return "[" + elementType.getDescr(context);
     }
 
     @Override
@@ -115,8 +115,8 @@ class TypeRepr {
     public final AbstractType[] typeArgs;
 
     @Override
-    public String getDescr() {
-      return "L" + className.getValue() + ";";
+    public String getDescr(final DependencyContext context) {
+      return "L" + context.getValue(className) + ";";
     }
 
     @Override
@@ -125,7 +125,7 @@ class TypeRepr {
     }
 
     ClassType (final DependencyContext context, final BufferedReader r) {
-      className = context.get(RW.readString(r));
+      className = new DependencyContext.S(r);
       final Collection<AbstractType> args = RW.readMany(r, reader (context), new LinkedList<AbstractType>());
       typeArgs = args.toArray(new AbstractType[args.size()]);
     }
@@ -133,11 +133,6 @@ class TypeRepr {
     ClassType(final DependencyContext.S className) {
       this.className = className;
       typeArgs = new AbstractType[0];
-    }
-
-    ClassType(final DependencyContext.S className, final AbstractType[] typeArgs) {
-      this.className = className;
-      this.typeArgs = typeArgs;
     }
 
     @Override
@@ -162,7 +157,7 @@ class TypeRepr {
 
     public void write(BufferedWriter w) {
       RW.writeln(w, "class");
-      RW.writeln(w, className.getValue());
+      RW.writeln(w, className.toString());
       RW.writeln(w, typeArgs);
     }
   }
@@ -190,26 +185,9 @@ class TypeRepr {
   public static ClassType createClassType(final DependencyContext context, final DependencyContext.S s) {
     return (ClassType)context.getType(new ClassType(s));
   }
-    
-  //private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
-
- // private static AbstractType getType(final AbstractType t) {
-  //  return t;
-    /*
-    final AbstractType r = map.get(t);
-
-    if (r != null) {
-      return r;
-    }
-
-    map.put(t, t);
-
-    return t;
-    */
-  //}
 
   public static AbstractType getType(final DependencyContext context, final DependencyContext.S descr) {
-    final Type t = Type.getType(descr.getValue());
+    final Type t = Type.getType(context.getValue(descr));
 
     switch (t.getSort()) {
       case Type.OBJECT:
@@ -237,20 +215,6 @@ class TypeRepr {
     return r;
   }
 
-  public static AbstractType[] getType(final DependencyContext context, final String[] t) {
-    if (t == null) {
-      return null;
-    }
-
-    final AbstractType[] types = new AbstractType[t.length];
-
-    for (int i = 0; i < types.length; i++) {
-      types[i] = getType(context, Type.getType(t[i]));
-    }
-
-    return types;
-  }
-
   public static RW.Reader<AbstractType> reader (final DependencyContext context) {
     return new RW.Reader<AbstractType>() {
       public AbstractType read(final BufferedReader r) {
@@ -261,7 +225,7 @@ class TypeRepr {
           final String tag = RW.readString(r);
 
           if (tag.equals("primitive")) {
-            elementType = context.getType(new PrimitiveType(context.get(RW.readString(r))));
+            elementType = context.getType(new PrimitiveType(new DependencyContext.S(r)));
             break;
           }
 
