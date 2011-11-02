@@ -26,6 +26,7 @@ import javax.swing.*;
 public class ConfirmationDialog extends OptionsMessageDialog{
 
   private final VcsShowConfirmationOption myOption;
+  private String myDoNotShowAgainMessage;
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
@@ -36,6 +37,8 @@ public class ConfirmationDialog extends OptionsMessageDialog{
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option);
     if (! option.isPersistent()) {
       dialog.setDoNotAskOption(null);
+    } else {
+      dialog.setDoNotShowAgainMessage(CommonBundle.message("dialog.options.do.not.ask"));
     }
     dialog.show();
     return dialog.isOK();
@@ -45,6 +48,16 @@ public class ConfirmationDialog extends OptionsMessageDialog{
     super(project, message, title, icon);
     myOption = option;
     init();    
+  }
+  
+  public void setDoNotShowAgainMessage(final String doNotShowAgainMessage) {
+    myDoNotShowAgainMessage = doNotShowAgainMessage;
+    myCheckBoxDoNotShowDialog.setText(doNotShowAgainMessage);
+  }
+
+  @Override
+  protected String getDoNotShowMessage() {
+    return myDoNotShowAgainMessage == null ? super.getDoNotShowMessage() : myDoNotShowAgainMessage;
   }
 
   protected String getOkActionName() {
