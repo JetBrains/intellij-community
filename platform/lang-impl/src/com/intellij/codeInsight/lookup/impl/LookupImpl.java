@@ -853,6 +853,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
+    if (!myEditor.getContentComponent().isShowing()) {
+      hide();
+      return false;
+    }
+
     myAdComponent.showRandomText();
 
     getComponent().setBorder(null);
