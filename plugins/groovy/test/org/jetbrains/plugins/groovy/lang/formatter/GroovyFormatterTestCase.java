@@ -84,7 +84,7 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     checkFormatting(expected);
   }
 
-  protected void checkFormatting(String expected) {
+  protected void doFormat(final PsiFile file) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
@@ -92,7 +92,6 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
           @Override
           public void run() {
             try {
-              final PsiFile file = myFixture.getFile();
               TextRange myTextRange = file.getTextRange();
               CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
             } catch (IncorrectOperationException e) {
@@ -102,6 +101,10 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
         });
       }
     }, null, null);
+  }
+
+  protected void checkFormatting(String expected) {
+    doFormat(myFixture.getFile());
     myFixture.checkResult(expected);
   }
 }
