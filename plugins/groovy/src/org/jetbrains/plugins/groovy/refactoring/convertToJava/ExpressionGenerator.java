@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +24,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -977,7 +979,7 @@ public class ExpressionGenerator extends Generator {
     }
   }
 
-  private String createVarByInitializer(GrExpression initializer) {
+  private String createVarByInitializer(@NotNull GrExpression initializer) {
     GrExpression inner = initializer;
     while (inner instanceof GrParenthesizedExpression) inner = ((GrParenthesizedExpression)inner).getOperand();
     if (inner != null) initializer = inner;
@@ -1094,12 +1096,19 @@ public class ExpressionGenerator extends Generator {
     final GrTypeElement typeElement = expression.getTypeElement();
     operand.accept(this);
     builder.append(" instanceof ");
-    typeElement.accept(this);
+
+    if (typeElement != null) {
+      typeElement.accept(this);
+    }
   }
 
   @Override
   public void visitBuiltinTypeClassExpression(GrBuiltinTypeClassExpression expression) {
-    final IElementType type = expression.getFirstChild().getNode().getElementType();
+    PsiElement firstChild = expression.getFirstChild();
+    LOG.assertTrue(firstChild != null);
+    ASTNode node = firstChild.getNode();
+    LOG.assertTrue(node != null);
+    final IElementType type = node.getElementType();
     final String boxed = TypesUtil.getBoxedTypeName(type);
     builder.append(boxed);
     if (expression.getParent() instanceof GrIndexProperty) {
@@ -1130,11 +1139,13 @@ public class ExpressionGenerator extends Generator {
         selectedExpression.accept(this);
         return;
       }
-      else if (selectedExpression instanceof GrReferenceExpression &&
-               ((GrReferenceExpression)selectedExpression).resolve() instanceof PsiClass) {
-        builder.append(((PsiClass)((GrReferenceExpression)selectedExpression).resolve()).getQualifiedName());
-        builder.append("[].class");
-        return;
+      else if (selectedExpression instanceof GrReferenceExpression) {
+        PsiElement resolved = ((GrReferenceExpression)selectedExpression).resolve();
+        if (resolved instanceof PsiClass) {
+          builder.append(((PsiClass)resolved).getQualifiedName());
+          builder.append("[].class");
+          return;
+        }
       }
     }
     final PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
