@@ -99,7 +99,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
       boolean isAccessible = isAccessible(method);
       GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-      boolean isStaticsOK = isStaticsOK(method, resolveContext);
+      boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
       if (!myAllVariants && isStaticsOK &&
           PsiUtil.isApplicable(myArgumentTypes, method, substitutor, (GroovyPsiElement)myPlace, myByShape)) {
         addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));

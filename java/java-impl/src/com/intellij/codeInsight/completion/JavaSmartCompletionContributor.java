@@ -449,7 +449,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (reference instanceof PsiJavaReference) {
       final PsiJavaReference javaReference = (PsiJavaReference)reference;
 
-      return   JavaCompletionUtil.processJavaReference(element, javaReference, new ElementFilter() {
+      return JavaCompletionUtil.processJavaReference(element, javaReference, new ElementFilter() {
         public boolean isAcceptable(Object element, PsiElement context) {
           return filter.isAcceptable(element, context);
         }
@@ -463,7 +463,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                  ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
                  ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
         }
-      }, true, null, parameters);
+      }, true, parameters.getInvocationCount() <= 1, null, parameters);
     }
 
     return Collections.emptySet();

@@ -30,7 +30,6 @@ import java.util.List;
 public class XmlTextTokenizer extends Tokenizer<XmlText> {
   @Override
   public void tokenize(@NotNull XmlText element, TokenConsumer consumer) {
-    if(element.getContainingFile().getContext() != null) return; // outer element should care of spell checking
     List<Pair<PsiElement,TextRange>> list = InjectedLanguageUtil.getInjectedPsiFiles(element);
     if (list != null && list.size() > 0) return;
     final PsiElement[] children = element.getChildren();

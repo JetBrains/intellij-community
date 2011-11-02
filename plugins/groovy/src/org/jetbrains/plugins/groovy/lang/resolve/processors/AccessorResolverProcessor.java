@@ -72,7 +72,7 @@ public class AccessorResolverProcessor extends ResolverProcessor {
     }
     boolean isAccessible = isAccessible(method);
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-    boolean isStaticsOK = isStaticsOK(method, resolveContext);
+    boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
     addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, true));
     return !isAccessible || !isStaticsOK;
   }

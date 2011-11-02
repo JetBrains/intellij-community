@@ -18,9 +18,15 @@ package com.intellij.ide.diff;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -28,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +45,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -213,6 +221,32 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public void refresh(boolean userInitiated) {
+    if (userInitiated) {
+      final List<Document> docsToSave = new ArrayList<Document>();
+      final FileDocumentManager manager = FileDocumentManager.getInstance();
+      for (Document document : manager.getUnsavedDocuments()) {
+        if (VfsUtil.isAncestor(myFile, manager.getFile(document), false)) {
+          docsToSave.add(document);
+        }
+      }
+
+      if (!docsToSave.isEmpty()) {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            AccessToken token = WriteAction.start();
+            try {
+              for (Document document : docsToSave) {
+                manager.saveDocument(document);
+              }
+            }
+            finally {
+              token.finish();
+            }
+          }
+        }, ModalityState.defaultModalityState());
+      }
+    }
     myFile.refresh(false, true);
   }
 }

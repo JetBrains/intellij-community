@@ -53,7 +53,6 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
     PsiClass psiClass = (PsiClass)item.getObject();
 
-    boolean withTail = item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous;
     boolean isAbstract = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar()) {
@@ -74,13 +73,13 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
     }
 
-    insertParentheses(context, delegate, psiClass, withTail && isAbstract);
+    insertParentheses(context, delegate, psiClass, !inAnonymous && isAbstract);
 
     if (item.getDelegate() instanceof JavaPsiClassReferenceElement) {
       DefaultInsertHandler.addImportForItem(context, delegate);
     }
 
-    if (!withTail) {
+    if (inAnonymous) {
       return;
     }
 

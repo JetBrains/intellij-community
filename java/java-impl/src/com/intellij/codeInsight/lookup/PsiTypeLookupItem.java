@@ -37,11 +37,22 @@ import org.jetbrains.annotations.Nullable;
 public class PsiTypeLookupItem extends LookupItem {
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
   private final boolean myDiamond;
+  private final int myBracketsCount;
   private boolean myIndicateAnonymous;
 
-  private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond) {
+  private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond, int bracketsCount) {
     super(o, lookupString);
     myDiamond = diamond;
+    myBracketsCount = bracketsCount;
+  }
+
+  public PsiType getPsiType() {
+    Object object = getObject();
+    PsiType type = object instanceof PsiType ? (PsiType)object : JavaPsiFacade.getElementFactory(((PsiClass) object).getProject()).createType((PsiClass)object);
+    for (int i = 0; i < getBracketsCount(); i++) {
+      type = new PsiArrayType(type);
+    }
+    return type;
   }
 
 
@@ -119,8 +130,7 @@ public class PsiTypeLookupItem extends LookupItem {
   }
 
   public int getBracketsCount() {
-    final Integer integer = (Integer)getUserData(BRACKETS_COUNT_ATTR);
-    return integer == null ? 0 : integer;
+    return myBracketsCount;
   }
 
   public static PsiTypeLookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context) {
@@ -131,18 +141,17 @@ public class PsiTypeLookupItem extends LookupItem {
       dim++;
     }
 
-    PsiTypeLookupItem item = doCreateItem(type, context);
+    PsiTypeLookupItem item = doCreateItem(type, context, dim);
 
     if (dim > 0) {
       item.setAttribute(TAIL_TEXT_ATTR, " " + StringUtil.repeat("[]", dim));
       item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
-      item.putUserData(BRACKETS_COUNT_ATTR, dim);
     }
     item.setAttribute(TYPE, original);
     return item;
   }
 
-  private static PsiTypeLookupItem doCreateItem(final PsiType type, PsiElement context) {
+  private static PsiTypeLookupItem doCreateItem(final PsiType type, PsiElement context, int bracketsCount) {
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
@@ -169,13 +178,13 @@ public class PsiTypeLookupItem extends LookupItem {
           }
         }
 
-        PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond);
+        PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond, bracketsCount);
         item.setAttribute(SUBSTITUTOR, substitutor);
         return item;
       }
 
     }
-    return new PsiTypeLookupItem(type, type.getPresentableText(), false);
+    return new PsiTypeLookupItem(type, type.getPresentableText(), false, bracketsCount);
   }
 
   @NotNull

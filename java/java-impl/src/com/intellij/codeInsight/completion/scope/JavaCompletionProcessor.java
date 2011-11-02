@@ -18,6 +18,8 @@ package com.intellij.codeInsight.completion.scope;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInspection.SuppressManager;
+import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,7 +54,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final List<CompletionElement> myResults;
   private final PsiElement myElement;
   private final PsiElement myScope;
-  private CodeInsightSettings mySettings = null;
   private final ElementFilter myFilter;
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
@@ -60,10 +61,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final Condition<String> myMatcher;
   private final boolean myCheckAccess;
   private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
+  private boolean myAllowStaticWithInstanceQualifier;
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, boolean checkInitialized, @Nullable Condition<String> nameCondition) {
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, boolean checkInitialized, boolean filterStaticAfterInstance, @Nullable Condition<String> nameCondition) {
     myCheckAccess = checkAccess;
-    mySettings = CodeInsightSettings.getInstance();
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
     myMatcher = nameCondition;
@@ -108,6 +109,11 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (checkInitialized) {
       myNonInitializedFields.addAll(getNonInitializedFields(element));
     }
+
+    myAllowStaticWithInstanceQualifier = !filterStaticAfterInstance || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
+                                         SuppressManager.getInstance()
+                                           .isSuppressedFor(element, AccessStaticViaInstance.ACCESS_STATIC_VIA_INSTANCE);
+
   }
 
   private static boolean isInitializedImplicitly(PsiField field) {
@@ -202,7 +208,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
         }
       }
       else {
-        if (!mySettings.SHOW_STATIC_AFTER_INSTANCE
+        if (!myAllowStaticWithInstanceQualifier
             && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
             && !myMembersFlag) {
           // according settings we don't need to process such fields/methods

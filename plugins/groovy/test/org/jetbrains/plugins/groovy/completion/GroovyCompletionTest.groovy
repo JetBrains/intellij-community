@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
+import com.intellij.codeInsight.completion.CompletionType
 
 /**
  * @author Maxim.Medvedev
@@ -1070,6 +1071,19 @@ class X {
   public void testFieldInitializerMatters() throws Exception {
     myFixture.configureByText("a.groovy", "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
     myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["foo"]
+  }
+
+  public void testAccessStaticViaInstanceSecond() throws Exception {
+    myFixture.configureByText("a.groovy", """
+public class KeyVO {
+  { this.fo<caret>x }
+  static void foo() {}
+}
+""");
+    myFixture.complete(CompletionType.BASIC, 1)
+    assert !myFixture.lookupElementStrings
+    myFixture.complete(CompletionType.BASIC, 2)
     assert myFixture.lookupElementStrings == ["foo"]
   }
 

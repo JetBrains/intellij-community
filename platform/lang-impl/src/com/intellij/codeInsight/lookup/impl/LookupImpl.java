@@ -853,6 +853,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
+    if (!myEditor.getContentComponent().isShowing()) {
+      hide();
+      return false;
+    }
+
     myAdComponent.showRandomText();
 
     getComponent().setBorder(null);
@@ -1262,7 +1267,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     Disposer.dispose(myHintAlarm);
 
     myDisposed = true;
-    disposeTrace = DebugUtil.currentStackTrace();
+    disposeTrace = DebugUtil.currentStackTrace() + "\n============";
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     staticDisposeTrace = disposeTrace;
   }

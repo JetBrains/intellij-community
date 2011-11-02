@@ -16,14 +16,17 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ComponentTypeOfMacro extends Macro {
   public String getName() {
@@ -39,12 +42,14 @@ public class ComponentTypeOfMacro extends Macro {
     LookupElement[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
 
+    List<LookupElement> result = CollectionFactory.arrayList();
     for (LookupElement element : lookupItems) {
-      if (element instanceof LookupItem) {
-        final LookupItem item = (LookupItem)element;
-        Integer bracketsCount = (Integer)item.getUserData(LookupItem.BRACKETS_COUNT_ATTR);
-        if (bracketsCount == null) return null;
-        item.putUserData(LookupItem.BRACKETS_COUNT_ATTR, new Integer(bracketsCount.intValue() - 1));
+      PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
+      if (lookupItem != null) {
+        PsiType psiType = lookupItem.getPsiType();
+        if (psiType instanceof PsiArrayType) {
+          result.add(PsiTypeLookupItem.createLookupItem(((PsiArrayType)psiType).getComponentType(), null));
+        }
       }
     }
 
@@ -65,15 +70,22 @@ public class ComponentTypeOfMacro extends Macro {
     }
 
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
-    PsiType type;
-    if (expr == null) {
-      type = MacroUtil.resultToPsiType(result, context);
-    }
-    else{
-      type = expr.getType();
-    }
+    PsiType type = expr == null ? MacroUtil.resultToPsiType(result, context) : expr.getType();
     if (type instanceof PsiArrayType) {
       return new PsiTypeResult(((PsiArrayType) type).getComponentType(), context.getProject());
+    }
+
+    LookupElement[] elements = params[0].calculateLookupItems(context);
+    if (elements != null) {
+      for (LookupElement element : elements) {
+        PsiTypeLookupItem typeLookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
+        if (typeLookupItem != null) {
+          PsiType psiType = typeLookupItem.getPsiType();
+          if (psiType instanceof PsiArrayType) {
+            return new PsiTypeResult(((PsiArrayType)psiType).getComponentType(), context.getProject());
+          }
+        }
+      }
     }
 
     return new PsiElementResult(null);
