@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
@@ -52,16 +53,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class SurroundWithHandler implements CodeInsightActionHandler{
+public class SurroundWithHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
   private static final String CHOOSER_TITLE = CodeInsightBundle.message("surround.with.chooser.title");
 
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file){
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     invoke(project, editor, file, null);
   }
 
@@ -69,7 +67,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     return true;
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder){
+  public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder) {
     List<AnAction> applicable = buildSurroundActions(project, editor, file, surrounder);
     if (applicable != null) {
       showPopup(editor, applicable);
@@ -115,28 +113,27 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
       return null;
     }
 
+    Map<Surrounder, PsiElement[]> surrounders = Maps.newLinkedHashMap();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
       if (elements.length > 0) {
         for (PsiElement element : elements) {
           assert element.isValid() : descriptor;
         }
-        List<AnAction> applicable = buildSurroundActions(project, editor, file, descriptor.getSurrounders(), elements);
-        if (applicable != null) {
-          return applicable;
+        for (Surrounder s: descriptor.getSurrounders()) {
+          surrounders.put(s, elements);
         }
       }
     }
-
-    return buildSurroundActions(project, editor, file, new Surrounder[0], new PsiElement[0]);
+    return doBuildSurroundActions(project, editor, file, surrounders);
   }
 
   private static void invokeSurrounderInTests(Project project,
-                                                 Editor editor,
-                                                 PsiFile file,
-                                                 Surrounder surrounder,
-                                                 int startOffset,
-                                                 int endOffset, List<SurroundDescriptor> surroundDescriptors) {
+                                              Editor editor,
+                                              PsiFile file,
+                                              Surrounder surrounder,
+                                              int startOffset,
+                                              int endOffset, List<SurroundDescriptor> surroundDescriptors) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
@@ -155,7 +152,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
 
@@ -183,18 +180,19 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
   }
 
   @Nullable
-  private static List<AnAction> buildSurroundActions(Project project,
-                                                        Editor editor,
-                                                        PsiFile file,
-                                                        Surrounder[] surrounders,
-                                                        PsiElement[] elements) {
+  private static List<AnAction> doBuildSurroundActions(Project project,
+                                                     Editor editor,
+                                                     PsiFile file,
+                                                     Map<Surrounder, PsiElement[]> surrounders) {
     final List<AnAction> applicable = new ArrayList<AnAction>();
     boolean hasEnabledSurrounders = false;
 
     Set<Character> usedMnemonicsSet = new HashSet<Character>();
 
     int index = 0;
-    for (Surrounder surrounder : surrounders) {
+    for (Map.Entry<Surrounder, PsiElement[]> entry : surrounders.entrySet()) {
+      Surrounder surrounder = entry.getKey();
+      PsiElement[] elements = entry.getValue();
       if (surrounder.isApplicable(elements)) {
         char mnemonic;
         if (index < 9) {
