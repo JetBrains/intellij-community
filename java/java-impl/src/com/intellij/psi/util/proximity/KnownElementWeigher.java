@@ -18,13 +18,11 @@ package com.intellij.psi.util.proximity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -44,36 +42,50 @@ public class KnownElementWeigher extends ProximityWeigher {
     }
 
     if (element instanceof PsiClass) {
-      @NonNls final String qname = ((PsiClass)element).getQualifiedName();
-      if (qname != null) {
-        String pkg = StringUtil.getPackageName(qname);
-        if (pkg.equals("java.lang")) return 7;
-        if (pkg.equals("java.util")) return 6;
-
-        if (qname.startsWith("java.lang")) return 5;
-        if (qname.startsWith("java.util")) return 4;
-
-        if (pkg.equals("javax.swing")) return 3;
-        if (qname.startsWith("java.")) return 2;
-        if (qname.startsWith("javax.")) return 1;
-        if (qname.startsWith("com.")) return -1;
-        if (qname.startsWith("net.")) return -1;
-      }
+      return getJdkClassProximity((PsiClass)element);
     }
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      if ("finalize".equals(method.getName()) || "registerNatives".equals(method.getName())) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
-          return -1;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        if ("finalize".equals(method.getName()) || "registerNatives".equals(method.getName())) {
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+            return -1;
+          }
         }
-      }
-      if ("subSequence".equals(method.getName())) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
-          return -1;
+        if ("subSequence".equals(method.getName())) {
+          if (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
+            return -1;
+          }
         }
+        return getJdkClassProximity(method.getContainingClass());
       }
+    }
+    if (element instanceof PsiField) {
+      return getJdkClassProximity(((PsiField)element).getContainingClass());
+    }
+    return 0;
+  }
+
+  private static Comparable getJdkClassProximity(@Nullable PsiClass element) {
+    if (element == null) {
+      return 0;
+    }
+
+    @NonNls final String qname = element.getQualifiedName();
+    if (qname != null) {
+      String pkg = StringUtil.getPackageName(qname);
+      if (pkg.equals("java.lang")) return 7;
+      if (pkg.equals("java.util")) return 6;
+
+      if (qname.startsWith("java.lang")) return 5;
+      if (qname.startsWith("java.util")) return 4;
+
+      if (pkg.equals("javax.swing")) return 3;
+      if (qname.startsWith("java.")) return 2;
+      if (qname.startsWith("javax.")) return 1;
+      if (qname.startsWith("com.")) return -1;
+      if (qname.startsWith("net.")) return -1;
     }
     return 0;
   }
