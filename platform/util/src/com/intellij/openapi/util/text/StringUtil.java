@@ -955,8 +955,17 @@ public class StringUtil {
   }
 
   @Nullable
-  public static String nullize(@Nullable final String s) {
-    if (isEmpty(s)) return null;
+  public static String nullize(final @Nullable String s) {
+    return nullize(s, false);
+  }
+
+  @Nullable
+  public static String nullize(final @Nullable String s, boolean nullizeSpaces) {
+    if (nullizeSpaces) {
+      if (isEmpty(s)) return null;
+    } else {
+      if (isEmptyOrSpaces(s)) return null;
+    }
     return s;
   }
 
