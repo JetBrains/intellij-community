@@ -854,17 +854,20 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     else {
       // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough; don't care.
-      method.getStatementList().accept(new PyRecursiveElementVisitor() {
-        public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-          super.visitPyAssignmentStatement(node);
-          final PyExpression[] targets = node.getTargets();
-          for (PyExpression target : targets) {
-            if (PyUtil.isInstanceAttribute(target) && !result.containsKey(target.getName())) {
-              result.put(target.getName(), (PyTargetExpression) target);
+      final PyStatementList statementList = method.getStatementList();
+      if (statementList != null) {
+        statementList.accept(new PyRecursiveElementVisitor() {
+          public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+            super.visitPyAssignmentStatement(node);
+            final PyExpression[] targets = node.getTargets();
+            for (PyExpression target : targets) {
+              if (PyUtil.isInstanceAttribute(target) && !result.containsKey(target.getName())) {
+                result.put(target.getName(), (PyTargetExpression) target);
+              }
             }
           }
-        }
-      });
+        });
+      }
     }
   }
 
