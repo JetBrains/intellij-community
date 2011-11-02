@@ -402,7 +402,8 @@ public class BigTableTableModel extends AbstractTableModel {
 
             @Override
             public int[] getFutureWireStarts() {
-              return arraysConvertor.convert(next.getFutureWireStarts());
+              // these are wire numbers
+              return next.getFutureWireStarts();
             }
 
             @Override
