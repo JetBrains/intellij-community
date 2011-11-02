@@ -41,11 +41,13 @@ public class PyCopyPasteTest extends PyTestCase {
   }
 
   private void doTest() {
+    String name = getTestName(false);
+
     if (!SystemInfo.isWindows) {
-      System.out.println("System is not windows. Skipping.");
+      System.out.println("PyCopyPasteTest." + name + ": system is not windows. Skipping.");
       return;
     }
-    String name = getTestName(false);
+
     myFixture.configureByFile("copyPaste/" + name + ".src.py");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
     myFixture.configureByFile("copyPaste/" + name + ".dst.py");

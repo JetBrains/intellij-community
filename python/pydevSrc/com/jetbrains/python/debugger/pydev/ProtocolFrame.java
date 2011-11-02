@@ -49,9 +49,8 @@ public class ProtocolFrame {
     sb.append('\t');
     sb.append(Integer.toString(mySequence));
     sb.append('\t');
-    if (myPayload != null) {
-      sb.append(myPayload);
-    }
+    sb.append(myPayload);
+    sb.append('\n');
     return sb.toString().getBytes("UTF-8");
   }
 
@@ -62,10 +61,8 @@ public class ProtocolFrame {
     sb.append(Integer.toString(myCommand));
     sb.append(':');
     sb.append(Integer.toString(mySequence));
-    if (myPayload != null) {
-      sb.append(':');
-      sb.append(myPayload);
-    }
+    sb.append(':');
+    sb.append(myPayload);
     sb.append(']');
     return sb.toString();
   }

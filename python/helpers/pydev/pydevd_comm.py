@@ -268,6 +268,8 @@ class ReaderThread(PyDBDaemonThread):
                     break
                 while buffer.find('\n') != -1:
                     command, buffer = buffer.split('\n', 1)
+                    if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
+                        sys.stdout.write('command >>%s<<\n' % (command,))
                     PydevdLog(1, "received command ", command)
                     args = command.split('\t', 2)
                     try:
