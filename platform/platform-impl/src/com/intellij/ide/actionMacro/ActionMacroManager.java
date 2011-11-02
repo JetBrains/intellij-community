@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -91,7 +92,11 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           //noinspection HardCodedStringLiteral
           if (id != null && !"StartStopMacroRecording".equals(id)) {
             myRecordingMacro.appendAction(id);
-            notifyUser("action " + id, false);
+            String shortcut = null;
+            if (event.getInputEvent() instanceof KeyEvent) {
+              shortcut = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event.getInputEvent()));
+            }
+            notifyUser(id + (shortcut != null ? " (" + shortcut + ")" : ""), false);
           }
 
           if (id != null) {
@@ -561,9 +566,9 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           String modifiers = stroke.substring(0, pressed);
 
           String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
-          
+
           myRecordingMacro.appendShortcut(ready);
-          notifyUser(ready, false);
+          notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false);
           if (!isEnter) {
             myLastActionInputEvent.remove(e);
           }
