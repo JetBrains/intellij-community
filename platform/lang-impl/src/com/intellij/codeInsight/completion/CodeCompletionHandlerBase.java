@@ -303,16 +303,20 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       final LookupElement[] allItems = data.get();
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
-        if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
-          LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        }
+        checkNotSync(indicator, allItems);
         return;
       }
     }
 
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
     indicator.showLookup();
+  }
+
+  private void checkNotSync(CompletionProgressIndicator indicator, LookupElement[] allItems) {
+    if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
+      LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    }
   }
 
   private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
@@ -447,6 +451,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
       indicator.handleEmptyLookup(true);
+      checkNotSync(indicator, items);
       return;
     }
 
@@ -479,8 +484,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           !ApplicationManager.getApplication().isUnitTestMode()) {
         CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
       }
+      checkNotSync(indicator, items);
     } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
+      checkNotSync(indicator, items);
     }
   }
 
