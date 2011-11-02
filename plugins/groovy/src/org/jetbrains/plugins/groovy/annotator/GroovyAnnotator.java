@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -1239,6 +1240,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     for (MethodSignature signature : map.keySet()) {
       Collection<PsiMethod> methods = map.get(signature);
       if (methods.size() > 1) {
+        for (Iterator<PsiMethod> iterator = methods.iterator(); iterator.hasNext(); ) {
+          PsiMethod method = iterator.next();
+          if (method instanceof LightElement) iterator.remove();
+        }
+
+        if (methods.size() < 2) continue;
         String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
         for (PsiMethod method : methods) {
           //noinspection ConstantConditions
