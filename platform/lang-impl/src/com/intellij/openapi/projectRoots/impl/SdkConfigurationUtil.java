@@ -306,7 +306,7 @@ public class SdkConfigurationUtil {
     }
     if (suggestedSdkHomes.size() > 0) {
       suggestedSdkHomes.put(null, sdkTypes[0]);
-      showSuggestedHomesPopup(project, existingSdks, suggestedSdkHomes, popupOwner, callback);
+      showSuggestedHomesPopup(project, existingSdks, suggestedSdkHomes, sdkTypes, popupOwner, callback);
     }
     else {
       createSdk(project, existingSdks, callback, sdkTypes);
@@ -316,6 +316,7 @@ public class SdkConfigurationUtil {
   private static void showSuggestedHomesPopup(final Project project,
                                               final Sdk[] existingSdks,
                                               final Map<String, SdkType> suggestedSdkHomes,
+                                              final SdkType[] sdkTypes,
                                               final JComponent popupOwner,
                                               final Consumer<Sdk> callback) {
     final List<String> list = new ArrayList<String>(suggestedSdkHomes.keySet());
@@ -333,8 +334,7 @@ public class SdkConfigurationUtil {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              final Collection<SdkType> sdkTypes = suggestedSdkHomes.values();
-              createSdk(project, existingSdks, callback, sdkTypes.toArray(new SdkType[sdkTypes.size()]));
+              createSdk(project, existingSdks, callback, sdkTypes);
             }
           }, ModalityState.current());
         }
