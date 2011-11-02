@@ -48,10 +48,16 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     String prefix = getPrefix(editor.getDocument(), offset);
 
     List<TemplateImpl> matchingTemplates = new ArrayList<TemplateImpl>();
-    for (TemplateImpl template : SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false)) {
+    ArrayList<TemplateImpl> applicableTemplates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false);
+    for (TemplateImpl template : applicableTemplates) {
       if (template.getKey().startsWith(prefix)) {
         matchingTemplates.add(template);
       }
+    }
+
+    if (matchingTemplates.isEmpty()) {
+      matchingTemplates.addAll(applicableTemplates);
+      prefix = "";
     }
 
     if (matchingTemplates.size() == 0) {
