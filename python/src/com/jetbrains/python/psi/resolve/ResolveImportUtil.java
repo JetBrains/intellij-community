@@ -113,7 +113,7 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
+  private static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     if (qName == null) return Collections.emptyList();
 
     // TODO: search for entire names, not for first component only!
@@ -194,7 +194,7 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+  private static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
     return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());

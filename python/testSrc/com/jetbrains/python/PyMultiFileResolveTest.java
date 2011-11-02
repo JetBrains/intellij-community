@@ -323,6 +323,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertEquals("foo", ((PsiNamedElement)field).getName());
   }
 
+  public void testCythonImportFromPython() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
