@@ -337,18 +337,12 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Override
   public boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo) {
     if (currentInfo instanceof JavaChangeInfo) {
-      final PsiMethod method = (PsiMethod)currentInfo.getMethod();
-      return getSignatureRange(method).contains(element.getTextRange());
+      return isInsideMethodSignature(element, (PsiMethod)currentInfo.getMethod());
     } else if (currentInfo instanceof RenameChangeInfo) {
       final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNameIdentifier();
       return nameIdentifier != null && nameIdentifier.getTextRange().contains(element.getTextRange());
     }
     return false;
-  }
-
-  private static TextRange getSignatureRange(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    return new TextRange(method.getModifierList().getTextRange().getStartOffset(), body == null ? method.getTextRange().getEndOffset() : body.getTextRange().getStartOffset() - 1);
   }
 
   @Override
@@ -406,9 +400,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     final PsiCodeBlock body = method.getBody();
     final TextRange textRange = element.getTextRange();
     if (body != null) {
-      return textRange.getEndOffset() < body.getTextOffset() && textRange.getStartOffset() > method.getModifierList().getTextRange().getEndOffset();
+      return textRange.getEndOffset() <= body.getTextOffset() && textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset();
     }
-    return textRange.getStartOffset() > method.getModifierList().getTextRange().getEndOffset() &&
-           textRange.getEndOffset() < method.getTextRange().getEndOffset();
+    return textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset() &&
+           textRange.getEndOffset() <= method.getTextRange().getEndOffset();
   }
 }
