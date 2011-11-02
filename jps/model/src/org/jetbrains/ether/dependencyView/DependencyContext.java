@@ -1,11 +1,13 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.ether.RW;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +19,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 class DependencyContext {
-  private final static String stringTableName = "strings.tab"; 
+  private final static String stringTableName = "strings.tab";
   private final PersistentStringEnumerator enumerator;
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> typeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
 
@@ -35,7 +37,7 @@ class DependencyContext {
 
   DependencyContext(final File rootDir) {
     final File file = new File(FileUtil.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + stringTableName));
-    
+
     try {
       FileUtil.createIfDoesntExist(file);
 
@@ -46,31 +48,15 @@ class DependencyContext {
     }
   }
 
-  public class S implements Comparable<S>, RW.Writable, KeyDescriptor<S> {
+  public static class S implements Comparable<S>, RW.Writable {
     public final int index;
-
-    @Override
-    public void save(final DataOutput out, final S value) throws IOException {
-      out.writeUTF(value.getValue());
-    }
-
-    @Override
-    public S read(final DataInput in) throws IOException {
-      return get(in.readUTF());
-    }
-
-    @Override
-    public int getHashCode(final S value) {
-      return value.hashCode();
-    }
-
-    @Override
-    public boolean isEqual(final S val1, final S val2) {
-      return val1.equals(val2);
-    }
 
     private S(final int i) {
       index = i;
+    }
+    
+    public S(final BufferedReader r) {
+      index = RW.readInt(r);
     }
 
     @Override
@@ -95,33 +81,32 @@ class DependencyContext {
     }
 
     public void write(BufferedWriter w) {
-      RW.writeln(w, getValue());
+      RW.writeln(w, Integer.toString(index));
     }
 
-    public final RW.Reader<S> reader = new RW.Reader<S>() {
+    public static final RW.Reader<S> reader = new RW.Reader<S>() {
       public S read(final BufferedReader r) {
-        final String s = RW.readString(r);
-        return get(s);
+        return new S(RW.readInt(r));
       }
     };
 
+    @Override
     public String toString() {
-      return getValue();
+      return Integer.toString(index);
     }
+  }
 
-    public String getValue() {
-      try {
-        return enumerator.valueOf(index);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
+  public String getValue(final S s) {
+    try {
+      return enumerator.valueOf(s.index);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
   public S get(final String s) {
-   try {
+    try {
       final int i = enumerator.enumerate(s);
 
       return new S(i);
@@ -134,13 +119,16 @@ class DependencyContext {
 
   public RW.Reader<S> reader = new RW.Reader<S>() {
     public S read(final BufferedReader r) {
-      try {
-        return get(r.readLine());
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-        return null;
-      }
+      return new S(RW.readInt(r));
     }
   };
+
+  public void close() {
+    try {
+      enumerator.close();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
