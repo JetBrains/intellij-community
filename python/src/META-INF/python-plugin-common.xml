@@ -381,6 +381,7 @@
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
     <annotator language="Cython" implementationClass="com.jetbrains.cython.CythonBuiltinAnnotator"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.cython.CythonKeywordCompletionContributor"/>
 
     <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
     <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
