@@ -177,6 +177,11 @@ public final class GitRepository implements Disposable {
     return myRootDir;
   }
 
+  @NotNull
+  public String getPresentableUrl() {
+    return getRoot().getPresentableUrl();
+  }
+
   public Project getProject() {
     return myProject;
   }
