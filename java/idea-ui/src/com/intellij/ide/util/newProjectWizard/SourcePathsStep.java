@@ -28,12 +28,14 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -51,6 +53,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -241,7 +244,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     }
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     if (!super.validate()) {
       return false;
     }
@@ -270,7 +273,12 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
                                    CommonBundle.getErrorTitle());
           return false;
         }
-        srcDir.mkdirs();
+        try {
+          VfsUtil.createDirectories(srcDir.getPath());
+        }
+        catch (IOException e) {
+          throw new ConfigurationException(e.getMessage());
+        }
       }
     }
     return true;

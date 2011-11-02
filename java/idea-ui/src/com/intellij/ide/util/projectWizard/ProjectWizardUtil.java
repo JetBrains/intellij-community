@@ -19,9 +19,11 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author cdr
@@ -50,8 +52,10 @@ public class ProjectWizardUtil {
           return false;
         }
       }
-      final boolean ok = dir.mkdirs();
-      if (!ok) {
+      try {
+        VfsUtil.createDirectories(dir.getPath());
+      }
+      catch (IOException e) {
         Messages.showErrorDialog(IdeBundle.message("error.failed.to.create.directory", dir.getPath()), CommonBundle.getErrorTitle());
         return false;
       }

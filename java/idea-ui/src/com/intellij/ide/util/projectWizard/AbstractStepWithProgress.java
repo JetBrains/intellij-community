@@ -18,6 +18,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -152,7 +153,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     myPanel.revalidate();
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     if (isProgressRunning()) {
       final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
                                              IdeBundle.message("title.question"), IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching"), Messages.getWarningIcon());

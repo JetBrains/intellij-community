@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public interface SourcePathsBuilder {
 
   void setContentEntryPath(String moduleRootPath);
 
-  List<Pair<String,String>> getSourcePaths();
+  List<Pair<String,String>> getSourcePaths() throws ConfigurationException;
 
   void setSourcePaths(List<Pair<String,String>> sourcePaths);
 

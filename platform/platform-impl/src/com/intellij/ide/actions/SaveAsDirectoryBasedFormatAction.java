@@ -28,9 +28,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author spleaner
@@ -50,7 +52,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
           assert baseDir != null;
 
           File ideaDir = new File(baseDir.getPath(), ProjectEx.DIRECTORY_STORE_FOLDER + File.separatorChar);
-          final boolean ok = (ideaDir.exists() && ideaDir.isDirectory()) || ideaDir.mkdirs();
+          final boolean ok = (ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir);
           if (ok) {
             LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
 
@@ -70,6 +72,16 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
           }
         }
       }
+    }
+  }
+
+  private boolean createDir(File ideaDir) {
+    try {
+      VfsUtil.createDirectories(ideaDir.getPath());
+      return true;
+    }
+    catch (IOException e) {
+      return false;
     }
   }
 

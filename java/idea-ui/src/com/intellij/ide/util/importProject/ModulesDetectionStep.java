@@ -16,10 +16,11 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
-import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
-import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -107,7 +108,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   @Override
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     final boolean validated = super.validate();
     if (!validated) {
       return false;
