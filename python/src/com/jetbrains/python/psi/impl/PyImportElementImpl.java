@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -44,9 +43,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   @Nullable
   public PyReferenceExpression getImportReference() {
-    final ASTNode importRefNode = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
-    if (importRefNode == null) return null;
-    return (PyReferenceExpression)importRefNode.getPsi();
+    return findChildByClass(PyReferenceExpression.class);
   }
 
   public PyQualifiedName getImportedQName() {
