@@ -45,6 +45,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   private final TextComponentSelectionModel mySelectionModel;
   private final TextComponentScrollingModel myScrollingModel;
   private final TextComponentSoftWrapModel mySoftWrapModel;
+  private final TextComponentFoldingModel myFoldingModel;
   private EditorSettings mySettings;
 
   public TextComponentEditor(final Project project, final JTextComponent textComponent) {
@@ -60,6 +61,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     mySelectionModel = new TextComponentSelectionModel(textComponent, this);
     myScrollingModel = new TextComponentScrollingModel(textComponent);
     mySoftWrapModel = new TextComponentSoftWrapModel();
+    myFoldingModel = new TextComponentFoldingModel();
   }
 
   @Override
@@ -109,7 +111,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   @Override
   @NotNull
   public FoldingModel getFoldingModel() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myFoldingModel;
   }
 
   @Override
