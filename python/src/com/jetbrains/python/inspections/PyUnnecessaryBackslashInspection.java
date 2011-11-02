@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
@@ -88,6 +89,9 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     private void findProblem(@Nullable final PsiElement expression) {
+      if (MakoLanguage._isDisabledFor(expression)) {
+        return;
+      }
       PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
       if (children != null) {
         for (PsiWhiteSpace ws : children) {
