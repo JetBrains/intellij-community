@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -37,6 +38,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -47,7 +49,6 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -57,7 +58,7 @@ import java.util.List;
 public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private CompoundReferenceRenderer myRenderer;
   private CompoundReferenceRenderer myOriginalRenderer;
-  private final Project myProject;
+  private Project myProject;
   private TextFieldWithBrowseButton myClassNameField;
   private JRadioButton myRbDefaultLabel;
   private JRadioButton myRbExpressionLabel;
@@ -81,7 +82,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
 
-  public CompoundRendererConfigurable(Project project) {
+  public CompoundRendererConfigurable(@Nullable Project project) {
     myProject = project;
   }
 
@@ -101,6 +102,9 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   public JComponent createComponent() {
+    if (myProject == null) {
+      myProject = JavaDebuggerSupport.getCurrentProject();
+    }
     final JPanel panel = new JPanel(new GridBagLayout());
     myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -373,6 +377,11 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     myChildrenEditor.dispose();
     myChildrenExpandedEditor.dispose();
     myListChildrenEditor.dispose();
+    myLabelEditor = null;
+    myChildrenEditor = null;
+    myChildrenExpandedEditor = null;
+    myListChildrenEditor = null;
+    myProject = null;
   }
 
   private MyTableModel getTableModel() {
@@ -380,19 +389,14 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   private final class MyTableModel extends AbstractTableModel {
-    private final java.util.List<Row> myData = new ArrayList<Row>();
-
-    public MyTableModel(java.util.List<Pair<String, TextWithImports>> data) {
-      init(data);
-    }
+    private final List<Row> myData = new ArrayList<Row>();
 
     public MyTableModel() {
     }
 
-    public void init(java.util.List<Pair<String, TextWithImports>> data) {
+    public void init(List<Pair<String, TextWithImports>> data) {
       myData.clear();
-      for (Iterator<Pair<String, TextWithImports>> it = data.iterator(); it.hasNext();) {
-        final Pair<String, TextWithImports> pair = it.next();
+      for (final Pair<String, TextWithImports> pair : data) {
         myData.add(new Row(pair.getFirst(), pair.getSecond()));
       }
     }
@@ -465,14 +469,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
     }
 
-    public String getNameAt(int row) {
-      return (row >= 0 && row < myData.size())? myData.get(row).name : null;
-    }
-
-    public TextWithImports getExpressionAt(int row) {
-      return (row >= 0 && row < myData.size())? myData.get(row).value : null;
-    }
-
     public void clear() {
       myData.clear();
       fireTableDataChanged();
@@ -480,8 +476,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     public List<Pair<String, TextWithImports>> getExpressions() {
       final ArrayList<Pair<String, TextWithImports>> pairs = new ArrayList<Pair<String, TextWithImports>>(myData.size());
-      for (Iterator<Row> it = myData.iterator(); it.hasNext();) {
-        final Row row = it.next();
+      for (final Row row : myData) {
         pairs.add(new Pair<String, TextWithImports>(row.name, row.value));
       }
       return pairs;
@@ -494,10 +489,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       public Row(final String name, final TextWithImports value) {
         this.name = name;
         this.value = value;
-      }
-
-      public Row() {
-        this("", new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
       }
     }
   }

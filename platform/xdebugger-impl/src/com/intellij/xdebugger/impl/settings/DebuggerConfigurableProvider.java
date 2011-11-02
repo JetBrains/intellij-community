@@ -15,12 +15,8 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 
 import java.util.ArrayList;
@@ -47,14 +43,9 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
       }
     });
 
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if(project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-
     Configurable rootConfigurable = null;
     for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables(project));
+      configurables.addAll(provider.getConfigurables());
       final Configurable aRootConfigurable = provider.getRootConfigurable();
       if (aRootConfigurable != null) {
         if (rootConfigurable != null) {

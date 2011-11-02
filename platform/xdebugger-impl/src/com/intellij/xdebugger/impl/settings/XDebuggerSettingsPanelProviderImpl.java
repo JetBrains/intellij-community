@@ -30,7 +30,7 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
     return 0;
   }
 
-  public Collection<? extends Configurable> getConfigurables(final Project project) {
+  public Collection<? extends Configurable> getConfigurables() {
     ArrayList<Configurable> list = new ArrayList<Configurable>();
     for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstance().getSettingsList()) {
       list.add(settings.createConfigurable());

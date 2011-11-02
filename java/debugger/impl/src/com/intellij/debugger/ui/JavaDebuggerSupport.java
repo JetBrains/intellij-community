@@ -22,10 +22,13 @@ import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -206,11 +209,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return new DebuggerLaunchingConfigurable();
     }
 
-    public Collection<? extends Configurable> getConfigurables(final Project project) {
+    public Collection<? extends Configurable> getConfigurables() {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new DebuggerDataViewsConfigurable(project));
-      configurables.add(new DebuggerSteppingConfigurable(project));
-      configurables.add(new UserRenderersConfigurable(project));
+      configurables.add(new DebuggerDataViewsConfigurable(null));
+      configurables.add(new DebuggerSteppingConfigurable());
+      configurables.add(new UserRenderersConfigurable(null));
       configurables.add(new DebuggerHotswapConfigurable());
       return configurables;
     }
@@ -218,5 +221,14 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     public void apply() {
       NodeRendererSettings.getInstance().fireRenderersChanged();
     }
+  }
+
+  public static Project getCurrentProject() {
+    //todo[nik] improve
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    if (project != null) {
+      return project;
+    }
+    return ProjectManager.getInstance().getDefaultProject();
   }
 }

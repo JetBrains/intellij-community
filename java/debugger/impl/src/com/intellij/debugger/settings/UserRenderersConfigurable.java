@@ -28,6 +28,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.InternalIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -53,7 +54,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable {
   private NodeRenderer myCurrentRenderer = null;
   private final CompoundRendererConfigurable myRendererDataConfigurable;
 
-  public UserRenderersConfigurable(Project project) {
+  public UserRenderersConfigurable(@Nullable Project project) {
     myRendererDataConfigurable = new CompoundRendererConfigurable(project);
   }
 

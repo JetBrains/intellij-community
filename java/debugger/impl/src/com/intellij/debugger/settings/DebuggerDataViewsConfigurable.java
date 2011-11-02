@@ -17,6 +17,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -28,6 +29,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -58,16 +60,18 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private ClassFilterEditor myToStringFilterEditor;
   private JTextField myValueTooltipDelayField;
   
-  private final Project myProject;
+  private Project myProject;
   private RegistryCheckBox myAutoTooltip;
 
-  public DebuggerDataViewsConfigurable(Project project) {
+  public DebuggerDataViewsConfigurable(@Nullable Project project) {
     myProject = project;
     myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
   }
 
   public void disposeUIResources() {
     myArrayRendererConfigurable.disposeUIResources();
+    myToStringFilterEditor = null;
+    myProject = null;
   }
 
   public String getDisplayName() {
@@ -75,6 +79,9 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   }
 
   public JComponent createComponent() {
+    if (myProject == null) {
+      myProject = JavaDebuggerSupport.getCurrentProject();
+    }
     final JPanel panel = new JPanel(new GridBagLayout());
 
     myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
@@ -174,7 +181,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     try {
       DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
@@ -243,7 +250,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     try {
       return DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY != Integer.parseInt(myValueTooltipDelayField.getText().trim());
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
     return false;
   }
@@ -289,6 +296,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return false;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.debugger.dataviews";
   }

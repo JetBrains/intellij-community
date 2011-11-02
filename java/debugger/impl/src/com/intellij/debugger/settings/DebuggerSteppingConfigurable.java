@@ -16,6 +16,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -33,11 +34,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable {
   private JCheckBox myCbSkipClassLoaders;
   private ClassFilterEditor mySteppingFilterEditor;
   private JCheckBox myCbSkipSimpleGetters;
-  private final Project myProject;
-
-  public DebuggerSteppingConfigurable(Project project) {
-    myProject = project;
-  }
+  private Project myProject;
 
   public void reset() {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
@@ -84,6 +81,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable {
     return null;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.debugger.stepping";
   }
@@ -99,7 +97,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable {
 
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
-
+    myProject = JavaDebuggerSupport.getCurrentProject();
     myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
     myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classloaders"));
@@ -123,6 +121,8 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable {
   }
 
   public void disposeUIResources() {
+    mySteppingFilterEditor = null;
+    myProject = null;
   }
 
 }
