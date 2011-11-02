@@ -126,15 +126,15 @@ public class SelectWordHandler extends EditorActionHandler {
 
     if (element instanceof OuterLanguageElement) {
       PsiElement elementInOtherTree = file.getViewProvider().findElementAt(element.getTextOffset(), element.getLanguage());
-      assert elementInOtherTree == null || elementInOtherTree.getContainingFile() != element.getContainingFile();
-      
-      while (elementInOtherTree != null && elementInOtherTree.getPrevSibling() == null) {
-        elementInOtherTree = elementInOtherTree.getParent();
-      }
-      
-      if (elementInOtherTree != null) {
-        assert elementInOtherTree.getTextOffset() == caretOffset;
-        element = elementInOtherTree;
+      if (elementInOtherTree == null || elementInOtherTree.getContainingFile() != element.getContainingFile()) {
+        while (elementInOtherTree != null && elementInOtherTree.getPrevSibling() == null) {
+          elementInOtherTree = elementInOtherTree.getParent();
+        }
+
+        if (elementInOtherTree != null) {
+          assert elementInOtherTree.getTextOffset() == caretOffset;
+          element = elementInOtherTree;
+        }
       }
     }
 
