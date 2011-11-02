@@ -53,6 +53,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
@@ -412,8 +413,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
     PsiFileImpl clone = (PsiFileImpl)providerCopy.getPsi(language);
-    assert clone != null : "Cannot find psi file with: " + language + " from viewprovider:" +
-                           providerCopy + "; virtual file: " + getVirtualFile();
+    assert clone != null : "Cannot find psi file with: " + language + "." +
+                           " Original viewprovider: " + viewProvider +"; languages: " + viewProvider.getLanguages()+
+                           "; copied viewprovider: "+ providerCopy + "; languages: " + providerCopy.getLanguages() +
+                           "; Original virtual file: " + getVirtualFile() + "; copied virtual file: "+providerCopy.getVirtualFile()
+                           + "; its .getOriginal(): "+(providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null);
 
     copyCopyableDataTo(clone);
 
