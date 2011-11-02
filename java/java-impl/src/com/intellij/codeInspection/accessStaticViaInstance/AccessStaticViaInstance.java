@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
  * Date: 15-Nov-2005
  */
 public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
+
+  public static final String ACCESS_STATIC_VIA_INSTANCE = "AccessStaticViaInstance";
+
   @NotNull
   public String getGroupDisplayName() {
     return "";
@@ -44,7 +47,7 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
   @NotNull
   @NonNls
   public String getShortName() {
-    return "AccessStaticViaInstance";
+    return ACCESS_STATIC_VIA_INSTANCE;
   }
 
   public boolean isEnabledByDefault() {
