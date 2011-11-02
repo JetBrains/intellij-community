@@ -592,7 +592,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls final String link = " <a href=\"#inspection/" + tool.getShortName() + "\">" + DaemonBundle.message("inspection.extended.description") +
-                                "</a>" + myShortcutText;
+                                "</a> " + myShortcutText;
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {
