@@ -33,7 +33,7 @@ public class FileIndexImplUtil {
       VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(VirtualFile file) {
-          if (!file.isValid() || !filter.accept(file)) return true;
+          if (!file.isValid() || !filter.accept(file)) return false;
 
           if (!iterator.processFile(file)) throw new StopItException();
           return true;
