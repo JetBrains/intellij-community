@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -80,7 +81,7 @@ public class ResolveUtil {
    * 
    * @param place - place to start tree walk up
    * @param processor 
-   * @param processNonCodeMethods. this parameter tells us if we need non code members. But non code members are started to process only after we walk up any code block or script
+   * @param processNonCodeMethods - this parameter tells us if we need non code members. But non code members are started to process only after we walk up any code block or script
    * @return
    */
   public static boolean treeWalkUp(@NotNull GroovyPsiElement place, PsiScopeProcessor processor, boolean processNonCodeMethods) {
@@ -687,10 +688,11 @@ public class ResolveUtil {
   }
 
   @Nullable
-  public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate) {
+  public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression) {
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      return candidate.getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
+      PsiType substituted = candidate.getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
+      return PsiImplUtil.normalizeWildcardTypeByPosition(substituted, expression);
     }
 
     final PsiType type;
@@ -704,7 +706,8 @@ public class ResolveUtil {
       return null;
     }
     if (type instanceof GrClosureType) {
-      return candidate.getSubstitutor().substitute(((GrClosureType)type).getSignature().getReturnType());
+      PsiType substituted = candidate.getSubstitutor().substitute(((GrClosureType)type).getSignature().getReturnType());
+      return PsiImplUtil.normalizeWildcardTypeByPosition(substituted, expression);
     }
     return null;
   }

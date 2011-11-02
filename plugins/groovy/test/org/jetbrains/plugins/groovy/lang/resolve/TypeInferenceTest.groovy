@@ -287,4 +287,8 @@ List<Integer> l2
     assertEquals('java.util.ArrayList<java.lang.String>', ((statements[2] as GrAssignmentExpression).RValue as GrListOrMap).initializers[0].type.canonicalText)
     assertEquals('java.util.ArrayList<java.lang.Integer>', ((statements[2] as GrAssignmentExpression).RValue as GrListOrMap).initializers[1].type.canonicalText)
   }
+
+  void testWildCardsNormalized() {
+    assertTypeEquals(Object.canonicalName, 'a.groovy')
+  }
 }

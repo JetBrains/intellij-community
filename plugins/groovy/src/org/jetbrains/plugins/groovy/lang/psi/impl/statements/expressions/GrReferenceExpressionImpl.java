@@ -543,6 +543,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (result != null) {
       result = resolveResult.getSubstitutor().substitute(result);
       result = TypesUtil.boxPrimitiveType(result, getManager(), getResolveScope());
+      result = PsiImplUtil.normalizeWildcardTypeByPosition(result, this);
     }
     if (dotType != mSPREAD_DOT) {
       return result;

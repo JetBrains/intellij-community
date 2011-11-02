@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -73,6 +74,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         if (!(returnType instanceof GrLiteralClassType)) {
           returnType = resolveResult.getSubstitutor().substitute(returnType);
           returnType = TypesUtil.boxPrimitiveType(returnType, manager, scope);
+          returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, callExpression);
         }
 
         if (result == null || returnType.isAssignableFrom(result)) result = returnType;
@@ -112,7 +114,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       returnType = null;
       final PsiManager manager = callExpression.getManager();
       for (GroovyResolveResult call : calls) {
-        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call);
+        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call, callExpression);
         returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
       }
     }

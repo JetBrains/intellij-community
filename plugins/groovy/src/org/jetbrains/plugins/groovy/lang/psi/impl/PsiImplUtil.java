@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -563,5 +564,54 @@ public class PsiImplUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull GrExpression expression) {
+    GrExpression toplevel = expression;
+    while (toplevel.getParent() instanceof GrIndexProperty &&
+           ((GrIndexProperty)toplevel.getParent()).getSelectedExpression() == toplevel) {
+      toplevel = (GrExpression)toplevel.getParent();
+    }
+
+    final PsiType normalized = doNormalizeWildcardByPosition(type, expression, toplevel);
+    if (normalized instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {
+      return com.intellij.psi.util.PsiUtil.captureToplevelWildcards(normalized, expression);
+    }
+
+    return normalized;
+  }
+
+  @Nullable
+  private static PsiType doNormalizeWildcardByPosition(final PsiType type, final GrExpression expression, final GrExpression toplevel) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return doNormalizeWildcardByPosition(((PsiCapturedWildcardType)type).getWildcard(), expression, toplevel);
+    }
+
+
+    if (type instanceof PsiWildcardType) {
+      final PsiWildcardType wildcardType = (PsiWildcardType)type;
+
+      if (PsiUtil.isAccessedForWriting(toplevel)) {
+        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
+      }
+      else {
+        if (wildcardType.isExtends()) {
+          return wildcardType.getBound();
+        }
+        else {
+          return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+        }
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      final PsiType componentType = ((PsiArrayType)type).getComponentType();
+      final PsiType normalizedComponentType = doNormalizeWildcardByPosition(componentType, expression, toplevel);
+      if (normalizedComponentType != componentType) {
+        return normalizedComponentType.createArrayType();
+      }
+    }
+
+    return type;
   }
 }

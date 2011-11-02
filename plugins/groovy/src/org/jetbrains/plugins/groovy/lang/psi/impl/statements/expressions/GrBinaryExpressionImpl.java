@@ -69,7 +69,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
       }
 
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(binary.multiResolve(false));
-      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult);
+      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, binary);
       return TypesUtil.boxPrimitiveType(substituted, binary.getManager(), binary.getResolveScope());
     }
   };

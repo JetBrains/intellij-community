@@ -103,5 +103,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testLastBlockStatementInterruptsControlFlow() {doTest();}
 
   public void testAOOBE() {doTest();}
+  
+  public void testWildCardReturnType() {doTest();}
 
 }

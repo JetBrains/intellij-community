@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -55,7 +58,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
       if (opType == null) return null;
 
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(unary.multiResolve(false));
-      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult);
+      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, unary);
       if (substituted != null) {
         return TypesUtil.boxPrimitiveType(substituted, unary.getManager(), unary.getResolveScope());
       }

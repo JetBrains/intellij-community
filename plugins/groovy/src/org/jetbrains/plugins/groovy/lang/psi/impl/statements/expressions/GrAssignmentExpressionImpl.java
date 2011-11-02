@@ -62,7 +62,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         PsiType returnType = null;
         final PsiManager manager = assignment.getManager();
         for (GroovyResolveResult result : results) {
-          final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(result);
+          final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(result, assignment);
           returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
         }
         return returnType;
