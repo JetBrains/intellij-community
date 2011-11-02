@@ -259,7 +259,10 @@ public class JavaBuilder extends Builder{
           }
         }
 
-        if (!compiledOk || diagnosticSink.getErrorCount() > 0) {
+        if (!compiledOk) {
+          throw new ProjectBuildException("Compilation failed: internal java compiler error");
+        }
+        if (diagnosticSink.getErrorCount() > 0) {
           throw new ProjectBuildException("Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount());
         }
       }
@@ -523,6 +526,9 @@ public class JavaBuilder extends Builder{
               myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
             }
           }
+        }
+        else if (line.contains("java.lang.OutOfMemoryError")) {
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
         }
       }
     }
