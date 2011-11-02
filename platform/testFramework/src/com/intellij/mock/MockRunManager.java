@@ -16,28 +16,32 @@ import java.util.Map;
  * @author gregsh
  */
 public class MockRunManager extends RunManagerEx {
+  @NotNull
   @Override
   public ConfigurationType[] getConfigurationFactories() {
     return new ConfigurationType[0];
   }
 
+  @NotNull
   @Override
-  public RunConfiguration[] getConfigurations(ConfigurationType type) {
+  public RunConfiguration[] getConfigurations(@NotNull ConfigurationType type) {
     return new RunConfiguration[0];
   }
 
+  @NotNull
   @Override
   public RunConfiguration[] getAllConfigurations() {
     return new RunConfiguration[0];
   }
 
+  @NotNull
   @Override
   public RunConfiguration[] getTempConfigurations() {
     return new RunConfiguration[0];
   }
 
   @Override
-  public boolean isTemporary(RunConfiguration configuration) {
+  public boolean isTemporary(@NotNull RunConfiguration configuration) {
     return false;
   }
 
@@ -50,6 +54,7 @@ public class MockRunManager extends RunManagerEx {
     return null;
   }
 
+  @NotNull
   @Override
   public RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type) {
     throw new UnsupportedOperationException();
@@ -62,17 +67,13 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public RunnerAndConfigurationSettings[] getConfigurationSettings(ConfigurationType type) {
+  public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type) {
     return new RunnerAndConfigurationSettings[0];
   }
 
   @Override
-  public boolean isTemporary(RunnerAndConfigurationSettings configuration) {
+  public boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration) {
     return false;
-  }
-
-  @Override
-  public void setActiveConfiguration(RunnerAndConfigurationSettings configuration) {
   }
 
   @Override

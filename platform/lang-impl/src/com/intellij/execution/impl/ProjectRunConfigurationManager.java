@@ -112,7 +112,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
       }
 
       if (configuration != null) {
-        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
+        existing.add(RunManagerImpl.getUniqueName(configuration));
       }
     }
 
@@ -133,7 +133,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final Collection<RunnerAndConfigurationSettings> configurations = myManager.getStableConfigurations().values();
+    final Collection<RunnerAndConfigurationSettings> configurations = myManager.getStableConfigurations();
     for (RunnerAndConfigurationSettings configuration : configurations) {
       if (myManager.isConfigurationShared(configuration)){
         myManager.addConfigurationElement(element, configuration);

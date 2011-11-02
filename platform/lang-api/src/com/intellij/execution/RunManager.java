@@ -31,25 +31,31 @@ public abstract class RunManager {
     return project.getComponent(RunManager.class);
   }
 
+  @NotNull
   public abstract ConfigurationType[] getConfigurationFactories();
 
-  public abstract RunConfiguration[] getConfigurations(ConfigurationType type);
+  @NotNull
+  public abstract RunConfiguration[] getConfigurations(@NotNull ConfigurationType type);
 
+  @NotNull
   public abstract RunConfiguration[] getAllConfigurations();
 
+  @NotNull
   public abstract RunConfiguration[] getTempConfigurations();
 
-  public abstract boolean isTemporary(RunConfiguration configuration);
+  public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
 
-  public abstract void makeStable(RunConfiguration configuration);
+  public abstract void makeStable(@Nullable RunConfiguration configuration);
 
   @Nullable
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
+  @NotNull
   public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
 
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
 
-  public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(ConfigurationType type);
+  @NotNull
+  public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type);
 }

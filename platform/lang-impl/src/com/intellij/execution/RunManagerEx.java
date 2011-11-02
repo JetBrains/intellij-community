@@ -37,16 +37,16 @@ public abstract class RunManagerEx extends RunManager {
     return (RunManagerEx)project.getComponent(RunManager.class);
   }
 
-  @Nullable
-  public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
+  public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
 
-  public abstract boolean isTemporary(RunnerAndConfigurationSettings configuration);
+  @Deprecated // use setSelectedConfiguration instead
+  public void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
+    setSelectedConfiguration(configuration);
+  }
 
-  public abstract void setActiveConfiguration(RunnerAndConfigurationSettings configuration);
+  public abstract void setSelectedConfiguration(@Nullable RunnerAndConfigurationSettings configuration);
 
-  public abstract void setSelectedConfiguration(RunnerAndConfigurationSettings configuration);
-
-  public abstract void setTemporaryConfiguration(RunnerAndConfigurationSettings tempConfiguration);
+  public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
 
   public abstract void setEditBeforeRun(RunConfiguration settings, boolean edit);
 
