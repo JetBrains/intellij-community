@@ -38,6 +38,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private final IPyDebugProcess myDebugProcess;
   private final ServerSocket myServerSocket;
   private final int myTimeout;
+  private final Object mySocketObject = new Object(); // for synchronization on socket
   private Socket mySocket;
   private volatile boolean myConnected = false;
   private int mySequence = -1;
@@ -79,7 +80,7 @@ public class RemoteDebugger implements ProcessDebugger {
       ApplicationManager.getApplication().executeOnPooledThread(reader);
     }
     catch (Exception e) {
-      synchronized (this) {
+      synchronized (mySocketObject) {
         mySocket.close();
       }
       throw e;
@@ -89,14 +90,16 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public synchronized void disconnect() {
-    myConnected = false;
+  public void disconnect() {
+    synchronized (mySocketObject) {
+      myConnected = false;
 
-    if (mySocket != null && !mySocket.isClosed()) {
-      try {
-        mySocket.close();
-      }
-      catch (IOException ignore) {
+      if (mySocket != null && !mySocket.isClosed()) {
+        try {
+          mySocket.close();
+        }
+        catch (IOException ignore) {
+        }
       }
     }
 
@@ -298,14 +301,16 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  synchronized void sendFrame(final ProtocolFrame frame) {
+  void sendFrame(final ProtocolFrame frame) {
     logFrame(frame, true);
 
     try {
       final byte[] packed = frame.pack();
-      final OutputStream os = mySocket.getOutputStream();
-      os.write(packed);
-      os.flush();
+      synchronized (mySocketObject) {
+        final OutputStream os = mySocket.getOutputStream();
+        os.write(packed);
+        os.flush();
+      }
     }
     catch (SocketException se) {
       disconnect();
@@ -400,7 +405,9 @@ public class RemoteDebugger implements ProcessDebugger {
     private final InputStream myInputStream;
 
     private DebuggerReader() throws IOException {
-      this.myInputStream = mySocket.getInputStream();
+      synchronized (mySocketObject) {
+        this.myInputStream = mySocket.getInputStream();
+      }
     }
 
     public void run() {
