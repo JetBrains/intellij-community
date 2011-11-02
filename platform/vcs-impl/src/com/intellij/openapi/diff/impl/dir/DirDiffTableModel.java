@@ -607,7 +607,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       myElements.remove(row);
       int start = row;
 
-      if (row == myElements.size() && myElements.get(row - 1).isSeparator()) {
+      if (row > 0 && row == myElements.size() && myElements.get(row - 1).isSeparator()) {
         final DirDiffElement el = myElements.get(row - 1);
         el.getParentNode().remove(el.getNode());
         myElements.remove(row - 1);
