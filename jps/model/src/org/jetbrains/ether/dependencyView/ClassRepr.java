@@ -19,6 +19,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
+  private final DependencyContext context;
   public final DependencyContext.S sourceFileName;
   public final DependencyContext.S fileName;
   public final TypeRepr.AbstractType superClass;
@@ -34,7 +35,7 @@ public class ClassRepr extends Proto {
   public final boolean isLocal;
 
   public String getFileName () {
-    return fileName.getValue();
+    return context.getValue(fileName);
   }
 
   public abstract class Diff extends Difference {
@@ -70,7 +71,7 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = ((TypeRepr.ClassType)((ClassRepr)past).superClass).className.getValue();
+        final String pastSuperName = context.getValue(((TypeRepr.ClassType)((ClassRepr)past).superClass) .className);
         return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
       }
 
@@ -173,6 +174,7 @@ public class ClassRepr extends Proto {
                    final DependencyContext.S outerClassName,
                    final boolean localClassFlag) {
     super(a, sig, n);
+    this.context = context;
     fileName = fn;
     sourceFileName = sn;
     superClass = TypeRepr.createClassType(context, sup);
@@ -188,8 +190,9 @@ public class ClassRepr extends Proto {
 
   public ClassRepr(final DependencyContext context, final BufferedReader r) {
     super(context, r);
-    fileName = context.get(RW.readString(r));
-    sourceFileName = context.get(RW.readString(r));
+    this.context = context;
+    fileName = new DependencyContext.S(r);
+    sourceFileName = new DependencyContext.S(r);
     superClass = TypeRepr.reader(context).read(r);
     interfaces = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
     nestedClasses = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
@@ -201,7 +204,7 @@ public class ClassRepr extends Proto {
 
     policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-    outerClassName = context.get(RW.readString(r));
+    outerClassName = new DependencyContext.S(r);
     isLocal = RW.readString(r).equals("true");
   }
 
@@ -219,8 +222,8 @@ public class ClassRepr extends Proto {
 
   public void write(final BufferedWriter w) {
     super.write(w);
-    RW.writeln(w, fileName.getValue());
-    RW.writeln(w, sourceFileName.getValue());
+    RW.writeln(w, fileName.toString());
+    RW.writeln(w, sourceFileName.toString());
     superClass.write(w);
     RW.writeln(w, interfaces);
     RW.writeln(w, nestedClasses);
@@ -228,7 +231,7 @@ public class ClassRepr extends Proto {
     RW.writeln(w, methods);
     RW.writeln(w, targets, UsageRepr.AnnotationUsage.elementTypeToWritable);
     RW.writeln(w, policy == null ? "" : policy.toString());
-    RW.writeln(w, outerClassName.getValue());
+    RW.writeln(w, outerClassName.toString());
     RW.writeln(w, isLocal ? "true" : "false");
   }
 
@@ -264,8 +267,8 @@ public class ClassRepr extends Proto {
     return getPackageName(name);
   }
 
-  public static String getPackageName(final DependencyContext.S s) {
-    return getPackageName(s.getValue());
+  public String getPackageName(final DependencyContext.S s) {
+    return getPackageName(context.getValue(s));
 
   }
 
