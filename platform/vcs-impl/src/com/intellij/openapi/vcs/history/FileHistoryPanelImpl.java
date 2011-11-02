@@ -742,6 +742,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     }
+    final MyShowDiffWithLocalAction showDiffWithLocalAction = new MyShowDiffWithLocalAction();
+    result.add(showDiffWithLocalAction);
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
     if (diffGroup != null) result.add(diffGroup);    
@@ -831,10 +833,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         showDifferences(myVcs.getProject(), sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
-        if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
-        final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
-        if (currentRevisionNumber != null) {
-          showDifferences(myVcs.getProject(), getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
+        final TableView flatView = myDualView.getFlatView();
+        final TableViewModel model = flatView.getTableViewModel();
+        final int selectedRow = flatView.getSelectedRow();
+        if (selectedRow == (model.getRowCount() - 1)) {
+          // no previous
+          showDifferences(myVcs.getProject(), VcsFileRevision.NULL, getFirstSelectedRevision());
+        } else {
+          showDifferences(myVcs.getProject(), (VcsFileRevision)model.getRowValue(selectedRow + 1), getFirstSelectedRevision());
         }
       }
     }
@@ -842,20 +848,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void update(final AnActionEvent e) {
       super.update(e);
       final int selectionSize = getSelection().size();
-      if (selectionSize == 1) {
-        e.getPresentation().setText(VcsBundle.message("action.name.compare.with.local"));
-        e.getPresentation().setDescription(VcsBundle.message("action.description.compare.with.local"));
-      }
-      else {
-        e.getPresentation().setText(VcsBundle.message("action.name.compare"));
-        e.getPresentation().setDescription(VcsBundle.message("action.description.compare"));
-      }
+      e.getPresentation().setEnabled(selectionSize > 0);
     }
 
     public boolean isEnabled() {
       final int selectionSize = getSelection().size();
       if (selectionSize == 1) {
-        return isDiffWithCurrentEnabled();
+        List<TreeNodeOnVcsRevision> sel = getSelection();
+        return myHistorySession.isContentAvailable(sel.get(0));
       }
       else if (selectionSize > 1) {
         return isDiffEnabled();
@@ -867,12 +867,36 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       List<TreeNodeOnVcsRevision> sel = getSelection();
       return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
     }
+  }
+
+  private class MyShowDiffWithLocalAction extends AbstractActionForSomeSelection {
+    private MyShowDiffWithLocalAction() {
+      super(VcsBundle.message("action.name.compare.with.local"), VcsBundle.message("action.description.compare.with.local"), "diffWithCurrent", 1,
+                  FileHistoryPanelImpl.this);
+    }
+
+    @Override
+    protected void actionPerformed() {
+      final List<TreeNodeOnVcsRevision> selection = getSelection();
+      if (selection.size() != 1) return;
+      if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
+      final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
+      if (currentRevisionNumber != null) {
+        showDifferences(myVcs.getProject(), getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
+      }
+    }
 
     private boolean isDiffWithCurrentEnabled() {
       if (myHistorySession.getCurrentRevisionNumber() == null) return false;
       if (myFilePath.getVirtualFile() == null) return false;
       if (!myHistorySession.isContentAvailable(getFirstSelectedRevision())) return false;
       return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      final int size = getSelection().size();
+      return size == 1 && isDiffWithCurrentEnabled();
     }
   }
 
