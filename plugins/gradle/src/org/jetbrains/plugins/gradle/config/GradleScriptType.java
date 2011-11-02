@@ -19,6 +19,7 @@ import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -34,7 +35,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
@@ -70,10 +70,8 @@ public class GradleScriptType extends GroovyScriptType {
 
   public static final GroovyScriptType INSTANCE = new GradleScriptType();
   
-  private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
-
   private GradleScriptType() {
-    super("gradle");
+    super("gradle");    
   }
 
   @NotNull
@@ -146,7 +144,8 @@ public class GradleScriptType extends GroovyScriptType {
     return new GroovyScriptRunner() {
       @Override
       public boolean isValidModule(@NotNull Module module) {
-        return myLibraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
+        GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+        return libraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
       }
 
       @Override

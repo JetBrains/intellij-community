@@ -55,11 +55,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
+public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
 
-  private final ProjectImportBuilder myBuilder;
+  private final T myBuilder;
 
-  protected ProjectOpenProcessorBase(final ProjectImportBuilder builder) {
+  protected ProjectOpenProcessorBase(@NotNull final T builder) {
     myBuilder = builder;
   }
 
@@ -108,7 +108,8 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
     return false;
   }
 
-  public ProjectImportBuilder getBuilder() {
+  @NotNull
+  public T getBuilder() {
     return myBuilder;
   }
 

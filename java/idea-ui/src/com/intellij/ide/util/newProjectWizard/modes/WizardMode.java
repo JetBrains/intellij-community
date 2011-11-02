@@ -46,7 +46,7 @@ public abstract class WizardMode implements Disposable {
   public abstract boolean isAvailable(final WizardContext context);
 
   @Nullable
-  public StepSequence getSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+  public StepSequence getSteps(final WizardContext context, @Nullable final ModulesProvider modulesProvider) {
     if (myStepSequence == null) {
       myStepSequence = createSteps(context, modulesProvider);
     }
@@ -54,7 +54,7 @@ public abstract class WizardMode implements Disposable {
   }
 
   @Nullable
-  protected abstract StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider);
+  protected abstract StepSequence createSteps(final WizardContext context, @Nullable final ModulesProvider modulesProvider);
 
   @Nullable
   public abstract ProjectBuilder getModuleBuilder();

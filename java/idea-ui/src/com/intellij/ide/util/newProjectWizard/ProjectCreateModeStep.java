@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   private final WizardContext myWizardContext;
 
   public ProjectCreateModeStep(final String defaultPath, final WizardContext wizardContext) {
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     for (WizardMode mode : Extensions.getExtensions(WizardMode.MODES)) {
       if (mode.isAvailable(wizardContext)) {
         myModes.add(mode);
@@ -90,10 +91,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
       rb.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
       rb.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          myMode.onChosen(false);
-          myMode = mode;
-          myMode.onChosen(true);
-          update();
+          setMode(mode);
         }
       });
       rb.addMouseListener(new MouseAdapter() {
@@ -119,7 +117,10 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
     myWholePanel.add(Box.createVerticalBox(), gc);
-    final JLabel note = new JLabel( "<html>" + buf.toString() + "</html>", IconLoader.getIcon("/nodes/warningIntroduction.png"), SwingUtilities.LEFT);
+    final JLabel note = new JLabel(
+      "<html>" + buf.toString() + "</html>", IconLoader.getIcon("/nodes/warningIntroduction.png"),
+      SwingConstants.LEFT
+    );
     note.setVisible(buf.length() > 0);
     gc.weighty = 0;
     gc.fill = GridBagConstraints.HORIZONTAL;
@@ -141,6 +142,25 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
 
   public WizardMode getMode() {
     return myMode;
+  }
+
+  /**
+   * Instructs current step to use given mode.
+   * 
+   * @param mode  mode to set active
+   * @throws IllegalArgumentException   if given mode is not registered at the current step (not contained at {@link #getModes()})
+   */
+  public void setMode(@NotNull WizardMode mode) throws IllegalArgumentException {
+    if (!myModes.contains(mode)) {
+      throw new IllegalArgumentException(String.format(
+        "Can't activate given mode (%s) to the %s object. Reason: it's not contained in registered modes (%s)",
+        mode, getClass().getName(), myModes
+      ));
+    }
+    myMode.onChosen(false);
+    myMode = mode;
+    myMode.onChosen(true);
+    update();
   }
 
   public void disposeUIResources() {

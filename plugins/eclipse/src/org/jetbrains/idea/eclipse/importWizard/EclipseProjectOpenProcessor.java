@@ -23,18 +23,15 @@ package org.jetbrains.idea.eclipse.importWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.util.List;
 
-public class EclipseProjectOpenProcessor extends ProjectOpenProcessorBase {
-  public EclipseProjectOpenProcessor(final EclipseImportBuilder builder) {
+public class EclipseProjectOpenProcessor extends ProjectOpenProcessorBase<EclipseImportBuilder> {
+  public EclipseProjectOpenProcessor(@NotNull final EclipseImportBuilder builder) {
     super(builder);
-  }
-
-  public EclipseImportBuilder getBuilder() {
-    return (EclipseImportBuilder)super.getBuilder();
   }
 
   @Nullable

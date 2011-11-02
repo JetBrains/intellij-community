@@ -47,10 +47,11 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
   
   private static final LibraryKind<GroovyLibraryProperties> GRADLE_KIND = LibraryKind.create("gradle");
   
-  private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
+  private final GradleLibraryManager myLibraryManager;
   
-  public GradleLibraryPresentationProvider() {
+  public GradleLibraryPresentationProvider(@NotNull GradleLibraryManager libraryManager) {
     super(GRADLE_KIND);
+    myLibraryManager = libraryManager;
   }
   @NotNull
   @Override

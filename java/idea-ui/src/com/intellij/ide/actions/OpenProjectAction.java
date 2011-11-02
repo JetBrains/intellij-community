@@ -48,7 +48,7 @@ public class OpenProjectAction extends AnAction implements DumbAware {
     descriptor.setTitle(IdeBundle.message("title.open.project"));
     final Set<String> extensions = new HashSet<String>();
     extensions.add(ProjectFileType.DOT_DEFAULT_EXTENSION);
-    final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessorBase.EXTENSION_POINT_NAME);
+    final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME);
     for (ProjectOpenProcessor openProcessor : openProcessors) {
       final String[] supportedExtensions = ((ProjectOpenProcessorBase)openProcessor).getSupportedExtensions();
       if (supportedExtensions != null) {

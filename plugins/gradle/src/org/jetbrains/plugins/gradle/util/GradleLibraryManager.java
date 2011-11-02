@@ -26,9 +26,6 @@ import java.util.regex.Pattern;
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleLibraryManager {
 
-  /** Shared instance of the current (stateless) class. */
-  public static final GradleLibraryManager INSTANCE = new GradleLibraryManager();
-
   private static final Pattern GRADLE_JAR_FILE_PATTERN;
   private static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
   private static final String[] GRADLE_START_FILE_NAMES;

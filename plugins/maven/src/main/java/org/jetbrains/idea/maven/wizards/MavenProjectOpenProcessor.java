@@ -23,6 +23,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -31,13 +32,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
-  public MavenProjectOpenProcessor(MavenProjectBuilder builder) {
+public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProjectBuilder> {
+  public MavenProjectOpenProcessor(@NotNull MavenProjectBuilder builder) {
     super(builder);
-  }
-
-  public MavenProjectBuilder getBuilder() {
-    return (MavenProjectBuilder)super.getBuilder();
   }
 
   @Nullable

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -56,10 +57,11 @@ public class GradleConfigurable implements SearchableConfigurable {
    * This property has a form of 'not-propagate' in order to default to 'propagate'.
    */
   @NonNls private static final String NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT = "gradle.not.propagate.home.to.default.project";
-  
-  private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
-  private final Alarm                myAlarm          = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Project myProject;
+
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
+  private final GradleLibraryManager myLibraryManager;
+  private final Project              myProject;
 
   private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
 
@@ -68,6 +70,11 @@ public class GradleConfigurable implements SearchableConfigurable {
   private boolean            myPathManuallyModified;
 
   public GradleConfigurable(@Nullable Project project) {
+    this(project, ServiceManager.getService(GradleLibraryManager.class));
+  }
+
+  public GradleConfigurable(@Nullable Project project, @NotNull GradleLibraryManager gradleLibraryManager) {
+    myLibraryManager = gradleLibraryManager;
     myProject = project;
     doCreateComponent();
   }

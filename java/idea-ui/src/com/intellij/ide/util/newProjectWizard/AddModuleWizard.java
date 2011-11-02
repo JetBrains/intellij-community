@@ -29,6 +29,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -42,6 +43,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +61,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
 
   /**
-   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing proj.
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
   public AddModuleWizard(final Project project, final ModulesProvider modulesProvider, @Nullable String defaultPath) {
     super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project);
@@ -204,7 +206,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     return true;
   }
 
-  protected void doNextAction() {
+  public void doNextAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     if (!commitStepData(step)) {
       return;
@@ -320,11 +322,15 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     return null;
   }
 
+  @NotNull
+  public WizardContext getWizardContext() {
+    return myWizardContext;
+  }
+
   @Nullable
   public Sdk getNewProjectJdk() {
     return getNewProjectJdk(myWizardContext);
   }
-
 
   @NotNull
   public String getNewCompileOutput() {
@@ -352,5 +358,39 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   @Override
   protected String getDimensionServiceKey() {
     return "NewModule_or_Project.wizard";
+  }
+
+  /**
+   * Allows to ask current wizard to move to the desired step.
+   *
+   * @param filter  closure that allows to indicate target step - is called with each of registered steps and is expected
+   *                to return <code>true</code> for the step to go to
+   * @return        <code>true</code> if current wizard is navigated to the target step; <code>false</code> otherwise
+   */
+  public boolean navigateToStep(@NotNull Function<Step, Boolean> filter) {
+    for (int i = 0, myStepsSize = mySteps.size(); i < myStepsSize; i++) {
+      ModuleWizardStep step = mySteps.get(i);
+      if (filter.fun(step) != Boolean.TRUE) {
+        continue;
+      }
+
+      // Switch to the target mode if necessary.
+      for (WizardMode mode : myRootStep.getModes()) {
+        StepSequence steps = mode.getSteps(myWizardContext, null);
+        if (steps == null || !steps.getAllSteps().contains(step)) {
+          continue;
+        }
+        if (getMode() != mode) {
+          myRootStep.setMode(mode);
+        }
+        break;
+      }
+      
+      // Update current step.
+      myCurrentStep = i;
+      updateStep();
+      return true;
+    }
+    return false;
   }
 }

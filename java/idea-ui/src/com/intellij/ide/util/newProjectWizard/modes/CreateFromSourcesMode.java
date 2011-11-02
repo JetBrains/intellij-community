@@ -56,7 +56,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
   }
 
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(final WizardContext context, @Nullable final ModulesProvider modulesProvider) {
     final ProjectFromSourcesBuilderImpl projectBuilder = new ProjectFromSourcesBuilderImpl(context, modulesProvider);
     myProjectBuilder = projectBuilder;
     

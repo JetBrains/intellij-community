@@ -64,7 +64,7 @@ public class GradleApiFacadeManager {
   private final AtomicReference<Pair<GradleApiFacade, RemoteGradleProcessSettings>> myFacade
     = new AtomicReference<Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
 
-  private final GradleLibraryManager myGradleLibraryManager = GradleLibraryManager.INSTANCE;
+  private final GradleLibraryManager myGradleLibraryManager;
 
   // Please note that we don't use RemoteGradleProcessSettings as the 'Configuration' type parameter here because we need
   // to apply the settings to the newly created process. I.e. every time new process is created we need to call
@@ -72,7 +72,8 @@ public class GradleApiFacadeManager {
   private final RemoteProcessSupport<Object, GradleApiFacade, Object> mySupport;
   private final GradleApiFacade                                       myApiFacade;
 
-  public GradleApiFacadeManager() {
+  public GradleApiFacadeManager(@NotNull GradleLibraryManager gradleLibraryManager) {
+    myGradleLibraryManager = gradleLibraryManager;
     mySupport = new RemoteProcessSupport<Object, GradleApiFacade, Object>(GradleApiFacade.class) {
       @Override
       protected void fireModificationCountChanged() {
