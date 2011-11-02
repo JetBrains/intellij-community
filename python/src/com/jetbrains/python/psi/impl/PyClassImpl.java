@@ -411,7 +411,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return getClassChildren(PyElementTypes.CLASS_DECLARATION, PyClass.ARRAY_FACTORY);
   }
 
-  private <T extends PsiElement> T[] getClassChildren(IElementType elementType, ArrayFactory<T> factory) {
+  protected <T extends PsiElement> T[] getClassChildren(IElementType elementType, ArrayFactory<T> factory) {
     // TODO: gather all top-level functions, maybe within control statements
     final PyClassStub classStub = getStub();
     if (classStub != null) {
