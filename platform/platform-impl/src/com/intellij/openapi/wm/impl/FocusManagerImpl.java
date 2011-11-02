@@ -811,7 +811,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     assertDispatchThread();
 
     Component result = null;
-    if (myRunContext != null) {
+    if (!ApplicationManager.getApplication().isActive()) {
+      final WeakReference<Component> ref = myLastFocusedAtDeactivation.get(getLastFocusedFrame());
+      if (ref != null) {
+        result = ref.get();
+      }
+    } else if (myRunContext != null) {
       result = (Component)myRunContext.getData(PlatformDataKeys.CONTEXT_COMPONENT.getName());
     }
 
