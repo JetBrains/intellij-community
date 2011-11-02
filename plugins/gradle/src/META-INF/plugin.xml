@@ -1,29 +1,31 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
-  <name>Gradle</name>
-  <id>org.jetbrains.plugins.gradle</id>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <description>Gradle integration</description>
+    <name>Gradle</name>
+    <id>org.jetbrains.plugins.gradle</id>
+    <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+    <description>Gradle integration</description>
 
-  <!--// TODO den implement-->
-  <depends>com.intellij.modules.lang</depends>
-  <depends>org.intellij.groovy</depends>
+    <!--// TODO den implement-->
+    <depends>com.intellij.modules.lang</depends>
+    <depends>org.intellij.groovy</depends>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportProvider"/>
-    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder"/>
-    <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
-    <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
-    <projectService serviceInterface="org.jetbrains.plugins.gradle.config.GradleSettings"
-                    serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"
-                    serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
-  </extensions>
-  
-  <extensions defaultExtensionNs="org.intellij.groovy">
-    <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
-    <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
-  </extensions>
-  
+    <extensions defaultExtensionNs="com.intellij">
+        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+        <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportProvider"/>
+        <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder"/>
+        <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
+        <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
+        <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+        <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectOpenProcessor"/>
+
+        <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
+        <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
+        
+        <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.intellij.groovy">
+        <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
+        <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
+    </extensions>
+
 </idea-plugin>
