@@ -62,8 +62,8 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
     return findChildByClass(GrTypeElement.class);
   }
 
-  @Nullable
+  @NotNull
   public GrExpression getOperand() {
-    return findChildByClass(GrExpression.class);
+    return findNotNullChildByClass(GrExpression.class);
   }
 }

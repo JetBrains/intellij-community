@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
@@ -52,9 +53,11 @@ import java.util.List;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
 
+  private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
+
   @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
-    return RecursionManager.doPreventingRecursion(refExpr, true, new Computable<PsiType>() {
+    return RecursionManager.doPreventingRecursion(refExpr, true, new NullableComputable<PsiType>() {
       @Override
       public PsiType compute() {
         final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
@@ -104,8 +107,12 @@ public class TypeInferenceHelper {
     Collections.sort(applicable, new Comparator<Instruction>() {
       @Override
       public int compare(Instruction o1, Instruction o2) {
-        final TextRange t1 = o1.getElement().getTextRange();
-        final TextRange t2 = o2.getElement().getTextRange();
+        PsiElement e1 = o1.getElement();
+        PsiElement e2 = o2.getElement();
+        LOG.assertTrue(e1 != null);
+        LOG.assertTrue(e2 != null);
+        final TextRange t1 = e1.getTextRange();
+        final TextRange t2 = e2.getTextRange();
         final int s1 = t1.getStartOffset();
         final int s2 = t2.getStartOffset();
 
