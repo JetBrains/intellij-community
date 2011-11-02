@@ -64,6 +64,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   private int mySavedCaretShift;
   private boolean myCaretPositionSaved;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
+  private boolean myDocumentChangeProcessed = true;
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -423,7 +424,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public int getFoldedLinesCountBefore(int offset) {
-    if (myEditor.getDocument().isInEventsHandling()) {
+    if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
+      // There is a possible case that this method is called on document update before fold regions are recalculated.
+      // We return zero in such situations then. 
       return 0;
     }
     return myFoldTree.getFoldedLinesCountBefore(offset);
@@ -470,14 +473,20 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    myDocumentChangeProcessed = false;
   }
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    if (((DocumentEx)event.getDocument()).isInBulkUpdate()) {
-      myFoldTree.clear();
-    } else {
-      updateCachedOffsets();
+    try {
+      if (((DocumentEx)event.getDocument()).isInBulkUpdate()) {
+        myFoldTree.clear();
+      } else {
+        updateCachedOffsets();
+      }
+    }
+    finally {
+      myDocumentChangeProcessed = true;
     }
   }
 
