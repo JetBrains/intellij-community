@@ -73,6 +73,14 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
   }
 
   @Override
+  public void doCancelAction() {
+    if (myDoNotShowCheckbox != null && myDoNotShowCheckbox.isSelected()) {
+        myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+      }
+    super.doCancelAction();
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return getFileList();
   }
@@ -85,7 +93,7 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
     panel.add(getFileList(), BorderLayout.CENTER);
 
     if (myShowDoNotAskOption) {
-      myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
+      myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.ask"));
       panel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
     }
     return panel;
