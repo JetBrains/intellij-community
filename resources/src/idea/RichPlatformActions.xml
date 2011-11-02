@@ -134,8 +134,8 @@
       <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
               text="Mark File Dirty"/>
       <separator/>
-      <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
-              text="Check VFS sanity"/>
+      <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction" text="Check VFS sanity"/>
+      <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load all files content"/>
 
       <separator/>
 

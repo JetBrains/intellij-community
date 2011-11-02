@@ -1,0 +1,86 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * User: anna
+ * Date: 28-Jun-2007
+ */
+package com.intellij.internal;
+
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class LoadAllContentsAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance("com.intellij.internal.LoadAllContentsAction");
+  public LoadAllContentsAction() {
+    super("Load all files content", "Measure reading the content of all files in the project", null);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    String m = "Started loading content";
+    LOG.info(m);
+    System.out.println(m);
+    long start = System.currentTimeMillis();
+    final AtomicInteger count = new AtomicInteger();
+    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+          @Override
+          public boolean processFile(VirtualFile fileOrDir) {
+            if (fileOrDir.isDirectory() || fileOrDir.isSpecialFile()) return true;
+            try {
+              //fileOrDir.contentsToByteArray();
+              count.incrementAndGet();
+              FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
+              ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
+            }
+            catch (IOException e1) {
+              LOG.error(e1);
+            }
+            return true;
+          }
+        });
+       }
+    }, "Loading", false, project);
+    long end = System.currentTimeMillis();
+    String message = "Finished loading content of " + count + " files. elapsed=" + ((end - start) / 1000) + "sec.";
+    LOG.info(message);
+    System.out.println(message);
+  }
+
+
+  @Override
+  public void update(final AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+  }
+}
