@@ -79,7 +79,9 @@ public class RemoteDebugger implements ProcessDebugger {
       ApplicationManager.getApplication().executeOnPooledThread(reader);
     }
     catch (Exception e) {
-      mySocket.close();
+      synchronized (this) {
+        mySocket.close();
+      }
       throw e;
     }
 
@@ -87,7 +89,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void disconnect() {
+  public synchronized void disconnect() {
     myConnected = false;
 
     if (mySocket != null && !mySocket.isClosed()) {
@@ -296,14 +298,13 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  void sendFrame(final ProtocolFrame frame) {
+  synchronized void sendFrame(final ProtocolFrame frame) {
     logFrame(frame, true);
 
     try {
       final byte[] packed = frame.pack();
       final OutputStream os = mySocket.getOutputStream();
       os.write(packed);
-      os.write('\n');
       os.flush();
     }
     catch (SocketException se) {
