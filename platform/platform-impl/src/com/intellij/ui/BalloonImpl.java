@@ -755,7 +755,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         getUpdatedBounds(balloon.myLayeredPane.getSize(), balloon.myForcedBounds, balloon.myComp.getPreferredSize(), balloon.myShowPointer,
                          balloon.myTargetPoint, balloon.myContainerInsets, balloon.myCalloutshift);
 
-      final Point point = getShiftedPoint(bounds.getLocation(), -balloon.getShadowBorderSize());
+      final Point point = getShiftedPoint(bounds.getLocation(), balloon.getShadowBorderSize());
       bounds.setLocation(point);
       balloon.myComp._setBounds(bounds);
     }
