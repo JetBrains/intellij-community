@@ -473,10 +473,10 @@ public class FindUtil {
     return true;
   }
 
-  private static boolean doReplace(Project project, final Editor editor, FindModel model, final Document document, int caretOffset,
+  private static boolean doReplace(Project project, final Editor editor, final FindModel aModel, final Document document, int caretOffset,
                                    boolean toPrompt, ReplaceDelegate delegate) {
     FindManager findManager = FindManager.getInstance(project);
-    model = (FindModel)model.clone();
+    final FindModel model = (FindModel)aModel.clone();
     int occurrences = 0;
 
     List<Pair<TextRange,String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
@@ -583,7 +583,9 @@ public class FindUtil {
               public void run() {
                 document.setText(newText);
                 editor.getCaretModel().moveToOffset(finalCaretOffset);
-                editor.getSelectionModel().removeSelection();
+                if (model.isGlobal()) {
+                  editor.getSelectionModel().removeSelection();
+                }
               }
             });
           }
