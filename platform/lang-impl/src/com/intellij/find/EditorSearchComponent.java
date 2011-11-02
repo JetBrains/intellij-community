@@ -677,7 +677,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   @Override
   public void selectionChanged(SelectionEvent e) {
-    updateResults(true);
+    updateResults(false);
   }
 
   private void moveCursor(SearchResults.Direction direction) {
