@@ -1262,7 +1262,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     Disposer.dispose(myHintAlarm);
 
     myDisposed = true;
-    disposeTrace = DebugUtil.currentStackTrace();
+    disposeTrace = DebugUtil.currentStackTrace() + "\n============";
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     staticDisposeTrace = disposeTrace;
   }

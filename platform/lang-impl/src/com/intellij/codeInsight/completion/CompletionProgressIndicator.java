@@ -618,7 +618,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(this == current, current + "!=" + this);
 
-    if (isAutopopupCompletion() && (!myLookup.isShown() || hideAutopopupIfMeaningless())) {
+    if (isAutopopupCompletion() && (myLookup.isLookupDisposed() || !myLookup.isShown() || hideAutopopupIfMeaningless())) {
       if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() == this) {
         closeAndFinish(true);
       }
