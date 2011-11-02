@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
@@ -24,6 +25,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NonNls;
 
 public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiExpressionCodeFragment {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl");
   private PsiType myExpectedType;
 
   public PsiExpressionCodeFragmentImpl(Project project,
@@ -32,7 +34,7 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
                                        CharSequence text,
                                        final PsiType expectedType) {
     super(project, JavaElementType.EXPRESSION_TEXT, isPhysical, name, text);
-    myExpectedType = expectedType;
+    setExpectedType(expectedType);
   }
 
   @Override
@@ -44,11 +46,18 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
 
   @Override
   public PsiType getExpectedType() {
-    return myExpectedType;
+    PsiType type = myExpectedType;
+    if (type != null) {
+      LOG.assertTrue(type.isValid());
+    }
+    return type;
   }
 
   @Override
   public void setExpectedType(PsiType type) {
     myExpectedType = type;
+    if (type != null) {
+      LOG.assertTrue(type.isValid());
+    }
   }
 }
