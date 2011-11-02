@@ -1,5 +1,6 @@
 package com.jetbrains.python.fixtures;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerRegistry;
@@ -24,12 +25,14 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   private static final int PORT = 123;
 
   protected static int verifyPyDevDParameters(List<String> params) {
+    params = Lists.newArrayList(params);
+    int debugParam = params.remove("--DEBUG_RECORD_SOCKET_READS") ? 1 : 0;
     assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
     assertEquals("--client", params.get(1));
     assertEquals("--port", params.get(3));
     assertEquals("" + PORT, params.get(4));
     assertEquals("--file", params.get(5));
-    return 6;
+    return 6 + debugParam;
   }
 
   protected <T extends AbstractPythonRunConfiguration> T createConfiguration(final ConfigurationType configurationType, Class<T> cls) {
@@ -38,7 +41,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     return cls.cast(factory.createTemplateConfiguration(project));
   }
 
-  protected static List<String> buildRunCommandLine(AbstractPythonRunConfiguration configuration)  {
+  protected static List<String> buildRunCommandLine(AbstractPythonRunConfiguration configuration) {
     try {
       final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
       final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, new ExecutionEnvironment());
