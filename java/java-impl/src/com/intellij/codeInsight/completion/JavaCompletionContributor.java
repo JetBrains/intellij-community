@@ -274,7 +274,7 @@ public class JavaCompletionContributor extends CompletionContributor {
             for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
                                                                                   (PsiJavaReference)reference,
                                                                                   new ElementExtractorFilter(filter),
-                                                                                  checkAccess,
+                                                                                  checkAccess, checkAccess,
                                                                                   result.getPrefixMatcher(), parameters)) {
               if (inheritors.alreadyProcessed(element)) {
                 continue;
@@ -414,7 +414,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
       final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(
-        insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, result.getPrefixMatcher(), parameters);
+        insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, false, result.getPrefixMatcher(), parameters);
       for (final LookupElement element : set) {
         result.addElement(element);
       }

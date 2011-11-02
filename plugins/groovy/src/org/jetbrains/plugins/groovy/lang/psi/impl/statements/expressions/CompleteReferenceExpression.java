@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
@@ -62,8 +63,8 @@ public class CompleteReferenceExpression {
   private CompleteReferenceExpression() {
   }
 
-  public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
-    final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher);
+  public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
+    final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
     getVariantsImpl(matcher, refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
@@ -335,16 +336,18 @@ public class CompleteReferenceExpression {
   private static class CompleteReferenceProcessor extends ResolverProcessor implements Consumer<Object> {
     private final Consumer<Object> myConsumer;
     private final PrefixMatcher myMatcher;
+    private final CompletionParameters myParameters;
     private Collection<String> myPreferredFieldNames;
     private final boolean mySkipPackages;
     private final PsiClass myEventListener;
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
 
-    protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher) {
+    protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
       myConsumer = consumer;
       myMatcher = matcher;
+      myParameters = parameters;
       myPreferredFieldNames = addAllRestrictedProperties(place);
       mySkipPackages = PsiImplUtil.getRuntimeQualifier(place) == null;
       myEventListener = JavaPsiFacade.getInstance(place.getProject()).findClass("java.util.EventListener", place.getResolveScope());
@@ -359,7 +362,7 @@ public class CompleteReferenceExpression {
 
       boolean isAccessible = isAccessible(namedElement);
       final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-      boolean isStaticsOK = isStaticsOK(namedElement, resolveContext);
+      boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, myParameters.getInvocationCount() <= 1);
 
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;

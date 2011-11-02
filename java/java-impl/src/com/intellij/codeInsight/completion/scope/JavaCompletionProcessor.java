@@ -63,7 +63,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
   private boolean myAllowStaticWithInstanceQualifier;
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, boolean checkInitialized, @Nullable Condition<String> nameCondition) {
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, boolean checkInitialized, boolean filterStaticAfterInstance, @Nullable Condition<String> nameCondition) {
     myCheckAccess = checkAccess;
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
@@ -110,7 +110,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       myNonInitializedFields.addAll(getNonInitializedFields(element));
     }
 
-    myAllowStaticWithInstanceQualifier = CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
+    myAllowStaticWithInstanceQualifier = !filterStaticAfterInstance || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
                                          SuppressManager.getInstance()
                                            .isSuppressedFor(element, AccessStaticViaInstance.ACCESS_STATIC_VIA_INSTANCE);
 

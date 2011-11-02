@@ -299,11 +299,7 @@ public class PsiUtil {
     return TokenSets.REFERENCE_NAMES_WITHOUT_NUMBERS.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
   }
 
-  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
-    return isStaticsOK(owner, place, null);
-  }
-
-  public static boolean isStaticsOK(PsiModifierListOwner member, PsiElement place, @Nullable PsiElement resolveContext) {
+  public static boolean isStaticsOK(PsiModifierListOwner member, PsiElement place, @Nullable PsiElement resolveContext, boolean filterStaticAfterInstanceQualifier) {
     if (!(member instanceof PsiMember)) return true;
 
     if (!(place instanceof GrReferenceExpression)) return true;
@@ -367,7 +363,7 @@ public class PsiUtil {
         //static members may be invoked from this.<...>
         final boolean isInStatic = isInStaticContext((GrThisReferenceExpression)qualifier);
         if (containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
-          return !(member.hasModifierProperty(PsiModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
+          return !filterStaticAfterInstanceQualifier || !member.hasModifierProperty(PsiModifier.STATIC) || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
         }
         else if (isInStatic) return member.hasModifierProperty(PsiModifier.STATIC);
       }
@@ -376,7 +372,7 @@ public class PsiUtil {
       if (member instanceof PsiClass) {
         return false;
       }
-      return !(isStatic && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
+      return !isStatic || !filterStaticAfterInstanceQualifier || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
     }
     else {
       if (containingClass == null) return true;

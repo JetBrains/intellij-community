@@ -411,7 +411,7 @@ public class JavaCompletionUtil {
   }
 
   public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
-                                                        final boolean checkAccess, @Nullable final PrefixMatcher matcher, CompletionParameters parameters) {
+                                                        final boolean checkAccess, boolean filterStaticAfterInstance, @Nullable final PrefixMatcher matcher, CompletionParameters parameters) {
     final THashSet<LookupElement> set = new THashSet<LookupElement>();
     final Condition<String> nameCondition = matcher == null ? null : new Condition<String>() {
       public boolean value(String s) {
@@ -422,7 +422,7 @@ public class JavaCompletionUtil {
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     boolean checkInitialized = parameters.getInvocationCount() <= 1 && call != null && PsiKeyword.SUPER.equals(call.getMethodExpression().getText());
     
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, checkInitialized, nameCondition);
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, checkInitialized, filterStaticAfterInstance, nameCondition);
     javaReference.processVariants(processor);
     final Collection<CompletionElement> plainResults = processor.getResults();
 
