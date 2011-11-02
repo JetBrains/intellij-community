@@ -757,6 +757,7 @@
     <!-- Cython -->
     <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
     <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
+    <importResolver implementation="com.jetbrains.cython.PyCythonImportResolver"/>
   </extensions>
 
   <project-components>

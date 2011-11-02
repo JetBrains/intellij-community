@@ -26,10 +26,11 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
       String text = element.getText();
       if (text.startsWith("u") || text.startsWith("U") || text.startsWith("r") || text.startsWith("R") ||
           text.startsWith("b") || text.startsWith("B")) {
-        String stringValue = element.getStringValue();
         List<TextRange> valueTextRanges = element.getStringValueTextRanges();
-        final int startOffset = valueTextRanges.get(0).getStartOffset();
-        consumer.consumeToken(element, stringValue, false, startOffset, valueTextRanges.get(0).shiftRight(-startOffset), splitter);
+        for (TextRange valueTextRange : valueTextRanges) {
+          final int startOffset = valueTextRange.getStartOffset();
+          consumer.consumeToken(element, valueTextRange.substring(element.getText()), false, startOffset, valueTextRange.shiftRight(-startOffset), splitter);
+        }
       }
       else {
         consumer.consumeToken(element, splitter);

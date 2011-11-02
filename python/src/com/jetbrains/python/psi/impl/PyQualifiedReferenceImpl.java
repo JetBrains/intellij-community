@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -54,10 +55,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     PyType qualifierType = myContext.getTypeEvalContext().getType(qualifier);
     // is it a class-private name qualified by a different class?
     if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
-      final List<? extends PsiElement> match = PyUtil.searchForWrappingMethod(qualifier, true);
-      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size() - 1))) {
-        return Collections.emptyList();
-      }
+      if (isOtherClassQualifying(qualifier, (PyClassType)qualifierType)) return Collections.emptyList();
     }
     //
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
@@ -83,6 +81,19 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  private static boolean isOtherClassQualifying(PyExpression qualifier, PyClassType qualifierType) {
+    final List<? extends PsiElement> match = PyUtil.searchForWrappingMethod(qualifier, true);
+    if (match == null) {
+      return true;
+    }
+    if (match.size() > 1) {
+      final PyClass ourClass = qualifierType.getPyClass();
+      final PsiElement theirClass = CompletionUtil.getOriginalOrSelf(match.get(match.size() - 1));
+      if (ourClass != theirClass) return true;
+    }
+    return false;
   }
 
   private void addImplicitResolveResults(String referencedName, ResolveResultList ret) {

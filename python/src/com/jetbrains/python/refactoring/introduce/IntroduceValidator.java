@@ -51,6 +51,6 @@ public abstract class IntroduceValidator {
       context = psiElement.getContainingFile();
     }
 
-    return PyRefactoringUtil.collectScopeVariables(context).contains(name);
+    return PyRefactoringUtil.collectUsedNames(context).contains(name);
   }
 }

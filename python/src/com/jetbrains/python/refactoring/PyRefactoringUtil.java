@@ -104,7 +104,7 @@ public class PyRefactoringUtil {
   }
 
   @NotNull
-  public static Collection<String> collectScopeVariables(@Nullable final PsiElement scope) {
+  public static Collection<String> collectUsedNames(@Nullable final PsiElement scope) {
     if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
       return Collections.emptyList();
     }
@@ -121,18 +121,18 @@ public class PyRefactoringUtil {
       }
 
       @Override
-      public void visitPyStatement(@NotNull final PyStatement node) {
-        if ((node instanceof PyAssignmentStatement) || (scope instanceof PyFunction)) {
-          node.acceptChildren(this);
-        }
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        variables.add(node.getReferencedName());
       }
 
       @Override
       public void visitPyFunction(@NotNull final PyFunction node) {
+        variables.add(node.getName());
       }
 
       @Override
       public void visitPyClass(@NotNull final PyClass node) {
+        variables.add(node.getName());
       }
     });
     return variables;

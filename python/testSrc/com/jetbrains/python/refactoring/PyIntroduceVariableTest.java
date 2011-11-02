@@ -52,6 +52,12 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     assertFalse(strings.contains("str"));
   }
   
+  public void testSuggestNamesNotInScope() {  // PY-4605
+    final Collection<String> strings = buildSuggestions(PyExpression.class);
+    assertTrue(strings.contains("myfunc1"));
+    assertFalse(strings.contains("myfunc"));
+  }
+
   public void testIncorrectSelection() {  // PY-4455
     doTestCannotPerform();
   }
