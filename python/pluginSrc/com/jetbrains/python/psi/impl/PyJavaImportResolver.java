@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyJavaImportResolver implements PyImportResolver {
   @Nullable
-  public PsiElement resolveImportReference(final PyElement importElement, final PyQualifiedName importText, PyQualifiedName importFrom) {
+  public PsiElement resolveImportReference(@NotNull final PyElement importElement, @NotNull final PyQualifiedName importText,
+                                           @Nullable PyQualifiedName importFrom) {
     String fqn = importText.toString();
     if (importFrom != null) {
       fqn = importFrom.toString() + "." + fqn;
