@@ -38,19 +38,20 @@ public class GroovyMethodInfo {
     Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
 
     for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
+      ClassLoader classLoader = classDescriptor.getLoaderForClass();
       for (GroovyMethodDescriptor method : classDescriptor.methods) {
-        addMethodDescriptor(methodInfos, method, classDescriptor.className);
+        addMethodDescriptor(methodInfos, method, classLoader, classDescriptor.className);
       }
     }
 
     for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
       if (methodDescriptor.className != null) {
         assert methodDescriptor.lightMethodKey == null;
-        addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.className);
+        addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.className);
       }
       else {
         assert methodDescriptor.className == null;
-        addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.lightMethodKey);
+        addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.lightMethodKey);
       }
     }
 
@@ -121,8 +122,8 @@ public class GroovyMethodInfo {
     }
   }
 
-  public GroovyMethodInfo(GroovyMethodDescriptor method) {
-    myClassLoader = method.getLoaderForClass();
+  public GroovyMethodInfo(GroovyMethodDescriptor method, @NotNull ClassLoader classLoader) {
+    myClassLoader = classLoader;
     myParams = method.getParams();
     myReturnType = method.returnType;
     myReturnTypeCalculatorClassName = method.returnTypeCalculator;
@@ -135,21 +136,23 @@ public class GroovyMethodInfo {
 
   private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
                                           GroovyMethodDescriptor method,
+                                          @NotNull ClassLoader classLoader,
                                           @NotNull String key) {
     if (method.methodName == null) {
-      addMethodDescriptor(res, method, null, key);
+      addMethodDescriptor(res, method, classLoader, null, key);
     }
     else {
       for (StringTokenizer st = new StringTokenizer(method.methodName, " \t,;"); st.hasMoreTokens(); ) {
         String name = st.nextToken();
         assert GroovyNamesUtil.isIdentifier(name);
-        addMethodDescriptor(res, method, name, key);
+        addMethodDescriptor(res, method, classLoader, name, key);
       }
     }
   }
   
   private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
                                           GroovyMethodDescriptor method,
+                                          @NotNull ClassLoader classLoader,
                                           @Nullable String methodName,
                                           @NotNull String key) {
     Map<String, List<GroovyMethodInfo>> methodMap = res.get(key);
@@ -164,7 +167,7 @@ public class GroovyMethodInfo {
       methodMap.put(methodName, methodsList);
     }
 
-    methodsList.add(new GroovyMethodInfo(method));
+    methodsList.add(new GroovyMethodInfo(method, classLoader));
   }
 
   @Nullable

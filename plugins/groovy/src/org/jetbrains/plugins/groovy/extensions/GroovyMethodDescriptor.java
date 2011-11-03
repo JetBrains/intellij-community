@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.extensions;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -10,13 +9,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority;
 import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.*;
 
 /**
  * @author Sergey Evdokimov
  */
-public class GroovyMethodDescriptor extends AbstractExtensionPointBean {
+public class GroovyMethodDescriptor {
 
   private static final String ATTR_NAMES_DELIMITER = " \t\n\r,;";
 
