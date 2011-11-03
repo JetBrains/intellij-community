@@ -62,6 +62,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -476,7 +477,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void print(String s, final ConsoleViewContentType contentType) {
-    printHyperlink(s, contentType, null);
+    final String text = StringUtil.replaceChar(s, '\r', ' '); // todo[zajac]: remove this hack once ConsoleViewImpl is fixed
+    printHyperlink(text, contentType, null);
   }
 
   private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
