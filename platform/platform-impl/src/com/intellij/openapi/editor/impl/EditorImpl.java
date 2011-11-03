@@ -159,6 +159,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private MouseEvent myMousePressedEvent = null;
   private MouseEvent myMouseMovedEvent = null;
 
+  /** Holds information about area where mouse was pressed. */
+  private EditorMouseEventArea myMousePressArea;
   private int mySavedSelectionStart = -1;
   private int mySavedSelectionEnd = -1;
   private int myLastColumnNumber = 0;
@@ -3741,7 +3743,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
             // lead selection point.
-            if (selectionModel.hasSelection()) {
+            if ((myMousePressArea == EditorMouseEventArea.LINE_NUMBERS_AREA
+                 || myMousePressArea == EditorMouseEventArea.LINE_MARKERS_AREA)
+                &&  selectionModel.hasSelection())
+            {
               if (newCaretOffset >= selectionModel.getSelectionEnd()) {
                 oldSelectionStart = selectionModel.getSelectionStart();
                 oldVisLeadSelectionStart = selectionModel.getSelectionStartPosition();
@@ -4868,6 +4873,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void mouseReleased(MouseEvent e) {
+      myMousePressArea = null;
       runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
         Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
@@ -5003,6 +5009,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (y < 0) y = 0;
 
       final EditorMouseEventArea eventArea = getMouseEventArea(e);
+      myMousePressArea = eventArea;
       boolean isNavigation = false;
       if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         final FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
