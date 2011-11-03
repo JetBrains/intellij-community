@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.model;
+package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.roots.DependencyScope;
 import org.jetbrains.annotations.NotNull;

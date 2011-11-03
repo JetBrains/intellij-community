@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.model;
+package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;

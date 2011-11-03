@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard;
+package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;

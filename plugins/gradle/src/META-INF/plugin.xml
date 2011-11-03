@@ -26,12 +26,12 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-        <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportProvider"/>
-        <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder"/>
+        <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
+        <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder"/>
         <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
         <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
         <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
-        <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectOpenProcessor"/>
+        <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
 
         <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
         <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>

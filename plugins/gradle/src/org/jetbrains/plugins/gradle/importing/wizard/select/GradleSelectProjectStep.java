@@ -11,8 +11,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
+import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
-import org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 

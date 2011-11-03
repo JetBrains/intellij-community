@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard;
+package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -24,9 +24,9 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.importing.GradleModulesImporter;
-import org.jetbrains.plugins.gradle.importing.model.GradleEntity;
-import org.jetbrains.plugins.gradle.importing.model.GradleModule;
-import org.jetbrains.plugins.gradle.importing.model.GradleProject;
+import org.jetbrains.plugins.gradle.model.GradleEntity;
+import org.jetbrains.plugins.gradle.model.GradleModule;
+import org.jetbrains.plugins.gradle.model.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;

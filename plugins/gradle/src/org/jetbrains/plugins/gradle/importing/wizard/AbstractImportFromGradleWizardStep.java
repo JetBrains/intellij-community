@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
 
 /**
  * Just a holder for the common useful functionality.
