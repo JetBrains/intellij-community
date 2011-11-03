@@ -63,26 +63,33 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
 
     final int index = values.indexOf(t);
     if (index < 0) {
-      final XmlTag parentTag = parent.getXmlTag();
-      StringBuilder diag = new StringBuilder("Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values + "\n");
-      if (parentTag != null) {
-        diag.append("Parent tag: ").append(parentTag.getName()).append("\n");
-        if (t instanceof GenericAttributeValue) {
-          for (XmlAttribute attribute : parentTag.getAttributes()) {
-            diag.append("attr: ").append(attribute.getName());
-          }
-          diag.append("\n");
-        } else {
-          for (XmlTag tag : parentTag.getSubTags()) {
-            diag.append("subtag: ").append(tag.getName());
-          }
-          diag.append("\n");
-        }
-      }
-      diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
-      LOG.error(diag);
+      diagnoseNegativeIndex(t, parent, description, values);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
+  }
+
+  private static <T extends DomElement> void diagnoseNegativeIndex(T t,
+                                                                   DomElement parent,
+                                                                   AbstractDomChildrenDescription description,
+                                                                   List<? extends DomElement> values) {
+    final XmlTag parentTag = parent.getXmlTag();
+    StringBuilder diag = new StringBuilder("Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values + "\n");
+    if (parentTag != null) {
+      diag.append("Parent tag: ").append(parentTag.getName()).append("\n");
+      if (t instanceof GenericAttributeValue) {
+        for (XmlAttribute attribute : parentTag.getAttributes()) {
+          diag.append("\nattr: ").append(attribute.getName());
+        }
+        diag.append("\n");
+      } else {
+        for (XmlTag tag : parentTag.getSubTags()) {
+          diag.append("\nsubtag: ").append(tag.getName());
+        }
+        diag.append("\n");
+      }
+    }
+    diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
+    LOG.error(diag);
   }
 
 

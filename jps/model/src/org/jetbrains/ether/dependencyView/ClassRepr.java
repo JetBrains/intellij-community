@@ -142,19 +142,19 @@ public class ClassRepr extends Proto {
     return result;
   }
 
-  public void updateClassUsages(final UsageRepr.Cluster s) {
-    superClass.updateClassUsages(name, s);
+  public void updateClassUsages(final DependencyContext context, final UsageRepr.Cluster s) {
+    superClass.updateClassUsages(context, name, s);
 
     for (TypeRepr.AbstractType t : interfaces) {
-      t.updateClassUsages(name, s);
+      t.updateClassUsages(context, name, s);
     }
 
     for (MethodRepr m : methods) {
-      m.updateClassUsages(name, s);
+      m.updateClassUsages(context, name, s);
     }
 
     for (FieldRepr f : fields) {
-      f.updateClassUsages(name, s);
+      f.updateClassUsages(context, name, s);
     }
   }
 
@@ -256,7 +256,7 @@ public class ClassRepr extends Proto {
   }
 
   public UsageRepr.Usage createUsage() {
-    return UsageRepr.createClassUsage(name);
+    return UsageRepr.createClassUsage(context, name);
   }
 
   public DependencyContext.S getSourceFileName() {

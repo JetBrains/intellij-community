@@ -102,7 +102,7 @@ public class NameUtil {
       pattern = pattern.substring(0, MAX_LENGTH);
     }
 
-    @NonNls final StringBuffer buffer = new StringBuffer();
+    @NonNls final StringBuilder buffer = new StringBuilder();
     boolean lastIsUppercase = false;
     boolean prevIsUppercase = false;
     final boolean endsWithSpace = !forCompletion && StringUtil.endsWithChar(pattern, ' ');
@@ -362,6 +362,8 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
+  @SuppressWarnings("UnusedParameters")
+  @Deprecated
   public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, options);
@@ -481,6 +483,7 @@ public class NameUtil {
       return null;
     }
 
+    @Nullable
     private FList<TextRange> skipSeparators(String name, int patternIndex, int nameIndex) {
       int nextStart = NameUtil.nextWord(name, nameIndex);
       assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;

@@ -18,30 +18,17 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 
 /**
  * User: anna
@@ -51,85 +38,14 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   private static final Logger LOG = Logger.getInstance("#" + JavaChangeSignatureDetector.class.getName());
 
   @Override
-  public ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
-                                                 final @Nullable ChangeInfo changeInfo) {
+  public ChangeInfo createInitialChangeInfo(final @NotNull PsiElement element) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-    if (method != null && isInsideMethodSignature(element, method) && (changeInfo == null || changeInfo instanceof MyJavaChangeInfo)) {
-      final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      final PsiType returnType = method.getReturnType();
-      final CanonicalTypes.Type newReturnType;
-      final ParameterInfoImpl[] parameterInfos;
-      try {
-        newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
-        parameterInfos = ParameterInfoImpl.fromMethod(method);
-        for (ParameterInfoImpl parameterInfo : parameterInfos) {
-          if (!parameterInfo.getTypeWrapper().isValid()) {
-            return null;
-          }
-        }
-      }
-      catch (IncorrectOperationException e) {
-        return null;
-      }
-      final MyJavaChangeInfo fromMethod = new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, null, method.getName(), method.getName());
-      if (changeInfo == null) { //before replacement
-        final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
-        if (deepestSuperMethod != null) {
-          if (!deepestSuperMethod.getManager().isInProject(deepestSuperMethod)) return null;
-        }
-        fromMethod.setSuperMethod(deepestSuperMethod);
-        return fromMethod;
-      } else {
-        final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
-        if (!info.getMethod().equals(method)) return null;
-        if (!info.equals(fromMethod)) {
-          if (!createParametersInfo(element, parameterInfos, info)) return null;
-          if (info.isReturnTypeChanged()) {
-            final String visibility = info.getNewVisibility();
-            if (Comparing.strEqual(visibility, PsiModifier.PRIVATE) &&
-                !info.isArrayToVarargs() &&
-                !info.isExceptionSetOrOrderChanged() &&
-                !info.isExceptionSetChanged() &&
-                !info.isNameChanged() &&
-                !info.isParameterSetOrOrderChanged() &&
-                !info.isParameterNamesChanged() &&
-                !info.isParameterTypesChanged()) {
-              return null;
-            }
-          }
-          try {
-            final MyJavaChangeInfo javaChangeInfo =
-              new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), method.getName(), info.getOldName()) {
-                @Override
-                protected void fillOldParams(PsiMethod method) {
-                  oldParameterNames = info.getOldParameterNames();
-                  oldParameterTypes = info.getOldParameterTypes();
-                  if (!method.isConstructor()) {
-                    try {
-                      isReturnTypeChanged = info.isReturnTypeChanged ||
-                                            (info.getNewReturnType() != null
-                                               ? !Comparing.strEqual(info.getNewReturnType().getTypeText(), newReturnType.getTypeText())
-                                               : newReturnType != null);
-                    }
-                    catch (IncorrectOperationException e) {
-                      isReturnTypeChanged = true;
-                    }
-                  }
-                }
-              };
-            javaChangeInfo.setSuperMethod(info.getSuperMethod());
-            return javaChangeInfo;
-          }
-          catch (IncorrectOperationException e) {
-            return null;
-          }
-        }
-        return changeInfo;
-      }
+    if (method != null && isInsideMethodSignature(element, method)) {
+      return DetectedJavaChangeInfo.createFromMethod(method);
     } else {
       final PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
       if (variable != null && JavaRefactoringSupportProvider.mayRenameInplace(variable, element)) {
-        return new RenameChangeInfo(variable, changeInfo) {
+        return new RenameChangeInfo(variable, null) {
           @Override
           public Language getLanguage() {
             return StdLanguages.JAVA;
@@ -140,143 +56,10 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     return null;
   }
 
-  private static boolean createParametersInfo(PsiElement element,
-                                              ParameterInfoImpl[] parameterInfos,
-                                              MyJavaChangeInfo info) {
-
-    final JavaParameterInfo[] oldParameters = info.getNewParameters();
-    final String[] oldParameterNames = info.getOldParameterNames();
-    final String[] oldParameterTypes =  info.getOldParameterTypes();
-    final Map<JavaParameterInfo, Integer> untouchedParams = new HashMap<JavaParameterInfo, Integer>();
-    for (int i = 0; i < parameterInfos.length; i++) {
-      ParameterInfoImpl parameterInfo = parameterInfos[i];
-      JavaParameterInfo oldParameter = null;
-      for (JavaParameterInfo parameter : oldParameters) {
-        if (Comparing.strEqual(parameter.getName(), parameterInfo.getName()) &&
-            Comparing.strEqual(parameter.getTypeText(), parameterInfo.getTypeText())) {
-          oldParameter = parameter;
-          break;
-        }
-      }
-
-      if (oldParameter != null) {
-        parameterInfos[i] = new ParameterInfoImpl(oldParameter.getOldIndex(),
-                                                  oldParameter.getName(),
-                                                  oldParameter.getTypeWrapper(),
-                                                  null);
-        untouchedParams.put(parameterInfos[i], oldParameter.getOldIndex());
-      }
-    }
-
-    for (int i = 0; i < parameterInfos.length; i++) {
-      ParameterInfoImpl parameterInfo = parameterInfos[i];
-      if (!untouchedParams.containsKey(parameterInfo)) {
-        JavaParameterInfo oldParameter = null;
-        if (oldParameters.length > i && oldParameterNames.length > i) {
-          if (Comparing.strEqual(oldParameterNames[i], parameterInfo.getName()) ||
-              Comparing.strEqual(oldParameterTypes[i], parameterInfo.getTypeText())) {
-            if (!untouchedParams.containsValue(oldParameters[i].getOldIndex())) {
-              oldParameter = oldParameters[i];
-            }
-          }
-        }
-        final CanonicalTypes.Type typeWrapper = parameterInfo.getTypeWrapper();
-        if (!typeWrapper.isValid()) return false;
-        parameterInfos[i] = new ParameterInfoImpl(oldParameter != null ? oldParameter.getOldIndex() : - 1,
-                                                  parameterInfo.getName(),
-                                                  typeWrapper,
-                                                  null);
-      }
-    }
-    return true;
-  }
-
-
-  private static class MyJavaChangeInfo extends JavaChangeInfoImpl  {
-    private PsiMethod mySuperMethod;
-    private String[] myModifiers;
-    private MyJavaChangeInfo(String newVisibility,
-                             PsiMethod method,
-                             CanonicalTypes.Type newType,
-                             @NotNull ParameterInfoImpl[] newParms,
-                             ThrownExceptionInfo[] newExceptions,
-                             String newName, String oldName) {
-      super(newVisibility, method, newName, newType, newParms, newExceptions, false,
-            new HashSet<PsiMethod>(),
-            new HashSet<PsiMethod>(), oldName);
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      myModifiers = new String[parameters.length];
-      for (int i = 0; i < parameters.length; i++) {
-        PsiParameter parameter = parameters[i];
-        final PsiModifierList modifierList = parameter.getModifierList();
-        if (modifierList != null) {
-          final String text = modifierList.getText();
-          myModifiers[i] = text;
-        }
-      }
-    }
-
-    @Override
-    protected void setupPropagationEnabled(PsiParameter[] parameters, ParameterInfoImpl[] newParms) {
-      isPropagationEnabled = false;
-    }
-
-    public PsiMethod getSuperMethod() {
-      if (mySuperMethod == null) {
-        return getMethod();
-      }
-      return mySuperMethod;
-    }
-
-    public void setSuperMethod(PsiMethod superMethod) {
-      mySuperMethod = superMethod;
-    }
-
-    public String[] getModifiers() {
-      return myModifiers;
-    }
-  }
-
   @Override
-  public boolean accept(final ChangeInfo changeInfo, @NotNull final String oldText, boolean silently) {
-    if (changeInfo instanceof MyJavaChangeInfo) {
-      final MyJavaChangeInfo info = (MyJavaChangeInfo)changeInfo;
-      final PsiMethod method = info.getSuperMethod();
-
-      if (silently || ApplicationManager.getApplication().isUnitTestMode()) {
-        temporallyRevertChanges(info.getMethod(), oldText);
-        createChangeSignatureProcessor(info, method).run();
-        return true;
-      }
-      final JavaMethodDescriptor descriptor = new JavaMethodDescriptor(info.getMethod()) {
-        @Override
-        public String getReturnTypeText() {
-          return info.getNewReturnType().getTypeText();
-        }
-      };
-      final JavaChangeSignatureDialog dialog =
-        new JavaChangeSignatureDialog(method.getProject(), descriptor, true, method) {
-          protected BaseRefactoringProcessor createRefactoringProcessor() {
-            return createChangeSignatureProcessor(info, method);
-          }
-
-          @Override
-          protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              @Override
-              public void run() {
-                temporallyRevertChanges(method, oldText);
-                doRefactor(processor);
-              }
-            }, RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(info.getMethod())), null);
-          }
-
-          private void doRefactor(BaseRefactoringProcessor processor) {
-            super.invokeRefactoring(processor);
-          }
-        };
-      dialog.show();
-      return dialog.isOK();
+  public boolean performChange(final ChangeInfo changeInfo, ChangeInfo initialChangeInfo, @NotNull final String oldText, boolean silently) {
+    if (changeInfo instanceof DetectedJavaChangeInfo) {
+      return ((DetectedJavaChangeInfo)changeInfo).perform(initialChangeInfo, oldText, silently);
     } else if (changeInfo instanceof RenameChangeInfo) {
       ((RenameChangeInfo)changeInfo).perform();
       return true;
@@ -285,64 +68,90 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   }
 
-  private static void temporallyRevertChanges(final PsiElement psiElement, final String oldText) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiFile file = psiElement.getContainingFile();
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
-        final Document document = documentManager.getDocument(file);
-        if (document != null) {
-          final TextRange textRange = psiElement.getTextRange();
-          document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), oldText);
-          documentManager.commitDocument(document);
-        }
+  @Override
+  public boolean isChangeSignatureAvailableOnElement(PsiElement element, ChangeInfo currentInfo) {
+    if (currentInfo instanceof RenameChangeInfo) {
+      final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNameIdentifier();
+      if (nameIdentifier != null) {
+        final TextRange nameIdentifierTextRange = nameIdentifier.getTextRange();
+        return nameIdentifierTextRange.contains(element.getTextRange()) ||
+               nameIdentifierTextRange.getEndOffset() == element.getTextOffset();
       }
-    });
-  }
-
-  private static ChangeSignatureProcessor createChangeSignatureProcessor(final MyJavaChangeInfo info,
-                                                                         final PsiMethod method) {
-    return new ChangeSignatureProcessor(method.getProject(), new MyJavaChangeInfo(info.getNewVisibility(), info.getSuperMethod(),
-                                                                           info.getNewReturnType(),
-                                                                           (ParameterInfoImpl[])info.getNewParameters(),
-                                                                           info.getNewExceptions(), info.getNewName(), method.getName()) {
-      @Override
-      protected void fillOldParams(PsiMethod method) {
-        super.fillOldParams(method);
-        oldParameterNames = info.getOldParameterNames();
-        oldParameterTypes = info.getOldParameterTypes();
-      }
-    }) {
-      @Override
-      protected void performRefactoring(UsageInfo[] usages) {
-        super.performRefactoring(usages);
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (int i = 0; i < info.getModifiers().length; i++) {
-          final String modifier = info.getModifiers()[i];
-          final PsiModifierList modifierList = parameters[i].getModifierList();
-          if (modifierList != null && !Comparing.strEqual(modifier, modifierList.getText())) {
-            final PsiModifierList newModifierList =
-              elementFactory.createParameterFromText((modifier.isEmpty() ? "" : modifier + " ") + "type name", method).getModifierList();
-            if (newModifierList != null) {
-              modifierList.replace(newModifierList);
-            }
-          }
-        }
-      }
-    };
+    }
+    else if (currentInfo instanceof JavaChangeInfo) {
+      final PsiMethod method = (PsiMethod)currentInfo.getMethod();
+      return getSignatureRange(method).contains(element.getTextRange());
+    }
+    return false;
   }
 
   @Override
-  public boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo) {
-    if (currentInfo instanceof JavaChangeInfo) {
-      return isInsideMethodSignature(element, (PsiMethod)currentInfo.getMethod());
-    } else if (currentInfo instanceof RenameChangeInfo) {
-      final PsiElement nameIdentifier = ((RenameChangeInfo)currentInfo).getNameIdentifier();
-      return nameIdentifier != null && nameIdentifier.getTextRange().contains(element.getTextRange());
+  public boolean ignoreChanges(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiImportList.class) != null;
+  }
+
+  @Nullable
+  @Override
+  public TextRange getHighlightingRange(ChangeInfo changeInfo) {
+    if (changeInfo == null) return null;
+    if (changeInfo instanceof RenameChangeInfo) {
+      PsiElement nameIdentifier = ((RenameChangeInfo)changeInfo).getNameIdentifier();
+      return nameIdentifier != null ? nameIdentifier.getTextRange() : null;
     }
-    return false;
+
+    PsiElement method = changeInfo.getMethod();
+    return method instanceof PsiMethod ? getSignatureRange((PsiMethod)method) : null;
+  }
+
+  @Nullable
+  @Override
+  public String extractSignature(PsiElement element, @NotNull ChangeInfo initialChangeInfo) {
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+    if (method != null && isInsideMethodSignature(element, method) && method == initialChangeInfo.getMethod()) {
+      final TextRange signatureRange = getSignatureRange(method);
+      return element.getContainingFile().getText().substring(signatureRange.getStartOffset(), signatureRange.getEndOffset());
+    } else if (element instanceof PsiIdentifier && element.getParent() instanceof PsiNamedElement) {
+      return element.getText();
+    }
+    return null;
+  }
+
+  @Override
+  public ChangeInfo createNextChangeInfo(String signature, @NotNull final ChangeInfo currentInfo, String initialName) {
+    final Project project = currentInfo.getMethod().getProject();
+    if (currentInfo instanceof RenameChangeInfo) {
+      return currentInfo;
+    }
+    
+    final PsiMethod oldMethod = (PsiMethod)currentInfo.getMethod();
+    if (oldMethod.isPhysical() && LanguageChangeSignatureDetectors.skipElement(oldMethod, initialName)) return null;
+
+    String visibility = "";
+    PsiClass containingClass = oldMethod.getContainingClass();
+    if (containingClass != null && containingClass.isInterface()) {
+      visibility = PsiModifier.PUBLIC + " ";
+    }
+    PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText((visibility + signature).trim(), oldMethod);
+    return ((DetectedJavaChangeInfo)currentInfo).createNextInfo(method);
+  }
+
+  private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    final TextRange textRange = element.getTextRange();
+    if (body != null) {
+      return textRange.getEndOffset() <= body.getTextOffset() && textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset();
+    }
+    return textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset() &&
+           textRange.getEndOffset() <= method.getTextRange().getEndOffset();
+  }
+
+  private static TextRange getSignatureRange(PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      return new TextRange(method.getTextRange().getStartOffset(), body.getTextOffset());
+    }
+    return new TextRange(method.getTextRange().getStartOffset(),
+                         method.getTextRange().getEndOffset());
   }
 
   @Override
@@ -389,20 +198,5 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         }
       }
     }.execute();
-  }
-
-  @Override
-  public boolean ignoreChanges(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiImportList.class) != null;
-  }
-
-  private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    final TextRange textRange = element.getTextRange();
-    if (body != null) {
-      return textRange.getEndOffset() <= body.getTextOffset() && textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset();
-    }
-    return textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset() &&
-           textRange.getEndOffset() <= method.getTextRange().getEndOffset();
   }
 }

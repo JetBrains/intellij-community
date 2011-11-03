@@ -328,12 +328,15 @@ public class DirDiffPanel implements Disposable {
       }
     } else {
       final DiffElement object;
+      final DiffElement target;
       if (element.getType() == DType.ERROR) {
         object = element.getSource() == null ? element.getTarget() : element.getSource();
+        target = element.getSource() == null ? element.getSource() : element.getTarget();
       } else {
         object = element.isSource() ? element.getSource() : element.getTarget();
+        target = element.isSource() ? element.getTarget() : element.getSource();
       }
-      myViewComponent = object.getViewComponent(project, null);
+      myViewComponent = object.getViewComponent(project, target);
 
       if (myViewComponent != null) {
         myCurrentElement = object;

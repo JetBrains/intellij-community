@@ -1,5 +1,6 @@
 package org.jetbrains.jps;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public class ProjectPaths {
   public static List<String> getPathsList(Collection<File> files) {
     final List<String> result = new ArrayList<String>();
     for (File file : files) {
-      result.add(file.getPath());
+      result.add(getCanonicalPath(file));
     }
     return result;
   }
@@ -243,4 +244,10 @@ public class ProjectPaths {
       return !myFilter.accept(module, item);
     }
   }
+
+  private static String getCanonicalPath(File file) {
+    final String path = file.getPath();
+    return path.contains(".")? FileUtil.toCanonicalPath(path) : FileUtil.toSystemIndependentName(path);
+  }
+
 }

@@ -55,7 +55,17 @@ public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    myAcceptText = ChangeSignatureGestureDetector.getInstance(project).getChangeSignatureAcceptText(element);
+    myAcceptText = null;
+    final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
+    if (detector != null) {
+      ChangeSignatureGestureDetector signatureGestureDetector = ChangeSignatureGestureDetector.getInstance(project);
+      PsiFile containingFile = element.getContainingFile();
+      ChangeInfo changeInfo = signatureGestureDetector.getChangeInfo(containingFile);
+      ChangeInfo initialChangeInfo = signatureGestureDetector.getInitialChangeInfo(containingFile);
+      if (changeInfo != null && detector.isChangeSignatureAvailableOnElement(element, initialChangeInfo)) {
+        myAcceptText = changeInfo instanceof RenameChangeInfo ? NEW_NAME : CHANGE_SIGNATURE;
+      }
+    }
     return myAcceptText != null;
   }
 

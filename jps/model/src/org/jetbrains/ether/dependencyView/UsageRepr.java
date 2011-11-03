@@ -20,8 +20,9 @@ class UsageRepr {
 
   //private final static Map<Usage, Usage> map = new HashMap<Usage, Usage>();
 
-  private static Usage getUsage(final Usage u) {
-    return u;
+
+  //private static Usage getUsage(final Usage u) {
+   // return u;
     /*
     final Usage r = map.get(u);
 
@@ -31,7 +32,7 @@ class UsageRepr {
     }
 
     return r;*/
-  }
+  //}
 
   public static class Cluster implements RW.Writable {
     final Set<Usage> usages = new HashSet<Usage>();
@@ -443,34 +444,35 @@ class UsageRepr {
   }
 
   public static Usage createFieldUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final DependencyContext.S descr) {
-    return getUsage(new FieldUsage(context, name, owner, descr));
+    return context.getUsage(new FieldUsage(context, name, owner, descr));
   }
 
   public static Usage createFieldAssignUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final DependencyContext.S descr) {
-    return getUsage(new FieldAssignUsage(context, name, owner, descr));
+    return context.getUsage(new FieldAssignUsage(context, name, owner, descr));
   }
 
   public static Usage createMethodUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final String descr) {
-    return getUsage(new MethodUsage(context, name, owner, descr));
+    return context.getUsage(new MethodUsage(context, name, owner, descr));
   }
 
-  public static Usage createClassUsage(final DependencyContext.S name) {
-    return getUsage(new ClassUsage(name));
+  public static Usage createClassUsage(final DependencyContext context, final DependencyContext.S name) {
+    return context.getUsage(new ClassUsage(name));
   }
 
 
-  public static Usage createClassExtendsUsage(final DependencyContext.S name) {
-    return getUsage(new ClassExtendsUsage(name));
+  public static Usage createClassExtendsUsage(final DependencyContext context, final DependencyContext.S name) {
+    return context.getUsage(new ClassExtendsUsage(name));
   }
 
-  public static Usage createClassNewUsage(final DependencyContext.S name) {
-    return getUsage(new ClassNewUsage(name));
+  public static Usage createClassNewUsage(final DependencyContext context, final DependencyContext.S name) {
+    return context.getUsage(new ClassNewUsage(name));
   }
 
-  public static Usage createAnnotationUsage(final TypeRepr.ClassType type,
+  public static Usage createAnnotationUsage(final DependencyContext context,
+                                            final TypeRepr.ClassType type,
                                             final Collection<DependencyContext.S> usedArguments,
                                             final Collection<ElementType> targets) {
-    return getUsage(new AnnotationUsage(type, usedArguments, targets));
+    return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
   public static RW.Reader<Usage> reader (final DependencyContext context) {    
@@ -479,25 +481,25 @@ class UsageRepr {
       final String tag = RW.readString(r);
 
       if (tag.equals("classUsage")) {
-        return getUsage(new ClassUsage(context, r));
+        return context.getUsage(new ClassUsage(context, r));
       }
       else if (tag.equals("fieldUsage")) {
-        return getUsage(new FieldUsage(context, r));
+        return context.getUsage(new FieldUsage(context, r));
       }
       else if (tag.equals("fieldAssignUsage")) {
-        return getUsage(new FieldAssignUsage(context, r));
+        return context.getUsage(new FieldAssignUsage(context, r));
       }
       else if (tag.equals("methodUsage")) {
-        return getUsage(new MethodUsage(context, r));
+        return context.getUsage(new MethodUsage(context, r));
       }
       else if (tag.equals("classExtendsUsage")) {
-        return getUsage(new ClassExtendsUsage(context, r));
+        return context.getUsage(new ClassExtendsUsage(context, r));
       }
       else if (tag.equals("classNewUsage")) {
-        return getUsage(new ClassNewUsage(context, r));
+        return context.getUsage(new ClassNewUsage(context, r));
       }
       else {
-        return getUsage(new AnnotationUsage(context, r));
+        return context.getUsage(new AnnotationUsage(context, r));
       }
     }
   };

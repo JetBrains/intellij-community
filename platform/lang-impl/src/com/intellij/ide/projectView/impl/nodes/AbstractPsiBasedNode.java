@@ -24,6 +24,8 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.extensions.Extensions;
@@ -123,37 +125,43 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   // Should be called in atomic action
 
   public void update(final PresentationData data) {
-    if (!validate()) {
-      return;
-    }
-
-    final PsiElement value = extractPsiFromValue();
-    LOG.assertTrue(value.isValid());
-
-    int flags = getIconableFlags();
-
+    AccessToken token = ReadAction.start();
     try {
-      Icon icon = value.getIcon(flags);
-      data.setClosedIcon(icon);
-      data.setOpenIcon(icon);
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-    data.setPresentableText(myName);
-
-    try {
-      if (isDeprecated()) {
-        data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+      if (!validate()) {
+        return;
       }
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-    updateImpl(data);
-    for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
-      decorator.decorate(this, data);
-    }
 
-    Iconable.LastComputedIcon.put(value, data.getIcon(false), flags);
+      final PsiElement value = extractPsiFromValue();
+      LOG.assertTrue(value.isValid());
+
+      int flags = getIconableFlags();
+
+      try {
+        Icon icon = value.getIcon(flags);
+        data.setClosedIcon(icon);
+        data.setOpenIcon(icon);
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+      data.setPresentableText(myName);
+
+      try {
+        if (isDeprecated()) {
+          data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+        }
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+      updateImpl(data);
+      for (ProjectViewNodeDecorator decorator : Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
+        decorator.decorate(this, data);
+      }
+
+      Iconable.LastComputedIcon.put(value, data.getIcon(false), flags);
+    }
+    finally {
+      token.finish();
+    }
   }
 
   protected int getIconableFlags() {

@@ -20,7 +20,7 @@ class TypeRepr {
   }
 
   public static abstract class AbstractType implements RW.Writable {
-    public abstract void updateClassUsages(DependencyContext.S owner, UsageRepr.Cluster s);
+    public abstract void updateClassUsages(DependencyContext context, DependencyContext.S owner, UsageRepr.Cluster s);
     public abstract String getDescr(DependencyContext context);
   }
 
@@ -33,7 +33,7 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
 
     }
 
@@ -81,8 +81,8 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
-      elementType.updateClassUsages(owner, s);
+    public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+      elementType.updateClassUsages(context, owner, s);
     }
 
     ArrayType(final AbstractType elementType) {
@@ -120,8 +120,8 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
-      s.addUsage(owner, UsageRepr.createClassUsage(className));
+    public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+      s.addUsage(owner, UsageRepr.createClassUsage(context, className));
     }
 
     ClassType (final DependencyContext context, final BufferedReader r) {

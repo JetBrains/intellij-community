@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
+import org.jetbrains.jps.ClasspathKind;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
@@ -63,8 +64,9 @@ public class GroovyBuilder extends Builder {
       //groovy_rt.jar
       // IMPORTANT! must be the first in classpath
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
-      for (File file : context.getProjectPaths().getCompilationClasspath(chunk, context.isCompilingTests(), false)) {
-        cp.add(FileUtil.toSystemIndependentName(file.getPath()));
+
+      for (File file : context.getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(context.isCompilingTests()), false)) {
+        cp.add(FileUtil.toCanonicalPath(file.getPath()));
       }
 
       final File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);

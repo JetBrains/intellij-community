@@ -135,6 +135,10 @@
       <skipForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignaturePassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>

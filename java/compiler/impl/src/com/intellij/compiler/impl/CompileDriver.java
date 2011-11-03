@@ -572,6 +572,12 @@ public class CompileDriver {
               finish - start
             );
             CompilerCacheManager.getInstance(myProject).flushCaches();
+
+            final Set<File> outputs = new HashSet<File>();
+            for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+              outputs.add(new File(path));
+            }
+            CompilerUtil.refreshIODirectories(outputs);
           }
         }
       };

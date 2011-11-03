@@ -31,9 +31,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -337,12 +335,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     @Nullable
     public String getInfo() {
+      AccessToken token = ReadAction.start();
       try {
         return generateInfo(myTargetElement, myElementAtPointer);
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myTargetElement.getProject());
         return null;
+      }
+      finally {
+        token.finish();
       }
     }
 

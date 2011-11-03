@@ -52,6 +52,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
   }
 
   public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+    if (myProject.isDisposed()) return;
     ProjectView projectView = ProjectView.getInstance(myProject);
     final TreePath path = event.getPath();
     if (path == null) return;

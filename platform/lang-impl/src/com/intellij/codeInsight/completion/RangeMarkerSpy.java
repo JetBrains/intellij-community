@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 10, 2002
- * Time: 5:54:59 PM
- * To change template for new interface use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
-package com.intellij.openapi.editor.ex;
+package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.impl.MutableInterval;
-import com.intellij.openapi.util.Segment;
 
-public interface RangeMarkerEx extends RangeMarker, MutableInterval, Segment {
-  void documentChanged(DocumentEvent e);
+/**
+ * @author peter
+ */
+public abstract class RangeMarkerSpy extends DocumentAdapter {
+  private final RangeMarker myMarker;
 
-  long getId();
+  public RangeMarkerSpy(RangeMarker marker) {
+    myMarker = marker;
+    assert myMarker.isValid();
+  }
+
+  protected abstract void invalidated(DocumentEvent e);
+
+  @Override
+  public void documentChanged(DocumentEvent e) {
+    if (!myMarker.isValid()) {
+      invalidated(e);
+    }
+  }
 }

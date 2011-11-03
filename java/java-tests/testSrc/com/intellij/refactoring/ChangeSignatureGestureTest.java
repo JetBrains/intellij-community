@@ -73,6 +73,18 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     doTypingTest("param");
   }
 
+  public void testSpaces() {
+    doTypingNoBorderTest("   ");
+  }
+
+  public void testNoUsages() {
+    doTypingNoBorderTest("int param");
+  }
+
+  public void testOccurrencesInSameFile() {
+    doTypingTest("int param");
+  }
+
   public void testNewParam() {
     doTypingTest(", int param");
   }

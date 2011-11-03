@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.ether.dependencyView;
 
-/*
+import java.util.Collection;
+import java.util.Map;
+
+/**
  * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 10, 2002
- * Time: 5:54:59 PM
- * To change template for new interface use 
- * Code Style | Class Templates options (Tools | IDE Options).
+ * User: db
+ * Date: 03.11.11
+ * Time: 21:01
+ * To change this template use File | Settings | File Templates.
  */
-package com.intellij.openapi.editor.ex;
-
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.impl.MutableInterval;
-import com.intellij.openapi.util.Segment;
-
-public interface RangeMarkerEx extends RangeMarker, MutableInterval, Segment {
-  void documentChanged(DocumentEvent e);
-
-  long getId();
+interface Maplet<K, V> extends Map<K, Collection<V>> {
+  Collection<V> put(final K key, final V value);
+  void removeFrom(final K key, final V value);
+  void close();
 }
