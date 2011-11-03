@@ -847,6 +847,11 @@ public class GitLogUI implements Disposable {
       group.add(myStructureFilterAction.asTextAction());
       group.add(new Separator());
       group.add(myRefreshAction);
+      final CustomShortcutSet refreshShortcut =
+        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myJBTable);
+      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myGraphGutter.getComponent());
+
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
   }
