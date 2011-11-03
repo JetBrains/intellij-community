@@ -266,7 +266,7 @@ class ClassfileAnalyzer {
     RetentionPolicy policy = null;
 
     private FoxyMap.CollectionConstructor<ElementType> elementTypeSetConstructor = new FoxyMap.CollectionConstructor<ElementType>() {
-      public Collection<ElementType> create() {
+      public Set<ElementType> create() {
         return new HashSet<ElementType>();
       }
     };
@@ -327,7 +327,7 @@ class ClassfileAnalyzer {
     @Override
     public void visitEnd() {
       for (TypeRepr.ClassType type : annotationTargets.keySet()) {
-        final Collection<ElementType> targets = annotationTargets.foxyGet(type);
+        final Collection<ElementType> targets = annotationTargets.get(type);
         final Set<DependencyContext.S> usedArguments = annotationArguments.get(type);
 
         annotationUsages.add(UsageRepr.createAnnotationUsage(type, usedArguments, targets));

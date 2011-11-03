@@ -26,20 +26,20 @@ public class Mappings implements RW.Writable {
   private final DependencyContext context;
 
   private static FoxyMap.CollectionConstructor<ClassRepr> classSetConstructor = new FoxyMap.CollectionConstructor<ClassRepr>() {
-    public Collection<ClassRepr> create() {
+    public Set<ClassRepr> create() {
       return new HashSet<ClassRepr>();
     }
   };
 
   private static FoxyMap.CollectionConstructor<UsageRepr.Usage> usageSetConstructor = new FoxyMap.CollectionConstructor<UsageRepr.Usage>() {
-    public Collection<UsageRepr.Usage> create() {
+    public Set<UsageRepr.Usage> create() {
       return new HashSet<UsageRepr.Usage>();
     }
   };
 
   private static FoxyMap.CollectionConstructor<DependencyContext.S> stringSetConstructor =
     new FoxyMap.CollectionConstructor<DependencyContext.S>() {
-      public Collection<DependencyContext.S> create() {
+      public Set<DependencyContext.S> create() {
         return new HashSet<DependencyContext.S>();
       }
     };
@@ -158,7 +158,7 @@ public class Mappings implements RW.Writable {
     final DependencyContext.S source = classToSourceFile.get(name);
 
     if (source != null) {
-      final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(source);
+      final Collection<ClassRepr> reprs = sourceFileToClasses.get(source);
 
       if (reprs != null) {
         for (ClassRepr repr : reprs) {
@@ -189,7 +189,7 @@ public class Mappings implements RW.Writable {
       }
 
       for (ClassRepr c : classes) {
-        final Collection<DependencyContext.S> depClasses = delta.classToClassDependency.foxyGet(c.name);
+        final Collection<DependencyContext.S> depClasses = delta.classToClassDependency.get(c.name);
 
         if (depClasses != null) {
           for (DependencyContext.S className : depClasses) {
@@ -221,7 +221,7 @@ public class Mappings implements RW.Writable {
           acc.add(reflcass);
         }
 
-        final Collection<DependencyContext.S> subclasses = classToSubclasses.foxyGet(reflcass);
+        final Collection<DependencyContext.S> subclasses = classToSubclasses.get(reflcass);
 
         if (subclasses != null) {
           for (DependencyContext.S subclass : subclasses) {
@@ -382,7 +382,7 @@ public class Mappings implements RW.Writable {
         }
       }
 
-      final Collection<DependencyContext.S> depClasses = classToClassDependency.foxyGet(fileName);
+      final Collection<DependencyContext.S> depClasses = classToClassDependency.get(fileName);
 
       if (depClasses != null) {
         dependants.addAll(depClasses);
@@ -390,7 +390,7 @@ public class Mappings implements RW.Writable {
 
       affectedFiles.add(new File(context.getValue(fileName)));
 
-      final Collection<DependencyContext.S> directSubclasses = classToSubclasses.foxyGet(className);
+      final Collection<DependencyContext.S> directSubclasses = classToSubclasses.get(className);
 
       if (directSubclasses != null) {
         for (DependencyContext.S subClass : directSubclasses) {
@@ -407,7 +407,7 @@ public class Mappings implements RW.Writable {
       affectedUsages.add(rootUsage);
 
       for (DependencyContext.S p : subclasses) {
-        final Collection<DependencyContext.S> deps = classToClassDependency.foxyGet(p);
+        final Collection<DependencyContext.S> deps = classToClassDependency.get(p);
 
         if (deps != null) {
           dependents.addAll(deps);
@@ -426,7 +426,7 @@ public class Mappings implements RW.Writable {
       affectedUsages.add(rootUsage);
 
       for (DependencyContext.S p : subclasses) {
-        final Collection<DependencyContext.S> deps = classToClassDependency.foxyGet(p);
+        final Collection<DependencyContext.S> deps = classToClassDependency.get(p);
 
         if (deps != null) {
           dependents.addAll(deps);
@@ -437,7 +437,7 @@ public class Mappings implements RW.Writable {
     }
 
     void affectAll(final DependencyContext.S className, final Collection<File> affectedFiles) {
-      final Set<DependencyContext.S> dependants = (Set<DependencyContext.S>)classToClassDependency.foxyGet(className);
+      final Set<DependencyContext.S> dependants = (Set<DependencyContext.S>)classToClassDependency.get(className);
 
       if (dependants != null) {
         for (DependencyContext.S depClass : dependants) {
@@ -530,7 +530,7 @@ public class Mappings implements RW.Writable {
 
     if (removed != null) {
       for (String file : removed) {
-        final Collection<ClassRepr> classes = sourceFileToClasses.foxyGet(context.get(file));
+        final Collection<ClassRepr> classes = sourceFileToClasses.get(context.get(file));
 
         if (classes != null) {
           for (ClassRepr c : classes) {
@@ -545,8 +545,8 @@ public class Mappings implements RW.Writable {
         continue;
       }
 
-      final Set<ClassRepr> classes = (Set<ClassRepr>)delta.sourceFileToClasses.foxyGet(fileName);
-      final Set<ClassRepr> pastClasses = (Set<ClassRepr>)sourceFileToClasses.foxyGet(fileName);
+      final Set<ClassRepr> classes = (Set<ClassRepr>)delta.sourceFileToClasses.get(fileName);
+      final Set<ClassRepr> pastClasses = (Set<ClassRepr>)sourceFileToClasses.get(fileName);
       final Set<DependencyContext.S> dependants = new HashSet<DependencyContext.S>();
 
       self.appendDependents(pastClasses, dependants);
@@ -752,7 +752,7 @@ public class Mappings implements RW.Writable {
           final boolean fPLocal = !fPrivate && !fProtected && !fPublic;
 
           if (!fPrivate) {
-            final Collection<DependencyContext.S> subClasses = classToSubclasses.foxyGet(it.name);
+            final Collection<DependencyContext.S> subClasses = classToSubclasses.get(it.name);
 
             if (subClasses != null) {
               for (final DependencyContext.S subClass : subClasses) {
@@ -775,7 +775,7 @@ public class Mappings implements RW.Writable {
                 final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, subClass);
                 u.affectFieldUsages(f, propagated, f.createUsage(context, subClass), affectedUsages, dependants);
 
-                final Collection<DependencyContext.S> deps = classToClassDependency.foxyGet(subClass);
+                final Collection<DependencyContext.S> deps = classToClassDependency.get(subClass);
 
                 if (deps != null) {
                   dependants.addAll(deps);
@@ -886,7 +886,7 @@ public class Mappings implements RW.Writable {
       }
 
       for (ClassRepr c : classDiff.added()) {
-        final Collection<DependencyContext.S> depClasses = classToClassDependency.foxyGet(c.name);
+        final Collection<DependencyContext.S> depClasses = classToClassDependency.get(c.name);
 
         if (depClasses != null) {
           for (DependencyContext.S depClass : depClasses) {
@@ -948,7 +948,7 @@ public class Mappings implements RW.Writable {
             }
 
             if (annotationQuery.size() > 0) {
-              final Collection<UsageRepr.Usage> annotationUsages = sourceFileToAnnotationUsages.foxyGet(depFile);
+              final Collection<UsageRepr.Usage> annotationUsages = sourceFileToAnnotationUsages.get(depFile);
 
               for (UsageRepr.Usage usage : annotationUsages) {
                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
@@ -971,7 +971,7 @@ public class Mappings implements RW.Writable {
     if (removed != null) {
       for (String file : removed) {
         final DependencyContext.S key = context.get(file);
-        final Set<ClassRepr> classes = (Set<ClassRepr>)sourceFileToClasses.foxyGet(key);
+        final Set<ClassRepr> classes = (Set<ClassRepr>)sourceFileToClasses.get(key);
         final UsageRepr.Cluster cluster = sourceFileToUsages.get(key);
         final Set<UsageRepr.Usage> usages = cluster == null ? null : cluster.getUsages();
 
@@ -1013,8 +1013,8 @@ public class Mappings implements RW.Writable {
     classToSourceFile.putAll(delta.classToSourceFile);
 
     for (DependencyContext.S file : delta.classToClassDependency.keySet()) {
-      final Collection<DependencyContext.S> now = delta.classToClassDependency.foxyGet(file);
-      final Collection<DependencyContext.S> past = classToClassDependency.foxyGet(file);
+      final Collection<DependencyContext.S> now = delta.classToClassDependency.get(file);
+      final Collection<DependencyContext.S> past = classToClassDependency.get(file);
 
       if (past == null) {
         classToClassDependency.put(file, now);
@@ -1114,7 +1114,7 @@ public class Mappings implements RW.Writable {
 
   @Nullable
   public Set<ClassRepr> getClasses(final String sourceFileName) {
-    return (Set<ClassRepr>)sourceFileToClasses.foxyGet(context.get(sourceFileName));
+    return (Set<ClassRepr>)sourceFileToClasses.get(context.get(sourceFileName));
   }
 
   @Nullable
