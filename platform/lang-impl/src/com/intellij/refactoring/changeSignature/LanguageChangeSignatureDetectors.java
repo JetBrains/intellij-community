@@ -15,17 +15,17 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 
 /**
-* User: anna
-* Date: Sep 9, 2010
-*/
+ * User: anna
+ * Date: Sep 9, 2010
+ */
 class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeSignatureDetector> {
   public static final LanguageChangeSignatureDetectors INSTANCE = new LanguageChangeSignatureDetectors();
 
@@ -33,9 +33,22 @@ class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeS
     super("com.intellij.changeSignatureDetector");
   }
 
-  @Nullable
-  protected static ChangeInfo createCurrentChangeInfo(@NotNull PsiElement element, @Nullable ChangeInfo changeInfo) {
-    final LanguageChangeSignatureDetector detector = INSTANCE.forLanguage(element.getLanguage());
-    return detector != null ? detector.createCurrentChangeSignature(element, changeInfo) : null;
+  static boolean skipElement(PsiNamedElement psiNamedElement, String initialName) {
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(psiNamedElement.getProject());
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(psiNamedElement.getProject());
+    if (initialName == null) return true;
+    PsiFile containingFile = psiNamedElement.getContainingFile();
+    final PsiSearchHelper.SearchCostResult cheapEnoughToSearch = searchHelper.isCheapEnoughToSearch(initialName, scope, containingFile, progressManager.getProgressIndicator());
+    if (cheapEnoughToSearch == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES){
+      String text = containingFile.getText();
+      int idx = text.indexOf(initialName);
+      //check another occurrences in the same file
+      if (idx > 0 && text.indexOf(initialName, idx + initialName.length()) > 0) {
+        return false;
+      }
+      return true;
+    }
+    return false;
   }
 }

@@ -28,17 +28,17 @@ import org.jetbrains.annotations.Nullable;
 public interface LanguageChangeSignatureDetector {
   String MOVE_PARAMETER = "Parameter Move";
 
-  @Nullable
-  ChangeInfo createCurrentChangeSignature(final @NotNull PsiElement element,
-                                          final @Nullable ChangeInfo changeInfo);
+  @Nullable ChangeInfo createInitialChangeInfo(final @NotNull PsiElement element);
+  @Nullable String extractSignature(PsiElement child, @NotNull ChangeInfo initialChangeInfo);
+  boolean ignoreChanges(PsiElement element);
+  @Nullable ChangeInfo createNextChangeInfo(String signature, @NotNull ChangeInfo currentInfo, String initialName);
 
-  boolean accept(ChangeInfo changeInfo, @NotNull String oldText, boolean silently);
+  boolean performChange(ChangeInfo changeInfo, ChangeInfo initialChangeInfo, @NotNull String oldText, boolean silently);
 
-  boolean isChangeSignatureAvailable(PsiElement element, ChangeInfo currentInfo);
+  boolean isChangeSignatureAvailableOnElement(PsiElement element, ChangeInfo currentInfo);
+  @Nullable TextRange getHighlightingRange(ChangeInfo changeInfo);
+
 
   boolean isMoveParameterAvailable(PsiElement parameter, boolean left);
-
   void moveParameter(PsiElement parameter, Editor editor, boolean left);
-
-  boolean ignoreChanges(PsiElement element);
 }
