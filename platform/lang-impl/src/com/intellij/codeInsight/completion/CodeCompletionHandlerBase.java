@@ -799,7 +799,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  public static Runnable rememberDocumentState(final Editor editor) {
+  public static Runnable rememberDocumentState(final Editor _editor) {
+    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(_editor);
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();
     final int selStart = editor.getSelectionModel().getSelectionStart();
@@ -872,7 +873,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     @Override
     public int getTailOffset() {
       int offset = super.getTailOffset();
-      if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset()) {
+      if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset() && offset > 0) {
         watchTail(offset);
       }
 
