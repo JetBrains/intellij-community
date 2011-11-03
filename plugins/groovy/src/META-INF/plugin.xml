@@ -988,7 +988,6 @@
             text="Convert to Java"
             description="Convert Groovy files to Java">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
-      <keyboard-shortcut first-keystroke="alt shift j" keymap="$default"/>
     </action>
 
     <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction" text="get PsiType" description="" internal = "true">
