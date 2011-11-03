@@ -253,6 +253,13 @@ public class BigTableTableModel extends AbstractTableModel {
                             pair.getSecond() != null && pair.getSecond().equals(commitI.getHash()));
   }
 
+  public void setHeadIfEmpty(VirtualFile root, AbstractHash headHash) {
+    final TreeHighlighter treeHighlighter = myTreeHighlighter.get(root);
+    if (treeHighlighter != null && treeHighlighter.getPoint() == null) {
+      setHead(root, headHash);
+    }
+  }
+
   public void setHead(VirtualFile root, AbstractHash headHash) {
     final TreeHighlighter treeHighlighter = myTreeHighlighter.get(root);
     if (treeHighlighter != null) {
@@ -488,9 +495,19 @@ public class BigTableTableModel extends AbstractTableModel {
         myRunningRepoIdxs.put(vf, 0);
         myIdxMap.clear();
       }
-      myTreeHighlighter.clear();
       for (VirtualFile virtualFile : myOrder) {
-        myTreeHighlighter.put(virtualFile, new TreeHighlighter(this, virtualFile, -1));
+        if (! myTreeHighlighter.containsKey(virtualFile)) {
+          myTreeHighlighter.put(virtualFile, new TreeHighlighter(this, virtualFile, -1));
+        }
+      }
+      for (Iterator<VirtualFile> iterator = myTreeHighlighter.keySet().iterator(); iterator.hasNext(); ) {
+        VirtualFile root = iterator.next();
+        if (! myOrder.contains(root)) {
+          iterator.remove();
+        } else {
+          final TreeHighlighter highlighter = myTreeHighlighter.get(root);
+          highlighter.setPoint(highlighter.getPoint());
+        }
       }
     } else {
       myCurrentComparator = CommitIReorderingInsideOneRepoComparator.getInstance();
