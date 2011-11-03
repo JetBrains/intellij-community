@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
@@ -85,7 +86,7 @@ public class ToolRunProfile implements ModuleRunProfile{
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
-        final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }
