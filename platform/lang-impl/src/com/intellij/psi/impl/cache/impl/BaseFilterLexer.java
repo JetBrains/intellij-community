@@ -105,7 +105,8 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   }
 
   protected final void addOccurrenceInToken(final int occurrenceMask) {
-    myOccurrenceConsumer.addOccurrence(getBufferSequence(), getTokenStart(), getTokenEnd(), occurrenceMask);
+    if (myCachedBufferSequence == null) myCachedBufferSequence = getBufferSequence();
+    myOccurrenceConsumer.addOccurrence(myCachedBufferSequence, getTokenStart(), getTokenEnd(), occurrenceMask);
   }
 
   protected final void scanWordsInToken(final int occurrenceMask, boolean mayHaveFileRefs, final boolean mayHaveEscapes) {
