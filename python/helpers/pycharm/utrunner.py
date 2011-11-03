@@ -45,35 +45,28 @@ def loadSource(fileName):
   modules[moduleName] = module
   return module
 
-def walkModules(modules, dirname, names):
+def walkModules(modulesAndPattern, dirname, names):
+  modules = modulesAndPattern[0]
+  pattern = modulesAndPattern[1]
+  prog_list = [re.compile(pat.strip()) for pat in pattern.split(',')]
   for name in names:
-    if name.endswith(".py"):
-      modules.append(loadSource(os.path.join(dirname, name)))
+    for prog in prog_list:
+      if name.endswith(".py") and prog.match(name):
+        modules.append(loadSource(os.path.join(dirname, name)))
 
-def loadModulesFromFolderRec(folder):
+def loadModulesFromFolderRec(folder, pattern="test.*"):
   modules = []
   if PYTHON_VERSION_MAJOR == 3:
-    for root, dirs, files in os.walk(folder, walkModules, modules):
+    prog_list = [re.compile(pat.strip()) for pat in pattern.split(',')]
+    for root, dirs, files in os.walk(folder):
       for name in files:
-        if name.endswith(".py"):
-          modules.append(loadSource(os.path.join(root, name)))
-  else:
-    os.path.walk(folder, walkModules, modules)
+        for prog in prog_list:
+          if name.endswith(".py") and prog.match(name):
+            modules.append(loadSource(os.path.join(root, name)))
+  else:   # actually for jython compatibility
+    os.path.walk(folder, walkModules, (modules, pattern))
 
   return modules
-
-def loadModulesFromFolderUsingPattern(folder, pattern="test.*"):
-  ''' loads modules from folder ,
-      check if module name matches given pattern'''
-  modules = loadModulesFromFolderRec(folder)
-  prog_list = [re.compile(pat.strip()) for pat in pattern.split(',')]
-  result = []  
-
-  for module in modules:
-    for prog in prog_list:
-      if prog.match(module.__name__):
-        result.append(module)
-  return result
 
 testLoader = TestLoader()
 all = ContextSuite()
@@ -110,11 +103,11 @@ if __name__ == "__main__":
         # means we have pattern to match against
         if a_splitted[0].endswith("/"):
           debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
-          modules = loadModulesFromFolderUsingPattern(a_splitted[0], a_splitted[1])
+          modules = loadModulesFromFolderRec(a_splitted[0], a_splitted[1])
       else:
         if a[0].endswith("/"):
           debug("/ from folder " + a[0])
-          modules = loadModulesFromFolderUsingPattern(a[0])
+          modules = loadModulesFromFolderRec(a[0])
         else:
           debug("/ from module " + a[0])
           modules = [loadSource(a[0])]
