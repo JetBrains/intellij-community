@@ -32,6 +32,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   private final JBLabel myLabel = new JBLabel();
   private Comp myComponent;
   private String myLabelConstraints = BorderLayout.NORTH;
+  private JComponent myAnchor;
 
   public LabeledComponent() {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, 2));
@@ -49,6 +50,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   private void insertLabel() {
     remove(myLabel);
     add(myLabel, myLabelConstraints);
+    setAnchor(myLabel);
   }
 
   public void setText(String textWithMnemonic) {
@@ -142,11 +144,12 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
 
   @Override
   public JComponent getAnchor() {
-    return myLabel.getAnchor();
+    return myAnchor;
   }
 
   @Override
   public void setAnchor(@Nullable JComponent labelAnchor) {
+    myAnchor = labelAnchor;
     myLabel.setAnchor(labelAnchor);
   }
 

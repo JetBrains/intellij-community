@@ -31,13 +31,15 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
+import com.intellij.ui.PanelWithAnchor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> {
+public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> implements PanelWithAnchor {
   private CommonJavaParametersPanel myCommonProgramParameters;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMainClass;
   private LabeledComponent<JComboBox> myModule;
@@ -48,6 +50,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private JCheckBox myShowSwingInspectorCheckbox;
   private final JreVersionDetector myVersionDetector;
   private final Project myProject;
+  private JComponent myAnchor;
 
   public ApplicationConfigurable(final Project project) {
     myProject = project;
@@ -61,16 +64,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
     myVersionDetector = new JreVersionDetector();
 
-    settingAnchors();
-  }
-
-  private void settingAnchors() {
-    JComponent anchor = myCommonProgramParameters.getAnchor();
-    myMainClass.setAnchor(anchor);
-    myCommonProgramParameters.setAnchor(anchor);
-
-    anchor = myModule.getLabel();
-    myAlternativeJREPanel.setAnchor(anchor);
+    setAnchor(myModule.getAnchor());
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
@@ -136,5 +130,19 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
         return Visibility.NOT_VISIBLE;
       }
     }));
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return myAnchor;
+  }
+
+  @Override
+  public void setAnchor(@Nullable JComponent anchor) {
+    this.myAnchor = anchor;
+    myMainClass.setAnchor(anchor);
+    myCommonProgramParameters.setAnchor(anchor);
+    myAlternativeJREPanel.setAnchor(anchor);
+    myModule.setAnchor(anchor);
   }
 }

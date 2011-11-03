@@ -239,6 +239,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           updateWarning();
         }
       });
+
+      settingAnchor();
+    }
+
+    private void settingAnchor() {
     }
 
     public final JComponent getWholePanel() {

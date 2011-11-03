@@ -158,7 +158,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       }
     });
 
-    setAnchor(myModule.getLabel());
+    setAnchor(myVMParameters.getLabel());
   }
 
   private void removeParameter() {
