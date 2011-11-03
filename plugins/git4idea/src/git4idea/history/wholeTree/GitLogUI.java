@@ -2400,7 +2400,7 @@ public class GitLogUI implements Disposable {
 
   public class MyGotoCommitAction extends DumbAwareAction {
     public MyGotoCommitAction() {
-      super("Goto commit", "Goto commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/icons/goto.png"));
+      super("Goto Commit", "Goto commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/icons/goto.png"));
     }
 
     @Override
