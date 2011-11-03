@@ -46,9 +46,9 @@ import java.nio.charset.Charset;
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
-  public static final Key<Object> REQUESTOR_MARKER = new Key<Object>("REQUESTOR_MARKER");
-  private static final Key<byte[]> BOM_KEY = new Key<byte[]>("BOM");
-  private static final Key<Charset> CHARSET_KEY = new Key<Charset>("CHARSET");
+  public static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
+  private static final Key<byte[]> BOM_KEY = Key.create("BOM");
+  private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   protected VirtualFile() {
