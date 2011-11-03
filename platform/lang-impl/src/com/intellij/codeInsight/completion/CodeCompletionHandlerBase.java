@@ -312,7 +312,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.showLookup();
   }
 
-  private void checkNotSync(CompletionProgressIndicator indicator, LookupElement[] allItems) {
+  private static void checkNotSync(CompletionProgressIndicator indicator, LookupElement[] allItems) {
     if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
       LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -727,7 +727,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         if (context.shouldAddCompletionChar()) {
           int tailOffset = context.getTailOffset();
           if (tailOffset < 0) {
-            LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass());
+            LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
             tailOffset = editor.getCaretModel().getOffset();
           }
           else {
@@ -825,6 +825,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private static class WatchingInsertionContext extends InsertionContext {
     private RangeMarkerEx tailWatcher;
+    String invalidateTrace;
+    DocumentEvent killer;
+    private RangeMarkerSpy spy;
 
     public WatchingInsertionContext(CompletionProgressIndicator indicator, char completionChar, List<LookupElement> items, Editor editor) {
       super(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]),
@@ -842,13 +845,27 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     private void watchTail(int offset) {
       stopWatching();
       tailWatcher = (RangeMarkerEx)getDocument().createRangeMarker(offset, offset);
-      tailWatcher.trackInvalidation(true);
       tailWatcher.setGreedyToRight(true);
+      spy = new RangeMarkerSpy(tailWatcher) {
+        @Override
+        protected void invalidated(DocumentEvent e) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            LOG.error("Tail offset invalidated, say thanks to the "+ e);
+          }
+
+          if (invalidateTrace == null) {
+            invalidateTrace = DebugUtil.currentStackTrace();
+            killer = e;
+          }
+        }
+      };
+      getDocument().addDocumentListener(spy);
     }
 
     void stopWatching() {
       if (tailWatcher != null) {
-        tailWatcher.trackInvalidation(false);
+        getDocument().removeDocumentListener(spy);
+        tailWatcher.dispose();
       }
     }
 
