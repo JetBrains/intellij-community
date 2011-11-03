@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -78,20 +79,24 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Module module = ModuleUtil.findModuleForPsiElement(file);
+    AnalysisScope analysisScope = new AnalysisScope(file);
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (file.isPhysical() || virtualFile == null || !virtualFile.isInLocalFileSystem()) {
+      analysisScope = new AnalysisScope(project);
+    }
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
                                                                       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
                                                                       project,
-                                                                      new AnalysisScope(file),
+                                                                      analysisScope,
                                                                       module != null ? module.getName() : null,
                                                                       true, AnalysisUIOptions.getInstance(project), file);
-    AnalysisScope scope = new AnalysisScope(file);
     dlg.show();
     if (!dlg.isOK()) return;
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-    scope = dlg.getScope(uiOptions, scope, project, module);
+    analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
     final InspectionProfileEntry baseTool =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
-    rerunInspection(baseTool, managerEx, scope, file);
+    rerunInspection(baseTool, managerEx, analysisScope, file);
   }
 
   public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
