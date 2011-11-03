@@ -1,5 +1,6 @@
 from pycharm.tcmessages import TeamcityServiceMessages
 import os
+import sys
 
 messages = TeamcityServiceMessages(prepend_linebreak=True)
 messages.testMatrixEntered()
@@ -11,9 +12,12 @@ except:
   PYVERSION = [int(x) for x in py.__version__.split(".")]
 
 def get_name(nodeid):
-    return nodeid.split("::")[-1]
+  return nodeid.split("::")[-1]
 
-if PYVERSION > [1,4,0]:
+def fspath_to_url(fspath):
+    return "file:///" + str(fspath).replace("\\", "/")
+
+if PYVERSION > [1, 4, 0]:
   items = {}
   current_suite = None
   current_file = None
@@ -68,10 +72,32 @@ if PYVERSION > [1,4,0]:
     if current_file_suite:
       messages.testSuiteFinished(current_file_suite)
 
-else:
-  def fspath_to_url(fspath):
-    return "file:///" + str(fspath).replace("\\", "/")
+  from _pytest.terminal import TerminalReporter
+  class PycharmTestReporter(TerminalReporter):
+    def __init__(self, config, file=None):
+      TerminalReporter.__init__(self, config, file)
 
+    def summary_errors(self):
+      reports = self.getreports('error')
+      if not reports:
+        return
+      for rep in self.stats['error']:
+        name = rep.nodeid.split("/")[-1]
+        location = None
+        if hasattr(rep, 'location'):
+          location, lineno, domain = rep.location
+
+        messages.testSuiteStarted(name, location=fspath_to_url(location))
+        messages.testStarted("<noname>", location=fspath_to_url(location))
+        TerminalReporter.summary_errors(self)
+        messages.testError("<noname>")
+        messages.testSuiteFinished(name)
+
+  def pytest_configure(config):
+    reporter = PycharmTestReporter(config, sys.stdout)
+    config.pluginmanager.register(reporter, 'terminalreporter')
+
+else:
   def pytest_collectstart(collector):
     if collector.name != "()":
       messages.testSuiteStarted(collector.name, location=fspath_to_url(collector.fspath))
