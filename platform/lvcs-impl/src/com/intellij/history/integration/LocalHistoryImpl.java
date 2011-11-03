@@ -21,7 +21,6 @@ import com.intellij.history.core.*;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +85,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
     CommandProcessor.getInstance().addCommandListener(myEventDispatcher);
 
-    VirtualFileManager fm = VirtualFileManagerEx.getInstance();
+    VirtualFileManager fm = VirtualFileManager.getInstance();
     fm.addVirtualFileListener(myEventDispatcher);
     fm.addVirtualFileManagerListener(myEventDispatcher);
 
@@ -100,7 +98,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   private void validateStorage() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
       LocalHistoryLog.LOG.info("Checking local history storage...");
       try {
         long before = Clock.getTime();
@@ -126,7 +124,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
     int period = Registry.intValue("localHistory.daysToKeep") * 1000 * 60 * 60 * 24;
 
-    VirtualFileManager fm = VirtualFileManagerEx.getInstance();
+    VirtualFileManager fm = VirtualFileManager.getInstance();
     fm.removeVirtualFileListener(myEventDispatcher);
     fm.removeVirtualFileManagerListener(myEventDispatcher);
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
