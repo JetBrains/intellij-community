@@ -1,4 +1,4 @@
-import sys
+import sys, shlex
 from utrunner import debug
 from nose_utils import TeamcityNoseRunner
 
@@ -51,7 +51,7 @@ def process_args():
     argv = ['nosetests']
 
     if len(sys.argv) > 2:
-      options = sys.argv[2].split()
+      options = shlex.split(sys.argv[2])
       argv.extend(options)
 
     argv.extend(tests)

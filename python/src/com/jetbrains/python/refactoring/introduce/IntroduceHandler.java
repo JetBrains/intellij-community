@@ -1,6 +1,8 @@
 package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -177,10 +179,16 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
       return;
     }
+    final Editor editor = operation.getEditor();
+    if (editor.getSettings().isVariableInplaceRenameEnabled()) {
+      final TemplateState templateState = TemplateManagerImpl.getTemplateState(operation.getEditor());
+      if (templateState != null && !templateState.isFinished()) {
+        return;
+      }
+    }
 
     PsiElement element1 = null;
     PsiElement element2 = null;
-    final Editor editor = operation.getEditor();
     final SelectionModel selectionModel = editor.getSelectionModel();
     boolean singleElementSelection = false;
     if (selectionModel.hasSelection()) {

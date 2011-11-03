@@ -7,7 +7,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +16,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonResolveUtil;
+import com.jetbrains.cython.psi.CythonFile;
 import com.jetbrains.cython.psi.CythonIncludeStatement;
 import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.django.util.PythonDataflowUtil;
@@ -33,7 +33,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -204,12 +207,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       uexpr = PyUtil.turnDirIntoInit(outerContextElement);
     }
     if (uexpr == null && CythonLanguageDialect.isInsideCythonFile(realContext)) {
-      final VirtualFile file = CythonResolveUtil.findImplicitDefinitionFile(realContext);
-      if (file != null) {
-        final PyFile implicit = CythonResolveUtil.toPyFile(realContext.getProject(), file);
-        if (implicit != null) {
-          uexpr = implicit.getElementNamed(referencedName);
-        }
+      final CythonFile implicit = CythonResolveUtil.findImplicitDefinitionFile(realContext);
+      if (implicit != null) {
+        uexpr = implicit.getElementNamed(referencedName);
       }
     }
     if (uexpr != null) {

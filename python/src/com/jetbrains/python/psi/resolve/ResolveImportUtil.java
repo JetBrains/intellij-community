@@ -170,15 +170,22 @@ public class ResolveImportUtil {
     final PsiFile file = importRef.getContainingFile();
     if (file == null || !file.isValid()) return Collections.emptyList();
 
-    final PsiElement parent =
-      PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
+    final PyElement parent = PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
+    final PyQualifiedName qname = importRef.asQualifiedName();
     if (parent instanceof PyImportElement) {
       PyImportElement import_element = (PyImportElement)parent;
-      return multiResolveImportElement(import_element, importRef.asQualifiedName());
+      return multiResolveImportElement(import_element, qname);
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
       PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
-      return resolveFromImportStatementSource(from_import_statement, importRef.asQualifiedName());
+      final List<PsiElement> results = resolveFromImportStatementSource(from_import_statement, qname);
+      if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
+        final PyQualifiedName importedQName = PyQualifiedName.fromComponents(qname.getLastComponent());
+        final PyQualifiedName containingQName = qname.removeLastComponent();
+        final PsiElement result = resolveForeignImport(parent, importedQName, containingQName);
+        return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
+      }
+      return results;
     }
     return Collections.emptyList();
   }
@@ -541,9 +548,9 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveForeignImport(final PyElement importElement,
-                                                 final PyQualifiedName importText,
-                                                 final PyQualifiedName importFrom) {
+  private static PsiElement resolveForeignImport(@NotNull final PyElement importElement,
+                                                 @NotNull final PyQualifiedName importText,
+                                                 @Nullable final PyQualifiedName importFrom) {
     for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
       PsiElement result = resolver.resolveImportReference(importElement, importText, importFrom);
       if (result != null) {
