@@ -327,6 +327,19 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(CythonFunction.class, "foo");
   }
 
+  // PY-4946
+  public void testCythonCdefClassAttributeInDefinition() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyExpression value = target.findAssignedValue();
+    assertNotNull(value);
+    final PsiReference ref = value.getReference();
+    assertNotNull(ref);
+    final PsiElement field = ref.resolve();
+    assertNotNull(field);
+    assertInstanceOf(field, CythonVariable.class);
+    assertEquals("x", ((PsiNamedElement)field).getName());
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
