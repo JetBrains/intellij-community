@@ -361,10 +361,4 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return true;
   }
 
-  @Override
-  void reportInvalidation(RangeMarkerEx markerEx, Object reason) {
-    if (markerEx.isTrackInvalidation()) {
-      LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+ reason);
-    }
-  }
 }
