@@ -36,7 +36,7 @@ public class GitPushDialog extends DialogWrapper {
   private Project myProject;
   private final Collection<GitRepository> myRepositories;
   private final GitPusher myPusher;
-  private final GitLogMultiRepoMultiBranch myListPanel;
+  private final GitPushLog myListPanel;
   private GitCommitsByRepoAndBranch myGitCommitsToPush;
   private GitPushSpec myPushSpec = new GitPushSpec(null, "");
 
@@ -46,7 +46,7 @@ public class GitPushDialog extends DialogWrapper {
     myRepositories = repositories;
     myPusher = new GitPusher(myProject);
 
-    myListPanel = new GitLogMultiRepoMultiBranch(myProject);
+    myListPanel = new GitPushLog(myProject);
 
     init();
     setOKButtonText("Push");
@@ -74,7 +74,7 @@ public class GitPushDialog extends DialogWrapper {
     return commitListPanel;
   }
 
-  private void loadCommitsInBackground(final GitLogMultiRepoMultiBranch myListPanel, final JBLoadingPanel loadingPanel) {
+  private void loadCommitsInBackground(final GitPushLog myListPanel, final JBLoadingPanel loadingPanel) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpec);

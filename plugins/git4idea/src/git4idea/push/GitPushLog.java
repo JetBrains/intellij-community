@@ -51,7 +51,7 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataProvider {
+class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   private final Project myProject;
   private ChangesBrowser myChangesBrowser;
@@ -60,7 +60,7 @@ public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataPr
   private final DefaultMutableTreeNode myRootNode;
   Map<GitRepository, Boolean> mySelectedRepositories = new HashMap<GitRepository, Boolean>();
 
-  public GitLogMultiRepoMultiBranch(@NotNull Project project) {
+  GitPushLog(@NotNull Project project) {
     myProject = project;
 
     for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
@@ -156,7 +156,7 @@ public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataPr
     return myTree;
   }
 
-  public void setCommits(GitCommitsByRepoAndBranch commits) {
+  void setCommits(GitCommitsByRepoAndBranch commits) {
     insertToRootNode(myRootNode, createNodesForRepositories(commits));
     myTreeModel.reload(myRootNode);
     TreeUtil.expandAll(myTree);
@@ -166,7 +166,7 @@ public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataPr
   /**
    * @return repositories selected (via checkboxes) to be pushed.
    */
-  public Collection<GitRepository> getSelectedRepositories() {
+  Collection<GitRepository> getSelectedRepositories() {
     Collection<GitRepository> repositories = new ArrayList<GitRepository>(mySelectedRepositories.size());
     for (Map.Entry<GitRepository, Boolean> entry : mySelectedRepositories.entrySet()) {
       if (entry.getValue()) {
