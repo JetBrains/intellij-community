@@ -2067,6 +2067,10 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void update(AnActionEvent e) {
+      if (myThereAreFilters) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
       weNeedOneCommitSelected(e);
     }
   }
@@ -2113,6 +2117,10 @@ public class GitLogUI implements Disposable {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
@@ -2129,6 +2137,10 @@ public class GitLogUI implements Disposable {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
@@ -2155,6 +2167,10 @@ public class GitLogUI implements Disposable {
 
       @Override
       public void update(AnActionEvent e) {
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         weNeedOneCommitSelected(e);
       }
     };
@@ -2177,6 +2193,10 @@ public class GitLogUI implements Disposable {
 
       @Override
       public void update(AnActionEvent e) {
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         weNeedOneCommitSelected(e);
       }
     };
@@ -2202,6 +2222,12 @@ public class GitLogUI implements Disposable {
     };*/
 
       myAnActions = new AnAction[]{myAllHeads, myClearAll, new Separator(), myHead, myClear};
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(! myThereAreFilters);
     }
 
     @NotNull
