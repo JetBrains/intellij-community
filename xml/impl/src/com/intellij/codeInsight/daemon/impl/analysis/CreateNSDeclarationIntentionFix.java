@@ -217,7 +217,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final int[] wordsFoundCount = new int[1];
 
     IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
-      public void run(final CharSequence chars, int start, int end) {
+      public void run(final CharSequence chars, @Nullable char[] charsArray, int start, int end) {
         if (wordsFoundCount[0] == words.length) return;
         final int foundWordLen = end - start;
 

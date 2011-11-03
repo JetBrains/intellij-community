@@ -36,7 +36,7 @@ public class TodoOccurrenceConsumer implements BaseFilterLexer.OccurrenceConsume
   }
   
   @Override
-  public void addOccurrence(final CharSequence charSequence, final int start, final int end, final int occurrenceMask) {
+  public void addOccurrence(final CharSequence charSequence, char[] charArray, final int start, final int end, final int occurrenceMask) {
     // empty
   }
 

@@ -64,7 +64,7 @@ public class IdTableBuilding {
   }
 
   public interface ScanWordProcessor {
-    void run(CharSequence chars, int start, int end);
+    void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
@@ -75,8 +75,12 @@ public class IdTableBuilding {
       final CharSequence chars = inputData.getContentAsText();
       scanWords(new ScanWordProcessor() {
         @Override
-        public void run(final CharSequence chars11, final int start, final int end) {
-          consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+        public void run(final CharSequence chars11, @Nullable char[] charsArray, final int start, final int end) {
+          if (charsArray != null) {
+            consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+          } else {
+            consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+          }
         }
       }, chars, 0, chars.length());
       return consumer.getResult();
@@ -409,7 +413,7 @@ public class IdTableBuilding {
       }
       if (index - index1 > 100) continue; // Strange limit but we should have some!
 
-      processor.run(chars, index1, index);
+      processor.run(chars, charArray, index1, index);
     }
   }
 

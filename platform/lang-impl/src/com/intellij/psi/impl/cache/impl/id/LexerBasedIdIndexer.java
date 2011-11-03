@@ -52,10 +52,14 @@ public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
     public OccurrenceToIdDataConsumerAdapter(final IdDataConsumer indexDataConsumer) {
       myIndexDataConsumer = indexDataConsumer;
     }
-    
+
     @Override
-    public void addOccurrence(final CharSequence charSequence, final int start, final int end, final int occurrenceMask) {
-      myIndexDataConsumer.addOccurrence(charSequence, start, end, occurrenceMask);
+    public void addOccurrence(final CharSequence charSequence, char[] charArray, final int start, final int end, final int occurrenceMask) {
+      if (charArray != null) {
+        myIndexDataConsumer.addOccurrence(charArray, start, end, occurrenceMask);
+      } else {
+        myIndexDataConsumer.addOccurrence(charSequence, start, end, occurrenceMask);
+      }
     }
 
     @Override

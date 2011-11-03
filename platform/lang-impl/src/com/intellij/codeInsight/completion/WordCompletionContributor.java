@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -121,7 +122,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
 
     final CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      public void run(final CharSequence chars, final int start, final int end) {
+      public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
         if (start > offset || offset > end) {
           words.add(chars.subSequence(start, end).toString());
         }

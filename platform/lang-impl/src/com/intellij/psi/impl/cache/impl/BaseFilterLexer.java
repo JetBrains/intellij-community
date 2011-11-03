@@ -21,6 +21,8 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,9 +34,10 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   private int myOccurenceMask;
   private TodoScanningData[] myTodoScanningData;
   private CharSequence myCachedBufferSequence;
+  private char[] myCachedArraySequence;
 
   public interface OccurrenceConsumer {
-    void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
+    void addOccurrence(CharSequence charSequence, @Nullable char[] charArray, int start, int end, int occurrenceMask);
 
     boolean canConsumeTodoOccurrences();
     void incTodoOccurrence(IndexPattern pattern);
@@ -100,35 +103,33 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   }
 
   @Override
-  public final void run(CharSequence chars, int start, int end) {
-    myOccurrenceConsumer.addOccurrence(chars, start, end, myOccurenceMask);
+  public final void run(CharSequence chars, @Nullable char[] charsArray, int start, int end) {
+    myOccurrenceConsumer.addOccurrence(chars, charsArray, start, end, myOccurenceMask);
   }
 
   protected final void addOccurrenceInToken(final int occurrenceMask) {
-    if (myCachedBufferSequence == null) myCachedBufferSequence = getBufferSequence();
-    myOccurrenceConsumer.addOccurrence(myCachedBufferSequence, getTokenStart(), getTokenEnd(), occurrenceMask);
+    myOccurrenceConsumer.addOccurrence(myCachedBufferSequence, myCachedArraySequence, getTokenStart(), getTokenEnd(), occurrenceMask);
   }
 
   protected final void scanWordsInToken(final int occurrenceMask, boolean mayHaveFileRefs, final boolean mayHaveEscapes) {
     myOccurenceMask = occurrenceMask;
     final int start = getTokenStart();
     final int end = getTokenEnd();
-    if (myCachedBufferSequence == null) myCachedBufferSequence = getBufferSequence();
-    IdTableBuilding.scanWords(this, myCachedBufferSequence, null, start, end, mayHaveEscapes);
+    IdTableBuilding.scanWords(this, myCachedBufferSequence, myCachedArraySequence, start, end, mayHaveEscapes);
 
     if (mayHaveFileRefs) {
-      processPossibleComplexFileName(myCachedBufferSequence, start, end);
+      processPossibleComplexFileName(myCachedBufferSequence, myCachedArraySequence, start, end);
     }
   }
-  
-  private void processPossibleComplexFileName(CharSequence chars, int startOffset, int endOffset) {
+
+  private void processPossibleComplexFileName(CharSequence chars, char[] cachedArraySequence, int startOffset, int endOffset) {
     int offset = findCharsWithinRange(chars, startOffset, endOffset, "/\\");
     offset = Math.min(offset, endOffset);
     int start = startOffset;
 
     while(start < endOffset) {
       if (start != offset) {
-        myOccurrenceConsumer.addOccurrence(chars, start, offset, UsageSearchContext.IN_FOREIGN_LANGUAGES);
+        myOccurrenceConsumer.addOccurrence(chars, cachedArraySequence, start, offset, UsageSearchContext.IN_FOREIGN_LANGUAGES);
       }
       start = offset + 1;
       offset = Math.min(endOffset, findCharsWithinRange(chars, start, endOffset, "/\\"));
@@ -145,5 +146,11 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
 
     return startOffset;
   }
-  
+
+  @Override
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    super.start(buffer, startOffset, endOffset, initialState);
+    myCachedBufferSequence = getBufferSequence();
+    myCachedArraySequence = CharArrayUtil.fromSequenceWithoutCopying(myCachedBufferSequence);
+  }
 }
