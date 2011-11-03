@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,6 +34,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
 
   private static final JavaClassReferenceProvider JVM_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
   private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
+  private static final CanonicalPsiTypeConverterImpl CANONICAL_PSI_TYPE_CONVERTER = new CanonicalPsiTypeConverterImpl();
 
   static {
     JVM_REFERENCE_PROVIDER.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
@@ -81,7 +83,9 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
 
       return null;
     }
-
+    if (Arrays.binarySearch(CanonicalPsiTypeConverterImpl.PRIMITIVES, s) >= 0) {
+      return JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createPrimitiveType(s);
+    }
     final PsiClass aClass1 = DomJavaUtil.findClass(s, context.getFile(), context.getModule(), null);
     return aClass1 == null ? null : createType(aClass1);
   }
@@ -145,6 +149,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
       }
       if (psiType != null) return PsiReference.EMPTY_ARRAY;
     }
-    return REFERENCE_PROVIDER.getReferencesByElement(element);
+    PsiReference[] references = REFERENCE_PROVIDER.getReferencesByElement(element);
+    return references.length == 1 ? CANONICAL_PSI_TYPE_CONVERTER.createReferences(value, element, context) : references;
   }
 }

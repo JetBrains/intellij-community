@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
-  @NonNls private static final String[] PRIMITIVES = new String[]{"boolean", "byte",
+  @NonNls static final String[] PRIMITIVES = new String[]{"boolean", "byte",
     "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
@@ -55,60 +55,60 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
     final String str = genericDomValue.getStringValue();
-    if (str != null) {
-      final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-      assert manipulator != null;
-      String trimmed = str.trim();
-      int offset = manipulator.getRangeInElement(element).getStartOffset() + str.indexOf(trimmed);
-      if (trimmed.startsWith(ARRAY_PREFIX)) {
-        offset += ARRAY_PREFIX.length();
-        if (trimmed.endsWith(";")) {
-          trimmed = trimmed.substring(ARRAY_PREFIX.length(), trimmed.length() - 1);
-        } else {
-          trimmed = trimmed.substring(ARRAY_PREFIX.length());          
-        }
-      }
-      return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
-        protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
-                                                     final boolean staticImport) {
-          return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport) {
-            public boolean isSoft() {
-              return true;
-            }
-
-            @NotNull
-            public JavaResolveResult advancedResolve(final boolean incompleteCode) {
-              PsiType type = genericDomValue.getValue();
-              if (type != null) {
-                type = type.getDeepComponentType();
-              }
-              if (type instanceof PsiPrimitiveType) {
-                return new CandidateInfo(element, PsiSubstitutor.EMPTY, false, false, element);
-              }
-
-              return super.advancedResolve(incompleteCode);
-            }
-
-            public void processVariants(final PsiScopeProcessor processor) {
-              if (processor instanceof JavaCompletionProcessor) {
-                ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
-              } else {
-                super.processVariants(processor);
-              }
-            }
-
-            @NotNull
-            public Object[] getVariants() {
-              final Object[] variants = super.getVariants();
-              if (myIndex == 0) {
-                return ArrayUtil.mergeArrays(variants, PRIMITIVES);
-              }
-              return variants;
-            }
-          };
-        }
-      }.getAllReferences();
+    if (str == null) {
+      return PsiReference.EMPTY_ARRAY;
     }
-    return PsiReference.EMPTY_ARRAY;
+    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
+    assert manipulator != null;
+    String trimmed = str.trim();
+    int offset = manipulator.getRangeInElement(element).getStartOffset() + str.indexOf(trimmed);
+    if (trimmed.startsWith(ARRAY_PREFIX)) {
+      offset += ARRAY_PREFIX.length();
+      if (trimmed.endsWith(";")) {
+        trimmed = trimmed.substring(ARRAY_PREFIX.length(), trimmed.length() - 1);
+      } else {
+        trimmed = trimmed.substring(ARRAY_PREFIX.length());
+      }
+    }
+    return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
+      protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
+                                                   final boolean staticImport) {
+        return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport) {
+          public boolean isSoft() {
+            return true;
+          }
+
+          @NotNull
+          public JavaResolveResult advancedResolve(final boolean incompleteCode) {
+            PsiType type = genericDomValue.getValue();
+            if (type != null) {
+              type = type.getDeepComponentType();
+            }
+            if (type instanceof PsiPrimitiveType) {
+              return new CandidateInfo(element, PsiSubstitutor.EMPTY, false, false, element);
+            }
+
+            return super.advancedResolve(incompleteCode);
+          }
+
+          public void processVariants(final PsiScopeProcessor processor) {
+            if (processor instanceof JavaCompletionProcessor) {
+              ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
+            } else {
+              super.processVariants(processor);
+            }
+          }
+
+          @NotNull
+          public Object[] getVariants() {
+            final Object[] variants = super.getVariants();
+            if (myIndex == 0) {
+              return ArrayUtil.mergeArrays(variants, PRIMITIVES);
+            }
+            return variants;
+          }
+        };
+      }
+    }.getAllReferences();
   }
 }

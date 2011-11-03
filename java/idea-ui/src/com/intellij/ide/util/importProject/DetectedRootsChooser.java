@@ -209,20 +209,15 @@ public class DetectedRootsChooser {
         rootTypes.add(projectRoot.getRootTypeName());
       }
     }
-    if (rootTypes.size() > 1) {
-      myModel.setColumnInfos(new ColumnInfo[]{myIncludedColumn, ROOT_COLUMN, ROOT_TYPE_COLUMN});
-      int max = 0;
-      for (String rootType : rootTypes) {
-        max = Math.max(max, myTable.getFontMetrics(myTable.getFont()).stringWidth(rootType));
-      }
-      final TableColumn column = myTable.getColumnModel().getColumn(2);
-      int width = max + 20;//add space for combobox button
-      column.setPreferredWidth(width);
-      column.setMaxWidth(width);
+    myModel.setColumnInfos(new ColumnInfo[]{myIncludedColumn, ROOT_COLUMN, ROOT_TYPE_COLUMN});
+    int max = 0;
+    for (String rootType : rootTypes) {
+      max = Math.max(max, myTable.getFontMetrics(myTable.getFont()).stringWidth(rootType));
     }
-    else {
-      myModel.setColumnInfos(new ColumnInfo[]{myIncludedColumn, ROOT_COLUMN});
-    }
+    final TableColumn column = myTable.getColumnModel().getColumn(2);
+    int width = max + 20;//add space for combobox button
+    column.setPreferredWidth(width);
+    column.setMaxWidth(width);
     myTable.updateColumnSizes();
     List<DetectedRootData> sortedRoots = new ArrayList<DetectedRootData>(roots);
     Collections.sort(sortedRoots, new Comparator<DetectedRootData>() {
