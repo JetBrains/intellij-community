@@ -287,7 +287,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
 
     private boolean myDisposing;
-    private IdeFrame myParent;
+    private final IdeFrame myParent;
 
     private String myFrameTitle;
     private String myFileTitle;

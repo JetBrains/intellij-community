@@ -81,7 +81,10 @@ class FrameDiffTool implements DiffTool {
     else {
       final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame(), frameWrapper);
-      if (diffPanel == null) return;
+      if (diffPanel == null) {
+        Disposer.dispose(frameWrapper);
+        return;
+      }
       if (hints.contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
         diffPanel.setPatchAppliedApproximately();
       }
