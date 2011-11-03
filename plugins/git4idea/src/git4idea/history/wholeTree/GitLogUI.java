@@ -2016,6 +2016,7 @@ public class GitLogUI implements Disposable {
             }
           }
         }).setTitle("Show graph for:").
+        setAdText("Press Enter to complete").
         createPopup();
 
       final AnAction ok = new AnAction() {
