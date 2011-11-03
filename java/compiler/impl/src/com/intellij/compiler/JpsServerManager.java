@@ -16,6 +16,7 @@
 package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
@@ -245,8 +246,12 @@ public class JpsServerManager implements ApplicationComponent{
   }
 
   private static RequestFuture sendSetupRequest(final @NotNull Client client) throws Exception {
-    final PathMacros pathVars = PathMacros.getInstance();
     final Map<String, String> data = new HashMap<String, String>();
+
+    // need this for tests and when this macro is missing from PathMacros registry
+    data.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+
+    final PathMacros pathVars = PathMacros.getInstance();
     for (String name : pathVars.getAllMacroNames()) {
       final String path = pathVars.getValue(name);
       if (path != null) {
@@ -333,6 +338,10 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.setWorkDirectory(workDirectory);
 
     return cmdLine.createProcess();
+  }
+
+  public void shutdownServer() {
+    shutdownServer(myClient, myProcessHandler);
   }
 
   private static void shutdownServer(final Client client, final OSProcessHandler processHandler) {
