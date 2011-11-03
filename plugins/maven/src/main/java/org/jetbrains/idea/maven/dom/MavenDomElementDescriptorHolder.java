@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,7 @@ import java.net.URL;
 import java.util.Map;
 
 public class MavenDomElementDescriptorHolder {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder");
   private enum FileKind {
     PROJECT_FILE {
       public String getSchemaUrl() {
@@ -77,6 +79,7 @@ public class MavenDomElementDescriptorHolder {
       desc = tryGetOrCreateDescriptor(kind);
       if (desc == null) return null;
     }
+    LOG.assertTrue(tag.isValid());
     return desc.getElementDescriptor(tag.getName(), desc.getDefaultNamespace());
   }
 

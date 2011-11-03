@@ -17,6 +17,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +51,7 @@ import java.util.*;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware, XmlNSTypeDescriptorProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.schema.XmlNSDescriptorImpl");
   @NonNls private static final Set<String> STD_TYPES = new HashSet<String>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();
   private XmlFile myFile;
@@ -170,6 +172,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     XmlTag[] tags = rootTag.getSubTags();
     visited.add( this );
 
+    LOG.assertTrue(rootTag.isValid());
     for (final XmlTag tag : tags) {
       if (equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
         String name = tag.getAttributeValue("name");
@@ -385,9 +388,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
            XmlUtil.XML_SCHEMA_URI3.equals(namespace);
   }
 
-  public static boolean checkSchemaNamespace(XmlTag context){
+  public static boolean checkSchemaNamespace(XmlTag context) {
+    LOG.assertTrue(context.isValid());
     final String namespace = context.getNamespace();
-    if(namespace.length() > 0){
+    if (namespace.length() > 0) {
       return checkSchemaNamespace(namespace);
     }
     return StringUtil.startsWithConcatenationOf(context.getName(), XSD_PREFIX, ":");
