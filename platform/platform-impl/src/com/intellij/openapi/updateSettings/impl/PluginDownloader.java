@@ -135,8 +135,9 @@ public class PluginDownloader {
             }
           });
           final File[] files = outputDir.listFiles();
-          assert files != null && files.length == 1;
-          descriptor = PluginManager.loadDescriptor(files[0], PluginManager.PLUGIN_XML);
+          if (files != null && files.length == 1) {
+            descriptor = PluginManager.loadDescriptor(files[0], PluginManager.PLUGIN_XML);
+          }
         }
         finally {
           FileUtil.delete(outputDir);
