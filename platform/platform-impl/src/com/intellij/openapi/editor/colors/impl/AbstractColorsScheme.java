@@ -64,7 +64,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>();
 
-  @NonNls private static final String DEFAULT_FONT_NAME = SystemInfo.isMac ? "Menlo" : "Monospaced";
+  @NonNls private static final String DEFAULT_FONT_NAME = SystemInfo.isMacOSSnowLeopard ? "Menlo" : "Monospaced";
   @NonNls private static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
   @NonNls private static final String CONSOLE_FONT_NAME = "CONSOLE_FONT_NAME";
   @NonNls protected static final String SCHEME_NAME = "SCHEME_NAME";
