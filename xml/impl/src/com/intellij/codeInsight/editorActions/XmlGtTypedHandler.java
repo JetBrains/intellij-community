@@ -124,16 +124,9 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         element = element.getParent();
       }
 
-      if (element != null) {
-        final String text = element.getText();
-        // check '/'
-        final int index = offset - element.getTextOffset() - 1;
-
-        if (index >= 0 && index < text.length()) {
-          if (text.charAt(index) == '/') {
-            // Some languages (e.g. GSP) allow character '/' in teg name.
-            return Result.CONTINUE;
-          }
+      if (offset > 0 && offset <= editor.getDocument().getTextLength()) {
+        if (editor.getDocument().getCharsSequence().charAt(offset - 1) == '/') { // Some languages (e.g. GSP) allow character '/' in tag name.
+          return Result.CONTINUE;
         }
       }
 
