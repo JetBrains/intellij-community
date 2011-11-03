@@ -127,8 +127,9 @@ public class SuiteState extends TestState {
 
   private static final CachedAcpect<Boolean> IS_IN_PROGRESS = new CachedAcpect<Boolean>() {
     public Boolean calculate(final SuiteState state) {
-      for (TestProxy proxy : state.myTest.getChildren()) {
-        if (proxy.isInProgress()) return Boolean.TRUE;
+      final List<TestProxy> children = state.myTest.getChildren();
+      for (int i = children.size() - 1; i >= 0; i--) {
+        if (children.get(i).isInProgress()) return Boolean.TRUE;
       }
       return Boolean.FALSE;
     }
