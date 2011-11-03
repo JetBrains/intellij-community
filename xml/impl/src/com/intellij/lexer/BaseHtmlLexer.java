@@ -43,6 +43,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   private boolean seenScript;
   private final boolean caseInsensitive;
   private boolean seenContentType;
+  private CharSequence cachedBufferSequence;
+  private Lexer lexerOfCacheBufferSequence;
 
   static final TokenSet TOKENS_TO_MERGE = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS, XmlTokenType.XML_WHITE_SPACE, XmlTokenType.XML_REAL_WHITE_SPACE,
                                                           XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlTokenType.XML_DATA_CHARACTERS,
@@ -56,8 +58,6 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     @NonNls private static final String TOKEN_SCRIPT = "script";
     @NonNls private static final String TOKEN_STYLE = "style";
     @NonNls private static final String TOKEN_ON = "on";
-    private CharSequence cachedBufferSequence;
-    private Lexer lexerOfCacheBufferSequence;
 
     public void handleElement(Lexer lexer) {
       final CharSequence buffer;
@@ -68,7 +68,6 @@ abstract class BaseHtmlLexer extends DelegateLexer {
         buffer = cachedBufferSequence;
         lexerOfCacheBufferSequence = lexer;
       }
-
       final char firstCh = buffer.charAt(lexer.getTokenStart());
 
       if (seenScript && !seenTag) {
@@ -214,6 +213,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     seenTag = (initialState & SEEN_TAG)!=0;
     seenAttribute = (initialState & SEEN_ATTRIBUTE)!=0;
     seenContentType = (initialState & SEEN_CONTENT_TYPE) != 0;
+    lexerOfCacheBufferSequence = null;
+    cachedBufferSequence = null;
   }
 
   protected int skipToTheEndOfTheEmbeddment() {
