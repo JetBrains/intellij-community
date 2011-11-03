@@ -298,6 +298,7 @@ public class GitLogUI implements Disposable {
         }
 
         myBranchSelectorAction.setSymbolicRefs(myRecalculatedCommon);
+        myBranchSelectorAction.asTextAction();
       }
     };
   }
