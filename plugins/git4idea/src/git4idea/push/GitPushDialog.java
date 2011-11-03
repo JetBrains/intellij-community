@@ -20,16 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitBranch;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Kirill Likhodedov
@@ -42,6 +38,7 @@ public class GitPushDialog extends DialogWrapper {
   private final GitPusher myPusher;
   private final GitLogMultiRepoMultiBranch myListPanel;
   private GitCommitsByRepoAndBranch myGitCommitsToPush;
+  private GitPushSpec myPushSpec = new GitPushSpec(null, "");
 
   public GitPushDialog(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
     super(project);
@@ -80,8 +77,7 @@ public class GitPushDialog extends DialogWrapper {
   private void loadCommitsInBackground(final GitLogMultiRepoMultiBranch myListPanel, final JBLoadingPanel loadingPanel) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        Map<GitRepository, Collection<GitBranch>> repositoriesToBranches = prepareRepositoriesAndBranchesToPush();
-        myGitCommitsToPush = myPusher.collectCommitsToPush(repositoriesToBranches);
+        myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpec);
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -91,14 +87,6 @@ public class GitPushDialog extends DialogWrapper {
         });
       }
     });
-  }
-
-  private Map<GitRepository, Collection<GitBranch>> prepareRepositoriesAndBranchesToPush() {
-    Map<GitRepository, Collection<GitBranch>> res = new HashMap<GitRepository, Collection<GitBranch>>();
-    for (GitRepository repository : myRepositories) {
-      res.put(repository, Collections.singleton(repository.getCurrentBranch()));
-    }
-    return res;
   }
 
   private JComponent createManualRefspecPanel() {
@@ -130,11 +118,7 @@ public class GitPushDialog extends DialogWrapper {
   @NotNull
   public GitPushInfo getPushInfo() {
     Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-    Map<GitRepository, Integer> reposAndCommits = new HashMap<GitRepository, Integer>();
-    for (GitRepository selectedRepository : selectedRepositories) {
-      reposAndCommits.put(selectedRepository, myGitCommitsToPush.asMap().get(selectedRepository).commitNumber());
-    }
-    GitPushSpec pushSpec = new GitPushSpec(null, "");
-    return new GitPushInfo(reposAndCommits, pushSpec);
+    GitCommitsByRepoAndBranch selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
+    return new GitPushInfo(selectedCommits, myPushSpec);
   }
 }

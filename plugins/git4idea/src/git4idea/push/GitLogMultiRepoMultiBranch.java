@@ -163,6 +163,9 @@ public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataPr
     repaint();
   }
 
+  /**
+   * @return repositories selected (via checkboxes) to be pushed.
+   */
   public Collection<GitRepository> getSelectedRepositories() {
     Collection<GitRepository> repositories = new ArrayList<GitRepository>(mySelectedRepositories.size());
     for (Map.Entry<GitRepository, Boolean> entry : mySelectedRepositories.entrySet()) {

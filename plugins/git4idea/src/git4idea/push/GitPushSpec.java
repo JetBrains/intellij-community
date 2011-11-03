@@ -16,23 +16,29 @@
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.VcsException;
+import git4idea.GitBranch;
+import git4idea.GitReference;
 import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitPushSpec {
 
-  //public static final GitPushSpec DEFAULT = new GitPushSpec(null, "");
-
   private static final Logger LOG = Logger.getInstance(GitPushSpec.class);
   
-  @Nullable private final GitRemote myRemote;
-  @NotNull private final String myRefspec;
+  private final GitRemote myRemote;
+  private final String myRefspec;
 
-  public GitPushSpec(@Nullable GitRemote remote, @NotNull String refspec) {
+  GitPushSpec(@Nullable GitRemote remote, @NotNull String refspec) {
     myRemote = remote;
     myRefspec = refspec;
     verifyParams();
@@ -44,24 +50,6 @@ public class GitPushSpec {
     }
   }
 
-  //public Map<GitRepository, Collection<GitBranch>> parseAsRepositoriesAndBranches(Collection<GitRepository> repositories) {
-  //  Map<GitRepository, Collection<GitBranch>> result = new HashMap<GitRepository, Collection<GitBranch>>();
-  //  if (myRemote == null) {
-  //    // from man: Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no remote is configured for the current branch).
-  //    // actually this is not true: if no remote is configured, then nothing will be pushed, except for the initial state of the repo, when master is pushed.
-  //    for (GitRepository repository : repositories) {
-  //      for (GitBranch branch : repository.getBranches().getLocalBranches()) {
-  //        GitBranch tracked = branch.tracked(repository.getProject(), repository.getRoot());
-  //        if (tracked != null) {
-  //
-  //        }
-  //      }
-  //    }
-  //  } else {
-  //
-  //  }
-  //}
-
   public boolean isSimple() {
     return myRemote == null;
   }
@@ -71,9 +59,91 @@ public class GitPushSpec {
     return myRemote;
   }
 
-
   @NotNull
   public String getRefspec() {
     return myRefspec;
   }
+  
+  List<SourceDest> parse(GitRepository repository) {
+    // TODO - this is only for isSimple() case, fairly parse ref and make for all cases
+    List<SourceDest> sourceDests = new ArrayList<SourceDest>();
+    for (GitBranch branch : repository.getBranches().getLocalBranches()) {
+      SourceDest forBranch = findSourceDestForBranch(repository, branch);
+      if (forBranch != null) {
+        sourceDests.add(forBranch);
+      }
+    }
+    return sourceDests;
+  }
+
+  @Nullable
+  private static SourceDest findSourceDestForBranch(GitRepository repository, GitBranch branch) {
+    try {
+      GitBranch trackedBranch = branch.tracked(repository.getProject(), repository.getRoot());
+      if (trackedBranch != null) {
+        return new SourceDest(branch, trackedBranch);
+      }
+      GitBranch matchingRemoteBranch = findMatchingRemoteBranch(repository, branch);
+      if (matchingRemoteBranch != null) {
+        return new SourceDest(branch, matchingRemoteBranch);
+      }
+    }
+    catch (VcsException e) {
+      e.printStackTrace();  // TODO
+    }
+    return null;
+  }
+
+  @Nullable
+  private static GitBranch findMatchingRemoteBranch(GitRepository repository, GitBranch branch) throws VcsException {
+    /*
+    from man git-push:
+    git push
+               Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no
+               remote is configured for the current branch).
+
+     */
+    String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
+    if (remoteName == null) {
+      if (originExists(repository.getRemotes())) {
+        remoteName = "origin";
+      } else {
+        return null;
+      }
+    }
+
+    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
+      if (remoteBranch.getName().equals(remoteName + "/" + branch.getName())) {
+        return remoteBranch;
+      }
+    }
+    return null;
+  }
+
+  private static boolean originExists(Collection<GitRemote> remotes) {
+    for (GitRemote remote : remotes) {
+      if (remote.getName().equals("origin")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static class SourceDest {
+    private final GitReference mySource;
+    private final GitBranch myDest;
+
+    SourceDest(GitReference source, GitBranch dest) {
+      mySource = source;
+      myDest = dest;
+    }
+
+    public GitReference getSource() {
+      return mySource;
+    }
+    
+    public GitBranch getDest() {
+      return myDest;
+    }
+  } 
 }

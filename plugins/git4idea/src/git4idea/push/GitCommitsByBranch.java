@@ -17,9 +17,8 @@ package git4idea.push;
 
 import git4idea.GitBranch;
 import git4idea.history.browser.GitCommit;
-import git4idea.repo.GitRepository;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +29,9 @@ import java.util.Map;
  */
 public class GitCommitsByBranch {
 
-  private final GitRepository myRepository;
   private final Map<GitBranch, List<GitCommit>> myCommitsByBranch;
 
-  GitCommitsByBranch(GitRepository repository, Map<GitBranch, List<GitCommit>> commitsByBranch) {
-    myRepository = repository;
+  GitCommitsByBranch(Map<GitBranch, List<GitCommit>> commitsByBranch) {
     myCommitsByBranch = commitsByBranch;
   }
 
@@ -42,11 +39,12 @@ public class GitCommitsByBranch {
     return myCommitsByBranch.isEmpty();
   }
 
+  @Deprecated
   public Map<GitBranch, List<GitCommit>> asMap() {
     return myCommitsByBranch;
   }
 
-  public int commitNumber() {
+  public int commitsNumber() {
     int sum = 0;
     for (List<GitCommit> commits : myCommitsByBranch.values()) {
       sum += commits.size();
@@ -54,7 +52,11 @@ public class GitCommitsByBranch {
     return sum;
   }
 
-  public static GitCommitsByBranch fromSingleBranch(GitRepository repository, GitBranch branch, List<GitCommit> commits) {
-    return new GitCommitsByBranch(repository, Collections.singletonMap(branch, commits));
+  public Collection<GitBranch> getBranches() {
+    return myCommitsByBranch.keySet();
+  }
+
+  public List<GitCommit> get(GitBranch branch) {
+    return myCommitsByBranch.get(branch);
   }
 }

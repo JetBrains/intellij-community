@@ -15,40 +15,73 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.project.Project;
-import git4idea.GitBranch;
-import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Holds Git commits grouped by repositories and by branches.
+ * Actually, it is just a map (of maps of lists of commits) encapsulated in a separated class with some handy methods.
  *
  * @author Kirill Likhodedov
  */
-public class GitCommitsByRepoAndBranch {
+final class GitCommitsByRepoAndBranch {
 
-  private final Project myProject;
   private final Map<GitRepository, GitCommitsByBranch> myCommitsByRepository;
 
-  public GitCommitsByRepoAndBranch(Project project, Map<GitRepository, GitCommitsByBranch> commitsByRepository) {
+  GitCommitsByRepoAndBranch(Map<GitRepository, GitCommitsByBranch> commitsByRepository) {
     myCommitsByRepository = commitsByRepository;
-    myProject = project;
   }
 
-  public Map<GitRepository, GitCommitsByBranch> asMap() {
+  static GitCommitsByRepoAndBranch empty() {
+    return new GitCommitsByRepoAndBranch(Collections.<GitRepository, GitCommitsByBranch>emptyMap());
+  }
+
+  @Deprecated
+  Map<GitRepository, GitCommitsByBranch> asMap() {
     return myCommitsByRepository;
   }
 
-  public static GitCommitsByRepoAndBranch empty(Project project) {
-    return new GitCommitsByRepoAndBranch(project, Collections.<GitRepository, GitCommitsByBranch>emptyMap());
+  @NotNull
+  Collection<GitRepository> getRepositories() {
+    return myCommitsByRepository.keySet();
   }
 
-  public static GitCommitsByRepoAndBranch fromSingleRepoAndBranch(Project project, GitRepository repository, GitBranch branch, List<GitCommit> commits) {
-    return new GitCommitsByRepoAndBranch(project, Collections.singletonMap(repository, GitCommitsByBranch.fromSingleBranch(repository, branch, commits)));
+  /**
+   * Retains only the elements for the given repositories.
+   * In other words, removes from this collection all of its elements that correspond to repositories not contained in the specified
+   * collection.
+   * This object is unaffected, a new object is returned by the method.
+   * @return New GitCommitsByRepoAndBranch which contains commits only from repositories listed in {@code repositories}.
+   */
+  @NotNull
+  GitCommitsByRepoAndBranch retainAll(Collection<GitRepository> repositories) {
+    Map<GitRepository, GitCommitsByBranch> commits = new HashMap<GitRepository, GitCommitsByBranch>();
+    for (GitRepository selectedRepository : repositories) {
+      GitCommitsByBranch value = myCommitsByRepository.get(selectedRepository);
+      if (value != null) {
+        commits.put(selectedRepository, value);
+      }
+    }
+    return new GitCommitsByRepoAndBranch(commits);
   }
+
+  @NotNull
+  GitCommitsByBranch get(GitRepository repository) {
+    return myCommitsByRepository.get(repository);
+  }
+
+  int commitsNumber() {
+    int sum = 0;
+    for (GitCommitsByBranch commitsByBranch : myCommitsByRepository.values()) {
+      sum += commitsByBranch.commitsNumber();
+    }
+    return sum;
+  }
+
 }
 
