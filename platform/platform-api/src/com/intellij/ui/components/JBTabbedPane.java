@@ -57,7 +57,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     UIUtil.setNotOpaqueRecursively(component);
     setInsets(component);
 
-    revalidate() ;
+    revalidate();
     repaint();
   }
 
