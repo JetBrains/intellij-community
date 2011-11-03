@@ -45,7 +45,11 @@ public class Paths {
     return new File(getDataStorageRoot(projectName), "mappings/data");
   }
 
-  public static URI toURI(String localPath){
+  public static File getMappingsStorageRoot(final String projectName) {
+    return new File(getDataStorageRoot(projectName), "mappings");
+  }
+
+  public static URI toURI(String localPath) {
     try {
       String p = FileUtil.toSystemIndependentName(localPath);
       if (!p.startsWith("/")) {

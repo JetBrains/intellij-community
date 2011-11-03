@@ -213,7 +213,7 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = context.getProjectPaths();
 
-    final Mappings delta = new Mappings();
+    final Mappings delta = context.createDelta();
     DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
 
     // todo: consider corresponding setting in CompilerWorkspaceConfiguration

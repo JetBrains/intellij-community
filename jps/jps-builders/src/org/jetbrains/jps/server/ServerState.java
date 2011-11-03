@@ -63,23 +63,25 @@ class ServerState {
       }
 
       mappings = myProjectMappings.get(projectPath);
+      final File mappingsRoot = Paths.getMappingsStorageRoot(projectName);
+
       if (mappings == null) {
         final File mappingsStorageFile = Paths.getMappingsStorageFile(projectName);
         try {
           final BufferedReader reader = new BufferedReader(new InputStreamReader(new DeflaterInputStream(new FileInputStream(mappingsStorageFile))));
           try {
-            mappings = new Mappings(reader);
+            mappings = new Mappings(mappingsRoot, reader);
           }
           finally {
             reader.close();
           }
         }
         catch (FileNotFoundException e) {
-          mappings = new Mappings();
+          mappings = new Mappings(mappingsRoot);
         }
         catch (IOException e) {
           msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
-          mappings = new Mappings();
+          mappings = new Mappings(mappingsRoot);
         }
 
         myProjectMappings.put(projectPath, mappings);

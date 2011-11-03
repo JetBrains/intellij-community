@@ -132,7 +132,7 @@ public class GroovyBuilder extends Builder {
           }
         }
         else {
-          final Mappings delta = new Mappings();
+          final Mappings delta = context.createDelta();
           final List<File> successfullyCompiledFiles = new ArrayList<File>();
           if (!successfullyCompiled.isEmpty()) {
             final Callbacks.Backend callback = delta.getCallback();

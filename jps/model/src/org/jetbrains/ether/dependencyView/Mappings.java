@@ -75,7 +75,7 @@ public class Mappings implements RW.Writable {
     formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
     classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
-
+ /*
   public Mappings() {
     try {
       context = new DependencyContext(FileUtil.createTempDirectory("temp", "dir"));
@@ -93,7 +93,7 @@ public class Mappings implements RW.Writable {
     formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
     classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
-
+   */
   public Mappings(final File rootDir) {
     context = new DependencyContext(rootDir);
 
@@ -107,6 +107,7 @@ public class Mappings implements RW.Writable {
     classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
+  /*
   public Mappings(final BufferedReader r) { // Temporary
     try {
       context = new DependencyContext(FileUtil.createTempDirectory("temp", "dir"));
@@ -125,7 +126,7 @@ public class Mappings implements RW.Writable {
     formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
     classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
-
+    */
   public Mappings(final File rootDir, final BufferedReader r) {
     context = new DependencyContext(rootDir);
     classToSubclasses = FoxyMap.read(r, context.reader, context.reader, stringSetConstructor);

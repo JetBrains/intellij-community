@@ -115,6 +115,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   public Mappings getMappings() {
     return myMappings;
   }
+  
+  public Mappings createDelta() {
+    return myMappings.createDelta();
+  }
 
   public boolean isCompilingTests() {
     return myCompilingTests;
