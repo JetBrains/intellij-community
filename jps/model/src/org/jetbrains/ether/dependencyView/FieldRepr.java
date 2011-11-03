@@ -12,8 +12,8 @@ import java.io.BufferedReader;
  * To change this template use File | Settings | File Templates.
  */
 class FieldRepr extends ProtoMember {
-  public void updateClassUsages(final DependencyContext.S owner, final UsageRepr.Cluster s) {
-    type.updateClassUsages(owner, s);
+  public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+    type.updateClassUsages(context, owner, s);
   }
 
   public FieldRepr(final DependencyContext context, final int a, final DependencyContext.S n, final DependencyContext.S d, final DependencyContext.S s, final Object v) {

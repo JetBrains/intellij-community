@@ -13,9 +13,8 @@ import java.util.*;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-class FoxyMap<K, V> implements Map<K, Collection<V>> {
-
-  public static <X extends RW.Writable, Y extends RW.Writable> void write(final BufferedWriter w, final FoxyMap<X, Y> m) {
+class TransientMaplet<K, V> implements Maplet<K, V> {
+  public static <X extends RW.Writable, Y extends RW.Writable> void write(final BufferedWriter w, final TransientMaplet<X, Y> m) {
     RW.writeln(w, Integer.toString(m.size()));
 
     for (Entry<X, Collection<Y>> e : m.entrySet()) {
@@ -24,11 +23,11 @@ class FoxyMap<K, V> implements Map<K, Collection<V>> {
     }
   }
 
-  public static <X, Y> FoxyMap<X, Y> read(final BufferedReader r,
+  public static <X, Y> TransientMaplet<X, Y> read(final BufferedReader r,
                                           final RW.Reader<X> xr,
                                           final RW.Reader<Y> yr,
                                           final CollectionConstructor<Y> cc) {
-    final FoxyMap<X, Y> result = new FoxyMap<X, Y>(cc);
+    final TransientMaplet<X, Y> result = new TransientMaplet<X, Y>(cc);
 
     final int size = RW.readInt(r);
 
@@ -48,7 +47,7 @@ class FoxyMap<K, V> implements Map<K, Collection<V>> {
 
   private final CollectionConstructor<V> constr;
 
-  public FoxyMap(final CollectionConstructor<V> c) {
+  public TransientMaplet(final CollectionConstructor<V> c) {
     constr = c;
   }
 
@@ -139,5 +138,9 @@ class FoxyMap<K, V> implements Map<K, Collection<V>> {
 
   public Set<Entry<K, Collection<V>>> entrySet() {
     return map.entrySet();
+  }
+
+  public void close(){
+
   }
 }
