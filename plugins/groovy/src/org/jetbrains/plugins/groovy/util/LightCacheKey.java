@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,15 @@ public class LightCacheKey<T> {
       @Override
       protected long getModificationCount(PsiElement holder) {
         return holder.getManager().getModificationTracker().getJavaStructureModificationCount();
+      }
+    };
+  }
+
+  public static <T> LightCacheKey<T> createByFileModificationCount() {
+    return new LightCacheKey<T>() {
+      @Override
+      protected long getModificationCount(PsiElement holder) {
+        return ((PsiFile)holder).getModificationStamp();
       }
     };
   }
