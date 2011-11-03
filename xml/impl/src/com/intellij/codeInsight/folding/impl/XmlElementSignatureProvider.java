@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
 public class XmlElementSignatureProvider extends ElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider");
 
-  public String getSignature(PsiElement element) {
+  public String getSignature(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       PsiElement parent = tag.getParent();

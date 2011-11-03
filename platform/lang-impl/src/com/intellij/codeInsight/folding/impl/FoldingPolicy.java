@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class FoldingPolicy {
   }
 
   @Nullable
-  public static String getSignature(PsiElement element) {
+  public static String getSignature(@NotNull PsiElement element) {
     for(ElementSignatureProvider provider: Extensions.getExtensions(ElementSignatureProvider.EP_NAME)) {
       String signature = provider.getSignature(element);
       if (signature != null) return signature;
