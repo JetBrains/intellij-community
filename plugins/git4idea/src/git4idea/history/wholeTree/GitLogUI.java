@@ -2148,7 +2148,7 @@ public class GitLogUI implements Disposable {
           e.getPresentation().setEnabled(false);
           return;
         }
-        e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
+        //e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
     myHead = new DumbAwareAction("HEAD subgraph") {
