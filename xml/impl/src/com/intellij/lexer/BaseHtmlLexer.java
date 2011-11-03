@@ -56,9 +56,19 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     @NonNls private static final String TOKEN_SCRIPT = "script";
     @NonNls private static final String TOKEN_STYLE = "style";
     @NonNls private static final String TOKEN_ON = "on";
+    private CharSequence cachedBufferSequence;
+    private Lexer lexerOfCacheBufferSequence;
 
     public void handleElement(Lexer lexer) {
-      final CharSequence buffer = lexer.getBufferSequence();
+      final CharSequence buffer;
+      if (lexerOfCacheBufferSequence == lexer) {
+        buffer = cachedBufferSequence;
+      } else {
+        cachedBufferSequence = lexer.getBufferSequence();
+        buffer = cachedBufferSequence;
+        lexerOfCacheBufferSequence = lexer;
+      }
+
       final char firstCh = buffer.charAt(lexer.getTokenStart());
 
       if (seenScript && !seenTag) {
