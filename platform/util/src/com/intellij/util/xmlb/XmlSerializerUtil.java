@@ -29,4 +29,15 @@ public class XmlSerializerUtil {
       accessor.write(to, accessor.read(from));
     }
   }
+
+  public static <T> T createCopy(@NotNull T from) {
+    try {
+      final T to = (T)from.getClass().newInstance();
+      copyBean(from, to);
+      return to;
+    }
+    catch (Exception ignored) {
+    }
+    return null;
+  }
 }
