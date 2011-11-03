@@ -19,13 +19,14 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -39,10 +40,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -57,7 +59,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private ChangesBrowser myChangesBrowser;
   private final Tree myTree;
   private final DefaultTreeModel myTreeModel;
-  private final DefaultMutableTreeNode myRootNode;
+  private final CheckedTreeNode myRootNode;
   Map<GitRepository, Boolean> mySelectedRepositories = new HashMap<GitRepository, Boolean>();
 
   GitPushLog(@NotNull Project project) {
@@ -67,11 +69,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       mySelectedRepositories.put(repository, true);
     }
 
-    myRootNode = new DefaultMutableTreeNode();
+    myRootNode = new CheckedTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRootNode);
-    myTree = new Tree(myTreeModel);
+    myTree = new CheckboxTree(new MyTreeCellRenderer(), myRootNode);
     myTree.setRootVisible(false);
-    myTree.setCellRenderer(new MyTreeCellRenderer());
+    //myTree.setCellRenderer(new MyTreeCellRenderer());
     TreeUtil.expandAll(myTree);
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -120,7 +122,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private DefaultMutableTreeNode createRepoNode(GitRepository repository, GitCommitsByBranch commitsByBranch) {
-    DefaultMutableTreeNode repoNode = new DefaultMutableTreeNode(repository);
+    DefaultMutableTreeNode repoNode = new CheckedTreeNode(repository);
     for (Map.Entry<GitBranch, List<GitCommit>> entry : commitsByBranch.asMap().entrySet()) {
       DefaultMutableTreeNode branchNode = createBranchNode(entry.getKey(), entry.getValue());
       repoNode.add(branchNode);
@@ -129,7 +131,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private DefaultMutableTreeNode createBranchNode(GitBranch branch, List<GitCommit> commits) {
-    DefaultMutableTreeNode branchNode = new DefaultMutableTreeNode(branch.getName());
+    DefaultMutableTreeNode branchNode = new CheckedTreeNode(branch);
     for (GitCommit commit : commits) {
       branchNode.add(new DefaultMutableTreeNode(commit));
     }
@@ -176,60 +178,34 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return repositories;
   }
 
-  private class MyTreeCellRenderer implements TreeCellRenderer {
-
-    public final DefaultTreeCellRenderer DEFAULT_RENDERER = new DefaultTreeCellRenderer();
-
-    JBLabel myBranchRenderer = createBranchRender();
-    JBLabel myCommitRender = createCommitRender();
-
+  private class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements TreeCellRenderer {
 
     @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof DefaultMutableTreeNode) {
-        Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        if (userObject instanceof GitCommit) {
-          myCommitRender.setText(makeTextForCommit((GitCommit) userObject));
-          myCommitRender.setForeground(selected ? DEFAULT_RENDERER.getTextSelectionColor() : DEFAULT_RENDERER.getTextNonSelectionColor());
-          return myCommitRender;
-        } else if (userObject instanceof GitRepository) {
-          return createRepositoryRender((GitRepository)userObject, selected);
-        }
+    public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
+      Object userObject;
+      if (value instanceof CheckedTreeNode) {
+        userObject = ((CheckedTreeNode)value).getUserObject();
+      } else if (value instanceof DefaultMutableTreeNode) {
+        userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      } else {
+        return;
       }
-      return DEFAULT_RENDERER.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-    }
 
-    private String makeTextForCommit(@NotNull GitCommit commit) {
-      return String.format("<html><code><b>%s</b> %15s</code>  %s</html>",
-                           commit.getShortHash(),
-                           DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()),
-                           commit.getSubject())
-        .replace(" ", "&nbsp;");
-    }
+      if (userObject instanceof GitCommit) {
+        ColoredTreeCellRenderer renderer = getTextRenderer();
+        GitCommit commit = (GitCommit)userObject;
 
-
-    private JBLabel createCommitRender() {
-      return new JBLabel();
-    }
-
-    private Component createRepositoryRender(final GitRepository repository, boolean selected) {
-      final JCheckBox checkBox = new JCheckBox(repository.getRoot().getPresentableUrl(), null, true);
-      checkBox.setForeground(selected ? DEFAULT_RENDERER.getTextSelectionColor() : DEFAULT_RENDERER.getTextNonSelectionColor());
-      checkBox.setBackground(selected ? DEFAULT_RENDERER.getBackgroundSelectionColor() : DEFAULT_RENDERER.getBackgroundNonSelectionColor());
-      checkBox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          mySelectedRepositories.put(repository, checkBox.isSelected());
-        }
-      });
-      return checkBox;
-    }
-
-    private JBLabel createBranchRender() {
-      JBLabel label = new JBLabel();
-      label.setOpaque(true);
-      label.setBackground(Color.CYAN);
-      return label;
+        Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+        renderer.setFont(font);
+        SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
+        renderer.append(commit.getShortHash().toString(), small);
+        renderer.append(String.format("%15s  ", DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime())), small);
+        renderer.append(commit.getSubject(), small);
+      } else if (userObject instanceof GitRepository) {
+        getTextRenderer().append(((GitRepository)userObject).getPresentableUrl());
+      } else if (userObject instanceof GitBranch) {
+        getTextRenderer().append(((GitBranch)userObject).getName());
+      }
     }
   }
 
