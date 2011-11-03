@@ -56,6 +56,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   }
 
   public boolean useCompileServer() {
-    return USE_COMPILE_SERVER && ApplicationManager.getApplication().isInternal();
+    return USE_COMPILE_SERVER && (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode());
   }
 }
