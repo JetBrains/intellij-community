@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,17 +41,26 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
 
     if (parent instanceof DomFileElementImpl) {
       final DomFileElementImpl fileElement = (DomFileElementImpl)parent;
+      //noinspection unchecked
       return new RootAnchor<T>(fileElement.getFile(), fileElement.getRootElementClass());
     }
 
     final DomAnchorImpl<DomElement> parentAnchor = createAnchor(parent);
     final String name = t.getGenericInfo().getElementName(t);
     final AbstractDomChildrenDescription description = t.getChildDescription();
+    final List<? extends DomElement> values = description.getValues(parent);
     if (name != null) {
-      return new NamedAnchor<T>(parentAnchor, description, name);
+      int i = 0;
+      for (DomElement value : values) {
+        if (value.equals(t)) {
+          return new NamedAnchor<T>(parentAnchor, description, name, i);
+        }
+        if (name.equals(value.getGenericInfo().getElementName(value))) {
+          i++;
+        }
+      }
     }
 
-    final List<? extends DomElement> values = description.getValues(parent);
     final int index = values.indexOf(t);
     if (index < 0) {
       final XmlTag parentTag = parent.getXmlTag();
@@ -92,12 +101,14 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   private static class NamedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
     private final DomAnchorImpl myParent;
     private final AbstractDomChildrenDescription myDescr;
-    private final String myIndex;
+    private final String myName;
+    private final int myIndex;
 
-    private NamedAnchor(final DomAnchorImpl parent, final AbstractDomChildrenDescription descr, final String id) {
+    private NamedAnchor(final DomAnchorImpl parent, final AbstractDomChildrenDescription descr, final String id, int index) {
       myParent = parent;
       myDescr = descr;
-      myIndex = id;
+      myName = id;
+      myIndex = index;
     }
 
     @Override
@@ -108,8 +119,9 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       final NamedAnchor that = (NamedAnchor)o;
 
       if (myDescr != null ? !myDescr.equals(that.myDescr) : that.myDescr != null) return false;
-      if (myIndex != null ? !myIndex.equals(that.myIndex) : that.myIndex != null) return false;
+      if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
       if (myParent != null ? !myParent.equals(that.myParent) : that.myParent != null) return false;
+      if (myIndex != that.myIndex) return false;
 
       return true;
     }
@@ -119,7 +131,8 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       int result;
       result = (myParent != null ? myParent.hashCode() : 0);
       result = 31 * result + (myDescr != null ? myDescr.hashCode() : 0);
-      result = 31 * result + (myIndex != null ? myIndex.hashCode() : 0);
+      result = 31 * result + (myName != null ? myName.hashCode() : 0);
+      result = 31 * result + myIndex;
       return result;
     }
 
@@ -128,10 +141,15 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       if (parent == null) return null;
 
       final List<? extends DomElement> list = myDescr.getValues(parent);
+      int i = 0;
       for (final DomElement element : list) {
         final String s = element.getGenericInfo().getElementName(element);
-        if (myIndex.equals(s)) {
-          return (T)element;
+        if (myName.equals(s)) {
+          if (i == myIndex) {
+            //noinspection unchecked
+            return (T)element;
+          }
+          i++;
         }
       }
       return null;
@@ -184,6 +202,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       final List<? extends DomElement> list = myDescr.getValues(parent);
       if (myIndex < 0 || myIndex >= list.size()) return null;
 
+      //noinspection unchecked
       return (T)list.get(myIndex);
     }
 
