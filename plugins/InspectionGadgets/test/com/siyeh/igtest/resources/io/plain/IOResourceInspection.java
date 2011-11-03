@@ -2,7 +2,7 @@ package com.siyeh.igtest.resources.io.plain;
 
 import java.io.*;
 
-public class IOResource {
+public class IOResourceInspection {
     public void foo() throws FileNotFoundException {
        new FileInputStream("bar");
     }
