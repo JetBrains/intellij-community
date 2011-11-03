@@ -488,12 +488,9 @@ public class BigTableTableModel extends AbstractTableModel {
         myRunningRepoIdxs.put(vf, 0);
         myIdxMap.clear();
       }
-      if (noStartingPoints) {
-        for (VirtualFile virtualFile : myOrder) {
-          myTreeHighlighter.put(virtualFile, new TreeHighlighter(this, virtualFile, -1));
-        }
-      } else {
-        myTreeHighlighter.clear();
+      myTreeHighlighter.clear();
+      for (VirtualFile virtualFile : myOrder) {
+        myTreeHighlighter.put(virtualFile, new TreeHighlighter(this, virtualFile, -1));
       }
     } else {
       myCurrentComparator = CommitIReorderingInsideOneRepoComparator.getInstance();

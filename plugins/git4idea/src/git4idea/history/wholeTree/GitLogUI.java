@@ -152,6 +152,7 @@ public class GitLogUI implements Disposable {
   private final Runnable myRefresh;
   private JViewport myTableViewPort;
   private GitLogUI.MyGotoCommitAction myMyGotoCommitAction;
+  private final Set<VirtualFile> myClearedHighlightingRoots;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -166,6 +167,7 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.addHighlighter(myDescriptionRenderer.myInner.myWorker);
     myCommitsInRepositoryChangesBrowser = new ArrayList<CommitI>();
     myMarked = new HashSet<AbstractHash>();
+    myClearedHighlightingRoots = new HashSet<VirtualFile>();
 
     mySelectionRequestsMerger = new RequestsMerger(new Runnable() {
       @Override
@@ -1129,6 +1131,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBackground(getRowBg(row));
       //setBackground(getLogicBackground(selected, row));
       if (BigTableTableModel.LOADING == value) {
         return;
@@ -1165,7 +1168,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      //setBackground(getLogicBackground(selected, row));
+      setBackground(getRowBg(row));
       if (BigTableTableModel.LOADING == value) {
         if (myShowLoading) {
           append("Loading...");
@@ -1206,9 +1209,10 @@ public class GitLogUI implements Disposable {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myCurrentWidth = 0;
+      final Color bg = isSelected ? UIUtil.getTableSelectionBackground() : getRowBg(row);
       if (value instanceof GitCommit) {
         myPanel.removeAll();
-        myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
+        myPanel.setBackground(bg);
         final GitCommit commit = (GitCommit)value;
 
         final boolean marked = myMarked.contains(commit.getShortHash());
@@ -1243,20 +1247,24 @@ public class GitLogUI implements Disposable {
             addTagIcon(table, value, isSelected, hasFocus, row, column, "HEAD", plus);
           }
 
+          myInner.setBackground(bg);
           return myPanel;
         }
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
           final String tag = commit.getTags().get(0);
           addTagIcon(table, value, isSelected, hasFocus, row, column, tag, tagsSize > 1);
+          myInner.setBackground(bg);
           return myPanel;
         }
         if (marked) {
           myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           myPanel.add(myInner);
+          myInner.setBackground(bg);
           return myPanel;
         }
       }
       myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      myInner.setBackground(bg);
       return myInner;
     }
 
@@ -1329,6 +1337,27 @@ public class GitLogUI implements Disposable {
         }
       }
     }
+  }
+
+  private Color getRowBg(int row) {
+    final int[] selectedRows = myJBTable.getSelectedRows();
+    if (selectedRows != null && selectedRows.length > 0) {
+      for (int selectedRow : selectedRows) {
+        if (selectedRow == row) {
+          return UIUtil.getTableSelectionBackground();
+        }
+      }
+    }
+    if (myClearedHighlightingRoots.isEmpty()) {
+      return myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.getTableBackground();
+    }
+    final CommitI commitAt = myTableModel.getCommitAt(row);
+    if (commitAt.holdsDecoration()) {
+      return UIUtil.getTableBackground();
+    }
+    final VirtualFile virtualFile = commitAt.selectRepository(myRootsUnderVcs);
+    return myClearedHighlightingRoots.contains(virtualFile) ? UIUtil.getTableBackground() :
+           (myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.getTableBackground());
   }
 
   private Color getLogicBackground(final boolean isSelected, final int row) {
@@ -1538,6 +1567,8 @@ public class GitLogUI implements Disposable {
     Color ownThisBranch = new Color(198,255,226);
     Color commonThisBranch = new Color(223,223,255);
     Color stashed = new Color(225,225,225);
+    Color highlighted = new Color(210,255,233);
+    //Color highlighted = new Color(204,255,230);
   }
 
   private class MyCherryPick extends DumbAwareAction {
@@ -2030,6 +2061,8 @@ public class GitLogUI implements Disposable {
       }
       final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
       myTableModel.setHead(root, commitAt.getHash());
+      myClearedHighlightingRoots.remove(root);
+      myJBTable.repaint();
     }
 
     @Override
@@ -2072,7 +2105,9 @@ public class GitLogUI implements Disposable {
           final AbstractHash headHash = symbolicRefs.getHeadHash();
           if (headHash == null) continue;
           myTableModel.setHead(root, headHash);
+          myClearedHighlightingRoots.removeAll(myRootsUnderVcs);
         }
+        myJBTable.repaint();
       }
 
       @Override
@@ -2087,6 +2122,8 @@ public class GitLogUI implements Disposable {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
           myTableModel.setDumbHighlighter(root);
         }
+        myClearedHighlightingRoots.addAll(myRootsUnderVcs);
+        myJBTable.repaint();
       }
 
       @Override
@@ -2112,6 +2149,8 @@ public class GitLogUI implements Disposable {
         final AbstractHash headHash = symbolicRefs.getHeadHash();
         if (headHash == null) return;
         myTableModel.setHead(root, headHash);
+        myClearedHighlightingRoots.remove(root);
+        myJBTable.repaint();
       }
 
       @Override
@@ -2132,6 +2171,8 @@ public class GitLogUI implements Disposable {
         }
         final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
         myTableModel.setDumbHighlighter(root);
+        myClearedHighlightingRoots.add(root);
+        myJBTable.repaint();
       }
 
       @Override
