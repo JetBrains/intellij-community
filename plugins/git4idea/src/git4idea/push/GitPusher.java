@@ -15,9 +15,16 @@
  */
 package git4idea.push;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import git4idea.Git;
 import git4idea.GitBranch;
+import git4idea.GitVcs;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitCompoundResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
@@ -31,12 +38,12 @@ import java.util.*;
  *
  * @author Kirill Likhodedov
  */
-class GitPusher {
+public final class GitPusher {
 
   private final Project myProject;
   private final Collection<GitRepository> myRepositories;
 
-  GitPusher(Project project) {
+  public GitPusher(Project project) {
     myProject = project;
     myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
   }
@@ -113,6 +120,40 @@ class GitPusher {
   //  }
   //  return holders;
   //}
-  
 
+
+  public void push(@NotNull GitPushInfo pushInfo) {
+    final Map<GitRepository, Integer> successfulRepositoriesWithPushedCommitCount = new HashMap<GitRepository, Integer>();
+    GitCompoundResult result = new GitCompoundResult(myProject);
+    for (Map.Entry<GitRepository, Integer> entry : pushInfo.getRepositoriesWithPushCommitCount().entrySet()) {
+      GitRepository repository = entry.getKey();
+      GitCommandResult res = Git.push(repository, pushInfo.getPushSpec());
+      result.append(repository, res);
+      if (res.success()) {
+        successfulRepositoriesWithPushedCommitCount.put(repository, entry.getValue());
+      }
+    }
+
+    Notification notification;
+    if (result.totalSuccess()) {
+      int commitsPushed = 0;
+      for (Integer integer : successfulRepositoriesWithPushedCommitCount.values()) {
+        commitsPushed += integer;
+      }
+      notification = GitVcs.NOTIFICATION_GROUP_ID.createNotification("Pushed " + commitsPushed + " " + StringUtil.pluralize("commit", commitsPushed), NotificationType.INFORMATION);
+    } else if (result.partialSuccess()) {
+      StringBuilder errorReport = new StringBuilder(result.getErrorOutputWithReposIndication());
+      errorReport.append("However some pushes were successful: <br/>");
+      for (Map.Entry<GitRepository, Integer> entry : successfulRepositoriesWithPushedCommitCount.entrySet()) {
+        Integer commitNum = entry.getValue();
+        errorReport.append("<code>" + entry.getKey().getPresentableUrl() + "</code>: pushed " + commitNum + " " + StringUtil.pluralize("commit", commitNum) + ".<br/>");
+      }
+      notification = GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Push failed for some repositories",
+                                                                            errorReport.toString(), NotificationType.WARNING, null);
+    } else {
+      notification = GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Push failed", result.getErrorOutputWithReposIndication(), NotificationType.ERROR, null);
+    }
+    notification.notify(myProject);
+  }
+  
 }

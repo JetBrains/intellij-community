@@ -163,6 +163,16 @@ public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataPr
     repaint();
   }
 
+  public Collection<GitRepository> getSelectedRepositories() {
+    Collection<GitRepository> repositories = new ArrayList<GitRepository>(mySelectedRepositories.size());
+    for (Map.Entry<GitRepository, Boolean> entry : mySelectedRepositories.entrySet()) {
+      if (entry.getValue()) {
+        repositories.add(entry.getKey());
+      }
+    }
+    return repositories;
+  }
+
   private class MyTreeCellRenderer implements TreeCellRenderer {
 
     public final DefaultTreeCellRenderer DEFAULT_RENDERER = new DefaultTreeCellRenderer();
@@ -187,7 +197,7 @@ public class GitLogMultiRepoMultiBranch extends JPanel implements TypeSafeDataPr
     }
 
     private String makeTextForCommit(@NotNull GitCommit commit) {
-      return String.format("<html><code>%s %-15s</code>  %s</html>",
+      return String.format("<html><code><b>%s</b> %15s</code>  %s</html>",
                            commit.getShortHash(),
                            DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()),
                            commit.getSubject())

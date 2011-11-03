@@ -46,6 +46,14 @@ public class GitCommitsByBranch {
     return myCommitsByBranch;
   }
 
+  public int commitNumber() {
+    int sum = 0;
+    for (List<GitCommit> commits : myCommitsByBranch.values()) {
+      sum += commits.size();
+    }
+    return sum;
+  }
+
   public static GitCommitsByBranch fromSingleBranch(GitRepository repository, GitBranch branch, List<GitCommit> commits) {
     return new GitCommitsByBranch(repository, Collections.singletonMap(branch, commits));
   }

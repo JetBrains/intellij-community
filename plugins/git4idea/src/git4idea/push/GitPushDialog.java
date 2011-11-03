@@ -41,6 +41,7 @@ public class GitPushDialog extends DialogWrapper {
   private final Collection<GitRepository> myRepositories;
   private final GitPusher myPusher;
   private final GitLogMultiRepoMultiBranch myListPanel;
+  private GitCommitsByRepoAndBranch myGitCommitsToPush;
 
   public GitPushDialog(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
     super(project);
@@ -80,11 +81,11 @@ public class GitPushDialog extends DialogWrapper {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         Map<GitRepository, Collection<GitBranch>> repositoriesToBranches = prepareRepositoriesAndBranchesToPush();
-        final GitCommitsByRepoAndBranch gitCommits = myPusher.collectCommitsToPush(repositoriesToBranches);
+        myGitCommitsToPush = myPusher.collectCommitsToPush(repositoriesToBranches);
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myListPanel.setCommits(gitCommits);
+            myListPanel.setCommits(myGitCommitsToPush);
             loadingPanel.stopLoading();
           }
         });
@@ -126,4 +127,14 @@ public class GitPushDialog extends DialogWrapper {
     return GitPushDialog.class.getName();
   }
 
+  @NotNull
+  public GitPushInfo getPushInfo() {
+    Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
+    Map<GitRepository, Integer> reposAndCommits = new HashMap<GitRepository, Integer>();
+    for (GitRepository selectedRepository : selectedRepositories) {
+      reposAndCommits.put(selectedRepository, myGitCommitsToPush.asMap().get(selectedRepository).commitNumber());
+    }
+    GitPushSpec pushSpec = new GitPushSpec(null, "");
+    return new GitPushInfo(reposAndCommits, pushSpec);
+  }
 }

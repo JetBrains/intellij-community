@@ -24,6 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.commands.*;
+import git4idea.push.GitPushSpec;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,6 +203,20 @@ public class Git {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
     h.addParameters("-1");
     h.addParameters(branchName);
+    return run(h);
+  }
+
+  public static GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
+    }
+    if (!pushSpec.isSimple()) {
+      GitRemote remote = pushSpec.getRemote();
+      LOG.assertTrue(remote != null, "Remote can't be null: " + pushSpec);
+      h.addParameters(remote.getName());
+      h.addParameters(pushSpec.getRefspec());
+    }
     return run(h);
   }
 
