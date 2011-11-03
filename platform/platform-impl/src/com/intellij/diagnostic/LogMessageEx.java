@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +65,17 @@ public class LogMessageEx extends LogMessage {
   public IdeaLoggingEvent toEvent() {
     return myEvent;
   }
+
+  /**
+   * @param userMessage      user-friendly message description (short, single line if possible)
+   * @param details          technical details (exception stack trace etc.)
+   * @param attachments      attachments that will be suggested to include to the report
+   * @return
+   */
+  public static IdeaLoggingEvent createEvent(String userMessage, final String details, final Attachment... attachments) {
+    return createEvent(userMessage, details, userMessage, null, Arrays.asList(attachments));
+  }
+
 
   /**
    * @param userMessage      user-friendly message description (short, single line if possible)

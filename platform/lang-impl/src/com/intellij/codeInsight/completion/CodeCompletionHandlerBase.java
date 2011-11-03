@@ -372,24 +372,36 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final int offset = newContext.getStartOffset();
     final PsiFile fileCopy = newContext.file;
-    final PsiElement insertedElement = newContext.file.findElementAt(newContext.getStartOffset());
-    if (insertedElement == null) {
-      throw new AssertionError("offset " + newContext.getStartOffset() + " at:\n text=\"" + fileCopy.getText() + "\"\n instance=" + fileCopy);
-    }
+    PsiFile originalFile = fileCopy.getOriginalFile();
+    final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
+  }
+
+  @NotNull
+  private static PsiElement findCompletionPositionLeaf(CompletionContext newContext, int offset, PsiFile fileCopy, PsiFile originalFile) {
+    final PsiElement insertedElement = newContext.file.findElementAt(offset);
+    if (insertedElement == null) {
+      LOG.error(LogMessageEx.createEvent("No element at insertion offset", "offset=" + newContext.getStartOffset(),
+                                         createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile)));
+    }
 
     LOG.assertTrue(fileCopy.findElementAt(offset) == insertedElement, "wrong offset");
 
     final TextRange range = insertedElement.getTextRange();
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
-      Attachment _fileCopy = new Attachment(initContext.getFile().getOriginalFile().getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
-      Attachment copyTree = new Attachment(initContext.getFile().getOriginalFile().getViewProvider().getVirtualFile().getPath() + " syntactic tree",
-                                           DebugUtil.psiToString(fileCopy, false));
-      Attachment elementText = new Attachment("Element at caret", insertedElement.getText());
-      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range, "Inconsistent completion tree", null, Arrays.asList(_fileCopy, copyTree, elementText)));
+      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range, createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
+                                         new Attachment("Element at caret", insertedElement.getText())));
     }
+    return insertedElement;
+  }
 
-    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
+  private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree", DebugUtil.psiToString(fileCopy, false));
+  }
+
+  private static Attachment createFileTextAttachment(PsiFile fileCopy, final PsiFile originalFile) {
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
   }
 
   private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, final LookupElement[] items) {
