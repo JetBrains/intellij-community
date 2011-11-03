@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,9 +70,8 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   public void setValue(@NotNull String value) throws IncorrectOperationException {
-    String escapedName = PropertiesElementFactory.escapeValue(value);
     ASTNode node = getValueNode();
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", escapedName);
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value);
     ASTNode valueNode = property.getValueNode();
     if (node == null) {
       if (valueNode != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.editor.ResourceBundleUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataCache;
@@ -102,16 +103,6 @@ public class PropertiesElementFactory {
   }
 
   public static String escapeValue(String value) {
-    StringBuilder escapedName = new StringBuilder(value.length());
-    for (int i = 0; i < value.length(); i++) {
-      char c = value.charAt(i);
-      if (c == '\n' && (i == 0 || value.charAt(i - 1) != '\\')
-        || i == value.length()-1 && (c == ' ' || c == '\t')
-        ) {
-        escapedName.append('\\');
-      }
-      escapedName.append(c);
-    }
-    return escapedName.toString();
+    return ResourceBundleUtil.fromValueEditorToPropertyValue(value);
   }
 }
