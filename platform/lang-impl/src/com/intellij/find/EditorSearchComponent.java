@@ -250,31 +250,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     mySearchField = createTextField(myLeadPanel);
     setupSearchFieldListener();
 
-    DefaultActionGroup myActionsGroup = new DefaultActionGroup("search bar", false);
-    myActionsGroup.add(new ShowHistoryAction(mySearchFieldGetter, this));
-    myActionsGroup.add(new PrevOccurrenceAction(this, mySearchFieldGetter));
-    myActionsGroup.add(new NextOccurrenceAction(this, mySearchFieldGetter));
-    myActionsGroup.add(new FindAllAction(this));
-    myActionsGroup.add(new ToggleMultiline(this));
-    myActionsGroup.add(new ToggleMatchCase(this));
-    myActionsGroup.add(new ToggleRegex(this));
-
-    myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", myActionsGroup, true);
-    myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
-
-    myActionsGroup.addAction(new ToggleWholeWordsOnlyAction(this));
-    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      myActionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
-      myActionsGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
+    if (myActionsToolbar == null) {
+      initToolbar();
     }
-    myActionsGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
-    myActionsGroup.addAction(new ToggleSelectionOnlyAction(this));
-
-
-    myActionsToolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
-    myToolbarComponent = myActionsToolbar.getComponent();
-    myToolbarComponent.setBorder(null);
-    myToolbarComponent.setOpaque(false);
 
     myLeadPanel.add(myToolbarComponent);
 
@@ -345,6 +323,34 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     new VariantsCompletionAction(this, mySearchFieldGetter); // It registers a shortcut set automatically on construction
     Utils.setSmallerFontForChildren(myToolbarComponent);
+  }
+
+  private void initToolbar() {
+    DefaultActionGroup actionGroup = new DefaultActionGroup("search bar", false);
+    actionGroup.add(new ShowHistoryAction(mySearchFieldGetter, this));
+    actionGroup.add(new PrevOccurrenceAction(this, mySearchFieldGetter));
+    actionGroup.add(new NextOccurrenceAction(this, mySearchFieldGetter));
+    actionGroup.add(new FindAllAction(this));
+    actionGroup.add(new ToggleMultiline(this));
+    actionGroup.add(new ToggleMatchCase(this));
+    actionGroup.add(new ToggleRegex(this));
+
+    myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", actionGroup, true);
+    myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
+
+    actionGroup.addAction(new ToggleWholeWordsOnlyAction(this));
+    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
+      actionGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
+      actionGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
+    }
+    actionGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleSelectionOnlyAction(this));
+
+
+    myActionsToolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
+    myToolbarComponent = myActionsToolbar.getComponent();
+    myToolbarComponent.setBorder(null);
+    myToolbarComponent.setOpaque(false);
   }
 
   private void setupSearchFieldListener() {
