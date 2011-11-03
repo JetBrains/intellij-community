@@ -2046,7 +2046,7 @@ public class GitLogUI implements Disposable {
 
   public class MyHighlightCurrent extends DumbAwareAction {
     public MyHighlightCurrent() {
-      super("Highlight current");
+      super("Highlight subgraph");
     }
 
     @Override
@@ -2093,14 +2093,14 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myAllHeads;
     private final DumbAwareAction myClearAll;
     private final DumbAwareAction myHead;
-    private final DumbAwareAction myClear;
+    //private final DumbAwareAction myClear;
 //    private final DumbAwareAction myCurrent;
     private final AnAction[] myAnActions;
 
     public MyHighlightActionGroup() {
       super("Highlight...", true);
 
-    myAllHeads = new DumbAwareAction("All Heads") {
+    myAllHeads = new DumbAwareAction("All HEADs subgraphs") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
@@ -2124,7 +2124,7 @@ public class GitLogUI implements Disposable {
         e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
-    myClearAll = new DumbAwareAction("Clear All") {
+    myClearAll = new DumbAwareAction("Clear") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
@@ -2144,7 +2144,7 @@ public class GitLogUI implements Disposable {
         e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
-    myHead = new DumbAwareAction("HEAD") {
+    myHead = new DumbAwareAction("HEAD subgraph") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final int[] selectedRows = myJBTable.getSelectedRows();
@@ -2174,7 +2174,7 @@ public class GitLogUI implements Disposable {
         weNeedOneCommitSelected(e);
       }
     };
-    myClear = new DumbAwareAction("Clear") {
+    /*myClear = new DumbAwareAction("Clear") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final int[] selectedRows = myJBTable.getSelectedRows();
@@ -2199,7 +2199,7 @@ public class GitLogUI implements Disposable {
         }
         weNeedOneCommitSelected(e);
       }
-    };
+    };*/
     /*myCurrent = new DumbAwareAction("Current") {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -2221,7 +2221,7 @@ public class GitLogUI implements Disposable {
       }
     };*/
 
-      myAnActions = new AnAction[]{myAllHeads, myClearAll, new Separator(), myHead, myClear};
+      myAnActions = new AnAction[]{myHead, myAllHeads, myClearAll};
     }
 
     @Override
