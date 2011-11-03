@@ -452,17 +452,18 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         for (PsiClass c : classes) {
           results.put(c, new LinkedHashSet<PsiMethod>());
         }
-      }
-      for (PsiMember psiMember : membersToCheckNow) {
-        PsiClass psiClass;
-        PsiMethod[] meths = null;
-        if (psiMember instanceof PsiMethod) {
-          psiClass = psiMember.getContainingClass();
-          meths = new PsiMethod[] {(PsiMethod)psiMember};
-        } else {
-          psiClass = (PsiClass)psiMember;
+      } else {
+        for (PsiMember psiMember : membersToCheckNow) {
+          PsiClass psiClass;
+          PsiMethod[] meths = null;
+          if (psiMember instanceof PsiMethod) {
+            psiClass = psiMember.getContainingClass();
+            meths = new PsiMethod[] {(PsiMethod)psiMember};
+          } else {
+            psiClass = (PsiClass)psiMember;
+          }
+          calculateDependencies(meths, results, alreadyMarkedToBeChecked, psiClass);
         }
-        calculateDependencies(meths, results, alreadyMarkedToBeChecked, psiClass);
       }
     }
   }
