@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
@@ -61,6 +60,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Yura Cangea
@@ -327,6 +327,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static class FileTypeDetectorHolder {
     private static final FileTypeDetector[] FILE_TYPE_DETECTORS = Extensions.getExtensions(FileTypeDetector.EP_NAME);
   }
+  private static final AtomicInteger DETECTED_COUNT = new AtomicInteger();
   private static final int DETECT_BUFFER_SIZE = 8192;
   @NotNull
   private static FileType detectFromContent(@NotNull final VirtualFile file) {
@@ -335,48 +336,47 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (length == 0) {
         return UnknownFileType.INSTANCE;
       }
-      final Function<ByteSequence, FileType> detectProcessor = new Function<ByteSequence, FileType>() {
+      VirtualFileSystem fileSystem = file.getFileSystem();
+      if (!(fileSystem instanceof FileSystemInterface)) return UnknownFileType.INSTANCE;
 
-        @Override
-        public FileType fun(ByteSequence byteSequence) {
-          boolean isText = guessIfText(file, byteSequence);
-          CharSequence text;
-          if (isText) {
-            byte[] bytes = Arrays.copyOf(byteSequence.getBytes(), byteSequence.getLength());
-            text = LoadTextUtil.getTextByBinaryPresentation(bytes, file);
-          }
-          else {
-            text = null;
-          }
-          for (FileTypeDetector detector : FileTypeDetectorHolder.FILE_TYPE_DETECTORS) {
-            FileType detected = detector.detect(file, byteSequence, text);
-            if (detected != null) return detected;
-          }
-
-          return isText ? PlainTextFileType.INSTANCE : UnknownFileType.INSTANCE;
-        }
-      };
-      FileType fileType;
-      if (length > DETECT_BUFFER_SIZE) {
-        VirtualFileSystem fileSystem = file.getFileSystem();
-        if (!(fileSystem instanceof FileSystemInterface)) return UnknownFileType.INSTANCE;
-
-        InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(file);
-        final Ref<FileType> detected = new Ref<FileType>();
+      InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(file);
+      final Ref<FileType> result;
+      try {
+        result = new Ref<FileType>(UnknownFileType.INSTANCE);
         FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
           @Override
           public boolean process(ByteSequence byteSequence) {
-            detected.set(detectProcessor.fun(byteSequence));
+            boolean isText = guessIfText(file, byteSequence);
+            CharSequence text;
+            if (isText) {
+              byte[] bytes = Arrays.copyOf(byteSequence.getBytes(), byteSequence.getLength());
+              text = LoadTextUtil.getTextByBinaryPresentation(bytes, file);
+            }
+            else {
+              text = null;
+            }
+            FileType detected = null;
+            for (FileTypeDetector detector : FileTypeDetectorHolder.FILE_TYPE_DETECTORS) {
+              detected = detector.detect(file, byteSequence, text);
+              if (detected != null) break;
+            }
+
+            if (detected == null) {
+              detected = isText ? PlainTextFileType.INSTANCE : UnknownFileType.INSTANCE;
+            }
+            result.set(detected);
             return true;
           }
         });
-         fileType = detected.get();
       }
-      else {
-        byte[] bytes = file.contentsToByteArray();
-        fileType = detectProcessor.fun(new ByteSequence(bytes));
+      finally {
+        inputStream.close();
       }
+      FileType fileType = result.get();
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(file + "; type=" + fileType.getDescription() + "; " + DETECTED_COUNT.incrementAndGet());
+      }
       return fileType;
     }
     catch (FileNotFoundException e) {
