@@ -180,9 +180,10 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       serializer.serialize(rootStub, stream);
 
       final List<StubElement> children = rootStub.getChildrenStubs();
-      DataInputOutputUtil.writeINT(stream, children.size());
-      for (StubElement child : children) {
-        doSerialize(child, stream);
+      final int childrenSize = children.size();
+      DataInputOutputUtil.writeINT(stream, childrenSize);
+      for (int i = 0; i < childrenSize; ++i) {
+        doSerialize(children.get(i), stream);
       }
     }
     catch (IOException e) {
