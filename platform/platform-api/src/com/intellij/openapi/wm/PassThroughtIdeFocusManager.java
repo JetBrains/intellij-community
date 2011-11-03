@@ -141,4 +141,7 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
     return false;
   }
 
+  @Override
+  public void dispose() {
+  }
 }

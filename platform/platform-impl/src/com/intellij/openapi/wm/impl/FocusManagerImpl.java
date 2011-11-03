@@ -791,6 +791,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       FurtherRequestor each = requestorIterator.next();
       if (each.isExpired()) {
         requestorIterator.remove();
+        Disposer.dispose(each);
       }
     }
   }
@@ -882,6 +883,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
     private Throwable myAllocation;
+    private boolean myDisposed;
 
     private FurtherRequestor(IdeFocusManager manager, Expirable expirable) {
       myManager = manager;
@@ -894,17 +896,29 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-      return isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+      final ActionCallback result = isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+      result.doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(FurtherRequestor.this);
+        }
+      });
+      return result;
     }
 
     private boolean isExpired() {
-      return myExpirable.isExpired();
+      return myExpirable.isExpired() || myDisposed;
     }
 
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
       return isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(command, forced);
+    }
+
+    @Override
+    public void dispose() {
+      myDisposed = true;
     }
   }
 

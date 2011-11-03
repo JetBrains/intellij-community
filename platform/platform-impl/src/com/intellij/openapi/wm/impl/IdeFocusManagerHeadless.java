@@ -133,4 +133,8 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   public void toFront(JComponent c) {
   }
+
+  @Override
+  public void dispose() {
+  }
 }
