@@ -969,6 +969,7 @@ public class TypeConversionUtil {
         }
       });
       LOG.error(msg.toString());
+      return PsiSubstitutor.EMPTY;
     }
     return substitutor;
   }
