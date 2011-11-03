@@ -2382,7 +2382,9 @@ public class GitLogUI implements Disposable {
       } else {
         myJBTable.getSelectionModel().addSelectionInterval(idx, idx);
         final int scrollOffsetTop = myJBTable.getRowHeight() * idx - myTableViewPort.getHeight()/2;
-        myTableViewPort.setViewPosition(new Point(0, scrollOffsetTop));
+        if (scrollOffsetTop > 0) {
+          myTableViewPort.setViewPosition(new Point(0, scrollOffsetTop));
+        }
       }
     }
     
