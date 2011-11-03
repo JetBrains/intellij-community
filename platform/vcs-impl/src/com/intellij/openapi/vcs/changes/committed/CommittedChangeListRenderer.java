@@ -142,20 +142,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
     if (description.length() == 0 && !truncated) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      appendAlign(availableWidth - dateCommitterSize - numberWidth);
+      appendAlign(descMaxWidth);
     }
     else if (descMaxWidth < 0) {
       myRenderer.appendTextWithLinks(description);
     }
     else if (descWidth < descMaxWidth && !truncated) {
       final List<String> pieces = myRenderer.appendTextWithLinks(description);
-      String subString = "";
-      for (int i = 0; i < (pieces.size() - 1); i++) {
-        final String s = pieces.get(i);
-        subString += s;
-      }
-      final int partWidth = fontMetrics.stringWidth(subString);
-      appendAlign(descMaxWidth - partWidth - numberWidth);
+      appendAlign(descMaxWidth);
     }
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
@@ -167,7 +161,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       // align value is for the latest added piece
-      appendAlign(descMaxWidth - addWidth - numberWidth);
+      appendAlign(descMaxWidth);
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
