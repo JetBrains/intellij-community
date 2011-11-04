@@ -33,25 +33,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class PersistentMaplet<K, V> implements Maplet<K, V> {
-  public static <X extends RW.Writable, Y extends RW.Writable> void write(final BufferedWriter w, final PersistentMaplet<X, Y> m) {
-    RW.writeln(w, Integer.toString(m.size()));
-
-    for (Entry<X, Collection<Y>> e : m.entrySet()) {
-      e.getKey().write(w);
-      RW.writeln(w, e.getValue());
-    }
-  }
-
-  public static <X, Y> PersistentMaplet<X, Y> read(final BufferedReader r,
-                                                   final RW.Reader<X> xr,
-                                                   final RW.Reader<Y> yr,
-                                                   final TransientMaplet.CollectionConstructor<Y> cc) {
-    assert (false);
-    return null;
-  }
-
   private final PersistentHashMap<K, Collection<V>> map;
-
   private final TransientMaplet.CollectionConstructor<V> constr;
 
   public PersistentMaplet(final File file,
@@ -91,16 +73,8 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
     constr = c;
   }
 
-  public int size() {
-    assert (false);
-    return -1;
-  }
-
-  public boolean isEmpty() {
-    assert (false);
-    return true;
-  }
-
+  
+  @Override
   public boolean containsKey(final Object key) {
     try {
       return map.containsMapping((K)key);
@@ -108,11 +82,6 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public boolean containsValue(final Object value) {
-    assert (false);
-    return false;
   }
 
   @Override
@@ -144,12 +113,14 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
     }
   }
 
+  @Override
   public Collection<V> put(final K key, final V value) {
     final Collection<V> x = constr.create();
     x.add(value);
     return put(key, x);
   }
 
+  @Override
   public void removeFrom(final K key, final V value) {
     try {
       final Object got = map.get(key);
@@ -168,6 +139,7 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
     }
   }
 
+  @Override
   public Collection<V> remove(final Object key) {
     try {
       map.remove((K)key);
@@ -179,46 +151,24 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public void putAll(Map<? extends K, ? extends Collection<V>> m) {
-    for (Entry<? extends K, ? extends Collection<V>> e : m.entrySet()) {
+  public void putAll(Maplet<K, V> m) {
+    for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
       remove(e.getKey());
       put(e.getKey(), e.getValue());
     }
   }
 
-  public void clear() {
-    assert (false);
-  }
 
-  public Set<K> keySet() {
-    //try {
-    assert (false);
-    return null; //map.getAllKeysWithExistingMapping();
-    // }
-    // catch (IOException e) {
-    //   throw new RuntimeException(e);
-    // }
+  public Collection<K> keyCollection() {
+    try {
+      return map.getAllKeysWithExistingMapping();
+    }
+    catch (IOException e){
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
-  public Collection<Collection<V>> values() {
-    assert (false);
-    return null;
-
-    //final List<Collection<V>> l = new LinkedList<Collection<V>>();
-
-    //for (Collection<V> value : map.values()) {
-    //  l.add(value);
-    //}
-
-    //return l;
-  }
-
-  public Set<Entry<K, Collection<V>>> entrySet() {
-    assert (false);
-    return null;
-  }
-
   public void close() {
     try {
       map.close();
@@ -226,5 +176,11 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public Set<Map.Entry<K, Collection<V>>> entrySet() {
+    assert(false);
+    return null;
   }
 }

@@ -1077,7 +1077,6 @@ public class ProjectWrapper {
                                  final Set<String> removed,
                                  final Flags flags) {
       final Collection<String> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
-      final Set<String> safeFiles = new HashSet<String>();
 
       if (outdated != null) {
         for (String s : outdated) {
@@ -1085,24 +1084,6 @@ public class ProjectWrapper {
         }
 
         filesToCompile.addAll(outdated);
-
-        for (String f : outdated) {
-          if (f.endsWith(".form")) {
-            final String sourceFileName = dependencyMapping.getJavaByForm(f);
-
-            if (sourceFileName != null && !filesToCompile.contains(sourceFileName)) {
-              safeFiles.add(sourceFileName);
-              filesToCompile.add(sourceFileName);
-            }
-          }
-          else if (f.endsWith(".java")) {
-            final String formFileName = dependencyMapping.getFormByJava(f);
-
-            if (formFileName != null) {
-              filesToCompile.add(formFileName);
-            }
-          }
-        }
       }
 
       filesToCompile.removeAll(compiledFiles);
@@ -1183,7 +1164,7 @@ public class ProjectWrapper {
 
           final Collection<File> affected = new HashSet<File>();
 
-          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected, safeFiles);
+          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected);
 
           for (File a : affected) {
             affectedFiles.add(FileUtil.toSystemIndependentName(a.getAbsolutePath()));

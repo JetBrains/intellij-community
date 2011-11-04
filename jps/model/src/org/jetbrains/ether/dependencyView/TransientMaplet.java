@@ -14,15 +14,6 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 class TransientMaplet<K, V> implements Maplet<K, V> {
-  public static <X extends RW.Writable, Y extends RW.Writable> void write(final BufferedWriter w, final TransientMaplet<X, Y> m) {
-    RW.writeln(w, Integer.toString(m.size()));
-
-    for (Entry<X, Collection<Y>> e : m.entrySet()) {
-      e.getKey().write(w);
-      RW.writeln(w, e.getValue());
-    }
-  }
-
   public static <X, Y> TransientMaplet<X, Y> read(final BufferedReader r,
                                           final RW.Reader<X> xr,
                                           final RW.Reader<Y> yr,
@@ -51,20 +42,9 @@ class TransientMaplet<K, V> implements Maplet<K, V> {
     constr = c;
   }
 
-  public int size() {
-    return map.size();
-  }
-
-  public boolean isEmpty() {
-    return map.isEmpty();
-  }
-
+  @Override
   public boolean containsKey(final Object key) {
     return map.containsKey(key);
-  }
-
-  public boolean containsValue(final Object value) {
-    return map.containsValue(value);
   }
 
   @Override
@@ -86,12 +66,14 @@ class TransientMaplet<K, V> implements Maplet<K, V> {
     return x;
   }
 
+  @Override
   public Collection<V> put(final K key, final V value) {
     final Collection<V> x = constr.create();
     x.add(value);
     return put(key, x);
   }
 
+  @Override
   public void removeFrom(final K key, final V value) {
     final Object got = map.get(key);
 
@@ -105,41 +87,30 @@ class TransientMaplet<K, V> implements Maplet<K, V> {
     }
   }
 
+  @Override
   public Collection<V> remove(final Object key) {
     return map.remove(key);
   }
 
   @Override
-  public void putAll(Map<? extends K, ? extends Collection<V>> m) {
-    for (Entry<? extends K, ? extends Collection<V>> e : m.entrySet()) {
+  public void putAll(Maplet<K, V> m) {
+    for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
       remove(e.getKey());
       put(e.getKey(), e.getValue());
     }
   }
 
-  public void clear() {
-    map.clear();
-  }
-
-  public Set<K> keySet() {
+  @Override
+  public Collection<K> keyCollection() {
     return map.keySet();
   }
 
   @Override
-  public Collection<Collection<V>> values() {
-    final List<Collection<V>> l = new LinkedList<Collection<V>>();
-
-    for (Collection<V> value : map.values()) {
-      l.add(value);
-    }
-
-    return l;
-  }
-
-  public Set<Entry<K, Collection<V>>> entrySet() {
+  public Set<Map.Entry<K, Collection<V>>> entrySet() {
     return map.entrySet();
   }
 
+  @Override
   public void close(){
 
   }

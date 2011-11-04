@@ -26,6 +26,5 @@ public class Callbacks {
   public interface Backend {
     Collection<String> getClassFiles();
     void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-    void associateForm(String formName, String className);
   }
 }

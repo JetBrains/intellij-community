@@ -17,6 +17,7 @@ package org.jetbrains.ether.dependencyView;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,8 +26,15 @@ import java.util.Map;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-interface Maplet<K, V> extends Map<K, Collection<V>> {
+interface Maplet<K, V> {
+  boolean containsKey(final Object key);
+  Collection<V> get(final Object key);
   Collection<V> put(final K key, final V value);
+  Collection<V> put(final K key, final Collection<V> value);
+  void putAll(Maplet<K, V> m);
+  Collection<V> remove(final Object key);
   void removeFrom(final K key, final V value);
   void close();
+  Collection<K> keyCollection();
+  Set<Map.Entry<K, Collection<V>>> entrySet();
 }

@@ -327,7 +327,7 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitEnd() {
-      for (TypeRepr.ClassType type : annotationTargets.keySet()) {
+      for (TypeRepr.ClassType type : annotationTargets.keyCollection()) {
         final Collection<ElementType> targets = annotationTargets.get(type);
         final Set<DependencyContext.S> usedArguments = annotationArguments.get(type);
 

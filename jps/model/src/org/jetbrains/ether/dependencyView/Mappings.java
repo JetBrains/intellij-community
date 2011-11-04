@@ -57,13 +57,10 @@ public class Mappings implements RW.Writable {
 
   private final Map<DependencyContext.S, UsageRepr.Cluster> sourceFileToUsages;
   private final Map<DependencyContext.S, DependencyContext.S> classToSourceFile;
-  private final Map<DependencyContext.S, DependencyContext.S> formToClass;
-  private final Map<DependencyContext.S, DependencyContext.S> classToForm;
 
   @Override
   public void write(final BufferedWriter w) {
     RW.writeMap(w, sourceFileToUsages);
-    //TransientMaplet.write(w, sourceFileToAnnotationUsages);
     RW.writeMap(w, classToSourceFile);
   }
 
@@ -76,8 +73,6 @@ public class Mappings implements RW.Writable {
     sourceFileToAnnotationUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
     classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
     classToClassDependency = new TransientMaplet<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
-    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
-    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
   public Mappings(final File rootDir) throws IOException {
@@ -114,8 +109,6 @@ public class Mappings implements RW.Writable {
     sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
     
     classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
-    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
-    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
   public Mappings(final File rootDir, final BufferedReader r) throws IOException {
@@ -152,8 +145,6 @@ public class Mappings implements RW.Writable {
     sourceFileToUsages =
       RW.readMap(r, context.reader, UsageRepr.clusterReader(context), new HashMap<DependencyContext.S, UsageRepr.Cluster>());
     classToSourceFile = RW.readMap(r, context.reader, context.reader, new HashMap<DependencyContext.S, DependencyContext.S>());
-    formToClass = new HashMap<DependencyContext.S, DependencyContext.S>();
-    classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
   public Mappings createDelta(){
@@ -529,15 +520,6 @@ public class Mappings implements RW.Writable {
                                final Collection<File> filesToCompile,
                                final Collection<File> compiledFiles,
                                final Collection<File> affectedFiles) {
-    return differentiate(delta, removed, filesToCompile, compiledFiles, affectedFiles, null);
-  }
-
-  public boolean differentiate(final Mappings delta,
-                               final Collection<String> removed,
-                               final Collection<File> filesToCompile,
-                               final Collection<File> compiledFiles,
-                               final Collection<File> affectedFiles,
-                               @Nullable final Collection<String> safeFiles) {
     delta.compensateRemovedContent(filesToCompile);
 
     final Util u = new Util(delta);
@@ -556,11 +538,7 @@ public class Mappings implements RW.Writable {
       }
     }
 
-    for (DependencyContext.S fileName : delta.sourceFileToClasses.keySet()) {
-      if (safeFiles != null && safeFiles.contains(context.getValue(fileName))) {
-        continue;
-      }
-
+    for (DependencyContext.S fileName : delta.sourceFileToClasses.keyCollection()) {
       final Set<ClassRepr> classes = (Set<ClassRepr>)delta.sourceFileToClasses.get(fileName);
       final Set<ClassRepr> pastClasses = (Set<ClassRepr>)sourceFileToClasses.get(fileName);
       final Set<DependencyContext.S> dependants = new HashSet<DependencyContext.S>();
@@ -1021,14 +999,12 @@ public class Mappings implements RW.Writable {
     }
 
     classToSubclasses.putAll(delta.classToSubclasses);
-    formToClass.putAll(delta.formToClass);
-    classToForm.putAll(delta.classToForm);
     sourceFileToClasses.putAll(delta.sourceFileToClasses);
     sourceFileToUsages.putAll(delta.sourceFileToUsages);
     sourceFileToAnnotationUsages.putAll(delta.sourceFileToAnnotationUsages);
     classToSourceFile.putAll(delta.classToSourceFile);
 
-    for (DependencyContext.S file : delta.classToClassDependency.keySet()) {
+    for (DependencyContext.S file : delta.classToClassDependency.keyCollection()) {
       final Collection<DependencyContext.S> now = delta.classToClassDependency.get(file);
       final Collection<DependencyContext.S> past = classToClassDependency.get(file);
 
@@ -1051,11 +1027,6 @@ public class Mappings implements RW.Writable {
         classToClassDependency.put(file, past);
       }
     }
-  }
-
-  private void updateFormToClass(final DependencyContext.S formName, final DependencyContext.S className) {
-    formToClass.put(formName, className);
-    classToForm.put(className, formName);
   }
 
   private void updateSourceToUsages(final DependencyContext.S source, final UsageRepr.Cluster usages) {
@@ -1121,42 +1092,12 @@ public class Mappings implements RW.Writable {
           updateSourceToAnnotationUsages(sourceFileNameS, localAnnotationUsages);
         }
       }
-
-      public void associateForm(String formName, String className) {
-        updateFormToClass(context.get(formName), context.get(className));
-      }
     };
   }
 
   @Nullable
   public Set<ClassRepr> getClasses(final String sourceFileName) {
     return (Set<ClassRepr>)sourceFileToClasses.get(context.get(sourceFileName));
-  }
-
-  @Nullable
-  public String getJavaByForm(final String formFileName) {
-    final DependencyContext.S classFileName = formToClass.get(context.get(formFileName));
-
-    assert classFileName != null;
-
-    return context.getValue(classToSourceFile.get(classFileName));
-  }
-
-  @Nullable
-  public String getFormByJava(final String javaFileName) {
-    final Set<ClassRepr> classes = getClasses(javaFileName);
-
-    if (classes != null) {
-      for (ClassRepr c : classes) {
-        final DependencyContext.S formName = classToForm.get(c.name);
-
-        if (formName != null) {
-          return context.getValue(formName);
-        }
-      }
-    }
-
-    return null;
   }
 
   public void close (){
