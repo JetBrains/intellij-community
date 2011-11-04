@@ -38,8 +38,6 @@ import java.util.ArrayList;
  */
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
-  private static final String AVAILABLE_VERSION = "available version: ";
-  private static final String INSTALLED_VERSION = "installed version: ";
 
   private static JEditorPane myDescriptionPanel = new JEditorPane();
 
@@ -60,9 +58,9 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         final String loadedVersion = downloader.getPluginVersion();
         if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
           final String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
-                                          ? INSTALLED_VERSION + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? ", " : "")
+                                          ? "v." + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " -> " : "")
                                           : "";
-          final String availableVersion = loadedVersion != null ? AVAILABLE_VERSION + loadedVersion : "";
+          final String availableVersion = loadedVersion != null ? loadedVersion : "";
           append(" (" + installedVersion + availableVersion + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
