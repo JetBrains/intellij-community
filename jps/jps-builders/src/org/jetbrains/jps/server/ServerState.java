@@ -1,5 +1,6 @@
 package org.jetbrains.jps.server;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.JavaSdk;
@@ -7,6 +8,7 @@ import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.BuildParameters;
+import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
@@ -52,6 +54,7 @@ class ServerState {
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
     final String projectName = getProjectName(projectPath);
+    BuildType buildType = params.buildType;
 
     Project project;
     Mappings mappings;
@@ -80,8 +83,10 @@ class ServerState {
           mappings = new Mappings(mappingsRoot);
         }
         catch (IOException e) {
-          msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
+          FileUtil.delete(mappingsRoot);
+          msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Problems reading dependency information, rebuild required: " + e.getMessage()));
           mappings = new Mappings(mappingsRoot);
+          buildType = BuildType.REBUILD;
         }
 
         myProjectMappings.put(projectPath, mappings);
@@ -106,7 +111,7 @@ class ServerState {
     if (msgHandler != null) {
       builder.addMessageHandler(msgHandler);
     }
-    switch (params.buildType) {
+    switch (buildType) {
       case REBUILD:
         builder.build(compileScope, false);
         break;

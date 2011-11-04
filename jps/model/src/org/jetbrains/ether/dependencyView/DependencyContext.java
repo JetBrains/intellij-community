@@ -51,15 +51,10 @@ class DependencyContext {
     return file;
   }
 
-  DependencyContext(final File rootDir) {
+  DependencyContext(final File rootDir) throws IOException {
     final File file = getTableFile(rootDir, stringTableName);
 
-    try {
-      enumerator = new PersistentStringEnumerator(file, true);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    enumerator = new PersistentStringEnumerator(file, true);
   }
 
   static KeyDescriptor<S> descriptorS = new KeyDescriptor<S>() {

@@ -10,6 +10,7 @@ import org.objectweb.asm.Opcodes;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
@@ -80,7 +81,7 @@ public class Mappings implements RW.Writable {
     classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
-  public Mappings(final File rootDir) {
+  public Mappings(final File rootDir) throws IOException {
     context = new DependencyContext(rootDir);
 
     classToSubclasses = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir,
@@ -96,7 +97,7 @@ public class Mappings implements RW.Writable {
     classToForm = new HashMap<DependencyContext.S, DependencyContext.S>();
   }
 
-  public Mappings(final File rootDir, final BufferedReader r) {
+  public Mappings(final File rootDir, final BufferedReader r) throws IOException {
     context = new DependencyContext(rootDir);
     classToSubclasses = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir,
                                                                                                                       classToSubclassesName), DependencyContext.descriptorS, DependencyContext.descriptorS, stringSetConstructor);

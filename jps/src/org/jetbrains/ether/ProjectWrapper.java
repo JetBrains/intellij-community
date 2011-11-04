@@ -852,7 +852,12 @@ public class ProjectWrapper {
     myProjectSnapshot =
               myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
-    dependencyMapping = new Mappings(getMapDir());
+    try {
+      dependencyMapping = new Mappings(getMapDir());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     backendCallback = dependencyMapping.getCallback();
 
     for (Module m : myProject.getModules().values()) {
@@ -908,7 +913,12 @@ public class ProjectWrapper {
 
     RW.readMany(r, RW.myStringReader, affectedFiles);
 
-    dependencyMapping = new Mappings(getMapDir(), r);
+    try {
+      dependencyMapping = new Mappings(getMapDir(), r);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     backendCallback = dependencyMapping.getCallback();
   }
 
