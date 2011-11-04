@@ -23,6 +23,7 @@ import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
@@ -449,12 +450,23 @@ public class GroovycRunner {
 
             if (resourceLoader.getSourceFile(name) != null) {
               try {
-                aClass.getDeclaredMethods();
-                aClass.getDeclaredFields();
+                for (Method method : aClass.getDeclaredMethods()) {
+                  method.getGenericReturnType();
+                  method.getGenericExceptionTypes();
+                  method.getGenericParameterTypes();
+                }
+
+                for (Field field : aClass.getDeclaredFields()) {
+                  field.getGenericType();
+                }
+
                 aClass.getDeclaredClasses();
                 aClass.getDeclaredAnnotations();
               }
-              catch (NoClassDefFoundError e) {
+              catch (LinkageError e) {
+                throw new ClassNotFoundException(name);
+              }
+              catch (TypeNotPresentException e) {
                 throw new ClassNotFoundException(name);
               }
             }
