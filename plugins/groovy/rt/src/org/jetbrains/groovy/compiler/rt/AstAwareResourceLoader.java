@@ -26,16 +26,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AstAwareResourceLoader implements GroovyResourceLoader {
-  final Map myClass2File;
+  final Map<String, File> myClass2File;
 
   AstAwareResourceLoader() {
-    myClass2File = Collections.synchronizedMap(new HashMap());
+    myClass2File = Collections.synchronizedMap(new HashMap<String, File>());
   }
 
   public URL loadGroovySource(String className) throws MalformedURLException {
     if (className == null) return null;
 
-    File file = (File)myClass2File.get(className);
+    File file = myClass2File.get(className);
     if (file != null) {
       return file.toURL();
     }

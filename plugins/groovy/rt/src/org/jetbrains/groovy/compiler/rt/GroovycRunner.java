@@ -109,16 +109,16 @@ public class GroovycRunner {
       compilerConfiguration.setOutput(new PrintWriter(System.err));
       compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
 
-      final List compilerMessages = new ArrayList();
-      final List patchers = new ArrayList();
-      final List srcFiles = new ArrayList();
+      final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
+      final List<CompilationUnitPatcher> patchers = new ArrayList<CompilationUnitPatcher>();
+      final List<File> srcFiles = new ArrayList<File>();
 
       final String[] finalOutput = new String[1];
       fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, finalOutput);
       if (srcFiles.isEmpty()) return;
 
       if (forStubs) {
-        HashMap options = new HashMap();
+        Map<String, Object> options = new HashMap<String, Object>();
         options.put("stubDir", compilerConfiguration.getTargetDirectory());
         options.put("keepStubs", Boolean.TRUE);
         compilerConfiguration.setJointCompilationOptions(options);
@@ -144,9 +144,7 @@ public class GroovycRunner {
       }
 
       int errorCount = 0;
-      for (int i = 0; i < compilerMessages.size(); i++) {
-        CompilerMessage message = (CompilerMessage)compilerMessages.get(i);
-
+      for (CompilerMessage message : compilerMessages) {
         if (message.getCategory() == CompilerMessage.ERROR) {
           if (errorCount > 100) {
             continue;
@@ -175,8 +173,8 @@ public class GroovycRunner {
     */
   }
 
-  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List patchers, List compilerMessages,
-                                         List srcFiles, String[] finalOutput) {
+  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages,
+                                         List<File> srcFiles, String[] finalOutput) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -250,11 +248,9 @@ public class GroovycRunner {
     return moduleClasspath;
   }
 
-  private static void addSources(boolean forStubs, List srcFiles, final CompilationUnit unit) {
-    for (int i = 0; i < srcFiles.size(); i++) {
-      final File file = (File)srcFiles.get(i);
+  private static void addSources(boolean forStubs, List<File> srcFiles, final CompilationUnit unit) {
+    for (final File file : srcFiles) {
       if (forStubs && file.getName().endsWith(".java")) {
-      //  unit.addSources(new File[]{file});
         continue;
       }
 
@@ -268,20 +264,18 @@ public class GroovycRunner {
     }
   }
 
-  private static void runPatchers(List patchers, List compilerMessages, CompilationUnit unit) {
+  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit) {
     if (!patchers.isEmpty()) {
       final AstAwareResourceLoader loader = new AstAwareResourceLoader();
       unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
         public void call(SourceUnit source) throws CompilationFailedException {
           File file = new File(source.getName());
-          List classes = source.getAST().getClasses();
-          for (int i = 0; i < classes.size(); i++) {
-            loader.myClass2File.put(((ClassNode)classes.get(i)).getName(), file);
+          for (ClassNode aClass : source.getAST().getClasses()) {
+            loader.myClass2File.put(aClass.getName(), file);
           }
         }
       }, Phases.CONVERSION);
-      for (int i = 0; i < patchers.size(); i++) {
-        final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patchers.get(i);
+      for (CompilationUnitPatcher patcher : patchers) {
         try {
           patcher.patchCompilationUnit(unit, loader);
         }
@@ -292,9 +286,8 @@ public class GroovycRunner {
     }
   }
 
-  private static void reportNotCompiledItems(Collection toRecompile) {
-    for (Iterator iterator = toRecompile.iterator(); iterator.hasNext();) {
-      File file = (File)iterator.next();
+  private static void reportNotCompiledItems(Collection<File> toRecompile) {
+    for (File file : toRecompile) {
       System.out.print(TO_RECOMPILE_START);
       System.out.print(file.getAbsolutePath());
       System.out.print(TO_RECOMPILE_END);
@@ -302,18 +295,17 @@ public class GroovycRunner {
     }
   }
 
-  private static void reportCompiledItems(List compiledFiles) {
-    for (int i = 0; i < compiledFiles.size(); i++) {
+  private static void reportCompiledItems(List<GroovyCompilerWrapper.OutputItem> compiledFiles) {
+    for (GroovyCompilerWrapper.OutputItem compiledFile : compiledFiles) {
       /*
       * output path
       * source file
       * output root directory
       */
-      GroovyCompilerWrapper.OutputItem compiledOutputItem = (GroovyCompilerWrapper.OutputItem)compiledFiles.get(i);
       System.out.print(COMPILED_START);
-      System.out.print(compiledOutputItem.getOutputPath());
+      System.out.print(compiledFile.getOutputPath());
       System.out.print(SEPARATOR);
-      System.out.print(compiledOutputItem.getSourceFile());
+      System.out.print(compiledFile.getSourceFile());
       System.out.print(COMPILED_END);
       System.out.println();
     }
@@ -335,7 +327,7 @@ public class GroovycRunner {
     System.out.println();
   }
 
-  private static void addExceptionInfo(List compilerMessages, Throwable e, String message) {
+  private static void addExceptionInfo(List<CompilerMessage> compilerMessages, Throwable e, String message) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
     compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
@@ -355,10 +347,10 @@ public class GroovycRunner {
     }
 
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
-      public Enumeration getResources(String name) throws IOException {
+      public Enumeration<URL> getResources(String name) throws IOException {
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
-          final Enumeration resources = super.getResources(name);
-          final ArrayList list = Collections.list(resources);
+          final Enumeration<URL> resources = super.getResources(name);
+          final ArrayList<URL> list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
             final URL url = (URL)iterator.next();
             try {
@@ -432,8 +424,8 @@ public class GroovycRunner {
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {
-    return (GroovyClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
-      public Object run() {
+    return AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
+      public GroovyClassLoader run() {
         return new GroovyClassLoader(getClass().getClassLoader(), compilerConfiguration) {
           public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
@@ -442,7 +434,7 @@ public class GroovycRunner {
             }
             catch (NoClassDefFoundError e) {
               final String ncdfe = e.getMessage();
-              
+
               throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name, e);
             }
             catch (LinkageError e) {
