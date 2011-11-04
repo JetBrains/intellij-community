@@ -66,5 +66,13 @@ if __name__ == "__main__":
   except ImportError:
     print ("There is no such settings file " + str(settings_file))
 
-  utility = PycharmTestManagementUtility()
+  try:
+    subcommand = sys.argv[1]
+  except IndexError:
+    subcommand = 'help' # Display help if no arguments were given.
+
+  if subcommand == 'test':
+    utility = PycharmTestManagementUtility()
+  else:
+    utility = ManagementUtility()
   utility.execute()
