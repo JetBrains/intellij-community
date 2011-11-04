@@ -135,6 +135,7 @@ public class PyTokenTypes {
   public static final TokenSet SHIFT_OPERATIONS = TokenSet.create(LTLT, GTGT);
   public static final TokenSet ADDITIVE_OPERATIONS = TokenSet.create(PLUS, MINUS);
   public static final TokenSet MULTIPLICATIVE_OPERATIONS = TokenSet.create(MULT, FLOORDIV, DIV, PERC);
+  public static final TokenSet MULTIPLICATIVE_OR_EXP = TokenSet.create(MULT, FLOORDIV, DIV, PERC, EXP);
   public static final TokenSet UNARY_OPERATIONS = TokenSet.create(PLUS, MINUS, TILDE);
   public static final TokenSet BITWISE_OPERATIONS = TokenSet.create(AND, OR, XOR); 
   public static final TokenSet EQUALITY_OPERATIONS = TokenSet.create(EQEQ, NE, NE_OLD);
