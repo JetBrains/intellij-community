@@ -292,7 +292,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public void addMessage(CompilerMessage msg) {
     Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
     if (messages == null) {
-      messages = new HashSet<CompilerMessage>();
+      messages = new LinkedHashSet<CompilerMessage>();
       myMessages.put(msg.getCategory(), messages);
     }
     if (messages.add(msg)) {
