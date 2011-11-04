@@ -37,9 +37,10 @@ class ClassfileAnalyzer {
     }
   }
 
-  private static String denullify (final String s) {
-    return s == null ? "" : s;
-  }
+  //private static String denullify (final String s) {
+  //  return s == null ? "" : s;
+  //}
+
   private class ClassCrawler extends EmptyVisitor {
     private class AnnotationRetentionPolicyCrawler implements AnnotationVisitor {
       public void visit(String name, Object value) {
@@ -145,9 +146,8 @@ class ClassfileAnalyzer {
       }
 
       public void visitEnum(String name, String desc, String value) {
-        final String denullified = denullify(name);
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(denullified), type.className, "()" + desc));
-        usedArguments.add(context.get(denullified));
+        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(name), type.className, "()" + desc));
+        usedArguments.add(context.get(name));
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {
@@ -287,7 +287,7 @@ class ClassfileAnalyzer {
     public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> getResult() {
       final ClassRepr repr =
         takeIntoAccount ? new ClassRepr(context, access, sourceFile, fileName, name, context.get(signature), context.get(superClass), interfaces, nestedClasses, fields,
-                                        methods, targets, policy, context.get(denullify(outerClassName.get())), localClassFlag.get()) : null;
+                                        methods, targets, policy, context.get(outerClassName.get()), localClassFlag.get()) : null;
 
       if (repr != null) {
         repr.updateClassUsages(context, usages);
@@ -304,8 +304,8 @@ class ClassfileAnalyzer {
 
       access = a;
       name = context.get(n);
-      signature = denullify(sig);
-      superClass = denullify(s);
+      signature = sig;
+      superClass = s;
       interfaces = i;
 
       classNameHolder.set(n);
@@ -358,7 +358,7 @@ class ClassfileAnalyzer {
     public FieldVisitor visitField(int access, String n, String desc, String signature, Object value) {
       processSignature(signature);
 
-      fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(denullify(signature)), value));
+      fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(signature), value));
 
       return new EmptyVisitor() {
         @Override
@@ -381,7 +381,7 @@ class ClassfileAnalyzer {
       return new EmptyVisitor() {
         @Override
         public void visitEnd() {
-          methods.add(new MethodRepr(context, access, context.get(n), context.get(denullify(signature)), desc, exceptions, defaultValue.get()));
+          methods.add(new MethodRepr(context, access, context.get(n), context.get(signature), desc, exceptions, defaultValue.get()));
         }
 
         @Override

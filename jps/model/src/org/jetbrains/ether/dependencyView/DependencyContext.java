@@ -156,7 +156,7 @@ class DependencyContext {
 
   public S get(final String s) {
     try {
-      final int i = enumerator.enumerate(s);
+      final int i = s == null ? enumerator.enumerate("") : enumerator.enumerate(s);
 
       return new S(i);
     }
