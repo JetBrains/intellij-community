@@ -205,7 +205,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {
       Image img = SEPARATOR_PASSIVE;
       final UISettings settings = UISettings.getInstance();
-      if (UIUtil.isUnderAquaLookAndFeel() || (settings.SHOW_MAIN_TOOLBAR && settings.SHOW_NAVIGATION_BAR)) {
+      if (settings.SHOW_NAVIGATION_BAR) {
         img = SEPARATOR_GRADIENT;
       }
       g.drawImage(img, null, null);
@@ -234,6 +234,11 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   private boolean isFirstElement() {
     return myIndex == 0;
+  }
+
+  @Override
+  public void setOpaque(boolean isOpaque) {
+    super.setOpaque(false);
   }
 
   @Override

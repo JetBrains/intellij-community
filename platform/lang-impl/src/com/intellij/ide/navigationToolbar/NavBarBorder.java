@@ -42,6 +42,7 @@ class NavBarBorder implements Border {
     if (myDocked) {
       if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
         drawTopBorder = false;
+        return;
       }
     }
 
