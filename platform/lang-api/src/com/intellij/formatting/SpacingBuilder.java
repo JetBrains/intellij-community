@@ -88,6 +88,15 @@ public class SpacingBuilder {
       return SpacingBuilder.this;
     }
 
+    public SpacingBuilder lineBreakInCode() {
+      for (RuleCondition condition : myConditions) {
+        myRules.add(new SpacingRule(condition, 0, 0, 1,
+                                    myCodeStyleSettings.KEEP_LINE_BREAKS, myCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE));
+      }
+      return SpacingBuilder.this;
+    }
+
+
     public SpacingBuilder spacing(int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
       for (RuleCondition condition : myConditions) {
         myRules.add(new SpacingRule(condition, minSpaces, maxSpaces,  minLF, keepLineBreaks, keepBlankLines));
