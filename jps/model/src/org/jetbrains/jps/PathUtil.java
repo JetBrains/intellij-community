@@ -1,5 +1,7 @@
 package org.jetbrains.jps;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
 import java.net.URI;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class PathUtil {
       if (ancestors.contains(current)) {
         return true;
       }
-      current = current.getParentFile();
+      current = FileUtil.getParentFile(current);
     }
     return false;
   }

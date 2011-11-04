@@ -232,7 +232,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private static void buildStructure(final FSSnapshot.Node from, final Set<File> excluded) {
     final File nodeFile = from.getFile();
     if (nodeFile.isDirectory()) {
-      if (isExcluded(excluded, nodeFile)) {
+      if (PathUtil.isUnder(excluded, nodeFile)) {
         return;
       }
       final File[] children = nodeFile.listFiles();
@@ -243,15 +243,4 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       }
     }
   }
-
-  private static boolean isExcluded(final Set<File> excludedRoots, File file) {
-    while (file != null) {
-      if (excludedRoots.contains(file)) {
-        return true;
-      }
-      file = file.getParentFile();
-    }
-    return false;
-  }
-
 }
