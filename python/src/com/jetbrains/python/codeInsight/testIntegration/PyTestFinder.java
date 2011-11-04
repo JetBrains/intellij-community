@@ -81,7 +81,7 @@ public class PyTestFinder implements TestFinder {
 
   @Override
   public boolean isTest(@NotNull PsiElement element) {
-    PyClass cl = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    PyClass cl = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     if (cl != null)
       return PyTestUtil.isPyTestClass(cl);
     return false;
