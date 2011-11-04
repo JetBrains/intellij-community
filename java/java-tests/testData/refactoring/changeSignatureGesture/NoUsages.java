@@ -1,3 +1,4 @@
+package refactoring.changeSignatureGesture;
 class Test {
-  void myverylonagname(<caret>){}
+  private void myverylonagname(<caret>){}
 }

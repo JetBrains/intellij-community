@@ -87,7 +87,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     return adapter != null && adapter.getCurrentInfo() != null;
   }
 
-
+  public void dismissForElement(PsiElement method) {
+    final PsiFile psiFile = method.getContainingFile();
+    final ChangeInfo initialChangeInfo = getInitialChangeInfo(psiFile);
+    if (initialChangeInfo != null && initialChangeInfo.getMethod() == method) {
+      clearSignatureChange(psiFile);
+    }
+  }
 
   public boolean containsChangeSignatureChange(@NotNull PsiFile file) {
     return getChangeInfo(file) != null;

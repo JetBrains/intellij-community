@@ -47,7 +47,7 @@ import java.util.Collections;
 public class ChangeSignaturePassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public ChangeSignaturePassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.POST_UPDATE_ALL}, null, false, -1);
   }
 
   @Override
@@ -101,7 +101,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
                                  SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
                                  HighlightSeverity.INFORMATION, false, true, false);
         final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
-        options.add(new DismissNewSignatureIntentionAction(myProject, myFile));
+        options.add(new DismissNewSignatureIntentionAction());
         QuickFixAction.registerQuickFixAction(info, new ChangeSignatureDetectorAction(), options, null);
       }
       Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.<HighlightInfo>emptyList();

@@ -17,6 +17,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -39,6 +40,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
 
   private void doTest(final Runnable run, boolean shouldShow, final String hint) {
     myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
+    myFixture.enableInspections(new UnusedSymbolLocalInspection());
     final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(getProject());
     final EditorEx editor = (EditorEx)myFixture.getEditor();
     final Document document = editor.getDocument();

@@ -124,8 +124,6 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     }
     
     final PsiMethod oldMethod = (PsiMethod)currentInfo.getMethod();
-    if (oldMethod.isPhysical() && LanguageChangeSignatureDetectors.skipElement(oldMethod, initialName)) return null;
-
     String visibility = "";
     PsiClass containingClass = oldMethod.getContainingClass();
     if (containingClass != null && containingClass.isInterface()) {
