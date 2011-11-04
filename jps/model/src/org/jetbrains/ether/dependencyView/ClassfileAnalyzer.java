@@ -145,8 +145,9 @@ class ClassfileAnalyzer {
       }
 
       public void visitEnum(String name, String desc, String value) {
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(name), type.className, "()" + desc));
-        usedArguments.add(context.get(name));
+        final String denullified = denullify(name);
+        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(denullified), type.className, "()" + desc));
+        usedArguments.add(context.get(denullified));
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {

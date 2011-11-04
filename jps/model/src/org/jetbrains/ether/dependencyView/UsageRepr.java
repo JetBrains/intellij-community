@@ -16,25 +16,13 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 class UsageRepr {
+  private UsageRepr(){
+
+  }
+
   private final static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
-  //private final static Map<Usage, Usage> map = new HashMap<Usage, Usage>();
-
-
-  //private static Usage getUsage(final Usage u) {
-  // return u;
-  /*
- final Usage r = map.get(u);
-
- if (r == null) {
-   map.put(u, u);
-   return u;
- }
-
- return r;*/
-  //}
-
-  public static class Cluster implements RW.Writable {
+  public static class Cluster implements RW.Writable {// , RW.Savable {
     final Set<Usage> usages = new HashSet<Usage>();
     final Map<Usage, Set<DependencyContext.S>> residentialMap = new HashMap<Usage, Set<DependencyContext.S>>();
 
@@ -103,7 +91,7 @@ class UsageRepr {
     }
   }
 
-  public static abstract class Usage implements RW.Writable {
+  public static abstract class Usage implements RW.Writable { //}, RW.Savable {
     public abstract DependencyContext.S getOwner();
   }
 

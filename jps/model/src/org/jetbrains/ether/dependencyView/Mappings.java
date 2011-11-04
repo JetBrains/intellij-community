@@ -61,12 +61,9 @@ public class Mappings implements RW.Writable {
 
   @Override
   public void write(final BufferedWriter w) {
-    //FoxyMap.write(w, classToSubclasses);
-    //TransientMaplet.write(w, sourceFileToClasses);
     RW.writeMap(w, sourceFileToUsages);
     TransientMaplet.write(w, sourceFileToAnnotationUsages);
     RW.writeMap(w, classToSourceFile);
-    //TransientMaplet.write(w, classToClassDependency);
   }
 
   private Mappings(final DependencyContext context) {
@@ -92,9 +89,6 @@ public class Mappings implements RW.Writable {
     sourceFileToClasses = new PersistentMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir,
                                                                                                                         sourceToClassName), DependencyContext.descriptorS, ClassRepr.externalizer(context), classSetConstructor);
 
-    
-    //sourceFileToClasses = new TransientMaplet<DependencyContext.S, ClassRepr>(classSetConstructor);
-    
     sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
     sourceFileToAnnotationUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
     classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
@@ -111,8 +105,6 @@ public class Mappings implements RW.Writable {
     sourceFileToClasses = new PersistentMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir,
                                                                                                                         sourceToClassName), DependencyContext.descriptorS, ClassRepr.externalizer(context), classSetConstructor);
 
-    //sourceFileToClasses = TransientMaplet.read(r, context.reader, ClassRepr.reader(context), classSetConstructor);
-    
     sourceFileToUsages =
       RW.readMap(r, context.reader, UsageRepr.clusterReader(context), new HashMap<DependencyContext.S, UsageRepr.Cluster>());
     sourceFileToAnnotationUsages = TransientMaplet.read(r, context.reader, UsageRepr.reader(context), usageSetConstructor);
