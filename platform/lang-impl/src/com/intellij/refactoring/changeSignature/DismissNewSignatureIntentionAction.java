@@ -27,15 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * Date: 11/3/11
  */
 class DismissNewSignatureIntentionAction implements IntentionAction {
-
-  private final Project myProject;
-  private final PsiFile myFile;
-
-  DismissNewSignatureIntentionAction(Project project, PsiFile file) {
-    myProject = project;
-    myFile = file;
-  }
-
   @NotNull
   @Override
   public String getText() {
@@ -55,7 +46,7 @@ class DismissNewSignatureIntentionAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ChangeSignatureGestureDetector.getInstance(myProject).clearSignatureChange(myFile);
+    ChangeSignatureGestureDetector.getInstance(project).clearSignatureChange(file);
   }
 
   @Override
