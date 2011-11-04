@@ -382,7 +382,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static PsiElement findCompletionPositionLeaf(CompletionContext newContext, int offset, PsiFile fileCopy, PsiFile originalFile) {
     final PsiElement insertedElement = newContext.file.findElementAt(offset);
     if (insertedElement == null) {
-      LOG.error(LogMessageEx.createEvent("No element at insertion offset", "offset=" + newContext.getStartOffset(),
+      LOG.error(LogMessageEx.createEvent("No element at insertion offset", "offset=" + newContext.getStartOffset() + "\n" + DebugUtil.currentStackTrace(),
                                          createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile)));
     }
 
@@ -390,7 +390,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final TextRange range = insertedElement.getTextRange();
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
-      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range, createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
+      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range + "\n" + DebugUtil.currentStackTrace(),
+                                         createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
                                          new Attachment("Element at caret", insertedElement.getText())));
     }
     return insertedElement;

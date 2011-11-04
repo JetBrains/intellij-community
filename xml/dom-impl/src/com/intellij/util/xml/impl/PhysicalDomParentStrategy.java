@@ -19,6 +19,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
@@ -106,7 +107,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
             "curContext?.physical=" + (curContext != null && curContext.isPhysical()) + ";\n" +
             "navContext?.physical=" + (navContext != null && navContext.isPhysical()) + ";\n" +
             "myElement.physical=" + myElement.isPhysical() + ";\n" +
-            "thatElement.physical=" + thatElement.isPhysical(),
+            "thatElement.physical=" + thatElement.isPhysical() + "\n" + DebugUtil.currentStackTrace(),
             new Attachment("Including tag text 1", curContext == null ? "null" : curContext.getText()),
             new Attachment("Including tag text 2", navContext == null ? "null" : navContext.getText())
           ));
