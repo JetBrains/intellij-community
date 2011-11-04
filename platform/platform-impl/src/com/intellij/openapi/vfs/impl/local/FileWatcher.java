@@ -25,8 +25,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.SymLinkUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -216,7 +216,7 @@ public class FileWatcher {
   }
 
   private static String getCanonicalPath(final String path) {
-    final String realPath = SymLinkUtil.resolveSymLink(path);
+    final String realPath = FileSystemUtil.resolveSymLink(path);
     return realPath != null ? realPath : path;
   }
 

@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.SymLinkUtil;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -175,12 +175,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public boolean isSymLink(@NotNull final VirtualFile file) {
-    return SymLinkUtil.isSymLink(file.getPath());
+    return FileSystemUtil.isSymLink(file.getPath());
   }
 
   @Override
   public String resolveSymLink(@NotNull VirtualFile file) {
-    return SymLinkUtil.resolveSymLink(file.getPath());
+    return FileSystemUtil.resolveSymLink(file.getPath());
   }
 
   @Override
@@ -393,7 +393,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static void delete(File physicalFile) throws IOException {
-    if (!SymLinkUtil.isSymLink(physicalFile)) {
+    if (!FileSystemUtil.isSymLink(physicalFile)) {
       File[] list = physicalFile.listFiles();
       if (list != null) {
         for (File aList : list) {
@@ -462,8 +462,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    BufferedInputStream rawStream = new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
-    return rawStream;
+    return new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
   }
 
   @Override
@@ -483,7 +482,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     final File ioFile = convertToIOFileAndCheck(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
+    final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -497,8 +496,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     };
   }
 
-  private static boolean shallUseSafeStream(Object requestor, File file) {
-    return requestor instanceof SafeWriteRequestor && !FileUtil.canExecute(file) && !FileUtil.isSymbolicLink(file);
+  private static boolean shallUseSafeStream(final Object requestor, final File file) {
+    return requestor instanceof SafeWriteRequestor && !FileUtil.isSymbolicLink(file);
   }
 
   @Override

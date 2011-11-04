@@ -569,7 +569,7 @@ public class FileUtil {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (file.isDirectory() && !SymLinkUtil.isSymLink(file)) {
+    if (file.isDirectory() && !FileSystemUtil.isSymLink(file)) {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
