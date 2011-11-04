@@ -33,10 +33,6 @@ class FieldRepr extends ProtoMember {
     super(context, in);
   }
 
-  public FieldRepr(final DependencyContext context, final BufferedReader r) {
-    super(context, r);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -62,14 +58,6 @@ class FieldRepr extends ProtoMember {
       @Override
       public FieldRepr read(final DataInput in) throws IOException {
         return new FieldRepr(context, in);
-      }
-    };
-  }
-
-  public static RW.Reader<FieldRepr> reader(final DependencyContext context) {
-    return new RW.Reader<FieldRepr>() {
-      public FieldRepr read(final BufferedReader r) {
-        return new FieldRepr(context, r);
       }
     };
   }

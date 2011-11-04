@@ -62,35 +62,6 @@ abstract class ProtoMember extends Proto {
     return null;
   }
 
-
-  private static Object readTyped(final BufferedReader r, final String tag) {
-    if (tag.equals("string")) {
-      return RW.readEncodedString(r);
-    }
-
-    if (tag.equals("none")) {
-      return null;
-    }
-
-    final String val = RW.readString(r);
-
-    if (tag.equals("integer")) return Integer.parseInt(val);
-
-    if (tag.equals("long")) return Long.parseLong(val);
-
-    if (tag.equals("float")) return Float.parseFloat(val);
-
-    if (tag.equals("double")) return Double.parseDouble(val);
-
-    return null;
-  }
-
-  protected ProtoMember(final DependencyContext context, final BufferedReader r) {
-    super(r);
-    type = TypeRepr.reader(context).read(r);
-    value = readTyped(r, RW.readString(r));
-  }
-
   protected ProtoMember(final DependencyContext context, final DataInput in) {
     super(in);
     try {
@@ -133,35 +104,6 @@ abstract class ProtoMember extends Proto {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  public void write(final BufferedWriter w) {
-    super.write(w);
-    type.write(w);
-
-    if (value instanceof String) {
-      RW.writeln(w, "string");
-      RW.writeEncodedString(w, (String)value);
-    }
-    else if (value instanceof Integer) {
-      RW.writeln(w, "integer");
-      RW.writeln(w, value.toString());
-    }
-    else if (value instanceof Long) {
-      RW.writeln(w, "long");
-      RW.writeln(w, value.toString());
-    }
-    else if (value instanceof Float) {
-      RW.writeln(w, "float");
-      RW.writeln(w, value.toString());
-    }
-    else if (value instanceof Double) {
-      RW.writeln(w, "double");
-      RW.writeln(w, value.toString());
-    }
-    else {
-      RW.writeln(w, "none");
     }
   }
 

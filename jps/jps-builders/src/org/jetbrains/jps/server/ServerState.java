@@ -121,25 +121,7 @@ class ServerState {
       }
     }
     finally {
-      if (mappings != null) {
-        final File mappingsDataFile = Paths.getMappingsStorageFile(projectName);
-        try {
-          FileUtil.createIfDoesntExist(mappingsDataFile);
-          final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new DeflaterOutputStream(new FileOutputStream(mappingsDataFile))));
-          try {
-            mappings.write(writer);
-          }
-          finally {
-            writer.close();
-          }
-        }
-        catch (IOException e) {
-          msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
-        }
-        finally {
-          mappings.close();
-        }
-      }
+      mappings.close();
     }
   }
 

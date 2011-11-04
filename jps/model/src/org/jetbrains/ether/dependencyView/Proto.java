@@ -12,7 +12,7 @@ import java.io.*;
  * Time: 17:57
  * To change this template use File | Settings | File Templates.
  */
-class Proto implements RW.Writable, RW.Savable {
+class Proto implements RW.Savable {
   public final int access;
   public final DependencyContext.S signature;
   public final DependencyContext.S name;
@@ -21,12 +21,6 @@ class Proto implements RW.Writable, RW.Savable {
     this.access = access;
     this.signature = signature;
     this.name = name;
-  }
-
-  protected Proto(final BufferedReader r) {
-    access = RW.readInt(r);
-    signature = new DependencyContext.S(r);
-    name = new DependencyContext.S(r);
   }
 
   protected Proto(final DataInput in) {
@@ -40,6 +34,7 @@ class Proto implements RW.Writable, RW.Savable {
     }
   }
 
+  @Override
   public void save(final DataOutput out) {
     try {
       out.writeInt(access);
@@ -49,12 +44,6 @@ class Proto implements RW.Writable, RW.Savable {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public void write(final BufferedWriter w) {
-    RW.writeln(w, Integer.toString(access));
-    RW.writeln(w, signature.toString());
-    RW.writeln(w, name.toString());
   }
 
   public Difference difference(final Proto past) {

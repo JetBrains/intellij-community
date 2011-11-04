@@ -22,7 +22,7 @@ import java.util.*;
  * Time: 16:20
  * To change this template use File | Settings | File Templates.
  */
-public class Mappings implements RW.Writable {
+public class Mappings {
   private final static String classToSubclassesName = "classToSubclasses.tab";
   private final static String classToClassName = "classToClass.tab";
   private final static String sourceToClassName = "sourceToClass.tab";
@@ -59,13 +59,6 @@ public class Mappings implements RW.Writable {
 
   private final Maplet<DependencyContext.S, UsageRepr.Cluster> sourceFileToUsages;
   private final Maplet<DependencyContext.S, DependencyContext.S> classToSourceFile;
-
-
-  @Override
-  public void write(final BufferedWriter w) {
-    //RW.writeMap(w, sourceFileToUsages);
-    //RW.writeMap(w, classToSourceFile);
-  }
 
   private Mappings(final DependencyContext context) {
     this.context = context;

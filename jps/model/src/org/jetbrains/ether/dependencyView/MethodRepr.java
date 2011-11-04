@@ -117,30 +117,11 @@ class MethodRepr extends ProtoMember {
     }
   }
 
-  public MethodRepr(final DependencyContext context, final BufferedReader r) {
-    super(context, r);
-    argumentTypes = RW.readMany(r, TypeRepr.reader(context), new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
-    exceptions = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
-  }
-
+  @Override
   public void save(final DataOutput out) {
     super.save(out);
     RW.save(argumentTypes, out);
     RW.save(exceptions, out);
-  }
-
-  public void write(final BufferedWriter w) {
-    super.write(w);
-    RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
-    RW.writeln(w, exceptions);
-  }
-
-  public static RW.Reader<MethodRepr> reader(final DependencyContext context) {
-    return new RW.Reader<MethodRepr>() {
-      public MethodRepr read(final BufferedReader r) {
-        return new MethodRepr(context, r);
-      }
-    };
   }
 
   public static DataExternalizer<MethodRepr> externalizer(final DependencyContext context) {

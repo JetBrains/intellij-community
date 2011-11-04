@@ -25,11 +25,9 @@ class TypeRepr {
 
   }
 
-  interface AbstractType extends RW.Writable, RW.Savable {
+  interface AbstractType extends RW.Savable {
     void updateClassUsages(DependencyContext context, DependencyContext.S owner, UsageRepr.Cluster s);
-
     String getDescr(DependencyContext context);
-
     void save(DataOutput out);
   }
 
@@ -46,11 +44,7 @@ class TypeRepr {
 
     }
 
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "primitive");
-      RW.writeln(w, type.toString());
-    }
-
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(PRIMITIVE_TYPE);
@@ -127,11 +121,7 @@ class TypeRepr {
       return elementType.hashCode();
     }
 
-    public void write(BufferedWriter w) {
-      RW.writeln(w, "array");
-      elementType.write(w);
-    }
-
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(ARRAY_TYPE);
@@ -155,12 +145,6 @@ class TypeRepr {
     @Override
     public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
       s.addUsage(owner, UsageRepr.createClassUsage(context, className));
-    }
-
-    ClassType(final DependencyContext context, final BufferedReader r) {
-      className = new DependencyContext.S(r);
-      final Collection<AbstractType> args = RW.readMany(r, reader(context), new LinkedList<AbstractType>());
-      typeArgs = args.toArray(new AbstractType[args.size()]);
     }
 
     ClassType(final DependencyContext.S className) {
@@ -205,12 +189,7 @@ class TypeRepr {
       return result;
     }
 
-    public void write(BufferedWriter w) {
-      RW.writeln(w, "class");
-      RW.writeln(w, className.toString());
-      RW.writeln(w, typeArgs);
-    }
-
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(CLASS_TYPE);
@@ -320,47 +299,4 @@ class TypeRepr {
       }
     };
   }
-
-  public static RW.Reader<AbstractType> reader(final DependencyContext context) {
-    return new RW.Reader<AbstractType>() {
-      public AbstractType read(final BufferedReader r) {
-        AbstractType elementType;
-        int level = 0;
-
-        while (true) {
-          final String tag = RW.readString(r);
-
-          if (tag.equals("primitive")) {
-            elementType = context.getType(new PrimitiveType(new DependencyContext.S(r)));
-            break;
-          }
-
-          if (tag.equals("class")) {
-            elementType = context.getType(new ClassType(context, r));
-            break;
-          }
-
-          if (tag.equals("array")) {
-            level++;
-          }
-        }
-
-        for (int i = 0; i < level; i++) {
-          elementType = context.getType(new ArrayType(elementType));
-        }
-
-        return elementType;
-      }
-    };
-  }
-
-  public static RW.ToWritable<AbstractType> fromAbstractType = new RW.ToWritable<AbstractType>() {
-    public RW.Writable convert(final AbstractType x) {
-      return new RW.Writable() {
-        public void write(final BufferedWriter w) {
-          x.write(w);
-        }
-      };
-    }
-  };
 }

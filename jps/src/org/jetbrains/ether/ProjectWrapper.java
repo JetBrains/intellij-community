@@ -730,8 +730,7 @@ public class ProjectWrapper {
         return x.equals(y);
       }
       catch (IOException e) {
-        e.printStackTrace();
-        return false;
+        throw new RuntimeException(e);
       }
     }
 
@@ -824,8 +823,7 @@ public class ProjectWrapper {
       return new File(path).getCanonicalPath();
     }
     catch (IOException e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -954,8 +952,6 @@ public class ProjectWrapper {
     RW.writeln(w, getModules());
 
     RW.writeln(w, affectedFiles, RW.fromString);
-
-    dependencyMapping.write(w);
   }
 
   private String getProjectSnapshotFileName() {
@@ -972,13 +968,9 @@ public class ProjectWrapper {
 
       return w;
     }
-    catch (FileNotFoundException e) {
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-
-    return null;
   }
 
   private void saveSnapshot() {
@@ -992,7 +984,7 @@ public class ProjectWrapper {
       bw.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 

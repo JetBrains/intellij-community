@@ -30,23 +30,11 @@ class UsageRepr {
 
   private final static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
-  public static class Cluster implements RW.Writable, RW.Savable {
+  public static class Cluster implements RW.Savable {
     final Set<Usage> usages = new HashSet<Usage>();
     final Map<Usage, Set<DependencyContext.S>> residentialMap = new HashMap<Usage, Set<DependencyContext.S>>();
 
     public Cluster() {
-    }
-
-    public Cluster(final DependencyContext context, final BufferedReader r) {
-      final int size = RW.readInt(r);
-
-      for (int i = 0; i < size; i++) {
-        final Usage u = reader(context).read(r);
-        final Set<DependencyContext.S> s = (Set<DependencyContext.S>)RW.readMany(r, context.reader, new HashSet<DependencyContext.S>());
-
-        usages.add(u);
-        residentialMap.put(u, s);
-      }
     }
 
     public Cluster(final DependencyContext context, final DataInput in) {
@@ -78,15 +66,6 @@ class UsageRepr {
       }
       catch (IOException e){
         throw new RuntimeException(e);
-      }
-    }
-    
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, Integer.toString(usages.size()));
-
-      for (Usage u : usages) {
-        u.write(w);
-        RW.writeln(w, residentialMap.get(u));
       }
     }
 
@@ -145,7 +124,7 @@ class UsageRepr {
     }
   }
 
-  public static abstract class Usage implements RW.Writable, RW.Savable {
+  public static abstract class Usage implements RW.Savable {
     public abstract DependencyContext.S getOwner();
   }
 
@@ -166,11 +145,6 @@ class UsageRepr {
     private FMUsage(final DataInput in) {
       name = new DependencyContext.S(in);
       owner = new DependencyContext.S(in);
-    }
-
-    private FMUsage(final BufferedReader r) {
-      name = new DependencyContext.S(r);
-      owner = new DependencyContext.S(r);
     }
 
     protected void save(final int tag, final DataOutput out) {
@@ -206,21 +180,10 @@ class UsageRepr {
       }
     }
 
-    private FieldUsage(final DependencyContext context, final BufferedReader r) {
-      super(r);
-      type = TypeRepr.reader(context).read(r);
-    }
-
+    @Override
     public void save(final DataOutput out) {
       save(FIELD_USAGE, out);
       type.save(out);
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "fieldUsage");
-      RW.writeln(w, name.toString());
-      RW.writeln(w, owner.toString());
-      type.write(w);
     }
 
     @Override
@@ -247,24 +210,14 @@ class UsageRepr {
       super(context, n, o, d);
     }
 
-    private FieldAssignUsage(final DependencyContext context, final BufferedReader r) {
-      super(context, r);
-    }
-
     private FieldAssignUsage(final DependencyContext context, final DataInput in) {
       super(context, in);
     }
 
+    @Override
     public void save(final DataOutput out) {
       save(FIELD_ASSIGN_USAGE, out);
       type.save(out);
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "fieldAssignUsage");
-      RW.writeln(w, name.toString());
-      RW.writeln(w, owner.toString());
-      type.write(w);
     }
 
     @Override
@@ -293,12 +246,6 @@ class UsageRepr {
       returnType = TypeRepr.getType(context, Type.getReturnType(d));
     }
 
-    private MethodUsage(final DependencyContext context, final BufferedReader r) {
-      super(r);
-      argumentTypes = RW.readMany(r, TypeRepr.reader(context), new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
-      returnType = TypeRepr.reader(context).read(r);
-    }
-
     private MethodUsage(final DependencyContext context, final DataInput in) {
       super(in);
       try {
@@ -311,18 +258,11 @@ class UsageRepr {
       }
     }
 
+    @Override
     public void save(final DataOutput out) {
       save(METHOD_USAGE, out);
       RW.save(argumentTypes, out);
       returnType.save(out);
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "methodUsage");
-      RW.writeln(w, name.toString());
-      RW.writeln(w, owner.toString());
-      RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
-      returnType.write(w);
     }
 
     @Override
@@ -361,14 +301,11 @@ class UsageRepr {
       className = n;
     }
 
-    private ClassUsage(final BufferedReader r) {
-      className = new DependencyContext.S(r);
-    }
-
     private ClassUsage(final DataInput in) {
       className = new DependencyContext.S(in);
     }
 
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(CLASS_USAGE);
@@ -377,11 +314,6 @@ class UsageRepr {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "classUsage");
-      RW.writeln(w, className.toString());
     }
 
     @Override
@@ -412,14 +344,11 @@ class UsageRepr {
       className = n;
     }
 
-    private ClassExtendsUsage(final BufferedReader r) {
-      className = new DependencyContext.S(r);
-    }
-
     private ClassExtendsUsage(final DataInput in) {
       className = new DependencyContext.S(in);
     }
 
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(CLASS_EXTENDS_USAGE);
@@ -428,11 +357,6 @@ class UsageRepr {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "classExtendsUsage");
-      RW.writeln(w, className.toString());
     }
 
     @Override
@@ -458,14 +382,11 @@ class UsageRepr {
       super(n);
     }
 
-    private ClassNewUsage(final BufferedReader r) {
-      super(r);
-    }
-
     private ClassNewUsage(final DataInput in) {
       super(in);
     }
 
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(CLASS_NEW_USAGE);
@@ -474,11 +395,6 @@ class UsageRepr {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "classNewUsage");
-      RW.writeln(w, className.toString());
     }
 
     @Override
@@ -498,22 +414,6 @@ class UsageRepr {
       public ElementType read(final DataInput in) throws IOException {
         final String s = in.readUTF();
         return ElementType.valueOf(s);
-      }
-    };
-
-    public static final RW.Reader<ElementType> elementTypeReader = new RW.Reader<ElementType>() {
-      public ElementType read(final BufferedReader r) {
-        return ElementType.valueOf(RW.readString(r));
-      }
-    };
-
-    public static final RW.ToWritable<ElementType> elementTypeToWritable = new RW.ToWritable<ElementType>() {
-      public RW.Writable convert(final ElementType x) {
-        return new RW.Writable() {
-          public void write(final BufferedWriter w) {
-            RW.writeln(w, x.toString());
-          }
-        };
       }
     };
 
@@ -576,6 +476,7 @@ class UsageRepr {
       }
     }
 
+    @Override
     public void save(final DataOutput out) {
       try {
         out.writeInt(ANNOTATION_USAGE);
@@ -588,22 +489,9 @@ class UsageRepr {
       }
     }
 
-    private AnnotationUsage(final DependencyContext context, final BufferedReader r) {
-      type = (TypeRepr.ClassType)TypeRepr.reader(context).read(r);
-      usedArguments = RW.readMany(r, context.reader, new HashSet<DependencyContext.S>());
-      usedTargets = RW.readMany(r, elementTypeReader, new HashSet<ElementType>());
-    }
-
     @Override
     public DependencyContext.S getOwner() {
       return type.className;
-    }
-
-    public void write(final BufferedWriter w) {
-      RW.writeln(w, "annotationUsage");
-      type.write(w);
-      RW.writeln(w, usedArguments);
-      RW.writeln(w, usedTargets, elementTypeToWritable);
     }
 
     @Override
@@ -705,45 +593,6 @@ class UsageRepr {
         assert (false);
 
         return null;
-      }
-    };
-  }
-
-  public static RW.Reader<Usage> reader(final DependencyContext context) {
-    return new RW.Reader<Usage>() {
-      public Usage read(final BufferedReader r) {
-        final String tag = RW.readString(r);
-
-        if (tag.equals("classUsage")) {
-          return context.getUsage(new ClassUsage(r));
-        }
-        else if (tag.equals("fieldUsage")) {
-          return context.getUsage(new FieldUsage(context, r));
-        }
-        else if (tag.equals("fieldAssignUsage")) {
-          return context.getUsage(new FieldAssignUsage(context, r));
-        }
-        else if (tag.equals("methodUsage")) {
-          return context.getUsage(new MethodUsage(context, r));
-        }
-        else if (tag.equals("classExtendsUsage")) {
-          return context.getUsage(new ClassExtendsUsage(r));
-        }
-        else if (tag.equals("classNewUsage")) {
-          return context.getUsage(new ClassNewUsage(r));
-        }
-        else {
-          return context.getUsage(new AnnotationUsage(context, r));
-        }
-      }
-    };
-  }
-
-  public static RW.Reader<Cluster> clusterReader(final DependencyContext context) {
-    return new RW.Reader<Cluster>() {
-      @Override
-      public Cluster read(final BufferedReader r) {
-        return new Cluster(context, r);
       }
     };
   }

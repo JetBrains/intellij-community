@@ -220,6 +220,7 @@ public class ClassRepr extends Proto {
     }
   }
 
+  @Override
   public void save(final DataOutput out) {
     try {
       super.save(out);
@@ -240,51 +241,8 @@ public class ClassRepr extends Proto {
     }
   }
 
-  public ClassRepr(final DependencyContext context, final BufferedReader r) {
-    super(r);
-    this.context = context;
-    fileName = new DependencyContext.S(r);
-    sourceFileName = new DependencyContext.S(r);
-    superClass = TypeRepr.reader(context).read(r);
-    interfaces = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
-    nestedClasses = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
-    fields = (Set<FieldRepr>)RW.readMany(r, FieldRepr.reader(context), new HashSet<FieldRepr>());
-    methods = (Set<MethodRepr>)RW.readMany(r, MethodRepr.reader(context), new HashSet<MethodRepr>());
-    targets = (Set<ElementType>)RW.readMany(r, UsageRepr.AnnotationUsage.elementTypeReader, new HashSet<ElementType>());
-
-    final String s = RW.readString(r);
-
-    policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
-
-    outerClassName = new DependencyContext.S(r);
-    isLocal = RW.readString(r).equals("true");
-  }
-
   public boolean isAnnotation() {
     return (access & Opcodes.ACC_ANNOTATION) > 0;
-  }
-
-  public static RW.Reader<ClassRepr> reader(final DependencyContext context) {
-    return new RW.Reader<ClassRepr>() {
-      public ClassRepr read(final BufferedReader r) {
-        return new ClassRepr(context, r);
-      }
-    };
-  }
-
-  public void write(final BufferedWriter w) {
-    super.write(w);
-    RW.writeln(w, fileName.toString());
-    RW.writeln(w, sourceFileName.toString());
-    superClass.write(w);
-    RW.writeln(w, interfaces);
-    RW.writeln(w, nestedClasses);
-    RW.writeln(w, fields);
-    RW.writeln(w, methods);
-    RW.writeln(w, targets, UsageRepr.AnnotationUsage.elementTypeToWritable);
-    RW.writeln(w, policy == null ? "" : policy.toString());
-    RW.writeln(w, outerClassName.toString());
-    RW.writeln(w, isLocal ? "true" : "false");
   }
 
   @Override
