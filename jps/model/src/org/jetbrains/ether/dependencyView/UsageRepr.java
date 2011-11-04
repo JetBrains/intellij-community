@@ -1,10 +1,10 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.util.*;
 
@@ -22,16 +22,16 @@ class UsageRepr {
 
 
   //private static Usage getUsage(final Usage u) {
-   // return u;
-    /*
-    final Usage r = map.get(u);
+  // return u;
+  /*
+ final Usage r = map.get(u);
 
-    if (r == null) {
-      map.put(u, u);
-      return u;
-    }
+ if (r == null) {
+   map.put(u, u);
+   return u;
+ }
 
-    return r;*/
+ return r;*/
   //}
 
   public static class Cluster implements RW.Writable {
@@ -130,7 +130,10 @@ class UsageRepr {
   public static class FieldUsage extends FMUsage {
     public final TypeRepr.AbstractType type;
 
-    private FieldUsage(final DependencyContext context, final DependencyContext.S n, final DependencyContext.S o, final DependencyContext.S d) {
+    private FieldUsage(final DependencyContext context,
+                       final DependencyContext.S n,
+                       final DependencyContext.S o,
+                       final DependencyContext.S d) {
       super(n, o);
       type = TypeRepr.getType(context, d);
     }
@@ -164,7 +167,10 @@ class UsageRepr {
   }
 
   public static class FieldAssignUsage extends FieldUsage {
-    private FieldAssignUsage(final DependencyContext context, final DependencyContext.S n, final DependencyContext.S o, final DependencyContext.S d) {
+    private FieldAssignUsage(final DependencyContext context,
+                             final DependencyContext.S n,
+                             final DependencyContext.S o,
+                             final DependencyContext.S d) {
       super(context, n, o, d);
     }
 
@@ -340,6 +346,19 @@ class UsageRepr {
   }
 
   public static class AnnotationUsage extends Usage {
+    public static final DataExternalizer<ElementType> elementTypeExternalizer = new DataExternalizer<ElementType>() {
+      @Override
+      public void save(final DataOutput out, final ElementType value) throws IOException {
+        out.writeUTF(value.toString());
+      }
+
+      @Override
+      public ElementType read(final DataInput in) throws IOException {
+        final String s = in.readUTF();
+        return ElementType.valueOf(s);
+      }
+    };
+
     public static final RW.Reader<ElementType> elementTypeReader = new RW.Reader<ElementType>() {
       public ElementType read(final BufferedReader r) {
         return ElementType.valueOf(RW.readString(r));
@@ -443,15 +462,24 @@ class UsageRepr {
     }
   }
 
-  public static Usage createFieldUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final DependencyContext.S descr) {
+  public static Usage createFieldUsage(final DependencyContext context,
+                                       final DependencyContext.S name,
+                                       final DependencyContext.S owner,
+                                       final DependencyContext.S descr) {
     return context.getUsage(new FieldUsage(context, name, owner, descr));
   }
 
-  public static Usage createFieldAssignUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final DependencyContext.S descr) {
+  public static Usage createFieldAssignUsage(final DependencyContext context,
+                                             final DependencyContext.S name,
+                                             final DependencyContext.S owner,
+                                             final DependencyContext.S descr) {
     return context.getUsage(new FieldAssignUsage(context, name, owner, descr));
   }
 
-  public static Usage createMethodUsage(final DependencyContext context, final DependencyContext.S name, final DependencyContext.S owner, final String descr) {
+  public static Usage createMethodUsage(final DependencyContext context,
+                                        final DependencyContext.S name,
+                                        final DependencyContext.S owner,
+                                        final String descr) {
     return context.getUsage(new MethodUsage(context, name, owner, descr));
   }
 
@@ -475,41 +503,42 @@ class UsageRepr {
     return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
-  public static RW.Reader<Usage> reader (final DependencyContext context) {    
-   return new RW.Reader<Usage>() {
-    public Usage read(final BufferedReader r) {
-      final String tag = RW.readString(r);
+  public static RW.Reader<Usage> reader(final DependencyContext context) {
+    return new RW.Reader<Usage>() {
+      public Usage read(final BufferedReader r) {
+        final String tag = RW.readString(r);
 
-      if (tag.equals("classUsage")) {
-        return context.getUsage(new ClassUsage(context, r));
+        if (tag.equals("classUsage")) {
+          return context.getUsage(new ClassUsage(context, r));
+        }
+        else if (tag.equals("fieldUsage")) {
+          return context.getUsage(new FieldUsage(context, r));
+        }
+        else if (tag.equals("fieldAssignUsage")) {
+          return context.getUsage(new FieldAssignUsage(context, r));
+        }
+        else if (tag.equals("methodUsage")) {
+          return context.getUsage(new MethodUsage(context, r));
+        }
+        else if (tag.equals("classExtendsUsage")) {
+          return context.getUsage(new ClassExtendsUsage(context, r));
+        }
+        else if (tag.equals("classNewUsage")) {
+          return context.getUsage(new ClassNewUsage(context, r));
+        }
+        else {
+          return context.getUsage(new AnnotationUsage(context, r));
+        }
       }
-      else if (tag.equals("fieldUsage")) {
-        return context.getUsage(new FieldUsage(context, r));
-      }
-      else if (tag.equals("fieldAssignUsage")) {
-        return context.getUsage(new FieldAssignUsage(context, r));
-      }
-      else if (tag.equals("methodUsage")) {
-        return context.getUsage(new MethodUsage(context, r));
-      }
-      else if (tag.equals("classExtendsUsage")) {
-        return context.getUsage(new ClassExtendsUsage(context, r));
-      }
-      else if (tag.equals("classNewUsage")) {
-        return context.getUsage(new ClassNewUsage(context, r));
-      }
-      else {
-        return context.getUsage(new AnnotationUsage(context, r));
-      }
-    }
-  };
+    };
   }
 
-  public static RW.Reader<Cluster> clusterReader (final DependencyContext context) {return new RW.Reader<Cluster>() {
-    @Override
-    public Cluster read(final BufferedReader r) {
-      return new Cluster(context, r);
-    }
-  };
+  public static RW.Reader<Cluster> clusterReader(final DependencyContext context) {
+    return new RW.Reader<Cluster>() {
+      @Override
+      public Cluster read(final BufferedReader r) {
+        return new Cluster(context, r);
+      }
+    };
   }
 }

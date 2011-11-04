@@ -1,11 +1,13 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.util.*;
+import java.io.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,16 +17,23 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 class TypeRepr {
-  private TypeRepr () {
+  private final static int PRIMITIVE_TYPE = 0;
+  private final static int CLASS_TYPE = 1;
+  private final static int ARRAY_TYPE = 2;
+
+  private TypeRepr() {
 
   }
 
-  public static abstract class AbstractType implements RW.Writable {
-    public abstract void updateClassUsages(DependencyContext context, DependencyContext.S owner, UsageRepr.Cluster s);
-    public abstract String getDescr(DependencyContext context);
+  interface AbstractType extends RW.Writable, RW.Savable {
+    void updateClassUsages(DependencyContext context, DependencyContext.S owner, UsageRepr.Cluster s);
+
+    String getDescr(DependencyContext context);
+
+    void save(DataOutput out);
   }
 
-  public static class PrimitiveType extends AbstractType {
+  public static class PrimitiveType implements AbstractType {
     public final DependencyContext.S type;
 
     @Override
@@ -42,8 +51,22 @@ class TypeRepr {
       RW.writeln(w, type.toString());
     }
 
+    public void save(final DataOutput out) {
+      try {
+        out.writeInt(PRIMITIVE_TYPE);
+        type.save(out);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     PrimitiveType(final DependencyContext.S type) {
       this.type = type;
+    }
+
+    PrimitiveType(final DataInput in) {
+      type = new DependencyContext.S(in);
     }
 
     @Override
@@ -62,7 +85,7 @@ class TypeRepr {
     }
   }
 
-  public static class ArrayType extends AbstractType {
+  public static class ArrayType implements AbstractType {
     public final AbstractType elementType;
 
     public AbstractType getDeepElementType() {
@@ -108,9 +131,19 @@ class TypeRepr {
       RW.writeln(w, "array");
       elementType.write(w);
     }
+
+    public void save(final DataOutput out) {
+      try {
+        out.writeInt(ARRAY_TYPE);
+        elementType.save(out);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
-  public static class ClassType extends AbstractType {
+  public static class ClassType implements AbstractType {
     public final DependencyContext.S className;
     public final AbstractType[] typeArgs;
 
@@ -124,15 +157,32 @@ class TypeRepr {
       s.addUsage(owner, UsageRepr.createClassUsage(context, className));
     }
 
-    ClassType (final DependencyContext context, final BufferedReader r) {
+    ClassType(final DependencyContext context, final BufferedReader r) {
       className = new DependencyContext.S(r);
-      final Collection<AbstractType> args = RW.readMany(r, reader (context), new LinkedList<AbstractType>());
+      final Collection<AbstractType> args = RW.readMany(r, reader(context), new LinkedList<AbstractType>());
       typeArgs = args.toArray(new AbstractType[args.size()]);
     }
 
     ClassType(final DependencyContext.S className) {
       this.className = className;
       typeArgs = new AbstractType[0];
+    }
+
+    ClassType(final DependencyContext context, final DataInput in) {
+      try {
+        className = new DependencyContext.S(in);
+        final int size = in.readInt();
+        typeArgs = new AbstractType[size];
+
+        final DataExternalizer<AbstractType> externalizer = externalizer(context);
+
+        for (int i = 0; i < size; i++) {
+          typeArgs[i] = externalizer.read(in);
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     @Override
@@ -160,28 +210,46 @@ class TypeRepr {
       RW.writeln(w, className.toString());
       RW.writeln(w, typeArgs);
     }
+
+    public void save(final DataOutput out) {
+      try {
+        out.writeInt(CLASS_TYPE);
+        className.save(out);
+        out.writeInt(typeArgs.length);
+        for (AbstractType t : typeArgs) {
+          t.save(out);
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
-  public static Collection<AbstractType> createClassType (final DependencyContext context, final String[] args, final Collection<AbstractType> acc) {
+  public static Collection<AbstractType> createClassType(final DependencyContext context,
+                                                         final String[] args,
+                                                         final Collection<AbstractType> acc) {
     if (args != null) {
       for (String a : args) {
-        acc.add(createClassType(context, context.get(a)));    
-      }      
-    }
-    
-    return acc;  
-  }
-  
-  public static Collection<AbstractType> createClassType (final DependencyContext context, final Collection<String> args, final Collection<AbstractType> acc) {
-      if (args != null) {
-        for (String a : args) {
-          acc.add(createClassType(context, context.get(a)));    
-        }      
+        acc.add(createClassType(context, context.get(a)));
       }
-      
-      return acc;  
     }
-  
+
+    return acc;
+  }
+
+  public static Collection<AbstractType> createClassType(final DependencyContext context,
+                                                         final Collection<String> args,
+                                                         final Collection<AbstractType> acc) {
+    if (args != null) {
+      for (String a : args) {
+        acc.add(createClassType(context, context.get(a)));
+      }
+    }
+
+    return acc;
+  }
+
   public static ClassType createClassType(final DependencyContext context, final DependencyContext.S s) {
     return (ClassType)context.getType(new ClassType(s));
   }
@@ -215,10 +283,48 @@ class TypeRepr {
     return r;
   }
 
-  public static RW.Reader<AbstractType> reader (final DependencyContext context) {
+  public static DataExternalizer<AbstractType> externalizer(final DependencyContext context) {
+    return new DataExternalizer<AbstractType>() {
+      @Override
+      public void save(final DataOutput out, final AbstractType value) throws IOException {
+        value.save(out);
+      }
+
+      @Override
+      public AbstractType read(final DataInput in) throws IOException {
+        AbstractType elementType;
+        int level = 0;
+
+        loop:
+        while (true) {
+          switch (in.readInt()) {
+            case PRIMITIVE_TYPE:
+              elementType = context.getType(new PrimitiveType(in));
+              break loop;
+
+            case CLASS_TYPE:
+              elementType = context.getType(new ClassType(context, in));
+              break loop;
+
+            case ARRAY_TYPE:
+              level++;
+              break;
+          }
+        }
+
+        for (int i = 0; i < level; i++) {
+          elementType = context.getType(new ArrayType(elementType));
+        }
+
+        return elementType;
+      }
+    };
+  }
+
+  public static RW.Reader<AbstractType> reader(final DependencyContext context) {
     return new RW.Reader<AbstractType>() {
       public AbstractType read(final BufferedReader r) {
-        AbstractType elementType = null;
+        AbstractType elementType;
         int level = 0;
 
         while (true) {

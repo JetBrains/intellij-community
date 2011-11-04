@@ -60,12 +60,12 @@ class DependencyContext {
   static KeyDescriptor<S> descriptorS = new KeyDescriptor<S>() {
     @Override
     public void save(final DataOutput out, final S value) throws IOException {
-      out.writeInt(value.index);
+      value.save(out);
     }
 
     @Override
     public S read(final DataInput in) throws IOException {
-      return new S(in.readInt());
+      return new S(in);
     }
 
     @Override
@@ -82,6 +82,15 @@ class DependencyContext {
   static class S implements Comparable<S>, RW.Writable {
     public final int index;
 
+    S(final DataInput in){
+      try{
+      index = in.readInt();
+      }
+      catch (IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+          
     private S(final int i) {
       index = i;
     }
@@ -115,6 +124,15 @@ class DependencyContext {
       RW.writeln(w, Integer.toString(index));
     }
 
+    public void save(final DataOutput out){
+      try{
+        out.writeInt(index);
+      }
+      catch (IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+    
     public static final RW.Reader<S> reader = new RW.Reader<S>() {
       public S read(final BufferedReader r) {
         return new S(RW.readInt(r));

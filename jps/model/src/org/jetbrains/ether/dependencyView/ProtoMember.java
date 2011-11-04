@@ -2,8 +2,7 @@ package org.jetbrains.ether.dependencyView;
 
 import org.jetbrains.ether.RW;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,6 +12,13 @@ import java.io.BufferedWriter;
  * To change this template use File | Settings | File Templates.
  */
 abstract class ProtoMember extends Proto {
+  private final static int STRING = 0;
+  private final static int NONE = 1;
+  private final static int INTEGER = 2;
+  private final static int LONG = 3;
+  private final static int FLOAT = 4;
+  private final static int DOUBLE = 5;
+
   public final TypeRepr.AbstractType type;
   public final Object value;
 
@@ -29,6 +35,33 @@ abstract class ProtoMember extends Proto {
     this.type = t;
     this.value = value;
   }
+
+  private static Object loadTyped(final DataInput in) {
+    try {
+      switch (in.readInt()) {
+        case STRING:
+          return in.readUTF();
+        case NONE:
+          return null;
+        case INTEGER:
+          return in.readInt();
+        case LONG:
+          return in.readLong();
+        case FLOAT:
+          return in.readFloat();
+        case DOUBLE:
+          return in.readDouble();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    assert (false);
+
+    return null;
+  }
+
 
   private static Object readTyped(final BufferedReader r, final String tag) {
     if (tag.equals("string")) {
@@ -53,9 +86,54 @@ abstract class ProtoMember extends Proto {
   }
 
   protected ProtoMember(final DependencyContext context, final BufferedReader r) {
-    super(context, r);
+    super(r);
     type = TypeRepr.reader(context).read(r);
     value = readTyped(r, RW.readString(r));
+  }
+
+  protected ProtoMember(final DependencyContext context, final DataInput in) {
+    super(in);
+    try {
+      type = TypeRepr.externalizer(context).read(in);
+      value = loadTyped(in);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void save(final DataOutput out) {
+    super.save(out);
+    type.save(out);
+
+    try {
+      if (value instanceof String) {
+        out.writeInt(STRING);
+        out.writeUTF((String)value);
+      }
+      else if (value instanceof Integer) {
+        out.writeInt(INTEGER);
+        out.writeInt(((Integer)value).intValue());
+      }
+      else if (value instanceof Long) {
+        out.writeInt(LONG);
+        out.writeLong(((Long)value).longValue());
+      }
+      else if (value instanceof Float) {
+        out.writeInt(FLOAT);
+        out.writeFloat(((Float)value).floatValue());
+      }
+      else if (value instanceof Double) {
+        out.writeInt(DOUBLE);
+        out.writeDouble(((Double)value).doubleValue());
+      }
+      else {
+        out.writeInt(NONE);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void write(final BufferedWriter w) {

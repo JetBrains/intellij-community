@@ -25,6 +25,7 @@ import java.util.*;
 public class Mappings implements RW.Writable {
   private final static String classToSubclassesName = "classToSubclasses.tab";
   private final static String classToClassName = "classToClass.tab";
+  private final static String sourceToClassName = "sourceToClass.tab";
 
   private final DependencyContext context;
 
@@ -50,7 +51,7 @@ public class Mappings implements RW.Writable {
   private final Maplet<DependencyContext.S, DependencyContext.S> classToSubclasses;
   private final Maplet<DependencyContext.S, DependencyContext.S> classToClassDependency;
 
-  private final TransientMaplet<DependencyContext.S, ClassRepr> sourceFileToClasses;
+  private final Maplet<DependencyContext.S, ClassRepr> sourceFileToClasses;
   private final TransientMaplet<DependencyContext.S, UsageRepr.Usage> sourceFileToAnnotationUsages;
 
   private final Map<DependencyContext.S, UsageRepr.Cluster> sourceFileToUsages;
@@ -61,7 +62,7 @@ public class Mappings implements RW.Writable {
   @Override
   public void write(final BufferedWriter w) {
     //FoxyMap.write(w, classToSubclasses);
-    TransientMaplet.write(w, sourceFileToClasses);
+    //TransientMaplet.write(w, sourceFileToClasses);
     RW.writeMap(w, sourceFileToUsages);
     TransientMaplet.write(w, sourceFileToAnnotationUsages);
     RW.writeMap(w, classToSourceFile);
@@ -88,8 +89,12 @@ public class Mappings implements RW.Writable {
                                                                                                                       classToSubclassesName), DependencyContext.descriptorS, DependencyContext.descriptorS, stringSetConstructor);
     classToClassDependency = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir,
                                                                                                                            classToClassName), DependencyContext.descriptorS, DependencyContext.descriptorS, stringSetConstructor);
+    sourceFileToClasses = new PersistentMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir,
+                                                                                                                        sourceToClassName), DependencyContext.descriptorS, ClassRepr.externalizer(context), classSetConstructor);
 
-    sourceFileToClasses = new TransientMaplet<DependencyContext.S, ClassRepr>(classSetConstructor);
+    
+    //sourceFileToClasses = new TransientMaplet<DependencyContext.S, ClassRepr>(classSetConstructor);
+    
     sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
     sourceFileToAnnotationUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
     classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
@@ -103,8 +108,11 @@ public class Mappings implements RW.Writable {
                                                                                                                       classToSubclassesName), DependencyContext.descriptorS, DependencyContext.descriptorS, stringSetConstructor);
     classToClassDependency = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir,
                                                                                                                            classToClassName), DependencyContext.descriptorS, DependencyContext.descriptorS, stringSetConstructor);
+    sourceFileToClasses = new PersistentMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir,
+                                                                                                                        sourceToClassName), DependencyContext.descriptorS, ClassRepr.externalizer(context), classSetConstructor);
 
-    sourceFileToClasses = TransientMaplet.read(r, context.reader, ClassRepr.reader(context), classSetConstructor);
+    //sourceFileToClasses = TransientMaplet.read(r, context.reader, ClassRepr.reader(context), classSetConstructor);
+    
     sourceFileToUsages =
       RW.readMap(r, context.reader, UsageRepr.clusterReader(context), new HashMap<DependencyContext.S, UsageRepr.Cluster>());
     sourceFileToAnnotationUsages = TransientMaplet.read(r, context.reader, UsageRepr.reader(context), usageSetConstructor);
@@ -1120,5 +1128,6 @@ public class Mappings implements RW.Writable {
     context.close();
     classToSubclasses.close ();
     classToClassDependency.close();
+    sourceFileToClasses.close();
   }
 }

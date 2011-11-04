@@ -1,10 +1,10 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -105,10 +105,28 @@ class MethodRepr extends ProtoMember {
     argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
   }
 
+  public MethodRepr(final DependencyContext context, final DataInput in) {
+    super(context, in);
+    try {
+      final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
+      argumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[in.readInt()]);
+      exceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new HashSet<TypeRepr.AbstractType>(), in);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public MethodRepr(final DependencyContext context, final BufferedReader r) {
     super(context, r);
     argumentTypes = RW.readMany(r, TypeRepr.reader(context), new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
     exceptions = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
+  }
+
+  public void save(final DataOutput out) {
+    super.save(out);
+    RW.save(argumentTypes, out);
+    RW.save(exceptions, out);
   }
 
   public void write(final BufferedWriter w) {
@@ -124,6 +142,22 @@ class MethodRepr extends ProtoMember {
       }
     };
   }
+
+  public static DataExternalizer<MethodRepr> externalizer(final DependencyContext context) {
+    return new DataExternalizer<MethodRepr>() {
+      @Override
+      public void save(final DataOutput out, final MethodRepr value) throws IOException {
+        value.save(out);
+      }
+
+      @Override
+      public MethodRepr read(DataInput in) throws IOException {
+        return new MethodRepr(context, in);
+      }
+    };
+  }
+
+  ;
 
   @Override
   public boolean equals(Object o) {
@@ -152,6 +186,6 @@ class MethodRepr extends ProtoMember {
     buf.append(")");
     buf.append(type.getDescr(context));
 
-    return UsageRepr.createMethodUsage(context,  name, owner, buf.toString());
+    return UsageRepr.createMethodUsage(context, name, owner, buf.toString());
   }
 }

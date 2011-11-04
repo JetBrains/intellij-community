@@ -1,11 +1,10 @@
 package org.jetbrains.ether;
 
-import com.intellij.util.xmlb.XmlSerializationException;
+import com.intellij.util.io.DataExternalizer;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,9 +15,84 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class RW {
+  private RW() {
+
+  }
+
+  public interface Savable {
+    void save(DataOutput out);
+  }
+
+  public static <X extends Savable> void save(final X[] x, final DataOutput out) {
+    try {
+      out.writeInt(x.length);
+      for (Savable s : x) {
+        s.save(out);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <X> void save(final Collection<X> x, final DataExternalizer<X> e, final DataOutput out) {
+    try {
+      out.writeInt(x.size());
+
+      for (X y : x) {
+        e.save(out, y);
+      }
+    }
+    catch (IOException c) {
+      throw new RuntimeException(c);
+    }
+  }
+
+  public static <X extends Savable> void save(final Collection<X> x, final DataOutput out) {
+    try {
+      final int size = x.size();
+
+      out.writeInt(size);
+
+      for (X s : x) {
+        s.save(out);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <X> X[] read(final DataExternalizer<X> e, final DataInput in, final X[] result) {
+    try {
+      for (int i = 0; i < result.length; i++) {
+        result[i] = e.read(in);
+      }
+
+      return result;
+    }
+    catch (IOException x) {
+      throw new RuntimeException(x);
+    }
+  }
+
+  public static <X> Collection<X> read(final DataExternalizer<X> e, final Collection<X> acc, final DataInput in) {
+    try {
+      final int size = in.readInt();
+
+      for (int i = 0; i<size; i++) {
+        acc.add(e.read(in));
+      }
+
+      return acc;
+    }
+    catch (IOException x) {
+      throw new RuntimeException(x);
+    }
+  }
 
   public interface Writable {
-    public void write(BufferedWriter w);
+    void write(BufferedWriter w);
   }
 
   public static <T extends Comparable> void writeln(final BufferedWriter w, final Collection<T> c, final ToWritable<T> t) {
@@ -98,11 +172,11 @@ public class RW {
       w.newLine();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
-  public static <X extends Writable, Y extends Writable> void writeMap (final BufferedWriter w, final Map<X, Y> m) {
+  public static <X extends Writable, Y extends Writable> void writeMap(final BufferedWriter w, final Map<X, Y> m) {
     final int size = m.size();
 
     writeln(w, Integer.toString(size));
@@ -114,7 +188,7 @@ public class RW {
   }
 
   public interface Reader<T> {
-    public T read(BufferedReader r);
+    T read(BufferedReader r);
   }
 
   public static ToWritable<String> fromString = new ToWritable<String>() {
@@ -139,8 +213,7 @@ public class RW {
         return r.readLine();
       }
       catch (IOException e) {
-        e.printStackTrace();
-        return null;
+        throw new RuntimeException(e);
       }
     }
   };
@@ -164,8 +237,7 @@ public class RW {
       return s;
     }
     catch (IOException e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -176,7 +248,7 @@ public class RW {
       if (!s.equals(tag)) System.err.println("Parsing error: expected \"" + tag + "\", but found \"" + s + "\"");
     }
     catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -185,8 +257,7 @@ public class RW {
       return r.readLine();
     }
     catch (IOException e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -238,15 +309,14 @@ public class RW {
       return null;
     }
     catch (IOException e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
-  public static <X, Y> Map<X, Y> readMap (final BufferedReader r, final Reader<X> xr, final Reader<Y> yr, final Map<X, Y> acc) {
+  public static <X, Y> Map<X, Y> readMap(final BufferedReader r, final Reader<X> xr, final Reader<Y> yr, final Map<X, Y> acc) {
     final int size = RW.readInt(r);
 
-    for (int i = 0; i<size; i++) {
+    for (int i = 0; i < size; i++) {
       final X key = xr.read(r);
       final Y value = yr.read(r);
 

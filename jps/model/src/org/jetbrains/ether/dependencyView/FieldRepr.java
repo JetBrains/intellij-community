@@ -1,8 +1,12 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 
 import java.io.BufferedReader;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,8 +20,17 @@ class FieldRepr extends ProtoMember {
     type.updateClassUsages(context, owner, s);
   }
 
-  public FieldRepr(final DependencyContext context, final int a, final DependencyContext.S n, final DependencyContext.S d, final DependencyContext.S s, final Object v) {
+  public FieldRepr(final DependencyContext context,
+                   final int a,
+                   final DependencyContext.S n,
+                   final DependencyContext.S d,
+                   final DependencyContext.S s,
+                   final Object v) {
     super(a, s, n, TypeRepr.getType(context, d), v);
+  }
+
+  public FieldRepr(final DependencyContext context, final DataInput in) {
+    super(context, in);
   }
 
   public FieldRepr(final DependencyContext context, final BufferedReader r) {
@@ -39,11 +52,25 @@ class FieldRepr extends ProtoMember {
     return 31 * name.hashCode();
   }
 
-  public static RW.Reader<FieldRepr> reader (final DependencyContext context) {
+  public static DataExternalizer<FieldRepr> externalizer(final DependencyContext context) {
+    return new DataExternalizer<FieldRepr>() {
+      @Override
+      public void save(final DataOutput out, final FieldRepr value) throws IOException {
+        value.save(out);
+      }
+
+      @Override
+      public FieldRepr read(final DataInput in) throws IOException {
+        return new FieldRepr(context, in);
+      }
+    };
+  }
+
+  public static RW.Reader<FieldRepr> reader(final DependencyContext context) {
     return new RW.Reader<FieldRepr>() {
       public FieldRepr read(final BufferedReader r) {
         return new FieldRepr(context, r);
-      }                       
+      }
     };
   }
 
