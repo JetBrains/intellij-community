@@ -22,17 +22,19 @@ import java.util.Set;
 /**
  * Created by IntelliJ IDEA.
  * User: db
- * Date: 04.11.11
- * Time: 23:48
+ * Date: 03.11.11
+ * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-interface Maplet<K, V> {
+interface MultiMaplet<K, V> {
   boolean containsKey(final Object key);
-  V get(final Object key);
+  Collection<V> get(final Object key);
   void put(final K key, final V value);
-  void putAll(Maplet<K, V> m);
+  void put(final K key, final Collection<V> value);
+  void putAll(MultiMaplet<K, V> m);
   void remove(final Object key);
+  void removeFrom(final K key, final V value);
   void close();
   Collection<K> keyCollection();
-  Set<Map.Entry<K, V>> entrySet();
+  Set<Map.Entry<K, Collection<V>>> entrySet();
 }

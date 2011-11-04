@@ -23,14 +23,14 @@ class UsageRepr {
   private final static int CLASS_EXTENDS_USAGE = 4;
   private final static int CLASS_NEW_USAGE = 5;
   private final static int ANNOTATION_USAGE = 6;
-  
+
   private UsageRepr() {
 
   }
 
   private final static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
-  public static class Cluster implements RW.Writable {// , RW.Savable {
+  public static class Cluster implements RW.Writable, RW.Savable {
     final Set<Usage> usages = new HashSet<Usage>();
     final Map<Usage, Set<DependencyContext.S>> residentialMap = new HashMap<Usage, Set<DependencyContext.S>>();
 
@@ -49,6 +49,38 @@ class UsageRepr {
       }
     }
 
+    public Cluster(final DependencyContext context, final DataInput in) {
+      try {
+        final int size = in.readInt();
+
+        for (int i = 0; i < size; i++) {
+          final Usage u = externalizer(context).read(in);
+          final Set<DependencyContext.S> s =
+            (Set<DependencyContext.S>)RW.read(DependencyContext.descriptorS, new HashSet<DependencyContext.S>(), in);
+
+          usages.add(u);
+          residentialMap.put(u, s);
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void save(final DataOutput out){
+      try{
+        out.writeInt(usages.size());
+        for(Usage u : usages){
+          u.save(out);
+          RW.save(residentialMap.get(u), DependencyContext.descriptorS, out);
+        }
+      }
+      catch (IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+    
     public void write(final BufferedWriter w) {
       RW.writeln(w, Integer.toString(usages.size()));
 
@@ -96,6 +128,20 @@ class UsageRepr {
 
     public boolean isEmpty() {
       return usages.isEmpty();
+    }
+
+    public static DataExternalizer<Cluster> clusterExternalizer (final DependencyContext context){
+      return new DataExternalizer<Cluster>() {
+        @Override
+        public void save(final DataOutput out, final Cluster value) throws IOException {
+          value.save(out);
+        }
+
+        @Override
+        public Cluster read(final DataInput in) throws IOException {
+          return new Cluster(context, in);
+        }
+      };
     }
   }
 
@@ -370,20 +416,20 @@ class UsageRepr {
       className = new DependencyContext.S(r);
     }
 
-    private ClassExtendsUsage(final DataInput in){
+    private ClassExtendsUsage(final DataInput in) {
       className = new DependencyContext.S(in);
     }
-    
+
     public void save(final DataOutput out) {
-      try{
+      try {
         out.writeInt(CLASS_EXTENDS_USAGE);
         className.save(out);
       }
-      catch(IOException e){
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
-    
+
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classExtendsUsage");
       RW.writeln(w, className.toString());
@@ -416,20 +462,20 @@ class UsageRepr {
       super(r);
     }
 
-    private ClassNewUsage(final DataInput in){
+    private ClassNewUsage(final DataInput in) {
       super(in);
     }
-    
-    public void save(final DataOutput out){
-      try{
+
+    public void save(final DataOutput out) {
+      try {
         out.writeInt(CLASS_NEW_USAGE);
         className.save(out);
       }
-      catch(IOException e){
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
-    
+
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classNewUsage");
       RW.writeln(w, className.toString());
@@ -517,31 +563,31 @@ class UsageRepr {
       this.usedTargets = targets;
     }
 
-    private AnnotationUsage(final DependencyContext context, final DataInput in){
+    private AnnotationUsage(final DependencyContext context, final DataInput in) {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
-      
+
       try {
-        type = (TypeRepr.ClassType) externalizer.read(in);
+        type = (TypeRepr.ClassType)externalizer.read(in);
         usedArguments = RW.read(DependencyContext.descriptorS, new HashSet<DependencyContext.S>(), in);
         usedTargets = RW.read(elementTypeExternalizer, new HashSet<ElementType>(), in);
       }
-      catch (IOException e){
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
-    
-    public void save(final DataOutput out){
-      try{
+
+    public void save(final DataOutput out) {
+      try {
         out.writeInt(ANNOTATION_USAGE);
         type.save(out);
         RW.save(usedArguments, DependencyContext.descriptorS, out);
         RW.save(usedTargets, elementTypeExternalizer, out);
       }
-      catch(IOException e){
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
-    
+
     private AnnotationUsage(final DependencyContext context, final BufferedReader r) {
       type = (TypeRepr.ClassType)TypeRepr.reader(context).read(r);
       usedArguments = RW.readMany(r, context.reader, new HashSet<DependencyContext.S>());
@@ -624,7 +670,7 @@ class UsageRepr {
     return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
-  public static DataExternalizer<Usage> externalizer (final DependencyContext context) {
+  public static DataExternalizer<Usage> externalizer(final DependencyContext context) {
     return new DataExternalizer<Usage>() {
       @Override
       public void save(final DataOutput out, final Usage value) throws IOException {
@@ -633,36 +679,36 @@ class UsageRepr {
 
       @Override
       public Usage read(DataInput in) throws IOException {
-        switch(in.readInt()){
+        switch (in.readInt()) {
           case CLASS_USAGE:
             return context.getUsage(new ClassUsage(in));
-          
+
           case CLASS_EXTENDS_USAGE:
             return context.getUsage(new ClassExtendsUsage(in));
-          
+
           case CLASS_NEW_USAGE:
             return context.getUsage(new ClassNewUsage(in));
-          
+
           case FIELD_USAGE:
             return context.getUsage(new FieldUsage(context, in));
-          
+
           case FIELD_ASSIGN_USAGE:
             return context.getUsage(new FieldAssignUsage(context, in));
-          
+
           case METHOD_USAGE:
             return context.getUsage(new MethodUsage(context, in));
-          
+
           case ANNOTATION_USAGE:
             return context.getUsage(new AnnotationUsage(context, in));
         }
-        
+
         assert (false);
-        
+
         return null;
       }
-    };  
+    };
   }
-  
+
   public static RW.Reader<Usage> reader(final DependencyContext context) {
     return new RW.Reader<Usage>() {
       public Usage read(final BufferedReader r) {

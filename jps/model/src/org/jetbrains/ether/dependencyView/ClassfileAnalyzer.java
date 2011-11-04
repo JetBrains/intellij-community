@@ -266,15 +266,15 @@ class ClassfileAnalyzer {
     final Set<ElementType> targets = new HashSet<ElementType>();
     RetentionPolicy policy = null;
 
-    private TransientMaplet.CollectionConstructor<ElementType> elementTypeSetConstructor = new TransientMaplet.CollectionConstructor<ElementType>() {
+    private TransientMultiMaplet.CollectionConstructor<ElementType> elementTypeSetConstructor = new TransientMultiMaplet.CollectionConstructor<ElementType>() {
       public Set<ElementType> create() {
         return new HashSet<ElementType>();
       }
     };
 
     final Map<TypeRepr.ClassType, Set<DependencyContext.S>> annotationArguments = new HashMap<TypeRepr.ClassType, Set<DependencyContext.S>>();
-    final TransientMaplet<TypeRepr.ClassType, ElementType> annotationTargets =
-      new TransientMaplet<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
+    final TransientMultiMaplet<TypeRepr.ClassType, ElementType> annotationTargets =
+      new TransientMultiMaplet<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
 
     public ClassCrawler(final DependencyContext.S fn) {
       fileName = fn;

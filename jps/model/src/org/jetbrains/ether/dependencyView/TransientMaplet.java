@@ -1,103 +1,66 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.ether.dependencyView;
 
-import org.jetbrains.ether.RW;
+import com.intellij.util.containers.hash.HashMap;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
  * User: db
- * Date: 08.03.11
- * Time: 15:38
+ * Date: 05.11.11
+ * Time: 0:00
  * To change this template use File | Settings | File Templates.
  */
-class TransientMaplet<K, V> implements Maplet<K, V> {
-  public static <X, Y> TransientMaplet<X, Y> read(final BufferedReader r,
-                                          final RW.Reader<X> xr,
-                                          final RW.Reader<Y> yr,
-                                          final CollectionConstructor<Y> cc) {
-    final TransientMaplet<X, Y> result = new TransientMaplet<X, Y>(cc);
-
-    final int size = RW.readInt(r);
-
-    for (int i = 0; i < size; i++) {
-      final X key = xr.read(r);
-      result.put(key, (Set<Y>)RW.readMany(r, yr, cc.create()));
-    }
-
-    return result;
-  }
-
-  public interface CollectionConstructor<X> {
-    Collection<X> create();
-  }
-
-  private final Map<K, Collection<V>> map = new HashMap<K, Collection<V>>();
-
-  private final CollectionConstructor<V> constr;
-
-  public TransientMaplet(final CollectionConstructor<V> c) {
-    constr = c;
-  }
-
+public class TransientMaplet<K, V> implements Maplet<K, V>{
+  private final Map<K, V> map = new HashMap<K, V>();
+  
   @Override
   public boolean containsKey(final Object key) {
     return map.containsKey(key);
   }
 
   @Override
-  public Collection<V> get(final Object key) {
+  public V get(final Object key) {
     return map.get(key);
   }
 
   @Override
-  public Collection<V> put(final K key, final Collection<V> value) {
-    final Collection<V> x = map.get(key);
-
-    if (x == null) {
-      map.put(key, value);
-    }
-    else {
-      x.addAll(value);
-    }
-
-    return x;
+  public void put(final K key, final V value) {
+    map.put(key, value);
   }
 
   @Override
-  public Collection<V> put(final K key, final V value) {
-    final Collection<V> x = constr.create();
-    x.add(value);
-    return put(key, x);
-  }
-
-  @Override
-  public void removeFrom(final K key, final V value) {
-    final Object got = map.get(key);
-
-    if (got != null) {
-      if (got instanceof Collection) {
-        ((Collection)got).remove(value);
-      }
-      else if (got.equals(value)) {
-        map.remove(key);
-      }
+  public void putAll(final Maplet<K, V> m) {
+    for (Map.Entry<K, V> e : m.entrySet()) {
+      map.put(e.getKey(), e.getValue());
     }
   }
 
   @Override
-  public Collection<V> remove(final Object key) {
-    return map.remove(key);
+  public void remove(final Object key) {
+    map.remove(key);
   }
 
   @Override
-  public void putAll(Maplet<K, V> m) {
-    for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
-      remove(e.getKey());
-      put(e.getKey(), e.getValue());
-    }
+  public void close() {
+   
   }
 
   @Override
@@ -106,12 +69,7 @@ class TransientMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Set<Map.Entry<K, Collection<V>>> entrySet() {
+  public Set<Map.Entry<K, V>> entrySet() {
     return map.entrySet();
-  }
-
-  @Override
-  public void close(){
-
   }
 }

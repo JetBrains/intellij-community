@@ -18,9 +18,9 @@ package org.jetbrains.ether.dependencyView;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import org.jetbrains.ether.RW;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -28,52 +28,22 @@ import java.util.Set;
 /**
  * Created by IntelliJ IDEA.
  * User: db
- * Date: 08.03.11
- * Time: 15:38
+ * Date: 05.11.11
+ * Time: 0:05
  * To change this template use File | Settings | File Templates.
  */
-class PersistentMaplet<K, V> implements Maplet<K, V> {
-  private final PersistentHashMap<K, Collection<V>> map;
-  private final TransientMaplet.CollectionConstructor<V> constr;
+public class PersistentMaplet<K, V> implements Maplet<K, V> {
+  private final PersistentHashMap<K, V> map;
 
-  public PersistentMaplet(final File file,
-                          final KeyDescriptor<K> k,
-                          final DataExternalizer<V> v,
-                          final TransientMaplet.CollectionConstructor<V> c) {
+  public PersistentMaplet(final File file, final KeyDescriptor<K> k, final DataExternalizer<V> v) {
     try {
-      map = new PersistentHashMap<K, Collection<V>>(file, k, new DataExternalizer<Collection<V>>() {
-        @Override
-        public void save(final DataOutput out, final Collection<V> value) throws IOException {
-          final int size = value.size();
-
-          out.writeInt(size);
-
-          for (V x : value) {
-            v.save(out, x);
-          }
-        }
-
-        @Override
-        public Collection<V> read(final DataInput in) throws IOException {
-          final Collection<V> result = c.create();
-          final int size = in.readInt();
-
-          for (int i = 0; i < size; i++) {
-            result.add(v.read(in));
-          }
-
-          return result;
-        }
-      });
+      map = new PersistentHashMap<K, V>(file, k, v);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-
-    constr = c;
   }
 
-  
   @Override
   public boolean containsKey(final Object key) {
     try {
@@ -85,7 +55,7 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Collection<V> get(final Object key) {
+  public V get(final Object key) {
     try {
       return map.get((K)key);
     }
@@ -95,18 +65,9 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Collection<V> put(final K key, final Collection<V> value) {
+  public void put(final K key, final V value) {
     try {
-      final Collection<V> x = map.get(key);
-
-      if (x == null) {
-        map.put(key, value);
-      }
-      else {
-        x.addAll(value);
-      }
-
-      return x;
+      map.put(key, value);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -114,24 +75,10 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Collection<V> put(final K key, final V value) {
-    final Collection<V> x = constr.create();
-    x.add(value);
-    return put(key, x);
-  }
-
-  @Override
-  public void removeFrom(final K key, final V value) {
+  public void putAll(final Maplet<K, V> m) {
     try {
-      final Object got = map.get(key);
-
-      if (got != null) {
-        if (got instanceof Collection) {
-          ((Collection)got).remove(value);
-        }
-        else if (got.equals(value)) {
-          map.remove(key);
-        }
+      for (Map.Entry<K, V> e : m.entrySet()) {
+        map.put(e.getKey(), e.getValue());
       }
     }
     catch (IOException e) {
@@ -140,30 +87,11 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Collection<V> remove(final Object key) {
+  public void remove(final Object key) {
     try {
       map.remove((K)key);
-      return null;
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public void putAll(Maplet<K, V> m) {
-    for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
-      remove(e.getKey());
-      put(e.getKey(), e.getValue());
-    }
-  }
-
-
-  public Collection<K> keyCollection() {
-    try {
-      return map.getAllKeysWithExistingMapping();
-    }
-    catch (IOException e){
       throw new RuntimeException(e);
     }
   }
@@ -179,8 +107,18 @@ class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Set<Map.Entry<K, Collection<V>>> entrySet() {
-    assert(false);
+  public Collection<K> keyCollection() {
+    try {
+      return map.getAllKeysWithExistingMapping();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public Set<Map.Entry<K, V>> entrySet() {
+    assert (false);
     return null;
   }
 }

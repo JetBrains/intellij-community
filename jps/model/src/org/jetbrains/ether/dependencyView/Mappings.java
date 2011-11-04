@@ -27,124 +27,142 @@ public class Mappings implements RW.Writable {
   private final static String classToClassName = "classToClass.tab";
   private final static String sourceToClassName = "sourceToClass.tab";
   private final static String sourceToAnnotationsName = "sourceToAnnotations.tab";
+  private final static String sourceToUsagesName = "sourceToUsages.tab";
+  private final static String classToSourceName = "classToSource.tab";
 
   private final DependencyContext context;
 
-  private static TransientMaplet.CollectionConstructor<ClassRepr> classSetConstructor = new TransientMaplet.CollectionConstructor<ClassRepr>() {
+  private static TransientMultiMaplet.CollectionConstructor<ClassRepr> classSetConstructor = new TransientMultiMaplet.CollectionConstructor<ClassRepr>() {
     public Set<ClassRepr> create() {
       return new HashSet<ClassRepr>();
     }
   };
 
-  private static TransientMaplet.CollectionConstructor<UsageRepr.Usage> usageSetConstructor = new TransientMaplet.CollectionConstructor<UsageRepr.Usage>() {
+  private static TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage> usageSetConstructor = new TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage>() {
     public Set<UsageRepr.Usage> create() {
       return new HashSet<UsageRepr.Usage>();
     }
   };
 
-  private static TransientMaplet.CollectionConstructor<DependencyContext.S> stringSetConstructor =
-    new TransientMaplet.CollectionConstructor<DependencyContext.S>() {
+  private static TransientMultiMaplet.CollectionConstructor<DependencyContext.S> stringSetConstructor =
+    new TransientMultiMaplet.CollectionConstructor<DependencyContext.S>() {
       public Set<DependencyContext.S> create() {
         return new HashSet<DependencyContext.S>();
       }
     };
 
-  private final Maplet<DependencyContext.S, DependencyContext.S> classToSubclasses;
-  private final Maplet<DependencyContext.S, DependencyContext.S> classToClassDependency;
+  private final MultiMaplet<DependencyContext.S, DependencyContext.S> classToSubclasses;
+  private final MultiMaplet<DependencyContext.S, DependencyContext.S> classToClassDependency;
 
-  private final Maplet<DependencyContext.S, ClassRepr> sourceFileToClasses;
-  private final Maplet<DependencyContext.S, UsageRepr.Usage> sourceFileToAnnotationUsages;
+  private final MultiMaplet<DependencyContext.S, ClassRepr> sourceFileToClasses;
+  private final MultiMaplet<DependencyContext.S, UsageRepr.Usage> sourceFileToAnnotationUsages;
 
-  private final Map<DependencyContext.S, UsageRepr.Cluster> sourceFileToUsages;
-  private final Map<DependencyContext.S, DependencyContext.S> classToSourceFile;
+  private final Maplet<DependencyContext.S, UsageRepr.Cluster> sourceFileToUsages;
+  private final Maplet<DependencyContext.S, DependencyContext.S> classToSourceFile;
 
   @Override
   public void write(final BufferedWriter w) {
-    RW.writeMap(w, sourceFileToUsages);
-    RW.writeMap(w, classToSourceFile);
+    //RW.writeMap(w, sourceFileToUsages);
+    //RW.writeMap(w, classToSourceFile);
   }
 
   private Mappings(final DependencyContext context) {
     this.context = context;
 
-    classToSubclasses = new TransientMaplet<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
-    sourceFileToClasses = new TransientMaplet<DependencyContext.S, ClassRepr>(classSetConstructor);
-    sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
-    sourceFileToAnnotationUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
-    classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
-    classToClassDependency = new TransientMaplet<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    classToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
+    sourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(classSetConstructor);
+    sourceFileToUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Cluster>();
+    sourceFileToAnnotationUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Usage>(usageSetConstructor);
+    classToSourceFile = new TransientMaplet<DependencyContext.S, DependencyContext.S>();
+    classToClassDependency = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(stringSetConstructor);
   }
 
   public Mappings(final File rootDir) throws IOException {
     context = new DependencyContext(rootDir);
 
-    classToSubclasses = new PersistentMaplet<DependencyContext.S, DependencyContext.S> (
+    classToSubclasses = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
       DependencyContext.getTableFile (rootDir, classToSubclassesName),
       DependencyContext.descriptorS,
       DependencyContext.descriptorS,
       stringSetConstructor
     );
 
-    classToClassDependency = new PersistentMaplet<DependencyContext.S, DependencyContext.S> (
+    classToClassDependency = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
       DependencyContext.getTableFile (rootDir, classToClassName),
       DependencyContext.descriptorS,
       DependencyContext.descriptorS,
       stringSetConstructor
     );
 
-    sourceFileToClasses = new PersistentMaplet<DependencyContext.S, ClassRepr> (
+    sourceFileToClasses = new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(
       DependencyContext.getTableFile (rootDir, sourceToClassName),
       DependencyContext.descriptorS,
       ClassRepr.externalizer(context),
       classSetConstructor
     );
 
-    sourceFileToAnnotationUsages = new PersistentMaplet<DependencyContext.S, UsageRepr.Usage> (
+    sourceFileToAnnotationUsages = new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(
       DependencyContext.getTableFile(rootDir, sourceToAnnotationsName), 
       DependencyContext.descriptorS, 
       UsageRepr.externalizer(context), 
       usageSetConstructor
     );    
     
-    sourceFileToUsages = new HashMap<DependencyContext.S, UsageRepr.Cluster>();
+    sourceFileToUsages = new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(
+      DependencyContext.getTableFile(rootDir, sourceToUsagesName),
+      DependencyContext.descriptorS,
+      UsageRepr.Cluster.clusterExternalizer(context)
+    );
     
-    classToSourceFile = new HashMap<DependencyContext.S, DependencyContext.S>();
+    classToSourceFile = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(
+      DependencyContext.getTableFile(rootDir, classToSourceName),
+      DependencyContext.descriptorS,
+      DependencyContext.descriptorS
+    );
   }
 
   public Mappings(final File rootDir, final BufferedReader r) throws IOException {
     context = new DependencyContext(rootDir);
     
-    classToSubclasses = new PersistentMaplet<DependencyContext.S, DependencyContext.S> (
+    classToSubclasses = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
       DependencyContext.getTableFile(rootDir, classToSubclassesName), 
       DependencyContext.descriptorS, 
       DependencyContext.descriptorS, 
       stringSetConstructor
     );
     
-    classToClassDependency = new PersistentMaplet<DependencyContext.S, DependencyContext.S> (
+    classToClassDependency = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
       DependencyContext.getTableFile(rootDir, classToClassName), 
       DependencyContext.descriptorS, 
       DependencyContext.descriptorS, 
       stringSetConstructor
     );
     
-    sourceFileToClasses = new PersistentMaplet<DependencyContext.S, ClassRepr> (
+    sourceFileToClasses = new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(
       DependencyContext.getTableFile(rootDir, sourceToClassName), 
       DependencyContext.descriptorS, 
       ClassRepr.externalizer(context), 
       classSetConstructor
     );
     
-    sourceFileToAnnotationUsages = new PersistentMaplet<DependencyContext.S, UsageRepr.Usage> (
+    sourceFileToAnnotationUsages = new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(
       DependencyContext.getTableFile(rootDir, sourceToAnnotationsName), 
       DependencyContext.descriptorS, 
       UsageRepr.externalizer(context), 
       usageSetConstructor
     );    
 
-    sourceFileToUsages =
-      RW.readMap(r, context.reader, UsageRepr.clusterReader(context), new HashMap<DependencyContext.S, UsageRepr.Cluster>());
-    classToSourceFile = RW.readMap(r, context.reader, context.reader, new HashMap<DependencyContext.S, DependencyContext.S>());
+    sourceFileToUsages = new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(
+      DependencyContext.getTableFile(rootDir, sourceToUsagesName),
+      DependencyContext.descriptorS,
+      UsageRepr.Cluster.clusterExternalizer(context)
+    );
+
+    classToSourceFile = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(
+      DependencyContext.getTableFile(rootDir, classToSourceName),
+      DependencyContext.descriptorS,
+      DependencyContext.descriptorS
+    );
   }
 
   public Mappings createDelta(){
@@ -1049,7 +1067,7 @@ public class Mappings implements RW.Writable {
       public Collection<String> getClassFiles() {
         final HashSet<String> result = new HashSet<String>();
 
-        for (DependencyContext.S s : classToSourceFile.keySet()) {
+        for (DependencyContext.S s : classToSourceFile.keyCollection()) {
           result.add(context.getValue(s));
         }
 
@@ -1106,5 +1124,7 @@ public class Mappings implements RW.Writable {
     classToClassDependency.close();
     sourceFileToClasses.close();
     sourceFileToAnnotationUsages.close();
+    sourceFileToUsages.close();
+    classToSourceFile.close();
   }
 }
