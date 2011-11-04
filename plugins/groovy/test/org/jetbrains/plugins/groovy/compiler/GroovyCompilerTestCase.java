@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.JpsServerManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -13,14 +15,16 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -28,6 +32,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -53,6 +58,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myMainOutput;
 
+  private static boolean useJps() {
+    return false;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -65,7 +73,19 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
+        //noinspection ConstantConditions
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+        if (useJps()) {
+          ApplicationManagerEx.getApplicationEx().doNotSave(false);
+          CompilerWorkspaceConfiguration.getInstance(getProject()).USE_COMPILE_SERVER = true;
+
+          JavaAwareProjectJdkTableImpl jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+          Sdk internalJdk = jdkTable.getInternalJdk();
+          jdkTable.addJdk(internalJdk);
+          final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+          modifiableModel.setSdk(internalJdk);
+          modifiableModel.commit();
+        }
       }
     }.execute();
   }
@@ -90,6 +110,19 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       @Override
       public void run() {
         try {
+          if (useJps()) {
+            CompilerWorkspaceConfiguration.getInstance(getProject()).USE_COMPILE_SERVER = false;
+            ApplicationManagerEx.getApplicationEx().doNotSave(true);
+            new WriteCommandAction(getProject()) {
+              @Override
+              protected void run(Result result) throws Throwable {
+                final JavaAwareProjectJdkTableImpl jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+                jdkTable.removeJdk(jdkTable.getInternalJdk());
+              }
+            }.execute();
+            JpsServerManager.getInstance().shutdownServer();
+          }
+
           myMainOutput.tearDown();
           myMainOutput = null;
           GroovyCompilerTestCase.super.tearDown();
@@ -117,43 +150,49 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected Module addDependentModule() {
-    Module dep = new WriteCommandAction<Module>(getProject()) {
+    return new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(Result<Module> result) throws Throwable {
+        final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir("dependent");
+
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-        moduleModel.newModule("dependent/dependent.iml", StdModuleTypes.JAVA);
+        String moduleName = moduleModel.newModule(depRoot.getPath() + "/dependent.iml", StdModuleTypes.JAVA).getName();
         moduleModel.commit();
 
-        final Module dep = ModuleManager.getInstance(getProject()).findModuleByName("dependent");
+        final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
         final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
         model.addModuleOrderEntry(myModule);
-        final VirtualFile depRoot = myFixture.getTempDirFixture().getFile("dependent");
         final ContentEntry entry = model.addContentEntry(depRoot);
         entry.addSourceFolder(depRoot, false);
         model.setSdk(ModuleRootManager.getInstance(myModule).getSdk());
-
-        //model.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
 
         model.commit();
         result.setResult(dep);
       }
     }.execute().getResultObject();
-    return dep;
   }
 
   protected void deleteClassFile(final String className) throws IOException {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
+    AccessToken token = WriteAction.start();
+    try {
+      if (useJps()) {
+        //noinspection ConstantConditions
+        touch(JavaPsiFacade.getInstance(getProject()).findClass(className).getContainingFile().getVirtualFile());
+      } else {
         final CompilerModuleExtension extension = ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class);
         //noinspection ConstantConditions
         extension.getCompilerOutputPath().findChild(className + ".class").delete(this);
       }
-    }.execute();
+    }
+    finally {
+      token.finish();
+    }
   }
 
   protected static void touch(VirtualFile file) throws IOException {
     file.setBinaryContent(file.contentsToByteArray(), file.getModificationStamp() + 1, file.getTimeStamp() + 1);
+    File ioFile = VfsUtil.virtualToIoFile(file);
+    assert ioFile.setLastModified(ioFile.lastModified() - 100000);
   }
 
   protected static void setFileText(final PsiFile file, final String barText) throws IOException {
@@ -187,6 +226,14 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       @Override
       public void run() {
         try {
+          if (useJps()) {
+            getProject().save();
+            File ioFile = VfsUtil.virtualToIoFile(myModule.getModuleFile());
+            if (!ioFile.exists()) {
+              getProject().save();
+              assert ioFile.exists();
+            }
+          }
           CompilerManager.getInstance(getProject()).make(callback);
         }
         catch (Exception e) {
