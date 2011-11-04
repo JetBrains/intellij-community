@@ -44,7 +44,7 @@ public class SpacingBuilder {
     }
   }
   
-  private class RuleCondition {
+  private static class RuleCondition {
     private final TokenSet myParentType;
     private final TokenSet myChild1Type;
     private final TokenSet myChild2Type;
