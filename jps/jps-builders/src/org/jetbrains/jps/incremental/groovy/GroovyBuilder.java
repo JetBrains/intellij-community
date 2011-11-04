@@ -49,7 +49,8 @@ public class GroovyBuilder extends Builder {
       context.processFiles(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
-          if (file.getPath().endsWith(".groovy") && isFileDirty(file, context, tsStorage)) { //todo file type check
+          String path = file.getPath();
+          if ((path.endsWith(".groovy") || path.endsWith(".gpp")) && isFileDirty(file, context, tsStorage)) { //todo file type check
             toCompile.add(file);
           }
           return true;
