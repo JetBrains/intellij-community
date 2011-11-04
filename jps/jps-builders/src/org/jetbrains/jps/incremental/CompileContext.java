@@ -207,15 +207,16 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   /** @noinspection unchecked*/
   private FSSnapshot buildSnapshot(Module module) {
     final Set<File> excludes = new HashSet<File>();
-    for (String excludePath : (Collection<String>)module.getExcludes()) {
+    for (String excludePath : module.getExcludes()) {
       excludes.add(new File(excludePath));
     }
     final FSSnapshot snapshot = new FSSnapshot(module);
-    final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
+    final Collection<String> roots = myCompilingTests? module.getTestRoots() : module.getSourceRoots();
     for (String srcRoot : roots) {
-      final File rootFile = new File(srcRoot);
+      final String normalizedRoot = FileUtil.toCanonicalPath(srcRoot);
+      final File rootFile = new File(normalizedRoot);
       if (rootFile.exists()) {
-        final FSSnapshot.Root root = snapshot.addRoot(rootFile, srcRoot);
+        final FSSnapshot.Root root = snapshot.addRoot(rootFile, normalizedRoot);
         buildStructure(root.getNode(), excludes);
       }
     }
