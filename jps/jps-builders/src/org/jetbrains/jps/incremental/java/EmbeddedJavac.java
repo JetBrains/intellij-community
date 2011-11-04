@@ -30,7 +30,7 @@ public class EmbeddedJavac {
   }
 
   public interface OutputFileConsumer {
-    void save(OutputFileObject fileObject);
+    void save(@NotNull OutputFileObject fileObject);
   }
 
   public interface ClassPostProcessor {

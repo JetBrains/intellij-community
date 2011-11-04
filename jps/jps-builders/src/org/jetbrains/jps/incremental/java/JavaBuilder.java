@@ -588,7 +588,7 @@ public class JavaBuilder extends Builder{
       myContext = context;
     }
 
-    public void save(OutputFileObject fileObject) {
+    public void save(final @NotNull OutputFileObject fileObject) {
       final String className = fileObject.getClassName();
       if (className != null) {
         final OutputFileObject.Content content = fileObject.getContent();
