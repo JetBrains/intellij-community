@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -15,6 +17,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -27,6 +31,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.EpydocUtil;
@@ -34,12 +39,15 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -977,6 +985,38 @@ public class PyUtil {
       }
     }
     return false;
+  }
+  @NotNull
+  public static PyFile getOrCreateFile(String path, Project project) {
+    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    final PsiFile psi;
+    if (vfile == null) {
+      final File file = new File(path);
+      try {
+        final VirtualFile baseDir = project.getBaseDir();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+        final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties()) : null;
+        psi = PyExtractSuperclassHelper.placeFile(project,
+                                                  StringUtil.notNullize(
+                                                    file.getParent(),
+                                                    baseDir != null ? baseDir
+                                                      .getPath() : "."),
+                                                  file.getName(),
+                                                  content);
+      }
+      catch (IOException e) {
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path));
+      }
+    }
+    else {
+      psi = PsiManager.getInstance(project).findFile(vfile);
+    }
+    if (!(psi instanceof PyFile)) {
+      throw new IncorrectOperationException(PyBundle.message(
+        "refactoring.move.class.or.function.error.cannot.place.elements.into.nonpython.file"));
+    }
+    return (PyFile)psi;
   }
 }
 

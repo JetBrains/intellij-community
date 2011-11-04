@@ -1,15 +1,14 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -27,12 +26,9 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
-import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -102,7 +98,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final PyFile dest = getOrCreateFile(myDestination);
+            final PyFile dest = PyUtil.getOrCreateFile(myDestination, myProject);
             CommonRefactoringUtil.checkReadOnlyStatus(myProject, dest);
             for (PsiNamedElement e: myElements) {
               // TODO: Check for resulting circular imports
@@ -167,36 +163,36 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
     }
   }
-
-  @NotNull
-  private PyFile getOrCreateFile(String path) {
-    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-    final PsiFile psi;
-    if (vfile == null) {
-      final File file = new File(myDestination);
-      try {
-        final VirtualFile baseDir = myProject.getBaseDir();
-        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
-        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
-        final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties()) : null;
-        psi = PyExtractSuperclassHelper.placeFile(myProject,
-                                                  StringUtil.notNullize(file.getParent(),
-                                                                        baseDir != null ? baseDir.getPath() : "."),
-                                                  file.getName(),
-                                                  content);
-      }
-      catch (IOException e) {
-        throw new IncorrectOperationException(String.format("Cannot create file '%s'", myDestination));
-      }
-    }
-    else {
-      psi = PsiManager.getInstance(myProject).findFile(vfile);
-    }
-    if (!(psi instanceof PyFile)) {
-      throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.place.elements.into.nonpython.file"));
-    }
-    return (PyFile)psi;
-  }
+  //
+  //@NotNull
+  //private PyFile getOrCreateFile(String path) {
+  //  final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+  //  final PsiFile psi;
+  //  if (vfile == null) {
+  //    final File file = new File(myDestination);
+  //    try {
+  //      final VirtualFile baseDir = myProject.getBaseDir();
+  //      final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+  //      final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+  //      final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties()) : null;
+  //      psi = PyExtractSuperclassHelper.placeFile(myProject,
+  //                                                StringUtil.notNullize(file.getParent(),
+  //                                                                      baseDir != null ? baseDir.getPath() : "."),
+  //                                                file.getName(),
+  //                                                content);
+  //    }
+  //    catch (IOException e) {
+  //      throw new IncorrectOperationException(String.format("Cannot create file '%s'", myDestination));
+  //    }
+  //  }
+  //  else {
+  //    psi = PsiManager.getInstance(myProject).findFile(vfile);
+  //  }
+  //  if (!(psi instanceof PyFile)) {
+  //    throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.place.elements.into.nonpython.file"));
+  //  }
+  //  return (PyFile)psi;
+  //}
 
   @Nullable
   private static PyImportStatementBase getUsageImportStatement(UsageInfo usage) {
