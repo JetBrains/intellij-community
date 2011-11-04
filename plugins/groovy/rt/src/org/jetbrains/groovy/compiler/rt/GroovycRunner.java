@@ -105,31 +105,43 @@ public class GroovycRunner {
     }
 
     try {
-      final CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
-      compilerConfiguration.setOutput(new PrintWriter(System.err));
-      compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
+      final CompilerConfiguration config = new CompilerConfiguration();
+      config.setClasspath("");
+      config.setOutput(new PrintWriter(System.err));
+      config.setWarningLevel(WarningMessage.PARANOIA);
 
       final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
       final List<CompilationUnitPatcher> patchers = new ArrayList<CompilationUnitPatcher>();
       final List<File> srcFiles = new ArrayList<File>();
+      final Map<String, File> class2File = new HashMap<String, File>();
 
       final String[] finalOutput = new String[1];
-      fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, finalOutput);
+      fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutput);
       if (srcFiles.isEmpty()) return;
 
       if (forStubs) {
         Map<String, Object> options = new HashMap<String, Object>();
-        options.put("stubDir", compilerConfiguration.getTargetDirectory());
+        options.put("stubDir", config.getTargetDirectory());
         options.put("keepStubs", Boolean.TRUE);
-        compilerConfiguration.setJointCompilationOptions(options);
+        config.setJointCompilationOptions(options);
 
-        compilerConfiguration.setTargetBytecode(CompilerConfiguration.POST_JDK5);
+        config.setTargetBytecode(CompilerConfiguration.POST_JDK5);
       }
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
-      final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration, finalOutput[0]);
+      final AstAwareResourceLoader resourceLoader = new AstAwareResourceLoader(class2File);
+      final CompilationUnit unit = createCompilationUnit(forStubs, config, finalOutput[0], buildClassLoaderFor(config, resourceLoader));
+      unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
+        public void call(SourceUnit source) throws CompilationFailedException {
+          File file = new File(source.getName());
+          for (ClassNode aClass : source.getAST().getClasses()) {
+            resourceLoader.myClass2File.put(aClass.getName(), file);
+          }
+        }
+      }, Phases.CONVERSION);
+
       addSources(forStubs, srcFiles, unit);
-      runPatchers(patchers, compilerMessages, unit);
+      runPatchers(patchers, compilerMessages, unit, resourceLoader);
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: compiling...");
       final List compiledFiles = GroovyCompilerWrapper.compile(compilerMessages, forStubs, unit);
@@ -174,7 +186,7 @@ public class GroovycRunner {
   }
 
   private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages,
-                                         List<File> srcFiles, String[] finalOutput) {
+                                         List<File> srcFiles, Map<String, File> class2File, String[] finalOutput) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -196,7 +208,12 @@ public class GroovycRunner {
       }
 
       while (line != null) {
-        if (line.startsWith(PATCHERS)) {
+        if (line.equals("class2src")) {
+          while (!END.equals(line = reader.readLine())) {
+            class2File.put(line, new File(reader.readLine()));
+          }
+        }
+        else if (line.startsWith(PATCHERS)) {
           String s;
           while (!END.equals(s = reader.readLine())) {
             try {
@@ -264,17 +281,8 @@ public class GroovycRunner {
     }
   }
 
-  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit) {
+  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader) {
     if (!patchers.isEmpty()) {
-      final AstAwareResourceLoader loader = new AstAwareResourceLoader();
-      unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
-        public void call(SourceUnit source) throws CompilationFailedException {
-          File file = new File(source.getName());
-          for (ClassNode aClass : source.getAST().getClasses()) {
-            loader.myClass2File.put(aClass.getName(), file);
-          }
-        }
-      }, Phases.CONVERSION);
       for (CompilationUnitPatcher patcher : patchers) {
         try {
           patcher.patchCompilationUnit(unit, loader);
@@ -333,10 +341,9 @@ public class GroovycRunner {
     compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
   }
 
-  private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config, final String finalOutput) {
-    config.setClasspath("");
-
-    final GroovyClassLoader classLoader = buildClassLoaderFor(config);
+  private static CompilationUnit createCompilationUnit(final boolean forStubs,
+                                                       final CompilerConfiguration config,
+                                                       final String finalOutput, final GroovyClassLoader classLoader) {
 
     try {
       if (forStubs) {
@@ -423,27 +430,42 @@ public class GroovycRunner {
     return unit;
   }
 
-  static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {
-    return AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
+  static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration, final AstAwareResourceLoader resourceLoader) {
+    GroovyClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
       public GroovyClassLoader run() {
         return new GroovyClassLoader(getClass().getClassLoader(), compilerConfiguration) {
           public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
+            Class aClass;
             try {
-              return super.loadClass(name, lookupScriptFiles, preferClassOverScript);
+              aClass = super.loadClass(name, lookupScriptFiles, preferClassOverScript);
             }
             catch (NoClassDefFoundError e) {
-              final String ncdfe = e.getMessage();
-
-              throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name, e);
+              throw new ClassNotFoundException(name);
             }
             catch (LinkageError e) {
               throw new RuntimeException("Problem loading class " + name, e);
             }
+
+            if (resourceLoader.getSourceFile(name) != null) {
+              try {
+                aClass.getDeclaredMethods();
+                aClass.getDeclaredFields();
+                aClass.getDeclaredClasses();
+                aClass.getDeclaredAnnotations();
+              }
+              catch (NoClassDefFoundError e) {
+                throw new ClassNotFoundException(name);
+              }
+            }
+
+            return aClass;
           }
         };
       }
     });
+    classLoader.setResourceLoader(resourceLoader);
+    return classLoader;
   }
 
 }
