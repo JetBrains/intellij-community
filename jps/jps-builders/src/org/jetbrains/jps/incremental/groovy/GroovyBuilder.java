@@ -72,13 +72,12 @@ public class GroovyBuilder extends Builder {
 
       final File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
       final Module representativeModule = chunk.getModules().iterator().next();
-      final File dir = myForStubs ?
-                 FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) :
-                 context.getProjectPaths().getModuleOutputDir(representativeModule, context.isCompilingTests());
+      File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(representativeModule, context.isCompilingTests());
+      final File dir = myForStubs ? FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) : moduleOutputDir;
 
       assert dir != null;
 
-      fillFileWithGroovycParameters(tempFile, dir.getPath(), toCompile);
+      fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompile, FileUtil.toCanonicalPath(moduleOutputDir.getPath()));
 
       if (myForStubs) {
         JavaBuilder.addTempSourcePathRoot(context, dir);
@@ -164,7 +163,7 @@ public class GroovyBuilder extends Builder {
     }
   }
 
-  private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<File> files) throws IOException {
+  private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<File> files, String finalOutput) throws IOException {
     final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
     try {
       for (File file : files) {
@@ -179,8 +178,8 @@ public class GroovyBuilder extends Builder {
       writer.write("outputpath\n");
       writer.write(outputDir);
       writer.write("\n");
-      writer.write("finaloutputpath\n");
-      writer.write(outputDir);
+      writer.write("final_outputpath\n");
+      writer.write(finalOutput);
       writer.write("\n");
     }
     finally {
