@@ -34,7 +34,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
@@ -225,7 +225,8 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       final List<Document> docsToSave = new ArrayList<Document>();
       final FileDocumentManager manager = FileDocumentManager.getInstance();
       for (Document document : manager.getUnsavedDocuments()) {
-        if (VfsUtil.isAncestor(myFile, manager.getFile(document), false)) {
+        VirtualFile file = manager.getFile(document);
+        if (file!=null && VfsUtilCore.isAncestor(myFile, file, false)) {
           docsToSave.add(document);
         }
       }
