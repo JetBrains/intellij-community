@@ -115,55 +115,92 @@ public class ProjectPaths {
   }
 
   public static Collection<File> getSourcePathsWithDependents(ModuleChunk chunk, boolean includeTests) {
-    final PathsGetter getter = new PathsGetter() {
-      public void store(Module module, ClasspathKind kind, final Set<File> container) {
-        addFiles(container, module.getSourceRoots());
+    final Set<File> sourcePaths = new LinkedHashSet<File>();
+    collectPathsRecursively(chunk, ClasspathKind.compile(includeTests), new PathsGetter() {
+      public void apply(Module module, ClasspathKind kind) {
+        addFiles(sourcePaths, module.getSourceRoots());
         if (kind.isTestsIncluded()) {
-          addFiles(container, module.getTestRoots());
+          addFiles(sourcePaths, module.getTestRoots());
         }
       }
-    };
-    final Set<File> sourcePaths = new LinkedHashSet<File>();
-    collectPathsRecursively(chunk, ClasspathKind.compile(includeTests), sourcePaths, getter);
+    });
     return sourcePaths;
   }
 
-  public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk, final boolean forTests) {
-    final PathsGetter getter = new PathsGetter() {
-      public void store(Module module, ClasspathKind kind, final Set<File> container) {
-        if (forTests) {
-          addFiles(container, Collections.singleton(module.getTestOutputPath()));
+  /**
+   * @param chunk
+   * @param includeTests
+   * @return mapping "sourceRoot" -> "package prefix" Package prefix uses slashes instead of dots and ends with trailing slash
+   */
+  public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk, boolean includeTests) {
+    final Map<File, String> result = new LinkedHashMap<File, String>();
+    collectPathsRecursively(chunk, ClasspathKind.compile(includeTests), new PathsGetter() {
+      public void apply(Module module, ClasspathKind kind) {
+        final Map<String, String> prefixes = module.getSourceRootPrefixes();
+        for (String root : module.getSourceRoots()) {
+          addRoot(prefixes, root);
         }
-        else {
-          addFiles(container, Collections.singleton(module.getOutputPath()));
+        if (kind.isTestsIncluded()) {
+          for (String root : module.getTestRoots()) {
+            addRoot(prefixes, root);
+          }
         }
       }
-    };
+
+      private void addRoot(Map<String, String> prefixes, String root) {
+        String prefix = prefixes.get(root);
+        if (prefix != null) {
+          if (!prefix.isEmpty()) {
+            prefix = prefix.replace('.', '/');
+            if (!prefix.endsWith("/")) {
+              prefix += "/";
+            }
+          }
+          else {
+            prefix = null;
+          }
+        }
+        result.put(new File(root), prefix);
+      }
+    });
+    return result;
+  }
+
+  public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk, final boolean forTests) {
     final Set<File> sourcePaths = new LinkedHashSet<File>();
-    collectPathsRecursively(chunk, ClasspathKind.compile(forTests), sourcePaths, getter);
+    collectPathsRecursively(chunk, ClasspathKind.compile(forTests), new PathsGetter() {
+      public void apply(Module module, ClasspathKind kind) {
+        if (forTests) {
+          addFiles(sourcePaths, Collections.singleton(module.getTestOutputPath()));
+        }
+        else {
+          addFiles(sourcePaths, Collections.singleton(module.getOutputPath()));
+        }
+      }
+    });
     return sourcePaths;
   }
 
   private interface PathsGetter {
-    void store(Module module, ClasspathKind kind, final Set<File> container);
+    void apply(Module module, ClasspathKind kind);
   }
 
-  private static void collectPathsRecursively(ModuleChunk chunk, ClasspathKind kind, Set<File> container, PathsGetter getter) {
+  private static void collectPathsRecursively(ModuleChunk chunk, ClasspathKind kind, PathsGetter proc) {
     final HashSet<Module> processed = new HashSet<Module>();
     for (Module module : chunk.getModules()) {
-      collectPathsRecursively(module, kind, container, processed, getter);
+      collectPathsRecursively(module, kind, processed, proc);
     }
   }
 
-  private static void collectPathsRecursively(Module module, ClasspathKind kind, Set<File> sourcePaths, Set<Module> processed, PathsGetter getter) {
+  private static void collectPathsRecursively(Module module, ClasspathKind kind, Set<Module> processed, PathsGetter processor) {
     if (processed.add(module)) {
       for (ClasspathItem item : module.getClasspath(kind, false)) {
         if (item instanceof ModuleSourceEntry) {
           final Module dep = ((ModuleSourceEntry) item).getModule();
-          getter.store(dep, kind, sourcePaths);
+          processor.apply(dep, kind);
         }
         else if (item instanceof Module) {
-          collectPathsRecursively((Module)item, kind, sourcePaths, processed, getter);
+          collectPathsRecursively((Module)item, kind, processed, processor);
         }
       }
     }
@@ -198,7 +235,7 @@ public class ProjectPaths {
     return getPathsList(classpath);
   }
 
-  private static interface ClasspathItemFilter {
+  private interface ClasspathItemFilter {
     boolean accept(Module module, ClasspathItem item);
   }
 
