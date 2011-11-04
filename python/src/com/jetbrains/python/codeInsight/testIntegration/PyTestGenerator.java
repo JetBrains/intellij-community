@@ -60,7 +60,7 @@ public class PyTestGenerator {
                 fileText.append("pass\n");
 
               for (String method : methods)
-                fileText.append("def ").append(method).append("(self):\n    self.assertFalse()\n\n");
+                fileText.append("def ").append(method).append("(self):\n    self.fail()\n\n");
 
               PsiFile psiFile = null;
               if (file != null) {
