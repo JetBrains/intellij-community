@@ -236,7 +236,7 @@ public class JavaBuilder extends Builder{
           options, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink
         );
 
-        final Collection<File> chunkSourcePath = ProjectPaths.getSourcePathsWithDependents(chunk, context.isCompilingTests());
+        final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
         final ClassLoader compiledClassesLoader = createInstrumentationClassLoader(classpath, platformCp, chunkSourcePath, outputSink);
 
         if (!forms.isEmpty()) {
@@ -297,7 +297,7 @@ public class JavaBuilder extends Builder{
     return exitCode;
   }
 
-  private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Collection<File> chunkSourcePath, OutputFilesSink outputSink)
+  private static ClassLoader createInstrumentationClassLoader(Collection<File> classpath, Collection<File> platformCp, Map<File, String> chunkSourcePath, OutputFilesSink outputSink)
     throws MalformedURLException {
     final List<URL> urls = new ArrayList<URL>();
     for (Collection<File> cp : Arrays.asList(platformCp, classpath)) {
@@ -307,7 +307,7 @@ public class JavaBuilder extends Builder{
     }
     urls.add(getResourcePath(GridConstraints.class).toURI().toURL()); // forms_rt.jar
     //urls.add(getResourcePath(CellConstraints.class).toURI().toURL());  // jgoodies-forms
-    for (File file : chunkSourcePath) {
+    for (File file : chunkSourcePath.keySet()) {
       urls.add(file.toURI().toURL());
     }
     return new CompiledClassesLoader(outputSink, urls.toArray(new URL[urls.size()]));
@@ -379,8 +379,13 @@ public class JavaBuilder extends Builder{
   }
 
   private static Collection<File> instrumentForms(
-    CompileContext context, ModuleChunk chunk, final Collection<File> chunkSourcePath, final ClassLoader loader,
-    Collection<File> formsToInstrument, OutputFilesSink outputSink) throws ProjectBuildException {
+    CompileContext context,
+    ModuleChunk chunk,
+    final Map<File, String> chunkSourcePath,
+    final ClassLoader loader,
+    Collection<File> formsToInstrument,
+    OutputFilesSink outputSink) throws ProjectBuildException {
+
     final Map<String, File> class2form = new HashMap<String, File>();
     final List<File> successfullForms = new ArrayList<File>();
 
@@ -390,8 +395,7 @@ public class JavaBuilder extends Builder{
     }
 
     final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(
-      chunkSourcePath,
-      ProjectPaths.getOutputPathsWithDependents(chunk, context.isCompilingTests())
+      chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, context.isCompilingTests())
     );
 
     for (File formFile : formsToInstrument) {
@@ -697,7 +701,7 @@ public class JavaBuilder extends Builder{
   }
 
   private static class MyNestedFormLoader implements NestedFormLoader {
-    private final Collection<File> mySourceRoots;
+    private final Map<File, String> mySourceRoots;
     private final Collection<File> myOutputRoots;
     private final HashMap<String, LwRootContainer> myCache = new HashMap<String, LwRootContainer>();
 
@@ -705,24 +709,38 @@ public class JavaBuilder extends Builder{
      * @param sourceRoots all source roots for current module chunk and all dependent recursively
      * @param outputRoots output roots for this module chunk and all dependent recursively
      */
-    public MyNestedFormLoader(Collection<File> sourceRoots, Collection<File> outputRoots) {
+    public MyNestedFormLoader(Map<File, String> sourceRoots, Collection<File> outputRoots) {
       mySourceRoots = sourceRoots;
       myOutputRoots = outputRoots;
     }
 
-    public LwRootContainer loadForm(String formFilePath) throws Exception {
-      if (myCache.containsKey(formFilePath)) {
-        return myCache.get(formFilePath);
+    public LwRootContainer loadForm(String formFileName) throws Exception {
+      if (myCache.containsKey(formFileName)) {
+        return myCache.get(formFileName);
       }
 
-      for (File sourceRoot : mySourceRoots) {
-        File formFile = new File(sourceRoot, formFilePath);
+      final String relPath = FileUtil.toSystemIndependentName(formFileName);
+
+      for (Map.Entry<File, String> entry : mySourceRoots.entrySet()) {
+        final File sourceRoot = entry.getKey();
+        final String prefix = entry.getValue();
+        String path = relPath;
+        if (prefix != null && FileUtil.startsWith(path, prefix)) {
+          path = path.substring(prefix.length());
+        }
+        final File formFile = new File(sourceRoot, path);
         if (formFile.exists()) {
-          return loadForm(formFilePath, new BufferedInputStream(new FileInputStream(formFile)));
+          final BufferedInputStream stream = new BufferedInputStream(new FileInputStream(formFile));
+          try {
+            return loadForm(formFileName, stream);
+          }
+          finally {
+            stream.close();
+          }
         }
       }
 
-      throw new Exception("Cannot find nested form file " + formFilePath);
+      throw new Exception("Cannot find nested form file " + formFileName);
     }
 
     private LwRootContainer loadForm(String formFileName, InputStream resourceStream) throws Exception {
