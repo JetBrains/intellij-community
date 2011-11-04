@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class GppCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
-    PsiTestUtil.addLibrary myFixture.module, "gpp", TestUtils.absoluteTestDataPath + "/realGroovypp/", "groovypp-all-0.2.13.jar"
+    PsiTestUtil.addLibrary myFixture.module, "gpp", TestUtils.absoluteTestDataPath + "/realGroovypp/", "groovy-all-1.8.2.jar", "groovypp-all-0.9.0_1.8.2.jar"
   }
 
   public void testTraitStubs() throws Throwable {
