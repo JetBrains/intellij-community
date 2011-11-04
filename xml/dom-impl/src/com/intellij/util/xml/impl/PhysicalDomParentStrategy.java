@@ -110,6 +110,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
             new Attachment("Including tag text 1", curContext == null ? "null" : curContext.getText()),
             new Attachment("Including tag text 2", navContext == null ? "null" : navContext.getText())
           ));
+          throw new AssertionError();
         }
       }
       return true;
