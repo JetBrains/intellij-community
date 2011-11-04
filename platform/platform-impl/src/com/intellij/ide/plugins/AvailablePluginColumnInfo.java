@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.LightColors;
@@ -167,12 +168,13 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
         }
         else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
-          final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginNode.getPluginId());
+          PluginId pluginId = pluginNode.getPluginId();
+          final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_MODIFIED);
           if (hasNewerVersion) {
             if (!isSelected) myPanel.setBackground(LightColors.BLUE);
           }
-          myStatusLabel.setText("[Installed" + (hasNewerVersion ? ": Ready to update" : "") + "]");
+          myStatusLabel.setText("[Installed " + "v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (": Ready to update to " + pluginNode.getVersion()) : "") + "]");
         }
       }
       return myPanel;
