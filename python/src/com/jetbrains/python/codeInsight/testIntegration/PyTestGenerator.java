@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
@@ -52,6 +53,7 @@ public class PyTestGenerator {
                                                            fileText.toString());
               createdClass = (PyElement)psiFile.addAfter(createdClass, psiFile.getLastChild());
 
+              CodeStyleManager.getInstance(project).reformat(psiFile);
               createdClass.navigate(false);
               return psiFile;
             }
