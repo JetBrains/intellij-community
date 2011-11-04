@@ -16,7 +16,15 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 class UsageRepr {
-  private UsageRepr(){
+  private final static int FIELD_USAGE = 0;
+  private final static int FIELD_ASSIGN_USAGE = 1;
+  private final static int METHOD_USAGE = 2;
+  private final static int CLASS_USAGE = 3;
+  private final static int CLASS_EXTENDS_USAGE = 4;
+  private final static int CLASS_NEW_USAGE = 5;
+  private final static int ANNOTATION_USAGE = 6;
+  
+  private UsageRepr() {
 
   }
 
@@ -91,7 +99,7 @@ class UsageRepr {
     }
   }
 
-  public static abstract class Usage implements RW.Writable { //}, RW.Savable {
+  public static abstract class Usage implements RW.Writable, RW.Savable {
     public abstract DependencyContext.S getOwner();
   }
 
@@ -104,14 +112,30 @@ class UsageRepr {
       return owner;
     }
 
-    protected FMUsage(final DependencyContext.S n, final DependencyContext.S o) {
+    private FMUsage(final DependencyContext.S n, final DependencyContext.S o) {
       name = n;
       owner = o;
     }
 
-    protected FMUsage(final DependencyContext context, final BufferedReader r) {
+    private FMUsage(final DataInput in) {
+      name = new DependencyContext.S(in);
+      owner = new DependencyContext.S(in);
+    }
+
+    private FMUsage(final BufferedReader r) {
       name = new DependencyContext.S(r);
       owner = new DependencyContext.S(r);
+    }
+
+    protected void save(final int tag, final DataOutput out) {
+      try {
+        out.writeInt(tag);
+        name.save(out);
+        owner.save(out);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -126,9 +150,24 @@ class UsageRepr {
       type = TypeRepr.getType(context, d);
     }
 
+    private FieldUsage(final DependencyContext context, final DataInput in) {
+      super(in);
+      try {
+        type = TypeRepr.externalizer(context).read(in);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     private FieldUsage(final DependencyContext context, final BufferedReader r) {
-      super(context, r);
+      super(r);
       type = TypeRepr.reader(context).read(r);
+    }
+
+    public void save(final DataOutput out) {
+      save(FIELD_USAGE, out);
+      type.save(out);
     }
 
     public void write(final BufferedWriter w) {
@@ -166,6 +205,15 @@ class UsageRepr {
       super(context, r);
     }
 
+    private FieldAssignUsage(final DependencyContext context, final DataInput in) {
+      super(context, in);
+    }
+
+    public void save(final DataOutput out) {
+      save(FIELD_ASSIGN_USAGE, out);
+      type.save(out);
+    }
+
     public void write(final BufferedWriter w) {
       RW.writeln(w, "fieldAssignUsage");
       RW.writeln(w, name.toString());
@@ -200,9 +248,27 @@ class UsageRepr {
     }
 
     private MethodUsage(final DependencyContext context, final BufferedReader r) {
-      super(context, r);
+      super(r);
       argumentTypes = RW.readMany(r, TypeRepr.reader(context), new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
       returnType = TypeRepr.reader(context).read(r);
+    }
+
+    private MethodUsage(final DependencyContext context, final DataInput in) {
+      super(in);
+      try {
+        final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
+        argumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[in.readInt()]);
+        returnType = externalizer.read(in);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void save(final DataOutput out) {
+      save(METHOD_USAGE, out);
+      RW.save(argumentTypes, out);
+      returnType.save(out);
     }
 
     public void write(final BufferedWriter w) {
@@ -249,8 +315,22 @@ class UsageRepr {
       className = n;
     }
 
-    private ClassUsage(final DependencyContext context, final BufferedReader r) {
+    private ClassUsage(final BufferedReader r) {
       className = new DependencyContext.S(r);
+    }
+
+    private ClassUsage(final DataInput in) {
+      className = new DependencyContext.S(in);
+    }
+
+    public void save(final DataOutput out) {
+      try {
+        out.writeInt(CLASS_USAGE);
+        className.save(out);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     public void write(final BufferedWriter w) {
@@ -282,14 +362,28 @@ class UsageRepr {
       return className;
     }
 
-    public ClassExtendsUsage(final DependencyContext.S n) {
+    private ClassExtendsUsage(final DependencyContext.S n) {
       className = n;
     }
 
-    public ClassExtendsUsage(final DependencyContext context, final BufferedReader r) {
+    private ClassExtendsUsage(final BufferedReader r) {
       className = new DependencyContext.S(r);
     }
 
+    private ClassExtendsUsage(final DataInput in){
+      className = new DependencyContext.S(in);
+    }
+    
+    public void save(final DataOutput out) {
+      try{
+        out.writeInt(CLASS_EXTENDS_USAGE);
+        className.save(out);
+      }
+      catch(IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+    
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classExtendsUsage");
       RW.writeln(w, className.toString());
@@ -318,10 +412,24 @@ class UsageRepr {
       super(n);
     }
 
-    public ClassNewUsage(final DependencyContext context, final BufferedReader r) {
-      super(context, r);
+    private ClassNewUsage(final BufferedReader r) {
+      super(r);
     }
 
+    private ClassNewUsage(final DataInput in){
+      super(in);
+    }
+    
+    public void save(final DataOutput out){
+      try{
+        out.writeInt(CLASS_NEW_USAGE);
+        className.save(out);
+      }
+      catch(IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+    
     public void write(final BufferedWriter w) {
       RW.writeln(w, "classNewUsage");
       RW.writeln(w, className.toString());
@@ -409,6 +517,31 @@ class UsageRepr {
       this.usedTargets = targets;
     }
 
+    private AnnotationUsage(final DependencyContext context, final DataInput in){
+      final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
+      
+      try {
+        type = (TypeRepr.ClassType) externalizer.read(in);
+        usedArguments = RW.read(DependencyContext.descriptorS, new HashSet<DependencyContext.S>(), in);
+        usedTargets = RW.read(elementTypeExternalizer, new HashSet<ElementType>(), in);
+      }
+      catch (IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+    
+    public void save(final DataOutput out){
+      try{
+        out.writeInt(ANNOTATION_USAGE);
+        type.save(out);
+        RW.save(usedArguments, DependencyContext.descriptorS, out);
+        RW.save(usedTargets, elementTypeExternalizer, out);
+      }
+      catch(IOException e){
+        throw new RuntimeException(e);
+      }
+    }
+    
     private AnnotationUsage(final DependencyContext context, final BufferedReader r) {
       type = (TypeRepr.ClassType)TypeRepr.reader(context).read(r);
       usedArguments = RW.readMany(r, context.reader, new HashSet<DependencyContext.S>());
@@ -491,13 +624,52 @@ class UsageRepr {
     return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
+  public static DataExternalizer<Usage> externalizer (final DependencyContext context) {
+    return new DataExternalizer<Usage>() {
+      @Override
+      public void save(final DataOutput out, final Usage value) throws IOException {
+        value.save(out);
+      }
+
+      @Override
+      public Usage read(DataInput in) throws IOException {
+        switch(in.readInt()){
+          case CLASS_USAGE:
+            return context.getUsage(new ClassUsage(in));
+          
+          case CLASS_EXTENDS_USAGE:
+            return context.getUsage(new ClassExtendsUsage(in));
+          
+          case CLASS_NEW_USAGE:
+            return context.getUsage(new ClassNewUsage(in));
+          
+          case FIELD_USAGE:
+            return context.getUsage(new FieldUsage(context, in));
+          
+          case FIELD_ASSIGN_USAGE:
+            return context.getUsage(new FieldAssignUsage(context, in));
+          
+          case METHOD_USAGE:
+            return context.getUsage(new MethodUsage(context, in));
+          
+          case ANNOTATION_USAGE:
+            return context.getUsage(new AnnotationUsage(context, in));
+        }
+        
+        assert (false);
+        
+        return null;
+      }
+    };  
+  }
+  
   public static RW.Reader<Usage> reader(final DependencyContext context) {
     return new RW.Reader<Usage>() {
       public Usage read(final BufferedReader r) {
         final String tag = RW.readString(r);
 
         if (tag.equals("classUsage")) {
-          return context.getUsage(new ClassUsage(context, r));
+          return context.getUsage(new ClassUsage(r));
         }
         else if (tag.equals("fieldUsage")) {
           return context.getUsage(new FieldUsage(context, r));
@@ -509,10 +681,10 @@ class UsageRepr {
           return context.getUsage(new MethodUsage(context, r));
         }
         else if (tag.equals("classExtendsUsage")) {
-          return context.getUsage(new ClassExtendsUsage(context, r));
+          return context.getUsage(new ClassExtendsUsage(r));
         }
         else if (tag.equals("classNewUsage")) {
-          return context.getUsage(new ClassNewUsage(context, r));
+          return context.getUsage(new ClassNewUsage(r));
         }
         else {
           return context.getUsage(new AnnotationUsage(context, r));

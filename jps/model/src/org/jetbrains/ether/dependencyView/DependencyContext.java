@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.ether.RW;
