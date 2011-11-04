@@ -56,7 +56,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Remove '" + myClassName + "' from 'throws' clause";
+      return InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", myClassName);
     }
 
     @Override
