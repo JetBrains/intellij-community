@@ -143,6 +143,17 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Bar", "239");
   }
 
+  public void testTransitiveGroovyDependency() throws Throwable {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {} ')
+    def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
+    def goo = myFixture.addFileToProject('Goo.groovy', 'class Goo extends Bar {}')
+    assertEmpty(make());
+
+    touch(foo.virtualFile)
+    touch(goo.virtualFile)
+    assertEmpty(make());
+  }
+
   public void testDeleteTransitiveJavaClass() throws Throwable {
     myFixture.addClass("public interface IFoo { int foo(); }");
     myFixture.addClass("public class Foo implements IFoo {" +
