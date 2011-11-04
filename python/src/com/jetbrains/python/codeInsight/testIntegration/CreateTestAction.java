@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.testIntegration;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -12,10 +13,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User: catherine
@@ -56,13 +60,21 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         d.addMethod("test_"+srcFunction.getName(), 0);
       }
       else {
-        d.methodsSize(srcClass.getMethods().length);
-        int i = 0;
-        for (PyFunction f : srcClass.getMethods()) {
-          if (f.getName() != null && !f.getName().startsWith("__")) {
-            d.addMethod("test_"+f.getName(), i);
-            ++i;
+        final List<PyFunction> methods = Lists.newArrayList();
+        srcClass.visitMethods(new Processor<PyFunction>() {
+          @Override
+          public boolean process(PyFunction pyFunction) {
+            if (pyFunction.getName() != null && !pyFunction.getName().startsWith("__"))
+              methods.add(pyFunction);
+            return true;
           }
+        }, false);
+
+        d.methodsSize(methods.size());
+        int i = 0;
+        for (PyFunction f : methods) {
+          d.addMethod("test_"+f.getName(), i);
+          ++i;
         }
       }
     }
