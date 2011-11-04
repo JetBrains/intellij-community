@@ -580,7 +580,7 @@ public abstract class BaseRefactoringProcessor {
       public void run() {
         execute(usages);
       }
-    });
+    }, false);
     conflictsDialog.setCommandName(getCommandName());
     return conflictsDialog;
   }
