@@ -9,9 +9,8 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 
-import java.io.*;
+import java.io.File;
 import java.util.*;
-import java.util.zip.DeflaterOutputStream;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,7 +45,6 @@ public class IncProjectBuilder {
 
     final CompileContext context = createContext(scope, isMake);
     try {
-
       try {
         runBuild(context);
       }
@@ -75,22 +73,7 @@ public class IncProjectBuilder {
       }
     }
     finally {
-      context.processMessage(new ProgressMessage("Build complete"));
       context.getBuildDataManager().close();
-      final File mappingsDataFile = Paths.getMappingsStorageFile(myProjectName);
-      try {
-        FileUtil.createIfDoesntExist(mappingsDataFile);
-        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new DeflaterOutputStream(new FileOutputStream(mappingsDataFile))));
-        try {
-          context.getMappings().write(writer);
-        }
-        finally {
-          writer.close();
-        }
-      }
-      catch (IOException e) {
-        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
-      }
     }
   }
 
