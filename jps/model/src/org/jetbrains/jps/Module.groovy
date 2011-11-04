@@ -11,10 +11,10 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   Sdk sdk;
 
   private List<ModuleDependency> dependencies = []
-  List contentRoots = []
-  List sourceRoots = []
-  List testRoots = []
-  List excludes = []
+  List<String> contentRoots = []
+  List<String> sourceRoots = []
+  List<String> testRoots = []
+  List<String> excludes = []
 
   String basePath
   String outputPath
