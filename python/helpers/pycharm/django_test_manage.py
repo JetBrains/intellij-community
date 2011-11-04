@@ -1,20 +1,70 @@
 #!/usr/bin/env python
 from pycharm.fix_getpass import fixGetpass
-from pycharm import django_settings
-from django.core.management import execute_manager, setup_environ
+from django.core.management import setup_environ, ManagementUtility
 
 import os
+import sys
+
 manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
-    manage_file = 'manage'
+  manage_file = 'manage'
+
+settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE') or os.getenv('DJANGO_SETTINGS_MODULE')
+if not settings_file:
+    settings_file = 'settings'
+
+from django.core.management.commands.test import Command
+
+class PycharmTestCommand(Command):
+  def get_runner(self):
+    TEST_RUNNER = 'pycharm.django_test_runner.run_tests'
+    test_path = TEST_RUNNER.split('.')
+    # Allow for Python 2.5 relative paths
+    if len(test_path) > 1:
+      test_module_name = '.'.join(test_path[:-1])
+    else:
+      test_module_name = '.'
+    test_module = __import__(test_module_name, {}, {}, test_path[-1])
+    test_runner = getattr(test_module, test_path[-1])
+    return test_runner
+
+  def handle(self, *test_labels, **options):
+    verbosity = int(options.get('verbosity', 1))
+    interactive = options.get('interactive', True)
+    failfast = options.get('failfast', False)
+    TestRunner = self.get_runner()
+
+    if hasattr(TestRunner, 'func_name'):
+      # Pre 1.2 test runners were just functions,
+      # and did not support the 'failfast' option.
+      failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive)
+    else:
+      test_runner = TestRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
+      failures = test_runner.run_tests(test_labels)
+
+    if failures:
+      sys.exit(bool(failures))
+
+class PycharmTestManagementUtility(ManagementUtility):
+  def __init__(self, argv=None):
+    ManagementUtility.__init__(self, argv)
+
+  def execute(self):
+    PycharmTestCommand().run_from_argv(self.argv)
+
 
 if __name__ == "__main__":
-  setup_environ(django_settings)
-  from django.conf import settings
-  settings.DATABASES # just to initialize django lazy settings correctly
   try:
     __import__(manage_file)
   except ImportError:
     print ("There is no such manage file " + str(manage_file))
   fixGetpass()
-  execute_manager(django_settings)
+
+  try:
+    settings_module = __import__(settings_file)
+    setup_environ(settings_module)
+  except ImportError:
+    print ("There is no such settings file " + str(settings_file))
+
+  utility = PycharmTestManagementUtility()
+  utility.execute()

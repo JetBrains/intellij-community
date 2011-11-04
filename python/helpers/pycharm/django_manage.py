@@ -14,6 +14,5 @@ if not manage_file:
 
 if __name__ == "__main__":
     fixGetpass()
-    #execute_manager(django_settings)
     run_module(manage_file, None, '__main__')
 

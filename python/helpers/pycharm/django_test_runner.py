@@ -8,10 +8,10 @@ import sys
 
 from django.test.simple import settings
 def get_test_suite_runner():
-  if hasattr(settings, "USER_TEST_RUNNER"):
+  if hasattr(settings, "TEST_RUNNER"):
     from django.test.utils import get_runner
     class TempSettings:
-      TEST_RUNNER = settings.USER_TEST_RUNNER
+      TEST_RUNNER = settings.TEST_RUNNER
     return get_runner(TempSettings)
 
 try:
