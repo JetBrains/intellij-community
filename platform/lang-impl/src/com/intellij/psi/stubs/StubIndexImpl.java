@@ -83,7 +83,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       needRebuild |= registerIndexer(extension, forceClean);
     }
     if (needRebuild) {
-      forceRebuild(new Throwable());
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        requestRebuild();
+      }
+      else {
+        forceRebuild(new Throwable());
+      }
     }
     dropUnregisteredIndices();
   }
