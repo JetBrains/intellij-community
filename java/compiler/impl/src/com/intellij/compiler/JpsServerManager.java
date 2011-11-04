@@ -309,7 +309,7 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.addParameter("-ea");
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
     cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-    cmdLine.addParameter("-Xmx1024m"); // todo: get this value from settings
+    cmdLine.addParameter("-Xmx640m"); // todo: get this value from settings
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getApplicationClasspath();
