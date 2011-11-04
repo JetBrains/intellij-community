@@ -68,6 +68,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
 
     myParamTextField.setVisible(false);
     myParamCheckBox.setVisible(false);
+    setPatternVisible(getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
