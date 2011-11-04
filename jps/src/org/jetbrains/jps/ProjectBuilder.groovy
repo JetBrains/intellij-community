@@ -426,22 +426,10 @@ class ProjectBuilder {
   }
 
   private List<String> computeExcludes(Collection<Module> modules, List<String> sourceRoots) {
-    Set<Module> otherModules = new HashSet<Module>(project.modules.values())
-    otherModules.removeAll(modules)
-
     Set<String> excludes = [] as Set
     modules.each {Module module ->
       excludes.addAll(module.excludes)
     }
-    Set<File> sourceRootFiles = sourceRoots.collect {new File(it)} as Set
-    otherModules.each {Module module ->
-      module.contentRoots.each {
-        if (PathUtil.isUnder(sourceRootFiles, new File(it))) {
-          excludes << it
-        }
-      }
-    }
-
     return excludes.asList()
   }
 
