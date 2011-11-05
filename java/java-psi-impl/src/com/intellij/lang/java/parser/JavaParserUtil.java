@@ -51,10 +51,6 @@ public class JavaParserUtil {
     void parse(PsiBuilder builder);
   }
 
-  public interface MarkingParserWrapper {
-    @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
-  }
-
   public static final WhitespacesAndCommentsBinder GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
     @Override
     public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
@@ -164,18 +160,6 @@ public class JavaParserUtil {
 
   public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
     return Boolean.TRUE.equals(builder.getUserDataUnprotected(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
-  }
-
-  public static void setParserExtender(@NotNull final PsiBuilder builder,
-                                       @NotNull final Key<MarkingParserWrapper> key,
-                                       @Nullable final MarkingParserWrapper extender) {
-    builder.putUserDataUnprotected(key, extender);
-  }
-
-  @Nullable
-  public static PsiBuilder.Marker parseWithExtender(@NotNull final PsiBuilder builder, @NotNull final Key<MarkingParserWrapper> key) {
-    final MarkingParserWrapper extender = builder.getUserDataUnprotected(key);
-    return extender != null ? extender.parse(builder) : null;
   }
 
   @NotNull

@@ -33,6 +33,9 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class ReferenceParser {
+  public static final ReferenceParser INSTANCE = new ReferenceParser();
+  private final DeclarationParser myDeclarationParser;
+
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
   public static final int WILDCARD = 0x04;
@@ -50,16 +53,22 @@ public class ReferenceParser {
 
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
 
-  private ReferenceParser() { }
+  public ReferenceParser(DeclarationParser declarationParser) {
+    myDeclarationParser = declarationParser;
+  }
+
+  public ReferenceParser() {
+    this(new DeclarationParser());
+  }
 
   @Nullable
-  public static PsiBuilder.Marker parseType(final PsiBuilder builder, final int flags) {
+  public PsiBuilder.Marker parseType(final PsiBuilder builder, final int flags) {
     final TypeInfo typeInfo = parseTypeInfo(builder, flags);
     return typeInfo != null ? typeInfo.marker : null;
   }
 
   @Nullable
-  public static TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags) {
+  public TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags) {
     final TypeInfo typeInfo =
       parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
 
@@ -81,7 +90,7 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private static TypeInfo parseTypeInfo(final PsiBuilder builder,
+  private TypeInfo parseTypeInfo(final PsiBuilder builder,
                                         final boolean eatLastDot, final boolean wildcard, final boolean diamonds, final boolean ellipsis) {
     if (builder.getTokenType() == null) return null;
 
@@ -90,7 +99,7 @@ public class ReferenceParser {
     final boolean annotationsSupported = areTypeAnnotationsSupported(builder);
     PsiBuilder.Marker type = builder.mark();
     if (annotationsSupported) {
-      DeclarationParser.parseAnnotations(builder);
+      myDeclarationParser.parseAnnotations(builder);
     }
 
     final IElementType tokenType = builder.getTokenType();
@@ -119,7 +128,7 @@ public class ReferenceParser {
     while (true) {
       type.done(JavaElementType.TYPE);
       if (annotationsSupported) {
-        DeclarationParser.parseAnnotations(builder);
+        myDeclarationParser.parseAnnotations(builder);
       }
 
       final PsiBuilder.Marker bracket = builder.mark();
@@ -149,7 +158,7 @@ public class ReferenceParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseWildcardType(final PsiBuilder builder) {
+  private PsiBuilder.Marker parseWildcardType(final PsiBuilder builder) {
     final PsiBuilder.Marker type = builder.mark();
     builder.advanceLexer();
 
@@ -164,25 +173,25 @@ public class ReferenceParser {
   }
 
   @Nullable
-  public static PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
+  public PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
                                                          final boolean annotations, final boolean isNew, final boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, false, false, isNew, diamonds, new TypeInfo());
   }
 
-  public static boolean parseImportCodeReference(final PsiBuilder builder, final boolean isStatic) {
+  public boolean parseImportCodeReference(final PsiBuilder builder, final boolean isStatic) {
     final TypeInfo typeInfo = new TypeInfo();
     parseJavaCodeReference(builder, true, false, false, true, isStatic, false, false, typeInfo);
     return !typeInfo.hasErrors;
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
+  private PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
                                                           final boolean annotations, final boolean isImport, final boolean isStaticImport,
                                                           final boolean isNew, final boolean diamonds, final TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     if (annotations) {
-      DeclarationParser.parseAnnotations(builder);
+      myDeclarationParser.parseAnnotations(builder);
     }
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
@@ -259,7 +268,7 @@ public class ReferenceParser {
     return refElement;
   }
 
-  public static boolean parseReferenceParameterList(final PsiBuilder builder, final boolean wildcard, final boolean diamonds) {
+  public boolean parseReferenceParameterList(final PsiBuilder builder, final boolean wildcard, final boolean diamonds) {
     final PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -286,7 +295,7 @@ public class ReferenceParser {
   }
 
   @NotNull
-  public static PsiBuilder.Marker parseTypeParameters(final PsiBuilder builder) {
+  public PsiBuilder.Marker parseTypeParameters(final PsiBuilder builder) {
     final PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.TYPE_PARAMETER_LIST);
@@ -326,10 +335,10 @@ public class ReferenceParser {
   }
 
   @Nullable
-  public static PsiBuilder.Marker parseTypeParameter(final PsiBuilder builder) {
+  public PsiBuilder.Marker parseTypeParameter(final PsiBuilder builder) {
     final PsiBuilder.Marker param = builder.mark();
 
-    DeclarationParser.parseAnnotations(builder);
+    myDeclarationParser.parseAnnotations(builder);
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
       param.rollbackTo();
       return null;
@@ -342,7 +351,7 @@ public class ReferenceParser {
   }
 
   @NotNull
-  public static PsiBuilder.Marker parseReferenceList(final PsiBuilder builder, final IElementType start,
+  public PsiBuilder.Marker parseReferenceList(final PsiBuilder builder, final IElementType start,
                                                      final IElementType type, final IElementType delimiter) {
     final PsiBuilder.Marker element = builder.mark();
 
