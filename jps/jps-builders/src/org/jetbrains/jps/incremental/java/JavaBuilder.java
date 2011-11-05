@@ -259,7 +259,7 @@ public class JavaBuilder extends Builder{
           }
         }
 
-        if (!compiledOk) {
+        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           throw new ProjectBuildException("Compilation failed: internal java compiler error");
         }
         if (diagnosticSink.getErrorCount() > 0) {
@@ -588,7 +588,7 @@ public class JavaBuilder extends Builder{
       myContext = context;
     }
 
-    public void save(OutputFileObject fileObject) {
+    public void save(final @NotNull OutputFileObject fileObject) {
       final String className = fileObject.getClassName();
       if (className != null) {
         final OutputFileObject.Content content = fileObject.getContent();

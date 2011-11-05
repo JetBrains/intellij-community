@@ -19,7 +19,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import java.io.*;
 import java.util.*;
 import java.util.zip.DeflaterInputStream;
-import java.util.zip.DeflaterOutputStream;
 
 /**
  * @author Eugene Zhuravlev
@@ -114,7 +113,9 @@ class ServerState {
       }
     }
     finally {
-      mappings.close();
+      if (mappings != null) {
+        mappings.close();
+      }
     }
   }
 

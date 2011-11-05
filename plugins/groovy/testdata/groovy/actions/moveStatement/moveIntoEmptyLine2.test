@@ -1,0 +1,11 @@
+if (true) {
+
+}
+pri<caret>ntln 'b'
+pri<caret>ntln 'c'
+-----
+if (true) {
+
+    pri<caret>ntln 'b'
+}
+pri<caret>ntln 'c'

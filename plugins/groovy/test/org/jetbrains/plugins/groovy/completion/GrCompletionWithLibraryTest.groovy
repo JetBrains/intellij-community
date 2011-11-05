@@ -114,6 +114,14 @@ for (def ch: "abc".toCharArray()) {
 }"""
   }
 
+  public void testEachSpace() throws Exception {
+    checkCompletion '[].ea<caret>', ' ', '[].each <caret>{}'
+  }
+
+  public void testEachBrace() throws Exception {
+    checkCompletion '[].ea<caret> {}', '\n', '[].each {<caret>}'
+  }
+
   public void testDeclaredMembersGoFirst() {
     myFixture.configureByText "a.groovy", """
       class Foo {

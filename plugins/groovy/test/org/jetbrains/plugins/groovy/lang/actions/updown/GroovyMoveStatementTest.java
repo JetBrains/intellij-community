@@ -100,6 +100,8 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
 
   public void testStatementsWithSemicolons() throws Throwable { bothTest(); }
   public void testStatementsWithComments() throws Throwable { bothTest(); }
+  public void testMoveIntoEmptyLine() throws Throwable { bothTest(); }
+  public void testMoveIntoEmptyLine2() throws Throwable { bothTest(); }
 
   private void bothTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
