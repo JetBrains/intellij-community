@@ -49,8 +49,7 @@ public class GroovyBuilder extends Builder {
       context.processFiles(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
-          file = file.getCanonicalFile();
-          String path = file.getPath();
+          final String path = file.getPath();
           if ((path.endsWith(".groovy") || path.endsWith(".gpp")) && isFileDirty(file, context, tsStorage)) { //todo file type check
             toCompile.add(file);
           }
@@ -79,7 +78,7 @@ public class GroovyBuilder extends Builder {
 
       Set<String> toCompilePaths = new LinkedHashSet<String>();
       for (File file : toCompile) {
-        toCompilePaths.add(FileUtil.toCanonicalPath(file.getPath()));
+        toCompilePaths.add(file.getPath());
       }
       
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());

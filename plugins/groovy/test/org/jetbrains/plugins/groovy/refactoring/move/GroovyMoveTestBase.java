@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 /**
  * @author Max Medvedev
  */
-public abstract class GroovyMoveTestBase extends LightCodeInsightFixtureTestCase {
+public abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
   protected void doTest(String newPackageName, String... names) {
     try {
       String root = PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath() + getTestName(true);
