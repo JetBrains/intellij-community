@@ -259,7 +259,7 @@ public class JavaBuilder extends Builder{
           }
         }
 
-        if (!compiledOk) {
+        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           throw new ProjectBuildException("Compilation failed: internal java compiler error");
         }
         if (diagnosticSink.getErrorCount() > 0) {
