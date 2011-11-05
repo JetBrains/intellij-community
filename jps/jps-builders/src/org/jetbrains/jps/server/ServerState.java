@@ -66,15 +66,8 @@ class ServerState {
 
     Mappings mappings = null;
     final File mappingsRoot = Paths.getMappingsStorageRoot(projectName);
-    final File mappingsStorageFile = Paths.getMappingsStorageFile(projectName);
     try {
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(new DeflaterInputStream(new FileInputStream(mappingsStorageFile))));
-      try {
-        mappings = new Mappings(mappingsRoot, reader);
-      }
-      finally {
-        reader.close();
-      }
+      mappings = new Mappings(mappingsRoot);
     }
     catch (FileNotFoundException e) {
       mappings = new Mappings(mappingsRoot);

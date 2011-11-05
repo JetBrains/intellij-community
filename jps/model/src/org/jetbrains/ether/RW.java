@@ -108,16 +108,6 @@ public class RW {
     }
   }
 
-  public static void writeEncodedString(final BufferedWriter w, final String val) {
-    final int size = val == null ? 0 : val.length();
-
-    writeln(w, Integer.toString(size));
-
-    for (int i = 0; i < size; i++) {
-      writeln(w, Integer.toString((int)val.charAt(i)));
-    }
-  }
-
   public static void writeln(final BufferedWriter w, final Collection<? extends Writable> c) {
     if (c == null) {
       writeln(w, "0");
@@ -135,32 +125,6 @@ public class RW {
     Writable convert(T x);
   }
 
-  public static <T> void writeln(final BufferedWriter w, final T[] c, final ToWritable<T> t) {
-    if (c == null) {
-      writeln(w, "0");
-      return;
-    }
-
-    writeln(w, Integer.toString(c.length));
-
-    for (int i = 0; i < c.length; i++) {
-      t.convert(c[i]).write(w);
-    }
-  }
-
-  public static <T extends Writable> void writeln(final BufferedWriter w, final T[] c) {
-    if (c == null) {
-      writeln(w, "0");
-      return;
-    }
-
-    writeln(w, Integer.toString(c.length));
-
-    for (int i = 0; i < c.length; i++) {
-      c[i].write(w);
-    }
-  }
-
   public static void writeln(final BufferedWriter w, final String s) {
     try {
       if (s == null) {
@@ -176,17 +140,6 @@ public class RW {
     }
   }
 
-  public static <X extends Writable, Y extends Writable> void writeMap(final BufferedWriter w, final Map<X, Y> m) {
-    final int size = m.size();
-
-    writeln(w, Integer.toString(size));
-
-    for (Map.Entry<X, Y> e : m.entrySet()) {
-      e.getKey().write(w);
-      e.getValue().write(w);
-    }
-  }
-
   public interface Reader<T> {
     T read(BufferedReader r);
   }
@@ -198,12 +151,6 @@ public class RW {
           writeln(w, s);
         }
       };
-    }
-  };
-
-  public static ToWritable<Writable> fromWritable = new ToWritable<Writable>() {
-    public Writable convert(final Writable w) {
-      return w;
     }
   };
 
@@ -261,19 +208,6 @@ public class RW {
     }
   }
 
-  public static String readEncodedString(final BufferedReader r) {
-    final StringBuilder b = new StringBuilder();
-
-    final int size = readInt(r);
-
-    for (int i = 0; i < size; i++) {
-      final int c = readInt(r);
-      b.append((char)c);
-    }
-
-    return b.toString();
-  }
-
   public static long readLong(final BufferedReader r) {
     final String s = readString(r);
 
@@ -311,18 +245,5 @@ public class RW {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public static <X, Y> Map<X, Y> readMap(final BufferedReader r, final Reader<X> xr, final Reader<Y> yr, final Map<X, Y> acc) {
-    final int size = RW.readInt(r);
-
-    for (int i = 0; i < size; i++) {
-      final X key = xr.read(r);
-      final Y value = yr.read(r);
-
-      acc.put(key, value);
-    }
-
-    return acc;
   }
 }

@@ -912,7 +912,7 @@ public class ProjectWrapper {
     RW.readMany(r, RW.myStringReader, affectedFiles);
 
     try {
-      dependencyMapping = new Mappings(getMapDir(), r);
+      dependencyMapping = new Mappings(getMapDir());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

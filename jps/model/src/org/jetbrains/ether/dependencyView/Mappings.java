@@ -115,50 +115,6 @@ public class Mappings {
     );
   }
 
-  public Mappings(final File rootDir, final BufferedReader r) throws IOException {
-    context = new DependencyContext(rootDir);
-    
-    classToSubclasses = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
-      DependencyContext.getTableFile(rootDir, classToSubclassesName), 
-      DependencyContext.descriptorS, 
-      DependencyContext.descriptorS, 
-      stringSetConstructor
-    );
-    
-    classToClassDependency = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
-      DependencyContext.getTableFile(rootDir, classToClassName), 
-      DependencyContext.descriptorS, 
-      DependencyContext.descriptorS, 
-      stringSetConstructor
-    );
-    
-    sourceFileToClasses = new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(
-      DependencyContext.getTableFile(rootDir, sourceToClassName), 
-      DependencyContext.descriptorS, 
-      ClassRepr.externalizer(context), 
-      classSetConstructor
-    );
-    
-    sourceFileToAnnotationUsages = new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(
-      DependencyContext.getTableFile(rootDir, sourceToAnnotationsName), 
-      DependencyContext.descriptorS, 
-      UsageRepr.externalizer(context), 
-      usageSetConstructor
-    );    
-
-    sourceFileToUsages = new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(
-      DependencyContext.getTableFile(rootDir, sourceToUsagesName),
-      DependencyContext.descriptorS,
-      UsageRepr.Cluster.clusterExternalizer(context)
-    );
-
-    classToSourceFile = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(
-      DependencyContext.getTableFile(rootDir, classToSourceName),
-      DependencyContext.descriptorS,
-      DependencyContext.descriptorS
-    );
-  }
-
   public Mappings createDelta(){
     return new Mappings(context);
   }
