@@ -37,7 +37,7 @@ public class FSSnapshot {
   }
 
   private boolean processRecursively(Node from, FileProcessor processor, String srcRoot) throws Exception {
-    if (from.file.isDirectory()) {
+    if (from.isDirectory()) {
       for (Node child : from.children) {
         if (!processRecursively(child, processor, srcRoot)) {
           return false;
@@ -68,11 +68,12 @@ public class FSSnapshot {
 
   static class Node {
     private final File file;
+    private final boolean myIsDirectory;
     private final List<Node> children = new ArrayList<Node>();
-
 
     Node(File file) {
       this.file = file;
+      myIsDirectory = file.isDirectory();
     }
 
     public Node addChild(File file) {
@@ -87,6 +88,10 @@ public class FSSnapshot {
 
     public List<Node> getChildren() {
       return Collections.unmodifiableList(children);
+    }
+
+    public boolean isDirectory() {
+      return myIsDirectory;
     }
   }
 

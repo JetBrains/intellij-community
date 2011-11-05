@@ -19,7 +19,10 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -38,36 +41,31 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   public PersistentMultiMaplet(final File file,
                                final KeyDescriptor<K> k,
                                final DataExternalizer<V> v,
-                               final TransientMultiMaplet.CollectionConstructor<V> c) {
-    try {
-      map = new PersistentHashMap<K, Collection<V>>(file, k, new DataExternalizer<Collection<V>>() {
-        @Override
-        public void save(final DataOutput out, final Collection<V> value) throws IOException {
-          final int size = value.size();
+                               final TransientMultiMaplet.CollectionConstructor<V> c) throws IOException {
+    map = new PersistentHashMap<K, Collection<V>>(file, k, new DataExternalizer<Collection<V>>() {
+      @Override
+      public void save(final DataOutput out, final Collection<V> value) throws IOException {
+        final int size = value.size();
 
-          out.writeInt(size);
+        out.writeInt(size);
 
-          for (V x : value) {
-            v.save(out, x);
-          }
+        for (V x : value) {
+          v.save(out, x);
+        }
+      }
+
+      @Override
+      public Collection<V> read(final DataInput in) throws IOException {
+        final Collection<V> result = c.create();
+        final int size = in.readInt();
+
+        for (int i = 0; i < size; i++) {
+          result.add(v.read(in));
         }
 
-        @Override
-        public Collection<V> read(final DataInput in) throws IOException {
-          final Collection<V> result = c.create();
-          final int size = in.readInt();
-
-          for (int i = 0; i < size; i++) {
-            result.add(v.read(in));
-          }
-
-          return result;
-        }
-      });
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+        return result;
+      }
+    });
 
     constr = c;
   }

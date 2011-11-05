@@ -231,15 +231,14 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   private static void buildStructure(final FSSnapshot.Node from, final Set<File> excluded) {
-    final File nodeFile = from.getFile();
-    if (nodeFile.isDirectory()) {
-      if (PathUtil.isUnder(excluded, nodeFile)) {
-        return;
-      }
-      final File[] children = nodeFile.listFiles();
-      if (children != null) {
-        for (File child : children) {
-          buildStructure(from.addChild(child), excluded);
+    if (from.isDirectory()) {
+      final File nodeFile = from.getFile();
+      if (!PathUtil.isUnder(excluded, nodeFile)) {
+        final File[] children = nodeFile.listFiles();
+        if (children != null) {
+          for (File child : children) {
+            buildStructure(from.addChild(child), excluded);
+          }
         }
       }
     }

@@ -170,6 +170,9 @@ public class JavaBuilder extends Builder{
 
       return compile(context, chunk, filesToCompile, formsToCompile);
     }
+    catch (ProjectBuildException e) {
+      throw e;
+    }
     catch (Exception e) {
       String message = e.getMessage();
       if (message == null) {
