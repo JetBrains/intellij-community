@@ -145,7 +145,6 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
   private synchronized void initSerializers() {
     if (mySerializersLoaded) return;
-    mySerializersLoaded = true;
     for(StubElementTypeHolderEP holderEP: Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
       holderEP.initialize();
     }
@@ -164,6 +163,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
         registerSerializer(stubSerializer);
       }
     }
+    mySerializersLoaded = true;
   }
 
   public void serialize(StubElement rootStub, OutputStream stream) {
@@ -172,7 +172,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   private void doSerialize(final StubElement rootStub, final StubOutputStream stream) {
-    initSerializers();
+    if (!mySerializersLoaded) initSerializers();
     try {
       final StubSerializer serializer = getSerializer(rootStub);
 
@@ -203,7 +203,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
   public StubElement deserialize(InputStream stream) {
     StubInputStream inputStream = new StubInputStream(stream, myNameStorage);
-    initSerializers();
+    if (!mySerializersLoaded) initSerializers();
     try {
       return deserialize(inputStream, null);
     }
