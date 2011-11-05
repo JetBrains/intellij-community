@@ -71,7 +71,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         final ASTNodeBuilder nodeBuilder = nodeMarker.getBuilder();
         final int endLexemIndex = nodeMarker.getEndLexemIndex();
         boolean seenNew = false;
-        
+
         for(int i = nodeMarker.getStartLexemIndex(); i < endLexemIndex; ++i) {
           final IElementType type = nodeBuilder.getElementType(i);
           if (type == JavaTokenType.NEW_KEYWORD) {
@@ -80,8 +80,12 @@ public class JavaLightStubBuilder extends LightStubBuilder {
             return false;
           } else if (seenNew && type == JavaTokenType.SEMICOLON) {
             seenNew = false;
-          } else if (type == JavaTokenType.AT) {
-            return false; // local vars can be annotated and we have them in stubs!
+          } else if (type == JavaTokenType.AT || // local vars can be annotated and we have them in stubs!
+                     type == JavaTokenType.CLASS_KEYWORD || // local classes
+                     type == JavaTokenType.INTERFACE_KEYWORD ||
+                     type == JavaTokenType.ENUM_KEYWORD
+                    ) {
+            return false;
           }
         }
 
