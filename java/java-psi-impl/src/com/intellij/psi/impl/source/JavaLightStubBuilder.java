@@ -80,6 +80,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
             return false;
           } else if (seenNew && type == JavaTokenType.SEMICOLON) {
             seenNew = false;
+          } else if (type == JavaTokenType.AT) {
+            return false; // local vars can be annotated and we have them in stubs!
           }
         }
 
