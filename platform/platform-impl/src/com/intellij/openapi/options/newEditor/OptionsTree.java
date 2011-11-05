@@ -60,7 +60,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   Root myRoot;
   OptionsEditorContext myContext;
 
-  Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
+  Map<Class<? extends Configurable>, EditorNode> myConfigurable2Node = new HashMap<Class<? extends Configurable>, EditorNode>();
 
   MergingUpdateQueue mySelection;
   private final OptionsTree.Renderer myRendrer;
@@ -196,7 +196,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
             public void run() {
               if (configurable != myQueuedConfigurable) return;
 
-              final EditorNode editorNode = myConfigurable2Node.get(configurable);
+              final EditorNode editorNode = myConfigurable2Node.get(configurable.getClass());
               FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
               if (editorUiNode == null) return;
 
@@ -244,7 +244,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   public List<Configurable> getPathToRoot(final Configurable configurable) {
     final ArrayList<Configurable> path = new ArrayList<Configurable>();
 
-    EditorNode eachNode = myConfigurable2Node.get(configurable);
+    EditorNode eachNode = myConfigurable2Node.get(configurable.getClass());
     if (eachNode == null) return path;
 
     while (eachNode != null) {
@@ -273,17 +273,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   public SimpleNode findNodeFor(final Configurable toSelect) {
-    return myConfigurable2Node.get(toSelect);
+    return myConfigurable2Node.get(toSelect.getClass());
   }
 
   @Nullable
   public <T extends Configurable> T findConfigurable(Class<T> configurableClass) {
-    for (Configurable configurable : myConfigurable2Node.keySet()) {
-      if (configurableClass.isInstance(configurable)) {
-        return configurableClass.cast(configurable);
-      }
-    }
-    return null;
+    return configurableClass.cast(myConfigurable2Node.get(configurableClass).getConfigurable());
   }
 
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
@@ -525,7 +520,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       super(parent);
       myConfigurable = configurable;
       myGroup = group;
-      myConfigurable2Node.put(configurable, this);
+      myConfigurable2Node.put(configurable.getClass(), this);
       addPlainText(getConfigurableDisplayName(configurable));
     }
 
