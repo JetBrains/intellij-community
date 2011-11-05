@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -86,8 +87,20 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
       if (parameters.length == 1) {
         if (context.getCompletionChar() != '(' && TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
-          document.insertString(offset, " {}");
-          caretModel.moveToOffset(offset + 2);
+          int afterBrace;
+          final int nonWs = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
+          if (nonWs < document.getTextLength() && document.getCharsSequence().charAt(nonWs) == '{') {
+            afterBrace = nonWs + 1;
+          } else {
+            document.insertString(offset, " {}");
+            afterBrace = offset + 2;
+          }
+          if (context.getCompletionChar() == ' ') {
+            context.setAddCompletionChar(false);
+            caretModel.moveToOffset(offset + 1);
+          } else {
+            caretModel.moveToOffset(afterBrace);
+          }
           return;
         }
       }
