@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * Date: 22.05.2007
  */
 public abstract class GroovyExpressionSurrounder implements Surrounder {
-  protected boolean isApplicable(PsiElement element) {
+  protected boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof GrExpression;
   }
 

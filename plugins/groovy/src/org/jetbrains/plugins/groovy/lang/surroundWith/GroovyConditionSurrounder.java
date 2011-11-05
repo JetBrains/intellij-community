@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import com.intellij.psi.*;
 
@@ -23,7 +24,7 @@ import com.intellij.psi.*;
  * Date: 30.07.2007
  */
 public abstract class GroovyConditionSurrounder extends GroovyExpressionSurrounder {
-  protected boolean isApplicable(PsiElement element) {
+  protected boolean isApplicable(@NotNull PsiElement element) {
     if (!GroovyManyStatementsSurrounder.isStatement(element) || !(element instanceof GrExpression)) return false;
 
     PsiType type = ((GrExpression)element).getType();

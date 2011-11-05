@@ -36,6 +36,29 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
                         "with () {...}"
   }
 
+  public void testStatementWithSemicolon() throws Exception {
+    def names = getSurrounders("<selection>println a;</selection>")
+    assertOrderedEquals names,
+                        "if", "if / else", "while",
+                        "{ -> ... }.call()",
+                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "shouldFail () {...}",
+                        "with () {...}"
+  }
+
+  public void testStatementsWithComments() throws Exception {
+    def names = getSurrounders("""<selection>println a; //a is very important
+println b
+println c /*also important */
+</selection>""")
+    assertOrderedEquals names,
+                        "if", "if / else", "while",
+                        "{ -> ... }.call()",
+                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "shouldFail () {...}",
+                        "with () {...}"
+  }
+
   public void testInnerExpressionSurrounders() {
     def names = getSurrounders("boolean a; println <selection>a</selection>")
     assertOrderedEquals names, "(expr)", "((Type) expr)"
