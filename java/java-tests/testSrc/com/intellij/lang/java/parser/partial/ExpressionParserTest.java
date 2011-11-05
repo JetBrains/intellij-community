@@ -124,7 +124,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   private static class MyTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      ExpressionParser.parse(builder);
+      ExpressionParser.INSTANCE.parse(builder);
     }
   }
 }

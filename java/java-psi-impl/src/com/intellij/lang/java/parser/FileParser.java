@@ -73,7 +73,7 @@ public class FileParser {
         continue;
       }
 
-      final PsiBuilder.Marker declaration = myDeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+      final PsiBuilder.Marker declaration = parseInitial(builder);
       if (declaration != null) {
         if (invalidElements != null) {
           invalidElements.errorBefore(errorMessage, declaration);
@@ -103,6 +103,10 @@ public class FileParser {
       impListInfo.first.setCustomEdgeTokenBinders(JavaParserUtil.PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
       firstDeclaration.setCustomEdgeTokenBinders(JavaParserUtil.SPECIAL_PRECEDING_COMMENT_BINDER, null);
     }
+  }
+
+  protected PsiBuilder.Marker parseInitial(PsiBuilder builder) {
+    return myDeclarationParser.parse(builder, DeclarationParser.Context.FILE);
   }
 
   @Nullable

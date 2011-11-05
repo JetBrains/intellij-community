@@ -65,7 +65,7 @@ public class FileParserTest extends JavaParsingTestCase {
   private static class MyTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      FileParser.parse(builder);
+      FileParser.INSTANCE.parse(builder);
     }
   }
 }

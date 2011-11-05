@@ -66,7 +66,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
 
     @Override
     public void parse(final PsiBuilder builder) {
-      ReferenceParser.parseJavaCodeReference(builder, myIncomplete, false, false, false, false);
+      ReferenceParser.INSTANCE.parseJavaCodeReference(builder, myIncomplete, false, false, false, false);
     }
   }
 
@@ -76,7 +76,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   private static class MyTestParser2 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      ReferenceParser.parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
+      ReferenceParser.INSTANCE.parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
     }
   }
 
@@ -87,7 +87,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   private static class MyTestParser3 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      ReferenceParser.parseTypeParameters(builder);
+      ReferenceParser.INSTANCE.parseTypeParameters(builder);
     }
   }
 }

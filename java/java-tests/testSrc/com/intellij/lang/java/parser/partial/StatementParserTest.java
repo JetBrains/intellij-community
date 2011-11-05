@@ -170,14 +170,14 @@ public class StatementParserTest extends JavaParsingTestCase {
   private static class MyTestParser2 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      StatementParser.parseStatements(builder);
+      StatementParser.INSTANCE.parseStatements(builder);
     }
   }
 
   private static class MyTestParser1 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      StatementParser.parseCodeBlockDeep(builder, true);
+      StatementParser.INSTANCE.parseCodeBlockDeep(builder, true);
     }
   }
 }

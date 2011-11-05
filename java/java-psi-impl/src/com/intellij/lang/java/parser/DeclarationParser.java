@@ -17,7 +17,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -37,9 +36,9 @@ import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 
 public class DeclarationParser {
   public static final DeclarationParser INSTANCE = new DeclarationParser();
-  private ExpressionParser myExpressionParser;
-  private StatementParser myStatementParser;
-  private ReferenceParser myReferenceParser;
+  private final ExpressionParser myExpressionParser;
+  private final StatementParser myStatementParser;
+  private final ReferenceParser myReferenceParser;
 
   public enum Context {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
@@ -58,6 +57,24 @@ public class DeclarationParser {
     myReferenceParser = new ReferenceParser(this);
     myExpressionParser = new ExpressionParser(this, myReferenceParser);
     myStatementParser = new StatementParser(this, myExpressionParser, myReferenceParser);
+  }
+
+  protected DeclarationParser(ReferenceParser referenceParser, ExpressionParser expressionParser, StatementParser statementParser) {
+    myReferenceParser = referenceParser;
+    myExpressionParser = expressionParser;
+    myStatementParser = statementParser;
+  }
+
+  public ReferenceParser getReferenceParser() {
+    return myReferenceParser;
+  }
+
+  public ExpressionParser getExpressionParser() {
+    return myExpressionParser;
+  }
+
+  public StatementParser getStatementParser() {
+    return myStatementParser;
   }
 
   public void parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
