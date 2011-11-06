@@ -40,6 +40,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @author Konstantin Bulenkov
+ */
+//TODO[kb]: cleanup
 public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private static final Icon CROSS_ICON = IconLoader.getIcon("/actions/cross.png");
 
@@ -88,12 +92,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           super.paintChildren(g);
           if (/*UIUtil.isUnderAquaLookAndFeel() &&*/ !isMainToolbarVisible()) {
             final Rectangle r = getBounds();
-            g.setColor(new Color(255, 255, 255, 90));
+            //g.setColor(new Color(0,0,0, 90));
+            //g.drawLine(0, r.height - 4, r.width, r.height - 4);
+            g.setColor(new Color(0, 0, 0, 90));
+            g.drawLine(0, r.height - 2, r.width, r.height - 2);
+            g.setColor(new Color(0, 0, 0, 20));
             g.drawLine(0, r.height - 1, r.width, r.height - 1);
-            //g.setColor(new Color(0, 0, 0, 90));
-            //g.drawLine(0, r.height - 3, r.width, r.height - 3);
-            //g.setColor(new Color(0, 0, 0, 20));
-            //g.drawLine(0, r.height - 2, r.width, r.height - 2);
           }
         }
 
@@ -125,7 +129,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
             return new Insets(0, 0, 0, 0);
           }
 
-          return new Insets(i.top, i.left, i.bottom + 3, i.right);
+          return new Insets(i.top, i.left, i.bottom + 1, i.right);
         }
       };
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
@@ -219,7 +223,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myScrollPane.getViewport().setOpaque(false);
 
         //panel.get().setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
-        panel.get().setOpaque(!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+        panel.get().setOpaque(true);//!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
         panel.get().setBorder(new NavBarBorder(true, 0));
         myNavigationBar.setBorder(null);
         panel.get().add(myScrollPane, BorderLayout.CENTER);
@@ -251,17 +255,17 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         //if (UIUtil.isUnderAquaLookAndFeel()) {
         final Rectangle r = getBounds();
         final Graphics2D g2d = (Graphics2D)g;
-        if (!isMainToolbarVisible() && UIUtil.isUnderAquaLookAndFeel()) {
+        //if (!isMainToolbarVisible() && UIUtil.isUnderAquaLookAndFeel()) {
           //if (UIUtil.isUnderAquaLookAndFeel()) {
-            final Dimension d = getPreferredSize();
-            final int topOffset = UIUtil.isUnderAquaLookAndFeel() ? (r.height - d.height) / 2 + 2 : 0;
-            UIUtil.drawDoubleSpaceDottedLine(g2d, topOffset, topOffset + d.height - 1, r.width - 1, Color.GRAY, false);
+          //  final Dimension d = getPreferredSize();
+          //  final int topOffset = UIUtil.isUnderAquaLookAndFeel() ? (r.height - d.height) / 2 + 2 : 0;
+          //  UIUtil.drawDoubleSpaceDottedLine(g2d, topOffset, topOffset + d.height - 1, r.width - 1, Color.GRAY, false);
           //} else {
           //  g2d.setPaint(getBackground());
           //  g2d.fillRect(0,0, r.width, r.height);
           //}
-        }
-        else {
+        //}
+        //else {
           final boolean undocked = isUndocked();
           final Color startColor = UIUtil.isUnderAquaLookAndFeel() ? new Color(240, 240, 240) : UIUtil.getControlColor();
           final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
@@ -280,7 +284,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           if (!isMainToolbarVisible()) {
             UIUtil.drawDottedLine(g2d, r.width - 1, 0, r.width - 1, r.height, null, Color.GRAY);
           }
-        }
+        //}
         //} else {
         //  super.paintComponent(g);
         //}
