@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -160,7 +161,7 @@ public abstract class SourceScope {
 
   private static class ModuleWithDependenciesAndLibsDependencies extends GlobalSearchScope {
     private final GlobalSearchScope myMainScope;
-    private final Collection<GlobalSearchScope> myScopes = new ArrayList<GlobalSearchScope>();
+    private final List<GlobalSearchScope> myScopes = new ArrayList<GlobalSearchScope>();
 
     public ModuleWithDependenciesAndLibsDependencies(final Module module) {
       super(module.getProject());
@@ -179,6 +180,7 @@ public abstract class SourceScope {
 
     public int compare(final VirtualFile file1, final VirtualFile file2) {
       final GlobalSearchScope scope = findScopeFor(file1);
+      assert scope != null;
       if (scope.contains(file2)) return scope.compare(file1, file2);
       return 0;
     }
@@ -191,9 +193,12 @@ public abstract class SourceScope {
       return true;
     }
 
+    @Nullable
     private GlobalSearchScope findScopeFor(final VirtualFile file) {
       if (myMainScope.contains(file)) return myMainScope;
-      for (final GlobalSearchScope scope : myScopes) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, size = myScopes.size(); i < size; i++) {
+        GlobalSearchScope scope = myScopes.get(i);
         if (scope.contains(file)) return scope;
       }
       return null;
