@@ -35,13 +35,6 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   private TodoScanningData[] myTodoScanningData;
   private CharSequence myCachedBufferSequence;
   private char[] myCachedArraySequence;
-
-  public interface OccurrenceConsumer {
-    void addOccurrence(CharSequence charSequence, @Nullable char[] charArray, int start, int end, int occurrenceMask);
-
-    boolean canConsumeTodoOccurrences();
-    void incTodoOccurrence(IndexPattern pattern);
-  }
   
   protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
     super(originalLexer);
@@ -49,17 +42,16 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   }
 
   protected final void advanceTodoItemCountsInToken() {
-    if (myOccurrenceConsumer.canConsumeTodoOccurrences()){
-      int start = getTokenStart();
-      int end = getTokenEnd();
-      start = Math.max(start, myTodoScannedBound);
-      if (start >= end) return; // this prevents scanning of the same comment twice
+    if (!myOccurrenceConsumer.isNeedToDo()) return;
+    int start = getTokenStart();
+    int end = getTokenEnd();
+    start = Math.max(start, myTodoScannedBound);
+    if (start >= end) return; // this prevents scanning of the same comment twice
 
-      CharSequence input = getBufferSequence().subSequence(start, end);
-      myTodoScanningData = advanceTodoItemsCount(input, myOccurrenceConsumer, myTodoScanningData);
+    CharSequence input = myCachedBufferSequence.subSequence(start, end);
+    myTodoScanningData = advanceTodoItemsCount(input, myOccurrenceConsumer, myTodoScanningData);
 
-      myTodoScannedBound = end;
-    }
+    myTodoScannedBound = end;
   }
 
   public static class TodoScanningData {

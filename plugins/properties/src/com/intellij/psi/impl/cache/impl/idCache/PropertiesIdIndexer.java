@@ -18,16 +18,24 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author Maxim.Mossienko
  */
 public class PropertiesIdIndexer extends LexerBasedIdIndexer {
-  protected Lexer createLexer(final BaseFilterLexer.OccurrenceConsumer consumer) {
+  private static TokenSet WHITE_SPACE_SET = TokenSet.create(TokenType.WHITE_SPACE);
+
+  public Lexer createLexer(final OccurrenceConsumer consumer) {
+    return createIndexingLexer(consumer);
+  }
+
+  static Lexer createIndexingLexer(OccurrenceConsumer consumer) {
     final PropertiesFilterLexer propsLexer =
       new PropertiesFilterLexer(new PropertiesLexer(), consumer);
-    return new FilterLexer(propsLexer, new FilterLexer.SetFilter(PropertiesTodoIndexer.WHITE_SPACE_SET));
+    return new FilterLexer(propsLexer, new FilterLexer.SetFilter(WHITE_SPACE_SET));
   }
 }
