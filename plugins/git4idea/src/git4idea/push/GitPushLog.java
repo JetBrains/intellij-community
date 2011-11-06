@@ -55,7 +55,6 @@ import java.util.List;
  */
 class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
-  private final Project myProject;
   private ChangesBrowser myChangesBrowser;
   private final Tree myTree;
   private final DefaultTreeModel myTreeModel;
@@ -63,8 +62,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   Map<GitRepository, Boolean> mySelectedRepositories = new HashMap<GitRepository, Boolean>();
 
   GitPushLog(@NotNull Project project) {
-    myProject = project;
-
     for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
       mySelectedRepositories.put(repository, true);
     }
@@ -92,7 +89,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
     });
     
-    myChangesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
+    myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
     Splitter splitter = new Splitter(false, 0.7f);
@@ -103,13 +100,13 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     add(splitter);
   }
 
-  private void insertToRootNode(DefaultMutableTreeNode rootNode, List<DefaultMutableTreeNode> nodesForRepositories) {
+  private static void insertToRootNode(DefaultMutableTreeNode rootNode, List<DefaultMutableTreeNode> nodesForRepositories) {
     for (DefaultMutableTreeNode node : nodesForRepositories) {
       rootNode.add(node);
     }
   }
 
-  private List<DefaultMutableTreeNode> createNodesForRepositories(@NotNull GitCommitsByRepoAndBranch commits) {
+  private static List<DefaultMutableTreeNode> createNodesForRepositories(@NotNull GitCommitsByRepoAndBranch commits) {
     List<DefaultMutableTreeNode> nodes = new ArrayList<DefaultMutableTreeNode>();
     for (Map.Entry<GitRepository, GitCommitsByBranch> entry : commits.asMap().entrySet()) {
       GitRepository repository = entry.getKey();
@@ -121,7 +118,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return nodes;
   }
 
-  private DefaultMutableTreeNode createRepoNode(GitRepository repository, GitCommitsByBranch commitsByBranch) {
+  private static DefaultMutableTreeNode createRepoNode(GitRepository repository, GitCommitsByBranch commitsByBranch) {
     DefaultMutableTreeNode repoNode = new CheckedTreeNode(repository);
     for (Map.Entry<GitBranch, List<GitCommit>> entry : commitsByBranch.asMap().entrySet()) {
       DefaultMutableTreeNode branchNode = createBranchNode(entry.getKey(), entry.getValue());
@@ -130,7 +127,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return repoNode;
   }
 
-  private DefaultMutableTreeNode createBranchNode(GitBranch branch, List<GitCommit> commits) {
+  private static DefaultMutableTreeNode createBranchNode(GitBranch branch, List<GitCommit> commits) {
     DefaultMutableTreeNode branchNode = new CheckedTreeNode(branch);
     for (GitCommit commit : commits) {
       branchNode.add(new DefaultMutableTreeNode(commit));
@@ -178,7 +175,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return repositories;
   }
 
-  private class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements TreeCellRenderer {
+  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements TreeCellRenderer {
 
     @Override
     public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
