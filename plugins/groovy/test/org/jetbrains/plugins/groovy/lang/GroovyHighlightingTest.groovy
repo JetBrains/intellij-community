@@ -513,6 +513,12 @@ class Bar {{
     myFixture.checkHighlighting(false, false, false)
   }
 
+  public void testDiamondTypeInferenceSOE() throws Exception {
+    myFixture.configureByText 'a.groovy', ''' Map<Integer, String> a; a[2] = [:] '''
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
+    myFixture.checkHighlighting(false, false, false)
+  }
+
   public void testMemberShipOperatorCheck() {
     doTest(new GroovyInArgumentCheckInspection());
   }
