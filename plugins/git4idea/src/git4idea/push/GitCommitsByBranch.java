@@ -41,11 +41,6 @@ public class GitCommitsByBranch {
     return myCommitsByBranch.isEmpty();
   }
 
-  @Deprecated
-  public Map<GitBranch, List<GitCommit>> asMap() {
-    return myCommitsByBranch;
-  }
-
   public int commitsNumber() {
     int sum = 0;
     for (List<GitCommit> commits : myCommitsByBranch.values()) {

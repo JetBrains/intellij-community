@@ -103,9 +103,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
-    for (Map.Entry<GitRepository, GitCommitsByBranch> entry : commits.asMap().entrySet()) {
-      GitRepository repository = entry.getKey();
-      GitCommitsByBranch commitsByBranch = entry.getValue();
+    for (GitRepository repository : sortRepos(commits.getRepositories())) {
+      GitCommitsByBranch commitsByBranch = commits.get(repository);
       createRepoNode(repository, commitsByBranch, myRootNode);
     }
   }
@@ -123,10 +122,30 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       rootNode.add(parentNode);
     }
 
-    for (Map.Entry<GitBranch, List<GitCommit>> entry : commitsByBranch.asMap().entrySet()) {
-      DefaultMutableTreeNode branchNode = createBranchNode(entry.getKey(), entry.getValue());
+    for (GitBranch branch : sortBranches(commitsByBranch.getBranches())) {
+      DefaultMutableTreeNode branchNode = createBranchNode(branch, commitsByBranch.get(branch));
       parentNode.add(branchNode);
     }
+  }
+
+  private static List<GitRepository> sortRepos(@NotNull Collection<GitRepository> repositories) {
+    List<GitRepository> repos = new ArrayList<GitRepository>(repositories);
+    Collections.sort(repos, new Comparator<GitRepository>() {
+      @Override public int compare(GitRepository o1, GitRepository o2) {
+        return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+      }
+    });
+    return repos;
+  }
+
+  private static List<GitBranch> sortBranches(@NotNull Collection<GitBranch> branches) {
+    List<GitBranch> sortedBranches = new ArrayList<GitBranch>(branches);
+    Collections.sort(sortedBranches, new Comparator<GitBranch>() {
+      @Override public int compare(GitBranch o1, GitBranch o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    return sortedBranches;
   }
 
   private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull List<GitCommit> commits) {

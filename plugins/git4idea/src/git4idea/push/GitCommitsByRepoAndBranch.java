@@ -20,7 +20,6 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,15 +35,6 @@ final class GitCommitsByRepoAndBranch {
 
   GitCommitsByRepoAndBranch(Map<GitRepository, GitCommitsByBranch> commitsByRepository) {
     myCommitsByRepository = commitsByRepository;
-  }
-
-  static GitCommitsByRepoAndBranch empty() {
-    return new GitCommitsByRepoAndBranch(Collections.<GitRepository, GitCommitsByBranch>emptyMap());
-  }
-
-  @Deprecated
-  Map<GitRepository, GitCommitsByBranch> asMap() {
-    return myCommitsByRepository;
   }
 
   @NotNull
