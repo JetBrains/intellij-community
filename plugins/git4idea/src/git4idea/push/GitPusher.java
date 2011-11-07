@@ -112,12 +112,19 @@ public final class GitPusher {
   }
   
   public void push(@NotNull GitPushInfo pushInfo) {
-    push(pushInfo, null);
+    push(pushInfo, null, null);
   }
 
-  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult) {
+  /**
+   * Makes push, shows the result in a notification. If push for current branch is rejected, shows a dialog proposing to update.
+   * If {@code previousResult} and {@code updateSettings} are set, it means that this push is not the first, but is after a successful update.
+   * In that case, if push is rejected again, the dialog is not shown, and update is performed automatically with the previously chosen
+   * option.
+   * Also, at the end results are merged and are shown in a single notification.
+   */
+  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
     GitPushResult result = tryPushAndGetResult(pushInfo);
-    handleResult(pushInfo, result, previousResult);
+    handleResult(pushInfo, result, previousResult, updateSettings);
     GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.ALL);
   }
 
@@ -170,7 +177,7 @@ public final class GitPusher {
   // if in a failed repo, a branch was rejected that had nothing to push, don't notify about the rejection.
   // Besides all of the above, don't confuse users with 1 repository with all this "repository/root" stuff;
   // don't confuse users which push only a single branch with all this "branch" stuff.
-  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult) {
+  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
@@ -194,32 +201,28 @@ public final class GitPusher {
 
       if (!rejectedPushesForCurrentBranch.isEmpty()) {
 
-        final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet());
-        final AtomicInteger exitCode = new AtomicInteger();
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            dialog.show();
-            exitCode.set(dialog.getExitCode());
-          }
-        });
+        if (updateSettings == null) {  // show dialog only when push is rejected for the first time in a row
+          final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet());
+          final AtomicInteger exitCode = new AtomicInteger();
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override public void run() {
+              dialog.show();
+              exitCode.set(dialog.getExitCode());
+            }
+          });
+          updateSettings = new UpdateSettings(dialog.updateAll(), getUpdateMethodFromDialogExitCode(exitCode.get()));
+        }
 
-        Set<VirtualFile> roots = getRootsToUpdate(rejectedPushesForCurrentBranch, dialog.updateAll());
-        boolean pushAgain = false;
-        switch (exitCode.get()) {
-          case GitRejectedPushUpdateDialog.MERGE_EXIT_CODE:
-            pushAgain = update(roots, true);
-            break;
-          case GitRejectedPushUpdateDialog.REBASE_EXIT_CODE:
-            pushAgain = update(roots, false);
-            break;
+        Set<VirtualFile> roots = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
+        boolean pushAgain = false; 
+        if (updateSettings.getUpdateMethod() != null) {
+          pushAgain = update(roots, updateSettings.getUpdateMethod());
         }
 
         if (pushAgain) {
-          GitPushInfo newPushInfo =
-            new GitPushInfo(pushInfo.getCommits().retainAll(rejectedPushesForCurrentBranch), pushInfo.getPushSpec());
+          GitPushInfo newPushInfo = new GitPushInfo(pushInfo.getCommits().retainAll(rejectedPushesForCurrentBranch), pushInfo.getPushSpec());
           GitPushResult adjustedPushResult = result.remove(rejectedPushesForCurrentBranch);
-          push(newPushInfo, adjustedPushResult);
+          push(newPushInfo, adjustedPushResult, updateSettings);
           return; // don't notify - next push will notify all results in compound
         }
       }
@@ -227,6 +230,36 @@ public final class GitPusher {
                                                              getResultDescriptionWithOptionalReposIndication(pushInfo, result),
                                                              NotificationType.WARNING, null).notify(myProject);
     }
+  }
+  
+  private static class UpdateSettings {
+    private final boolean myUpdateAllRoots;
+    private final GitUpdateProcess.UpdateMethod myUpdateMethod;
+
+    private UpdateSettings(boolean updateAllRoots, GitUpdateProcess.UpdateMethod updateMethod) {
+      myUpdateAllRoots = updateAllRoots;
+      myUpdateMethod = updateMethod;
+    }
+
+    public boolean shouldUpdateAllRoots() {
+      return myUpdateAllRoots;
+    }
+
+    public GitUpdateProcess.UpdateMethod getUpdateMethod() {
+      return myUpdateMethod;
+    }
+  }
+
+  /**
+   * @return update method selected in the dialog or {@code null} if user pressed Cancel, i.e. doesn't want to update.
+   */
+  @Nullable
+  private static GitUpdateProcess.UpdateMethod getUpdateMethodFromDialogExitCode(int exitCode) {
+    switch (exitCode) {
+      case GitRejectedPushUpdateDialog.MERGE_EXIT_CODE:  return GitUpdateProcess.UpdateMethod.MERGE;
+      case GitRejectedPushUpdateDialog.REBASE_EXIT_CODE: return GitUpdateProcess.UpdateMethod.REBASE;
+    }
+    return null;
   }
 
   private Set<VirtualFile> getRootsToUpdate(Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch, boolean updateAllRoots) {
@@ -244,7 +277,7 @@ public final class GitPusher {
     return roots;
   }
 
-  private Map<GitRepository, GitBranch> getRejectedPushesForCurrentBranch(GitPushResult pushResult) {
+  private static Map<GitRepository, GitBranch> getRejectedPushesForCurrentBranch(GitPushResult pushResult) {
     final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = new HashMap<GitRepository, GitBranch>();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : pushResult.group().myRejectedResults.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -261,9 +294,8 @@ public final class GitPusher {
     return rejectedPushesForCurrentBranch;
   }
 
-  private boolean update(Set<VirtualFile> rootsToUpdate, boolean merge) {
-    return new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rootsToUpdate, UpdatedFiles.create())
-      .update(merge ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE);
+  private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull GitUpdateProcess.UpdateMethod updateMethod) {
+    return new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rootsToUpdate, UpdatedFiles.create()).update(updateMethod);
   }
 
   /**
