@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,8 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   private final Project myProject;
   private final Collection<GitRepository> myRepositories;
   private final JCheckBox myUpdateAllRoots;
+  private final RebaseAction myRebaseAction;
+  private final MergeAction myMergeAction;
 
   protected GitRejectedPushUpdateDialog(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
     super(project);
@@ -57,14 +60,29 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
     myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", true);
 
+    myMergeAction = new MergeAction(this);
+    myRebaseAction = new RebaseAction(this);
+    getDefaultAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+    getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
+    
     init();
     setTitle("Push Rejected");
+  }
+
+  private AbstractAction getDefaultAction() {
+    GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+    if (settings == null) {
+      return myMergeAction;
+    } else if (settings.getUpdateType() == GitVcsSettings.UpdateType.REBASE) {
+      return myRebaseAction;
+    }
+    return myMergeAction;
   }
 
   @Override
   protected JComponent createCenterPanel() {
     JBLabel desc = new JBLabel(makeDescription());
-    
+
     JCheckBox dontAskAgain = new JCheckBox("<html>Remember the update method choice and silently update in future <br/>(you may change this in the Settings)</html>");
     JPanel options = new JPanel(new BorderLayout());
     options.add(dontAskAgain, BorderLayout.SOUTH);
@@ -151,7 +169,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    return new Action[] { getCancelAction(), new MergeAction(this), new RebaseAction(this) };
+    return new Action[] { getCancelAction(), myMergeAction, myRebaseAction};
   }
 
   @Override
