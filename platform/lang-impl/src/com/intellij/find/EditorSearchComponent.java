@@ -133,7 +133,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private void updateReplaceButton() {
     if (myReplaceButton != null) {
       myReplaceButton.setEnabled(mySearchResults != null && mySearchResults.getCursor() != null &&
-                                 !myLivePreviewController.isReplaceDenied());
+                                 !myLivePreviewController.isReplaceDenied() && (mySearchResults.getFindModel().isGlobal() ||
+                                                                                !mySearchResults.getEditor().getSelectionModel()
+                                                                                  .hasBlockSelection()));
     }
   }
 
@@ -437,6 +439,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       }
       updateExcludeStatus();
     }
+
+    updateReplaceButton();
 
     Utils.setSmallerFontForChildren(myToolbarComponent);
   }

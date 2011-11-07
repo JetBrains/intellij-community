@@ -409,6 +409,10 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
                                               oldSelectionStart, oldSelectionEnd,
                                               startOffset, endOffset);
 
+    broadcastSelectionEvent(event);
+  }
+
+  private void broadcastSelectionEvent(SelectionEvent event) {
     for (SelectionListener listener : mySelectionListeners) {
       try {
         listener.selectionChanged(event);
@@ -451,8 +455,17 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
 
     myEditor.repaintLines(Math.min(oldStartLine, newStartLine), Math.max(newEndLine, oldEndLine));
+
+    final int[] oldStarts = getBlockSelectionStarts();
+    final int[] oldEnds = getBlockSelectionEnds();
+    
     myBlockStart = blockStart;
     myBlockEnd = blockEnd;
+
+    final int[] newStarts = getBlockSelectionStarts();
+    final int[] newEnds = getBlockSelectionEnds();
+    
+    broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
   }
 
   @Override
@@ -479,8 +492,17 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public void removeBlockSelection() {
     if (hasBlockSelection()) {
       myEditor.repaint(0, myEditor.getDocument().getTextLength());
+
+      final int[] oldStarts = getBlockSelectionStarts();
+      final int[] oldEnds = getBlockSelectionEnds();
+
       myBlockStart = null;
       myBlockEnd = null;
+
+      final int[] newStarts = getBlockSelectionStarts();
+      final int[] newEnds = getBlockSelectionEnds();
+
+      broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
     }
   }
 

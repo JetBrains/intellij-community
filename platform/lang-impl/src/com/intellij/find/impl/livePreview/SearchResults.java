@@ -8,6 +8,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,14 +17,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
 public class SearchResults implements DocumentListener {
@@ -227,47 +231,40 @@ public class SearchResults implements DocumentListener {
     }
   }
 
-  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final TextRange next, final int stamp) {
+  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
     if (myDisposed) return;
     final ArrayList<LiveOccurrence> occurrences = new ArrayList<LiveOccurrence>();
     final Editor editor = getEditor();
 
     final ArrayList<FindResult> results = new ArrayList<FindResult>();
     if (findModel != null) {
+      final FutureResult<int[]> startsRef = new FutureResult<int[]>();
+      final FutureResult<int[]> endsRef = new FutureResult<int[]>();
+      getSelection(editor, startsRef, endsRef);
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
-          TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(),
-                                          editor.getSelectionModel().getSelectionEnd());
-          TextRange r = findModel.isGlobal() ? new TextRange(0, Integer.MAX_VALUE) : selection;
-          if (r.getLength() == 0) {
-            r = new TextRange(0, Integer.MAX_VALUE);
+          int[] starts = new int[0];
+          int[] ends = new int[0];
+          try {
+            starts = startsRef.get();
+            ends = endsRef.get();
           }
-          int offset = r.getStartOffset();
-          VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+          catch (InterruptedException ignore) {
+          }
+          catch (ExecutionException ignore) {
+          }
 
-          while (true) {
-            FindManager findManager = FindManager.getInstance(editor.getProject());
-            FindResult result;
-            try {
-              BombedCharSequence bombedCharSequence = new BombedCharSequence(editor.getDocument().getCharsSequence(), System.currentTimeMillis() + 3000);
-              result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
-            } catch(PatternSyntaxException e) {
-              result = null;
-            } catch (ProcessCanceledException e) {
-              result = null;
+          if (starts.length == 0 || findModel.isGlobal()) {
+            findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+          } else {
+            for (int i = 0; i < starts.length; ++i) {
+              findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
             }
-            if (result == null || !result.isStringFound()) break;
-            int newOffset = result.getEndOffset();
-            if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
-            offset = newOffset;
-            results.add(result);
-
-            if (results.size() > myMatchesLimit) break;
           }
-          if (results.size() < myMatchesLimit) {
 
+          if (results.size() < myMatchesLimit) {
             findResultsToOccurrences(results, occurrences);
           }
 
@@ -285,6 +282,56 @@ public class SearchResults implements DocumentListener {
           }
         }
       });
+    }
+  }
+
+  private static void getSelection(final Editor editor, final FutureResult<int[]> starts, final FutureResult<int[]> ends) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      SelectionModel selection = editor.getSelectionModel();
+      starts.set(selection.getBlockSelectionStarts());
+      ends.set(selection.getBlockSelectionEnds());
+    } else {
+      try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            SelectionModel selection = editor.getSelectionModel();
+            starts.set(selection.getBlockSelectionStarts());
+            ends.set(selection.getBlockSelectionEnds());
+          }
+        });
+      }
+      catch (InterruptedException ignore) {
+      }
+      catch (InvocationTargetException ignore) {
+      }
+    }
+  }
+
+  private void findInRange(TextRange r, Editor editor, FindModel findModel, ArrayList<FindResult> results) {
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+
+    int offset = r.getStartOffset();
+
+    while (true) {
+      FindManager findManager = FindManager.getInstance(editor.getProject());
+      FindResult result;
+      try {
+        BombedCharSequence
+          bombedCharSequence = new BombedCharSequence(editor.getDocument().getCharsSequence(), System.currentTimeMillis() + 3000);
+        result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
+      } catch(PatternSyntaxException e) {
+        result = null;
+      } catch (ProcessCanceledException e) {
+        result = null;
+      }
+      if (result == null || !result.isStringFound()) break;
+      int newOffset = result.getEndOffset();
+      if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
+      offset = newOffset;
+      results.add(result);
+
+      if (results.size() > myMatchesLimit) break;
     }
   }
 
