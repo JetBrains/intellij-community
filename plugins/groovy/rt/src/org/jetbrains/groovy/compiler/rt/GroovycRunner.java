@@ -126,7 +126,7 @@ public class GroovycRunner {
         options.put("keepStubs", Boolean.TRUE);
         config.setJointCompilationOptions(options);
 
-        config.setTargetBytecode(CompilerConfiguration.POST_JDK5);
+        config.setTargetBytecode(CompilerConfiguration.PRE_JDK5);
       }
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");

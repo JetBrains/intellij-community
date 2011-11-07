@@ -26,7 +26,7 @@ import junit.framework.AssertionFailedError
 /**
  * @author peter
  */
-public class GroovyCompilerTest extends GroovyCompilerTestCase {
+public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
@@ -49,7 +49,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
                                              "    239" +
                                              "  }" +
                                              "}");
-    assertEmpty(make());
+    make();
     assertOutput("Foo", "239");
   }
 
@@ -61,7 +61,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
                        "}");
     final String barText = "class Bar {" + "  def foo() { 239  }" + "}";
     final PsiFile file = myFixture.addFileToProject("Bar.groovy", barText);
-    assertEmpty(make());
+    make()
     assertOutput("Foo", "239");
 
     setFileText(file, "class Bar {}");
@@ -76,7 +76,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
     }
 
     setFileText(file, barText);
-    assertEmpty(make());
+    make();
     assertOutput("Foo", "239");
   }
 
@@ -90,12 +90,12 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
     final PsiFile bar =
       myFixture.addFileToProject("Bar.groovy", "public class Bar {" + "public int foo() { " + "  return 239;" + "}" + "}");
 
-    assertEmpty(make());
+    make();
     assertOutput("Foo", "239");
 
     setFileName bar, "Bar.java"
 
-    assertEmpty(make());
+    make();
     assertOutput("Foo", "239");
   }
 
@@ -416,5 +416,20 @@ class Usage {
     assertEmpty make()
   }
 
+  public void testGroovyAnnotations() {
+    myFixture.addClass 'public @interface Anno { Class[] value(); }'
+    myFixture.addFileToProject 'Foo.groovy', '@Anno([String]) class Foo {}'
+    myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {}'
+
+    assertEmpty make()
+  }
+
+  public static class IdeaMode extends GroovyCompilerTest {
+    @Override protected boolean useJps() { false }
+  }
+
+  public static class JpsMode extends GroovyCompilerTest {
+    @Override protected boolean useJps() { true }
+  }
 
 }

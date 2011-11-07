@@ -376,8 +376,7 @@ public class JavaSdkImpl extends JavaSdk {
     return getMockJdk17("java 1.7");
   }
   public static Sdk getMockJdk17(String name) {
-    File mockJdkCEPath = getPathForJdkNamed("mockJDK-1.7");
-    return createMockJdk(mockJdkCEPath.getPath(), name, getInstance());
+    return createMockJdk(getMockJdk17Path().getPath(), name, getInstance());
   }
   public static Sdk getMockJdk14() {
     File mockJdkCEPath = getMockJdk14Path();
@@ -386,6 +385,9 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static File getMockJdk14Path() {
     return getPathForJdkNamed("mockJDK-1.4");
+  }
+  public static File getMockJdk17Path() {
+    return getPathForJdkNamed("mockJDK-1.7");
   }
 
   public static Sdk getWebMockJdk17() {

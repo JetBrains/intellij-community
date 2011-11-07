@@ -324,7 +324,7 @@ public class IdeaProjectLoader {
     Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
     project.modules.values().each { module ->
       Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
-      Collection<String> newExcludes = (allContentRoots - module.contentRoots).findAll { PathUtil.isUnder(myRoots, new File(it)) }
+      Collection<String> newExcludes = (allContentRoots - module.contentRoots).findAll { PathUtil.isUnder(myRoots, new File(it)) }.collect { FileUtil.toCanonicalPath(it) }
       module.excludes.addAll(newExcludes)
     }
   }

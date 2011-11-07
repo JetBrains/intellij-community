@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GppCompilerTest extends GroovyCompilerTestCase {
+public abstract class GppCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     PsiTestUtil.addLibrary myFixture.module, "gpp", TestUtils.absoluteTestDataPath + "/realGroovypp/", "groovy-all-1.8.2.jar", "groovypp-all-0.9.0_1.8.2.jar"
@@ -114,5 +114,16 @@ class A {
     assertEmpty make()
     assertOutput "B", "239"
   }
+
+  public static class IdeaMode extends GppCompilerTest {
+    @Override
+    protected boolean useJps() { false }
+  }
+
+  public static class JpsMode extends GppCompilerTest {
+    @Override
+    protected boolean useJps() { true }
+  }
+
 
 }

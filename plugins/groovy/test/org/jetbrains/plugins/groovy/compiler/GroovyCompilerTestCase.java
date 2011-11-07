@@ -58,9 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myMainOutput;
 
-  private static boolean useJps() {
-    return false;
-  }
+  protected abstract boolean useJps();
 
   @Override
   protected void setUp() throws Exception {
@@ -93,7 +91,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-    moduleBuilder.addJdk(JavaSdkImpl.getMockJdk14Path().getPath());
+    moduleBuilder.addJdk(JavaSdkImpl.getMockJdk17Path().getPath());
     super.tuneFixture(moduleBuilder);
   }
 
