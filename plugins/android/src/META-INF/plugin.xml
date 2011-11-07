@@ -74,6 +74,8 @@
 
   <depends>JUnit</depends>
   <depends>com.intellij.properties</depends>
+  <depends>IntentionPowerPack</depends>
+
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -133,6 +135,9 @@
     <renamePsiElementProcessor implementation="org.jetbrains.android.AndroidRenameResourceProcessor" order="first"/>
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
+    </intentionAction>
+    <intentionAction>
+      <className>org.jetbrains.android.intentions.AndroidReplaceSwitchWithIfIntention</className>
     </intentionAction>
 
     <localInspection language="XML" shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
