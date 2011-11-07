@@ -3,6 +3,7 @@ package org.jetbrains.jps.idea
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
+import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author max
@@ -131,7 +132,7 @@ public class IdeaProjectLoader {
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
       librariesFolder.eachFile {File file ->
-        if (file.isFile()) {
+        if (isXmlFile(file)) {
           Node librariesComponent = new XmlParser(false, false).parse(file)
           loadProjectLibraries(librariesComponent)
         }
@@ -144,7 +145,7 @@ public class IdeaProjectLoader {
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
       artifactsFolder.eachFile {File file ->
-        if (file.isFile()) {
+        if (isXmlFile(file)) {
           def artifactsComponent = new XmlParser(false, false).parse(file)
           loadArtifacts(artifactsComponent)
         }
@@ -154,12 +155,16 @@ public class IdeaProjectLoader {
     def runConfFolder = new File(dir, "runConfigurations")
     if (runConfFolder.isDirectory()) {
       runConfFolder.eachFile {File file ->
-        if (file.isFile()) {
+        if (isXmlFile(file)) {
           def runConfManager = new XmlParser(false, false).parse(file);
           loadRunConfigurations(runConfManager);
         }
       }
     }
+  }
+
+  boolean isXmlFile(File file) {
+    return file.isFile() && StringUtil.endsWithIgnoreCase(file.name, ".xml")
   }
 
   private def loadWorkspaceConfiguration(File workspaceFile) {
