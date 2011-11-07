@@ -3,15 +3,16 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope
 import static com.intellij.patterns.PlatformPatterns.psiFile
 import static com.intellij.patterns.PlatformPatterns.virtualFile
 
- /**
+/**
  * @author ilyas
  */
 class Context {
-  private List<ContextFilter> myFilters = []
+  private final List<ContextFilter> myFilters = []
 
   public Context(Map args) {
     // Named parameter processing
@@ -38,7 +39,7 @@ class Context {
     // filter by scope first, then by ctype
     // scope: <scope>
     if (args.scope) {
-      myFilters += ((Scope) args.scope).createFilters(args)
+      myFilters.addAll(((Scope) args.scope).createFilters(args))
     }
 
     // ctype : <ctype>
@@ -55,6 +56,7 @@ class Context {
     myFilters << cl
   }
 
+  @NotNull
   ContextFilter getFilter() {
     if (myFilters.size() == 1) {
       return myFilters[0]
