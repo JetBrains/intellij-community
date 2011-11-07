@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import git4idea.GitBranch;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +70,20 @@ final class GitCommitsByRepoAndBranch {
     }
     return new GitCommitsByRepoAndBranch(commits);
   }
+
+  @NotNull
+  GitCommitsByRepoAndBranch retainAll(Map<GitRepository, GitBranch> repositoriesBranches) {
+    Map<GitRepository, GitCommitsByBranch> commits = new HashMap<GitRepository, GitCommitsByBranch>();
+    for (GitRepository repository : repositoriesBranches.keySet()) {
+      GitCommitsByBranch commitsByBranch = myCommitsByRepository.get(repository);
+      if (commitsByBranch != null) {
+        commits.put(repository, commitsByBranch.retain(repositoriesBranches.get(repository)));
+      }
+    }
+    return new GitCommitsByRepoAndBranch(commits);
+  }
+
+
 
   @NotNull
   GitCommitsByBranch get(GitRepository repository) {

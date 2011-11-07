@@ -341,4 +341,9 @@ public final class GitRepository implements Disposable {
     }
   }
 
+  @Override
+  public String toString() {
+    return String.format("GitRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
+                         myCurrentBranch, myCurrentRevision, myState, myRootDir);
+  }
 }

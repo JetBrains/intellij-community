@@ -34,6 +34,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -550,4 +551,9 @@ public class GitUtil {
     }
     return rc.toString();
   }
+  
+  public static boolean justOneGitRepository(Project project) {
+    return !GitRepositoryManager.getInstance(project).moreThanOneRoot();
+  }
+
 }

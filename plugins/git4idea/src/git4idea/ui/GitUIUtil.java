@@ -480,4 +480,17 @@ public class GitUIUtil {
       GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(GitBundle.getString("general.error"), e.getLocalizedMessage(), NotificationType.ERROR, null).notify(project);
     }
   }
+
+  public static String bold(String s) {
+    return surround(s, "b");
+  }
+
+  public static String code(String s) {
+    return surround(s, "code");
+  }
+  
+  private static String surround(String s, String tag) {
+    return String.format("<%2$s>%1$s</%2$s>", s, tag);
+  }
+
 }

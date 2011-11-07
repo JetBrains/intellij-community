@@ -17,8 +17,10 @@ package git4idea.push;
 
 import git4idea.GitBranch;
 import git4idea.history.browser.GitCommit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,5 +60,17 @@ public class GitCommitsByBranch {
 
   public List<GitCommit> get(GitBranch branch) {
     return myCommitsByBranch.get(branch);
+  }
+
+  /**
+   * Returns new GitCommitsByBranch that contains commits only from the given branch (or nothing, if the given branch didn't exist in
+   * the original structure).
+   */
+  public GitCommitsByBranch retain(@NotNull GitBranch branch) {
+    Map<GitBranch, List<GitCommit>> res = new HashMap<GitBranch, List<GitCommit>>();
+    if (myCommitsByBranch.containsKey(branch)) {
+      res.put(branch, myCommitsByBranch.get(branch));
+    }
+    return new GitCommitsByBranch(res);
   }
 }
