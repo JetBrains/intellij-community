@@ -10,6 +10,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -107,7 +108,7 @@ public class IncProjectBuilder {
     });
   }
 
-  private static void cleanOutputRoots(CompileContext context) {
+  private static void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     final CompileScope scope = context.getScope();
     final Collection<Module> allProjectModules = scope.getProject().getModules().values();
     final Collection<Module> modulesToClean = new HashSet<Module>();
@@ -127,6 +128,12 @@ public class IncProjectBuilder {
       if (allModules.isEmpty()) {
         // whole project is affected
         context.getBuildDataManager().clean();
+        try {
+          context.getMappings().clean();
+        }
+        catch (IOException e) {
+          throw new ProjectBuildException(e);
+        }
       }
     }
 
