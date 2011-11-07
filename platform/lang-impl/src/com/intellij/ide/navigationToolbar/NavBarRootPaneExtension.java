@@ -90,14 +90,14 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         @Override
         protected void paintChildren(Graphics g) {
           super.paintChildren(g);
-          if (/*UIUtil.isUnderAquaLookAndFeel() &&*/ !isMainToolbarVisible()) {
+          if (UIUtil.isUnderAquaLookAndFeel() && !isMainToolbarVisible()) {
             final Rectangle r = getBounds();
             //g.setColor(new Color(0,0,0, 90));
             //g.drawLine(0, r.height - 4, r.width, r.height - 4);
-            g.setColor(new Color(0, 0, 0, 90));
-            g.drawLine(0, r.height - 2, r.width, r.height - 2);
-            g.setColor(new Color(0, 0, 0, 20));
-            g.drawLine(0, r.height - 1, r.width, r.height - 1);
+              g.setColor(new Color(0, 0, 0, 90));
+              g.drawLine(0, r.height - 2, r.width, r.height - 2);
+              g.setColor(new Color(0, 0, 0, 20));
+              g.drawLine(0, r.height - 1, r.width, r.height - 1);
           }
         }
 
