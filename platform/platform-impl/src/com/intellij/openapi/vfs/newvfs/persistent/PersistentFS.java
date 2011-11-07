@@ -24,7 +24,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -183,8 +185,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         childrenIds[i] = currentIds[idx];
       }
       else {
-        int childId = FSRecords.createRecord();
-        copyRecordFromDelegateFS(childId, id, new FakeVirtualFile(file, name), delegate);
+        int childId = createAndCopyRecord(delegate, new FakeVirtualFile(file, name), id);
         childrenIds[i] = childId;
       }
     }
@@ -278,18 +279,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return FSRecords.getModCount();
   }
 
-  private static void copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file, NewVirtualFileSystem delegate) {
-    if (id == parentId) {
-      LOG.error("Cyclic parent-child relations for file: " + file);
-      return;
-    }
-
+  private static boolean copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file, NewVirtualFileSystem delegate) {
     String name = file.getName();
 
-    if (name.length() > 0 && namesEqual(delegate, name, FSRecords.getName(id))) return; // TODO: Handle root attributes change.
+    if (name.length() > 0 && namesEqual(delegate, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
 
     if (name.length() == 0) {            // TODO: hack
-      if (areChildrenLoaded(id)) return;
+      if (areChildrenLoaded(id)) return false;
     }
 
     FSRecords.setParent(id, parentId);
@@ -307,6 +303,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
                            (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
                            (delegate.isSymLink(file) ? IS_SYMLINK : 0) |
                            (delegate.isSpecialFile(file) ? IS_SPECIAL : 0), true);
+
+    return true;
   }
 
   @Override
@@ -397,8 +395,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     VirtualFile fake = new FakeVirtualFile(parent, childName);
     if (delegate.exists(fake)) {
-      int child = FSRecords.createRecord();
-      copyRecordFromDelegateFS(child, parentId, fake, delegate);
+      int child = createAndCopyRecord(delegate, fake, parentId);
       FSRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
     }
@@ -749,7 +746,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           }
           if (!fs.exists(root)) return null;
 
-          copyRecordFromDelegateFS(rootId, 0, root, fs);
+          boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs);
+          if (!newRoot) {
+            if (fs.getTimeStamp(root) != FSRecords.getTimestamp(rootId)) {
+              root.markDirtyRecursively();
+            }
+          }
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -934,14 +936,22 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     VirtualFile fakeFile = new FakeVirtualFile(parent, name);
     if (delegate.exists(fakeFile)) {
       final int parentId = getFileId(parent);
-      int childId = FSRecords.createRecord();
-      copyRecordFromDelegateFS(childId, parentId, fakeFile, delegate);
+      int childId = createAndCopyRecord(delegate, fakeFile, parentId);
 
       appendIdToParentList(parentId, childId);
       final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
       dir.addChild(dir.createChild(name, childId));
     }
   }
+
+  private static int createAndCopyRecord(NewVirtualFileSystem delegateSystem, VirtualFile delegateFile, int parentId) {
+    int childId = FSRecords.createRecord();
+    copyRecordFromDelegateFS(childId, parentId, delegateFile, delegateSystem);
+    return childId;
+  }
+
+  public static void thisIsApiMethodToTest() {}
+  public static void thisAnotherApiMethodToTest() {}
 
   private static void appendIdToParentList(final int parentId, final int childId) {
     int[] childrenlist = FSRecords.list(parentId);
