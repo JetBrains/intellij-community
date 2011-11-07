@@ -25,8 +25,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +79,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public static Project doOpenProject(@NotNull final VirtualFile virtualFile,
-                                      final Project projectToClose,
+                                      Project projectToClose,
                                       final boolean forceOpenInNewFrame,
                                       final int line) {
     VirtualFile baseDir = virtualFile;
@@ -98,12 +100,32 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
-      int exitCode = ProjectUtil.confirmOpenNewProject(false);
-      if (exitCode == 0) { // this window option
-        if (!ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
+      if (projectToClose == null) {
+        projectToClose = openProjects[openProjects.length - 1];
       }
-      else if (exitCode != 1) { // not in a new window
-        return null;
+
+      if (ProjectAttachProcessor.canAttachToProject()) {
+        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose);
+        dialog.show();
+        if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+          return null;
+        }
+        if (dialog.isReplace()) {
+          if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
+        }
+        else if (dialog.isAttach()) {
+          attachToProject(projectToClose, projectDir);
+          return null;
+        }
+      }
+      else {
+        int exitCode = ProjectUtil.confirmOpenNewProject(false);
+        if (exitCode == 0) { // this window option
+          if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
+        }
+        else if (exitCode != 1) { // not in a new window
+          return null;
+        }
       }
     }
     
@@ -144,6 +166,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     projectManager.openProject(project);
 
     return project;
+  }
+
+  private static void attachToProject(Project project, File projectDir) {
+    final ProjectAttachProcessor[] extensions = Extensions.getExtensions(ProjectAttachProcessor.EP_NAME);
+    for (ProjectAttachProcessor processor : extensions) {
+      if (processor.attachToProject(project, projectDir)) {
+        break;
+      }
+    }
   }
 
   private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile, final int line) {
