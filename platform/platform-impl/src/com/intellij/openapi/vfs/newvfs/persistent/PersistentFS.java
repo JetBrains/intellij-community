@@ -950,9 +950,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return childId;
   }
 
-  public static void thisIsApiMethodToTest() {}
-  public static void thisAnotherApiMethodToTest() {}
-
   private static void appendIdToParentList(final int parentId, final int childId) {
     int[] childrenlist = FSRecords.list(parentId);
     childrenlist = ArrayUtil.append(childrenlist, childId);
