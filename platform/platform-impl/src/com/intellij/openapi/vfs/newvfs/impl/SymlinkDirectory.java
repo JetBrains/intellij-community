@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -30,10 +32,16 @@ public class SymlinkDirectory extends VirtualDirectoryImpl {
   @Nullable
   private final VirtualFile myTarget;
 
-  public SymlinkDirectory(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull NewVirtualFileSystem fs, final int id) {
+  public SymlinkDirectory(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull final NewVirtualFileSystem fs, final int id) {
     super(name, parent, fs, id);
-    String path = fs.resolveSymLink(this);
-    myTarget = path == null ? null : VfsImplUtil.findFileByPath(fs, path);
+    final String path = fs.resolveSymLink(this);
+
+    myTarget = path == null ? null : RecursionManager.doPreventingRecursion("", false, new NullableComputable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return VfsImplUtil.findFileByPath(getFileSystem(), path);
+      }
+    });
   }
 
   @NotNull
