@@ -3,15 +3,12 @@ package com.jetbrains.python.run;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
@@ -45,18 +42,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final List<Module> validModules = configuration.getValidModules();
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
-    myModuleComboBox.setRenderer(new HtmlListCellRenderer<Module>(myModuleComboBox.getRenderer()) {
-      @Override
-      protected void doCustomize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
-        if (module == null) {
-          append("[none]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-        else {
-          setIcon(ModuleType.get(module).getNodeIcon(false));
-          append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-    });
+    myModuleComboBox.setRenderer(new PyModuleRenderer(PyPluginCommonOptionsForm.this.myModuleComboBox.getRenderer()));
 
     myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>", myInterpreterComboBox.getRenderer()));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", configuration.getProject(),
