@@ -17,9 +17,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,7 @@ import java.util.*;
 
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   public JavaClassTreeElement(PsiClass aClass, boolean inherited) {
-    super(inherited,aClass);
+    super(inherited, aClass);
   }
 
   @NotNull
@@ -67,23 +65,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
         array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
-    if (Registry.is("show.anonymous.in.structure.view")) {
-      for (PsiElement anonymous : getAnonymousClasses(aClass)) {
-        array.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)anonymous, false));
-      }
-    }
     return array;
-  }
-
-  private static Collection<PsiElement> getAnonymousClasses(PsiClass aClass) {
-    final Collection<PsiAnonymousClass> anonymousClasses = PsiTreeUtil.collectElementsOfType(aClass, PsiAnonymousClass.class);
-    final Collection<PsiElement> classes = new ArrayList<PsiElement>();
-    for (PsiAnonymousClass cls : anonymousClasses) {
-      if (PsiTreeUtil.getParentOfType(cls, PsiClass.class) == aClass) {
-        classes.add(cls);
-      }
-    }
-    return classes;
   }
 
   public String getPresentableText() {

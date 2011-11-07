@@ -20,15 +20,12 @@ import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.TreeAction;
+import com.intellij.ide.util.treeView.smartTree.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class TreeModelWrapper implements StructureViewModel {
+public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel {
   private final StructureViewModel myModel;
   private final TreeActionsOwner myStructureView;
 
@@ -70,6 +67,15 @@ public class TreeModelWrapper implements StructureViewModel {
 
   public Object getCurrentEditorElement() {
     return myModel.getCurrentEditorElement();
+  }
+
+  @Override
+  public NodeProvider[] getNodeProviders() {
+    if (myModel instanceof ProvidingTreeModel) {
+      ArrayList<TreeAction> filtered = filterActive(((ProvidingTreeModel)myModel).getNodeProviders());
+      return filtered.toArray(new NodeProvider[filtered.size()]);
+    }
+    return NodeProvider.EMPTY_ARRAY;
   }
 
   public static boolean isActive(final TreeAction action, final TreeActionsOwner actionsOwner) {

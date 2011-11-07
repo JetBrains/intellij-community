@@ -26,10 +26,7 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -220,17 +217,19 @@ public class FileStructureDialog extends DialogWrapper {
 
     myCommanderPanel.setPreferredSize(new Dimension(400, 500));
 
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new BorderLayout());
+    JPanel comboPanel = new JPanel(new GridLayout(0, 2, 0, 0));
 
-    addNarrowDownCheckbox(panel);
+    addNarrowDownCheckbox(comboPanel);
 
     for(FileStructureFilter filter: fileStructureFilters) {
-      addFilterCheckbox(panel, filter);
+      addFilterCheckbox(comboPanel, filter);
     }
 
     myCommanderPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-    panel.add(myCommanderPanel,
-              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(comboPanel, BorderLayout.NORTH);
+    panel.add(myCommanderPanel, BorderLayout.CENTER);
+              //new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
   }
@@ -257,8 +256,8 @@ public class FileStructureDialog extends DialogWrapper {
     });
 
     checkBox.setFocusable(false);
-    panel.add(checkBox,
-              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
+    panel.add(checkBox);
+    //,new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
   private void addFilterCheckbox(final JPanel panel, final FileStructureFilter fileStructureFilter) {
@@ -308,11 +307,11 @@ public class FileStructureDialog extends DialogWrapper {
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), panel);
+      }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myCommanderPanel);
     }
     chkFilter.setText(text);
-    panel.add(chkFilter,
-                new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
+    panel.add(chkFilter);
+      //,new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -26,11 +27,12 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
+  public final static JavaAnonymousClassTreeElement[] EMPTY_ARRAY = {};
+
   private String myName;
   
-  public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass, boolean inherited) {
-    super(aClass, inherited);
-    
+  public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass) {
+    super(aClass, false);
   }
 
   @Override
@@ -67,6 +69,6 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
 
   @Override
   public Icon getIcon(boolean open) {
-    return getElement().getIcon(0);
+    return PlatformIcons.ANONYMOUS_CLASS_ICON;
   }
 }

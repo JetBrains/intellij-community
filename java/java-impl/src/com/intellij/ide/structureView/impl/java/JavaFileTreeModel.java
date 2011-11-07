@@ -20,6 +20,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,11 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
     return new Filter[]{new InheritedMembersFilter(),
                         new FieldsFilter(),
                         new PublicElementsFilter()};
+  }
+
+  @Override
+  public NodeProvider[] getNodeProviders() {
+    return new NodeProvider[]{new JavaAnonymousClassesNodeProvider()};
   }
 
   @NotNull
