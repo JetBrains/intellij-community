@@ -755,7 +755,15 @@ public class PluginManager {
       myPlugins2Disable = disabledPluginIds;
       myPlugins2Enable = faultyDescriptors;
       message.append("<br>");
-      message.append("<br>").append("<a href=\"" + DISABLE + "\">Disable ").append(disabledPluginIds.size() == 1 ? disabledPluginNames.get(disabledPluginIds.iterator().next()) : "not loaded plugins").append("</a>");
+      message.append("<br>").append("<a href=\"" + DISABLE + "\">Disable ");
+      if (disabledPluginIds.size() == 1) {
+        final PluginId pluginId2Disable = PluginId.getId(disabledPluginIds.iterator().next());
+        message.append(idToDescriptorMap.containsKey(pluginId2Disable) ? idToDescriptorMap.get(pluginId2Disable).getName() : pluginId2Disable.getIdString());
+      }
+      else {
+        message.append("not loaded plugins");
+      }
+      message.append("</a>");
       message.append("<br>").append("<a href=\"" + ENABLE + "\">Enable ").append(faultyDescriptors.size() == 1 ? disabledPluginNames.get(faultyDescriptors.iterator().next()) : " all necessary plugins").append("</a>");
       message.append("<br>").append("<a href=\"" + EDIT + "\">Open plugin manager</a>");
     }

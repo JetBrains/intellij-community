@@ -204,7 +204,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   
   public void setIconInsets(@Nullable Insets insets) {
-    myInsets = insets != null ? insets : ICON_INSETS;
+    myInsets = insets != null ? insets : new Insets(0,0,0,0);
   }
   
   public Dimension getMinimumSize() {

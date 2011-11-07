@@ -15,8 +15,11 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PhysicalDomParentStrategy implements DomParentStrategy {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.PhysicalDomParentStrategy");
   private XmlElement myElement;
   private final DomManagerImpl myDomManager;
 
@@ -89,29 +93,25 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     final XmlElement thatElement = ((PhysicalDomParentStrategy)o).myElement;
     if (xmlElementsEqual(myElement, thatElement)) {
       if (myElement != thatElement) {
-        //todo remove this assertion before X release
         final PsiElement nav1 = myElement.getNavigationElement();
         final PsiElement nav2 = thatElement.getNavigationElement();
         if (nav1 != nav2) {
-          if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-            PsiElement cur = findIncluder(myElement);
-            PsiElement nav = findIncluder(nav1);
-            final PsiElement _nav1 = myElement.getNavigationElement();
-            final PsiElement _nav2 = thatElement.getNavigationElement();
-            throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()) + "; nav=" + (nav == null ? null : nav.getText()));
-          }
-
-          throw new AssertionError(nav1.getContainingFile() +
-                                ":" +
-                                nav1.getTextRange().getStartOffset() +
-                                "!=" +
-                                nav2.getContainingFile() +
-                                ":" +
-                                nav2.getTextRange().getStartOffset() +
-                                "; " +
-                                (nav1 == myElement) +
-                                ";" +
-                                (nav2 == thatElement));
+          PsiElement curContext = findIncluder(myElement);
+          PsiElement navContext = findIncluder(nav1);
+          LOG.error(LogMessageEx.createEvent(
+            "x:include processing error",
+            "nav1,nav2=" + nav1 + ", " + nav2 + ";\n" +
+            nav1.getContainingFile() + ":" + nav1.getTextRange().getStartOffset() + "!=" + nav2.getContainingFile() + ":" + nav2.getTextRange().getStartOffset() + ";\n" +
+            (nav1 == myElement) + ";" + (nav2 == thatElement) + ";\n" +
+            "contexts equal: " +  (curContext == navContext) + ";\n" +
+            "curContext?.physical=" + (curContext != null && curContext.isPhysical()) + ";\n" +
+            "navContext?.physical=" + (navContext != null && navContext.isPhysical()) + ";\n" +
+            "myElement.physical=" + myElement.isPhysical() + ";\n" +
+            "thatElement.physical=" + thatElement.isPhysical() + "\n" + DebugUtil.currentStackTrace(),
+            new Attachment("Including tag text 1", curContext == null ? "null" : curContext.getText()),
+            new Attachment("Including tag text 2", navContext == null ? "null" : navContext.getText())
+          ));
+          throw new AssertionError();
         }
       }
       return true;
@@ -134,9 +134,9 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     if (fst.getTextLength() != snd.getTextLength()) return false;
     if (fst.getStartOffsetInParent() != snd.getStartOffsetInParent()) return false;
 
-    final PsiElement parent1 = fst.getParent();
-    final PsiElement parent2 = snd.getParent();
-    return parent1 != null && parent2 != null && xmlElementsEqual(parent1, parent2);
+    PsiElement nav1 = fst.getNavigationElement();
+    PsiElement nav2 = snd.getNavigationElement();
+    return nav1 != null && nav1.equals(nav2);
   }
 
   public int hashCode() {

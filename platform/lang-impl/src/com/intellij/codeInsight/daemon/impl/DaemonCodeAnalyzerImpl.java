@@ -676,7 +676,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       public void run() {
         if (myDisposed || !myProject.isInitialized()) return;
         if (PowerSaveMode.isEnabled()) return;
-        Editor active = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
         Runnable runnable = new Runnable() {
           public void run() {
@@ -691,7 +691,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
             ApplicationManager.getApplication().assertIsDispatchThread();
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
               // makes no sense to start from within write action, will cancel anyway
-              ApplicationManager.getApplication().invokeLater(this, myProject.getDisposed());
+              // we'll restart when write action finish
+              return;
             }
             if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
               ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
@@ -714,7 +715,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
             myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
           }
         };
-        if (active == null) {
+        if (activeEditor == null) {
           runnable.run();
         }
         else {
@@ -760,7 +761,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @TestOnly
-  public DaemonProgressIndicator getUpdateProgress() {
+  public synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }
 }

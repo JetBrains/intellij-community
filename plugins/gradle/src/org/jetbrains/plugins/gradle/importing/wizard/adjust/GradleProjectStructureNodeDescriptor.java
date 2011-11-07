@@ -2,8 +2,7 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.GradleEntity;
-import org.jetbrains.plugins.gradle.importing.model.Named;
+import org.jetbrains.plugins.gradle.model.GradleEntity;
 
 import javax.swing.*;
 

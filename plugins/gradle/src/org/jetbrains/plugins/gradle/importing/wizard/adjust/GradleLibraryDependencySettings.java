@@ -2,7 +2,7 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.GradleLibraryDependency;
+import org.jetbrains.plugins.gradle.model.GradleLibraryDependency;
 
 import javax.swing.*;
 

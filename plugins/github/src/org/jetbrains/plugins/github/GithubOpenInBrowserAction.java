@@ -41,12 +41,11 @@ import javax.swing.*;
  * @date 12/10/10
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
-  public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
   private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
-    super("Open in browser", "Open corresponding GitHub link in browser", ICON);
+    super("Open in browser", "Open corresponding GitHub link in browser", GithubUtil.GITHUB_ICON);
   }
 
   @Override

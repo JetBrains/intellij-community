@@ -54,7 +54,7 @@ public class GroovyCompilerWrapper {
       if (className.startsWith("org/apache/ivy/")) {
         addMessageWithoutLocation(collector, "Cannot @Grab without Ivy, please add it to your module dependencies (NoClassDefFoundError: " + className + ")", true);
       } else {
-        addMessageWithoutLocation(collector, "Groovyc error: " + className + " class not found", !forStubs);
+        throw e;
       }
 
     }

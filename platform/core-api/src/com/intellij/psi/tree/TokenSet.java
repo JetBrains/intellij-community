@@ -136,6 +136,22 @@ public class TokenSet {
     return 0 <= i && i < mySet.length && mySet[i];
   }
 
+  public TokenSet minus(TokenSet t) {
+    TokenSet set = new TokenSet();
+    for (int i = 0; i < mySet.length; i++) {
+      set.mySet [i] = mySet [i] && (i >= t.mySet.length || !t.mySet[i]);
+    }
+    return set;
+  }
+
+  public static TokenSet not(TokenSet t) {
+    TokenSet set = new TokenSet();
+    for (int i = 0; i < t.mySet.length; i++) {
+      set.mySet [i] = (i >= t.mySet.length || !t.mySet[i]);
+    }
+    return set;
+  }
+
   @Override
   public String toString() {
     return Arrays.asList(getTypes()).toString();

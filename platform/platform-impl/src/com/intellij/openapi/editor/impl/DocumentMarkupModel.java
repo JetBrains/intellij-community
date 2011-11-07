@@ -51,12 +51,12 @@ public class DocumentMarkupModel {
    * @param project the project for which the markup model is requested, or null if the default markup
    *                model is requested.
    * @return the markup model instance.
-   * @see Editor#getMarkupModel() 
+   * @see com.intellij.openapi.editor.Editor#getMarkupModel()
    */
   public static MarkupModel forDocument(Document document, @Nullable Project project, boolean create) {
     if (document instanceof DocumentWindow) {
       final Document delegate = ((DocumentWindow)document).getDelegate();
-      final MarkupModelEx baseMarkupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(delegate, project, true);
+      final MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
       return new MarkupModelWindow(baseMarkupModel, (DocumentWindow) document);
     }
 

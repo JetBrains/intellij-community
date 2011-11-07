@@ -88,12 +88,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       for (LookupElement element : list) {
         assert srcSet.contains(element) : myNext;
         if (processed.add(element)) {
-          final List<String> prefixes = new SmartList<String>();
-          for (String string : getAllLookupStrings(element)) {
-            prefixes.addAll(myPrefixes.get(string));
-          }
-          Collections.sort(prefixes);
-          for (String prefix : prefixes) {
+          for (String prefix : getSortedPrefixes(element)) {
             List<LookupElement> shorter = new SmartList<LookupElement>();
             for (LookupElement shorterElement : myElements.get(prefix)) {
               if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
@@ -120,14 +115,18 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     return result;
   }
 
+  private String[] getSortedPrefixes(LookupElement element) {
+    final List<String> prefixes = new SmartList<String>();
+    for (String string : getAllLookupStrings(element)) {
+      prefixes.addAll(myPrefixes.get(string));
+    }
+    String[] result = prefixes.toArray(new String[prefixes.size()]);
+    Arrays.sort(result);
+    return result;
+  }
+
   private static Set<String> getAllLookupStrings(LookupElement element) {
     return element.getAllLookupStrings();
-    /*boolean empty = element.getPrefixMatcher().getPrefix().isEmpty();
-    HashSet<String> result = new HashSet<String>();
-    for (String s : element.getAllLookupStrings()) {
-      result.add(empty ? s : StringUtil.toLowerCase(s));
-    }
-    return result;*/
   }
 
   @Override

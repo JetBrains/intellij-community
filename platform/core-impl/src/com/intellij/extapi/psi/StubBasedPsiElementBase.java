@@ -21,6 +21,7 @@ package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -64,6 +65,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public ASTNode getNode() {
     ASTNode node = myNode;
     if (node == null) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
       synchronized (file.getStubLock()) {
         node = myNode;

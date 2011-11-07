@@ -538,7 +538,7 @@ public class PsiImplUtil {
     if (pparent instanceof GrAssignmentExpression &&
         PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), diamondNew, false)) {
       GrExpression lValue = ((GrAssignmentExpression)pparent).getLValue();
-      if (PsiUtil.mightBeLValue(lValue)) {
+      if (PsiUtil.mightBeLValue(lValue) && !(lValue instanceof GrIndexProperty)) {
         return lValue.getNominalType();
       }
     }

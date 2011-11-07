@@ -63,6 +63,7 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   private String myDownloadUrl;
   private String myRepositoryName;
+  private String myInstalledVersion;
 
   public PluginNode() {
   }
@@ -345,5 +346,13 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void setRepositoryName(String repositoryName) {
     myRepositoryName = repositoryName;
+  }
+
+  public void setInstalledVersion(String installedVersion) {
+    myInstalledVersion = installedVersion;
+  }
+
+  public String getInstalledVersion() {
+    return myInstalledVersion;
   }
 }

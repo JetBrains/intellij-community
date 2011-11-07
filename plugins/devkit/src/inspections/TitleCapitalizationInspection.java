@@ -15,14 +15,17 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +77,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
           String titleValue = getTitleValue(args [0]);
           if (!hasTitleCapitalization(titleValue)) {
             holder.registerProblem(args [0], "Dialog title '" + titleValue + "' is not properly capitalized. It should have title capitalization",
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TitleCapitalizationFix(titleValue));
           }
         }
         else if (calledName.startsWith("show") && (calledName.endsWith("Dialog") || calledName.endsWith("Message"))) {
@@ -89,7 +92,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
               String titleValue = getTitleValue(args [i]);
               if (!hasTitleCapitalization(titleValue)) {
                 holder.registerProblem(args [i], "Message title '" + titleValue + "' is not properly capitalized. It should have title capitalization",
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TitleCapitalizationFix(titleValue));
               }
               break;
             }
@@ -165,5 +168,102 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     value = value.replace("&", "");
     return StringUtil.wordsToBeginFromUpperCase(value).equals(value);
+  }
+
+  private static class TitleCapitalizationFix implements LocalQuickFix {
+
+    private final String myTitleValue;
+
+    public TitleCapitalizationFix(String titleValue) {
+      myTitleValue = titleValue;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Properly capitalize '" + myTitleValue + '\'';
+    }
+
+    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement problemElement = descriptor.getPsiElement();
+      if (problemElement == null || !problemElement.isValid()) {
+        return;
+      }
+      if (isQuickFixOnReadOnlyFile(problemElement)) {
+        return;
+      }
+      try {
+        doFix(project, problemElement);
+      }
+      catch (IncorrectOperationException e) {
+        final Class<? extends TitleCapitalizationFix> aClass = getClass();
+        final String className = aClass.getName();
+        final Logger logger = Logger.getInstance(className);
+        logger.error(e);
+      }
+    }
+
+    protected void doFix(Project project, PsiElement element) throws IncorrectOperationException {
+      if (element instanceof PsiLiteralExpression) {
+        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+        final Object value = literalExpression.getValue();
+        if (!(value instanceof String)) {
+          return;
+        }
+        final String string = (String)value;
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiExpression
+          newExpression = factory.createExpressionFromText('"' + StringUtil.wordsToBeginFromUpperCase(string) + '"', element);
+        literalExpression.replace(newExpression);
+      }else if (element instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        final PsiExpression returnValue = PropertyUtils.getGetterReturnExpression(method);
+        if (returnValue != null) {
+          doFix(project, returnValue);
+        }
+        final Property property = getPropertyArgument(methodCallExpression);
+        if (property == null) {
+          return;
+        }
+        final String value = property.getUnescapedValue();
+        if (value == null) {
+          return;
+        }
+        final String capitalizedString = StringUtil.wordsToBeginFromUpperCase(value);
+        property.setValue(capitalizedString);
+      } else if (element instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiVariable)) {
+          return;
+        }
+        final PsiVariable variable = (PsiVariable)target;
+        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+            doFix(project, variable.getInitializer());
+          }
+      }
+    }
+
+    protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
+      final PsiFile containingPsiFile = problemElement.getContainingFile();
+      if (containingPsiFile == null) {
+        return false;
+      }
+      final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
+      if (virtualFile == null) {
+        return false;
+      }
+      final Project project = problemElement.getProject();
+      final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
+      final ReadonlyStatusHandler.OperationStatus status = handler.ensureFilesWritable(virtualFile);
+      return status.hasReadonlyFiles();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
   }
 }

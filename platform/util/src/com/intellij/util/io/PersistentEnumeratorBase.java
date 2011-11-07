@@ -249,7 +249,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     catch (Throwable e) {
       markCorrupted();
       LOG.info(e);
-      throw new RuntimeException(e);
+      throw new IOException(e);
     }
 
     if (myDoCaching && id != NULL_ID) {

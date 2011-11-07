@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
+import org.jetbrains.jps.ClasspathKind;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
@@ -48,7 +49,8 @@ public class GroovyBuilder extends Builder {
       context.processFiles(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
-          if (file.getPath().endsWith(".groovy") && isFileDirty(file, context, tsStorage)) { //todo file type check
+          final String path = file.getPath();
+          if ((path.endsWith(".groovy") || path.endsWith(".gpp")) && isFileDirty(file, context, tsStorage)) { //todo file type check
             toCompile.add(file);
           }
           return true;
@@ -63,19 +65,29 @@ public class GroovyBuilder extends Builder {
       //groovy_rt.jar
       // IMPORTANT! must be the first in classpath
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
-      for (File file : context.getProjectPaths().getCompilationClasspath(chunk, context.isCompilingTests(), false)) {
-        cp.add(FileUtil.toSystemIndependentName(file.getPath()));
+
+      for (File file : context.getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(context.isCompilingTests()), false)) {
+        cp.add(FileUtil.toCanonicalPath(file.getPath()));
       }
 
       final File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
       final Module representativeModule = chunk.getModules().iterator().next();
-      final File dir = myForStubs ?
-                 FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) :
-                 context.getProjectPaths().getModuleOutputDir(representativeModule, context.isCompilingTests());
-
+      File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(representativeModule, context.isCompilingTests());
+      final File dir = myForStubs ? FileUtil.createTempDirectory(/*new File("/tmp/stubs/"), */"groovyStubs", null) : moduleOutputDir;
       assert dir != null;
 
-      fillFileWithGroovycParameters(tempFile, dir.getPath(), toCompile);
+      Set<String> toCompilePaths = new LinkedHashSet<String>();
+      for (File file : toCompile) {
+        toCompilePaths.add(file.getPath());
+      }
+      
+      String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
+      if (!moduleOutputPath.endsWith("/")) {
+        moduleOutputPath += "/";
+      }
+      Map<String, String> class2Src = buildClassToSourceMap(context, toCompilePaths, moduleOutputPath);
+
+      fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, moduleOutputPath, class2Src);
 
       if (myForStubs) {
         JavaBuilder.addTempSourcePathRoot(context, dir);
@@ -132,7 +144,7 @@ public class GroovyBuilder extends Builder {
           }
         }
         else {
-          final Mappings delta = new Mappings();
+          final Mappings delta = context.createDelta();
           final List<File> successfullyCompiledFiles = new ArrayList<File>();
           if (!successfullyCompiled.isEmpty()) {
             final Callbacks.Backend callback = delta.getCallback();
@@ -161,14 +173,36 @@ public class GroovyBuilder extends Builder {
     }
   }
 
-  private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<File> files) throws IOException {
+  private static Map<String, String> buildClassToSourceMap(CompileContext context, Set<String> toCompilePaths, String moduleOutputPath)
+    throws Exception {
+    Map<String, String> class2Src = new HashMap<String, String>();
+    for (String out : context.getBuildDataManager().getOutputToSourceStorage().getKeys()) {
+      if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
+        String src = context.getBuildDataManager().getOutputToSourceStorage().getState(out);
+        if (!toCompilePaths.contains(src)) {
+          String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.').replace('$', '.');
+          class2Src.put(className, src);
+        }
+      }
+    }
+    return class2Src;
+  }
+
+  private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<String> files, String finalOutput, Map<String, String> class2Src) throws IOException {
     final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
     try {
-      for (File file : files) {
+      for (String file : files) {
         writer.write("src_file\n");
-        writer.write(file.getPath());
+        writer.write(file);
         writer.write("\n");
       }
+      
+      writer.write("class2src\n");
+      for (Map.Entry<String, String> entry : class2Src.entrySet()) {
+        writer.write(entry.getKey() + "\n");
+        writer.write(entry.getValue() + "\n");
+      }
+      writer.write("end\n");
 
       //todo patchers
       writer.write("encoding\n");
@@ -176,8 +210,8 @@ public class GroovyBuilder extends Builder {
       writer.write("outputpath\n");
       writer.write(outputDir);
       writer.write("\n");
-      writer.write("finaloutputpath\n");
-      writer.write(outputDir);
+      writer.write("final_outputpath\n");
+      writer.write(finalOutput);
       writer.write("\n");
     }
     finally {

@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -52,7 +53,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
   private JCheckBox myCbWrapWhenTypingReachesRightMargin;
+  private JPanel myDefaultIndentOptionsPanel;
   private int myRightMargin;
+  private SmartIndentOptionsEditor myIndentOptionsEditor;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -92,6 +95,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         }
       }
     });
+
+    myIndentOptionsEditor = new SmartIndentOptionsEditor();
+    myDefaultIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
   }
 
   @Nullable
@@ -127,6 +133,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       settings.RIGHT_MARGIN = rightMarginImpl;
     }
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
+    myIndentOptionsEditor.setEnabled(true);
+    myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
 
@@ -164,7 +172,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return !myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN));
+    if (!myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN))) return true;
+    myIndentOptionsEditor.setEnabled(true);
+    return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
   public JComponent getPanel() {
@@ -189,6 +199,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myRightMarginField.setText(String.valueOf(settings.RIGHT_MARGIN));
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
+    myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
+    myIndentOptionsEditor.setEnabled(true);
   }
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {

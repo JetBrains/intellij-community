@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.RangeMarkerSpy;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -37,7 +38,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -813,19 +813,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     assert !myChangeGuard;
 
     myChangeGuard = true;
-    RangeMarkerEx marker = (RangeMarkerEx) myEditor.getDocument().createRangeMarker(myLookupStartMarker.getStartOffset(), myLookupStartMarker.getEndOffset());
-    marker.trackInvalidation(true);
+    Document document = myEditor.getDocument();
+    RangeMarkerSpy spy = new RangeMarkerSpy(myLookupStartMarker) {
+      @Override
+      protected void invalidated(DocumentEvent e) {
+        LOG.error("Lookup start marker invalidated, say thanks to the "+ e);
+      }
+    };
+    document.addDocumentListener(spy);
     try {
       change.run();
     }
     finally {
-      marker.trackInvalidation(false);
+      document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
     checkValid();
     LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
-    LOG.assertTrue(marker.isValid(), "invalid marker");
-    marker.dispose();
     if (isVisible()) {
       updateLookupLocation();
     }

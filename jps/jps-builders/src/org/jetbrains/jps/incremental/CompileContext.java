@@ -115,6 +115,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   public Mappings getMappings() {
     return myMappings;
   }
+  
+  public Mappings createDelta() {
+    return myMappings.createDelta();
+  }
 
   public boolean isCompilingTests() {
     return myCompilingTests;
@@ -203,15 +207,16 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   /** @noinspection unchecked*/
   private FSSnapshot buildSnapshot(Module module) {
     final Set<File> excludes = new HashSet<File>();
-    for (String excludePath : (Collection<String>)module.getExcludes()) {
+    for (String excludePath : module.getExcludes()) {
       excludes.add(new File(excludePath));
     }
     final FSSnapshot snapshot = new FSSnapshot(module);
-    final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
+    final Collection<String> roots = myCompilingTests? module.getTestRoots() : module.getSourceRoots();
     for (String srcRoot : roots) {
-      final File rootFile = new File(srcRoot);
+      final String normalizedRoot = FileUtil.toCanonicalPath(srcRoot);
+      final File rootFile = new File(normalizedRoot);
       if (rootFile.exists()) {
-        final FSSnapshot.Root root = snapshot.addRoot(rootFile, srcRoot);
+        final FSSnapshot.Root root = snapshot.addRoot(rootFile, normalizedRoot);
         buildStructure(root.getNode(), excludes);
       }
     }
@@ -226,28 +231,16 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   private static void buildStructure(final FSSnapshot.Node from, final Set<File> excluded) {
-    final File nodeFile = from.getFile();
-    if (nodeFile.isDirectory()) {
-      if (isExcluded(excluded, nodeFile)) {
-        return;
-      }
-      final File[] children = nodeFile.listFiles();
-      if (children != null) {
-        for (File child : children) {
-          buildStructure(from.addChild(child), excluded);
+    if (from.isDirectory()) {
+      final File nodeFile = from.getFile();
+      if (!PathUtil.isUnder(excluded, nodeFile)) {
+        final File[] children = nodeFile.listFiles();
+        if (children != null) {
+          for (File child : children) {
+            buildStructure(from.addChild(child), excluded);
+          }
         }
       }
     }
   }
-
-  private static boolean isExcluded(final Set<File> excludedRoots, File file) {
-    while (file != null) {
-      if (excludedRoots.contains(file)) {
-        return true;
-      }
-      file = file.getParentFile();
-    }
-    return false;
-  }
-
 }

@@ -773,6 +773,39 @@ public class FileUtil {
     return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
   }
 
+  public static String toCanonicalPath(String path) {
+    if (path == null || path.length() == 0) {
+      return path;
+    }
+    path = path.replace(File.separatorChar, '/');
+    final StringTokenizer tok = new StringTokenizer(path, "/");
+    final com.intellij.util.containers.Stack<String> stack = new com.intellij.util.containers.Stack<String>();
+    while (tok.hasMoreTokens()) {
+      final String token = tok.nextToken();
+      if ("..".equals(token)) {
+        if (stack.isEmpty()) {
+          return null;
+        }
+        stack.pop();
+      }
+      else if (token.length() != 0 && !".".equals(token)) {
+        stack.push(token);
+      }
+    }
+    final StringBuilder result = new StringBuilder(path.length());
+    if (path.charAt(0) == '/') {
+      result.append("/");
+    }
+    for (int i = 0; i < stack.size(); i++) {
+      String str = stack.get(i);
+      if (i > 0) {
+        result.append('/');
+      }
+      result.append(str);
+    }
+    return result.toString();
+  }
+
   @NotNull
   public static String unquote(@NotNull String urlString) {
     urlString = urlString.replace('/', File.separatorChar);

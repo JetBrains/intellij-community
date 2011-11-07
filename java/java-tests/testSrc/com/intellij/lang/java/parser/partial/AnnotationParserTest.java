@@ -45,7 +45,7 @@ public class AnnotationParserTest extends JavaParsingTestCase {
   private static class MyTestParser1 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.parseAnnotations(builder);
+      DeclarationParser.INSTANCE.parseAnnotations(builder);
     }
   }
 }

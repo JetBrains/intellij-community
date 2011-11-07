@@ -1,7 +1,23 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<!--
+  ~  Copyright 2000-2011 JetBrains s.r.o.
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  ~
+  -->
+
+<idea-plugin url="http://confluence.jetbrains.net/display/IDEADEV/Gradle+integration">
     <name>Gradle</name>
     <id>org.jetbrains.plugins.gradle</id>
-    <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+    <vendor logo="/icons/gradle.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
     <description>Gradle integration</description>
 
     <!--// TODO den implement-->
@@ -10,12 +26,12 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-        <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportProvider"/>
-        <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder"/>
+        <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
+        <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder"/>
         <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
         <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
         <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
-        <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectOpenProcessor"/>
+        <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
 
         <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
         <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>

@@ -312,7 +312,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.showLookup();
   }
 
-  private void checkNotSync(CompletionProgressIndicator indicator, LookupElement[] allItems) {
+  private static void checkNotSync(CompletionProgressIndicator indicator, LookupElement[] allItems) {
     if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
       LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -372,24 +372,37 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final int offset = newContext.getStartOffset();
     final PsiFile fileCopy = newContext.file;
-    final PsiElement insertedElement = newContext.file.findElementAt(newContext.getStartOffset());
-    if (insertedElement == null) {
-      throw new AssertionError("offset " + newContext.getStartOffset() + " at:\n text=\"" + fileCopy.getText() + "\"\n instance=" + fileCopy);
-    }
+    PsiFile originalFile = fileCopy.getOriginalFile();
+    final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
+  }
+
+  @NotNull
+  private static PsiElement findCompletionPositionLeaf(CompletionContext newContext, int offset, PsiFile fileCopy, PsiFile originalFile) {
+    final PsiElement insertedElement = newContext.file.findElementAt(offset);
+    if (insertedElement == null) {
+      LOG.error(LogMessageEx.createEvent("No element at insertion offset", "offset=" + newContext.getStartOffset() + "\n" + DebugUtil.currentStackTrace(),
+                                         createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile)));
+    }
 
     LOG.assertTrue(fileCopy.findElementAt(offset) == insertedElement, "wrong offset");
 
     final TextRange range = insertedElement.getTextRange();
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
-      Attachment _fileCopy = new Attachment(initContext.getFile().getOriginalFile().getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
-      Attachment copyTree = new Attachment(initContext.getFile().getOriginalFile().getViewProvider().getVirtualFile().getPath() + " syntactic tree",
-                                           DebugUtil.psiToString(fileCopy, false));
-      Attachment elementText = new Attachment("Element at caret", insertedElement.getText());
-      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range, "Inconsistent completion tree", null, Arrays.asList(_fileCopy, copyTree, elementText)));
+      LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range + "\n" + DebugUtil.currentStackTrace(),
+                                         createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
+                                         new Attachment("Element at caret", insertedElement.getText())));
     }
+    return insertedElement;
+  }
 
-    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
+  private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree", DebugUtil.psiToString(fileCopy, false));
+  }
+
+  private static Attachment createFileTextAttachment(PsiFile fileCopy, final PsiFile originalFile) {
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
   }
 
   private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, final LookupElement[] items) {
@@ -702,7 +715,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                                      final CompletionLookupArranger.StatisticsUpdate update,
                                                      final Editor editor, final int caretOffset) {
     editor.getCaretModel().moveToOffset(caretOffset);
-    indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, caretOffset - item.getLookupString().length());
+    final int initialStartOffset = caretOffset - item.getLookupString().length();
+    assert initialStartOffset >= 0 : "negative startOffset: " + caretOffset + "; " + item.getLookupString();
+    indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
 
     final WatchingInsertionContext context = new WatchingInsertionContext(indicator, completionChar, items, editor);
@@ -710,12 +725,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       public void run() {
         final int idEndOffset = Math.max(caretOffset, indicator.getIdentifierEndOffset());
         indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
-        if (idEndOffset != indicator.getSelectionEndOffset() && completionChar == Lookup.REPLACE_SELECT_CHAR) {
-          editor.getDocument().deleteString(indicator.getSelectionEndOffset(), idEndOffset);
+        int selEnd = indicator.getSelectionEndOffset();
+        if (idEndOffset != selEnd && completionChar == Lookup.REPLACE_SELECT_CHAR) {
+          editor.getDocument().deleteString(selEnd, idEndOffset);
         }
 
-        assert context.getStartOffset() >= 0 : "stale startOffset";
-        assert context.getTailOffset() >= 0 : "stale tailOffset";
+        assert context.getStartOffset() >= 0 : "stale startOffset: was " + initialStartOffset + "; selEnd=" + selEnd + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
+        assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + selEnd + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
 
         item.handleInsert(context);
         Project project = indicator.getProject();
@@ -724,7 +740,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         if (context.shouldAddCompletionChar()) {
           int tailOffset = context.getTailOffset();
           if (tailOffset < 0) {
-            LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass());
+            LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
             tailOffset = editor.getCaretModel().getOffset();
           }
           else {
@@ -796,7 +812,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  public static Runnable rememberDocumentState(final Editor editor) {
+  public static Runnable rememberDocumentState(final Editor _editor) {
+    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(_editor);
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();
     final int selStart = editor.getSelectionModel().getSelectionStart();
@@ -822,6 +839,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private static class WatchingInsertionContext extends InsertionContext {
     private RangeMarkerEx tailWatcher;
+    String invalidateTrace;
+    DocumentEvent killer;
+    private RangeMarkerSpy spy;
 
     public WatchingInsertionContext(CompletionProgressIndicator indicator, char completionChar, List<LookupElement> items, Editor editor) {
       super(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]),
@@ -839,20 +859,34 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     private void watchTail(int offset) {
       stopWatching();
       tailWatcher = (RangeMarkerEx)getDocument().createRangeMarker(offset, offset);
-      tailWatcher.trackInvalidation(true);
       tailWatcher.setGreedyToRight(true);
+      spy = new RangeMarkerSpy(tailWatcher) {
+        @Override
+        protected void invalidated(DocumentEvent e) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            LOG.error("Tail offset invalidated, say thanks to the "+ e);
+          }
+
+          if (invalidateTrace == null) {
+            invalidateTrace = DebugUtil.currentStackTrace();
+            killer = e;
+          }
+        }
+      };
+      getDocument().addDocumentListener(spy);
     }
 
     void stopWatching() {
       if (tailWatcher != null) {
-        tailWatcher.trackInvalidation(false);
+        getDocument().removeDocumentListener(spy);
+        tailWatcher.dispose();
       }
     }
 
     @Override
     public int getTailOffset() {
       int offset = super.getTailOffset();
-      if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset()) {
+      if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset() && offset > 0) {
         watchTail(offset);
       }
 

@@ -23,6 +23,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -120,9 +121,27 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
         LOG.assertTrue(frame != null);
         frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension size = super.getPreferredSize();
+        if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {          
+          return new Dimension(size.width, 21);
+        }
+        return size;
+      }
     };
 
-    final JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+          g.setColor(UIUtil.getBorderColor());
+          g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1); //fix for navbar
+        }
+      }
+    };
     panel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     panel.add(comboBoxButton);
     panel.setOpaque(false);

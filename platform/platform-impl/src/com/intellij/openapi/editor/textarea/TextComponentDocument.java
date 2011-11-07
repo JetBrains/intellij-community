@@ -19,8 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
@@ -171,11 +169,6 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   @Override
   @NotNull
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @NotNull
-  public MarkupModel getMarkupModel(@Nullable final Project project) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

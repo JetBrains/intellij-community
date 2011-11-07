@@ -23,6 +23,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -57,7 +58,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   private List<GroovyResolveResult> myCandidates;
 
-  protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
+  protected ResolverProcessor(@Nullable String name, EnumSet<ResolveKind> resolveTargets,
                               PsiElement place,
                               @NotNull PsiType[] typeArguments) {
     myName = name;
@@ -68,7 +69,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   public boolean execute(PsiElement element, ResolveState state) {
     if (element instanceof PsiLocalVariableImpl) { //todo a better hack
-      return true; // the debugger creates a Java codeblock context and our expressions to evaluate resolve there
+      return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
     }
 
     if (myResolveTargetKinds.contains(getResolveKind(element))) {
@@ -105,7 +106,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   protected final void addCandidate(GroovyResolveResult candidate) {
-    assert candidate.getElement().isValid() : "invalid resolve candidate";
+    PsiElement element = candidate.getElement();
+    assert element == null || element.isValid() : "invalid resolve candidate";
 
     if (myCandidates == null) myCandidates = new ArrayList<GroovyResolveResult>();
     myCandidates.add(candidate);
@@ -208,7 +210,6 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public String getName(ResolveState state) {
-    //todo[DIANA] implement me!
     return myName;
   }
 

@@ -143,6 +143,17 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Bar", "239");
   }
 
+  public void testTransitiveGroovyDependency() throws Throwable {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {} ')
+    def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
+    def goo = myFixture.addFileToProject('Goo.groovy', 'class Goo extends Bar {}')
+    assertEmpty(make());
+
+    touch(foo.virtualFile)
+    touch(goo.virtualFile)
+    assertEmpty(make());
+  }
+
   public void testDeleteTransitiveJavaClass() throws Throwable {
     myFixture.addClass("public interface IFoo { int foo(); }");
     myFixture.addClass("public class Foo implements IFoo {" +
@@ -228,20 +239,21 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   private void addTransform() throws IOException {
-    myFixture.addFileToProject("Transf.groovy",
-                               "import org.codehaus.groovy.ast.*\n" +
-                               "import org.codehaus.groovy.control.*\n" +
-                               "import org.codehaus.groovy.transform.*\n" +
-                               "@GroovyASTTransformation(phase = CompilePhase.CONVERSION)\n" +
-                               "public class Transf implements ASTTransformation {\n" +
-                               "  void visit(ASTNode[] nodes, SourceUnit sourceUnit) {\n" +
-                               "    ModuleNode module = nodes[0]\n" +
-                               "    for (clazz in module.classes) {\n" +
-                               "      if (clazz.name.contains('Bar')) " +
-                               "        module.addStaticStarImport('Foo', ClassHelper.makeWithoutCaching(Foo.class));\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}");
+    myFixture.addFileToProject("Transf.groovy", """
+import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.control.*
+import org.codehaus.groovy.transform.*
+@GroovyASTTransformation(phase = CompilePhase.CONVERSION)
+public class Transf implements ASTTransformation {
+  void visit(ASTNode[] nodes, SourceUnit sourceUnit) {
+    ModuleNode module = nodes[0]
+    for (clazz in module.classes) {
+      if (clazz.name.contains('Bar')) {
+        module.addStaticStarImport('Foo', ClassHelper.makeWithoutCaching(Foo.class))
+      }
+    }
+  }
+}""");
 
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
                                              "static def autoImported() { 239 }\n" +

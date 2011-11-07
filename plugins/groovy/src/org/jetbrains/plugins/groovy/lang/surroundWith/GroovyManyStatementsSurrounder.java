@@ -20,6 +20,8 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +52,12 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     return true;
   }
 
-  public static boolean isStatement(PsiElement element) {
-    if (!(element instanceof GrStatement)) {
+  public static boolean isStatement(@NotNull PsiElement element) {
+    if (!(element instanceof GrStatement) && !(element instanceof PsiComment) &&
+        !element.getText().equals(";") && !StringUtil.isEmptyOrSpaces(element.getText())) {
       return false;
     }
-    PsiElement parent = element.getParent();
-    if (!(parent instanceof GrStatementOwner)) {
-      return false;
-    }
-    return true;
+    return element.getParent() instanceof GrStatementOwner;
   }
 
   @Nullable

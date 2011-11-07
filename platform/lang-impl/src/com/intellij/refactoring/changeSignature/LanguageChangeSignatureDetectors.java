@@ -15,17 +15,12 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
-* User: anna
-* Date: Sep 9, 2010
-*/
+ * User: anna
+ * Date: Sep 9, 2010
+ */
 class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeSignatureDetector> {
   public static final LanguageChangeSignatureDetectors INSTANCE = new LanguageChangeSignatureDetectors();
 
@@ -33,9 +28,4 @@ class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeS
     super("com.intellij.changeSignatureDetector");
   }
 
-  @Nullable
-  protected static ChangeInfo createCurrentChangeInfo(@NotNull PsiElement element, @Nullable ChangeInfo changeInfo) {
-    final LanguageChangeSignatureDetector detector = INSTANCE.forLanguage(element.getLanguage());
-    return detector != null ? detector.createCurrentChangeSignature(element, changeInfo) : null;
-  }
 }

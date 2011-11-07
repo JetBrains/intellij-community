@@ -1,5 +1,6 @@
 package org.jetbrains.jps.server;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.JavaSdk;
@@ -7,6 +8,7 @@ import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.BuildParameters;
+import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
@@ -27,7 +29,6 @@ class ServerState {
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
 
   private final Map<String, Project> myProjects = new HashMap<String, Project>();
-  private final Map<String, Mappings> myProjectMappings = new HashMap<String, Mappings>();
 
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
@@ -46,77 +47,75 @@ class ServerState {
   public void clearProjectCache(Collection<String> projectPaths) {
     synchronized (myConfigurationLock) {
       myProjects.keySet().removeAll(projectPaths);
-      myProjectMappings.keySet().removeAll(projectPaths);
     }
   }
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
     final String projectName = getProjectName(projectPath);
+    BuildType buildType = params.buildType;
 
     Project project;
-    Mappings mappings;
     synchronized (myConfigurationLock) {
       project = myProjects.get(projectPath);
       if (project == null) {
         project = loadProject(projectPath, params);
         myProjects.put(projectPath, project);
       }
-
-      mappings = myProjectMappings.get(projectPath);
-      if (mappings == null) {
-        final File mappingsStorageFile = Paths.getMappingsStorageFile(projectName);
-        try {
-          final BufferedReader reader = new BufferedReader(new InputStreamReader(new DeflaterInputStream(new FileInputStream(mappingsStorageFile))));
-          try {
-            mappings = new Mappings(reader);
-          }
-          finally {
-            reader.close();
-          }
-        }
-        catch (FileNotFoundException e) {
-          mappings = new Mappings();
-        }
-        catch (IOException e) {
-          msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, e.getMessage()));
-          mappings = new Mappings();
-        }
-
-        myProjectMappings.put(projectPath, mappings);
-      }
     }
 
-    final List<Module> toCompile = new ArrayList<Module>();
-    if (modules != null && modules.size() > 0) {
-      for (Module m : project.getModules().values()) {
-        if (modules.contains(m.getName())){
-          toCompile.add(m);
+    Mappings mappings = null;
+    final File mappingsRoot = Paths.getMappingsStorageRoot(projectName);
+    try {
+      mappings = new Mappings(mappingsRoot);
+    }
+    catch (FileNotFoundException e) {
+      mappings = new Mappings(mappingsRoot);
+    }
+    catch (IOException e) {
+      FileUtil.delete(mappingsRoot);
+      msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Problems reading dependency information, rebuild required: " + e.getMessage()));
+      mappings = new Mappings(mappingsRoot);
+      buildType = BuildType.REBUILD;
+    }
+
+    try {
+      final List<Module> toCompile = new ArrayList<Module>();
+      if (modules != null && modules.size() > 0) {
+        for (Module m : project.getModules().values()) {
+          if (modules.contains(m.getName())){
+            toCompile.add(m);
+          }
         }
       }
+      else {
+        toCompile.addAll(project.getModules().values());
+      }
+
+      final CompileScope compileScope = new CompileScope(project, toCompile);
+
+      final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
+      if (msgHandler != null) {
+        builder.addMessageHandler(msgHandler);
+      }
+      switch (buildType) {
+        case REBUILD:
+          builder.build(compileScope, false);
+          break;
+
+        case MAKE:
+          builder.build(compileScope, true);
+          break;
+
+        case CLEAN:
+          //todo[nik]
+  //        new ProjectBuilder(new GantBinding(), project).clean();
+          break;
+      }
     }
-    else {
-      toCompile.addAll(project.getModules().values());
-    }
-
-    final CompileScope compileScope = new CompileScope(project, toCompile);
-
-    final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
-    if (msgHandler != null) {
-      builder.addMessageHandler(msgHandler);
-    }
-    switch (params.buildType) {
-      case REBUILD:
-        builder.build(compileScope, false);
-        break;
-
-      case MAKE:
-        builder.build(compileScope, true);
-        break;
-
-      case CLEAN:
-        //todo[nik]
-//        new ProjectBuilder(new GantBinding(), project).clean();
-        break;
+    finally {
+      if (mappings != null) {
+        mappings.close();
+      }
     }
   }
 

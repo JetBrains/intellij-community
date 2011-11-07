@@ -26,10 +26,10 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExcludingTraversalPolicy;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,11 +38,11 @@ import java.awt.*;
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffPanel myDiffPanel;
 
-  public FileHistoryDialog(Project p, IdeaGateway gw, VirtualFile f) {
+  public FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);
   }
 
-  protected FileHistoryDialog(Project p, IdeaGateway gw, VirtualFile f, boolean doInit) {
+  protected FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f, boolean doInit) {
     super(p, gw, f, doInit);
   }
 

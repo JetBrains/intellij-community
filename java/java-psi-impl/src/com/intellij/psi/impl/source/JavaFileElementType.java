@@ -84,7 +84,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   private void doParse(final PsiBuilder builder) {
     final PsiBuilder.Marker root = builder.mark();
-    FileParser.parse(builder);
+    FileParser.INSTANCE.parse(builder);
     root.done(this);
   }
 

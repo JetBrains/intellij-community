@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class JavaElementSignatureProvider extends ElementSignatureProvider {
+public class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider");
 
   @Nullable
-  public String getSignature(final PsiElement element) {
+  public String getSignature(@NotNull final PsiElement element) {
     if (element instanceof PsiImportList) {
       PsiFile file = element.getContainingFile();
       if (file instanceof PsiJavaFile && element.equals(((PsiJavaFile)file).getImportList())) {
@@ -45,10 +45,10 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
       PsiElement parent = method.getParent();
 
       StringBuilder buffer = new StringBuilder();
-      buffer.append("method#");
+      buffer.append("method").append(ELEMENT_TOKENS_SEPARATOR);
       String name = method.getName();
       buffer.append(name);
-      buffer.append("#");
+      buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(getChildIndex(method, parent, name, PsiMethod.class));
 
       if (parent instanceof PsiClass) {
@@ -65,17 +65,17 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
       PsiElement parent = aClass.getParent();
 
       StringBuilder buffer = new StringBuilder();
-      buffer.append("class#");
+      buffer.append("class").append(ELEMENT_TOKENS_SEPARATOR);
       if (parent instanceof PsiClass || parent instanceof PsiFile) {
         String name = aClass.getName();
         buffer.append(name);
-        buffer.append("#");
+        buffer.append(ELEMENT_TOKENS_SEPARATOR);
         buffer.append(getChildIndex(aClass, parent, name, PsiClass.class));
 
         if (parent instanceof PsiClass) {
           String parentSignature = getSignature(parent);
           if (parentSignature == null) return null;
-          buffer.append(";");
+          buffer.append(ELEMENTS_SEPARATOR);
           buffer.append(parentSignature);
         }
       }
@@ -92,7 +92,7 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
       PsiElement parent = initializer.getParent();
 
       StringBuilder buffer = new StringBuilder();
-      buffer.append("initializer#");
+      buffer.append("initializer").append(ELEMENT_TOKENS_SEPARATOR);
 
       int index = 0;
       PsiElement[] children = parent.getChildren();
@@ -102,13 +102,13 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
           index++;
         }
       }
-      buffer.append("#");
+      buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(index);
 
       if (parent instanceof PsiClass) {
         String parentSignature = getSignature(parent);
         if (parentSignature == null) return null;
-        buffer.append(";");
+        buffer.append(ELEMENTS_SEPARATOR);
         buffer.append(parentSignature);
       }
 
@@ -119,17 +119,17 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
       PsiElement parent = field.getParent();
 
       StringBuilder buffer = new StringBuilder();
-      buffer.append("field#");
+      buffer.append("field").append(ELEMENT_TOKENS_SEPARATOR);
       String name = field.getName();
       buffer.append(name);
 
-      buffer.append("#");
+      buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(getChildIndex(field, parent, name, PsiField.class));
 
       if (parent instanceof PsiClass) {
         String parentSignature = getSignature(parent);
         if (parentSignature == null) return null;
-        buffer.append(";");
+        buffer.append(ELEMENTS_SEPARATOR);
         buffer.append(parentSignature);
       }
 
@@ -137,7 +137,7 @@ public class JavaElementSignatureProvider extends ElementSignatureProvider {
     }
     if (element instanceof PsiDocComment) {
       StringBuilder buffer = new StringBuilder();
-      buffer.append("docComment;");
+      buffer.append("docComment").append(ELEMENTS_SEPARATOR);
 
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass) && !(parent instanceof PsiMethod) && !(parent instanceof PsiField)) {

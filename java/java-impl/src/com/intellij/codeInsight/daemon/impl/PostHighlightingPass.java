@@ -75,6 +75,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -534,6 +535,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     });
+    ChangeSignatureGestureDetector.getInstance(myProject).dismissForElement(method);
     return highlightInfo;
   }
 

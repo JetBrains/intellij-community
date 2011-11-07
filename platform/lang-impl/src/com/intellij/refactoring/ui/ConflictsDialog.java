@@ -55,12 +55,19 @@ public class ConflictsDialog extends DialogWrapper{
   private String myCommandName;
 
   public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
-    this(project, conflictDescriptions, null);
+    this(project, conflictDescriptions, null, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
                          @NotNull MultiMap<PsiElement, String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable) {
+    this(project, conflictDescriptions, doRefactoringRunnable, true);
+  }
+
+  public ConflictsDialog(@NotNull Project project,
+                         @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                         @Nullable Runnable doRefactoringRunnable,
+                         boolean alwaysShowOkButton) {
     super(project, true);
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
@@ -73,7 +80,7 @@ public class ConflictsDialog extends DialogWrapper{
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
-    setOKActionEnabled(myDoRefactoringRunnable != null);
+    setOKActionEnabled(alwaysShowOkButton || myDoRefactoringRunnable != null);
     init();
   }
 

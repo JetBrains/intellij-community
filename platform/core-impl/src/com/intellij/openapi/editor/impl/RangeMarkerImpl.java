@@ -259,14 +259,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   private static final Key<Boolean> TRACK_INVALIDATION_KEY = new Key<Boolean>("TRACK_INVALIDATION_KEY");
-  @Override
-  public void trackInvalidation(boolean track) {
-    putUserData(TRACK_INVALIDATION_KEY, track ? Boolean.TRUE : null);
-  }
-  @Override
-  public boolean isTrackInvalidation() {
-    return getUserData(TRACK_INVALIDATION_KEY) == Boolean.TRUE;
-  }
 
   @Override
   public boolean setValid(boolean value) {

@@ -1,10 +1,10 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collection;
@@ -34,18 +34,25 @@ public class ClassRepr extends Proto {
   public final DependencyContext.S outerClassName;
   public final boolean isLocal;
 
-  public String getFileName () {
+  public String getFileName() {
     return context.getValue(fileName);
   }
 
   public abstract class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
+
     public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
+
     public abstract Specifier<FieldRepr> fields();
+
     public abstract Specifier<MethodRepr> methods();
+
     public abstract Specifier<ElementType> targets();
+
     public abstract boolean retentionChanged();
+
     public abstract boolean extendsAdded();
+
     public boolean no() {
       return base() == NONE &&
              interfaces().unchanged() &&
@@ -71,7 +78,7 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = context.getValue(((TypeRepr.ClassType)((ClassRepr)past).superClass) .className);
+        final String pastSuperName = context.getValue(((TypeRepr.ClassType)((ClassRepr)past).superClass).className);
         return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
       }
 
@@ -142,19 +149,19 @@ public class ClassRepr extends Proto {
     return result;
   }
 
-  public void updateClassUsages(final UsageRepr.Cluster s) {
-    superClass.updateClassUsages(name, s);
+  public void updateClassUsages(final DependencyContext context, final UsageRepr.Cluster s) {
+    superClass.updateClassUsages(context, name, s);
 
     for (TypeRepr.AbstractType t : interfaces) {
-      t.updateClassUsages(name, s);
+      t.updateClassUsages(context, name, s);
     }
 
     for (MethodRepr m : methods) {
-      m.updateClassUsages(name, s);
+      m.updateClassUsages(context, name, s);
     }
 
     for (FieldRepr f : fields) {
-      f.updateClassUsages(name, s);
+      f.updateClassUsages(context, name, s);
     }
   }
 
@@ -188,51 +195,54 @@ public class ClassRepr extends Proto {
     this.isLocal = localClassFlag;
   }
 
-  public ClassRepr(final DependencyContext context, final BufferedReader r) {
-    super(context, r);
-    this.context = context;
-    fileName = new DependencyContext.S(r);
-    sourceFileName = new DependencyContext.S(r);
-    superClass = TypeRepr.reader(context).read(r);
-    interfaces = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
-    nestedClasses = (Set<TypeRepr.AbstractType>)RW.readMany(r, TypeRepr.reader(context), new HashSet<TypeRepr.AbstractType>());
-    fields = (Set<FieldRepr>)RW.readMany(r, FieldRepr.reader(context), new HashSet<FieldRepr>());
-    methods = (Set<MethodRepr>)RW.readMany(r, MethodRepr.reader(context), new HashSet<MethodRepr>());
-    targets = (Set<ElementType>)RW.readMany(r, UsageRepr.AnnotationUsage.elementTypeReader, new HashSet<ElementType>());
+  public ClassRepr(final DependencyContext context, final DataInput in) {
+    super(in);
+    try {
+      this.context = context;
+      fileName = new DependencyContext.S(in);
+      sourceFileName = new DependencyContext.S(in);
+      superClass = TypeRepr.externalizer(context).read(in);
+      interfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
+      nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
+      fields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
+      methods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
+      targets = (Set<ElementType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, new HashSet<ElementType>(), in);
 
-    final String s = RW.readString(r);
+      final String s = in.readUTF();
 
-    policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
+      policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-    outerClassName = new DependencyContext.S(r);
-    isLocal = RW.readString(r).equals("true");
+      outerClassName = new DependencyContext.S(in);
+      isLocal = in.readBoolean();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void save(final DataOutput out) {
+    try {
+      super.save(out);
+      fileName.save(out);
+      sourceFileName.save(out);
+      superClass.save(out);
+      RW.save(interfaces, out);
+      RW.save(nestedClasses, out);
+      RW.save(fields, out);
+      RW.save(methods, out);
+      RW.save(targets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
+      out.writeUTF(policy == null ? "" : policy.toString());
+      outerClassName.save(out);
+      out.writeBoolean(isLocal);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public boolean isAnnotation() {
     return (access & Opcodes.ACC_ANNOTATION) > 0;
-  }
-
-  public static RW.Reader<ClassRepr> reader (final DependencyContext context) {
-    return new RW.Reader<ClassRepr>() {
-      public ClassRepr read(final BufferedReader r) {
-        return new ClassRepr(context, r);
-      }
-    };
-  }
-
-  public void write(final BufferedWriter w) {
-    super.write(w);
-    RW.writeln(w, fileName.toString());
-    RW.writeln(w, sourceFileName.toString());
-    superClass.write(w);
-    RW.writeln(w, interfaces);
-    RW.writeln(w, nestedClasses);
-    RW.writeln(w, fields);
-    RW.writeln(w, methods);
-    RW.writeln(w, targets, UsageRepr.AnnotationUsage.elementTypeToWritable);
-    RW.writeln(w, policy == null ? "" : policy.toString());
-    RW.writeln(w, outerClassName.toString());
-    RW.writeln(w, isLocal ? "true" : "false");
   }
 
   @Override
@@ -256,7 +266,7 @@ public class ClassRepr extends Proto {
   }
 
   public UsageRepr.Usage createUsage() {
-    return UsageRepr.createClassUsage(name);
+    return UsageRepr.createClassUsage(context, name);
   }
 
   public DependencyContext.S getSourceFileName() {
@@ -300,5 +310,19 @@ public class ClassRepr extends Proto {
     }
 
     return null;
+  }
+
+  public final static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
+    return new DataExternalizer<ClassRepr>() {
+      @Override
+      public void save(final DataOutput out, final ClassRepr value) throws IOException {
+        value.save(out);
+      }
+
+      @Override
+      public ClassRepr read(final DataInput in) throws IOException {
+        return new ClassRepr(context, in);
+      }
+    };
   }
 }

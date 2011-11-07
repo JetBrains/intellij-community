@@ -269,6 +269,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public void dispose() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
+    myCurrentDocument = null;
   }
 
   @NotNull

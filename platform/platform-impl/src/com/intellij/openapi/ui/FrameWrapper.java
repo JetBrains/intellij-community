@@ -41,6 +41,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,10 +86,16 @@ public class FrameWrapper implements Disposable, DataProvider {
     myDatas.put(dataId, data);
   }
 
-  public void setProject(Project project) {
+  public void setProject(@NotNull final Project project) {
     myProject = project;
     setData(PlatformDataKeys.PROJECT.getName(), project);
     ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        ProjectManager.getInstance().removeProjectManagerListener(project, myProjectListener);
+      }
+    });
   }
 
   public void show() {
@@ -287,7 +294,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
 
     private boolean myDisposing;
-    private IdeFrame myParent;
+    private final IdeFrame myParent;
 
     private String myFrameTitle;
     private String myFileTitle;
@@ -362,10 +369,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       saveFrameState(myDimensionKey, this);
       Disposer.dispose(FrameWrapper.this);
       myDatas.clear();
-      if (myProject != null) {
-        ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectListener);
-        myProject = null;
-      }
+      myProject = null;
       myPreferedFocus = null;
 
       if (myFocusTrackback != null) {

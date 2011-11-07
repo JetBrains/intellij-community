@@ -34,6 +34,7 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +83,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected Module createModule() {
     final Project project = myFixtureBuilder.getFixture().getProject();
     assert project != null;
-    return ModuleManager.getInstance(project).newModule(getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION, myModuleType);
+    final String moduleFilePath = new File(project.getProjectFilePath()).getParent() + File.separator + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType);
   }
 
   private static int getNextIndex() {

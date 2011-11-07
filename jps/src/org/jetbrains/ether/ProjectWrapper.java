@@ -730,8 +730,7 @@ public class ProjectWrapper {
         return x.equals(y);
       }
       catch (IOException e) {
-        e.printStackTrace();
-        return false;
+        throw new RuntimeException(e);
       }
     }
 
@@ -824,8 +823,7 @@ public class ProjectWrapper {
       return new File(path).getCanonicalPath();
     }
     catch (IOException e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -852,7 +850,12 @@ public class ProjectWrapper {
     myProjectSnapshot =
               myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
-    dependencyMapping = new Mappings(getMapDir());
+    try {
+      dependencyMapping = new Mappings(getMapDir());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     backendCallback = dependencyMapping.getCallback();
 
     for (Module m : myProject.getModules().values()) {
@@ -908,7 +911,12 @@ public class ProjectWrapper {
 
     RW.readMany(r, RW.myStringReader, affectedFiles);
 
-    dependencyMapping = new Mappings(getMapDir(), r);
+    try {
+      dependencyMapping = new Mappings(getMapDir());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     backendCallback = dependencyMapping.getCallback();
   }
 
@@ -944,8 +952,6 @@ public class ProjectWrapper {
     RW.writeln(w, getModules());
 
     RW.writeln(w, affectedFiles, RW.fromString);
-
-    dependencyMapping.write(w);
   }
 
   private String getProjectSnapshotFileName() {
@@ -962,13 +968,9 @@ public class ProjectWrapper {
 
       return w;
     }
-    catch (FileNotFoundException e) {
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-
-    return null;
   }
 
   private void saveSnapshot() {
@@ -982,7 +984,7 @@ public class ProjectWrapper {
       bw.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -1067,7 +1069,6 @@ public class ProjectWrapper {
                                  final Set<String> removed,
                                  final Flags flags) {
       final Collection<String> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
-      final Set<String> safeFiles = new HashSet<String>();
 
       if (outdated != null) {
         for (String s : outdated) {
@@ -1075,24 +1076,6 @@ public class ProjectWrapper {
         }
 
         filesToCompile.addAll(outdated);
-
-        for (String f : outdated) {
-          if (f.endsWith(".form")) {
-            final String sourceFileName = dependencyMapping.getJavaByForm(f);
-
-            if (sourceFileName != null && !filesToCompile.contains(sourceFileName)) {
-              safeFiles.add(sourceFileName);
-              filesToCompile.add(sourceFileName);
-            }
-          }
-          else if (f.endsWith(".java")) {
-            final String formFileName = dependencyMapping.getFormByJava(f);
-
-            if (formFileName != null) {
-              filesToCompile.add(formFileName);
-            }
-          }
-        }
       }
 
       filesToCompile.removeAll(compiledFiles);
@@ -1173,7 +1156,7 @@ public class ProjectWrapper {
 
           final Collection<File> affected = new HashSet<File>();
 
-          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected, safeFiles);
+          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected);
 
           for (File a : affected) {
             affectedFiles.add(FileUtil.toSystemIndependentName(a.getAbsolutePath()));

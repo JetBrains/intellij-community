@@ -48,6 +48,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
   private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
   @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
+  @NonNls private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
   private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<JavaSdkVersion, String[]>(JavaSdkVersion.class);
 
   static {
@@ -213,8 +214,9 @@ public class JavaSdkImpl extends JavaSdk {
 
   @NotNull
   private static String getVersionNumber(@NotNull String versionString) {
-    if (versionString.startsWith(JAVA_VERSION_PREFIX)) {
-      versionString = versionString.substring(JAVA_VERSION_PREFIX.length());
+    if (versionString.startsWith(JAVA_VERSION_PREFIX) || versionString.startsWith(OPENJDK_VERSION_PREFIX)) {
+      boolean openJdk = versionString.startsWith(OPENJDK_VERSION_PREFIX); 
+      versionString = versionString.substring(openJdk ? OPENJDK_VERSION_PREFIX.length() : JAVA_VERSION_PREFIX.length());
       if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
         versionString = versionString.substring(1, versionString.length() - 1);
       }
@@ -440,11 +442,21 @@ public class JavaSdkImpl extends JavaSdk {
 
     File[] jarDirs;
     if(SystemInfo.isMac && /*!ApplicationManager.getApplication().isUnitTestMode()) &&*/ !file.getName().startsWith("mockJDK")){
-      File libFile = new File(file, "lib");
-      @NonNls File classesFile = new File(file, "../Classes");
-      @NonNls File libExtFile = new File(libFile, "ext");
-      @NonNls File libEndorsedFile = new File(libFile, "endorsed");
-      jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
+      final File openJdkRtJar = new File(new File(new File(file, "jre"), "lib"), "rt.jar");
+      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
+        // openjdk
+        File libFile = new File(file, "lib");
+        @NonNls File classesFile = openJdkRtJar.getParentFile();
+        @NonNls File libExtFile = new File(openJdkRtJar.getParentFile(), "ext");
+        @NonNls File libEndorsedFile = new File(libFile, "endorsed");
+        jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
+      } else {
+        File libFile = new File(file, "lib");
+        @NonNls File classesFile = new File(file, "../Classes");
+        @NonNls File libExtFile = new File(libFile, "ext");
+        @NonNls File libEndorsedFile = new File(libFile, "endorsed");
+        jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
+      }
     }
     else{
       @NonNls final String jre = "jre";
@@ -481,18 +493,6 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
     
-    if (SystemInfo.isMac) {
-      final File openJdkRtJar = new File(new File(new File(file, "jre"), "lib"), "rt.jar");
-      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
-        String url =
-          JarFileSystem.PROTOCOL_PREFIX + openJdkRtJar.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-        VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-        if (vFile != null){
-          result.add(vFile);
-        }
-      }
-    }
-
     @NonNls File classesZipFile = new File(new File(file, "lib"), "classes.zip");
     if(!classesZipFile.isDirectory() && classesZipFile.exists()){
       String url =

@@ -16,17 +16,15 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.StringTokenizer;
 
 public class PathUtil {
   private PathUtil() {
@@ -73,36 +71,7 @@ public class PathUtil {
   }
 
   public static String getCanonicalPath(@NonNls String path) {
-    if (path == null || path.length() == 0) {
-      return path;
-    }
-    path = path.replace(File.separatorChar, '/');
-    final StringTokenizer tok = new StringTokenizer(path, "/");
-    final Stack<String> stack = new Stack<String>();
-    while (tok.hasMoreTokens()) {
-      final String token = tok.nextToken();
-      if ("..".equals(token)) {
-        if (stack.isEmpty()) {
-          return null;
-        }
-        stack.pop();
-      }
-      else if (token.length() != 0 && !".".equals(token)) {
-        stack.push(token);
-      }
-    }
-    final StringBuilder result = new StringBuilder(path.length());
-    if (path.charAt(0) == '/') {
-      result.append("/");
-    }
-    for (int i = 0; i < stack.size(); i++) {
-      String str = stack.get(i);
-      if (i > 0) {
-        result.append('/');
-      }
-      result.append(str);
-    }
-    return result.toString();
+    return FileUtil.toCanonicalPath(path);
   }
 
   @NotNull

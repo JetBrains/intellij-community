@@ -111,15 +111,16 @@ public class DetailsLoaderImpl implements DetailsLoader {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      synchronized (myLock) {
-        for (VirtualFile file : myAccesses.keySet()) {
-          final LowLevelAccess access = myAccesses.get(file);
-          try {
-            myRefs.put(file, access.getRefs());
+      for (VirtualFile file : myAccesses.keySet()) {
+        final LowLevelAccess access = myAccesses.get(file);
+        try {
+          final SymbolicRefs refs = access.getRefs();
+          synchronized (myLock) {
+            myRefs.put(file, refs);
           }
-          catch (VcsException e) {
-            LOG.info(e);
-          }
+        }
+        catch (VcsException e) {
+          LOG.info(e);
         }
       }
     }

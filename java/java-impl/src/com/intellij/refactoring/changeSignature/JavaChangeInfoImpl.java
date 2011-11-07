@@ -384,6 +384,10 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     return toRemoveParm;
   }
 
+  protected boolean checkMethodEquality() {
+    return true;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -406,7 +410,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     if (retainsVarargs != that.retainsVarargs) return false;
     if (wasVararg != that.wasVararg) return false;
     if (!Arrays.equals(defaultValues, that.defaultValues)) return false;
-    if (!method.equals(that.method)) return false;
+    if (checkMethodEquality() && !method.equals(that.method)) return false;
     if (!Arrays.equals(newExceptions, that.newExceptions)) return false;
     if (!newName.equals(that.newName)) return false;
     if (newNameIdentifier != null ? !newNameIdentifier.equals(that.newNameIdentifier) : that.newNameIdentifier != null) return false;
@@ -427,7 +431,9 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
   @Override
   public int hashCode() {
     int result = newVisibility != null ? newVisibility.hashCode() : 0;
-    result = 31 * result + method.hashCode();
+    if (checkMethodEquality()) {
+      result = 31 * result + method.hashCode();
+    }
     result = 31 * result + oldName.hashCode();
     result = 31 * result +(oldType != null ? oldType.hashCode() : 0);
     result = 31 * result + Arrays.hashCode(oldParameterNames);

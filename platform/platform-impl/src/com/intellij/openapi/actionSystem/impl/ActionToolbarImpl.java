@@ -163,7 +163,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private boolean doMacEnhancementsForMainToolbar() {
-    return UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace);
+    return (UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace)) 
+           || ActionPlaces.NAVIGATION_BAR.equals(myPlace);
   }
 
   @Override
@@ -189,6 +190,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   protected void paintComponent(final Graphics g) {
+    if (ActionPlaces.NAVIGATION_BAR.equals(myPlace)) {
+      final Dimension size = getSize();
+      g.setColor(UIUtil.getBorderColor());
+      g.drawLine(0, size.height - 2, size.width, size.height - 2);
+      return;
+    }
     if (doMacEnhancementsForMainToolbar()) {
       final Rectangle r = getBounds();
       UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
@@ -236,11 +243,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
-      mySecondaryActionsButton = new SecondaryButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, DEFAULT_MINIMUM_BUTTON_SIZE);
+      mySecondaryActionsButton = new SecondaryButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
       mySecondaryActionsButton.setNoIconsInPopup(true);
       add(mySecondaryActionsButton);
     }
   }
+  
+  private Dimension getMinimumButtonSize() {
+    return ActionPlaces.NAVIGATION_BAR.equals(myPlace) ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
+  } 
 
   public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
@@ -1159,10 +1170,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);
     } else {
-      setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
+      if (ActionPlaces.NAVIGATION_BAR.equals(myPlace)) {
+        setMinimumButtonSize(NAVBAR_MINIMUM_BUTTON_SIZE);
+        setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
+        setOpaque(true);
+      } else {
+        setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        setOpaque(true);
+      }
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
-      setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      setOpaque(true);
     }
 
     updateActions(false, false, true);

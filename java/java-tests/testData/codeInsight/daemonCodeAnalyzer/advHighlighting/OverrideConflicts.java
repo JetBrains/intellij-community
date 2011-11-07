@@ -90,3 +90,17 @@ interface InterfaceOverridesObject {
     Object clone() throws java.io.IOException;
 }
 
+////////////multiple interface inheritance///////
+class sqlExcept extends Exception {}
+class sqlInheritorException extends sqlExcept {}
+class timeoutEx extends Exception{}
+
+interface AMultiple {
+  void m() throws java.io.IOException, sqlInheritorException;
+}
+
+interface BMultiple {
+  void m() throws java.io.EOFException, sqlExcept, timeoutEx;
+}
+
+interface DMultiple extends AMultiple, BMultiple {}

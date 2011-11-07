@@ -39,7 +39,7 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
   @Override
   public TextWithImports getEditorText(PsiElement elementAtCaret) {
     String result = "";
-    PsiElement element = findExpressionInner(elementAtCaret, false);
+    PsiElement element = findExpressionInner(elementAtCaret, true);
     if (element != null) {
       if (element instanceof GrReferenceExpression) {
         final GrReferenceExpression reference = (GrReferenceExpression)element;

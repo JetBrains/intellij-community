@@ -6,7 +6,6 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Pair;
@@ -126,7 +125,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     final FindModel copy = new FindModel();
     copy.copyFrom(findModel);
 
-    final ModalityState modalityState = ModalityState.current();
     Runnable request = new Runnable() {
       @Override
       public void run() {
@@ -176,9 +174,15 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = null;
     try {
-      result = FindUtil.doReplace(editor.getProject(), editor.getDocument(), findModel, new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
-                         FindManager.getInstance(editor.getProject()).getStringToReplace(editor.getDocument().getText(range), findModel),
-                         true, new ArrayList<Pair<TextRange, String>>());
+      FindManager findManager = FindManager.getInstance(editor.getProject());
+      String stringToReplace = findManager.getStringToReplace(editor.getDocument().getText(range), findModel);
+      result = FindUtil.doReplace(editor.getProject(),
+                                  editor.getDocument(),
+                                  findModel,
+                                  new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
+                                  stringToReplace,
+                                  true,
+                                  new ArrayList<Pair<TextRange, String>>());
     }
     catch (FindManager.MalformedReplacementStringException e) {
       /**/
@@ -200,15 +204,13 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
       final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
 
-      int offset = 0;
-      if (selectionModel.getSelectedText() != null) {
-        if (!mySearchResults.getFindModel().isGlobal()) {
-          offset = selectionModel.getSelectionStart();
-        }
-      } else {
+      final int offset;
+      if ((!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) || copy.isGlobal()) {
         copy.setGlobal(true);
+        offset = 0;
+      } else {
+        offset = selectionModel.getBlockSelectionStarts()[0];
       }
-
       FindUtil.replace(e.getProject(), e, offset, copy, this);
 
       if (myReplaceListener != null) {

@@ -3,8 +3,7 @@ package org.jetbrains.ether.dependencyView;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +12,7 @@ import java.io.BufferedWriter;
  * Time: 17:57
  * To change this template use File | Settings | File Templates.
  */
-abstract class Proto implements RW.Writable {
+class Proto implements RW.Savable {
   public final int access;
   public final DependencyContext.S signature;
   public final DependencyContext.S name;
@@ -24,16 +23,27 @@ abstract class Proto implements RW.Writable {
     this.name = name;
   }
 
-  protected Proto(final DependencyContext context, final BufferedReader r) {
-    access = RW.readInt(r);
-    signature = new DependencyContext.S(r);
-    name = new DependencyContext.S(r);
+  protected Proto(final DataInput in) {
+    try {
+      access = in.readInt();
+      signature = new DependencyContext.S(in);
+      name = new DependencyContext.S(in);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public void write(final BufferedWriter w) {
-    RW.writeln(w, Integer.toString(access));
-    RW.writeln(w, signature.toString());
-    RW.writeln(w, name.toString());
+  @Override
+  public void save(final DataOutput out) {
+    try {
+      out.writeInt(access);
+      signature.save(out);
+      name.save(out);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public Difference difference(final Proto past) {

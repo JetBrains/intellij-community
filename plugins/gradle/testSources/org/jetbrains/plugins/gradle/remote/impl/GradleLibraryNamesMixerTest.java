@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.GradleLibrary;
-import org.jetbrains.plugins.gradle.importing.model.LibraryPathType;
+import org.jetbrains.plugins.gradle.model.GradleLibrary;
+import org.jetbrains.plugins.gradle.model.LibraryPathType;
 import org.junit.Before;
 import org.junit.Test;
 

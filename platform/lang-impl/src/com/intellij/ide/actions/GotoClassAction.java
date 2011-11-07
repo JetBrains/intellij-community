@@ -27,6 +27,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -62,12 +64,18 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        if (element instanceof PsiElement) {
-          final PsiElement psiElement = getElement(((PsiElement)element), popup);
-          NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+        AccessToken token = ReadAction.start();
+        try {
+          if (element instanceof PsiElement) {
+            final PsiElement psiElement = getElement(((PsiElement)element), popup);
+            NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+          }
+          else {
+            EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
+          }
         }
-        else {
-          EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
+        finally {
+          token.finish();
         }
       }
     }, "Classes matching pattern");

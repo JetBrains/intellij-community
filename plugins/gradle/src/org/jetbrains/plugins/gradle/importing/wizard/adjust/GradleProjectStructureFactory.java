@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.*;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;

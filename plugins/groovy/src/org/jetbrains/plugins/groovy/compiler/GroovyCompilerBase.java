@@ -68,7 +68,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -110,6 +109,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     final JavaParameters parameters = new JavaParameters();
     final PathsList classPathBuilder = parameters.getClassPath();
 
+    // IMPORTANT: must be the first entry to avoid collisions
+    classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
+
     final ModuleChunk chunk = createChunk(module, compileContext);
 
     final Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module);
@@ -123,8 +125,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (tests) {
       appendOutputPath(module, classPathBuilder, true);
     }
-
-    classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
 
     final List<String> patchers = new SmartList<String>();
 

@@ -43,6 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -108,10 +110,8 @@ public class CompleteReferenceExpression {
       if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
 
-        if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
-          processIfJavaLangClass(refExpr, processor, qualifier.getType());
-        }
-        else if (qualifier instanceof GrThisReferenceExpression) {
+        if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
+            qualifier instanceof GrThisReferenceExpression) {
           processIfJavaLangClass(refExpr, processor, qualifier.getType());
         }
       }
@@ -342,6 +342,7 @@ public class CompleteReferenceExpression {
     private final PsiClass myEventListener;
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
+    private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -378,13 +379,22 @@ public class CompleteReferenceExpression {
         return;
       }
 
-      final GroovyResolveResult result = (GroovyResolveResult)o;
+      GroovyResolveResult result = (GroovyResolveResult)o;
       if (!result.isStaticsOK() || !result.isAccessible()) return;
       if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
-      final PsiElement element = result.getElement();
+      PsiElement element = result.getElement();
       if (element instanceof PsiVariable && !myMatcher.prefixMatches(((PsiVariable)element).getName())) {
         return;
+      }
+
+      if (element instanceof GrReflectedMethod) {
+        element = ((GrReflectedMethod)element).getBaseMethod();
+        if (!myProcessedMethodWithOptionalParams.add((GrMethod)element)) return;
+
+        result = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(),
+                                             result.getSubstitutor(), result.isAccessible(), result.isStaticsOK(),
+                                             result.isInvokedOnProperty());
       }
 
       addCandidate(result);
@@ -397,7 +407,7 @@ public class CompleteReferenceExpression {
           processPropertyFromField((GrField)element, result);
         }
       }
-      else if (element instanceof GrVariable && ((GrVariable)element).getName() != null) {
+      else if (element instanceof GrVariable) {
         myLocalVars.add(((GrVariable)element).getName());
       }
     }

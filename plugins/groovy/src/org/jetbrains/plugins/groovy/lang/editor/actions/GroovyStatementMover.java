@@ -146,6 +146,16 @@ public class GroovyStatementMover extends StatementUpDownMover {
             addRange(new LineRange(lBrace).endLine);
           }
           addChildRanges(((GrCodeBlock)element).getStatements());
+          final PsiElement rBrace = ((GrCodeBlock)element).getRBrace();
+          if (nlsAfter(rBrace)) {
+            assert rBrace != null;
+            final int endLine = new LineRange(rBrace).endLine;
+            if (lastStart >= 0) {
+              for (int i = lastStart + 1; i < endLine; i++) {
+                addRange(i);
+              }
+            }
+          }
         }
         else if (stmtLevel && element instanceof GrCaseSection) {
           final GrCaseLabel label = ((GrCaseSection)element).getCaseLabel();

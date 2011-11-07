@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,20 @@ import java.util.StringTokenizer;
 /**
  * @author yole
  */
-public class XmlElementSignatureProvider extends ElementSignatureProvider {
+public class XmlElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider");
 
-  public String getSignature(PsiElement element) {
+  public String getSignature(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       PsiElement parent = tag.getParent();
 
       StringBuilder buffer = new StringBuilder();
-      buffer.append("tag#");
+      buffer.append("tag").append(ELEMENT_TOKENS_SEPARATOR);
       String name = tag.getName();
       buffer.append(name.length() == 0 ? "<unnamed>" : name);
 
-      buffer.append("#");
+      buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(getChildIndex(tag, parent, name, XmlTag.class));
 
       if (parent instanceof XmlTag) {

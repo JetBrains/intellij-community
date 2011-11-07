@@ -22,20 +22,19 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public class AstAwareResourceLoader implements GroovyResourceLoader {
-  final Map myClass2File;
+  final Map<String, File> myClass2File;
 
-  AstAwareResourceLoader() {
-    myClass2File = Collections.synchronizedMap(new HashMap());
+  AstAwareResourceLoader(Map<String, File> class2File) {
+    myClass2File = Collections.synchronizedMap(class2File);
   }
 
   public URL loadGroovySource(String className) throws MalformedURLException {
     if (className == null) return null;
 
-    File file = (File)myClass2File.get(className);
+    File file = getSourceFile(className);
     if (file != null) {
       return file.toURL();
     }
@@ -46,5 +45,9 @@ public class AstAwareResourceLoader implements GroovyResourceLoader {
     }
 
     return null;
+  }
+
+  File getSourceFile(String className) {
+    return myClass2File.get(className.replace('$', '.'));
   }
 }

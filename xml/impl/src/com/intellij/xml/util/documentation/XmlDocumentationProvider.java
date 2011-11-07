@@ -365,6 +365,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         }
       }
 
+      if (object == null) return null;
       try {
         @NonNls StringBuffer tagText = new StringBuffer(object.toString());
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());

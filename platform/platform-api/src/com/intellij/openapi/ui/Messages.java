@@ -103,14 +103,14 @@ public class Messages {
   /**
    * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
    */
-  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
   }
 
   /**
    * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
    */
-  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon,
+  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -464,7 +464,7 @@ public class Messages {
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
-  public static int showYesNoCancelDialog(Project project, String message, String title, String yes, String no, String cancel, Icon icon) {
+  public static int showYesNoCancelDialog(Project project, String message, String title, String yes, String no, String cancel, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel,
                                                WindowManager.getInstance().suggestParentWindow(project), null);

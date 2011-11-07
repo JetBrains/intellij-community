@@ -3,6 +3,7 @@ package org.jetbrains.jps.idea
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
+import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author max
@@ -101,11 +102,11 @@ public class IdeaProjectLoader {
     loadProjectJdkAndOutput(root)
     loadCompilerConfiguration(root)
     loadProjectFileEncodings(root)
-    loadModules(getComponent(root, "ProjectModuleManager"))
+    loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
+    loadModules(getComponent(root, "ProjectModuleManager"))
     loadArtifacts(getComponent(root, "ArtifactManager"))
     loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
-    loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
   }
 
   def loadFromDirectoryBased(File dir) {
@@ -128,23 +129,23 @@ public class IdeaProjectLoader {
     }
     loadWorkspaceConfiguration(new File(dir, "workspace.xml"))
 
-    Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
-    loadModules(modulesXmlRoot.component[0])
-
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
       librariesFolder.eachFile {File file ->
-        if (file.isFile()) {
+        if (isXmlFile(file)) {
           Node librariesComponent = new XmlParser(false, false).parse(file)
           loadProjectLibraries(librariesComponent)
         }
       }
     }
 
+    Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
+    loadModules(modulesXmlRoot.component[0])
+
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
       artifactsFolder.eachFile {File file ->
-        if (file.isFile()) {
+        if (isXmlFile(file)) {
           def artifactsComponent = new XmlParser(false, false).parse(file)
           loadArtifacts(artifactsComponent)
         }
@@ -154,12 +155,16 @@ public class IdeaProjectLoader {
     def runConfFolder = new File(dir, "runConfigurations")
     if (runConfFolder.isDirectory()) {
       runConfFolder.eachFile {File file ->
-        if (file.isFile()) {
+        if (isXmlFile(file)) {
           def runConfManager = new XmlParser(false, false).parse(file);
           loadRunConfigurations(runConfManager);
         }
       }
     }
+  }
+
+  boolean isXmlFile(File file) {
+    return file.isFile() && StringUtil.endsWithIgnoreCase(file.name, ".xml")
   }
 
   private def loadWorkspaceConfiguration(File workspaceFile) {
@@ -315,6 +320,12 @@ public class IdeaProjectLoader {
   private def loadModules(Node modulesComponent) {
     modulesComponent?.modules?.module?.each {Node moduleTag ->
       loadModule(projectMacroExpander.expandMacros(moduleTag.@filepath))
+    }
+    Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
+    project.modules.values().each { module ->
+      Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
+      Collection<String> newExcludes = (allContentRoots - module.contentRoots).findAll { PathUtil.isUnder(myRoots, new File(it)) }
+      module.excludes.addAll(newExcludes)
     }
   }
 

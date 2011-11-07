@@ -152,6 +152,7 @@ public class GitLogUI implements Disposable {
   private final Runnable myRefresh;
   private JViewport myTableViewPort;
   private GitLogUI.MyGotoCommitAction myMyGotoCommitAction;
+  private final Set<VirtualFile> myClearedHighlightingRoots;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -166,6 +167,7 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.addHighlighter(myDescriptionRenderer.myInner.myWorker);
     myCommitsInRepositoryChangesBrowser = new ArrayList<CommitI>();
     myMarked = new HashSet<AbstractHash>();
+    myClearedHighlightingRoots = new HashSet<VirtualFile>();
 
     mySelectionRequestsMerger = new RequestsMerger(new Runnable() {
       @Override
@@ -296,6 +298,7 @@ public class GitLogUI implements Disposable {
         }
 
         myBranchSelectorAction.setSymbolicRefs(myRecalculatedCommon);
+        myBranchSelectorAction.asTextAction();
       }
     };
   }
@@ -844,6 +847,11 @@ public class GitLogUI implements Disposable {
       group.add(myStructureFilterAction.asTextAction());
       group.add(new Separator());
       group.add(myRefreshAction);
+      final CustomShortcutSet refreshShortcut =
+        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myJBTable);
+      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myGraphGutter.getComponent());
+
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
   }
@@ -1129,6 +1137,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBackground(getRowBg(row));
       //setBackground(getLogicBackground(selected, row));
       if (BigTableTableModel.LOADING == value) {
         return;
@@ -1165,7 +1174,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      //setBackground(getLogicBackground(selected, row));
+      setBackground(getRowBg(row));
       if (BigTableTableModel.LOADING == value) {
         if (myShowLoading) {
           append("Loading...");
@@ -1206,9 +1215,10 @@ public class GitLogUI implements Disposable {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myCurrentWidth = 0;
+      final Color bg = isSelected ? UIUtil.getTableSelectionBackground() : getRowBg(row);
       if (value instanceof GitCommit) {
         myPanel.removeAll();
-        myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
+        myPanel.setBackground(bg);
         final GitCommit commit = (GitCommit)value;
 
         final boolean marked = myMarked.contains(commit.getShortHash());
@@ -1243,20 +1253,24 @@ public class GitLogUI implements Disposable {
             addTagIcon(table, value, isSelected, hasFocus, row, column, "HEAD", plus);
           }
 
+          myInner.setBackground(bg);
           return myPanel;
         }
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
           final String tag = commit.getTags().get(0);
           addTagIcon(table, value, isSelected, hasFocus, row, column, tag, tagsSize > 1);
+          myInner.setBackground(bg);
           return myPanel;
         }
         if (marked) {
           myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           myPanel.add(myInner);
+          myInner.setBackground(bg);
           return myPanel;
         }
       }
       myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      myInner.setBackground(bg);
       return myInner;
     }
 
@@ -1329,6 +1343,27 @@ public class GitLogUI implements Disposable {
         }
       }
     }
+  }
+
+  private Color getRowBg(int row) {
+    final int[] selectedRows = myJBTable.getSelectedRows();
+    if (selectedRows != null && selectedRows.length > 0) {
+      for (int selectedRow : selectedRows) {
+        if (selectedRow == row) {
+          return UIUtil.getTableSelectionBackground();
+        }
+      }
+    }
+    if (myClearedHighlightingRoots.isEmpty()) {
+      return myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.getTableBackground();
+    }
+    final CommitI commitAt = myTableModel.getCommitAt(row);
+    if (commitAt.holdsDecoration()) {
+      return UIUtil.getTableBackground();
+    }
+    final VirtualFile virtualFile = commitAt.selectRepository(myRootsUnderVcs);
+    return myClearedHighlightingRoots.contains(virtualFile) ? UIUtil.getTableBackground() :
+           (myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.getTableBackground());
   }
 
   private Color getLogicBackground(final boolean isSelected, final int row) {
@@ -1538,6 +1573,8 @@ public class GitLogUI implements Disposable {
     Color ownThisBranch = new Color(198,255,226);
     Color commonThisBranch = new Color(223,223,255);
     Color stashed = new Color(225,225,225);
+    Color highlighted = new Color(210,255,233);
+    //Color highlighted = new Color(204,255,230);
   }
 
   private class MyCherryPick extends DumbAwareAction {
@@ -1984,6 +2021,7 @@ public class GitLogUI implements Disposable {
             }
           }
         }).setTitle("Show graph for:").
+        setAdText("Press Enter to complete").
         createPopup();
 
       final AnAction ok = new AnAction() {
@@ -2015,7 +2053,7 @@ public class GitLogUI implements Disposable {
 
   public class MyHighlightCurrent extends DumbAwareAction {
     public MyHighlightCurrent() {
-      super("Highlight current");
+      super("Highlight subgraph");
     }
 
     @Override
@@ -2030,10 +2068,16 @@ public class GitLogUI implements Disposable {
       }
       final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
       myTableModel.setHead(root, commitAt.getHash());
+      myClearedHighlightingRoots.remove(root);
+      myJBTable.repaint();
     }
 
     @Override
     public void update(AnActionEvent e) {
+      if (myThereAreFilters) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
       weNeedOneCommitSelected(e);
     }
   }
@@ -2056,14 +2100,14 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myAllHeads;
     private final DumbAwareAction myClearAll;
     private final DumbAwareAction myHead;
-    private final DumbAwareAction myClear;
+    //private final DumbAwareAction myClear;
 //    private final DumbAwareAction myCurrent;
     private final AnAction[] myAnActions;
 
     public MyHighlightActionGroup() {
       super("Highlight...", true);
 
-    myAllHeads = new DumbAwareAction("All Heads") {
+    myAllHeads = new DumbAwareAction("All HEADs subgraphs") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
@@ -2072,30 +2116,42 @@ public class GitLogUI implements Disposable {
           final AbstractHash headHash = symbolicRefs.getHeadHash();
           if (headHash == null) continue;
           myTableModel.setHead(root, headHash);
+          myClearedHighlightingRoots.removeAll(myRootsUnderVcs);
         }
+        myJBTable.repaint();
       }
 
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
-    myClearAll = new DumbAwareAction("Clear All") {
+    myClearAll = new DumbAwareAction("Clear") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
           myTableModel.setDumbHighlighter(root);
         }
+        myClearedHighlightingRoots.addAll(myRootsUnderVcs);
+        myJBTable.repaint();
       }
 
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+        //e.getPresentation().setVisible(myTableModel.getActiveRoots().size() > 1);
       }
     };
-    myHead = new DumbAwareAction("HEAD") {
+    myHead = new DumbAwareAction("HEAD subgraph") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final int[] selectedRows = myJBTable.getSelectedRows();
@@ -2112,14 +2168,20 @@ public class GitLogUI implements Disposable {
         final AbstractHash headHash = symbolicRefs.getHeadHash();
         if (headHash == null) return;
         myTableModel.setHead(root, headHash);
+        myClearedHighlightingRoots.remove(root);
+        myJBTable.repaint();
       }
 
       @Override
       public void update(AnActionEvent e) {
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         weNeedOneCommitSelected(e);
       }
     };
-    myClear = new DumbAwareAction("Clear") {
+    /*myClear = new DumbAwareAction("Clear") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final int[] selectedRows = myJBTable.getSelectedRows();
@@ -2132,13 +2194,19 @@ public class GitLogUI implements Disposable {
         }
         final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
         myTableModel.setDumbHighlighter(root);
+        myClearedHighlightingRoots.add(root);
+        myJBTable.repaint();
       }
 
       @Override
       public void update(AnActionEvent e) {
+        if (myThereAreFilters) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         weNeedOneCommitSelected(e);
       }
-    };
+    };*/
     /*myCurrent = new DumbAwareAction("Current") {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -2160,7 +2228,13 @@ public class GitLogUI implements Disposable {
       }
     };*/
 
-      myAnActions = new AnAction[]{myAllHeads, myClearAll, new Separator(), myHead, myClear};
+      myAnActions = new AnAction[]{myHead, myAllHeads, myClearAll};
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(! myThereAreFilters);
     }
 
     @NotNull
@@ -2326,7 +2400,7 @@ public class GitLogUI implements Disposable {
 
   public class MyGotoCommitAction extends DumbAwareAction {
     public MyGotoCommitAction() {
-      super("Goto commit", "Goto commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/icons/goto.png"));
+      super("Goto Commit", "Goto commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/icons/goto.png"));
     }
 
     @Override
@@ -2382,7 +2456,9 @@ public class GitLogUI implements Disposable {
       } else {
         myJBTable.getSelectionModel().addSelectionInterval(idx, idx);
         final int scrollOffsetTop = myJBTable.getRowHeight() * idx - myTableViewPort.getHeight()/2;
-        myTableViewPort.setViewPosition(new Point(0, scrollOffsetTop));
+        if (scrollOffsetTop > 0) {
+          myTableViewPort.setViewPosition(new Point(0, scrollOffsetTop));
+        }
       }
     }
     

@@ -5,8 +5,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.AbstractGradleDependency;
-import org.jetbrains.plugins.gradle.importing.model.Named;
+import org.jetbrains.plugins.gradle.model.AbstractGradleDependency;
+import org.jetbrains.plugins.gradle.model.Named;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 

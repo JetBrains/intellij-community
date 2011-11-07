@@ -886,6 +886,9 @@
     <localInspection language="JAVA" shortName="NewExceptionWithoutArguments" bundle="com.siyeh.InspectionGadgetsBundle" key="new.exception.without.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NewExceptionWithoutArgumentsInspection"/>
+    <localInspection language="JAVA" shortName="ThrowsRuntimeException" bundle="com.siyeh.InspectionGadgetsBundle" key="throws.runtime.exception.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.errorhandling.ThrowsRuntimeExceptionInspection"/>
 
     <localInspection language="JAVA" suppressId="FinalizeDoesntCallSuperFinalize" shortName="FinalizeCallsSuperFinalize"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="finalize.doesnt.call.super.display.name"

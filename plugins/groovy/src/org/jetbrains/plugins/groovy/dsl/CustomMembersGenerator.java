@@ -154,7 +154,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   
   @SuppressWarnings("unchecked")
   public void method(Map<Object, Object> args) {
-    args.put("type", stringifyType(args.get("type")));
+    String type = stringifyType(args.get("type"));
+    args.put("type", type);
 
     Object namedParams = args.get("namedParams");
     if (namedParams instanceof List) {
@@ -201,6 +202,10 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
     String s = type.toString();
     LOG.assertTrue(!s.startsWith("? extends"), s);
+    LOG.assertTrue(!s.contains("?extends"), s);
+    LOG.assertTrue(!s.contains("<null."), s);
+    LOG.assertTrue(!s.startsWith("null."), s);
+    LOG.assertTrue(!(s.contains(",") && !s.contains("<")), s);
     return s;
   }
 

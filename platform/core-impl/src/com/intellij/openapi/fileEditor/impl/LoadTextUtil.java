@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +57,10 @@ public final class LoadTextUtil {
     int crlfCount = 0;
 
     final int length = buffer.length();
+    final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
+
     for (int src = 0; src < length; src++) {
-      char c = buffer.charAt(src);
+      char c = bufferArray != null ? bufferArray[src]:buffer.charAt(src);
       switch (c) {
         case '\r':
           buffer.put(dst++, '\n');

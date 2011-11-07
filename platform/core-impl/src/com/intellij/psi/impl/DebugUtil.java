@@ -38,17 +38,12 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
@@ -456,11 +451,7 @@ public class DebugUtil {
   }
 
   public static String currentStackTrace() {
-    final Throwable throwable = new Throwable();
-    final StringWriter out = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    throwable.printStackTrace(new PrintWriter(out));
-    return out.toString();
+    return ExceptionUtil.getThrowableText(new Throwable());
   }
 
   public static class IncorrectTreeStructureException extends RuntimeException {

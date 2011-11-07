@@ -2,8 +2,7 @@ package org.jetbrains.ether.dependencyView;
 
 import org.jetbrains.ether.RW;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,6 +12,13 @@ import java.io.BufferedWriter;
  * To change this template use File | Settings | File Templates.
  */
 abstract class ProtoMember extends Proto {
+  private final static int STRING = 0;
+  private final static int NONE = 1;
+  private final static int INTEGER = 2;
+  private final static int LONG = 3;
+  private final static int FLOAT = 4;
+  private final static int DOUBLE = 5;
+
   public final TypeRepr.AbstractType type;
   public final Object value;
 
@@ -30,60 +36,74 @@ abstract class ProtoMember extends Proto {
     this.value = value;
   }
 
-  private static Object readTyped(final BufferedReader r, final String tag) {
-    if (tag.equals("string")) {
-      return RW.readEncodedString(r);
+  private static Object loadTyped(final DataInput in) {
+    try {
+      switch (in.readInt()) {
+        case STRING:
+          return in.readUTF();
+        case NONE:
+          return null;
+        case INTEGER:
+          return in.readInt();
+        case LONG:
+          return in.readLong();
+        case FLOAT:
+          return in.readFloat();
+        case DOUBLE:
+          return in.readDouble();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
 
-    if (tag.equals("none")) {
-      return null;
-    }
-
-    final String val = RW.readString(r);
-
-    if (tag.equals("integer")) return Integer.parseInt(val);
-
-    if (tag.equals("long")) return Long.parseLong(val);
-
-    if (tag.equals("float")) return Float.parseFloat(val);
-
-    if (tag.equals("double")) return Double.parseDouble(val);
+    assert (false);
 
     return null;
   }
 
-  protected ProtoMember(final DependencyContext context, final BufferedReader r) {
-    super(context, r);
-    type = TypeRepr.reader(context).read(r);
-    value = readTyped(r, RW.readString(r));
+  protected ProtoMember(final DependencyContext context, final DataInput in) {
+    super(in);
+    try {
+      type = TypeRepr.externalizer(context).read(in);
+      value = loadTyped(in);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public void write(final BufferedWriter w) {
-    super.write(w);
-    type.write(w);
+  public void save(final DataOutput out) {
+    super.save(out);
+    type.save(out);
 
-    if (value instanceof String) {
-      RW.writeln(w, "string");
-      RW.writeEncodedString(w, (String)value);
+    try {
+      if (value instanceof String) {
+        out.writeInt(STRING);
+        out.writeUTF((String)value);
+      }
+      else if (value instanceof Integer) {
+        out.writeInt(INTEGER);
+        out.writeInt(((Integer)value).intValue());
+      }
+      else if (value instanceof Long) {
+        out.writeInt(LONG);
+        out.writeLong(((Long)value).longValue());
+      }
+      else if (value instanceof Float) {
+        out.writeInt(FLOAT);
+        out.writeFloat(((Float)value).floatValue());
+      }
+      else if (value instanceof Double) {
+        out.writeInt(DOUBLE);
+        out.writeDouble(((Double)value).doubleValue());
+      }
+      else {
+        out.writeInt(NONE);
+      }
     }
-    else if (value instanceof Integer) {
-      RW.writeln(w, "integer");
-      RW.writeln(w, value.toString());
-    }
-    else if (value instanceof Long) {
-      RW.writeln(w, "long");
-      RW.writeln(w, value.toString());
-    }
-    else if (value instanceof Float) {
-      RW.writeln(w, "float");
-      RW.writeln(w, value.toString());
-    }
-    else if (value instanceof Double) {
-      RW.writeln(w, "double");
-      RW.writeln(w, value.toString());
-    }
-    else {
-      RW.writeln(w, "none");
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

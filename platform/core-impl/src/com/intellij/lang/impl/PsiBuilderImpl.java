@@ -59,7 +59,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
+public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, ASTNodeBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
   // function stored in PsiBuilderImpl' user data which called during reparse when merge algorithm is not sure what to merge
@@ -260,7 +260,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public abstract int hc();
   }
 
-  private abstract static class ProductionMarker extends Node {
+  @Override
+  public IElementType getElementType(int lexemIndex) {
+    return lexemIndex < myLexemeCount && lexemIndex >= 0 ? myLexTypes[lexemIndex] : null;
+  }
+
+  public abstract static class ProductionMarker extends Node {
     protected int myLexemeIndex;
     protected WhitespacesAndCommentsBinder myEdgeTokenBinder;
     protected ProductionMarker myParent;
@@ -498,9 +503,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static class TokenNode extends Token implements LighterASTTokenNode {
   }
 
-  private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
+  private static class LazyParseableToken extends Token implements LighterLazyParseableNode, ASTUnparsedNodeMarker {
     private MyTreeStructure myParent;
     private FlyweightCapableTreeStructure<LighterASTNode> myParsed;
+    private int myStartIndex;
+    private int myEndIndex;
 
     @Override
     public void clean() {
@@ -525,6 +532,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       return myParsed;
     }
+
+    public ASTNodeBuilder getBuilder() {
+      return myBuilder;
+    }
+
+    @Override
+    public int getStartLexemIndex() {
+      return myStartIndex;
+    }
+
+    @Override
+    public int getEndLexemIndex() {
+      return myEndIndex;
+    }
+
   }
 
   private static class DoneMarker extends ProductionMarker {
@@ -976,7 +998,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private ASTNode createRootAST(final StartMarker rootMarker) {
     final IElementType type = rootMarker.getTokenType();
-    final ASTNode rootNode = type instanceof IFileElementType ?
+    final ASTNode rootNode = type instanceof ILazyParseableElementType ?
                              ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
     if (myCharTable == null) {
       myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
@@ -1411,9 +1433,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, into, marker.myBuilder);
 
         if (child instanceof StartMarker && ((StartMarker)child).myDoneMarker.myCollapse) {
-          final int start = marker.myBuilder.myLexStarts[child.myLexemeIndex];
-          final int end = marker.myBuilder.myLexStarts[((StartMarker)child).myDoneMarker.myLexemeIndex];
-          insertLeaf(into, start, end, child.getTokenType(), marker.myBuilder);
+          int lastIndex = ((StartMarker)child).myDoneMarker.myLexemeIndex;
+          insertLeaf(into, child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex);
         }
         else {
           ensureCapacity(into);
@@ -1461,22 +1482,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private int insertLeaves(int curToken, int lastIdx, Ref<LighterASTNode[]> into, PsiBuilderImpl builder) {
       lastIdx = Math.min(lastIdx, builder.myLexemeCount);
       while (curToken < lastIdx) {
-        final int start = builder.myLexStarts[curToken];
-        final int end = builder.myLexStarts[curToken + 1];
-        final IElementType type = builder.myLexTypes[curToken];
-        if (start < end || type instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in Python
-          insertLeaf(into, start, end, type, builder);
-        }
+        insertLeaf(into, builder.myLexTypes[curToken], builder, curToken, curToken + 1);
+
         curToken++;
       }
       return curToken;
     }
 
-    private void insertLeaf(Ref<LighterASTNode[]> into, int start, int end, IElementType type, PsiBuilderImpl builder) {
+    private void insertLeaf(Ref<LighterASTNode[]> into, IElementType type, PsiBuilderImpl builder, int startLexemIndex, int endLexemIndex) {
+      final int start = builder.myLexStarts[startLexemIndex];
+      final int end = builder.myLexStarts[endLexemIndex];
+      if (start > end || ((start == end) && !(type instanceof ILeafElementType))) return;
+
       final Token lexeme;
       if (type instanceof ILightLazyParseableElementType) {
         lexeme = myLazyPool.alloc();
-        ((LazyParseableToken)lexeme).myParent = this;
+        LazyParseableToken lazyParseableToken = (LazyParseableToken)lexeme;
+        lazyParseableToken.myParent = this;
+        lazyParseableToken.myStartIndex = startLexemIndex;
+        lazyParseableToken.myEndIndex = endLexemIndex;
       }
       else {
         lexeme = myPool.alloc();

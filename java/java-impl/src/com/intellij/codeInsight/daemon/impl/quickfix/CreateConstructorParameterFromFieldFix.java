@@ -57,7 +57,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   public CreateConstructorParameterFromFieldFix(@NotNull PsiField field) {
     myClass = field.getContainingClass();
     myField = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
-    getFieldsToFix().add(myField);
+    if (myClass != null) {
+      getFieldsToFix().add(myField);
+    }
   }
 
   @Override

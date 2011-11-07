@@ -54,7 +54,7 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class GrLightMethodBuilder extends LightElement implements GrMethod {
-  private String myName;
+  protected String myName;
   private PsiType myReturnType = PsiType.VOID;
   private final GrLightModifierList myModifierList;
   private final GrLightParameterListBuilder myParameterList;
@@ -401,24 +401,28 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return getReturnType();
   }
 
+  protected void copyData(GrLightMethodBuilder dest) {
+    dest.setMethodKind(myMethodKind);
+    dest.setData(myData);
+    dest.setNamedParameters(myNamedParameters);
+    if (getNavigationElement() != this) {
+      dest.setNavigationElement(getNavigationElement());
+    }
+    dest.setBaseIcon(myBaseIcon);
+    dest.setReturnType(myReturnType);
+
+    dest.getModifierList().copyModifiers(this);
+
+    dest.getParameterList().clear();
+    for (GrParameter parameter : myParameterList.getParameters()) {
+      dest.addParameter(parameter);
+    }
+  }
+
   @Override
   public GrLightMethodBuilder copy() {
     GrLightMethodBuilder copy = new GrLightMethodBuilder(myManager, myName);
-    copy.setMethodKind(myMethodKind);
-    copy.setData(myData);
-    copy.setNamedParameters(myNamedParameters);
-    if (getNavigationElement() != this) {
-      copy.setNavigationElement(getNavigationElement());
-    }
-    copy.setBaseIcon(myBaseIcon);
-    copy.setReturnType(myReturnType);
-
-    copy.getModifierList().copyModifiers(this);
-
-    for (GrParameter parameter : myParameterList.getParameters()) {
-      copy.addParameter(parameter);
-    }
-
+    copyData(copy);
     return copy;
   }
 

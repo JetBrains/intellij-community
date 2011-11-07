@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FoldingPolicy {
+  
+  private static final GenericElementSignatureProvider GENERIC_PROVIDER = new GenericElementSignatureProvider();
+  
   private FoldingPolicy() {}
 
   public static boolean isCollapseByDefault(PsiElement element) {
@@ -35,12 +38,12 @@ public class FoldingPolicy {
   }
 
   @Nullable
-  public static String getSignature(PsiElement element) {
+  public static String getSignature(@NotNull PsiElement element) {
     for(ElementSignatureProvider provider: Extensions.getExtensions(ElementSignatureProvider.EP_NAME)) {
       String signature = provider.getSignature(element);
       if (signature != null) return signature;
     }
-    return null;
+    return GENERIC_PROVIDER.getSignature(element);
   }
   
   @Nullable
@@ -66,6 +69,6 @@ public class FoldingPolicy {
       PsiElement result = provider.restoreBySignature(file, signature, processingInfoStorage);
       if (result != null) return result;
     }
-    return null;
+    return GENERIC_PROVIDER.restoreBySignature(file, signature, processingInfoStorage);
   }
 }

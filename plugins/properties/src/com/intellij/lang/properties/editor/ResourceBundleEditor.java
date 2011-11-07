@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -369,14 +369,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     else {
       myBackSlashPressed.remove(propertiesFile);
     }
-    String value = ResourceBundleUtil.fromValueEditorToPropertyValue(text);
     IProperty property = propertiesFile.findPropertyByKey(propertyName);
     try {
       if (property == null) {
-        propertiesFile.addProperty(propertyName, value);
+        propertiesFile.addProperty(propertyName, text);
       }
       else {
-        property.setValue(value);
+        property.setValue(text);
       }
     }
     catch (IncorrectOperationException e) {

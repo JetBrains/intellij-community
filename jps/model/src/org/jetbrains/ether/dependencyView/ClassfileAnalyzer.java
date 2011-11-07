@@ -37,9 +37,10 @@ class ClassfileAnalyzer {
     }
   }
 
-  private static String denullify (final String s) {
-    return s == null ? "" : s;
-  }
+  //private static String denullify (final String s) {
+  //  return s == null ? "" : s;
+  //}
+
   private class ClassCrawler extends EmptyVisitor {
     private class AnnotationRetentionPolicyCrawler implements AnnotationVisitor {
       public void visit(String name, Object value) {
@@ -91,7 +92,7 @@ class ClassfileAnalyzer {
         this.type = type;
         this.target = target;
         annotationTargets.put(type, target);
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(type.className));
+        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, type.className));
       }
 
       private String getMethodDescr(final Object value) {
@@ -235,7 +236,7 @@ class ClassfileAnalyzer {
       }
 
       public void visitClassType(String name) {
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context.get(name)));
+        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(name)));
       }
     };
 
@@ -265,15 +266,15 @@ class ClassfileAnalyzer {
     final Set<ElementType> targets = new HashSet<ElementType>();
     RetentionPolicy policy = null;
 
-    private FoxyMap.CollectionConstructor<ElementType> elementTypeSetConstructor = new FoxyMap.CollectionConstructor<ElementType>() {
-      public Collection<ElementType> create() {
+    private TransientMultiMaplet.CollectionConstructor<ElementType> elementTypeSetConstructor = new TransientMultiMaplet.CollectionConstructor<ElementType>() {
+      public Set<ElementType> create() {
         return new HashSet<ElementType>();
       }
     };
 
     final Map<TypeRepr.ClassType, Set<DependencyContext.S>> annotationArguments = new HashMap<TypeRepr.ClassType, Set<DependencyContext.S>>();
-    final FoxyMap<TypeRepr.ClassType, ElementType> annotationTargets =
-      new FoxyMap<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
+    final TransientMultiMaplet<TypeRepr.ClassType, ElementType> annotationTargets =
+      new TransientMultiMaplet<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
 
     public ClassCrawler(final DependencyContext.S fn) {
       fileName = fn;
@@ -286,10 +287,10 @@ class ClassfileAnalyzer {
     public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> getResult() {
       final ClassRepr repr =
         takeIntoAccount ? new ClassRepr(context, access, sourceFile, fileName, name, context.get(signature), context.get(superClass), interfaces, nestedClasses, fields,
-                                        methods, targets, policy, context.get(denullify(outerClassName.get())), localClassFlag.get()) : null;
+                                        methods, targets, policy, context.get(outerClassName.get()), localClassFlag.get()) : null;
 
       if (repr != null) {
-        repr.updateClassUsages(usages);
+        repr.updateClassUsages(context, usages);
       }
 
       return new Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>>(repr,
@@ -303,21 +304,21 @@ class ClassfileAnalyzer {
 
       access = a;
       name = context.get(n);
-      signature = denullify(sig);
-      superClass = denullify(s);
+      signature = sig;
+      superClass = s;
       interfaces = i;
 
       classNameHolder.set(n);
 
       if (superClass != null) {
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context.get(superClass)));
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassExtendsUsage(context.get(superClass)));
+        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(superClass)));
+        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassExtendsUsage(context, context.get(superClass)));
       }
 
       if (interfaces != null) {
         for (String it : interfaces) {
-          usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context.get(it)));
-          usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassExtendsUsage(context.get(it)));
+          usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(it)));
+          usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassExtendsUsage(context, context.get(it)));
         }
       }
 
@@ -326,11 +327,11 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitEnd() {
-      for (TypeRepr.ClassType type : annotationTargets.keySet()) {
-        final Collection<ElementType> targets = annotationTargets.foxyGet(type);
+      for (TypeRepr.ClassType type : annotationTargets.keyCollection()) {
+        final Collection<ElementType> targets = annotationTargets.get(type);
         final Set<DependencyContext.S> usedArguments = annotationArguments.get(type);
 
-        annotationUsages.add(UsageRepr.createAnnotationUsage(type, usedArguments, targets));
+        annotationUsages.add(UsageRepr.createAnnotationUsage(context, type, usedArguments, targets));
       }
     }
 
@@ -357,7 +358,7 @@ class ClassfileAnalyzer {
     public FieldVisitor visitField(int access, String n, String desc, String signature, Object value) {
       processSignature(signature);
 
-      fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(denullify(signature)), value));
+      fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(signature), value));
 
       return new EmptyVisitor() {
         @Override
@@ -380,7 +381,7 @@ class ClassfileAnalyzer {
       return new EmptyVisitor() {
         @Override
         public void visitEnd() {
-          methods.add(new MethodRepr(context, access, context.get(n), context.get(denullify(signature)), desc, exceptions, defaultValue.get()));
+          methods.add(new MethodRepr(context, access, context.get(n), context.get(signature), desc, exceptions, defaultValue.get()));
         }
 
         @Override
@@ -409,11 +410,11 @@ class ClassfileAnalyzer {
           final TypeRepr.AbstractType element = typ.getDeepElementType();
 
           if (element instanceof TypeRepr.ClassType) {
-            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(((TypeRepr.ClassType)element).className));
-            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassNewUsage(((TypeRepr.ClassType)element).className));
+            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, ((TypeRepr.ClassType)element).className));
+            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassNewUsage(context, ((TypeRepr.ClassType)element).className));
           }
 
-          typ.updateClassUsages(name, usages);
+          typ.updateClassUsages(context, name, usages);
 
           super.visitMultiANewArrayInsn(desc, dims);
         }
@@ -421,14 +422,14 @@ class ClassfileAnalyzer {
         @Override
         public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
           processSignature(signature);
-          TypeRepr.getType(context, context.get(desc)).updateClassUsages(name, usages);
+          TypeRepr.getType(context, context.get(desc)).updateClassUsages(context, name, usages);
           super.visitLocalVariable(n, desc, signature, start, end, index);
         }
 
         @Override
         public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
           if (type != null) {
-            TypeRepr.createClassType(context, context.get(type)).updateClassUsages(name, usages);
+            TypeRepr.createClassType(context, context.get(type)).updateClassUsages(context, name, usages);
           }
 
           super.visitTryCatchBlock(start, end, handler, type);
@@ -439,17 +440,17 @@ class ClassfileAnalyzer {
           final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(context, context.get(type)) : TypeRepr.createClassType(context, context.get(type));
 
           if (opcode == Opcodes.NEW) {
-            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(((TypeRepr.ClassType)typ).className));
-            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassNewUsage(((TypeRepr.ClassType)typ).className));
+            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, ((TypeRepr.ClassType)typ).className));
+            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassNewUsage(context, ((TypeRepr.ClassType)typ).className));
           }
           else if (opcode == Opcodes.ANEWARRAY) {
             if (typ instanceof TypeRepr.ClassType) {
-              usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(((TypeRepr.ClassType)typ).className));
-              usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassNewUsage(((TypeRepr.ClassType)typ).className));
+              usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, ((TypeRepr.ClassType)typ).className));
+              usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassNewUsage(context, ((TypeRepr.ClassType)typ).className));
             }
           }
 
-          typ.updateClassUsages(name, usages);
+          typ.updateClassUsages(context, name, usages);
 
           super.visitTypeInsn(opcode, type);
         }

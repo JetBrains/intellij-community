@@ -39,9 +39,9 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
+import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
-import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -64,7 +64,7 @@ public class IdTableBuilding {
   }
 
   public interface ScanWordProcessor {
-    void run(CharSequence chars, int start, int end);
+    void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
@@ -75,8 +75,12 @@ public class IdTableBuilding {
       final CharSequence chars = inputData.getContentAsText();
       scanWords(new ScanWordProcessor() {
         @Override
-        public void run(final CharSequence chars11, final int start, final int end) {
-          consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+        public void run(final CharSequence chars11, @Nullable char[] charsArray, final int start, final int end) {
+          if (charsArray != null) {
+            consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+          } else {
+            consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+          }
         }
       }, chars, 0, chars.length());
       return consumer.getResult();
@@ -92,7 +96,7 @@ public class IdTableBuilding {
 
       final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
       if (indexPatterns.length > 0) {
-        final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
+        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
         for (IndexPattern indexPattern : indexPatterns) {
           Pattern pattern = indexPattern.getPattern();
           if (pattern != null) {
@@ -315,7 +319,7 @@ public class IdTableBuilding {
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
       if (IndexPatternUtil.getIndexPatternCount() > 0) {
         final CharSequence chars = inputData.getContentAsText();
-        final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
+        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
         EditorHighlighter highlighter;
 
         final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndex.EDITOR_HIGHLIGHTER);
@@ -409,7 +413,7 @@ public class IdTableBuilding {
       }
       if (index - index1 > 100) continue; // Strange limit but we should have some!
 
-      processor.run(chars, index1, index);
+      processor.run(chars, charArray, index1, index);
     }
   }
 

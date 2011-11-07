@@ -152,9 +152,13 @@ public class GraphGutter {
                                         Map<Integer, Set<Integer>> grey,
                                         HashSet<Integer> wireModificationSet) {
       int rowYOffset = yOffset;
-      final int eventWire = myModel.getCorrectedWire(myModel.getCommitAt(event.getCommitIdx()));
+      final CommitI commitAt1 = myModel.getCommitAt(event.getCommitIdx());
+      // fictive wire umber. for the end of the graph
+      final int eventWire = commitAt1 == null ? -1 : myModel.getCorrectedWire(commitAt1);
       for (int i = idxFrom; i < event.getCommitIdx(); i++) {
-        final int commitWire = myModel.getCorrectedWire(myModel.getCommitAt(i));
+        final CommitI commitAt = myModel.getCommitAt(i);
+        if (commitAt == null) continue;
+        final int commitWire = myModel.getCorrectedWire(commitAt);
         for (Integer wire : wires) {
           verticalLine(g, selected, wiresGroups, grey, rowYOffset, i, wire, wireModificationSet, wire == commitWire);
         }

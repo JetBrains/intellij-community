@@ -253,6 +253,7 @@ public class CompositeElement extends TreeElement {
   @Override
   @NotNull
   public char[] textToCharArray() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     int startStamp = myModificationsCount;
 
     final int len = getTextLength();

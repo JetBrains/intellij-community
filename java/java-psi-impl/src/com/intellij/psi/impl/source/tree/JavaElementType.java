@@ -156,14 +156,14 @@ public interface JavaElementType {
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      StatementParser.parseCodeBlockDeep(builder, true);
+      StatementParser.INSTANCE.parseCodeBlockDeep(builder, true);
       return builder.getTreeBuilt().getFirstChildNode();
     }
 
     @Override
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      StatementParser.parseCodeBlockDeep(builder, true);
+      StatementParser.INSTANCE.parseCodeBlockDeep(builder, true);
       return builder.getLightTree();
     }
 
@@ -196,7 +196,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        StatementParser.parseStatements(builder);
+        StatementParser.INSTANCE.parseStatements(builder);
       }
     };
 
@@ -211,7 +211,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        ExpressionParser.parse(builder);
+        ExpressionParser.INSTANCE.parse(builder);
       }
     };
 
@@ -226,7 +226,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+        ReferenceParser.INSTANCE.parseJavaCodeReference(builder, false, true, false, false, false);
       }
     };
 
@@ -241,7 +241,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+        ReferenceParser.INSTANCE.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
                                            ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
       }
     };

@@ -251,6 +251,7 @@ public class HighlightMethodUtil {
         if (aClass.isInterface()) {
           final PsiClass superContainingClass = superMethod.getContainingClass();
           if (superContainingClass != null && !superContainingClass.isInterface()) continue;
+          if (superContainingClass != null && !aClass.isInheritor(superContainingClass, true)) continue;
         }
         PsiClassType exception = checkedExceptions.get(index);
         String message = JavaErrorMessages.message("overridden.method.does.not.throw",
