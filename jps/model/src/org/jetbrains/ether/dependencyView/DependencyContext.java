@@ -1,7 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.ether.RW;
@@ -58,25 +58,15 @@ class DependencyContext {
     enumerator = new PersistentStringEnumerator(file, true);
   }
 
-  static KeyDescriptor<S> descriptorS = new KeyDescriptor<S>() {
+  static KeyDescriptor<S> descriptorS = new InlineKeyDescriptor<S>() {
     @Override
-    public void save(final DataOutput out, final S value) throws IOException {
-      value.save(out);
+    public S fromInt(int n) {
+      return new S(n);
     }
 
     @Override
-    public S read(final DataInput in) throws IOException {
-      return new S(in);
-    }
-
-    @Override
-    public int getHashCode(final S value) {
-      return value.index;
-    }
-
-    @Override
-    public boolean isEqual(final S val1, final S val2) {
-      return val1.index == val2.index;
+    public int toInt(S s) {
+      return s.index;
     }
   };
 

@@ -19,11 +19,9 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,38 +33,16 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
-  private final PersistentHashMap<K, Collection<V>> map;
+  private final PersistentHashMap<K, Collection<V>> myMap;
   private final TransientMultiMaplet.CollectionConstructor<V> constr;
+  private final DataExternalizer<V> myValueExternalizer;
 
   public PersistentMultiMaplet(final File file,
-                               final KeyDescriptor<K> k,
-                               final DataExternalizer<V> v,
+                               final KeyDescriptor<K> keyExternalizer,
+                               final DataExternalizer<V> valueExternalizer,
                                final TransientMultiMaplet.CollectionConstructor<V> c) throws IOException {
-    map = new PersistentHashMap<K, Collection<V>>(file, k, new DataExternalizer<Collection<V>>() {
-      @Override
-      public void save(final DataOutput out, final Collection<V> value) throws IOException {
-        final int size = value.size();
-
-        out.writeInt(size);
-
-        for (V x : value) {
-          v.save(out, x);
-        }
-      }
-
-      @Override
-      public Collection<V> read(final DataInput in) throws IOException {
-        final Collection<V> result = c.create();
-        final int size = in.readInt();
-
-        for (int i = 0; i < size; i++) {
-          result.add(v.read(in));
-        }
-
-        return result;
-      }
-    });
-
+    myValueExternalizer = valueExternalizer;
+    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, c));
     constr = c;
   }
 
@@ -74,7 +50,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public boolean containsKey(final Object key) {
     try {
-      return map.containsMapping((K)key);
+      return myMap.containsMapping((K)key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -84,7 +60,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public Collection<V> get(final Object key) {
     try {
-      return map.get((K)key);
+      return myMap.get((K)key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -94,14 +70,13 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void put(final K key, final Collection<V> value) {
     try {
-      final Collection<V> x = map.get(key);
-
-      if (x == null) {
-        map.put(key, value);
-      }
-      else {
-        x.addAll(value);
-      }
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        public void append(DataOutput out) throws IOException {
+          for (V v : value) {
+            myValueExternalizer.save(out, v);
+          }
+        }
+      });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -110,22 +85,22 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void put(final K key, final V value) {
-    final Collection<V> x = constr.create();
-    x.add(value);
-    put(key, x);
+    put(key, Collections.singleton(value));
   }
 
   @Override
   public void removeFrom(final K key, final V value) {
     try {
-      final Object got = map.get(key);
+      final Collection<V> collection = myMap.get(key);
 
-      if (got != null) {
-        if (got instanceof Collection) {
-          ((Collection)got).remove(value);
-        }
-        else if (got.equals(value)) {
-          map.remove(key);
+      if (collection != null) {
+        if (collection.remove(value)) {
+          if (collection.isEmpty()) {
+            myMap.remove(key);
+          }
+          else {
+            myMap.put(key, collection);
+          }
         }
       }
     }
@@ -137,7 +112,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void remove(final Object key) {
     try {
-      map.remove((K)key);
+      myMap.remove((K)key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -146,16 +121,20 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void putAll(MultiMaplet<K, V> m) {
-    for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
-      remove(e.getKey());
-      put(e.getKey(), e.getValue());
+    try {
+      for (Map.Entry<K, Collection<V>> entry : m.entrySet()) {
+        myMap.put(entry.getKey(), entry.getValue());
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
 
   public Collection<K> keyCollection() {
     try {
-      return map.getAllKeysWithExistingMapping();
+      return myMap.getAllKeysWithExistingMapping();
     }
     catch (IOException e){
       throw new RuntimeException(e);
@@ -165,7 +144,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void close() {
     try {
-      map.close();
+      myMap.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -176,5 +155,32 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   public Set<Map.Entry<K, Collection<V>>> entrySet() {
     assert(false);
     return null;
+  }
+
+  private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
+    private final DataExternalizer<V> myElementExternalizer;
+    private final TransientMultiMaplet.CollectionConstructor<V> myCollectionFactory;
+
+    public CollectionDataExternalizer(DataExternalizer<V> elementExternalizer, TransientMultiMaplet.CollectionConstructor<V> collectionFactory) {
+      myElementExternalizer = elementExternalizer;
+      myCollectionFactory = collectionFactory;
+    }
+
+    @Override
+    public void save(final DataOutput out, final Collection<V> value) throws IOException {
+      for (V x : value) {
+        myElementExternalizer.save(out, x);
+      }
+    }
+
+    @Override
+    public Collection<V> read(final DataInput in) throws IOException {
+      final Collection<V> result = myCollectionFactory.create();
+      final DataInputStream stream = (DataInputStream)in;
+      while (stream.available() > 0) {
+        result.add(myElementExternalizer.read(in));
+      }
+      return result;
+    }
   }
 }
