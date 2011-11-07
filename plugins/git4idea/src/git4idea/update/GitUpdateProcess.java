@@ -61,6 +61,12 @@ public class GitUpdateProcess {
   private boolean myResult;
   private final Map<VirtualFile, GitUpdater> myUpdaters;
   private final Collection<VirtualFile> myRootsToSave;
+  
+  public enum UpdateMethod {
+    MERGE,
+    REBASE,
+    READ_FROM_SETTINGS
+  }
 
   public GitUpdateProcess(@NotNull Project project,
                           @NotNull ProgressIndicator progressIndicator,
@@ -82,7 +88,7 @@ public class GitUpdateProcess {
    * In case of error shows notification and returns false. If update completes without errors, returns true.
    */
   public boolean update() {
-    return update(false);
+    return update(UpdateMethod.READ_FROM_SETTINGS);
   }
 
   /**
@@ -98,8 +104,8 @@ public class GitUpdateProcess {
    * @param forceRebase
    * @return
    */
-  public boolean update(final boolean forceRebase) {
-    LOG.info("update started|" + (forceRebase ? " force rebase" : ""));
+  public boolean update(final UpdateMethod updateMethod) {
+    LOG.info("update started|" + updateMethod);
 
     if (!fetchAndNotify()) {
       return false;
@@ -107,14 +113,14 @@ public class GitUpdateProcess {
 
     GitComplexProcess.Operation updateOperation = new GitComplexProcess.Operation() {
       @Override public void run(ContinuationContext continuationContext) {
-        myResult = updateImpl(forceRebase, continuationContext);
+        myResult = updateImpl(updateMethod, continuationContext);
       }
     };
     GitComplexProcess.execute(myProject, "update", updateOperation);
     return myResult;
   }
 
-  private boolean updateImpl(boolean forceRebase, ContinuationContext context) {
+  private boolean updateImpl(UpdateMethod updateMethod, ContinuationContext context) {
     // define updaters for roots
     // check if update is possible
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) return false;
@@ -122,9 +128,15 @@ public class GitUpdateProcess {
 
     try {
       for (VirtualFile root : myRoots) {
-        final GitUpdater updater = forceRebase
-                                   ? new GitRebaseUpdater(myProject, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles)
-                                   : GitUpdater.getUpdater(myProject, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
+        final GitUpdater updater;
+        if (updateMethod == UpdateMethod.MERGE) {
+          updater = new GitMergeUpdater(myProject, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
+        } else if (updateMethod == UpdateMethod.REBASE) {
+          updater = new GitRebaseUpdater(myProject, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
+        } else {
+          updater = GitUpdater.getUpdater(myProject, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
+        }
+
         if (updater.isUpdateNeeded()) {
           myUpdaters.put(root, updater);
         }
