@@ -32,10 +32,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
@@ -167,6 +164,26 @@ public abstract class MvcFramework {
     }
 
     return null;
+  }
+  
+  @Nullable
+  public VirtualFile findAppRoot(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    PsiFile containingFile = element.getContainingFile().getOriginalFile();
+    VirtualFile file = containingFile.getVirtualFile();
+    if (file == null) return null;
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex();
+
+    VirtualFile root = index.getContentRootForFile(file);
+    if (root == null) return null;
+
+    String appDirName = getApplicationDirectoryName();
+
+    if (root.findChild(appDirName) == null) return null;
+
+    return root;
   }
 
   @Nullable
