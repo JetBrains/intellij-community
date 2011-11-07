@@ -22,6 +22,7 @@ import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -30,9 +31,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -43,7 +47,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +72,7 @@ public class AndroidCompileUtil {
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
+  @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
   private AndroidCompileUtil() {
   }
@@ -183,9 +191,35 @@ public class AndroidCompileUtil {
       }
     });
   }
+  
+  @NotNull
+  private static String getGenModuleName(@NotNull Module module) {
+    // todo: name can be used by another module
+    return GEN_MODULE_PREFIX + module.getName();
+  }
+
+  public static boolean isGenModule(@NotNull Module module) {
+    return module.getName().startsWith(GEN_MODULE_PREFIX);
+  }
+  
+  @Nullable
+  public static Module getBaseModuleByGenModule(@NotNull Module module) {
+    if (isGenModule(module)) {
+      final String baseModuleName = module.getName().substring(GEN_MODULE_PREFIX.length());
+      return ModuleManager.getInstance(module.getProject()).findModuleByName(baseModuleName);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Module getGenModule(@NotNull Module baseModule) {
+    final String genModuleName = getGenModuleName(baseModule);
+    return ModuleManager.getInstance(baseModule.getProject()).findModuleByName(genModuleName);
+  }
 
   public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    
     final File rootFile = new File(path);
     final boolean created;
     if (!rootFile.exists()) {
@@ -195,33 +229,132 @@ public class AndroidCompileUtil {
     else {
       created = false;
     }
-    final Project project = module.getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (project.isDisposed() || module.isDisposed()) {
-          return;
-        }
 
-        final VirtualFile root;
-        if (created) {
-          root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile);
+    final Project project = module.getProject();
+    Module genModule = module;
+
+    final AndroidFacet facet = AndroidFacet.getInstance(genModule);
+
+    if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
+      final VirtualFile oldStyleRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (oldStyleRoot != null) {
+        removeSourceRoot(module, oldStyleRoot);
+      }
+
+      genModule = setUpGenModule(module);
+      if (genModule == null) {
+        return;
+      }
+    }
+
+    if (project.isDisposed() || genModule.isDisposed()) {
+      return;
+    }
+
+    final VirtualFile root;
+    if (created) {
+      root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile);
+    }
+    else {
+      root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
+    }
+    if (root != null) {
+      final ModuleRootManager manager = ModuleRootManager.getInstance(genModule);
+      unexcludeRootIfNeccessary(root, manager);
+      for (VirtualFile existingRoot : manager.getSourceRoots()) {
+        if (existingRoot == root) return;
+      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          addSourceRoot(manager, root);
         }
-        else {
-          root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
+      });
+    }
+  }
+  
+  private static Module setUpGenModule(@NotNull Module libModule) {
+    final ModuleRootManager libRootManager = ModuleRootManager.getInstance(libModule);
+    final Sdk sdk = libRootManager.getSdk();
+
+    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
+      LOG.error("Android SDK is not specified for module " + libModule.getName());
+      return null;
+    }
+
+    final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+    final Sdk jdk = data != null ? data.getJavaSdk() : null;
+
+    if (jdk == null) {
+      LOG.error("Internal Java SDK is not specified for module " + libModule.getName());
+      return null;
+    }
+
+    final Module genModule = findOrCreateGenModule(libModule);
+    
+    final ModifiableRootModel genModel = ModuleRootManager.getInstance(genModule).getModifiableModel();
+    genModel.setSdk(jdk);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        genModel.commit();
+      }
+    });
+    
+
+    if (ArrayUtil.find(libRootManager.getDependencies(), genModule) < 0) {
+      final ModifiableRootModel libModel = libRootManager.getModifiableModel();
+      libModel.addModuleOrderEntry(genModule);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          libModel.commit();
         }
-        if (root != null) {
-          unexcludeRootIfNeccessary(root, manager);
-          for (VirtualFile existingRoot : manager.getSourceRoots()) {
-            if (existingRoot == root) return;
-          }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              addSourceRoot(manager, root);
-            }
-          });
+      });
+    }
+    
+    return genModule;
+  }
+
+  @NotNull
+  private static Module findOrCreateGenModule(Module module) {
+    final String genModuleName = getGenModuleName(module);
+    final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
+    
+    final Module genModule = moduleManager.findModuleByName(genModuleName);
+    if (genModule != null) {
+      return genModule;
+    }
+    
+    final File moduleDir = new File(module.getModuleFilePath()).getParentFile();
+    final String moduleDirPath = FileUtil.toSystemIndependentName(moduleDir.getPath());
+
+    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @Override
+      public Module compute() {
+        return moduleManager.newModule(moduleDirPath + '/' + genModuleName + ModuleFileType.DOT_DEFAULT_EXTENSION,
+                                       StdModuleTypes.JAVA);
+      }
+    });
+  }
+  
+  private static void removeSourceRoot(@NotNull Module module, @NotNull final VirtualFile root) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final ContentEntry contentEntry = findContentEntryForRoot(model, root);
+
+    if (contentEntry != null) {
+      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+        if (sourceFolder.getFile() == root) {
+          contentEntry.removeSourceFolder(sourceFolder);
         }
       }
-    }, project.getDisposed());
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+      }
+    });
   }
 
   public static void addSourceRoot(final ModuleRootManager manager, @NotNull final VirtualFile root) {
@@ -279,39 +412,53 @@ public class AndroidCompileUtil {
   }
 
   public static void generate(GeneratingCompiler compiler, final CompileContext context) {
-    if (context != null) {
-
-      Set<Module> affectedModules = new HashSet<Module>();
-      Collections.addAll(affectedModules, context.getCompileScope().getAffectedModules());
-      List<GeneratingCompiler.GenerationItem> itemsToGenerate = new ArrayList<GeneratingCompiler.GenerationItem>();
-      for (GeneratingCompiler.GenerationItem item : compiler.getGenerationItems(context)) {
-        if (affectedModules.contains(item.getModule())) {
-          itemsToGenerate.add(item);
+    if (context == null) {
+      return;
+    }
+    
+    final Set<Module> affectedModules = new HashSet<Module>();
+    Collections.addAll(affectedModules, context.getCompileScope().getAffectedModules());
+    
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        for (Module module : affectedModules) {
+          final AndroidFacet facet = AndroidFacet.getInstance(module);
+          if (facet != null) {
+            AndroidCompileUtil.createGenModulesAndSourceRoots(facet);
+          }
         }
       }
-
-      GeneratingCompiler.GenerationItem[] items = itemsToGenerate.toArray(new GeneratingCompiler.GenerationItem[itemsToGenerate.size()]);
-
-      final boolean[] run = {true};
-      final VirtualFile[] files = getFilesToCheckReadonlyStatus(items);
-      if (files.length > 0) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                final Project project = context.getProject();
-                run[0] = !project.isDisposed() && ReadonlyStatusHandler.ensureFilesWritable(project, files);
-              }
-            });
-          }
-        }, ModalityState.defaultModalityState());
+    }, ModalityState.defaultModalityState());
+    
+    List<GeneratingCompiler.GenerationItem> itemsToGenerate = new ArrayList<GeneratingCompiler.GenerationItem>();
+    for (GeneratingCompiler.GenerationItem item : compiler.getGenerationItems(context)) {
+      if (affectedModules.contains(item.getModule())) {
+        itemsToGenerate.add(item);
       }
+    }
 
-      if (run[0]) {
-        compiler.generate(context, items, null);
-      }
+    GeneratingCompiler.GenerationItem[] items = itemsToGenerate.toArray(new GeneratingCompiler.GenerationItem[itemsToGenerate.size()]);
+
+    final boolean[] run = {true};
+    final VirtualFile[] files = getFilesToCheckReadonlyStatus(items);
+    if (files.length > 0) {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              final Project project = context.getProject();
+              run[0] = !project.isDisposed() && ReadonlyStatusHandler.ensureFilesWritable(project, files);
+            }
+          });
+        }
+      }, ModalityState.defaultModalityState());
+    }
+
+    if (run[0]) {
+      compiler.generate(context, items, null);
     }
   }
 
@@ -319,7 +466,7 @@ public class AndroidCompileUtil {
     List<VirtualFile> filesToCheck = new ArrayList<VirtualFile>();
     for (GeneratingCompiler.GenerationItem item : items) {
       if (item instanceof AndroidAptCompiler.AptGenerationItem) {
-        final File[] generatedFiles = ((AndroidAptCompiler.AptGenerationItem)item).getGeneratedFiles();
+        final Set<File> generatedFiles = ((AndroidAptCompiler.AptGenerationItem)item).getGeneratedFiles().keySet();
         for (File generatedFile : generatedFiles) {
           if (generatedFile.exists()) {
             VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
@@ -482,5 +629,24 @@ public class AndroidCompileUtil {
 
   public static void setReleaseBuild(@NotNull CompileScope compileScope) {
     compileScope.putUserData(RELEASE_BUILD_KEY, Boolean.TRUE);
+  }
+
+  public static void createGenModulesAndSourceRoots(@NotNull final AndroidFacet facet) {
+    final Module module = facet.getModule();
+
+    String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+    if (sourceRootPath != null) {
+      createSourceRootIfNotExist(sourceRootPath, module);
+    }
+
+    sourceRootPath = facet.getAptGenSourceRootPath();
+    if (sourceRootPath != null) {
+      createSourceRootIfNotExist(sourceRootPath, module);
+    }
+
+    sourceRootPath = facet.getAidlGenSourceRootPath();
+    if (sourceRootPath != null) {
+      createSourceRootIfNotExist(sourceRootPath, module);
+    }
   }
 }

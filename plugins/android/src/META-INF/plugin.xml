@@ -168,6 +168,7 @@
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
     <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
                                      implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
+    <compiler.additionalCompileScopeProvider implementation="org.jetbrains.android.compiler.AndroidAdditionalCompileScopeProvider"/>
   </extensions>
 
   <extensionPoints>

@@ -120,7 +120,6 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
     final String rawDirPath = resourceDirPath + '/' + AndroidConstants.FD_RES_RAW;
 
-    AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
     items.add(new MyGenerationItem(module, sourceFile, sourceRootPath, packageName, rawDirPath, fileIndex.isInTestSourceContent(sourceFile),
                                    sdkLocation, target));
   }
