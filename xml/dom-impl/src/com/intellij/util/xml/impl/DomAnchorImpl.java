@@ -76,7 +76,11 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     StringBuilder diag = new StringBuilder("Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values + "\n");
     for (DomElement value : values) {
       if (value.toString().equals(t.toString())) {
-        diag.append(" hasSame, same=" + (value == t) + ", equal=" + value.equals(t) + ", equal2=" + t.equals(value) + "\n");
+        diag.append(" hasSame, same=" + (value == t) +
+                    ", equal=" + value.equals(t) +
+                    ", equal2=" + t.equals(value) +
+                    ", sameElements=" + (t.getXmlElement() == value.getXmlElement()) +
+                    "\n");
       }
     }
     
@@ -84,12 +88,12 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       diag.append("Parent tag: ").append(parentTag.getName()).append("\n");
       if (t instanceof GenericAttributeValue) {
         for (XmlAttribute attribute : parentTag.getAttributes()) {
-          diag.append("\nattr: ").append(attribute.getName());
+          diag.append(", attr: ").append(attribute.getName());
         }
         diag.append("\n");
       } else {
         for (XmlTag tag : parentTag.getSubTags()) {
-          diag.append("\nsubtag: ").append(tag.getName());
+          diag.append(", subtag: ").append(tag.getName());
         }
         diag.append("\n");
       }
