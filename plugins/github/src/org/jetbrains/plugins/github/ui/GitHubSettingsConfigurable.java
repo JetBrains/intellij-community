@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 
@@ -13,7 +14,6 @@ import javax.swing.*;
  * @author oleg
  */
 public class GitHubSettingsConfigurable implements SearchableConfigurable {
-  public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   private GithubSettingsPanel mySettingsPane;
   private final GithubSettings mySettings;
 
@@ -26,7 +26,7 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return GithubUtil.GITHUB_ICON;
   }
 
   public String getHelpTopic() {

@@ -43,11 +43,10 @@ import java.util.regex.Pattern;
  * @date 9/27/11
  */
 public class GithubCreateGistAction extends DumbAwareAction {
-  public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   private static final Logger LOG = Logger.getInstance(GithubCreateGistAction.class);
 
   protected GithubCreateGistAction() {
-    super("Create Gist...", "Create github gist", ICON);
+    super("Create Gist...", "Create github gist", GithubUtil.GITHUB_ICON);
   }
 
   @Override
