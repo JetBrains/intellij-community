@@ -115,20 +115,14 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
 
   public JComponent createCustomComponent(final Presentation presentation) {
     final ComboBoxButton comboBoxButton = new ComboBoxButton(presentation) {
+      {
+        setSmallVariant(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+      }
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
         final IdeFrame frame = findFrame(this);
         LOG.assertTrue(frame != null);
         frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        final Dimension size = super.getPreferredSize();
-        if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {          
-          return new Dimension(size.width, 21);
-        }
-        return size;
       }
     };
 
@@ -136,10 +130,10 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
       @Override
       protected void paintChildren(Graphics g) {
         super.paintChildren(g);
-        if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
-          g.setColor(UIUtil.getBorderColor());
-          g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1); //fix for navbar
-        }
+        //if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+        //  g.setColor(UIUtil.getBorderColor());
+        //  g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1); //fix for navbar
+        //}
       }
     };
     panel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
