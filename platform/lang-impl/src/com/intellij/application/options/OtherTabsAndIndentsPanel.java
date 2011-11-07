@@ -44,7 +44,6 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.GeneralCodeStylePanel");
 
   private JCheckBox myCbUseSameIndents;
-  private final IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor();
 
   private final Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptionsEditor>();
   private final List<FileTypeIndentOptionsProvider> myIndentOptionsProviders = new ArrayList<FileTypeIndentOptionsProvider>();
@@ -109,19 +108,20 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
 
   private void update() {
     boolean enabled = !myCbUseSameIndents.isSelected();
+    if (myIndentOptionsTabs.getTabCount() <= 0) return;
     if (!enabled && myIndentOptionsTabs.getSelectedIndex() != 0) {
       myIndentOptionsTabs.setSelectedIndex(0);
     }
 
     int index = 0;
     for(IndentOptionsEditor options: myAdditionalIndentOptions.values()) {
-      final boolean tabEnabled = enabled || index == 0;
-      options.setEnabled(tabEnabled);
-      myIndentOptionsTabs.setEnabledAt(index, tabEnabled);
+      options.setEnabled(enabled);
+      myIndentOptionsTabs.setEnabledAt(index, enabled);
       index++;
     }
-    myOtherIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(myIndentOptionsTabs.getTabCount()-1, enabled);
+    if (myIndentOptionsTabs.getTabCount() > 0) {
+      myIndentOptionsTabs.setEnabledAt(myIndentOptionsTabs.getTabCount()-1, enabled);
+    }
   }
 
   private JPanel createTabOptionsPanel() {
@@ -134,8 +134,6 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
       String tabName = ft instanceof LanguageFileType ? ((LanguageFileType)ft).getLanguage().getDisplayName() : ft.getName();
       myIndentOptionsTabs.addTab(tabName, entry.getValue().createPanel());
     }
-
-    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.other"), myOtherIndentOptions.createPanel());
 
     myIndentOptionsTabs.addChangeListener(new ChangeListener() {
       public void stateChanged(final ChangeEvent e) {
@@ -199,13 +197,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
 
   public void apply(CodeStyleSettings settings) {
     settings.USE_SAME_INDENTS = myCbUseSameIndents.isSelected();
-    if (settings.USE_SAME_INDENTS) {
-      IndentOptionsEditor theEditor = findEditorForSameIndents();
-      theEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
-    }
-    else {
-      myOtherIndentOptions.apply(settings, settings.OTHER_INDENT_OPTIONS);
-
+    if (!settings.USE_SAME_INDENTS) {
       for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
         FileType fileType = entry.getKey();
         CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
@@ -219,28 +211,12 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
 
   }
 
-  private IndentOptionsEditor findEditorForSameIndents() {
-    return myAdditionalIndentOptions.isEmpty() ? myOtherIndentOptions : myAdditionalIndentOptions.values().iterator().next();
-  }
-
-
 
   public boolean isModified(CodeStyleSettings settings) {
     if (myCbUseSameIndents.isSelected() != settings.USE_SAME_INDENTS) {
       return true;
     }
-    if (settings.USE_SAME_INDENTS) {
-      final IndentOptionsEditor editor = findEditorForSameIndents();
-      // since the values from the editor will be saved into all options,
-      if (editor.isModified(settings, settings.OTHER_INDENT_OPTIONS)) {
-        return true;
-      }
-    }
-    else {
-      if (myOtherIndentOptions.isModified(settings, settings.OTHER_INDENT_OPTIONS)) {
-        return true;
-      }
-
+    if (!settings.USE_SAME_INDENTS) {
       for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
         FileType fileType = entry.getKey();
         CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
@@ -263,21 +239,12 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   protected void resetImpl(final CodeStyleSettings settings) {
     myCbUseSameIndents.setSelected(settings.USE_SAME_INDENTS);
 
-    myOtherIndentOptions.reset(settings, settings.OTHER_INDENT_OPTIONS);
-
-    boolean first = true;
-    for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
+    for (Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
       final IndentOptionsEditor editor = entry.getValue();
-      if (settings.USE_SAME_INDENTS && first) {
-        first = false;
-        editor.reset(settings, settings.OTHER_INDENT_OPTIONS);
-      }
-      else {
-        FileType type = entry.getKey();
-        CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(type);
-        if (additionalIndentOptions != null) {
-          editor.reset(settings, additionalIndentOptions);
-        }
+      FileType type = entry.getKey();
+      CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(type);
+      if (additionalIndentOptions != null) {
+        editor.reset(settings, additionalIndentOptions);
       }
     }
 
@@ -285,6 +252,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   }
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+    //noinspection NullableProblems
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 
