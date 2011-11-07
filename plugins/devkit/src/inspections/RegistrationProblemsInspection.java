@@ -226,12 +226,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
               .createCreateClassOrInterfaceFix(myXmlFile, implClassName, true, intfClass != null ? intfName : type.myClassName)));
         } else {
-          final PsiClass componentClass = JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(type.myClassName, myScope);
-          if (componentClass != null && !implClass.isInheritor(componentClass, true) && type != ComponentType.APPLICATION) {
-            addProblem(impl,
-                    DevKitBundle.message("inspections.registration.problems.component.should.implement", type.myClassName),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, ImplementOrExtendFix.createFix(componentClass, implClass, myOnTheFly));
-          }
           if (isAbstract(implClass)) {
             addProblem(impl,
                     DevKitBundle.message("inspections.registration.problems.abstract"),
