@@ -93,7 +93,7 @@ public class GroovyBuilder extends Builder {
         JavaBuilder.addTempSourcePathRoot(context, dir);
       }
 
-      // todo cmd.add("-bootclasspath");
+      //todo different outputs in a chunk
       //todo module jdk path
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
         SystemProperties.getJavaHome() + "/bin/java",
