@@ -366,7 +366,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       public void run() {
         GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
         try {
-          if (executor == null) {
+          if (executor == null && isActivated(vfile)) {
             executor = createExecutor(text, vfile, project);
             // executor is not only time-consuming to create, but also takes some PermGenSpace
             // => we can't afford garbage-collecting it together with PsiFile
