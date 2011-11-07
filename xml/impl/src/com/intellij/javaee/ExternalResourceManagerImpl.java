@@ -41,6 +41,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.net.URL;
@@ -429,6 +430,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     fireExternalResourceChanged();
   }
 
+  @TestOnly
   public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
