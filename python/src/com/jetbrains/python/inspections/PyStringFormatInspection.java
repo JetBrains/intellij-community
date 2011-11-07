@@ -102,12 +102,15 @@ public class PyStringFormatInspection extends PyInspection {
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
+          if ("self.__dict__".equals(rightExpression.getText())) return -1;
+
           final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
           if (!(pyElement instanceof PyExpression)) {
             return -1;
           }
-          if (pyElement instanceof PyDictLiteralExpression)
+          if (pyElement instanceof PyDictLiteralExpression) {
             return inspectDict(rightExpression, problemTarget, true);
+          }
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
