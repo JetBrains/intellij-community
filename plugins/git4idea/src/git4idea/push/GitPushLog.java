@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -55,13 +56,15 @@ import java.util.List;
  */
 class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
-  private ChangesBrowser myChangesBrowser;
+  private final Project myProject;
+  private final ChangesBrowser myChangesBrowser;
   private final Tree myTree;
   private final DefaultTreeModel myTreeModel;
   private final CheckedTreeNode myRootNode;
-  Map<GitRepository, Boolean> mySelectedRepositories = new HashMap<GitRepository, Boolean>();
+  private final Map<GitRepository, Boolean> mySelectedRepositories = new HashMap<GitRepository, Boolean>();
 
   GitPushLog(@NotNull Project project) {
+    myProject = project;
     for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
       mySelectedRepositories.put(repository, true);
     }
@@ -70,7 +73,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     myTreeModel = new DefaultTreeModel(myRootNode);
     myTree = new CheckboxTree(new MyTreeCellRenderer(), myRootNode);
     myTree.setRootVisible(false);
-    //myTree.setCellRenderer(new MyTreeCellRenderer());
     TreeUtil.expandAll(myTree);
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -100,34 +102,34 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     add(splitter);
   }
 
-  private static void insertToRootNode(DefaultMutableTreeNode rootNode, List<DefaultMutableTreeNode> nodesForRepositories) {
-    for (DefaultMutableTreeNode node : nodesForRepositories) {
-      rootNode.add(node);
-    }
-  }
-
-  private static List<DefaultMutableTreeNode> createNodesForRepositories(@NotNull GitCommitsByRepoAndBranch commits) {
-    List<DefaultMutableTreeNode> nodes = new ArrayList<DefaultMutableTreeNode>();
+  private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
     for (Map.Entry<GitRepository, GitCommitsByBranch> entry : commits.asMap().entrySet()) {
       GitRepository repository = entry.getKey();
       GitCommitsByBranch commitsByBranch = entry.getValue();
-
-      DefaultMutableTreeNode repoNode = createRepoNode(repository, commitsByBranch);
-      nodes.add(repoNode);
+      createRepoNode(repository, commitsByBranch, myRootNode);
     }
-    return nodes;
   }
 
-  private static DefaultMutableTreeNode createRepoNode(GitRepository repository, GitCommitsByBranch commitsByBranch) {
-    DefaultMutableTreeNode repoNode = new CheckedTreeNode(repository);
+  /**
+   * Creates the node with subnodes for a repository and adds it to the rootNode.
+   * If there is only one repo in the project, doesn't create a node for the repository, and adds subnodes directly to the rootNode.
+   */
+  private void createRepoNode(@NotNull GitRepository repository, @NotNull GitCommitsByBranch commitsByBranch, @NotNull DefaultMutableTreeNode rootNode) {
+    DefaultMutableTreeNode parentNode;
+    if (GitUtil.justOneGitRepository(myProject)) {
+      parentNode = rootNode;
+    } else {
+      parentNode = new CheckedTreeNode(repository);
+      rootNode.add(parentNode);
+    }
+
     for (Map.Entry<GitBranch, List<GitCommit>> entry : commitsByBranch.asMap().entrySet()) {
       DefaultMutableTreeNode branchNode = createBranchNode(entry.getKey(), entry.getValue());
-      repoNode.add(branchNode);
+      parentNode.add(branchNode);
     }
-    return repoNode;
   }
 
-  private static DefaultMutableTreeNode createBranchNode(GitBranch branch, List<GitCommit> commits) {
+  private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull List<GitCommit> commits) {
     DefaultMutableTreeNode branchNode = new CheckedTreeNode(branch);
     for (GitCommit commit : commits) {
       branchNode.add(new DefaultMutableTreeNode(commit));
@@ -155,8 +157,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
-  void setCommits(GitCommitsByRepoAndBranch commits) {
-    insertToRootNode(myRootNode, createNodesForRepositories(commits));
+  void setCommits(@NotNull GitCommitsByRepoAndBranch commits) {
+    createNodes(commits);
     myTreeModel.reload(myRootNode);
     TreeUtil.expandAll(myTree);
     repaint();
