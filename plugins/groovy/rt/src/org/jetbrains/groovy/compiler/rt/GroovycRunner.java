@@ -22,8 +22,7 @@ import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
@@ -448,20 +447,63 @@ public class GroovycRunner {
               throw new RuntimeException("Problem loading class " + name, e);
             }
 
-            if (resourceLoader.getSourceFile(name) != null) {
+            ensureWellFormed(aClass, new HashSet<Class>());
+
+            return aClass;
+          }
+
+          private void ensureWellFormed(Type aClass, Set<Class> visited) throws ClassNotFoundException {
+            if (aClass instanceof Class) {
+              ensureWellFormed((Class)aClass, visited);
+            }
+            else if (aClass instanceof ParameterizedType) {
+              ensureWellFormed(((ParameterizedType)aClass).getOwnerType(), visited);
+              for (Type type : ((ParameterizedType)aClass).getActualTypeArguments()) {
+                ensureWellFormed(type, visited);
+              }
+            }
+            else if (aClass instanceof WildcardType) {
+              for (Type type : ((WildcardType)aClass).getLowerBounds()) {
+                ensureWellFormed(type, visited);
+              }
+              for (Type type : ((WildcardType)aClass).getUpperBounds()) {
+                ensureWellFormed(type, visited);
+              }
+            }
+            else if (aClass instanceof GenericArrayType) {
+              ensureWellFormed(((GenericArrayType)aClass).getGenericComponentType(), visited);
+            }
+          }
+          private void ensureWellFormed(Class aClass, Set<Class> visited) throws ClassNotFoundException {
+            String name = aClass.getName();
+            if (resourceLoader.getSourceFile(name) != null && visited.add(aClass)) {
               try {
                 for (Method method : aClass.getDeclaredMethods()) {
-                  method.getGenericReturnType();
-                  method.getGenericExceptionTypes();
-                  method.getGenericParameterTypes();
+                  ensureWellFormed(method.getGenericReturnType(), visited);
+                  for (Type type : method.getGenericExceptionTypes()) {
+                    ensureWellFormed(type, visited);
+                  }
+                  for (Type type : method.getGenericParameterTypes()) {
+                    ensureWellFormed(type, visited);
+                  }
                 }
 
                 for (Field field : aClass.getDeclaredFields()) {
-                  field.getGenericType();
+                  ensureWellFormed(field.getGenericType(), visited);
                 }
 
-                aClass.getDeclaredClasses();
-                aClass.getDeclaredAnnotations();
+                for (Class inner : aClass.getDeclaredClasses()) {
+                  ensureWellFormed(inner, visited);
+                }
+
+                Type superclass = aClass.getGenericSuperclass();
+                if (superclass != null) {
+                  ensureWellFormed(aClass, visited);
+                }
+
+                for (Type intf : aClass.getGenericInterfaces()) {
+                  ensureWellFormed(intf, visited);
+                }
               }
               catch (LinkageError e) {
                 throw new ClassNotFoundException(name);
@@ -470,8 +512,6 @@ public class GroovycRunner {
                 throw new ClassNotFoundException(name);
               }
             }
-
-            return aClass;
           }
         };
       }
