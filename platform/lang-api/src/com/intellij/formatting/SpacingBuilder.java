@@ -206,6 +206,13 @@ public class SpacingBuilder {
     return new RuleBuilder(before, after);
   }
 
+  public RuleBuilder aroundInside(IElementType token, TokenSet parent) {
+    final TokenSet tokenSet = TokenSet.create(token);
+    RuleCondition before = new RuleCondition(parent, null, tokenSet);
+    RuleCondition after = new RuleCondition(parent, tokenSet, null);
+    return new RuleBuilder(before, after);
+  }
+
   @Nullable
   public Spacing getSpacing(Block parent, Block child1, Block child2) {
     if (!(parent instanceof ASTBlock) || !(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {
