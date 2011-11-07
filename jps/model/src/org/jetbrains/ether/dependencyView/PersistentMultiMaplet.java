@@ -34,23 +34,23 @@ import java.util.Set;
  */
 class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   private final PersistentHashMap<K, Collection<V>> myMap;
-  private final TransientMultiMaplet.CollectionConstructor<V> constr;
   private final DataExternalizer<V> myValueExternalizer;
 
   public PersistentMultiMaplet(final File file,
                                final KeyDescriptor<K> keyExternalizer,
                                final DataExternalizer<V> valueExternalizer,
-                               final TransientMultiMaplet.CollectionConstructor<V> c) throws IOException {
+                               final TransientMultiMaplet.CollectionConstructor<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, c));
-    constr = c;
+    myMap = new PersistentHashMap<K, Collection<V>>(
+      file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory)
+    );
   }
 
-  
+
   @Override
-  public boolean containsKey(final Object key) {
+  public boolean containsKey(final K key) {
     try {
-      return myMap.containsMapping((K)key);
+      return myMap.containsMapping(key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -58,9 +58,9 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
-  public Collection<V> get(final Object key) {
+  public Collection<V> get(final K key) {
     try {
-      return myMap.get((K)key);
+      return myMap.get(key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -89,6 +89,27 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
+  public void removeAll(K key, Collection<V> values) {
+    try {
+      final Collection<V> collection = myMap.get(key);
+
+      if (collection != null) {
+        if (collection.removeAll(values)) {
+          if (collection.isEmpty()) {
+            myMap.remove(key);
+          }
+          else {
+            myMap.put(key, collection);
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public void removeFrom(final K key, final V value) {
     try {
       final Collection<V> collection = myMap.get(key);
@@ -110,9 +131,9 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
-  public void remove(final Object key) {
+  public void remove(final K key) {
     try {
-      myMap.remove((K)key);
+      myMap.remove(key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

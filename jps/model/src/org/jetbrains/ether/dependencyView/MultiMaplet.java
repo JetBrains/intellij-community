@@ -27,13 +27,14 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 interface MultiMaplet<K, V> {
-  boolean containsKey(final Object key);
-  Collection<V> get(final Object key);
+  boolean containsKey(final K key);
+  Collection<V> get(final K key);
   void put(final K key, final V value);
   void put(final K key, final Collection<V> value);
   void putAll(MultiMaplet<K, V> m);
-  void remove(final Object key);
+  void remove(final K key);
   void removeFrom(final K key, final V value);
+  void removeAll(final K key, final Collection<V> value);
   void close();
   Collection<K> keyCollection();
   Set<Map.Entry<K, Collection<V>>> entrySet();
