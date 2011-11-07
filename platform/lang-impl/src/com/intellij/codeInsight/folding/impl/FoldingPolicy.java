@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FoldingPolicy {
+  
+  private static final GenericElementSignatureProvider GENERIC_PROVIDER = new GenericElementSignatureProvider();
+  
   private FoldingPolicy() {}
 
   public static boolean isCollapseByDefault(PsiElement element) {
@@ -40,7 +43,7 @@ public class FoldingPolicy {
       String signature = provider.getSignature(element);
       if (signature != null) return signature;
     }
-    return null;
+    return GENERIC_PROVIDER.getSignature(element);
   }
   
   @Nullable
@@ -66,6 +69,6 @@ public class FoldingPolicy {
       PsiElement result = provider.restoreBySignature(file, signature, processingInfoStorage);
       if (result != null) return result;
     }
-    return null;
+    return GENERIC_PROVIDER.restoreBySignature(file, signature, processingInfoStorage);
   }
 }
