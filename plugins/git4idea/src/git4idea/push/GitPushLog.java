@@ -104,7 +104,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
-    for (GitRepository repository : sortRepos(commits.getRepositories())) {
+    for (GitRepository repository : GitUtil.sortRepositories(commits.getRepositories())) {
       GitCommitsByBranch commitsByBranch = commits.get(repository);
       createRepoNode(repository, commitsByBranch, myRootNode);
     }
@@ -127,16 +127,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       DefaultMutableTreeNode branchNode = createBranchNode(branch, commitsByBranch.get(branch));
       parentNode.add(branchNode);
     }
-  }
-
-  private static List<GitRepository> sortRepos(@NotNull Collection<GitRepository> repositories) {
-    List<GitRepository> repos = new ArrayList<GitRepository>(repositories);
-    Collections.sort(repos, new Comparator<GitRepository>() {
-      @Override public int compare(GitRepository o1, GitRepository o2) {
-        return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-      }
-    });
-    return repos;
   }
 
   private static List<GitBranch> sortBranches(@NotNull Collection<GitBranch> branches) {

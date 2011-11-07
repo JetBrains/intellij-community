@@ -214,7 +214,7 @@ public final class GitPusher {
               exitCode.set(dialog.getExitCode());
             }
           });
-          updateSettings = new UpdateSettings(dialog.updateAll(), getUpdateMethodFromDialogExitCode(exitCode.get()));
+          updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode.get()));
         }
 
         Set<VirtualFile> roots = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
