@@ -201,7 +201,9 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       } else if (userObject instanceof GitRepository) {
         getTextRenderer().append(((GitRepository)userObject).getPresentableUrl());
       } else if (userObject instanceof GitBranch) {
-        getTextRenderer().append(((GitBranch)userObject).getName());
+        GitBranch branch = (GitBranch)userObject;
+        SimpleTextAttributes attrs = branch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        getTextRenderer().append(branch.getName(), attrs);
       }
     }
   }
