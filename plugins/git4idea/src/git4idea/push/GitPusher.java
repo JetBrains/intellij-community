@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
+import git4idea.branch.GitBranchPair;
 import git4idea.commands.GitCommandResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
@@ -65,7 +66,7 @@ public final class GitPusher {
    */
   @NotNull
   public GitCommitsByRepoAndBranch collectCommitsToPush(GitPushSpec pushSpec) {
-    Map<GitRepository, List<GitPushSpec.SourceDest>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpec);
+    Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpec);
     
     Map<GitRepository, GitCommitsByBranch> commitsByRepoAndBranch = new HashMap<GitRepository, GitCommitsByBranch>();
     for (GitRepository repository : myRepositories) {
@@ -77,22 +78,25 @@ public final class GitPusher {
     return new GitCommitsByRepoAndBranch(commitsByRepoAndBranch);
   }
 
-  private Map<GitRepository, List<GitPushSpec.SourceDest>> prepareRepositoriesAndBranchesToPush(GitPushSpec pushSpec) {
-    Map<GitRepository, List<GitPushSpec.SourceDest>> res = new HashMap<GitRepository, List<GitPushSpec.SourceDest>>();
+  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(GitPushSpec pushSpec) {
+    Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
     for (GitRepository repository : myRepositories) {
       res.put(repository, pushSpec.parse(repository));
     }
     return res;
   }
 
-  private GitCommitsByBranch collectsCommitsToPush(GitRepository repository, List<GitPushSpec.SourceDest> sourcesDestinations) {
-    Map<GitBranch, List<GitCommit>> commitsByBranch = new HashMap<GitBranch, List<GitCommit>>();
+  private GitCommitsByBranch collectsCommitsToPush(GitRepository repository, List<GitBranchPair> sourcesDestinations) {
+    Map<GitBranch, GitPushBranchInfo> commitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>();
 
-    for (GitPushSpec.SourceDest sourceDest : sourcesDestinations) {
-      GitReference source = sourceDest.getSource();
-      List<GitCommit> commits = collectCommitsToPush(repository, source.getName(), sourceDest.getDest().getName());
+    for (GitBranchPair sourceDest : sourcesDestinations) {
+      GitBranch source = sourceDest.getBranch();
+      GitBranch dest = sourceDest.getDest();
+      assert dest != null : "Destination branch can't be null here for branch " + source;
+
+      List<GitCommit> commits = collectCommitsToPush(repository, source.getName(), dest.getName());
       if (!commits.isEmpty()) {
-        commitsByBranch.put((GitBranch)source, commits);
+        commitsByBranch.put(source, new GitPushBranchInfo(dest, commits));
       }
       
     }
@@ -555,7 +559,7 @@ public final class GitPusher {
     }
 
     private static int pushedCommitsNum(GitCommitsByBranch commitsByBranch, GitBranch branch) {
-      return commitsByBranch.get(branch).size();
+      return commitsByBranch.get(branch).getCommits().size();
     }
   }
 

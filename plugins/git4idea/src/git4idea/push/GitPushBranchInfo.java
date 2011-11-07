@@ -13,32 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.branch;
+package git4idea.push;
 
 import git4idea.GitBranch;
+import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
- * Holder for Git branch and the branch it is "connected" with. It is tracked branch or so called "matched" branch.
+ * Holds the list of commits and the destination branch (which a branch associated with this GitPushBranchInfo is going to be pushed to).
  *
  * @author Kirill Likhodedov
  */
-public class GitBranchPair {
-  private @NotNull GitBranch myBranch;
-  private @Nullable GitBranch myDestBranch;
+class GitPushBranchInfo {
 
-  public GitBranchPair(@NotNull GitBranch branch, @Nullable GitBranch destination) {
-    myBranch = branch;
-    myDestBranch = destination;
+  private final GitBranch myDestBranch;
+  private final List<GitCommit> myCommits;
+
+  GitPushBranchInfo(@NotNull GitBranch destBranch, @NotNull List<GitCommit> commits) {
+    myCommits = commits;
+    myDestBranch = destBranch;
   }
 
-  public @NotNull GitBranch getBranch() {
-    return myBranch;
-  }
-
-  public @Nullable GitBranch getDest() {
+  @NotNull
+  GitBranch getDestBranch() {
     return myDestBranch;
   }
 
+  @NotNull
+  List<GitCommit> getCommits() {
+    return myCommits;
+  }
 }

@@ -18,7 +18,7 @@ package git4idea.push;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitBranch;
-import git4idea.GitReference;
+import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -64,11 +64,11 @@ public class GitPushSpec {
     return myRefspec;
   }
   
-  List<SourceDest> parse(GitRepository repository) {
+  List<GitBranchPair> parse(GitRepository repository) {
     // TODO - this is only for isSimple() case, fairly parse ref and make for all cases
-    List<SourceDest> sourceDests = new ArrayList<SourceDest>();
+    List<GitBranchPair> sourceDests = new ArrayList<GitBranchPair>();
     for (GitBranch branch : repository.getBranches().getLocalBranches()) {
-      SourceDest forBranch = findSourceDestForBranch(repository, branch);
+      GitBranchPair forBranch = findSourceDestForBranch(repository, branch);
       if (forBranch != null) {
         sourceDests.add(forBranch);
       }
@@ -77,15 +77,15 @@ public class GitPushSpec {
   }
 
   @Nullable
-  private static SourceDest findSourceDestForBranch(GitRepository repository, GitBranch branch) {
+  private static GitBranchPair findSourceDestForBranch(GitRepository repository, GitBranch branch) {
     try {
       GitBranch trackedBranch = branch.tracked(repository.getProject(), repository.getRoot());
       if (trackedBranch != null) {
-        return new SourceDest(branch, trackedBranch);
+        return new GitBranchPair(branch, trackedBranch);
       }
       GitBranch matchingRemoteBranch = findMatchingRemoteBranch(repository, branch);
       if (matchingRemoteBranch != null) {
-        return new SourceDest(branch, matchingRemoteBranch);
+        return new GitBranchPair(branch, matchingRemoteBranch);
       }
     }
     catch (VcsException e) {
@@ -129,21 +129,4 @@ public class GitPushSpec {
     return false;
   }
 
-  static class SourceDest {
-    private final GitReference mySource;
-    private final GitBranch myDest;
-
-    SourceDest(GitReference source, GitBranch dest) {
-      mySource = source;
-      myDest = dest;
-    }
-
-    public GitReference getSource() {
-      return mySource;
-    }
-    
-    public GitBranch getDest() {
-      return myDest;
-    }
-  } 
 }

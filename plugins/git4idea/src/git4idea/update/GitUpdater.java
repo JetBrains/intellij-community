@@ -147,8 +147,8 @@ public abstract class GitUpdater {
   public boolean isUpdateNeeded() throws VcsException {
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     String currentBranch = gitBranchPair.getBranch().getName();
-    assert gitBranchPair.getTracked() != null;
-    String remoteBranch = gitBranchPair.getTracked().getName();
+    assert gitBranchPair.getDest() != null;
+    String remoteBranch = gitBranchPair.getDest().getName();
     if (! hasRemotelyChangedPaths(currentBranch, remoteBranch)) {
       LOG.info("isSaveNeeded No remote changes, save is not needed");
       return false;

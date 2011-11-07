@@ -33,6 +33,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchPair;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -148,9 +149,9 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return sortedBranches;
   }
 
-  private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull List<GitCommit> commits) {
-    DefaultMutableTreeNode branchNode = new CheckedTreeNode(branch);
-    for (GitCommit commit : commits) {
+  private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull GitPushBranchInfo branchInfo) {
+    DefaultMutableTreeNode branchNode = new CheckedTreeNode(new GitBranchPair(branch, branchInfo.getDestBranch()));
+    for (GitCommit commit : branchInfo.getCommits()) {
       branchNode.add(new DefaultMutableTreeNode(commit));
     }
     return branchNode;
@@ -219,12 +220,18 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         renderer.append(commit.getShortHash().toString(), small);
         renderer.append(String.format("%15s  ", DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime())), small);
         renderer.append(commit.getSubject(), small);
-      } else if (userObject instanceof GitRepository) {
+      }
+      else if (userObject instanceof GitRepository) {
         getTextRenderer().append(((GitRepository)userObject).getPresentableUrl());
-      } else if (userObject instanceof GitBranch) {
-        GitBranch branch = (GitBranch)userObject;
-        SimpleTextAttributes attrs = branch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        getTextRenderer().append(branch.getName(), attrs);
+      }
+      else if (userObject instanceof GitBranchPair) {
+        GitBranchPair branchPair = (GitBranchPair) userObject;
+        GitBranch fromBranch = branchPair.getBranch();
+        GitBranch dest = branchPair.getDest();
+        assert dest != null : "Destination branch can't be null for branch " + fromBranch;
+
+        SimpleTextAttributes attrs = fromBranch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        getTextRenderer().append(fromBranch.getName() + " -> " + dest.getName(), attrs);
       }
     }
   }

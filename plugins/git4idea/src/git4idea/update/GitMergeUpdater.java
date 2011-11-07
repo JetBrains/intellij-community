@@ -67,7 +67,7 @@ public class GitMergeUpdater extends GitUpdater {
     final GitMerger merger = new GitMerger(myProject);
     final GitLineHandler mergeHandler = new GitLineHandler(myProject, myRoot, GitCommand.MERGE);
     mergeHandler.addParameters("--no-stat", "-v");
-    mergeHandler.addParameters(myTrackedBranches.get(myRoot).getTracked().getName());
+    mergeHandler.addParameters(myTrackedBranches.get(myRoot).getDest().getName());
 
     final MergeLineListener mergeLineListener = new MergeLineListener();
     mergeHandler.addLineListener(mergeLineListener);
@@ -154,7 +154,7 @@ public class GitMergeUpdater extends GitUpdater {
     // git log --name-status master..origin/master
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     String currentBranch = gitBranchPair.getBranch().getName();
-    String remoteBranch = gitBranchPair.getTracked().getName();
+    String remoteBranch = gitBranchPair.getDest().getName();
     try {
       final Collection<String> remotelyChanged = getRemotelyChangedPaths(currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();

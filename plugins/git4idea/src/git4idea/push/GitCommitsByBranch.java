@@ -16,12 +16,10 @@
 package git4idea.push;
 
 import git4idea.GitBranch;
-import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,29 +29,29 @@ import java.util.Map;
  */
 public class GitCommitsByBranch {
 
-  private final Map<GitBranch, List<GitCommit>> myCommitsByBranch;
+  private final Map<GitBranch, GitPushBranchInfo> myCommitsByBranch;
 
-  GitCommitsByBranch(Map<GitBranch, List<GitCommit>> commitsByBranch) {
+  GitCommitsByBranch(Map<GitBranch, GitPushBranchInfo> commitsByBranch) {
     myCommitsByBranch = commitsByBranch;
   }
 
-  public boolean isEmpty() {
+  boolean isEmpty() {
     return myCommitsByBranch.isEmpty();
   }
 
-  public int commitsNumber() {
+  int commitsNumber() {
     int sum = 0;
-    for (List<GitCommit> commits : myCommitsByBranch.values()) {
-      sum += commits.size();
+    for (GitPushBranchInfo branchInfo : myCommitsByBranch.values()) {
+      sum += branchInfo.getCommits().size();
     }
     return sum;
   }
 
-  public Collection<GitBranch> getBranches() {
+  Collection<GitBranch> getBranches() {
     return myCommitsByBranch.keySet();
   }
 
-  public List<GitCommit> get(GitBranch branch) {
+  GitPushBranchInfo get(GitBranch branch) {
     return myCommitsByBranch.get(branch);
   }
 
@@ -62,7 +60,7 @@ public class GitCommitsByBranch {
    * the original structure).
    */
   public GitCommitsByBranch retain(@NotNull GitBranch branch) {
-    Map<GitBranch, List<GitCommit>> res = new HashMap<GitBranch, List<GitCommit>>();
+    Map<GitBranch, GitPushBranchInfo> res = new HashMap<GitBranch, GitPushBranchInfo>();
     if (myCommitsByBranch.containsKey(branch)) {
       res.put(branch, myCommitsByBranch.get(branch));
     }
