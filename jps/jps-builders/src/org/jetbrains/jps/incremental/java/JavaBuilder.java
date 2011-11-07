@@ -602,7 +602,9 @@ public class JavaBuilder extends Builder{
         }
       }
 
-      myFileObjects.add(fileObject);
+      synchronized (myFileObjects) {
+        myFileObjects.add(fileObject);
+      }
     }
 
     @Nullable
