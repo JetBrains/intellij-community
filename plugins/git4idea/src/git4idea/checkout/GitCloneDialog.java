@@ -140,7 +140,7 @@ public class GitCloneDialog extends DialogWrapper {
 
         if (result.isOK()) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
-                                   GitBundle.getString("clone.test.success"));
+                                   GitBundle.getString("clone.test.connection.title"));
           myTestResult = Boolean.TRUE;
         } else {
           myTestResult = Boolean.FALSE;
