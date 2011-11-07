@@ -33,6 +33,7 @@ public class PyBlock implements ASTBlock {
   private final ASTNode _node;
   private final Wrap _wrap;
   private final CommonCodeStyleSettings mySettings;
+  private final SpacingBuilder mySpacingBuilder;
   private List<PyBlock> _subBlocks = null;
   private Alignment myChildAlignment;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
@@ -58,12 +59,14 @@ public class PyBlock implements ASTBlock {
                  final Alignment alignment,
                  final Indent indent,
                  final Wrap wrap,
-                 final CommonCodeStyleSettings settings) {
+                 final CommonCodeStyleSettings settings,
+                 SpacingBuilder spacingBuilder) {
     _alignment = alignment;
     _indent = indent;
     _node = node;
     _wrap = wrap;
     mySettings = settings;
+    mySpacingBuilder = spacingBuilder;
   }
 
   @NotNull
@@ -186,7 +189,7 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
-    return new PyBlock(child, childAlignment, childIndent, wrap, mySettings);
+    return new PyBlock(child, childAlignment, childIndent, wrap, mySettings, mySpacingBuilder);
   }
 
   private static boolean isEmptyList(PsiElement psi) {
@@ -304,180 +307,7 @@ public class PyBlock implements ASTBlock {
 
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
-    ASTNode childNode1 = ((PyBlock)child1).getNode();
-    ASTNode childNode2 = ((PyBlock)child2).getNode();
-    IElementType parentType = _node.getElementType();
-    IElementType type1 = childNode1.getElementType();
-    IElementType type2 = childNode2.getElementType();
-
-    if (type1 == PyElementTypes.CLASS_DECLARATION) {
-      if ((type2 == PyElementTypes.CLASS_DECLARATION || type2 == PyElementTypes.FUNCTION_DECLARATION) &&
-          parentType instanceof PyFileElementType) {
-        return getBlankLinesForOption(getPySettings().BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS);
-      }
-      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
-    }
-    if (type2 == PyElementTypes.CLASS_DECLARATION && !(parentType instanceof PyFileElementType)) {
-      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
-    }
-    if (type1 == PyElementTypes.FUNCTION_DECLARATION &&
-              (type2 == PyElementTypes.CLASS_DECLARATION || type2 == PyElementTypes.FUNCTION_DECLARATION) &&
-        parentType instanceof PyFileElementType) {
-      return getBlankLinesForOption(getPySettings().BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS);
-    }
-    if (type1 == PyElementTypes.FUNCTION_DECLARATION ||
-        (type2 == PyElementTypes.FUNCTION_DECLARATION && isStatementOrDeclaration(type1))) {
-      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_METHOD);
-    }
-    if (isImportStatement(type1) && (isStatementOrDeclaration(type2) && !isImportStatement(type2))) {
-      return getBlankLinesForOption(mySettings.BLANK_LINES_AFTER_IMPORTS);
-    }
-
-    if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
-      return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
-    }
-
-    if (parentType == PyElementTypes.ANNOTATION) {
-      if (type1 == PyTokenTypes.GT) {
-        return createSpaces(1);
-      }
-      if (type1 == PyTokenTypes.MINUS && type2 == PyTokenTypes.GT) {
-        return createSpaces(0);
-      }
-    }
-    if (parentType == PyElementTypes.FUNCTION_DECLARATION && type2 == PyElementTypes.ANNOTATION) {
-      return createSpaces(1);
-    }
-
-    if (type1 == PyTokenTypes.COLON) {
-      if (type2 == PyElementTypes.STATEMENT_LIST) {
-        return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
-      }
-      if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION || parentType == PyElementTypes.LAMBDA_EXPRESSION) {
-        return getSpacingForOption(getPySettings().SPACE_AFTER_PY_COLON);
-      }
-    }
-    if (type2 == PyTokenTypes.COLON) {
-      return getSpacingForOption(getPySettings().SPACE_BEFORE_PY_COLON);
-    }
-
-    if (type1 == PyTokenTypes.COMMA) {
-      return getSpacingForOption(mySettings.SPACE_AFTER_COMMA);
-    }
-    if (type2 == PyTokenTypes.COMMA) {
-      return getSpacingForOption(mySettings.SPACE_BEFORE_COMMA);
-    }
-    if (type2 == PyTokenTypes.SEMICOLON) {
-      return getSpacingForOption(mySettings.SPACE_BEFORE_SEMICOLON);
-    }
-
-    if (type1 == PyTokenTypes.LPAR || type2 == PyTokenTypes.RPAR) {
-      if (parentType == PyElementTypes.ARGUMENT_LIST) {
-        return getSpacingForOption(mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
-      }
-    }
-    if (type2 == PyTokenTypes.LBRACKET) {
-      return getSpacingForOption(getPySettings().SPACE_BEFORE_LBRACKET);
-    }
-    if (type1 == PyTokenTypes.LBRACKET || type2 == PyTokenTypes.RBRACKET) {
-      return getSpacingForOption(mySettings.SPACE_WITHIN_BRACKETS);
-    }
-    if (type1 == PyTokenTypes.LBRACE || type2 == PyTokenTypes.RBRACE) {
-      return getSpacingForOption(getPySettings().SPACE_WITHIN_BRACES);
-    }
-    if (type2 == PyElementTypes.ARGUMENT_LIST) {
-      return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
-    }
-    if (type2 == PyElementTypes.PARAMETER_LIST && type1 != PyTokenTypes.LAMBDA_KEYWORD) {
-      return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
-    }
-
-    if (type1 == PyTokenTypes.EQ || type2 == PyTokenTypes.EQ) {
-      if (parentType == PyElementTypes.ASSIGNMENT_STATEMENT) {
-        return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
-      }
-      if (parentType == PyElementTypes.NAMED_PARAMETER) {
-        return getSpacingForOption(getPySettings().SPACE_AROUND_EQ_IN_NAMED_PARAMETER);
-      }
-      if (parentType == PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION) {
-        return getSpacingForOption(getPySettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT);
-      }
-    }
-    if (isAround(type1, type2, PyTokenTypes.AUG_ASSIGN_OPERATIONS)) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
-    }
-    if (isAround(type1, type2, PyTokenTypes.ADDITIVE_OPERATIONS) && parentType != PyElementTypes.PREFIX_EXPRESSION) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
-    }
-    if (isAround(type1, type2, PyTokenTypes.MULTIPLICATIVE_OPERATIONS) || type1 == PyTokenTypes.EXP || type2 == PyTokenTypes.EXP) {
-      if (parentType == PyElementTypes.NAMED_PARAMETER ||
-          parentType == PyElementTypes.STAR_ARGUMENT_EXPRESSION ||
-          parentType == PyElementTypes.STAR_EXPRESSION) {
-        return createSpaces(0);
-      }
-      return getSpacingForOption(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
-    }
-    if (isAround(type1, type2, PyTokenTypes.SHIFT_OPERATIONS)) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
-    }
-    if (isAround(type1, type2, PyTokenTypes.BITWISE_OPERATIONS)) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_BITWISE_OPERATORS);
-    }
-    if (isAround(type1, type2, PyTokenTypes.EQUALITY_OPERATIONS)) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_EQUALITY_OPERATORS);
-    }
-    if (isAround(type1, type2, PyTokenTypes.RELATIONAL_OPERATIONS)) {
-      return getSpacingForOption(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
-    }
-
-
-    //if (parentType == PyElementTypes.ARGUMENT_LIST
-    //    || parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
-    //  if (type1 == PyTokenTypes.COMMA && PyElementTypes.EXPRESSIONS.contains(type2)) {
-    //    return Spacing.createSpacing(1, 1, 0, true, Integer.MAX_VALUE);
-    //  }
-    //}
-    //if (PyElementTypes.STATEMENTS.contains(type1)
-    //    && PyElementTypes.STATEMENTS.contains(type2)) {
-    //  return Spacing.createSpacing(1, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
-    //}
-
-    //return new PySpacingProcessor(getNode(), childNode1, childNode2,
-    //        mySettings).getResult();
-    //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
-
-    return null;
-  }
-
-  private static boolean isImportStatement(IElementType type1) {
-    return (type1 == PyElementTypes.IMPORT_STATEMENT || type1 == PyElementTypes.FROM_IMPORT_STATEMENT);
-  }
-
-  private static boolean isAround(IElementType type1, IElementType type2, final TokenSet tokenSet) {
-    return tokenSet.contains(type1) || tokenSet.contains(type2);
-  }
-
-  private PyCodeStyleSettings getPySettings() {
-    return mySettings.getRootSettings().getCustomSettings(PyCodeStyleSettings.class);
-  }
-
-  private Spacing getBlankLinesForOption(final int option) {
-    int blankLines = option + 1;
-    return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-  }
-
-  private Spacing getSpacingForOption(boolean isOptionSet) {
-    return createSpaces(isOptionSet ? 1 : 0);
-  }
-
-  private Spacing createSpaces(int count) {
-    return Spacing.createSpacing(count, count, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-  }
-
-  private static boolean isStatementOrDeclaration(final IElementType type) {
-    return PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens().contains(type) ||
-           type == PyElementTypes.CLASS_DECLARATION ||
-           type == PyElementTypes.FUNCTION_DECLARATION;
+    return mySpacingBuilder.getSpacing(this, child1, child2);
   }
 
   @NotNull

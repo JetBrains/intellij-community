@@ -6,8 +6,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.PyElementTypes.*;
+import static com.jetbrains.python.PyTokenTypes.*;
 
 /**
  * @author yole
@@ -23,11 +30,64 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       printAST(fileNode, 0);
     }
     final PyBlock block =
-      new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, settings.getCommonSettings(PythonLanguage.getInstance()));
+      new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, settings.getCommonSettings(PythonLanguage.getInstance()),
+                  createSpacingBuilder(settings));
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
+  }
+
+  private static SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
+    final IStubFileElementType file = PythonLanguage.getInstance().getFileElementType();
+    final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
+    final TokenSet STATEMENT_OR_DECLARATION = TokenSet.orSet(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(),
+                                                             CLASS_OR_FUNCTION);
+
+    return new SpacingBuilder(settings)
+      .between(IMPORT_STATEMENTS, STATEMENT_OR_DECLARATION.minus(IMPORT_STATEMENTS)).blankLines(settings.BLANK_LINES_AFTER_IMPORTS)
+      .betweenInside(CLASS_OR_FUNCTION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS)
+      .between(CLASS_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(settings.BLANK_LINES_AROUND_CLASS)
+      .between(STATEMENT_OR_DECLARATION, CLASS_DECLARATION).blankLines(settings.BLANK_LINES_AROUND_CLASS)
+      .between(FUNCTION_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(settings.BLANK_LINES_AROUND_METHOD)
+      .between(STATEMENT_OR_DECLARATION, FUNCTION_DECLARATION).blankLines(settings.BLANK_LINES_AROUND_METHOD)
+      .after(FUNCTION_DECLARATION).blankLines(settings.BLANK_LINES_AROUND_METHOD)
+      .after(CLASS_DECLARATION).blankLines(settings.BLANK_LINES_AROUND_CLASS)
+      .between(STATEMENT_OR_DECLARATION, STATEMENT_OR_DECLARATION).spacing(0, Integer.MAX_VALUE, 1, false, 1)
+      
+      .between(COLON, STATEMENT_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
+      .afterInside(COLON, TokenSet.create(KEY_VALUE_EXPRESSION, PyElementTypes.LAMBDA_EXPRESSION)).spaceIf(pySettings.SPACE_AFTER_PY_COLON)
+
+      .afterInside(GT, ANNOTATION).spaces(1)
+      .betweenInside(MINUS, GT, ANNOTATION).none()
+      .beforeInside(ANNOTATION, FUNCTION_DECLARATION).spaces(1)
+      
+      .between(TokenSet.not(TokenSet.create(LAMBDA_KEYWORD)), PARAMETER_LIST).spaceIf(settings.SPACE_BEFORE_METHOD_PARENTHESES)
+      
+      .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
+      .after(COMMA).spaceIf(settings.SPACE_AFTER_COMMA)
+      .before(COMMA).spaceIf(settings.SPACE_BEFORE_COMMA)
+      .before(SEMICOLON).spaceIf(settings.SPACE_BEFORE_SEMICOLON)
+      .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
+      .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
+
+      .withinPair(LBRACE, RBRACE).spaceIf(settings.SPACE_WITHIN_BRACES)
+      .withinPair(LBRACKET, RBRACKET).spaceIf(settings.SPACE_WITHIN_BRACKETS)
+
+      .before(ARGUMENT_LIST).spaceIf(settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES)
+
+      .aroundInside(EQ, ASSIGNMENT_STATEMENT).spaceIf(settings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
+      .aroundInside(EQ, NAMED_PARAMETER).spaceIf(pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER)
+      .aroundInside(EQ, KEYWORD_ARGUMENT_EXPRESSION).spaceIf(pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)
+
+      .around(AUG_ASSIGN_OPERATIONS).spaceIf(settings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
+      .aroundInside(ADDITIVE_OPERATIONS, BINARY_EXPRESSION).spaceIf(settings.SPACE_AROUND_ADDITIVE_OPERATORS)
+      .aroundInside(MULTIPLICATIVE_OR_EXP, STAR_PARAMETERS).none()
+      .around(MULTIPLICATIVE_OR_EXP).spaceIf(settings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS)
+      .around(SHIFT_OPERATIONS).spaceIf(settings.SPACE_AROUND_SHIFT_OPERATORS)
+      .around(BITWISE_OPERATIONS).spaceIf(settings.SPACE_AROUND_BITWISE_OPERATORS)
+      .around(EQUALITY_OPERATIONS).spaceIf(settings.SPACE_AROUND_EQUALITY_OPERATORS)
+      .around(RELATIONAL_OPERATIONS).spaceIf(settings.SPACE_AROUND_RELATIONAL_OPERATORS);
   }
 
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
