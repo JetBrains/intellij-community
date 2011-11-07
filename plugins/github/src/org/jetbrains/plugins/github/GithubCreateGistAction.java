@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.httpclient.HttpClient;
@@ -33,7 +32,6 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -114,7 +112,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     final Ref<String> url = new Ref<String>();
     final String description = dialog.getDescription();
     final boolean isPrivate = dialog.isPrivate();
-    final boolean anonymous = dialog.isAnonimous();
+    final boolean anonymous = dialog.isAnonymous();
     final boolean openInBrowser = dialog.isOpenInBrowser();
     
     // Text

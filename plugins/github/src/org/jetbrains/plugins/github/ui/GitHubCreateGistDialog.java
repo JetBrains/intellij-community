@@ -76,7 +76,7 @@ public class GitHubCreateGistDialog extends DialogWrapper {
     return myGithubCreateGistPanel.isPrivate();
   }
 
-  public boolean isAnonimous() {
+  public boolean isAnonymous() {
     return myGithubCreateGistPanel.isAnonymous();
   }
 
