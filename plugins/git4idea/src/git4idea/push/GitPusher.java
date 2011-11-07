@@ -16,14 +16,17 @@
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.*;
+import git4idea.Git;
+import git4idea.GitBranch;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.GitCommandResult;
 import git4idea.history.GitHistoryUtils;
@@ -47,11 +50,15 @@ import static git4idea.ui.GitUIUtil.code;
  */
 public final class GitPusher {
 
+  public static final String INDICATOR_TEXT = "Pushing";
+
   private final Project myProject;
+  private final ProgressIndicator myProgressIndicator;
   private final Collection<GitRepository> myRepositories;
 
-  public GitPusher(Project project) {
+  public GitPusher(Project project, ProgressIndicator indicator) {
     myProject = project;
+    myProgressIndicator = indicator;
     myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
   }
 
@@ -224,6 +231,7 @@ public final class GitPusher {
         }
 
         if (pushAgain) {
+          myProgressIndicator.setText(INDICATOR_TEXT);
           GitPushInfo newPushInfo = new GitPushInfo(pushInfo.getCommits().retainAll(rejectedPushesForCurrentBranch), pushInfo.getPushSpec());
           GitPushResult adjustedPushResult = result.remove(rejectedPushesForCurrentBranch);
           push(newPushInfo, adjustedPushResult, updateSettings);
@@ -299,7 +307,7 @@ public final class GitPusher {
   }
 
   private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull GitUpdateProcess.UpdateMethod updateMethod) {
-    return new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rootsToUpdate, UpdatedFiles.create()).update(updateMethod);
+    return new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(updateMethod);
   }
 
   /**

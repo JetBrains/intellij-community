@@ -15,10 +15,12 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushDialog;
 import git4idea.push.GitPusher;
@@ -57,11 +59,13 @@ public class GitPush extends GitRepositoryAction {
     final GitPushDialog dialog = new GitPushDialog(project, repositories);
     dialog.show();
     if (dialog.isOK()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          new GitPusher(project).push(dialog.getPushInfo());
+      Task.Backgroundable task = new Task.Backgroundable(project, GitPusher.INDICATOR_TEXT, false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          new GitPusher(project, indicator).push(dialog.getPushInfo());
         }
-      });
+      };
+      GitVcs.runInBackground(task);
     }
   }
 

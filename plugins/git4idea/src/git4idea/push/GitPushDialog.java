@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -44,7 +45,7 @@ public class GitPushDialog extends DialogWrapper {
     super(project);
     myProject = project;
     myRepositories = repositories;
-    myPusher = new GitPusher(myProject);
+    myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
     myListPanel = new GitPushLog(myProject);
 
