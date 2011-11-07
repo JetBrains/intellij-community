@@ -70,9 +70,14 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       }
       return null;
     }
-    
-    int index = Integer.parseInt(tokenizer.nextToken());
-    return restoreElementInternal(parent, type, index, PsiNamedElement.class);
+
+    try {
+      int index = Integer.parseInt(tokenizer.nextToken());
+      return restoreElementInternal(parent, type, index, PsiNamedElement.class);
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   @Override
