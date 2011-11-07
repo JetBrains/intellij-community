@@ -19,6 +19,10 @@
     <orderEntry type="module" module-name="django-db-config" />
     <orderEntry type="module" module-name="JSInspections" />
     <orderEntry type="module" module-name="relaxng" />
+    <orderEntry type="module" module-name="python-javascript-debugger" />
+    <orderEntry type="module" module-name="ChromeConnector" />
+    <orderEntry type="module" module-name="FirefoxConnector" />
+    <orderEntry type="module" module-name="JavaScriptDebugger" />
   </component>
 </module>
 

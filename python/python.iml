@@ -36,6 +36,9 @@
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="spellchecker" exported="" />
     <orderEntry type="module" module-name="coverage-impl" />
+    <orderEntry type="module" module-name="JavaScriptDebugger" />
+    <orderEntry type="module" module-name="ChromeConnector" />
+    <orderEntry type="module" module-name="FirefoxConnector" />
   </component>
   <component name="copyright">
     <Base>
