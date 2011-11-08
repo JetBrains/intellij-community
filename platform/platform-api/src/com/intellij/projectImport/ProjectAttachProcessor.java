@@ -18,6 +18,7 @@ package com.intellij.projectImport;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -27,7 +28,7 @@ import java.io.File;
 public class ProjectAttachProcessor {
   public static final ExtensionPointName<ProjectAttachProcessor> EP_NAME = new ExtensionPointName<ProjectAttachProcessor>("com.intellij.projectAttachProcessor");
   
-  public boolean attachToProject(Project project, File projectDir, ProjectOpenedCallback callback) {
+  public boolean attachToProject(Project project, File projectDir, @Nullable ProjectOpenedCallback callback) {
     return false;
   }
   
