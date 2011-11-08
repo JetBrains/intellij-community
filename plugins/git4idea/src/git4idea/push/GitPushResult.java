@@ -122,8 +122,8 @@ class GitPushResult {
         continue;
       }
       GitPushRepoResult repoResult = entry.getValue();
-      GitPushRepoResult.BranchResult curBranchResult = repoResult.getBranchResults().get(currentBranch);
-      if (curBranchResult != null && curBranchResult == GitPushRepoResult.BranchResult.REJECTED) {
+      GitPushBranchResult curBranchResult = repoResult.getBranchResults().get(currentBranch);
+      if (curBranchResult != null && curBranchResult.isRejected()) {
         rejectedPushesForCurrentBranch.put(repository, currentBranch);
       }
     }
@@ -137,7 +137,7 @@ class GitPushResult {
    * Otherwise adds repository URL to the error that repository produced.
    */
   @NotNull
-  Notification createNotification(@NotNull GitPushInfo pushInfo) {
+  Notification createNotification() {
     GroupedResult groupedResult = group();
     
     boolean error = !groupedResult.myErrorResults.isEmpty();
@@ -147,7 +147,7 @@ class GitPushResult {
     boolean onlyError = error && !rejected && !success;
     boolean onlyRejected = rejected && !error && !success;
 
-    int pushedCommitsNumber = calcPushedCommitTotalNumber(groupedResult.mySuccessfulResults, pushInfo);
+    int pushedCommitsNumber = calcPushedCommitTotalNumber(groupedResult.mySuccessfulResults);
     
     String title;
     NotificationType notificationType;
@@ -176,9 +176,9 @@ class GitPushResult {
       notificationType = NotificationType.INFORMATION;
     }
     
-    String errorReport = reportForGroup(groupedResult.myErrorResults, pushInfo, GroupedResult.Type.ERROR);
-    String successReport = reportForGroup(groupedResult.mySuccessfulResults, pushInfo, GroupedResult.Type.SUCCESS);
-    String rejectedReport = reportForGroup(groupedResult.myRejectedResults, pushInfo, GroupedResult.Type.REJECT);
+    String errorReport = reportForGroup(groupedResult.myErrorResults, GroupedResult.Type.ERROR);
+    String successReport = reportForGroup(groupedResult.mySuccessfulResults, GroupedResult.Type.SUCCESS);
+    String rejectedReport = reportForGroup(groupedResult.myRejectedResults, GroupedResult.Type.REJECT);
 
     StringBuilder sb = new StringBuilder();
     sb.append(errorReport);
@@ -188,23 +188,17 @@ class GitPushResult {
     return GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, sb.toString(), notificationType, null);
   }
 
-  private static int calcPushedCommitTotalNumber(@NotNull Map<GitRepository, GitPushRepoResult> successfulResults, @NotNull GitPushInfo pushInfo) {
+  private static int calcPushedCommitTotalNumber(@NotNull Map<GitRepository, GitPushRepoResult> successfulResults) {
     int sum = 0;
-    for (GitRepository repository : pushInfo.getCommits().getRepositories()) {
-      if (successfulResults.containsKey(repository)) {
-        GitCommitsByBranch commitsByBranch = pushInfo.getCommits().get(repository);
-        Map<GitBranch, GitPushRepoResult.BranchResult> branchResults = successfulResults.get(repository).getBranchResults();
-        for (GitBranch branch : commitsByBranch.getBranches()) {
-          if (branchResults.containsKey(branch)) {
-            sum += commitsByBranch.commitsNumber();
-          }
-        }
+    for (GitPushRepoResult pushRepoResult : successfulResults.values()) {
+      for (GitPushBranchResult branchResult : pushRepoResult.getBranchResults().values()) {
+        sum += branchResult.getNumberOfPushedCommits();
       }
     }
     return sum;
   }
 
-  private String reportForGroup(@NotNull Map<GitRepository, GitPushRepoResult> groupResult, @NotNull GitPushInfo pushInfo, @NotNull GroupedResult.Type resultType) {
+  private String reportForGroup(@NotNull Map<GitRepository, GitPushRepoResult> groupResult, @NotNull GroupedResult.Type resultType) {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : groupResult.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -214,9 +208,9 @@ class GitPushResult {
         sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
       }
       if (resultType == GroupedResult.Type.SUCCESS) {
-        sb.append(result.getPushedCommitsDescription(pushInfo.getCommits().get(repository)));
+        sb.append(result.getPushedCommitsDescription());
       } else if (resultType == GroupedResult.Type.REJECT) {
-        sb.append(result.getBranchesDescription(pushInfo.getCommits().get(repository)));
+        sb.append(result.getBranchesDescription());
       } else {
         sb.append(result.getOutput().getErrorOutputAsHtmlString());
       }

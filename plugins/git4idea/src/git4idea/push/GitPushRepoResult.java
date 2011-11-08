@@ -30,13 +30,8 @@ import static git4idea.ui.GitUIUtil.code;
  * If an error happens, all push is unsuccessful, for all branches.
  * Otherwise we've got separate results for branches.
  */
-class GitPushRepoResult {
+final class GitPushRepoResult {
 
-  enum BranchResult {
-    SUCCESS,
-    REJECTED
-  }
-  
   private enum Type {
     SUCCESS,
     SOME_REJECTED,
@@ -45,23 +40,23 @@ class GitPushRepoResult {
 
   private final Type myType;
   private final GitCommandResult myOutput;
-  private final Map<GitBranch, BranchResult> myBranchResults;
+  private final Map<GitBranch, GitPushBranchResult> myBranchResults;
 
-  GitPushRepoResult(Type type, Map<GitBranch, BranchResult> resultsByBranch, GitCommandResult output) {
+  GitPushRepoResult(Type type, Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
     myType = type;
     myBranchResults = resultsByBranch;
     myOutput = output;
   }
 
-  static GitPushRepoResult success(Map<GitBranch, BranchResult> resultsByBranch, GitCommandResult output) {
+  static GitPushRepoResult success(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
     return new GitPushRepoResult(Type.SUCCESS, resultsByBranch, output);
   }
 
-  static GitPushRepoResult error(Map<GitBranch, BranchResult> resultsByBranch, GitCommandResult output) {
+  static GitPushRepoResult error(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
     return new GitPushRepoResult(Type.ERROR, resultsByBranch, output);
   }
 
-  static GitPushRepoResult someRejected(Map<GitBranch, BranchResult> resultsByBranch, GitCommandResult output) {
+  static GitPushRepoResult someRejected(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
     return new GitPushRepoResult(Type.SOME_REJECTED, resultsByBranch, output);
   }
 
@@ -77,13 +72,13 @@ class GitPushRepoResult {
     return myOutput;
   }
 
-  Map<GitBranch, BranchResult> getBranchResults() {
+  Map<GitBranch, GitPushBranchResult> getBranchResults() {
     return myBranchResults;
   }
 
   GitPushRepoResult remove(@NotNull GitBranch branch) {
-    Map<GitBranch, BranchResult> resultsByBranch = new HashMap<GitBranch, BranchResult>();
-    for (Map.Entry<GitBranch, BranchResult> entry : myBranchResults.entrySet()) {
+    Map<GitBranch, GitPushBranchResult> resultsByBranch = new HashMap<GitBranch, GitPushBranchResult>();
+    for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
       GitBranch b = entry.getKey();
       if (!b.equals(branch)) {
         resultsByBranch.put(b, entry.getValue());
@@ -101,23 +96,23 @@ class GitPushRepoResult {
    * In the case of conflict (i.e. different results for a branch), current result is preferred over the previous one.
    */
   void mergeFrom(@NotNull GitPushRepoResult repoResult) {
-    for (Map.Entry<GitBranch, BranchResult> entry : repoResult.myBranchResults.entrySet()) {
+    for (Map.Entry<GitBranch, GitPushBranchResult> entry : repoResult.myBranchResults.entrySet()) {
       GitBranch branch = entry.getKey();
-      BranchResult branchResult = entry.getValue();
+      GitPushBranchResult branchResult = entry.getValue();
       if (!myBranchResults.containsKey(branch)) {   // otherwise current result is preferred
         myBranchResults.put(branch, branchResult);
       }
     }
   }
 
-  String getBranchesDescription(GitCommitsByBranch commitsByBranch) {
+  String getBranchesDescription() {
     StringBuilder sb = new StringBuilder();
-    for (Map.Entry<GitBranch, BranchResult> entry : myBranchResults.entrySet()) {
+    for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
       GitBranch branch = entry.getKey();
-      BranchResult branchResult = entry.getValue();
+      GitPushBranchResult branchResult = entry.getValue();
 
-      if (branchResult == BranchResult.SUCCESS) {
-        sb.append(bold(branch.getName()) + ": pushed " + commits(pushedCommitsNum(commitsByBranch, branch))).append("<br/>");
+      if (branchResult.isSuccess()) {
+        sb.append(bold(branch.getName()) + ": pushed " + commits(branchResult.getNumberOfPushedCommits())).append("<br/>");
       } else {
         sb.append(code(branch.getName())).append(": rejected").append("<br/>");
       }
@@ -125,21 +120,17 @@ class GitPushRepoResult {
     return sb.toString();
   }
 
-  String getPushedCommitsDescription(GitCommitsByBranch commitsByBranch) {
+  String getPushedCommitsDescription() {
     StringBuilder sb = new StringBuilder();
-    for (Map.Entry<GitBranch, BranchResult> entry : myBranchResults.entrySet()) {
+    for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
       GitBranch branch = entry.getKey();
-      BranchResult branchResult = entry.getValue();
+      GitPushBranchResult branchResult = entry.getValue();
 
-      if (branchResult == BranchResult.SUCCESS) {
-        sb.append(branch.getName() + ": pushed " + commits(pushedCommitsNum(commitsByBranch, branch))).append("<br/>");
+      if (branchResult.isSuccess()) {
+        sb.append(branch.getName() + ": pushed " + commits(branchResult.getNumberOfPushedCommits())).append("<br/>");
       }
     }
     return sb.toString();
-  }
-
-  private static int pushedCommitsNum(GitCommitsByBranch commitsByBranch, GitBranch branch) {
-    return commitsByBranch.get(branch).getCommits().size();
   }
 
   private static String commits(int commitNum) {

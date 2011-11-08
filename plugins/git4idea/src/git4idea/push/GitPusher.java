@@ -171,30 +171,21 @@ public final class GitPusher {
       if (rejectedDetector.rejected()) {
         Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
         
-        Map<GitBranch, GitPushRepoResult.BranchResult> resultMap = new HashMap<GitBranch, GitPushRepoResult.BranchResult>();
+        Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
         GitCommitsByBranch commitsByBranch = commits.get(repository);
         for (GitBranch branch : commitsByBranch.getBranches()) {
-          resultMap.put(branch, branchInRejected(branch, rejectedBranches) ? GitPushRepoResult.BranchResult.REJECTED : GitPushRepoResult.BranchResult.SUCCESS);
+          GitPushBranchResult branchResult = branchInRejected(branch, rejectedBranches) ? 
+                                             GitPushBranchResult.rejected() : 
+                                             successfulResultForBranch(commitsByBranch, branch);
+          resultMap.put(branch, branchResult);
         }
         repoResult = GitPushRepoResult.someRejected(resultMap, res);
       }
       else if (res.success()) {
-        Map<GitBranch, GitPushRepoResult.BranchResult> resultMap = new HashMap<GitBranch, GitPushRepoResult.BranchResult>();
-        GitCommitsByBranch commitsByBranch = commits.get(repository);
-        for (GitBranch branch : commitsByBranch.getBranches()) {
-          resultMap.put(branch, GitPushRepoResult.BranchResult.SUCCESS);
-        }
-        
-        repoResult = GitPushRepoResult.success(resultMap, res);
+        repoResult = successOrErrorRepoResult(commits, repository, res, true);
       }
       else {
-        Map<GitBranch, GitPushRepoResult.BranchResult> resultMap = new HashMap<GitBranch, GitPushRepoResult.BranchResult>();
-        GitCommitsByBranch commitsByBranch = commits.get(repository);
-        for (GitBranch branch : commitsByBranch.getBranches()) {
-          resultMap.put(branch, GitPushRepoResult.BranchResult.SUCCESS);
-        }
-        
-        repoResult = GitPushRepoResult.error(resultMap,  res);
+        repoResult = successOrErrorRepoResult(commits, repository, res, false);
       }
 
       pushResult.append(repository, repoResult);
@@ -202,7 +193,26 @@ public final class GitPusher {
     return pushResult;
   }
 
-  private static boolean branchInRejected(GitBranch branch, Collection<String> rejectedBranches) {
+  private static GitPushRepoResult successOrErrorRepoResult(@NotNull GitCommitsByRepoAndBranch commits, @NotNull GitRepository repository, @NotNull GitCommandResult res, boolean success) {
+    GitPushRepoResult repoResult;
+    Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
+    GitCommitsByBranch commitsByBranch = commits.get(repository);
+    for (GitBranch branch : commitsByBranch.getBranches()) {
+      GitPushBranchResult branchResult = success ?
+                                         successfulResultForBranch(commitsByBranch, branch) :
+                                         GitPushBranchResult.error();
+      resultMap.put(branch, branchResult);
+    }
+    repoResult = success ? GitPushRepoResult.success(resultMap, res) : GitPushRepoResult.error(resultMap,  res);
+    return repoResult;
+  }
+
+  @NotNull
+  private static GitPushBranchResult successfulResultForBranch(@NotNull GitCommitsByBranch commitsByBranch, @NotNull GitBranch branch) {
+    return GitPushBranchResult.success(commitsByBranch.get(branch).getCommits().size());
+  }
+
+  private static boolean branchInRejected(@NotNull GitBranch branch, @NotNull Collection<String> rejectedBranches) {
     String branchName = branch.getName();
     for (String rejectedBranch : rejectedBranches) {
       if (rejectedBranch.equals(branchName)) {
@@ -229,7 +239,7 @@ public final class GitPusher {
     }
     else if (result.wasError()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
-      result.createNotification(pushInfo).notify(myProject);
+      result.createNotification().notify(myProject);
     }
     else {
       // there were no errors, but there might be some rejected branches on some of the repositories
@@ -259,7 +269,7 @@ public final class GitPusher {
         }
       }
 
-      result.createNotification(pushInfo).notify(myProject);
+      result.createNotification().notify(myProject);
     }
   }
 
