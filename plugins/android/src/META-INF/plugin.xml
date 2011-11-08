@@ -136,13 +136,14 @@
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
     </intentionAction>
-    <intentionAction>
-      <className>org.jetbrains.android.intentions.AndroidReplaceSwitchWithIfIntention</className>
-    </intentionAction>
 
     <localInspection language="XML" shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
                      groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.android.inspections.AndroidDomInspection"/>
+
+    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle" key="android.inspections.group.name"
+                         groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
+                         implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
 
     <colorSettingsPage implementation="org.jetbrains.android.logcat.AndroidLogcatColorPage"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.android.AndroidFindUsagesHandlerFactory"/>
