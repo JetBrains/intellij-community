@@ -65,7 +65,7 @@ public abstract class StaticMemberProcessor {
         for (final PsiMethod method : namesCache.getMethodsByName(methodName, scope)) {
           if (isStaticallyImportable(method)) {
             final PsiClass containingClass = method.getContainingClass();
-            assert containingClass != null;
+            assert containingClass != null : method.getName() + "; " + method + "; " + method.getClass();
 
             if (classes.add(containingClass) && JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
               final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
@@ -99,7 +99,7 @@ public abstract class StaticMemberProcessor {
         for (final PsiField field : namesCache.getFieldsByName(fieldName, scope)) {
           if (isStaticallyImportable(field)) {
             final PsiClass containingClass = field.getContainingClass();
-            assert containingClass != null;
+            assert containingClass != null : field.getName() + "; " + field + "; " + field.getClass();
 
             if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
               final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
