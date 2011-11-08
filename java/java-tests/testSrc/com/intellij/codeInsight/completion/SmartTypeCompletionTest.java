@@ -411,8 +411,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testParameterizedConstructor() throws Throwable { doTest(); }
 
+  public void testNewInnerClassNameShortPrefix() throws Throwable { doTest(); }
+
   public void testNewInnerOfParameterizedClass() throws Throwable { doTest(); }
-  
+
   public void testQualifiedThisInAnonymousConstructor() throws Throwable { doTest(); }
 
   public void testExceptionTwice() throws Throwable { doTest(); }
@@ -684,7 +686,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testSuggestInstanceofedValueInComplexIf() throws Throwable { doTest(); }
 
   public void testSuggestInstanceofedValueInElseNegated() throws Throwable { doTest(); }
-  
+
   public void testSuggestInstanceofedValueAfterReturn() throws Throwable { doTest(); }
 
   public void testNoInstanceofedValueWhenBasicSuits() throws Throwable { doTest(); }

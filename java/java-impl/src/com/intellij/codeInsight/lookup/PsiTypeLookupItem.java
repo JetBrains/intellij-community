@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author peter
  */
@@ -168,17 +171,22 @@ public class PsiTypeLookupItem extends LookupItem {
           }
         }
         PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(psiClass.getName(), context);
+
+        Set<String> allStrings = new HashSet<String>();
         String lookupString = psiClass.getName();
+        allStrings.add(lookupString);
         if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
           // inner class name should be shown qualified if its not accessible by single name
           PsiClass aClass = psiClass.getContainingClass();
           while (aClass != null) {
             lookupString = aClass.getName() + '.' + lookupString;
+            allStrings.add(lookupString);
             aClass = aClass.getContainingClass();
           }
         }
 
         PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond, bracketsCount);
+        item.addLookupStrings(allStrings.toArray(new String[allStrings.size()]));
         item.setAttribute(SUBSTITUTOR, substitutor);
         return item;
       }
