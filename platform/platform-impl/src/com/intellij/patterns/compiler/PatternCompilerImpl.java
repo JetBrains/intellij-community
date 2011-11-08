@@ -140,7 +140,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.name;
           }
           else {
-            return throwError(curPos +1, ch, "method call expected");
+            throwError(curPos +1, ch, "method call expected");
           }
           break;
         case name:
@@ -279,7 +279,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     return null;
   }
 
-  private static <T> T throwError(int offset, char ch, String message) {
+  private static void throwError(int offset, char ch, String message) {
     throw new IllegalStateException(offset+"("+ch+"): "+message);
   }
 
