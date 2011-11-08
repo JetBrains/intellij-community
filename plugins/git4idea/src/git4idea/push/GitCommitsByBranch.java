@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -27,12 +28,16 @@ import java.util.Map;
  *
  * @author Kirill Likhodedov
  */
-public class GitCommitsByBranch {
+final class GitCommitsByBranch {
 
   private final Map<GitBranch, GitPushBranchInfo> myCommitsByBranch;
 
   GitCommitsByBranch(@NotNull Map<GitBranch, GitPushBranchInfo> commitsByBranch) {
-    myCommitsByBranch = commitsByBranch;
+    myCommitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>(commitsByBranch);
+  }
+
+  GitCommitsByBranch(GitCommitsByBranch commitsByBranch) {
+    this(new HashMap<GitBranch, GitPushBranchInfo>(commitsByBranch.myCommitsByBranch));
   }
 
   boolean isEmpty() {
@@ -49,12 +54,12 @@ public class GitCommitsByBranch {
 
   @NotNull
   Collection<GitBranch> getBranches() {
-    return myCommitsByBranch.keySet();
+    return new HashSet<GitBranch>(myCommitsByBranch.keySet());
   }
 
   @NotNull
   GitPushBranchInfo get(@NotNull GitBranch branch) {
-    return myCommitsByBranch.get(branch);
+    return new GitPushBranchInfo(myCommitsByBranch.get(branch));
   }
 
   /**

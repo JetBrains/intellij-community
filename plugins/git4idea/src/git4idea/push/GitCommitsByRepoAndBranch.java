@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -39,7 +40,12 @@ final class GitCommitsByRepoAndBranch {
 
   @NotNull
   Collection<GitRepository> getRepositories() {
-    return myCommitsByRepository.keySet();
+    return new HashSet<GitRepository>(myCommitsByRepository.keySet());
+  }
+
+  @NotNull
+  GitCommitsByBranch get(@NotNull GitRepository repository) {
+    return new GitCommitsByBranch(myCommitsByRepository.get(repository));
   }
 
   /**
@@ -70,19 +76,6 @@ final class GitCommitsByRepoAndBranch {
       }
     }
     return new GitCommitsByRepoAndBranch(commits);
-  }
-
-  @NotNull
-  GitCommitsByBranch get(@NotNull GitRepository repository) {
-    return myCommitsByRepository.get(repository);
-  }
-
-  int commitsNumber() {
-    int sum = 0;
-    for (GitCommitsByBranch commitsByBranch : myCommitsByRepository.values()) {
-      sum += commitsByBranch.commitsNumber();
-    }
-    return sum;
   }
 
 }

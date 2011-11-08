@@ -19,6 +19,7 @@ import git4idea.GitBranch;
 import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-class GitPushBranchInfo {
+final class GitPushBranchInfo {
 
   private final GitBranch myDestBranch;
   private final List<GitCommit> myCommits;
@@ -36,6 +37,10 @@ class GitPushBranchInfo {
     myDestBranch = destBranch;
   }
 
+  GitPushBranchInfo(@NotNull GitPushBranchInfo pushBranchInfo) {
+    this(pushBranchInfo.getDestBranch(), pushBranchInfo.getCommits());
+  }
+
   @NotNull
   GitBranch getDestBranch() {
     return myDestBranch;
@@ -43,6 +48,6 @@ class GitPushBranchInfo {
 
   @NotNull
   List<GitCommit> getCommits() {
-    return myCommits;
+    return new ArrayList<GitCommit>(myCommits);
   }
 }
