@@ -101,8 +101,7 @@ public class AndroidSdkImpl extends AndroidSdk {
   }
 
   public int getPlatformToolsRevision() {
-    //return myPlatformToolsRevision;
-    return 7;
+    return myPlatformToolsRevision;
   }
 
   private static class MyTargetWrapper implements IAndroidTarget {
