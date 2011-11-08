@@ -37,7 +37,7 @@ import com.intellij.util.Consumer;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class OpenProjectAction extends AnAction implements DumbAware {
@@ -46,7 +46,7 @@ public class OpenProjectAction extends AnAction implements DumbAware {
 
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true);
     descriptor.setTitle(IdeBundle.message("title.open.project"));
-    final Set<String> extensions = new HashSet<String>();
+    final Set<String> extensions = new LinkedHashSet<String>();
     extensions.add(ProjectFileType.DOT_DEFAULT_EXTENSION);
     final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME);
     for (ProjectOpenProcessor openProcessor : openProcessors) {
