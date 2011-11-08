@@ -197,4 +197,20 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     type ' in c'
     assert lookup.focused
   }
+
+  public void testNonImportedClass() {
+    myFixture.addClass("package foo; public class Abcdefg {}")
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'Abcde '
+    myFixture.checkResult 'import foo.Abcdefg\n\nAbcdefg <caret>'
+  }
+
+  public void testTwoNonImportedClasses() {
+    myFixture.addClass("package foo; public class Abcdefg {}")
+    myFixture.addClass("package bar; public class Abcdefg {}")
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'Abcde '
+    myFixture.checkResult 'Abcdefg <caret>'
+  }
+
 }

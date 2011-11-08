@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.completion;
+package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Ref;
@@ -23,7 +24,7 @@ import com.intellij.util.Consumer;
 /**
  * @author peter
  */
-public class JavaNoVariantsDelegator extends CompletionContributor {
+public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
@@ -44,27 +45,25 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       if (parameters.getCompletionType() == CompletionType.BASIC &&
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result, false) &&
-          JavaCompletionContributor.isClassNamePossible(parameters.getPosition())) {
+          GroovyCompletionContributor.isClassNamePossible(parameters.getPosition())) {
         final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
-        
-        JavaClassNameCompletionContributor.addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result),
-                                                         true, new Consumer<LookupElement>() {
+
+        GroovyCompletionContributor.addAllClasses(parameters, result,
+                                                         new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement element) {
             JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
             if (classElement != null) {
               classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
             }
-            
             merger.consume(classElement);
           }
-        });
+        }, new InheritorsHolder(parameters.getPosition(), result));
 
         merger.finishedClassProcessing();
 
-      } else if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
-        result.runRemainingContributors(parameters.withInvocationCount(3), passResult);
       }
     }
   }
+
 }

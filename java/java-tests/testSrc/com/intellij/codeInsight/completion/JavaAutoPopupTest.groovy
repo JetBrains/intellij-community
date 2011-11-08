@@ -1095,5 +1095,20 @@ class Foo {{
     assert end == myFixture.editor.caretModel.logicalPosition
   }
 
+  public void testNonImportedClass() {
+    myFixture.addClass("package foo; public class Abcdefg {}")
+    myFixture.configureByText 'a.java', 'class Foo extends <caret>'
+    type 'Abcde '
+    myFixture.checkResult 'import foo.Abcdefg;\n\nclass Foo extends Abcdefg <caret>'
+  }
+
+  public void testTwoNonImportedClasses() {
+    myFixture.addClass("package foo; public class Abcdefg {}")
+    myFixture.addClass("package bar; public class Abcdefg {}")
+    myFixture.configureByText 'a.java', 'class Foo extends <caret>'
+    type 'Abcde '
+    myFixture.checkResult 'class Foo extends Abcdefg <caret>'
+  }
+
 
 }

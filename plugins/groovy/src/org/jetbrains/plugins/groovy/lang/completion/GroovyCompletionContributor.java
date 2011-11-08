@@ -174,13 +174,22 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
 
   private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
+    addAllClasses(parameters, result, new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        result.addElement(element);
+      }
+    }, inheritors);
+  }
+
+  public static void addAllClasses(CompletionParameters parameters, CompletionResultSet result, final Consumer<LookupElement> consumer, final InheritorsHolder inheritors) {
     final PsiElement position = parameters.getPosition();
     final ElementFilter filter = getClassFilter(position);
     AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
       @Override
       public void consume(PsiClass psiClass) {
         if (!inheritors.alreadyProcessed(psiClass) && filter.isAcceptable(psiClass, position)) {
-          result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
+          consumer.consume(GroovyCompletionUtil.createClassLookupItem(psiClass));
         }
       }
     });
@@ -311,8 +320,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (reference.getQualifier() == null) {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-            if (!PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position) &&
-                JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
+            if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
               if (JavaCompletionContributor.mayShowAllClasses(parameters)) {
                 addAllClasses(parameters, result, inheritors);
               } else {
@@ -348,6 +356,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
+  }
+
+  public static boolean isClassNamePossible(PsiElement position) {
+    PsiElement parent = position.getParent();
+    return parent instanceof GrReferenceElement && ((GrReferenceElement)parent).getQualifier() == null &&
+           !PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position);
   }
 
   private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
