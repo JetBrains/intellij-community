@@ -251,7 +251,7 @@ public final class GitPusher {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Everything up-to-date", NotificationType.INFORMATION);
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Everything up-to-date", NotificationType.INFORMATION).notify(myProject);
     }
     else if (result.wasError()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
