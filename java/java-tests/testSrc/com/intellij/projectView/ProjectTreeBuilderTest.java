@@ -90,8 +90,6 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
     try {
       structureViewComponent = (StructureViewComponent)fileEditors[0].getStructureViewBuilder().createStructureView(fileEditors[0], myProject);
-      structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
-
       TreeUtil.collapseAll(structureViewComponent.getTree(), -1);
 
       structureViewComponent.select(innerClass2Field, true);
@@ -114,7 +112,6 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
                   "  myField3:boolean\n" +
                   "  myField4:boolean\n";
 
-      structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
       IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                    expected);
 

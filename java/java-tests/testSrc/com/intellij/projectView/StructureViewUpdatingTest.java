@@ -136,8 +136,6 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     final StructureViewComponent structureViewComponent =
       (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
     try {
-      structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
-
       PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                          " -Class2\n" +
                                                                          "  +InnerClass1\n" +
