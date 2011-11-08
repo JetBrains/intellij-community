@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -39,12 +40,13 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
     myReceivedFileProcessor = receivedFileProcessor;
   }
 
+  @Override
   public void copyTextFileToLocation(InputStream textFileSource, int length, File targetFile, IReaderFactory readerFactory, Charset charSet) throws IOException {
-    VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
+    final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
     if (myReceivedFileProcessor.shouldProcess(virtualFile, targetFile)) {
-      PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
+      final PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
       try {
-        String lineSeparator = getLineSeparatorFor(targetFile);
+        final String lineSeparator = getLineSeparatorFor(targetFile);
         byte[] lineSeparatorBytes = null;
         if (charSet != null) {
           lineSeparatorBytes = charSet.encode(lineSeparator).array();
@@ -73,8 +75,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
       }
     } else {
       // read file from server, but do not save it.
-      final LineReader lineReader = new LineReader(textFileSource, length);
-      for (byte[] line = lineReader.readLine(); line != null; line = lineReader.readLine());
+      CvsUtil.skip(textFileSource, length);
     }
   }
 
