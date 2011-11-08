@@ -36,13 +36,14 @@ public class TestFailedState extends AbstractState {
   @Nullable
   public static String buildErrorPresentationText(@Nullable final String localizedMessage,
                                                   @Nullable final String stackTrace) {
-    final String text = (StringUtil.isEmptyOrSpaces(localizedMessage)
-                           ? ""
-                           : localizedMessage + CompositePrintable.NEW_LINE) +
-                        (StringUtil.isEmptyOrSpaces(stackTrace)
-                           ? ""
-                           : stackTrace + CompositePrintable.NEW_LINE);
+    final String text = (StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : appendLineEnd(localizedMessage)) +
+                        (StringUtil.isEmptyOrSpaces(stackTrace) ? "" : appendLineEnd(stackTrace));
     return StringUtil.isEmptyOrSpaces(text) ? null : text;
+  }
+
+  private static String appendLineEnd(String text) {
+    if (text.endsWith(CompositePrintable.NEW_LINE)) return text;
+    return text + CompositePrintable.NEW_LINE;
   }
 
   public static void printError(@NotNull final Printer printer,
@@ -60,7 +61,6 @@ public class TestFailedState extends AbstractState {
       printError(printer, myPresentationText);
     }
   }
-
 
   public boolean isDefect() {
     return true;

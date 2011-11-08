@@ -384,14 +384,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnErrorMsg(final String localizedMessage,
-                              @Nullable final String stackTrace) {
+  protected void fireOnErrorMsg(final String localizedMessage,
+                              @Nullable final String stackTrace,
+                              boolean isCritical) {
     assertNotNull(localizedMessage);
 
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onError(localizedMessage, stackTrace);
+      processor.onError(localizedMessage, stackTrace, isCritical);
     }
   }
 
@@ -540,7 +541,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
           // error msg
 
           final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
-          fireOnErrorMsg(text, stackTrace);
+          fireOnErrorMsg(text, stackTrace, true);
         } else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
           // warning msg
 
