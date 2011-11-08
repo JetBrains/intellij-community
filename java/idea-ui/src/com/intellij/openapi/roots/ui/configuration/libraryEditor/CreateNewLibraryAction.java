@@ -76,7 +76,9 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     final DefaultMutableTreeNode
       libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
     rootConfigurable.selectNodeInTree(libraryNode);
+    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject);
   }
+
 
   @Nullable
   public static Library createLibrary(@Nullable final LibraryType type, @NotNull final Component parentComponent,

@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -11,7 +10,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
@@ -187,20 +185,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
     @Override
     public void performFix() {
-      final Project project = myContext.getProject();
-      final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-      final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)myLibrary).getType());
-      if (modules.isEmpty()) return;
-      final ChooseModulesDialog dlg = new ChooseModulesDialog(project, modules, ProjectBundle.message("choose.modules.dialog.title"),
-                                                              ProjectBundle
-                                                                .message("choose.modules.dialog.description", myLibrary.getName()));
-      dlg.show();
-      if (dlg.isOK()) {
-        final List<Module> chosenModules = dlg.getChosenElements();
-        for (Module module : chosenModules) {
-          moduleStructureConfigurable.addLibraryOrderEntry(module, myLibrary);
-        }
-      }
+      LibraryEditingUtil.showDialogAndAddLibraryToDependencies(myLibrary, myContext.getProject());
     }
   }
 
