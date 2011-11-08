@@ -168,22 +168,8 @@ public abstract class MvcFramework {
   
   @Nullable
   public VirtualFile findAppRoot(@Nullable PsiElement element) {
-    if (element == null) return null;
-
-    PsiFile containingFile = element.getContainingFile().getOriginalFile();
-    VirtualFile file = containingFile.getVirtualFile();
-    if (file == null) return null;
-
-    ProjectFileIndex index = ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex();
-
-    VirtualFile root = index.getContentRootForFile(file);
-    if (root == null) return null;
-
-    String appDirName = getApplicationDirectoryName();
-
-    if (root.findChild(appDirName) == null) return null;
-
-    return root;
+    VirtualFile appDirectory = findAppDirectory(element);
+    return appDirectory == null ? null : appDirectory.getParent();
   }
 
   @Nullable
@@ -198,6 +184,22 @@ public abstract class MvcFramework {
     }
 
     return null;
+  }
+  
+  @Nullable
+  public VirtualFile findAppDirectory(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    PsiFile containingFile = element.getContainingFile().getOriginalFile();
+    VirtualFile file = containingFile.getVirtualFile();
+    if (file == null) return null;
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex();
+
+    VirtualFile root = index.getContentRootForFile(file);
+    if (root == null) return null;
+
+    return root.findChild(getApplicationDirectoryName());
   }
 
   @Nullable
