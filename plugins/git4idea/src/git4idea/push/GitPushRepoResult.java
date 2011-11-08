@@ -111,14 +111,19 @@ final class GitPushRepoResult {
   @NotNull
   String getPerBranchesReport() {
     StringBuilder sb = new StringBuilder();
+    int i = 0;
     for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
       GitBranch branch = entry.getKey();
       GitPushBranchResult branchResult = entry.getValue();
 
       if (branchResult.isSuccess()) {
-        sb.append(bold(branch.getName()) + ": pushed " + commits(branchResult.getNumberOfPushedCommits())).append("<br/>");
+        sb.append(bold(branch.getName()) + ": pushed " + commits(branchResult.getNumberOfPushedCommits()));
       } else {
-        sb.append(code(branch.getName())).append(": rejected").append("<br/>");
+        sb.append(code(branch.getName())).append(": rejected");
+      }
+      
+      if (i < myBranchResults.size() - 1) {
+        sb.append("<br/>");
       }
     }
     return sb.toString();
