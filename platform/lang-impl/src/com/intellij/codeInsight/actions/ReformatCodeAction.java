@@ -183,7 +183,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
   public static void updateShowDialogSetting(LayoutCodeDialog dialog, String title) {
     if (dialog.isDoNotAskMe()) {
-      Notifications.Bus.notify(new Notification("settings", title,
+      Notifications.Bus.notify(new Notification("Reformat Code", title,
                                                 "<html>You can re-enable the dialog on the <a href=''>IDE Settings -> Editor</a> pane</html>",
                                                 NotificationType.INFORMATION, new NotificationListener() {
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
