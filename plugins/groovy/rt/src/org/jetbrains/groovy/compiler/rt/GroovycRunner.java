@@ -16,7 +16,8 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
-import org.codehaus.groovy.ast.ClassNode;
+import org.codehaus.groovy.ast.*;
+import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
@@ -124,8 +125,6 @@ public class GroovycRunner {
         options.put("stubDir", config.getTargetDirectory());
         options.put("keepStubs", Boolean.TRUE);
         config.setJointCompilationOptions(options);
-
-        config.setTargetBytecode(CompilerConfiguration.PRE_JDK5);
       }
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
@@ -404,6 +403,38 @@ public class GroovycRunner {
 
   private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader) {
     JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
+      private boolean annoRemovedAdded;
+
+      @Override
+      public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {
+        if (!annoRemovedAdded && phase == Phases.CONVERSION && op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
+          annoRemovedAdded = true;
+          super.addPhaseOperation(new PrimaryClassNodeOperation() {
+            @Override
+            public void call(final SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
+              final ClassCodeVisitorSupport annoRemover = new ClassCodeVisitorSupport() {
+                @Override
+                protected SourceUnit getSourceUnit() {
+                  return source;
+                }
+
+                @Override
+                public void visitAnnotations(AnnotatedNode node) {
+                  List<AnnotationNode> annotations = node.getAnnotations();
+                  if (!annotations.isEmpty()) {
+                    annotations.clear();
+                  }
+                  super.visitAnnotations(node);
+                }
+              };
+              annoRemover.visitClass(classNode);
+            }
+          }, phase);
+        }
+
+        super.addPhaseOperation(op, phase);
+      }
+
       public void gotoPhase(int phase) throws CompilationFailedException {
         if (phase == Phases.SEMANTIC_ANALYSIS) {
           System.out.println(PRESENTABLE_MESSAGE + "Generating Groovy stubs...");

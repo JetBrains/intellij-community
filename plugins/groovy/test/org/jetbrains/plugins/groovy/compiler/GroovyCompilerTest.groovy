@@ -424,6 +424,12 @@ class Usage {
     assertEmpty make()
   }
 
+  public void testGenericStubs() {
+    myFixture.addFileToProject 'Foo.groovy', 'class Foo { List<String> list }'
+    myFixture.addFileToProject 'Bar.java', 'class Bar {{ for (String s : new Foo().getList()) {} }}'
+    assertEmpty make()
+  }
+
   public static class IdeaMode extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
