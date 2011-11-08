@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 
@@ -28,8 +29,13 @@ import java.awt.event.MouseEvent;
 public class OpenOrAttachDialog extends DialogWrapper {
   private JRadioButton myAttachButton;
   private JRadioButton myReplaceButton;
-  private JRadioButton myOpenInNewWindowLabel;
+  private JRadioButton myOpenInNewWindowButton;
   private JPanel myMainPanel;
+  
+  private static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
+  private static final String MODE_ATTACH = "attach";
+  private static final String MODE_REPLACE = "replace";
+  private static final String MODE_NEW = "new";
 
   protected OpenOrAttachDialog(Project project) {
     super(project);
@@ -49,7 +55,18 @@ public class OpenOrAttachDialog extends DialogWrapper {
     };
     myAttachButton.addMouseListener(listener);
     myReplaceButton.addMouseListener(listener);
-    myOpenInNewWindowLabel.addMouseListener(listener);
+    myOpenInNewWindowButton.addMouseListener(listener);
+
+    final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
+    if (MODE_NEW.equals(mode)) {
+      myOpenInNewWindowButton.setSelected(true);
+    }
+    else if (MODE_REPLACE.equals(mode)) {
+      myReplaceButton.setSelected(true);
+    }
+    else {
+      myAttachButton.setSelected(true);      
+    }
   }
   
   public boolean isReplace() {
@@ -63,5 +80,12 @@ public class OpenOrAttachDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
+  }
+
+  @Override
+  protected void doOKAction() {
+    String mode = isAttach() ? MODE_ATTACH : isReplace() ? MODE_REPLACE : MODE_NEW;
+    PropertiesComponent.getInstance().setValue(MODE_PROPERTY, mode);
+    super.doOKAction();
   }
 }
