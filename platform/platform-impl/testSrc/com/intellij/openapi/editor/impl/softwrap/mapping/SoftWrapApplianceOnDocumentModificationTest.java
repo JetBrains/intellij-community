@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -806,6 +806,23 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     // Don't expect soft wraps to be registered as there is no point in wrapping at the first non-white space symbol position
     // in all cases when soft wrap is located at the left screen edge.
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
+  public void testIncompleteLineEndRecalculation() throws IOException {
+    String text = 
+      "first line \t first line\n" +
+      "second line\n" +
+      "third line \t third line\n" +
+      "forth line \t forth line\n" +
+      "fifth line";
+    init(180, text);
+    List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
+    //assertEquals(2, softWraps.size());
+    int endOffset = text.indexOf("forth") - 3;
+    myEditor.getDocument().replaceString(0, endOffset, text.substring(0, endOffset));
+    // TODO den remove
+    System.out.println("ye");
+    //assertEquals(softWraps, getSoftWrapModel().getRegisteredSoftWraps());
   }
   
   private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
