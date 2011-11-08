@@ -136,7 +136,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
 
     private AnAction createFilterByCategoryAction(final String availableCategory) {
-      return new AnAction(availableCategory) {
+      return new AnAction(availableCategory != null ? availableCategory : "<N/A>") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final String filter = myFilter.getFilter().toLowerCase();
