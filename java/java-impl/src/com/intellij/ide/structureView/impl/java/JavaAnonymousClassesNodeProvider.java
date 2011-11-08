@@ -20,8 +20,10 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.AnonymousElementProvider;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -59,7 +61,7 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
 
   @Override
   public Shortcut[] getShortcut() {
-    return Shortcut.EMPTY_ARRAY;
+    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta A" : "control A")};
   }
 
   @NotNull

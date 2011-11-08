@@ -35,14 +35,13 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
 
   @NotNull
   public Filter[] getFilters() {
-    return new Filter[]{new InheritedMembersFilter(),
-                        new FieldsFilter(),
+    return new Filter[]{new FieldsFilter(),
                         new PublicElementsFilter()};
   }
 
   @Override
   public NodeProvider[] getNodeProviders() {
-    return new NodeProvider[]{new JavaAnonymousClassesNodeProvider()};
+    return new NodeProvider[]{new JavaInheritedMembersNodeProvider(), new JavaAnonymousClassesNodeProvider()};
   }
 
   @NotNull
