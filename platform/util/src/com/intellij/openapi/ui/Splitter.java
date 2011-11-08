@@ -214,13 +214,15 @@ public class Splitter extends JPanel {
     final double width = getWidth();
     final double height = getHeight();
 
+    final double componentSize = getOrientation() ? height : width;
+    if (componentSize <= 0) return;
+
     if (!isNull(myFirstComponent) && myFirstComponent.isVisible() && !isNull(mySecondComponent) && mySecondComponent.isVisible()) {
       // both first and second components are visible
       Rectangle firstRect = new Rectangle();
       Rectangle dividerRect = new Rectangle();
       Rectangle secondRect = new Rectangle();
 
-      final double componentSize = getOrientation() ? height : width;
       double dividerWidth = getDividerWidth();
       double firstComponentSize;
       double secondComponentSize;
