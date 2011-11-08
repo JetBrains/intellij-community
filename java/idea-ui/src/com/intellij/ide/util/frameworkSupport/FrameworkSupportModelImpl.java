@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author nik
 */
-class FrameworkSupportModelImpl extends FrameworkSupportModelBase {
+public class FrameworkSupportModelImpl extends FrameworkSupportModelBase {
   private final String myContentRootPath;
 
   public FrameworkSupportModelImpl(final @NotNull Project project,

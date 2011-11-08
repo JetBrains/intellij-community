@@ -20,9 +20,11 @@ import com.intellij.framework.FrameworkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -77,11 +79,11 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
 
   @Override
   public FrameworkType getFrameworkType() {
-    return new FrameworkType(getFacetType().getStringId(), getFacetType().getPresentableName(), getFacetType().getIcon());
+    return createFrameworkType(getFacetType());
   }
 
-  public static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
-    return new FrameworkType(facetType.getStringId(), facetType.getPresentableName(), facetType.getIcon());
+  static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
+    return new FacetBasedFrameworkType(facetType);
   }
 
   @Override
@@ -92,5 +94,29 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
 
   public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<VirtualFile> files) {
     return true;
+  }
+
+  private static class FacetBasedFrameworkType extends FrameworkType {
+    private final FacetType<?, ?> myFacetType;
+    private final Icon myIcon;
+
+    public FacetBasedFrameworkType(FacetType<?, ?> facetType) {
+      super(facetType.getStringId());
+      myFacetType = facetType;
+      final Icon icon = myFacetType.getIcon();
+      myIcon = icon != null ? icon : EmptyIcon.ICON_16;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
+      return myFacetType.getPresentableName();
+    }
+
+    @NotNull
+    @Override
+    public Icon getIcon() {
+      return myIcon;
+    }
   }
 }

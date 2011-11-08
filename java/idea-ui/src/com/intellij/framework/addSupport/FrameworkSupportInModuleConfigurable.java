@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.config;
+package com.intellij.framework.addSupport;
 
-import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
-* @author peter
-*/
-public class GroovySupportConfigurable extends FrameworkSupportInModuleConfigurable {
-  @Override
-  public JComponent createComponent() {
+ * @author nik
+ */
+public abstract class FrameworkSupportInModuleConfigurable implements Disposable {
+  @Nullable
+  public abstract JComponent createComponent();
+
+  public abstract void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
+                                  @NotNull ModifiableModelsProvider modifiableModelsProvider);
+
+  @Nullable
+  public CustomLibraryDescription createLibraryDescription() {
     return null;
   }
 
   @NotNull
-  @Override
-  public CustomLibraryDescription createLibraryDescription() {
-    return new GroovyLibraryDescription();
+  public FrameworkLibraryVersionFilter getLibraryVersionFilter() {
+    return FrameworkLibraryVersionFilter.ALL;
   }
 
-  @Override
   public boolean isOnlyLibraryAdded() {
-    return true;
+    return false;
   }
 
   @Override
-  public void addSupport(@NotNull Module module,
-                         @NotNull ModifiableRootModel rootModel,
-                         @NotNull ModifiableModelsProvider modifiableModelsProvider) {
-
+  public void dispose() {
   }
 }

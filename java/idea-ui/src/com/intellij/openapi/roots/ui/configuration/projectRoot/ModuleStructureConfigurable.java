@@ -45,12 +45,14 @@ import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.libraries.CreateCustomLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableComputable;
@@ -718,16 +720,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(module);
 
-        final AnAction[] facets = AddFacetToModuleAction.createAddFacetActions(myFacetEditorFacade, myProject);
-        if (facets.length > 0) {
-          result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
-          ContainerUtil.addAll(result, facets);
-        }
-
-        final List<AnAction> libraryActions = CreateCustomLibraryAction.getActions(myContext, ModuleStructureConfigurable.this);
-        if (!libraryActions.isEmpty()) {
-          result.add(new Separator("Library"));
-          result.addAll(libraryActions);
+        final Collection<AnAction> actions = AddFacetToModuleAction.createAddFrameworkActions(myFacetEditorFacade, myProject);
+        if (!actions.isEmpty()) {
+          result.add(new Separator(ProjectBundle.message("add.group.framework.separator")));
+          result.addAll(actions);
         }
 
         final NullableComputable<MyNode> selectedNodeRetriever = new NullableComputable<MyNode>() {

@@ -16,7 +16,7 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,7 +41,7 @@ import java.util.Map;
 */
 public class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
-  private FrameworkVersion myCurrentFrameworkVersion;
+  private FrameworkLibraryVersionFilter myVersionFilter;
   private String myBaseDirectoryPath;
   private final List<? extends FrameworkLibraryVersion> myAllVersions;
   private LibrariesContainer.LibraryLevel myNewLibraryLevel;
@@ -53,10 +53,10 @@ public class LibraryCompositionSettings implements Disposable {
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
                                     final @NotNull String baseDirectoryPath,
-                                    @Nullable FrameworkVersion currentFrameworkVersion,
+                                    @NotNull FrameworkLibraryVersionFilter versionFilter,
                                     final List<? extends FrameworkLibraryVersion> allVersions) {
     myLibraryDescription = libraryDescription;
-    myCurrentFrameworkVersion = currentFrameworkVersion;
+    myVersionFilter = versionFilter;
     myNewLibraryLevel = libraryDescription.getDefaultLevel();
     myBaseDirectoryPath = baseDirectoryPath;
     myAllVersions = allVersions;
@@ -71,9 +71,9 @@ public class LibraryCompositionSettings implements Disposable {
                                                      myNewLibraryLevel, getDefaultDownloadPath(myBaseDirectoryPath));
   }
 
-  public void updateDownloadableVersions(@Nullable FrameworkVersion version) {
-    myCurrentFrameworkVersion = version;
-    if (version != null && (myDownloadSettings == null || !myDownloadSettings.getVersion().isCompatibleWith(version))) {
+  public void setVersionFilter(@NotNull FrameworkLibraryVersionFilter versionFilter) {
+    myVersionFilter = versionFilter;
+    if (myDownloadSettings == null || !versionFilter.isAccepted(myDownloadSettings.getVersion())) {
       final FrameworkLibraryVersion newLibraryVersion = ContainerUtil.getFirstItem(getCompatibleVersions());
       if (newLibraryVersion != null) {
         myDownloadSettings = createDownloadSettings(newLibraryVersion);
@@ -85,10 +85,9 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   public List<? extends FrameworkLibraryVersion> getCompatibleVersions() {
-    if (myCurrentFrameworkVersion == null) return myAllVersions;
     final List<FrameworkLibraryVersion> result = new ArrayList<FrameworkLibraryVersion>();
     for (FrameworkLibraryVersion version : myAllVersions) {
-      if (version.isCompatibleWith(myCurrentFrameworkVersion)) {
+      if (myVersionFilter.isAccepted(version)) {
         result.add(version);
       }
     }

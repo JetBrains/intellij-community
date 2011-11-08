@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -115,7 +116,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
       final GroovyLibraryDescription libraryDescription = myFramework.createLibraryDescription();
       final String basePath = getBasePath();
       final String baseDirPath = basePath != null ? FileUtil.toSystemIndependentName(basePath) : "";
-      myPanel = new LibraryOptionsPanel(libraryDescription, baseDirPath, null, myLibrariesContainer, false);
+      myPanel = new LibraryOptionsPanel(libraryDescription, baseDirPath, FrameworkLibraryVersionFilter.ALL, myLibrariesContainer, false);
     }
     return myPanel;
   }

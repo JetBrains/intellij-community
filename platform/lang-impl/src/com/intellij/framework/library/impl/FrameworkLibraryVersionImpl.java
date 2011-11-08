@@ -15,12 +15,10 @@
  */
 package com.intellij.framework.library.impl;
 
-import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -29,25 +27,17 @@ import java.util.List;
  */
 public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionImpl implements FrameworkLibraryVersion {
   private final String myLibraryCategory;
-  private final FrameworkVersion myFrameworkVersion;
 
   public FrameworkLibraryVersionImpl(String versionString,
                                      List<DownloadableFileDescription> libraryFiles,
-                                     String category,
-                                     @Nullable FrameworkVersion frameworkVersion) {
+                                     String category) {
     super(category, versionString, libraryFiles);
     myLibraryCategory = category;
-    myFrameworkVersion = frameworkVersion;
   }
 
   @NotNull
   @Override
   public String getDefaultLibraryName() {
     return myVersionString.length() > 0 ? myLibraryCategory + "-" + myVersionString : myLibraryCategory;
-  }
-
-  @Override
-  public boolean isCompatibleWith(@NotNull FrameworkVersion frameworkVersion) {
-    return myFrameworkVersion == null || myFrameworkVersion.getVersionName().equals(frameworkVersion.getVersionName());
   }
 }

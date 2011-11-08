@@ -15,7 +15,6 @@
  */
 package com.intellij.framework.detection;
 
-import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl;
 import com.intellij.framework.detection.impl.exclude.ExcludedFileState;
 import com.intellij.framework.detection.impl.exclude.ExcludesConfigurationState;
@@ -86,13 +85,15 @@ public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
 
     assertTrue(isFileExcluded(file));
     assertNull(getOldConfiguration().getState());
-    assertOneElement(getNewConfiguration().getState().getFiles());
+    final ExcludesConfigurationState newState = getNewConfiguration().getState();
+    assertNotNull(newState);
+    assertOneElement(newState.getFiles());
   }
 
   private boolean isFileExcluded(VirtualFile file) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     files.add(file);
-    getNewConfiguration().removeExcluded(files, new FrameworkType(FRAMEWORK_ID, "", null));
+    getNewConfiguration().removeExcluded(files, new MockFrameworkType(FRAMEWORK_ID));
     return files.isEmpty();
   }
 
@@ -102,7 +103,7 @@ public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
     state.getElements().add(new DisabledAutodetectionByTypeElement(FRAMEWORK_ID, myModule.getName(), file.getUrl(), false));
     getOldConfiguration().loadState(state);
 
-    getNewConfiguration().addExcludedFramework(new FrameworkType("my-framework-2", "", null));
+    getNewConfiguration().addExcludedFramework(new MockFrameworkType("my-framework-2"));
     assertNull(getOldConfiguration().getState());
     final ExcludesConfigurationState newState = getNewConfiguration().getState();
     assertNotNull(newState);

@@ -52,8 +52,6 @@
     <extensionPoint name="OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 
-    <extensionPoint name="library.creator" interface="com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryCreator"/>
-
     <extensionPoint name="packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"/>
     <extensionPoint name="packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider"/>
     <extensionPoint name="packaging.sourceItemProvider" interface="com.intellij.packaging.ui.PackagingSourceItemsProvider"/>

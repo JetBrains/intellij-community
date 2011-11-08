@@ -15,41 +15,26 @@
  */
 package com.intellij.framework;
 
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public abstract class FrameworkType {
-  private final String myId;
+public abstract class FrameworkTypeEx extends FrameworkType {
+  public static final ExtensionPointName<FrameworkTypeEx> EP_NAME = ExtensionPointName.create("com.intellij.framework.type");
 
-  protected FrameworkType(@NotNull String id) {
-    myId = id;
+  protected FrameworkTypeEx(@NotNull String id) {
+    super(id);
   }
 
   @NotNull
-  public abstract String getPresentableName();
+  public abstract FrameworkSupportInModuleProvider createProvider();
 
-  @NotNull
-  public abstract Icon getIcon();
-
-  @NotNull
-  public final String getId() {
-    return myId;
-  }
-
-  @Override
-  public final boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    return myId.equals(((FrameworkType)o).myId);
-  }
-
-  @Override
-  public final int hashCode() {
-    return myId.hashCode();
+  @Nullable
+  public String getUnderlyingFrameworkTypeId() {
+    return null;
   }
 }

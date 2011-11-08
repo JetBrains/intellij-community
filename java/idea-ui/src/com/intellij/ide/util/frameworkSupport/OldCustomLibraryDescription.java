@@ -62,7 +62,7 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
           downloads.add(element);
         }
       }
-      libraryVersions.add(new FrameworkLibraryVersionImpl(version.getVersionName(), downloads, version.getLibraryName(), version));
+      libraryVersions.add(new FrameworkLibraryVersionImpl(version.getVersionName(), downloads, version.getLibraryName()));
     }
     myDownloadableDescription = !libraryVersions.isEmpty() ? new DownloadableLibraryDescriptionImpl(libraryVersions) : null;
   }

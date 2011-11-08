@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryCreator;
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
@@ -25,26 +25,26 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class GroovyLibraryCreator extends CustomLibraryCreator {
-  private final GroovyLibraryDescription myDescription;
-
-  public GroovyLibraryCreator() {
-    myDescription = new GroovyLibraryDescription();
-  }
-
-  @Override
-  public String getDisplayName() {
-    return "Groovy";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+public class GroovyFrameworkType extends FrameworkTypeEx {
+  public GroovyFrameworkType() {
+    super("Groovy");
   }
 
   @NotNull
   @Override
-  public CustomLibraryDescription getDescription() {
-    return myDescription;
+  public FrameworkSupportInModuleProvider createProvider() {
+    return new GroovyFrameworkSupportProvider();
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Groovy";
+  }
+
+  @NotNull
+  @Override
+  public Icon getIcon() {
+    return GroovyIcons.GROOVY_ICON_16x16;
   }
 }

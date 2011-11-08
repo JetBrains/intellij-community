@@ -18,6 +18,8 @@ package com.intellij.facet.impl.ui.actions;
 
 import com.intellij.facet.*;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
+import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.framework.addSupport.impl.AddFrameworkSupportInProjectStructureAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +27,11 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+
+import java.util.Collection;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * @author nik
@@ -91,12 +98,16 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     return !(type.isOnlyOneFacetAllowed() && editor.nodeHasFacetOfType(selectedFacet, type.getId()));
   }
 
-  public static AnAction[] createAddFacetActions(FacetEditorFacade editor, Project project) {
-    final FacetType[] types = FacetTypeRegistry.getInstance().getSortedFacetTypes();
-    AnAction[] actions = new AnAction[types.length];
-    for (int i = 0; i < types.length; i++) {
-      actions[i] = new AddFacetToModuleAction(editor, project, types[i]);
+  public static Collection<AnAction> createAddFrameworkActions(FacetEditorFacade editor, Project project) {
+    SortedMap<String, AnAction> actions = new TreeMap<String, AnAction>();
+    for (FacetType type : FacetTypeRegistry.getInstance().getFacetTypes()) {
+      actions.put(type.getPresentableName(), new AddFacetToModuleAction(editor, project, type));
     }
-    return actions;
+    for (FrameworkTypeEx frameworkType : FrameworkTypeEx.EP_NAME.getExtensions()) {
+      final AnAction action = new AddFrameworkSupportInProjectStructureAction(frameworkType, frameworkType.createProvider(), 
+                                                                              ModuleStructureConfigurable.getInstance(project));
+      actions.put(frameworkType.getPresentableName(), action);
+    }
+    return actions.values();
   }
 }

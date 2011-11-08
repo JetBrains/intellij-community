@@ -13,43 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework;
+package com.intellij.framework.library;
 
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author nik
  */
-public abstract class FrameworkType {
-  private final String myId;
+public interface FrameworkLibraryVersionFilter {
+  FrameworkLibraryVersionFilter ALL = new FrameworkLibraryVersionFilter() {
+    @Override
+    public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
+      return true;
+    }
+  };
 
-  protected FrameworkType(@NotNull String id) {
-    myId = id;
-  }
-
-  @NotNull
-  public abstract String getPresentableName();
-
-  @NotNull
-  public abstract Icon getIcon();
-
-  @NotNull
-  public final String getId() {
-    return myId;
-  }
-
-  @Override
-  public final boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    return myId.equals(((FrameworkType)o).myId);
-  }
-
-  @Override
-  public final int hashCode() {
-    return myId.hashCode();
-  }
+  boolean isAccepted(@NotNull FrameworkLibraryVersion version);
 }

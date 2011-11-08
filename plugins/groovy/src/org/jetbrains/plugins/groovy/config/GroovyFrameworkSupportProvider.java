@@ -15,28 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
-
-import javax.swing.*;
 
 /**
  * @author peter
  */
-public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
-  protected GroovyFacetSupportProvider() {
-    super("Groovy", "Groovy");
-  }
-
+public class GroovyFrameworkSupportProvider extends FrameworkSupportInModuleProvider {
+  @NotNull
   @Override
-  public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+  public FrameworkTypeEx getFrameworkType() {
+    return FrameworkTypeEx.EP_NAME.findExtension(GroovyFrameworkType.class);
   }
 
   @Override
@@ -45,7 +40,7 @@ public class GroovyFacetSupportProvider extends FrameworkSupportProvider {
   }
 
   @NotNull
-  public FrameworkSupportConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
+  public FrameworkSupportInModuleConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
     return new GroovySupportConfigurable();
   }
 

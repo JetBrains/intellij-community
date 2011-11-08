@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraries;
+package com.intellij.framework.detection;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.framework.FrameworkType;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author nik
  */
-public abstract class CustomLibraryCreator {
-  public static final ExtensionPointName<CustomLibraryCreator> EP_NAME = ExtensionPointName.create("com.intellij.library.creator");
-
-  public abstract String getDisplayName();
-
-  @Nullable
-  public abstract Icon getIcon();
+public class MockFrameworkType extends FrameworkType {
+  public MockFrameworkType(@NotNull String id) {
+    super(id);
+  }
 
   @NotNull
-  public abstract CustomLibraryDescription getDescription();
+  @Override
+  public String getPresentableName() {
+    return getId();
+  }
+
+  @NotNull
+  @Override
+  public Icon getIcon() {
+    return EmptyIcon.ICON_16;
+  }
 }
