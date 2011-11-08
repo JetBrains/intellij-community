@@ -44,15 +44,19 @@ public class CodeStyleSchemesPanel{
   private JButton myDeleteButton;
 
   private final CodeStyleSchemesModel myModel;
-  private JRadioButton myUseGlobalScheme;
-  private JRadioButton myUseProjectScheme;
   private JButton myImportButton;
   private JPanel myPanel;
   private JButton myExportAsGlobalButton;
   private JButton myCopyToProjectButton;
   private JBScrollPane myJBScrollPane;
+  private JPanel myGlobalPanel;
+  private JPanel myProjectPanel;
+  private JComboBox mySettingsType;
   private boolean myIsReset = false;
   private NewCodeStyleSettingsPanel mySettingsPanel;
+  
+  private final static String GLOBAL_SETTINGS_ITEM = "Global settings";
+  private final static String PROJECT_SETTINGS_ITEM = "Per project settings";
 
   public Collection<CodeStyleScheme> getSchemes() {
     ArrayList<CodeStyleScheme> result = new ArrayList<CodeStyleScheme>();
@@ -69,16 +73,13 @@ public class CodeStyleSchemesPanel{
 
   public CodeStyleSchemesPanel(CodeStyleSchemesModel model) {
     myModel = model;
-
-    myUseGlobalScheme.addItemListener(new ItemListener(){
-      public void itemStateChanged(final ItemEvent e) {
-        myModel.setUsePerProjectSettings(!myUseGlobalScheme.isSelected());
-      }
-    });
-
-    myUseProjectScheme.addItemListener(new ItemListener(){
-      public void itemStateChanged(final ItemEvent e) {
-        myModel.setUsePerProjectSettings(myUseProjectScheme.isSelected());
+    
+    ComboBoxModel settingsTypeModel = new DefaultComboBoxModel(new String[] {GLOBAL_SETTINGS_ITEM, PROJECT_SETTINGS_ITEM});
+    mySettingsType.setModel(settingsTypeModel);
+    mySettingsType.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        onSettingsTypeChange();
       }
     });
 
@@ -276,16 +277,11 @@ public class CodeStyleSchemesPanel{
   }
 
   private void updateProjectSchemesRelatedUI() {
-    if(myModel.isUsePerProjectSettings()) {
-      myUseProjectScheme.setSelected(true);
-      myCombo.setEnabled(false);
-      updateButtons();
-    }
-    else if (!myModel.isUsePerProjectSettings()){
-      myUseGlobalScheme.setSelected(true);
-      myCombo.setEnabled(true);
-      updateButtons();
-    }
+    boolean useProjectSettings = myModel.isUsePerProjectSettings();
+    mySettingsType.setSelectedItem(useProjectSettings ? PROJECT_SETTINGS_ITEM : GLOBAL_SETTINGS_ITEM);
+    myGlobalPanel.setVisible(!useProjectSettings);
+    myProjectPanel.setVisible(useProjectSettings);
+    updateButtons();
   }
 
   public void onSelectedSchemeChanged() {
@@ -311,6 +307,13 @@ public class CodeStyleSchemesPanel{
   public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
     mySettingsPanel = settingsPanel;
   }
-  
+
+  private void onSettingsTypeChange() {
+    Object selectedItem = mySettingsType.getSelectedItem();
+    boolean useProjectSettings = PROJECT_SETTINGS_ITEM.equals(selectedItem);
+    myGlobalPanel.setVisible(!useProjectSettings);
+    myProjectPanel.setVisible(useProjectSettings);
+    myModel.setUsePerProjectSettings(useProjectSettings);
+  }
 
 }
