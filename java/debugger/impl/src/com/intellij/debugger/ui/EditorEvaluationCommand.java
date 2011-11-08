@@ -24,12 +24,12 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +59,11 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    AccessToken token = ReadAction.start();
-    try {
-      myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", myElement.getText()));
-    }
-    finally {
-      token.finish();
-    }
+    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            public String compute() {
+              return myElement.getText();
+            }
+          })));
 
     try {
       T result = evaluate(myDebuggerContext.createEvaluationContext());
