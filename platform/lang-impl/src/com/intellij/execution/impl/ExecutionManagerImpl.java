@@ -109,14 +109,14 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         }
       }
 
+      ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
+      final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
+      final DataContext dataContext = configurationSettings != null ? SimpleDataContext
+        .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
+
       if (!activeProviders.isEmpty()) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
-            DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
-
-            final DataContext dataContext = configurationSettings != null ? SimpleDataContext
-              .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
             for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
               if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
                 if (onCancelRunnable != null) {
