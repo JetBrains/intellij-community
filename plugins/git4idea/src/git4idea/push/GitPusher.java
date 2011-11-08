@@ -173,13 +173,25 @@ public final class GitPusher {
         
         Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
         GitCommitsByBranch commitsByBranch = commits.get(repository);
+        boolean pushedBranchWasRejected = false;
         for (GitBranch branch : commitsByBranch.getBranches()) {
-          GitPushBranchResult branchResult = branchInRejected(branch, rejectedBranches) ? 
-                                             GitPushBranchResult.rejected() : 
-                                             successfulResultForBranch(commitsByBranch, branch);
+          GitPushBranchResult branchResult;
+          if (branchInRejected(branch, rejectedBranches)) {
+            branchResult = GitPushBranchResult.rejected();
+            pushedBranchWasRejected = true;
+          }
+          else {
+            branchResult = successfulResultForBranch(commitsByBranch, branch);
+          }
           resultMap.put(branch, branchResult);
         }
-        repoResult = GitPushRepoResult.someRejected(resultMap, res);
+
+        if (pushedBranchWasRejected) {
+          repoResult = GitPushRepoResult.someRejected(resultMap, res);
+        } else {
+          // The rejectedDetector detected rejected push of the branch which had nothing to push (but is behind the upstream). We are not counting it.
+          repoResult = GitPushRepoResult.success(resultMap, res);
+        }
       }
       else if (res.success()) {
         repoResult = successOrErrorRepoResult(commits, repository, res, true);
