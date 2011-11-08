@@ -363,7 +363,7 @@
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
     <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageConfigurable"/>
+    <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
