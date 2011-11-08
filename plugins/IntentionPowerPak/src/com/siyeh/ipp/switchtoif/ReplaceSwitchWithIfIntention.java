@@ -48,6 +48,14 @@ public class ReplaceSwitchWithIfIntention extends Intention {
     if (switchStatement == null) {
       return;
     }
+    doProcessIntention(switchStatement);
+  }
+
+  public static boolean canProcess(@NotNull PsiSwitchStatement switchLabelStatement) {
+    return SwitchPredicate.checkSwitchStatement(switchLabelStatement);
+  }
+
+  public static void doProcessIntention(@NotNull PsiSwitchStatement switchStatement) {
     final PsiExpression switchExpression = switchStatement.getExpression();
     if (switchExpression == null) {
       return;
@@ -61,7 +69,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
     final String declarationString;
     final boolean hadSideEffects;
     final String expressionText;
-    final Project project = element.getProject();
+    final Project project = switchStatement.getProject();
     if (SideEffectChecker.mayHaveSideEffects(switchExpression)) {
       hadSideEffects = true;
 

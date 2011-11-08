@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -87,29 +88,32 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    if (element instanceof GrVariable) {
-      GrVariable variable = (GrVariable)element;
+    if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
+      PsiVariable variable = (PsiVariable)element;
       StringBuilder buffer = new StringBuilder();
-      if (element instanceof GrField) {
-        final PsiClass parentClass = ((GrField)element).getContainingClass();
+      if (element instanceof PsiField) {
+        final PsiClass parentClass = ((PsiField)element).getContainingClass();
         if (parentClass != null) {
           buffer.append(JavaDocUtil.getShortestClassName(parentClass, element));
           newLine(buffer);
         }
         generateModifiers(buffer, element);
       }
-      final PsiType type = variable.getDeclaredType();
+      final PsiType type = variable instanceof GrVariable ? ((GrVariable)variable).getDeclaredType() : variable.getType();
       appendTypeString(buffer, type, calcSubstitutor(originalElement));
       buffer.append(" ");
       buffer.append(variable.getName());
-      newLine(buffer);
 
-      PsiReference ref;
-      while (originalElement != null && ((ref = originalElement.getReference()) == null || ref.resolve() == null)) {
-        originalElement = originalElement.getParent();
+      if (element instanceof GrVariable) {
+        newLine(buffer);
+
+        PsiReference ref;
+        while (originalElement != null && ((ref = originalElement.getReference()) == null || ref.resolve() == null)) {
+          originalElement = originalElement.getParent();
+        }
+
+        appendInferredType(originalElement, buffer);
       }
-
-      appendInferredType(originalElement, buffer);
 
       return buffer.toString();
     }

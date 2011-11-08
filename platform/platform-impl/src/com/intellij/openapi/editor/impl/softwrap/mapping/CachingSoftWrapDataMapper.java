@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
@@ -453,11 +454,15 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       if (beforeLast.visualLine == last.visualLine
           || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1))
       {
+        CharSequence editorState = "";
+        if (myEditor instanceof EditorImpl) {
+          editorState = ((EditorImpl)myEditor).dumpState();
+        }
         LOG.error(String.format(
-          "Detected invalid soft wraps recalculation. Event: %s, normal: %b.%n%nCurrent cache state: %s%n%nTail cache entries: %s%n%n"
-          + "Affected by change cache entries: %s%n%nBefore change state: %s%n%nAfter change state: %s",
-          event, normal, myCache, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
-          myBeforeChangeState, myAfterChangeState
+          "Detected invalid soft wraps recalculation. Event: %s, normal: %b.%n%nTail cache entries: %s%n%n"
+          + "Affected by change cache entries: %s%n%nBefore change state: %s%n%nAfter change state: %s%n%nEditor state: %s",
+          event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
+          myBeforeChangeState, myAfterChangeState, editorState
         ));
       }
     }
@@ -693,7 +698,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     @Override
     public String toString() {
       return String.format(
-        "visual lines: %d, logical lines: %d, soft wrap lines: %d, fold lines: %d, cache entry indices: [%d-%d]",
+        "visual lines: %d, logical lines: %d, soft wrap lines: %d, fold lines: %d, cache entry indices: [%d;%d]",
         visualLines, logicalLines, softWrapLines, foldedLines, startCacheEntryIndex, endCacheEntryIndex
       );
     }

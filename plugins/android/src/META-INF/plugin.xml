@@ -74,6 +74,8 @@
 
   <depends>JUnit</depends>
   <depends>com.intellij.properties</depends>
+  <depends>IntentionPowerPack</depends>
+
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -134,6 +136,9 @@
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
     </intentionAction>
+    <intentionAction>
+      <className>org.jetbrains.android.intentions.AndroidReplaceSwitchWithIfIntention</className>
+    </intentionAction>
 
     <localInspection language="XML" shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
                      groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
@@ -168,6 +173,7 @@
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
     <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
                                      implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
+    <compiler.additionalCompileScopeProvider implementation="org.jetbrains.android.compiler.AndroidAdditionalCompileScopeProvider"/>
   </extensions>
 
   <extensionPoints>

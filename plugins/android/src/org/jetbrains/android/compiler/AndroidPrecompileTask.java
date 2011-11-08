@@ -28,8 +28,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 
 import java.util.Collection;
 import java.util.Set;
@@ -50,8 +51,17 @@ public class AndroidPrecompileTask implements CompileTask {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
 
-      if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
-        excludeAllSourceRoots(module, configuration, addedEntries);
+      if (facet == null) {
+        continue;
+      }
+
+      final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+      final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+
+      if (platformToolsRevision >= 0 && platformToolsRevision <= 7) {
+        if (facet.getConfiguration().LIBRARY_PROJECT) {
+          excludeAllSourceRoots(module, configuration, addedEntries);
+        }
       }
     }
 

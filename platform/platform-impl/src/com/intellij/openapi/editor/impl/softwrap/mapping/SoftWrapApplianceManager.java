@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   }
 
   private final List<SoftWrapAwareDocumentParsingListener> myListeners            = new ArrayList<SoftWrapAwareDocumentParsingListener>();
+  private final List<IncrementalCacheUpdateEvent>          myActiveEvents         = new ArrayList<IncrementalCacheUpdateEvent>();
   private final CacheUpdateEventsStorage                   myEventsStorage        = new CacheUpdateEventsStorage();
   private final ProcessingContext                          myContext              = new ProcessingContext();
   private final FontTypesStorage                           myOffset2fontType      = new FontTypesStorage();
@@ -148,6 +149,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
 
     // There is a possible case that new dirty regions are encountered during processing, hence, we iterate on regions snapshot here.
     List<IncrementalCacheUpdateEvent> events = new ArrayList<IncrementalCacheUpdateEvent>(myEventsStorage.getEvents());
+    myActiveEvents.addAll(events);
     myEventsStorage.release();
     myInProgress = true;
     try {
@@ -157,6 +159,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
     finally {
       myInProgress = false;
+      myActiveEvents.clear();
     }
     updateLastTopLeftCornerOffset();
   }
@@ -850,6 +853,17 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     recalculateIfNecessary();
   }
 
+  public void setWidthProvider(VisibleAreaWidthProvider widthProvider) {
+    myWidthProvider = widthProvider;
+  }
+  
+  @Override
+  public String toString() {
+    return String.format(
+      "recalculation in progress: %b; stored update events: %s; active update events: %s", myInProgress, myEventsStorage, myActiveEvents
+    );
+  }
+
   /**
    * We need to use correct indent for soft-wrapped lines, i.e. they should be indented to the start of the logical line.
    * This class stores information about logical line start indent. 
@@ -911,10 +925,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       indentInPixels = 0;
       endLineOffset = 0;
     }
-  }
-
-  public void setWidthProvider(VisibleAreaWidthProvider widthProvider) {
-    myWidthProvider = widthProvider;
   }
 
   /**

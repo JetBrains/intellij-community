@@ -216,12 +216,10 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       if (myContext.isMake()) {
         File generatedFile = generationItem.myGeneratedFile;
         if (generatedFile == null || !generatedFile.exists() || generatedFile.lastModified() <= file.getModificationCount()) {
-          AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
           items.add(generationItem);
         }
       }
       else {
-        AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
         items.add(generationItem);
       }
     }

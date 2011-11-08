@@ -487,6 +487,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setPrefixTextAndAttributes(String prefixText, TextAttributes attributes) {
     myPrefixText = prefixText == null? null: prefixText.toCharArray();
     myPrefixAttributes = attributes;
+    mySoftWrapModel.recalculate();
   }
 
   @Override

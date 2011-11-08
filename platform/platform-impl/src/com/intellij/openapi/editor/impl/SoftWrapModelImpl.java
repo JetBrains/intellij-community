@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,12 +183,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDeferredFoldRegions.clear();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
       settings.setAdditionalColumnsCount(0);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else if (!myUseSoftWraps && softWrapsUsedBefore) {
       settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
   @Override
@@ -600,6 +599,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDeferredFoldRegions.clear();
   }
 
+  @Override
+  public void recalculate() {
+    myApplianceManager.reset();
+    myDeferredFoldRegions.clear();
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  }
+
   public SoftWrapApplianceManager getApplianceManager() {
     return myApplianceManager;
   }
@@ -647,7 +653,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public String toString() {
-    return myDataMapper.toString();
+    return String.format("appliance manager state: %s; soft wraps mapping info: %s", myApplianceManager, myDataMapper);
   }
 
   /**

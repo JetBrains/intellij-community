@@ -4,7 +4,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,10 +37,12 @@ class ImportSourceRootsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     panel.setPreferredSize(new Dimension(350, 200));
-    panel.add(new JLabel(AndroidBundle.message("android.import.dependencies.source.roots.dialog.label")));
-    panel.add(mySourcePathsChooser);
+    final JBLabel label = new JBLabel(AndroidBundle.message("android.import.dependencies.source.roots.dialog.label"));
+    label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(mySourcePathsChooser, BorderLayout.CENTER);
     return panel;
   }
 

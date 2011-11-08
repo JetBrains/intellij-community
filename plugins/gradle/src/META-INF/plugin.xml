@@ -15,33 +15,42 @@
   -->
 
 <idea-plugin url="http://confluence.jetbrains.net/display/IDEADEV/Gradle+integration">
-    <name>Gradle</name>
-    <id>org.jetbrains.plugins.gradle</id>
-    <vendor logo="/icons/gradle.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
-    <description>Gradle integration</description>
+  <name>Gradle</name>
+  <id>org.jetbrains.plugins.gradle</id>
+  <vendor logo="/icons/gradle.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
+  <description>Gradle integration</description>
 
-    <!--// TODO den implement-->
-    <depends>com.intellij.modules.lang</depends>
-    <depends>org.intellij.groovy</depends>
+  <!--// TODO den implement-->
+  <depends>com.intellij.modules.lang</depends>
+  <depends>org.intellij.groovy</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-        <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
-        <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder"/>
-        <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
-        <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
-        <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
-        <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
+    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder"/>
+    <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+    <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
 
-        <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
-        <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
-        
-        <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
-    </extensions>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
 
-    <extensions defaultExtensionNs="org.intellij.groovy">
-        <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
-        <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
-    </extensions>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
+  </extensions>
 
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
+    <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
+  </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.bootstrap.GradleBootstrap</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel</implementation-class>
+    </component>
+  </project-components>
+  
 </idea-plugin>

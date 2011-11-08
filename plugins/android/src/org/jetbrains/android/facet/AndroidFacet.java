@@ -529,6 +529,14 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       }
     });
     if (module == null) return null;
+
+    if (AndroidCompileUtil.isGenModule(module)) {
+      final Module baseModule = AndroidCompileUtil.getBaseModuleByGenModule(module);
+      if (baseModule != null) {
+        module = baseModule;
+      }
+    }
+
     return getInstance(module);
   }
 
