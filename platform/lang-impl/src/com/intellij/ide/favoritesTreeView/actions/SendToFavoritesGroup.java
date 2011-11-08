@@ -62,12 +62,16 @@ public class SendToFavoritesGroup extends ActionGroup{
       if (!(parent instanceof FavoritesTreeNodeDescriptor)) {
         return EMPTY_ARRAY;
       }
-      String name = ((FavoritesListNode)parent.getElement()).getName();
-      if (listName == null) {
-        listName = name;
-      }
-      if (!StringUtil.equals(listName, name)) {
-        return EMPTY_ARRAY;
+      final Object parentElement = parent.getElement();
+      if (parentElement instanceof FavoritesListNode) {
+        String name = ((FavoritesListNode)parentElement).getName();
+        if (listName == null) {
+          listName = name;
+        }
+
+        if (!StringUtil.equals(listName, name)) {
+          return EMPTY_ARRAY;
+        }
       }
     }
     
