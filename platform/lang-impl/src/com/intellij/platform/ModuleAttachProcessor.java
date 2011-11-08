@@ -26,6 +26,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -70,8 +73,11 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         }
       }
     }
+    int rc = Messages.showYesNoDialog(project, "The project at " + FileUtil.toSystemDependentName(projectDir.getPath()) +
+                                               " uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
+                                      "Open Project", Messages.getQuestionIcon());
 
-    return false;
+    return rc != Messages.YES;
   }
 
   private static void attachModule(Project project, VirtualFile file, @Nullable ProjectOpenedCallback callback) {
@@ -86,13 +92,38 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       finally {
         token.finish();
       }
+      final Module newModule = ModuleManager.getInstance(project).findModuleByName(module.getName());
+      addPrimaryModuleDependency(project, newModule);
+
       if (callback != null) {
-        callback.projectOpened(project, model.findModuleByName(module.getName()));
+        callback.projectOpened(project, newModule);
       }
     }
     catch (Exception ex) {
       LOG.info(ex);
       Messages.showErrorDialog(project, "Cannot attach project: " + ex.getMessage(), CommonBundle.getErrorTitle());
+    }
+  }
+
+  private static void addPrimaryModuleDependency(Project project, @NotNull Module newModule) {
+    for (Module oldModule : ModuleManager.getInstance(project).getModules()) {
+      if (oldModule != newModule) {
+        final VirtualFile[] roots = ModuleRootManager.getInstance(oldModule).getContentRoots();
+        for (VirtualFile root : roots) {
+          if (root == project.getBaseDir()) {
+            final ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(oldModule).getModifiableModel();
+            modifiableRootModel.addModuleOrderEntry(newModule);
+            AccessToken token = WriteAction.start();
+            try {
+              modifiableRootModel.commit();
+            }
+            finally {
+              token.finish();
+            }
+            break;
+          }
+        }
+      }
     }
   }
 }

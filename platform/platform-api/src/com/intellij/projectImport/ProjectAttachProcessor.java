@@ -27,7 +27,15 @@ import java.io.File;
  */
 public class ProjectAttachProcessor {
   public static final ExtensionPointName<ProjectAttachProcessor> EP_NAME = new ExtensionPointName<ProjectAttachProcessor>("com.intellij.projectAttachProcessor");
-  
+
+  /**
+   * Called to attach the directory projectDir as a module to the specified project.
+   *
+   * @param project    the project to attach the directory to.
+   * @param projectDir the directory to attach.
+   * @param callback   the callback to call on successful attachment
+   * @return true if the attach succeeded, false if the project should be opened in a new window.
+   */
   public boolean attachToProject(Project project, File projectDir, @Nullable ProjectOpenedCallback callback) {
     return false;
   }

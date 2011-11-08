@@ -118,8 +118,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
         }
         else if (dialog.isAttach()) {
-          attachToProject(projectToClose, projectDir, callback);
-          return null;
+          if (attachToProject(projectToClose, projectDir, callback)) return null;
         }
       }
       else {
@@ -181,13 +180,14 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return moduleRef.get();
   }
 
-  private static void attachToProject(Project project, File projectDir, ProjectOpenedCallback callback) {
+  private static boolean attachToProject(Project project, File projectDir, ProjectOpenedCallback callback) {
     final ProjectAttachProcessor[] extensions = Extensions.getExtensions(ProjectAttachProcessor.EP_NAME);
     for (ProjectAttachProcessor processor : extensions) {
       if (processor.attachToProject(project, projectDir, callback)) {
-        break;
+        return true;
       }
     }
+    return false;
   }
 
   private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile, final int line) {
