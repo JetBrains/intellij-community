@@ -183,12 +183,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDeferredFoldRegions.clear();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
       settings.setAdditionalColumnsCount(0);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else if (!myUseSoftWraps && softWrapsUsedBefore) {
       settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
   @Override
@@ -598,6 +597,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myApplianceManager.release();
     myStorage.removeAll();
     myDeferredFoldRegions.clear();
+  }
+
+  @Override
+  public void recalculate() {
+    myApplianceManager.reset();
+    myDeferredFoldRegions.clear();
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
   public SoftWrapApplianceManager getApplianceManager() {

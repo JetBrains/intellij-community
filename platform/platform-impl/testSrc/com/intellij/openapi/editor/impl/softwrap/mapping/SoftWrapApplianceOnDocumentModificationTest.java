@@ -17,9 +17,10 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -807,22 +808,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     // in all cases when soft wrap is located at the left screen edge.
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
   }
-  
-  public void testIncompleteLineEndRecalculation() throws IOException {
-    String text = 
-      "first line \t first line\n" +
-      "second line\n" +
-      "third line \t third line\n" +
-      "forth line \t forth line\n" +
-      "fifth line";
-    init(180, text);
-    List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
-    //assertEquals(2, softWraps.size());
-    int endOffset = text.indexOf("forth") - 3;
-    myEditor.getDocument().replaceString(0, endOffset, text.substring(0, endOffset));
-    // TODO den remove
-    System.out.println("ye");
-    //assertEquals(softWraps, getSoftWrapModel().getRegisteredSoftWraps());
+
+  public void testLeadingTabWithShiftedWidth() throws IOException {
+    // Inspired by IDEA-76353. The point is that we need to consider cached information about tab symbols width during logical
+    // position to offset mapping
+    String text = "\t test";
+    init(100, text);
+    ((EditorImpl)myEditor).setPrefixTextAndAttributes(" ", new TextAttributes());
+    myEditor.getCaretModel().moveToOffset(text.length());
   }
   
   private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
@@ -845,7 +838,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     applianceManager.registerSoftWrapIfNecessary();
   }
 
-  private static SoftWrapModelEx getSoftWrapModel() {
-    return (SoftWrapModelEx)myEditor.getSoftWrapModel();
+  private static SoftWrapModelImpl getSoftWrapModel() {
+    return (SoftWrapModelImpl)myEditor.getSoftWrapModel();
   }
 }
