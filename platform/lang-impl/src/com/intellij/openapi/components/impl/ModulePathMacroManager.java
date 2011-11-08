@@ -78,7 +78,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     // rather than the .idea directory itself is considered the module root
     // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
     File moduleDirParent = moduleDirFile.getParentFile();
-    if (moduleDirParent != null && moduleDirFile.getName().equals(".idea") && new File(moduleDirFile, "misc.xml").exists()) {
+    if (moduleDirParent != null && moduleDirFile.getName().equals(".idea")) {
       moduleDirFile = moduleDirParent;
     }
     String moduleDir = moduleDirFile.getPath();
