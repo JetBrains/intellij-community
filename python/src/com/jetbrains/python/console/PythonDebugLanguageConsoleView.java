@@ -37,21 +37,25 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   private final PythonConsoleView myPydevConsoleView;
 
-  private final ConsoleViewImpl myTextConsole;
+  private final ConsoleView myTextConsole;
 
   public boolean myIsDebugConsole = false;
 
   private ProcessHandler myProcessHandler;
 
 
-  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
+  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView) {
     super(new CardLayout());
     myPydevConsoleView = createConsoleView(project, sdk);
-    myTextConsole = (ConsoleViewImpl)TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    myTextConsole = consoleView;
 
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
     add(myPydevConsoleView.getComponent(), PYDEV_CONSOLE_PANEL);
     showDebugConsole(false);
+  }
+
+  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
+    this(project, sdk, TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole());
   }
 
   @Override
@@ -90,7 +94,9 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   }
 
   public ConsoleViewImpl getTextConsole() {
-    return myTextConsole;
+    if (myTextConsole instanceof ConsoleViewImpl)
+      return (ConsoleViewImpl)myTextConsole;
+    return null;
   }
 
   @Override
@@ -200,7 +206,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   @Override
   public void addChangeListener(ChangeListener listener, Disposable parent) {
     myPydevConsoleView.addChangeListener(listener, parent);
-    myTextConsole.addChangeListener(listener, parent);
+    if (myTextConsole instanceof ObservableConsoleView)
+      ((ObservableConsoleView)myTextConsole).addChangeListener(listener, parent);
   }
 
   private static class ShowDebugConsoleAction extends ToggleAction implements DumbAware {

@@ -16,10 +16,12 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -41,12 +43,22 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     throws ExecutionException {
 
     final PythonTRunnerConsoleProperties consoleProperties = new PythonTRunnerConsoleProperties(myConfiguration, executor);
+
+    if (isDebug()) {
+      final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
+                                                                                      consoleProperties,
+                                                                                      getRunnerSettings(),
+                                                                                      getConfigurationSettings());
+      final ConsoleView consoleView = new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getSdkHome()), testsOutputConsoleView);
+      consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
+      consoleView.attachToProcess(processHandler);
+      return consoleView;
+    }
     final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
                                                                                       processHandler,
                                                                                       consoleProperties,
                                                                                       getRunnerSettings(),
                                                                                       getConfigurationSettings());
-
     consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
     return consoleView;
   }
