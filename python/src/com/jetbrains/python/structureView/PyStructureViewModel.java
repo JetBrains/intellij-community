@@ -14,9 +14,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
   public PyStructureViewModel(@NotNull PsiFile psiFile) {
-    super(psiFile, new PyStructureViewElement((PyElement) psiFile));
+    this(psiFile, new PyStructureViewElement((PyElement) psiFile));
     withSorters(Sorter.ALPHA_SORTER);
     withSuitableClasses(PyFunction.class, PyClass.class);
+  }
+
+  public PyStructureViewModel(@NotNull PsiFile file, @NotNull StructureViewTreeElement element) {
+    super(file, element);
   }
 
   @Override
