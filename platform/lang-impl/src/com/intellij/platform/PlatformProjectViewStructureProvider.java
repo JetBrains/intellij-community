@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,16 @@ package com.intellij.platform;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author yole
@@ -43,25 +40,9 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
   }
 
   public Collection<AbstractTreeNode> modify(final AbstractTreeNode parent, final Collection<AbstractTreeNode> children, final ViewSettings settings) {
-    if (parent instanceof ProjectViewProjectNode) {
-      int foundModules = 0;
-      List<AbstractTreeNode> allChildren = new ArrayList<AbstractTreeNode>();
-      for(AbstractTreeNode child: children) {
-        if (child instanceof ProjectViewModuleNode) {
-          foundModules++;
-          allChildren.addAll(child.getChildren());
-        }
-        else if (child instanceof ExternalLibrariesNode) {
-          allChildren.add(child);
-        }
-      }
-      if (foundModules == 1) {
-        return allChildren;
-      }
-    }
-    else if (parent instanceof PsiDirectoryNode) {
+    if (parent instanceof PsiDirectoryNode) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
-      if (vFile != null && vFile.equals(myProject.getBaseDir())) {
+      if (vFile != null && ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile) == vFile) {
         final Collection<AbstractTreeNode> moduleChildren = ((PsiDirectoryNode) parent).getChildren();
         Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
         for (AbstractTreeNode moduleChild : moduleChildren) {
