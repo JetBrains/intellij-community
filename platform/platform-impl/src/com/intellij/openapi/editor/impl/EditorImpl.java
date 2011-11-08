@@ -259,6 +259,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
+  private int myPrefixWidthInPixels;
   private final IndentsModel myIndentsModel;
   
   @Nullable
@@ -484,10 +485,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  public void setPrefixTextAndAttributes(String prefixText, TextAttributes attributes) {
-    myPrefixText = prefixText == null? null: prefixText.toCharArray();
+  public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
+    myPrefixText = prefixText == null ? null: prefixText.toCharArray();
     myPrefixAttributes = attributes;
+    myPrefixWidthInPixels = 0;
+    if (myPrefixText != null) {
+      for (char c : myPrefixText) {
+        myPrefixWidthInPixels += EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
+      }
+    }
     mySoftWrapModel.recalculate();
+  }
+
+  @Override
+  public int getPrefixTextWidthInPixels() {
+    return myPrefixWidthInPixels;
   }
 
   @Override
@@ -960,9 +972,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int line = yPositionToVisibleLine(p.y);
     int px = p.x;
     if (line == 0 && myPrefixText != null) {
-      for (char c : myPrefixText) {
-        px -= EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
-      }
+      px -= myPrefixWidthInPixels;
     }
 
     int textLength = myDocument.getTextLength();
@@ -1282,9 +1292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int getTabbedTextWidth(int startOffset, int length, int xOffset) {
     int x = xOffset;
     if (startOffset == 0 && myPrefixText != null) {
-      for (char c : myPrefixText) {
-        x += EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
-      }
+      x += myPrefixWidthInPixels;
     }
     if (length <= 0) return x;
     int offset = startOffset;

@@ -204,13 +204,12 @@ public class EditorUtil {
    * @param tabSize       number of desired visual columns to use for tabulation representation
    * @return              given text offset that identifies the same position that is pointed by the given visual column
    */
-  public static int calcOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
+  public static int calcOffset(EditorEx editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
     final int maxScanIndex = Math.min(start + columnNumber + 1, end);
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
     int startToUse = start;
-    VisualPosition visualStart = editor.offsetToVisualPosition(start);
-    int x = editor.visualPositionToXY(visualStart).x;
+    int x = editor.getPrefixTextWidthInPixels();
     int[] currentColumn = {0};
     for (SoftWrap softWrap : softWraps) {
       // There is a possible case that target column points inside soft wrap-introduced virtual space.

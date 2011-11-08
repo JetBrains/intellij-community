@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -192,4 +193,18 @@ public interface EditorEx extends Editor {
    * @param enable      flag that identifies if <code>'sticky selection'</code> mode should be enabled
    */
   void setStickySelection(boolean enable);
+
+  /**
+   * Allows to define prefix to be displayed on every editor line and text attributes to use for its coloring.
+   * 
+   * @param prefixText  target prefix text
+   * @param attributes  text attributes to use during given prefix painting
+   */
+  void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes);
+
+  /**
+   * @return  width in pixels of the {@link #setPrefixTextAndAttributes(String, TextAttributes) prefix} used with the current editor if any;
+   * zero otherwise
+   */
+  int getPrefixTextWidthInPixels();
 }
