@@ -45,7 +45,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   private static final String HTML_IDENT = "&nbsp;&nbsp;&nbsp;&nbsp;";
   public static final String DESCRIPTION_START = "<html>Push of current branch ";
   public static final String DESCRIPTION_ENDING =
-    "Remote changes need to be merged or rebased before pushing.<br/> You may do it now or by manually pulling later.</html>";
+    "Remote changes need to be merged before pushing.<br/>To push anyway you may merge or rebase now.</html>";
 
   private final Project myProject;
   private final Collection<GitRepository> myRepositories;
