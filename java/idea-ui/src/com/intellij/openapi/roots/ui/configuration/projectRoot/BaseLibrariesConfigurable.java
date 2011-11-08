@@ -186,10 +186,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @NotNull
   protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
-    actions.add(new MyCopyAction());
+    actions.add(new CopyLibraryAction());
     if (fromPopup) {
       final BaseLibrariesConfigurable targetGroup = getOppositeGroup();
       actions.add(new ChangeLibraryLevelAction(myProject, myTree, this, targetGroup));
+      actions.add(new AddLibraryToModuleDependenciesAction(myProject, this));
     }
     return actions;
   }
@@ -314,8 +315,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return "Select a library to view or edit its details here";
   }
 
-  private class MyCopyAction extends AnAction {
-    private MyCopyAction() {
+  private class CopyLibraryAction extends AnAction {
+    private CopyLibraryAction() {
       super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
     }
 

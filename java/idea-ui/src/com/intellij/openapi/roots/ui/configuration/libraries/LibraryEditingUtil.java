@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
@@ -30,6 +31,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -202,13 +204,40 @@ public class LibraryEditingUtil {
         };
   }
 
-  public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable, final @Nullable LibraryType type) {
+  public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,
+                                                final @Nullable LibraryType type, @Nullable Library library) {
     final List<Module> modules = new ArrayList<Module>();
     for (Module module : rootConfigurable.getModules()) {
-      if (type == null || type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {
-        modules.add(module);
+      if (type != null && !type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {
+        continue;
       }
+
+      if (library != null) {
+        final ModuleRootModel rootModel = rootConfigurable.getContext().getModulesConfigurator().getRootModel(module);
+        if (!getNotAddedLibrariesCondition(rootModel).apply(library)) {
+          continue;
+        }
+      }
+
+      modules.add(module);
     }
     return modules;
+  }
+
+  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library, @NotNull Project project) {
+    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
+    final List<Module> modules = getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getType(), library);
+    if (modules.isEmpty()) return;
+    final ChooseModulesDialog
+      dlg = new ChooseModulesDialog(moduleStructureConfigurable.getProject(), modules, ProjectBundle.message("choose.modules.dialog.title"),
+                                                            ProjectBundle
+                                                              .message("choose.modules.dialog.description", library.getName()));
+    dlg.show();
+    if (dlg.isOK()) {
+      final List<Module> chosenModules = dlg.getChosenElements();
+      for (Module module : chosenModules) {
+        moduleStructureConfigurable.addLibraryOrderEntry(module, library);
+      }
+    }
   }
 }

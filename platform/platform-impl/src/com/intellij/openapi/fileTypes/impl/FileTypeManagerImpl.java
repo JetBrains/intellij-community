@@ -295,10 +295,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     FileType fileType = file.getUserData(FILE_TYPE_KEY);
     if (fileType != null) return fileType;
-    FileType detected = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
-    if (detected != null) {
-      return detected;
-    }
 
     final FileType assignedFileType = file instanceof LightVirtualFile? ((LightVirtualFile)file).getAssignedFileType() : null;
     if (assignedFileType != null) return assignedFileType;
@@ -309,7 +305,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (type.isMyFileType(file)) return type;
     }
 
-    return getFileTypeByFileName(file.getName());
+    FileType byFileName = getFileTypeByFileName(file.getName());
+    if (byFileName != UnknownFileType.INSTANCE) return byFileName;
+    FileType detected = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
+    if (detected != null) {
+      return detected;
+    }
+    return UnknownFileType.INSTANCE;
   }
 
   @NotNull
