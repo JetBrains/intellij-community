@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -74,11 +73,16 @@ public class PathEditor {
   private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
   private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
   private final FileChooserDescriptor myDescriptor;
+  private VirtualFile myAddBaseDir;
 
   public PathEditor(final FileChooserDescriptor descriptor) {
     myDescriptor = descriptor;
     myDescriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
     myModel = createListModel();
+  }
+
+  public void setAddBaseDir(VirtualFile addBaseDir) {
+    myAddBaseDir = addBaseDir;
   }
 
   protected void setEnabled(boolean enabled) {
@@ -218,8 +222,14 @@ public class PathEditor {
   }
 
   private VirtualFile[] doAdd() {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
-    VirtualFile[] files = FileChooser.chooseFiles(myPanel, myDescriptor, project != null ? project.getBaseDir() : null);
+    VirtualFile baseDir = myAddBaseDir;
+    if (baseDir == null) {
+      Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+      if (project != null) {
+        baseDir = project.getBaseDir();
+      }
+    }
+    VirtualFile[] files = FileChooser.chooseFiles(myPanel, myDescriptor, baseDir);
     files = adjustAddedFileSet(myPanel, files);
     List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
     for (VirtualFile vFile : files) {
