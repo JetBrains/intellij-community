@@ -326,8 +326,25 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myActionsTree.getTree().addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
+        if (e.getClickCount() == 2 || e.isPopupTrigger()) {
           editSelection(e);
+          e.consume();
+        }
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+          editSelection(e);
+          e.consume();
+        }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+          editSelection(e);
+          e.consume();
         }
       }
     });
@@ -961,19 +978,25 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
       });
     }
 
-    final DataContext dataContext = DataManager.getInstance().getDataContext(this);
-    final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup("Edit Shortcuts",
-                              group,
-                              dataContext,
-                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                              true);
-
-    if (e instanceof MouseEvent) {
-      popup.show(new RelativePoint((MouseEvent)e));
+    if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
+      final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      popupMenu.getComponent().show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
     }
     else {
-      popup.showInBestPositionFor(dataContext);
+      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      final ListPopup popup = JBPopupFactory.getInstance()
+        .createActionGroupPopup("Edit Shortcuts",
+                                group,
+                                dataContext,
+                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                true);
+  
+      if (e instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e));
+      }
+      else {
+        popup.showInBestPositionFor(dataContext);
+      }
     }
 
   }
