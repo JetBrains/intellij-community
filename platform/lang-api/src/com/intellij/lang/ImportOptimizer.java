@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Implementors of the interface encapsulate optimize imports process for the language.
+ * Should be registered as "com.intellij.lang.importOptimizer" extension.
  * @author max
+ * @see LanguageImportStatements
  */
 public interface ImportOptimizer {
   /**

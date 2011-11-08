@@ -176,7 +176,7 @@ public class ProblemsHolder {
     registerProblem(descriptor);
   }
 
-  @Nullable
+  @NotNull
   public List<ProblemDescriptor> getResults() {
     MyList<ProblemDescriptor> problems = myProblems;
     problems.allowModifications(false);
@@ -184,10 +184,10 @@ public class ProblemsHolder {
     return problems;
   }
 
-  @Nullable
+  @NotNull
   public ProblemDescriptor[] getResultsArray() {
     final List<ProblemDescriptor> problems = getResults();
-    return problems == null ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
   public final InspectionManager getManager() {
