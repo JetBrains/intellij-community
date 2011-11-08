@@ -44,7 +44,10 @@ if PYVERSION > [1, 4, 0]:
     else:
       name = location[2]
       splitted = nodeid.split("::")
-      ind = splitted.index(name.split("[")[0])
+      try:
+        ind = splitted.index(name.split("[")[0])
+      except ValueError:
+          ind = splitted.index(name)
       if splitted[ind-1] == current_file:
         suite = None
       else:
