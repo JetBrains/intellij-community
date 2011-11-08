@@ -61,12 +61,15 @@ public class GroovyBuilder extends Builder {
         return exitCode;
       }
 
-      final List<String> cp = new ArrayList<String>();
+      final Set<String> cp = new LinkedHashSet<String>();
       //groovy_rt.jar
       // IMPORTANT! must be the first in classpath
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
 
       for (File file : context.getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(context.isCompilingTests()), false)) {
+        cp.add(FileUtil.toCanonicalPath(file.getPath()));
+      }
+      for (File file : context.getProjectPaths().getClasspathFiles(chunk, ClasspathKind.runtime(context.isCompilingTests()), false)) {
         cp.add(FileUtil.toCanonicalPath(file.getPath()));
       }
 
@@ -98,8 +101,8 @@ public class GroovyBuilder extends Builder {
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
         SystemProperties.getJavaHome() + "/bin/java",
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
-        Collections.<String>emptyList(), cp,
-        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5858"*/),
+        Collections.<String>emptyList(), new ArrayList<String>(cp),
+        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5858"*/),
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 

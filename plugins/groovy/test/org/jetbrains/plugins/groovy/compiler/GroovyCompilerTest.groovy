@@ -284,6 +284,25 @@ public class Transf implements ASTTransformation {
     assertOutput("Bar", "239", dep);
   }
 
+  public void testIndirectDependencies() throws Exception {
+    myFixture.addFileToProject("dependent1/Bar1.groovy", "class Bar1 {}");
+    myFixture.addFileToProject("dependent2/Bar2.groovy", "class Bar2 extends Bar1 {}");
+    PsiFile main = myFixture.addFileToProject("Main.groovy", "class Main extends Bar2 {}");
+
+    Module dep1 = addModule('dependent1')
+    Module dep2 = addModule('dependent2')
+    addDependency dep2, dep1
+    addDependency myModule, dep2
+
+    addGroovyLibrary(dep1);
+    addGroovyLibrary(dep2);
+
+    assertEmpty(make())
+
+    touch(main.virtualFile)
+    assertEmpty(make())
+  }
+
   public void testExtendFromGroovyAbstractClass() throws Exception {
     myFixture.addFileToProject "Super.groovy", "abstract class Super {}"
     myFixture.addFileToProject "AJava.java", "public class AJava {}"
@@ -436,6 +455,7 @@ class Usage {
 
   public static class JpsMode extends GroovyCompilerTest {
     @Override protected boolean useJps() { true }
+
   }
 
 }

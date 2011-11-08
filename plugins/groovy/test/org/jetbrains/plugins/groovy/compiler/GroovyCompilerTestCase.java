@@ -148,18 +148,35 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected Module addDependentModule() {
+    Module module = addModule("dependent");
+    addDependency(module, myModule);
+    return module;
+  }
+
+  protected void addDependency(final Module from, final Module to) {
+    new WriteCommandAction(getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
+        model.addModuleOrderEntry(to);
+        model.commit();
+      }
+    }.execute().getResultObject();
+
+  }
+  
+  protected Module addModule(final String name) {
     return new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(Result<Module> result) throws Throwable {
-        final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir("dependent");
+        final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir(name);
 
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-        String moduleName = moduleModel.newModule(depRoot.getPath() + "/dependent.iml", StdModuleTypes.JAVA).getName();
+        String moduleName = moduleModel.newModule(depRoot.getPath() + "/" + name + ".iml", StdModuleTypes.JAVA).getName();
         moduleModel.commit();
 
         final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
         final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
-        model.addModuleOrderEntry(myModule);
         final ContentEntry entry = model.addContentEntry(depRoot);
         entry.addSourceFolder(depRoot, false);
         model.setSdk(ModuleRootManager.getInstance(myModule).getSdk());
