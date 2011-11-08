@@ -42,21 +42,21 @@ final class GitPushRepoResult {
   private final GitCommandResult myOutput;
   private final Map<GitBranch, GitPushBranchResult> myBranchResults;
 
-  GitPushRepoResult(Type type, Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
+  GitPushRepoResult(@NotNull Type type, @NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     myType = type;
     myBranchResults = resultsByBranch;
     myOutput = output;
   }
 
-  static GitPushRepoResult success(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
+  static GitPushRepoResult success(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     return new GitPushRepoResult(Type.SUCCESS, resultsByBranch, output);
   }
 
-  static GitPushRepoResult error(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
+  static GitPushRepoResult error(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     return new GitPushRepoResult(Type.ERROR, resultsByBranch, output);
   }
 
-  static GitPushRepoResult someRejected(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
+  static GitPushRepoResult someRejected(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     return new GitPushRepoResult(Type.SOME_REJECTED, resultsByBranch, output);
   }
 
@@ -68,14 +68,17 @@ final class GitPushRepoResult {
     return myType == Type.SUCCESS;
   }
 
+  @NotNull
   GitCommandResult getOutput() {
     return myOutput;
   }
 
+  @NotNull
   Map<GitBranch, GitPushBranchResult> getBranchResults() {
     return myBranchResults;
   }
 
+  @NotNull
   GitPushRepoResult remove(@NotNull GitBranch branch) {
     Map<GitBranch, GitPushBranchResult> resultsByBranch = new HashMap<GitBranch, GitPushBranchResult>();
     for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
@@ -105,7 +108,8 @@ final class GitPushRepoResult {
     }
   }
 
-  String getBranchesDescription() {
+  @NotNull
+  String getPerBranchesReport() {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
       GitBranch branch = entry.getKey();
@@ -120,19 +124,7 @@ final class GitPushRepoResult {
     return sb.toString();
   }
 
-  String getPushedCommitsDescription() {
-    StringBuilder sb = new StringBuilder();
-    for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
-      GitBranch branch = entry.getKey();
-      GitPushBranchResult branchResult = entry.getValue();
-
-      if (branchResult.isSuccess()) {
-        sb.append(branch.getName() + ": pushed " + commits(branchResult.getNumberOfPushedCommits())).append("<br/>");
-      }
-    }
-    return sb.toString();
-  }
-
+  @NotNull
   private static String commits(int commitNum) {
     return commitNum + " " + StringUtil.pluralize("commit", commitNum);
   }

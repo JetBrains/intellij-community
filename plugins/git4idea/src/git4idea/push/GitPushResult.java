@@ -147,7 +147,7 @@ class GitPushResult {
     boolean onlyError = error && !rejected && !success;
     boolean onlyRejected = rejected && !error && !success;
 
-    int pushedCommitsNumber = calcPushedCommitTotalNumber(groupedResult.mySuccessfulResults);
+    int pushedCommitsNumber = calcPushedCommitTotalNumber(myResults);
     
     String title;
     NotificationType notificationType;
@@ -207,10 +207,8 @@ class GitPushResult {
       if (!GitUtil.justOneGitRepository(myProject)) {
         sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
       }
-      if (resultType == GroupedResult.Type.SUCCESS) {
-        sb.append(result.getPushedCommitsDescription());
-      } else if (resultType == GroupedResult.Type.REJECT) {
-        sb.append(result.getBranchesDescription());
+      if (resultType == GroupedResult.Type.SUCCESS || resultType == GroupedResult.Type.REJECT) {
+        sb.append(result.getPerBranchesReport());
       } else {
         sb.append(result.getOutput().getErrorOutputAsHtmlString());
       }
