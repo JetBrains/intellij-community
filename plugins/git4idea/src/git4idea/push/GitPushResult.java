@@ -36,11 +36,11 @@ class GitPushResult {
   private final Project myProject;
   private final Map<GitRepository, GitPushRepoResult> myResults = new HashMap<GitRepository, GitPushRepoResult>();
 
-  GitPushResult(Project project) {
+  GitPushResult(@NotNull Project project) {
     myProject = project;
   }
 
-  void append(GitRepository repository, GitPushRepoResult result) {
+  void append(@NotNull GitRepository repository, @NotNull GitPushRepoResult result) {
     myResults.put(repository, result);
   }
 
@@ -53,6 +53,7 @@ class GitPushResult {
     return false;
   }
 
+  @NotNull
   GroupedResult group() {
     final Map<GitRepository, GitPushRepoResult> successfulResults = new HashMap<GitRepository, GitPushRepoResult>();
     final Map<GitRepository, GitPushRepoResult> errorResults = new HashMap<GitRepository, GitPushRepoResult>();
@@ -76,7 +77,8 @@ class GitPushResult {
     return myResults.isEmpty();
   }
 
-  GitPushResult remove(Map<GitRepository, GitBranch> repoBranchPairs) {
+  @NotNull
+  GitPushResult remove(@NotNull Map<GitRepository, GitBranch> repoBranchPairs) {
     GitPushResult result = new GitPushResult(myProject);
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : myResults.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -113,6 +115,7 @@ class GitPushResult {
     }
   }
 
+  @NotNull
   Map<GitRepository, GitBranch> getRejectedPushesForCurrentBranch() {
     final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = new HashMap<GitRepository, GitBranch>();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : group().myRejectedResults.entrySet()) {
@@ -165,10 +168,7 @@ class GitPushResult {
       if (onlyRejected) {
         title = "Push rejected";
       } else {
-        title = "Push partially rejected";
-        if (success) {
-          title += ", " + commits(pushedCommitsNumber) + " pushed";
-        }
+        title = "Push partially rejected, " + commits(pushedCommitsNumber) + " pushed";
       }
       notificationType = NotificationType.WARNING;
     } else {
@@ -198,6 +198,7 @@ class GitPushResult {
     return sum;
   }
 
+  @NotNull
   private String reportForGroup(@NotNull Map<GitRepository, GitPushRepoResult> groupResult, @NotNull GroupedResult.Type resultType) {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : groupResult.entrySet()) {
@@ -229,14 +230,16 @@ class GitPushResult {
     private final Map<GitRepository, GitPushRepoResult> myErrorResults;
     private final Map<GitRepository, GitPushRepoResult> myRejectedResults;
 
-    GroupedResult(Map<GitRepository, GitPushRepoResult> successfulResults,
-                         Map<GitRepository, GitPushRepoResult> errorResults, Map<GitRepository, GitPushRepoResult> rejectedResults) {
+    GroupedResult(@NotNull Map<GitRepository, GitPushRepoResult> successfulResults,
+                  @NotNull Map<GitRepository, GitPushRepoResult> errorResults,
+                  @NotNull Map<GitRepository, GitPushRepoResult> rejectedResults) {
       mySuccessfulResults = successfulResults;
       myErrorResults = errorResults;
       myRejectedResults = rejectedResults;
     }
   }
 
+  @NotNull
   private static String commits(int commitNum) {
     return commitNum + " " + StringUtil.pluralize("commit", commitNum);
   }

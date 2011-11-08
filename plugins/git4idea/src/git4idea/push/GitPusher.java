@@ -90,7 +90,7 @@ public final class GitPusher {
    * @return
    */
   @NotNull
-  public GitCommitsByRepoAndBranch collectCommitsToPush(GitPushSpec pushSpec) {
+  public GitCommitsByRepoAndBranch collectCommitsToPush(@NotNull GitPushSpec pushSpec) {
     Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpec);
     
     Map<GitRepository, GitCommitsByBranch> commitsByRepoAndBranch = new HashMap<GitRepository, GitCommitsByBranch>();
@@ -103,7 +103,8 @@ public final class GitPusher {
     return new GitCommitsByRepoAndBranch(commitsByRepoAndBranch);
   }
 
-  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(GitPushSpec pushSpec) {
+  @NotNull
+  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(@NotNull GitPushSpec pushSpec) {
     Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
     for (GitRepository repository : myRepositories) {
       res.put(repository, pushSpec.parse(repository));
@@ -111,7 +112,8 @@ public final class GitPusher {
     return res;
   }
 
-  private GitCommitsByBranch collectsCommitsToPush(GitRepository repository, List<GitBranchPair> sourcesDestinations) {
+  @NotNull
+  private GitCommitsByBranch collectsCommitsToPush(@NotNull GitRepository repository, @NotNull List<GitBranchPair> sourcesDestinations) {
     Map<GitBranch, GitPushBranchInfo> commitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>();
 
     for (GitBranchPair sourceDest : sourcesDestinations) {
@@ -130,7 +132,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private List<GitCommit> collectCommitsToPush(GitRepository repository, String source, String destination) {
+  private List<GitCommit> collectCommitsToPush(@NotNull GitRepository repository, @NotNull String source, @NotNull String destination) {
     try {
       return GitHistoryUtils.history(myProject, repository.getRoot(), destination + ".." + source);
     }
@@ -159,6 +161,7 @@ public final class GitPusher {
     handleResult(pushInfo, result, previousResult, updateSettings);
   }
 
+  @NotNull
   private GitPushResult tryPushAndGetResult(@NotNull GitPushInfo pushInfo) {
     GitPushResult pushResult = new GitPushResult(myProject);
     
@@ -205,6 +208,7 @@ public final class GitPusher {
     return pushResult;
   }
 
+  @NotNull
   private static GitPushRepoResult successOrErrorRepoResult(@NotNull GitCommitsByRepoAndBranch commits, @NotNull GitRepository repository, @NotNull GitCommandResult res, boolean success) {
     GitPushRepoResult repoResult;
     Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
@@ -285,7 +289,7 @@ public final class GitPusher {
     }
   }
 
-  private static int showDialogAndGetExitCode(final GitRejectedPushUpdateDialog dialog) {
+  private static int showDialogAndGetExitCode(@NotNull final GitRejectedPushUpdateDialog dialog) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override

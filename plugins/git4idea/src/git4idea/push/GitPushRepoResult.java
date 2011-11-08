@@ -48,14 +48,17 @@ final class GitPushRepoResult {
     myOutput = output;
   }
 
+  @NotNull
   static GitPushRepoResult success(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     return new GitPushRepoResult(Type.SUCCESS, resultsByBranch, output);
   }
 
+  @NotNull
   static GitPushRepoResult error(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     return new GitPushRepoResult(Type.ERROR, resultsByBranch, output);
   }
 
+  @NotNull
   static GitPushRepoResult someRejected(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
     return new GitPushRepoResult(Type.SOME_REJECTED, resultsByBranch, output);
   }
