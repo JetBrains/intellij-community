@@ -1081,7 +1081,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private static void assertDispatchThread() {
-    //ApplicationManager.getApplication().assertIsDispatchThread(); // todo: uncomment after IDEA 11 EAP
+    if (Registry.is("actionSystem.assertFocusAccessFromEdt")) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
   }
 
   private class SetLastEffectiveRunnable extends EdtRunnable {
