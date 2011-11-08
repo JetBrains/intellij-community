@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
@@ -153,28 +154,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
-      @Nullable
-      public String getPresentableText() {
-        return getName();
-      }
-
-      @Nullable
-      public String getLocationString() {
-        PsiFile file = getContainingFile();
-        if (file instanceof GroovyFile) {
-          GroovyFile groovyFile = (GroovyFile)file;
-
-          return groovyFile.getPackageName().length() > 0 ? "(" + groovyFile.getPackageName() + ")" : "";
-        }
-        return "";
-      }
-
-      @Nullable
-      public Icon getIcon(boolean open) {
-        return GrTypeDefinitionImpl.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
-      }
-    };
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Nullable
