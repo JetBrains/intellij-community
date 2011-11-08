@@ -111,7 +111,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   private static enum State {
     init, name, name_end,
-    param_start, param_end, literal,
+    param_start, param_end, literal, escape,
     invoke, invoke_end
   }
 
@@ -140,7 +140,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.name;
           }
           else {
-            throw new IllegalStateException("method call expected");
+            return throwError(curPos +1, ch, "method call expected");
           }
           break;
         case name:
@@ -153,7 +153,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = ch == '('? State.param_start : State.name_end;
           }
           else {
-            throw new IllegalStateException("'"+curString+ch+"' method name start is invalid, '(' expected");
+            throwError(curPos + 1, ch, "'"+curString+ch+"' method name start is invalid, '(' expected");
           }
           break;
         case name_end:
@@ -161,7 +161,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.param_start;
           }
           else if (!Character.isWhitespace(ch)) {
-            throw new IllegalStateException("'(' expected after '"+curFrame.methodName+"'");
+            throwError(curPos + 1, ch, "'(' expected after '"+curFrame.methodName+"'");
           }
           break;
         case param_start:
@@ -181,7 +181,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.name;
           }
           else {
-            throw new IllegalStateException("expression expected in '" + curFrame.methodName + "' call");
+            throwError(curPos + 1, ch, "expression expected in '" + curFrame.methodName + "' call");
           }
           break;
         case param_end:
@@ -192,16 +192,21 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.param_start;
           }
           else if (!Character.isWhitespace(ch)) {
-            throw new IllegalStateException("')' or ',' expected in '" + curFrame.methodName + "' call");
+            throwError(curPos + 1, ch, "')' or ',' expected in '" + curFrame.methodName + "' call");
           }
           break;
         case literal:
           if (curString.charAt(0) == '\"') {
             curString.append(ch);
-            if (ch == '\"') {
-              curFrame.params.add(makeParam(curString.toString()));
-              curString.setLength(0);
-              curFrame.state = State.param_end;
+            if (ch == '\\') {
+              curFrame.state = State.escape;
+            }
+            else {
+              if (ch == '\"') {
+                curFrame.params.add(makeParam(curString.toString()));
+                curString.setLength(0);
+                curFrame.state = State.param_end;
+              }
             }
           }
           else if (Character.isWhitespace(ch) || ch == ',' || ch == ')') {
@@ -212,6 +217,15 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           }
           else {
             curString.append(ch);
+          }
+          break;
+        case escape:
+          if (ch != 0) {
+            curString.append(ch);
+            curFrame.state = State.literal;
+          }
+          else {
+            throwError(curPos + 1, ch, "unclosed escape sequence");
           }
           break;
         case invoke:
@@ -235,7 +249,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.invoke_end;
           }
           else {
-            throw new IllegalStateException((stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
+            throwError(curPos + 1, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
                                             + "expected after '" + curFrame.methodName + "' call");
           }
           break;
@@ -256,7 +270,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curResult = null;
           }
           else if (!Character.isWhitespace(ch)) {
-            throw new IllegalStateException((stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
+            throwError(curPos + 1, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
                                             + "expected after '" + curFrame.methodName + "' call");
           }
           break;
@@ -265,8 +279,14 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     return null;
   }
 
+  private static <T> T throwError(int offset, char ch, String message) {
+    throw new IllegalStateException(offset+"("+ch+"): "+message);
+  }
+
   private static Object makeParam(final String s) {
-    if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length()-1);
+    if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
+      return StringUtil.unescapeStringCharacters(s.substring(1, s.length() - 1));
+    }
     try {
       return Integer.valueOf(s);
     }
@@ -619,8 +639,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           toString((Node)arg, sb);
         }
         else if (arg instanceof String) {
-          // todo no escaping!
-          sb.append('\"').append(arg).append('\"');
+          sb.append('\"').append(StringUtil.escapeStringCharacters((String)arg)).append('\"');
         }
         else if (arg instanceof Number) {
           sb.append(arg);
