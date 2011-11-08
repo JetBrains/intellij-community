@@ -385,6 +385,8 @@
 
     <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
     <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
+    <coverageOptions implementation="com.jetbrains.python.coverage.PyCoverageOptions"/>
+    <projectService serviceImplementation="com.jetbrains.python.coverage.PyCoverageOptionsProvider"/>
 
     <projectService serviceInterface="com.jetbrains.python.coverage.PyCoverageAnnotator"
                     serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
