@@ -119,4 +119,9 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   public StructureViewModel getModel() {
     return myModel;
   }
+
+  @Override
+  public boolean isEnabled(NodeProvider provider) {
+    return myStructureView.isActionActive(provider.getName());
+  }
 }

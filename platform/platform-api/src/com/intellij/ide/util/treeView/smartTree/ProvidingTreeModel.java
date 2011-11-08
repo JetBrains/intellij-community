@@ -20,4 +20,5 @@ package com.intellij.ide.util.treeView.smartTree;
  */
 public interface ProvidingTreeModel extends TreeModel {
   NodeProvider[] getNodeProviders();
+  boolean isEnabled(NodeProvider provider);
 }

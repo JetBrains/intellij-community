@@ -18,10 +18,12 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,7 +42,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     final PsiClass aClass = getElement();
     if (aClass == null) return Collections.emptyList();
 
-    Collection<PsiElement> members = new THashSet<PsiElement>();
+    Collection<PsiElement> members = new ArrayList<PsiElement>();
     ContainerUtil.addAll(members, aClass.getFields());
     ContainerUtil.addAll(members, aClass.getMethods());
     ContainerUtil.addAll(members, aClass.getInnerClasses());

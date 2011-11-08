@@ -171,4 +171,9 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   public NodeProvider[] getNodeProviders() {
     return NodeProvider.EMPTY_ARRAY;
   }
+
+  @Override
+  public boolean isEnabled(NodeProvider provider) {
+    return false;
+  }
 }
