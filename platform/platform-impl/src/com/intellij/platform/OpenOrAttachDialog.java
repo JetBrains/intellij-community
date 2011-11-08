@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author yole
@@ -37,6 +39,17 @@ public class OpenOrAttachDialog extends DialogWrapper {
     myReplaceButton.setText("Replace '" + project.getName() + "' in current window");
     myReplaceButton.setMnemonic('R');
     init();
+    MouseAdapter listener = new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+          doOKAction();
+        }
+      }
+    };
+    myAttachButton.addMouseListener(listener);
+    myReplaceButton.addMouseListener(listener);
+    myOpenInNewWindowLabel.addMouseListener(listener);
   }
   
   public boolean isReplace() {
