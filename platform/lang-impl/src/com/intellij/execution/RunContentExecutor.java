@@ -37,6 +37,7 @@ public class RunContentExecutor {
   private Runnable myAfterCompletion;
   private String myTitle = "Output";
   private String myHelpId = null;
+  private boolean myActivateToolWindow = true;
 
   public RunContentExecutor(Project project, ProcessHandler process) {
     myProject = project;
@@ -68,6 +69,11 @@ public class RunContentExecutor {
     return this;
   }
 
+  public RunContentExecutor withActivateToolWindow(boolean activateToolWindow) {
+    myActivateToolWindow = activateToolWindow;
+    return this;
+  }
+
   private ConsoleView createConsole(Project project, ProcessHandler processHandler) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for (Filter filter : myFilterList) {
@@ -96,11 +102,9 @@ public class RunContentExecutor {
 
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(executor, descriptor);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null);
-      }
-    });
+    if (myActivateToolWindow) {
+      activateToolWindow();
+    }
 
     if (myAfterCompletion != null) {
       myProcess.addProcessListener(new ProcessAdapter() {
@@ -111,6 +115,14 @@ public class RunContentExecutor {
     }
 
     myProcess.startNotify();
+  }
+
+  public void activateToolWindow() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null);
+      }
+    });
   }
 
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {
