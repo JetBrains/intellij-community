@@ -31,11 +31,13 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,7 +45,22 @@ import java.util.Map;
 
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   public boolean canDeleteElement(DataContext dataContext) {
-    return LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext) != null;
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    return modules != null && !isPrimaryModule(modules);
+  }
+
+  private static boolean isPrimaryModule(Module[] modules) {
+    if (!ProjectAttachProcessor.canAttachToProject()) {
+      return false;
+    }
+    for (Module module : modules) {
+      final File moduleFile = new File(module.getModuleFilePath());
+      final File projectFile = new File(module.getProject().getProjectFilePath());
+      if (moduleFile.getParent().equals(projectFile.getParent()) && moduleFile.getParentFile().getName().equals(".idea")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void deleteElement(DataContext dataContext) {
@@ -55,8 +72,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
         return "\'" + module.getName() + "\'";
       }
     }, ", ");
-    int ret = Messages.showOkCancelDialog(ProjectBundle.message("module.remove.confirmation.prompt", names, modules.length),
-                                          ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
+    int ret = Messages.showOkCancelDialog(getConfirmationText(modules, names), getActionTitle(), Messages.getQuestionIcon());
     if (ret != 0) return;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -85,9 +101,16 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
+  private static String getConfirmationText(Module[] modules, String names) {
+    if (ProjectAttachProcessor.canAttachToProject()) {
+      return "Would you like to detach the project" + (modules.length > 1 ? "s " : " ") +  names + "?";
+    }
+    return ProjectBundle.message("module.remove.confirmation.prompt", names, modules.length);
+  }
+
   @Override
   public String getActionTitle() {
-    return "Remove Module";
+    return ProjectAttachProcessor.canAttachToProject() ? "Detach Project" : "Remove Module";
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,

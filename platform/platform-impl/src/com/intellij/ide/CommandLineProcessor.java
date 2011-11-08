@@ -91,7 +91,7 @@ public class CommandLineProcessor {
     if (projects.length == 0) {
       final PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
       if (processor != null) {
-        return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line);
+        return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null);
       }
       Messages.showErrorDialog("No project found to open file in", "Cannot open file");
       return null;
