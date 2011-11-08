@@ -19,6 +19,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -26,10 +27,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.projectImport.ProjectOpenedCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,14 +77,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, @Nullable final Project projectToClose, final boolean forceOpenInNewFrame) {
-    return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1);
+    return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1, null);
   }
 
   @Nullable
   public static Project doOpenProject(@NotNull final VirtualFile virtualFile,
                                       Project projectToClose,
                                       final boolean forceOpenInNewFrame,
-                                      final int line) {
+                                      final int line, 
+                                      ProjectOpenedCallback callback) {
     VirtualFile baseDir = virtualFile;
     if (!baseDir.isDirectory()) {
       baseDir = virtualFile.getParent();
@@ -114,7 +118,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
         }
         else if (dialog.isAttach()) {
-          attachToProject(projectToClose, projectDir);
+          attachToProject(projectToClose, projectDir, callback);
           return null;
         }
       }
@@ -152,30 +156,35 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     if (project == null) return null;
-    runDirectoryProjectConfigurators(baseDir, project);
+    final Module module = runDirectoryProjectConfigurators(baseDir, project);
 
     openFileFromCommandLine(project, virtualFile, line);
     projectManager.openProject(project);
+    if (callback != null) {
+      callback.projectOpened(project, module);
+    }
 
     return project;
   }
 
-  public static void runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
+  public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
-    for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+    final Ref<Module> moduleRef = new Ref<Module>();
+    for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
       try {
-        configurator.configureProject(project, baseDir);
+        configurator.configureProject(project, baseDir, moduleRef);
       }
       catch (Exception e) {
         LOG.error(e);
       }
     }
+    return moduleRef.get();
   }
 
-  private static void attachToProject(Project project, File projectDir) {
+  private static void attachToProject(Project project, File projectDir, ProjectOpenedCallback callback) {
     final ProjectAttachProcessor[] extensions = Extensions.getExtensions(ProjectAttachProcessor.EP_NAME);
     for (ProjectAttachProcessor processor : extensions) {
-      if (processor.attachToProject(project, projectDir)) {
+      if (processor.attachToProject(project, projectDir, callback)) {
         break;
       }
     }

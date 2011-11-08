@@ -23,6 +23,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PlatformProjectConfigurator implements DirectoryProjectConfigurator {
-  public void configureProject(final Project project, @NotNull final VirtualFile baseDir) {
+  public void configureProject(final Project project, @NotNull final VirtualFile baseDir, final Ref<Module> moduleRef) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     if (modules.length == 0) {
@@ -44,6 +45,7 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
           rootModel.addContentEntry(baseDir);
           rootModel.inheritSdk();
           rootModel.commit();
+          moduleRef.set(module);
         }
       });
     }

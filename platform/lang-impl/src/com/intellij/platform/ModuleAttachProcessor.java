@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
+import com.intellij.projectImport.ProjectOpenedCallback;
 
 import java.io.File;
 
@@ -41,7 +43,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   private static final Logger LOG = Logger.getInstance(ModuleAttachProcessor.class);
   
   @Override
-  public boolean attachToProject(Project project, File projectDir) {
+  public boolean attachToProject(Project project, File projectDir, ProjectOpenedCallback callback) {
     if (!projectDir.exists()) {
       Project newProject = ((ProjectManagerEx) ProjectManager.getInstance()).newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
       if (newProject == null) {
@@ -62,7 +64,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       if (FileUtil.getExtension(file).equals("iml")) {
         VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
         if (imlFile != null) {
-          attachModule(project, imlFile);
+          attachModule(project, imlFile, callback);
           return true;
         }
       }
@@ -71,10 +73,10 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     return false;
   }
 
-  private static void attachModule(Project project, VirtualFile file) {
+  private static void attachModule(Project project, VirtualFile file, ProjectOpenedCallback callback) {
     try {
       final ModifiableModuleModel model = ModuleManager.getInstance(project).getModifiableModel();
-      model.loadModule(file.getPath());
+      final Module module = model.loadModule(file.getPath());
 
       AccessToken token = WriteAction.start();
       try {
@@ -83,6 +85,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       finally {
         token.finish();
       }
+      callback.projectOpened(project, model.findModuleByName(module.getName()));
     }
     catch (Exception ex) {
       LOG.info(ex);

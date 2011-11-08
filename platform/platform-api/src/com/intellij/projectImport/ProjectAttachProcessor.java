@@ -27,7 +27,7 @@ import java.io.File;
 public class ProjectAttachProcessor {
   public static final ExtensionPointName<ProjectAttachProcessor> EP_NAME = new ExtensionPointName<ProjectAttachProcessor>("com.intellij.projectAttachProcessor");
   
-  public boolean attachToProject(Project project, File projectDir) {
+  public boolean attachToProject(Project project, File projectDir, ProjectOpenedCallback callback) {
     return false;
   }
   
