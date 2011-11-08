@@ -120,7 +120,11 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setText("Category: " + ((AvailablePluginsTableModel)pluginsModel).getCategory());
+      String category = ((AvailablePluginsTableModel)pluginsModel).getCategory();
+      if (category == null) {
+        category = "N/A";
+      }
+      e.getPresentation().setText("Category: " + category);
     }
 
     @NotNull
