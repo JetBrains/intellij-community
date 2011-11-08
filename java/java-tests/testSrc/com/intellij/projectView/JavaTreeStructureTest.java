@@ -32,19 +32,17 @@
 package com.intellij.projectView;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
+import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
 import com.intellij.ide.structureView.impl.java.VisibilitySorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 
 import javax.swing.*;
@@ -59,6 +57,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                                                  "-Class1.java\n" +
                                                                  " -Class1\n" +
@@ -77,9 +76,9 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
                                                                  "  myField1:boolean\n" +
                                                                  "  myField2:boolean\n");
 
-        structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
-        structureViewComponent.setActionActive(InheritedMembersFilter.ID, false);
-        structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
                                                                  " -Class1\n" +
@@ -110,6 +109,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
         final JTree tree = structureViewComponent.getTree();
         tree.collapseRow(2);
         IdeaTestUtil.assertTreeEqual(tree, "-Class2.java\n" +
@@ -133,7 +133,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
                                            "  myField3:boolean\n" +
                                            "  myField4:boolean\n");
 
-        structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                        " -Class2\n" +
@@ -152,7 +152,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
-        structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                  " -Class2\n" +
@@ -175,7 +175,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
-        structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
+        structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                  " -Class2\n" +

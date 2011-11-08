@@ -32,7 +32,7 @@
 package com.intellij.projectView;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
+import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -68,6 +68,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       final StructureViewComponent structureViewComponent =
         (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
+      structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                        "-Class1.java\n" +
                                        " -Class1\n" +
@@ -135,7 +136,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     final StructureViewComponent structureViewComponent =
       (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
     try {
-      structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
+      structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
 
       PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                          " -Class2\n" +
