@@ -29,6 +29,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.util.download.DownloadableFileService} for asynchronous fetching of available versions
+ */
+@Deprecated
 public class LibrariesDownloadUiUtil {
 
   private LibrariesDownloadUiUtil() {
