@@ -96,7 +96,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       length = buffer == null ? 0 : buffer.length();
       StringBuilder b = getSignature(current, buffer);
       if (b == null && buffer != null && current.getParent() instanceof PsiFile) {
-        buffer.append(TOP_LEVEL_CHILD_MARKER).append(ELEMENTS_SEPARATOR);
+        buffer.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(TOP_LEVEL_CHILD_MARKER).append(ELEMENTS_SEPARATOR);
         break;
       } 
       buffer = b;
