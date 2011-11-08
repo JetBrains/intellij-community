@@ -23,6 +23,7 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.HashMap;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -30,14 +31,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.paths.WebReferencesAnnotatorBase");
+
+  private final Map<String, MyFetchResult> myFetchCache = new HashMap<String, MyFetchResult>();
+  private final Object myFetchCacheLock = new Object();
+  private static final long FETCH_CACHE_TIMEOUT = 10000;
 
   protected static final WebReference[] EMPTY_ARRAY = new WebReference[0];
 
@@ -106,13 +113,35 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   @NotNull
   protected abstract String getErrorMessage(@NotNull String url);
 
-  private static boolean checkUrl(String url) {
+  private boolean checkUrl(String url) {
+    synchronized (myFetchCacheLock) {
+      final MyFetchResult cachedResult = myFetchCache.get(url);
+      final long currentTime = System.currentTimeMillis();
+
+      if (cachedResult != null && currentTime - cachedResult.getTime() < FETCH_CACHE_TIMEOUT) {
+        return cachedResult.isExists();
+      }
+
+      final boolean answer = doCheckUrl(url);
+      myFetchCache.put(url, new MyFetchResult(currentTime, answer));
+      return answer;
+    }
+  }
+
+  private static boolean doCheckUrl(String url) {
     final HttpClient client = new HttpClient();
     client.setTimeout(3000);
     client.setConnectionTimeout(3000);
     try {
       final GetMethod method = new GetMethod(url);
-      return client.executeMethod(method) == HttpStatus.SC_OK;
+      final int code = client.executeMethod(method);
+
+      return code == HttpStatus.SC_OK ||
+             code == HttpStatus.SC_REQUEST_TIMEOUT;
+    }
+    catch (UnknownHostException e) {
+      LOG.info(e);
+      return false;
     }
     catch (IOException e) {
       LOG.info(e);
@@ -121,6 +150,24 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     catch (IllegalArgumentException e) {
       LOG.debug(e);
       return true;
+    }
+  }
+
+  private static class MyFetchResult {
+    private final long myTime;
+    private final boolean myExists;
+
+    private MyFetchResult(long time, boolean exists) {
+      myTime = time;
+      myExists = exists;
+    }
+
+    public long getTime() {
+      return myTime;
+    }
+
+    public boolean isExists() {
+      return myExists;
     }
   }
 
