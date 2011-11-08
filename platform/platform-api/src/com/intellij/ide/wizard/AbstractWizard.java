@@ -418,6 +418,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myNextButton.setText(IdeBundle.message("button.wizard.next"));
       myFinishButton.setVisible(true);
       myNextButton.setEnabled(mySteps.size() == 1 || myCurrentStep < mySteps.size() - 1);
+      myNextButton.setMnemonic('N');
     }
 
     myPreviousButton.setEnabled(myCurrentStep > 0);
