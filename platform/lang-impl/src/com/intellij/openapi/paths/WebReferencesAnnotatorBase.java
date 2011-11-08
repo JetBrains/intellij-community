@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.paths;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,21 +100,54 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   @Override
   public void apply(@NotNull PsiFile file, MyInfo[] infos, @NotNull AnnotationHolder holder) {
+    if (infos.length == 0) {
+      return;
+    }
+
+    final HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(file);
+
     for (MyInfo info : infos) {
       if (!info.myResult) {
         final PsiElement element = info.myAnchor.retrieve();
         if (element != null) {
           final int start = element.getTextRange().getStartOffset();
-          holder.createWarningAnnotation(
-            new TextRange(start + info.myRangeInElement.getStartOffset(), start + info.myRangeInElement.getEndOffset()),
-            getErrorMessage(info.myUrl));
+          final TextRange range = new TextRange(start + info.myRangeInElement.getStartOffset(),
+                                                start + info.myRangeInElement.getEndOffset());
+          final String message = getErrorMessage(info.myUrl);
+
+          final Annotation annotation;
+
+          if (displayLevel == HighlightDisplayLevel.ERROR) {
+            annotation = holder.createErrorAnnotation(range, message);
+          }
+          else if (displayLevel == HighlightDisplayLevel.WARNING) {
+            annotation = holder.createWarningAnnotation(range, message);
+          }
+          else if (displayLevel == HighlightDisplayLevel.WEAK_WARNING) {
+            annotation = holder.createInfoAnnotation(range, message);
+          }
+          else {
+            annotation = holder.createWarningAnnotation(range, message);
+          }
+
+          for (IntentionAction action : getQuickFixes()) {
+            annotation.registerFix(action);
+          }
         }
       }
     }
   }
-
+  
   @NotNull
   protected abstract String getErrorMessage(@NotNull String url);
+
+  @NotNull
+  protected IntentionAction[] getQuickFixes() {
+    return IntentionAction.EMPTY_ARRAY;
+  }
+  
+  @NotNull
+  protected abstract HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
 
   private boolean checkUrl(String url) {
     synchronized (myFetchCacheLock) {
