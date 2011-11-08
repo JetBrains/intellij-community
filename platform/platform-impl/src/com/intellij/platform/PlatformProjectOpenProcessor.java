@@ -152,6 +152,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     if (project == null) return null;
+    runDirectoryProjectConfigurators(baseDir, project);
+
+    openFileFromCommandLine(project, virtualFile, line);
+    projectManager.openProject(project);
+
+    return project;
+  }
+
+  public static void runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
       try {
@@ -161,11 +170,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         LOG.error(e);
       }
     }
-
-    openFileFromCommandLine(project, virtualFile, line);
-    projectManager.openProject(project);
-
-    return project;
   }
 
   private static void attachToProject(Project project, File projectDir) {

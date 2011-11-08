@@ -17,12 +17,16 @@ package com.intellij.platform;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,17 +42,32 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   
   @Override
   public boolean attachToProject(Project project, File projectDir) {
-    if (projectDir.exists()) {
-      for(String file: projectDir.list()) {
-        if (FileUtil.getExtension(file).equals("iml")) {
-          VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
-          if (imlFile != null) {
-            attachModule(project, imlFile);
-            return true;
-          }
+    if (!projectDir.exists()) {
+      Project newProject = ((ProjectManagerEx) ProjectManager.getInstance()).newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
+      if (newProject == null) {
+        return false;
+      }
+      final VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getParent());
+      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject);
+      newProject.save();
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(null);
+      try {
+        Disposer.dispose(newProject);
+      }
+      finally {
+        token.finish();
+      }
+    }
+    for(String file: projectDir.list()) {
+      if (FileUtil.getExtension(file).equals("iml")) {
+        VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
+        if (imlFile != null) {
+          attachModule(project, imlFile);
+          return true;
         }
       }
     }
+
     return false;
   }
 
