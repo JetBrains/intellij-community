@@ -68,8 +68,8 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   @Nullable
   protected abstract PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                          @NotNull PsiElement parent,
-                                                         String type,
-                                                         StringTokenizer tokenizer);
+                                                         @NotNull String type,
+                                                         @NotNull StringTokenizer tokenizer);
 
   protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();

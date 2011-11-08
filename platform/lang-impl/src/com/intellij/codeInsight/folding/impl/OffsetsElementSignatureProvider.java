@@ -32,11 +32,11 @@ import java.util.StringTokenizer;
  */
 public class OffsetsElementSignatureProvider extends AbstractElementSignatureProvider {
   
-  private static final String MARKER = "e";
+  private static final String TYPE_MARKER = "e";
   
   @Override
-  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
-    if (!MARKER.equals(type)) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, @NotNull String type, @NotNull StringTokenizer tokenizer) {
+    if (!TYPE_MARKER.equals(type)) {
       return null;
     }
     String name = tokenizer.nextToken();
@@ -62,7 +62,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
   @Override
   public String getSignature(@NotNull PsiElement element) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append(MARKER).append("#");
+    buffer.append(TYPE_MARKER).append("#");
     buffer.append(element.getTextRange().getStartOffset());
     buffer.append(":");
     buffer.append(element.getTextRange().getEndOffset());

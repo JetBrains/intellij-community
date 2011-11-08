@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,14 +31,23 @@ import java.util.StringTokenizer;
  * @since 11/7/11 11:58 AM
  */
 public class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
-
+  
+  private static final String TYPE_MARKER            = "n";
   private static final String TOP_LEVEL_CHILD_MARKER = "!!top";
   private static final String DOC_COMMENT_MARKER     = "!!doc";
   private static final String CODE_BLOCK_MARKER      = "!!block";
   
   @Override
-  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
-    if (TOP_LEVEL_CHILD_MARKER.equals(type)) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
+                                                @NotNull PsiElement parent,
+                                                @NotNull final String type,
+                                                @NotNull StringTokenizer tokenizer)
+  {
+    if (!TYPE_MARKER.equals(type)) {
+      return null;
+    }
+    String elementMarker = tokenizer.nextToken();
+    if (TOP_LEVEL_CHILD_MARKER.equals(elementMarker)) {
       PsiElement[] children = file.getChildren();
       PsiElement result = null;
       for (PsiElement child : children) {
@@ -56,11 +64,11 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       }
       return result;
     }
-    else if (DOC_COMMENT_MARKER.equals(type)) {
+    else if (DOC_COMMENT_MARKER.equals(elementMarker)) {
       PsiElement candidate = parent.getFirstChild();
       return candidate instanceof PsiComment ? candidate : null; 
     }
-    else if (CODE_BLOCK_MARKER.equals(type)) {
+    else if (CODE_BLOCK_MARKER.equals(elementMarker)) {
       for (PsiElement child : parent.getChildren()) {
         PsiElement firstChild = child.getFirstChild();
         PsiElement lastChild = child.getLastChild();
@@ -73,7 +81,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
 
     try {
       int index = Integer.parseInt(tokenizer.nextToken());
-      return restoreElementInternal(parent, type, index, PsiNamedElement.class);
+      return restoreElementInternal(parent, elementMarker, index, PsiNamedElement.class);
     }
     catch (NumberFormatException e) {
       return null;
@@ -124,7 +132,8 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       if (bufferToUse == null) {
         bufferToUse = new StringBuilder();
       }
-      bufferToUse.append(named.getName()).append(ELEMENT_TOKENS_SEPARATOR).append(index);
+      bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(named.getName())
+        .append(ELEMENT_TOKENS_SEPARATOR).append(index);
       return bufferToUse;
     }
     else if (element instanceof PsiComment) {
@@ -140,7 +149,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         if (bufferToUse == null) {
           bufferToUse = new StringBuilder();
         }
-        bufferToUse.append(DOC_COMMENT_MARKER);
+        bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(DOC_COMMENT_MARKER);
         return bufferToUse;
       } 
     }
@@ -154,7 +163,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         if (bufferToUse == null) {
           bufferToUse = new StringBuilder();
         }
-        bufferToUse.append(CODE_BLOCK_MARKER);
+        bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(CODE_BLOCK_MARKER);
         return bufferToUse;
       }
     } 

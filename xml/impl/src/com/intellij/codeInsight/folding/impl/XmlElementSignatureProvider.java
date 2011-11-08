@@ -58,7 +58,7 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
   }
 
   @Override
-  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, @NotNull String type, @NotNull StringTokenizer tokenizer) {
     if (type.equals("tag")) {
       String name = tokenizer.nextToken();
 
