@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,7 +263,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                            @NotNull PsiElement parent,
                                            ParameterTypeInferencePolicy policy) {
     PsiType[] substitutions = new PsiType[typeParameters.length];
-    //noinspection unchecked
+    @SuppressWarnings("unchecked")
     Pair<PsiType, ConstraintType>[] constraints = new Pair[typeParameters.length];
     for (int i = 0; i < typeParameters.length; i++) {
       final Pair<PsiType, ConstraintType> constraint =
@@ -318,21 +318,31 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       PsiType substitution = substitutions[i];
+      if (substitution != PsiType.NULL) {
+        partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
+      }
+    }
+
+    for (int i = 0; i < typeParameters.length; i++) {
+      PsiTypeParameter typeParameter = typeParameters[i];
+      PsiType substitution = substitutions[i];
+      if (substitution != null) continue;
+
       Pair<PsiType, ConstraintType> constraint = constraints[i];
-      if (substitution == null) {
-        if (constraint == null) {
-          constraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
-        } else if (constraint.getSecond() == ConstraintType.SUBTYPE) {
-          Pair<PsiType, ConstraintType> otherConstraint =
-            inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
-          if (otherConstraint != null) {
-            if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) constraint = otherConstraint;
+      if (constraint == null) {
+        constraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
+      }
+      else if (constraint.getSecond() == ConstraintType.SUBTYPE) {
+        Pair<PsiType, ConstraintType> otherConstraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
+        if (otherConstraint != null) {
+          if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) {
+            constraint = otherConstraint;
           }
         }
+      }
 
-        if (constraint != null) {
-          substitution = constraint.getFirst();
-        }
+      if (constraint != null) {
+        substitution = constraint.getFirst();
       }
 
       if (substitution == null) {
