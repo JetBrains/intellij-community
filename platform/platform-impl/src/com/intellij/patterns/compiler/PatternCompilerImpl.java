@@ -140,7 +140,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.name;
           }
           else {
-            throwError(curPos +1, ch, "method call expected");
+            throwError(curPos, ch, "method call expected");
           }
           break;
         case name:
@@ -153,7 +153,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = ch == '('? State.param_start : State.name_end;
           }
           else {
-            throwError(curPos + 1, ch, "'"+curString+ch+"' method name start is invalid, '(' expected");
+            throwError(curPos, ch, "'"+curString+ch+"' method name start is invalid, '(' expected");
           }
           break;
         case name_end:
@@ -161,7 +161,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.param_start;
           }
           else if (!Character.isWhitespace(ch)) {
-            throwError(curPos + 1, ch, "'(' expected after '"+curFrame.methodName+"'");
+            throwError(curPos, ch, "'(' expected after '"+curFrame.methodName+"'");
           }
           break;
         case param_start:
@@ -181,7 +181,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.name;
           }
           else {
-            throwError(curPos + 1, ch, "expression expected in '" + curFrame.methodName + "' call");
+            throwError(curPos, ch, "expression expected in '" + curFrame.methodName + "' call");
           }
           break;
         case param_end:
@@ -192,7 +192,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.param_start;
           }
           else if (!Character.isWhitespace(ch)) {
-            throwError(curPos + 1, ch, "')' or ',' expected in '" + curFrame.methodName + "' call");
+            throwError(curPos, ch, "')' or ',' expected in '" + curFrame.methodName + "' call");
           }
           break;
         case literal:
@@ -225,7 +225,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.literal;
           }
           else {
-            throwError(curPos + 1, ch, "unclosed escape sequence");
+            throwError(curPos, ch, "unclosed escape sequence");
           }
           break;
         case invoke:
@@ -249,7 +249,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.invoke_end;
           }
           else {
-            throwError(curPos + 1, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
+            throwError(curPos, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
                                             + "expected after '" + curFrame.methodName + "' call");
           }
           break;
@@ -270,7 +270,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curResult = null;
           }
           else if (!Character.isWhitespace(ch)) {
-            throwError(curPos + 1, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
+            throwError(curPos, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
                                             + "expected after '" + curFrame.methodName + "' call");
           }
           break;
