@@ -31,7 +31,7 @@ public class GitCommitsByBranch {
 
   private final Map<GitBranch, GitPushBranchInfo> myCommitsByBranch;
 
-  GitCommitsByBranch(Map<GitBranch, GitPushBranchInfo> commitsByBranch) {
+  GitCommitsByBranch(@NotNull Map<GitBranch, GitPushBranchInfo> commitsByBranch) {
     myCommitsByBranch = commitsByBranch;
   }
 
@@ -47,11 +47,13 @@ public class GitCommitsByBranch {
     return sum;
   }
 
+  @NotNull
   Collection<GitBranch> getBranches() {
     return myCommitsByBranch.keySet();
   }
 
-  GitPushBranchInfo get(GitBranch branch) {
+  @NotNull
+  GitPushBranchInfo get(@NotNull GitBranch branch) {
     return myCommitsByBranch.get(branch);
   }
 
@@ -59,11 +61,13 @@ public class GitCommitsByBranch {
    * Returns new GitCommitsByBranch that contains commits only from the given branch (or nothing, if the given branch didn't exist in
    * the original structure).
    */
-  public GitCommitsByBranch retain(@NotNull GitBranch branch) {
+  @NotNull
+  GitCommitsByBranch retain(@NotNull GitBranch branch) {
     Map<GitBranch, GitPushBranchInfo> res = new HashMap<GitBranch, GitPushBranchInfo>();
     if (myCommitsByBranch.containsKey(branch)) {
       res.put(branch, myCommitsByBranch.get(branch));
     }
     return new GitCommitsByBranch(res);
   }
+
 }

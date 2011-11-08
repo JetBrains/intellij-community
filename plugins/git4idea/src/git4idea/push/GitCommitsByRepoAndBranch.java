@@ -33,7 +33,7 @@ final class GitCommitsByRepoAndBranch {
 
   private final Map<GitRepository, GitCommitsByBranch> myCommitsByRepository;
 
-  GitCommitsByRepoAndBranch(Map<GitRepository, GitCommitsByBranch> commitsByRepository) {
+  GitCommitsByRepoAndBranch(@NotNull Map<GitRepository, GitCommitsByBranch> commitsByRepository) {
     myCommitsByRepository = commitsByRepository;
   }
 
@@ -43,14 +43,10 @@ final class GitCommitsByRepoAndBranch {
   }
 
   /**
-   * Retains only the elements for the given repositories.
-   * In other words, removes from this collection all of its elements that correspond to repositories not contained in the specified
-   * collection.
-   * This object is unaffected, a new object is returned by the method.
-   * @return New GitCommitsByRepoAndBranch which contains commits only from repositories listed in {@code repositories}.
+   * Creates new GitCommitByRepoAndBranch structure with only those repositories, which exist in the specified collection.
    */
   @NotNull
-  GitCommitsByRepoAndBranch retainAll(Collection<GitRepository> repositories) {
+  GitCommitsByRepoAndBranch retainAll(@NotNull Collection<GitRepository> repositories) {
     Map<GitRepository, GitCommitsByBranch> commits = new HashMap<GitRepository, GitCommitsByBranch>();
     for (GitRepository selectedRepository : repositories) {
       GitCommitsByBranch value = myCommitsByRepository.get(selectedRepository);
@@ -61,8 +57,11 @@ final class GitCommitsByRepoAndBranch {
     return new GitCommitsByRepoAndBranch(commits);
   }
 
+  /**
+   * Creates new GitCommitByRepoAndBranch structure with only those pairs repository-branch, which exist in the specified map.
+   */
   @NotNull
-  GitCommitsByRepoAndBranch retainAll(Map<GitRepository, GitBranch> repositoriesBranches) {
+  GitCommitsByRepoAndBranch retainAll(@NotNull Map<GitRepository, GitBranch> repositoriesBranches) {
     Map<GitRepository, GitCommitsByBranch> commits = new HashMap<GitRepository, GitCommitsByBranch>();
     for (GitRepository repository : repositoriesBranches.keySet()) {
       GitCommitsByBranch commitsByBranch = myCommitsByRepository.get(repository);
@@ -73,10 +72,8 @@ final class GitCommitsByRepoAndBranch {
     return new GitCommitsByRepoAndBranch(commits);
   }
 
-
-
   @NotNull
-  GitCommitsByBranch get(GitRepository repository) {
+  GitCommitsByBranch get(@NotNull GitRepository repository) {
     return myCommitsByRepository.get(repository);
   }
 
