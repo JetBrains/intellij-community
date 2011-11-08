@@ -18,14 +18,12 @@ package git4idea.push;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Git;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.GitCommandResult;
@@ -33,15 +31,12 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.GitUIUtil;
 import git4idea.update.GitUpdateProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static git4idea.ui.GitUIUtil.code;
 
 /**
  * Collects information to push and performs the push.
@@ -56,7 +51,30 @@ public final class GitPusher {
   private final ProgressIndicator myProgressIndicator;
   private final Collection<GitRepository> myRepositories;
 
-  public GitPusher(Project project, ProgressIndicator indicator) {
+  // holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
+  private static class UpdateSettings {
+    private final boolean myUpdateAllRoots;
+    private final GitUpdateProcess.UpdateMethod myUpdateMethod;
+
+    private UpdateSettings(boolean updateAllRoots, GitUpdateProcess.UpdateMethod updateMethod) {
+      myUpdateAllRoots = updateAllRoots;
+      myUpdateMethod = updateMethod;
+    }
+
+    public boolean shouldUpdateAllRoots() {
+      return myUpdateAllRoots;
+    }
+
+    public GitUpdateProcess.UpdateMethod getUpdateMethod() {
+      return myUpdateMethod;
+    }
+
+    public boolean shouldUpdate() {
+      return getUpdateMethod() != null;
+    }
+  }
+
+  public GitPusher(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myProgressIndicator = indicator;
     myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
@@ -121,7 +139,10 @@ public final class GitPusher {
     }
     return Collections.emptyList();
   }
-  
+
+  /**
+   * Makes push, shows the result in a notification. If push for current branch is rejected, shows a dialog proposing to update.
+   */
   public void push(@NotNull GitPushInfo pushInfo) {
     push(pushInfo, null, null);
   }
@@ -136,11 +157,10 @@ public final class GitPusher {
   private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
     GitPushResult result = tryPushAndGetResult(pushInfo);
     handleResult(pushInfo, result, previousResult, updateSettings);
-    GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.ALL);
   }
 
-  private static GitPushResult tryPushAndGetResult(@NotNull GitPushInfo pushInfo) {
-    GitPushResult pushResult = new GitPushResult();
+  private GitPushResult tryPushAndGetResult(@NotNull GitPushInfo pushInfo) {
+    GitPushResult pushResult = new GitPushResult(myProject);
     
     GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
     for (GitRepository repository : commits.getRepositories()) {
@@ -150,18 +170,31 @@ public final class GitPusher {
       GitPushRepoResult repoResult;
       if (rejectedDetector.rejected()) {
         Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
-        Map<GitBranch, GitPushBranchResult> rejectedMap = new HashMap<GitBranch, GitPushBranchResult>();
+        
+        Map<GitBranch, GitPushRepoResult.BranchResult> resultMap = new HashMap<GitBranch, GitPushRepoResult.BranchResult>();
         GitCommitsByBranch commitsByBranch = commits.get(repository);
         for (GitBranch branch : commitsByBranch.getBranches()) {
-          rejectedMap.put(branch, branchInRejected(branch, rejectedBranches) ? GitPushBranchResult.REJECTED : GitPushBranchResult.SUCCESS);
+          resultMap.put(branch, branchInRejected(branch, rejectedBranches) ? GitPushRepoResult.BranchResult.REJECTED : GitPushRepoResult.BranchResult.SUCCESS);
         }
-        repoResult = GitPushRepoResult.someRejected(rejectedMap, res);
+        repoResult = GitPushRepoResult.someRejected(resultMap, res);
       }
       else if (res.success()) {
-        repoResult = GitPushRepoResult.success(res);
+        Map<GitBranch, GitPushRepoResult.BranchResult> resultMap = new HashMap<GitBranch, GitPushRepoResult.BranchResult>();
+        GitCommitsByBranch commitsByBranch = commits.get(repository);
+        for (GitBranch branch : commitsByBranch.getBranches()) {
+          resultMap.put(branch, GitPushRepoResult.BranchResult.SUCCESS);
+        }
+        
+        repoResult = GitPushRepoResult.success(resultMap, res);
       }
       else {
-        repoResult = GitPushRepoResult.error(res);
+        Map<GitBranch, GitPushRepoResult.BranchResult> resultMap = new HashMap<GitBranch, GitPushRepoResult.BranchResult>();
+        GitCommitsByBranch commitsByBranch = commits.get(repository);
+        for (GitBranch branch : commitsByBranch.getBranches()) {
+          resultMap.put(branch, GitPushRepoResult.BranchResult.SUCCESS);
+        }
+        
+        repoResult = GitPushRepoResult.error(resultMap,  res);
       }
 
       pushResult.append(repository, repoResult);
@@ -192,41 +225,28 @@ public final class GitPusher {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
-      return;
-    }
-    if (result.totalSuccess()) {
-      int commitsPushed = pushInfo.getCommits().commitsNumber();
-      String message = "Pushed " + commits(commitsPushed);
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, NotificationType.INFORMATION).notify(myProject);
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Everything up-to-date", NotificationType.INFORMATION);
     }
     else if (result.wasError()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Push failed",
-                                                             getResultDescriptionWithOptionalReposIndication(pushInfo, result),
-                                                             NotificationType.ERROR, null).notify(myProject);
+      result.createNotification(pushInfo).notify(myProject);
     }
     else {
-      // there were no errors, but some rejected branches on some of the repositories
+      // there were no errors, but there might be some rejected branches on some of the repositories
       // => for current branch propose to update and re-push it. For others just warn
-      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = getRejectedPushesForCurrentBranch(result);
+      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesForCurrentBranch();
 
       if (!rejectedPushesForCurrentBranch.isEmpty()) {
 
-        if (updateSettings == null) {  // show dialog only when push is rejected for the first time in a row
+        if (updateSettings == null) {  // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
           final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet());
-          final AtomicInteger exitCode = new AtomicInteger();
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override public void run() {
-              dialog.show();
-              exitCode.set(dialog.getExitCode());
-            }
-          });
-          updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode.get()));
+          final int exitCode = showDialogAndGetExitCode(dialog);
+          updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode));
         }
 
         Set<VirtualFile> roots = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
         boolean pushAgain = false; 
-        if (updateSettings.getUpdateMethod() != null) {
+        if (updateSettings.shouldUpdate()) {
           pushAgain = update(roots, updateSettings.getUpdateMethod());
         }
 
@@ -238,28 +258,21 @@ public final class GitPusher {
           return; // don't notify - next push will notify all results in compound
         }
       }
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Push rejected",
-                                                             getResultDescriptionWithOptionalReposIndication(pushInfo, result),
-                                                             NotificationType.WARNING, null).notify(myProject);
+
+      result.createNotification(pushInfo).notify(myProject);
     }
   }
-  
-  private static class UpdateSettings {
-    private final boolean myUpdateAllRoots;
-    private final GitUpdateProcess.UpdateMethod myUpdateMethod;
 
-    private UpdateSettings(boolean updateAllRoots, GitUpdateProcess.UpdateMethod updateMethod) {
-      myUpdateAllRoots = updateAllRoots;
-      myUpdateMethod = updateMethod;
-    }
-
-    public boolean shouldUpdateAllRoots() {
-      return myUpdateAllRoots;
-    }
-
-    public GitUpdateProcess.UpdateMethod getUpdateMethod() {
-      return myUpdateMethod;
-    }
+  private static int showDialogAndGetExitCode(final GitRejectedPushUpdateDialog dialog) {
+    final AtomicInteger exitCode = new AtomicInteger();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        dialog.show();
+        exitCode.set(dialog.getExitCode());
+      }
+    });
+    return exitCode.get();
   }
 
   /**
@@ -274,7 +287,8 @@ public final class GitPusher {
     return null;
   }
 
-  private Set<VirtualFile> getRootsToUpdate(Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch, boolean updateAllRoots) {
+  @NotNull
+  private Set<VirtualFile> getRootsToUpdate(@NotNull Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch, boolean updateAllRoots) {
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
     if (updateAllRoots) {
       for (GitRepository repository : myRepositories) {
@@ -289,294 +303,8 @@ public final class GitPusher {
     return roots;
   }
 
-  private static Map<GitRepository, GitBranch> getRejectedPushesForCurrentBranch(GitPushResult pushResult) {
-    final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = new HashMap<GitRepository, GitBranch>();
-    for (Map.Entry<GitRepository, GitPushRepoResult> entry : pushResult.group().myRejectedResults.entrySet()) {
-      GitRepository repository = entry.getKey();
-      GitBranch currentBranch = repository.getCurrentBranch();
-      if (currentBranch == null) {
-        continue;
-      }
-      GitPushRepoResult repoResult = entry.getValue();
-      GitPushBranchResult curBranchResult = repoResult.getBranchResults().get(currentBranch);
-      if (curBranchResult != null && curBranchResult == GitPushBranchResult.REJECTED) {
-        rejectedPushesForCurrentBranch.put(repository, currentBranch);
-      }
-    }
-    return rejectedPushesForCurrentBranch;
-  }
-
   private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull GitUpdateProcess.UpdateMethod updateMethod) {
     return new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(updateMethod);
   }
 
-  /**
-   * Constructs the HTML-formatted message from error outputs of failed repositories.
-   * If there is only 1 repository in the project, just returns the error without writing the repository url (to avoid confusion for people
-   * with only 1 root ever).
-   * Otherwise adds repository URL to the error that repository produced.
-   */
-  @NotNull
-  public String getResultDescriptionWithOptionalReposIndication(GitPushInfo pushInfo, GitPushResult pushResult) {
-    GroupedResult groupedResult = pushResult.group();
-    
-    StringBuilder sb = new StringBuilder();
-    for (Map.Entry<GitRepository, GitPushRepoResult> entry : groupedResult.myErrorResults.entrySet()) {
-      GitRepository repository = entry.getKey();
-      GitPushRepoResult result = entry.getValue();
-      sb.append("<p>");
-      if (!GitUtil.justOneGitRepository(myProject)) {
-        sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
-      }
-      sb.append(result.getOutput().getErrorOutputAsHtmlString());
-      sb.append("</p>");
-    }
-
-    if (!groupedResult.myRejectedResults.isEmpty()) {
-      sb.append("Pushes to some branches were rejected: <br/>");
-      for (Map.Entry<GitRepository, GitPushRepoResult> entry : groupedResult.myRejectedResults.entrySet()) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult result = entry.getValue();
-        if (!GitUtil.justOneGitRepository(myProject)) {
-          sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
-        }
-        sb.append(result.getBranchesDescription(pushInfo.getCommits().get(repository)));
-        sb.append("</p>");
-      }
-    }
-    
-    if (!groupedResult.mySuccessfulResults.isEmpty()) {
-      sb.append("Some pushes were successful: <br/>");
-      for (Map.Entry<GitRepository, GitPushRepoResult> entry : groupedResult.mySuccessfulResults.entrySet()) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult result = entry.getValue();
-        if (!GitUtil.justOneGitRepository(myProject)) {
-          sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
-        }
-        sb.append(result.getPushedCommitsDescription(pushInfo.getCommits().get(repository)));
-        sb.append("</p>");
-      }
-    }
-    
-    return sb.toString();
-  }
-
-  private static class GroupedResult {
-    private final Map<GitRepository, GitPushRepoResult> mySuccessfulResults;
-    private final Map<GitRepository, GitPushRepoResult> myErrorResults;
-    private final Map<GitRepository, GitPushRepoResult> myRejectedResults;
-
-    GroupedResult(Map<GitRepository, GitPushRepoResult> successfulResults,
-                         Map<GitRepository, GitPushRepoResult> errorResults, Map<GitRepository, GitPushRepoResult> rejectedResults) {
-      mySuccessfulResults = successfulResults;
-      myErrorResults = errorResults;
-      myRejectedResults = rejectedResults;
-    }
-  }
-
-  private static class GitPushResult {
-    private final Map<GitRepository, GitPushRepoResult> myResults = new HashMap<GitRepository, GitPushRepoResult>();
-    
-    void append(GitRepository repository, GitPushRepoResult result) {
-      myResults.put(repository, result);
-    }
-
-    boolean totalSuccess() {
-      for (GitPushRepoResult repoResult : myResults.values()) {
-        if (repoResult.getType() != GitPushRepoResult.Type.SUCCESS) {
-          return false;
-        }
-      }
-      return true;
-    }
-    
-    boolean wasError() {
-      for (GitPushRepoResult repoResult : myResults.values()) {
-        if (repoResult.getType() == GitPushRepoResult.Type.ERROR) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    GroupedResult group() {
-      final Map<GitRepository, GitPushRepoResult> successfulResults = new HashMap<GitRepository, GitPushRepoResult>();
-      final Map<GitRepository, GitPushRepoResult> errorResults = new HashMap<GitRepository, GitPushRepoResult>();
-      final Map<GitRepository, GitPushRepoResult> rejectedResults = new HashMap<GitRepository, GitPushRepoResult>();
-
-      for (Map.Entry<GitRepository, GitPushRepoResult> entry : myResults.entrySet()) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult repoResult = entry.getValue();
-        if (repoResult.getType() == GitPushRepoResult.Type.SUCCESS) {
-          successfulResults.put(repository, repoResult);
-        } else if (repoResult.getType() == GitPushRepoResult.Type.SOME_REJECTED) {
-          rejectedResults.put(repository, repoResult);
-        } else {
-          errorResults.put(repository, repoResult);
-        }
-      }
-      return new GroupedResult(successfulResults, errorResults, rejectedResults);
-    }
-
-    boolean isEmpty() {
-      return myResults.isEmpty();
-    }
-
-    GitPushResult remove(Map<GitRepository, GitBranch> repoBranchPairs) {
-      GitPushResult result = new GitPushResult();
-      for (Map.Entry<GitRepository, GitPushRepoResult> entry : myResults.entrySet()) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult repoResult = entry.getValue();
-        if (repoBranchPairs.containsKey(repository)) {
-          GitPushRepoResult adjustedResult = repoResult.remove(repoBranchPairs.get(repository));
-          if (!repoResult.isEmpty()) {
-            result.append(repository, adjustedResult);
-          }
-        } else {
-          result.append(repository, repoResult);
-        }
-      }
-      return result;
-    }
-
-    /**
-     * Merges the given results to this result.
-     * In the case of conflict (i.e. different results for a repository-branch pair), current result is preferred over the previous one.
-     */
-    void mergeFrom(@Nullable GitPushResult previousResult) {
-      if (previousResult == null) {
-        return;
-      }
-
-      for (Map.Entry<GitRepository, GitPushRepoResult> entry : previousResult.myResults.entrySet()) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult repoResult = entry.getValue();
-        if (myResults.containsKey(repository)) {
-          myResults.get(repository).mergeFrom(previousResult.myResults.get(repository));
-        } else {
-          append(repository, repoResult);
-        }
-      }
-    }
-  }
-  
-  /**
-   * If an error happens, all push is unsuccessful, for all branches.
-   * Otherwise we've got separate results for branches.
-   */
-  private static class GitPushRepoResult {
-
-    private enum Type {
-      SUCCESS,
-      SOME_REJECTED,
-      ERROR
-    }
-    Type myType;
-    GitCommandResult myOutput;
-    Map<GitBranch, GitPushBranchResult> myBranchResults = new HashMap<GitBranch, GitPushBranchResult>();
-
-    private GitPushRepoResult(Type type, GitCommandResult output) {
-      myType = type;
-      myOutput = output;
-    }
-
-    GitPushRepoResult(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
-      this(Type.SOME_REJECTED, output);
-      myBranchResults = resultsByBranch;
-    }
-
-    static GitPushRepoResult success(GitCommandResult output) {
-      return new GitPushRepoResult(Type.SUCCESS, output);
-    }
-
-    static GitPushRepoResult error(GitCommandResult output) {
-      return new GitPushRepoResult(Type.ERROR, output);
-    }
-    
-    static GitPushRepoResult someRejected(Map<GitBranch, GitPushBranchResult> resultsByBranch, GitCommandResult output) {
-      return new GitPushRepoResult(resultsByBranch, output);
-    }
-
-    Type getType() {
-      return myType;
-    }
-
-    GitCommandResult getOutput() {
-      return myOutput;
-    }
-
-    Map<GitBranch, GitPushBranchResult> getBranchResults() {
-      return myBranchResults;
-    }
-
-    GitPushRepoResult remove(@NotNull GitBranch branch) {
-      Map<GitBranch, GitPushBranchResult> resultsByBranch = new HashMap<GitBranch, GitPushBranchResult>();
-      for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
-        GitBranch b = entry.getKey();
-        if (!b.equals(branch)) {
-          resultsByBranch.put(b, entry.getValue());
-        }
-      }
-      return new GitPushRepoResult(resultsByBranch, myOutput);
-    }
-
-    boolean isEmpty() {
-      return myBranchResults.isEmpty();
-    }
-
-    /**
-     * Merges the given results to this result.
-     * In the case of conflict (i.e. different results for a branch), current result is preferred over the previous one.
-     */
-    public void mergeFrom(@NotNull GitPushRepoResult repoResult) {
-      for (Map.Entry<GitBranch, GitPushBranchResult> entry : repoResult.myBranchResults.entrySet()) {
-        GitBranch branch = entry.getKey();
-        GitPushBranchResult branchResult = entry.getValue();
-        if (!myBranchResults.containsKey(branch)) {   // otherwise current result is preferred
-          myBranchResults.put(branch, branchResult);
-        }
-      }
-    }
-
-    public String getBranchesDescription(GitCommitsByBranch commitsByBranch) {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
-        GitBranch branch = entry.getKey();
-        GitPushBranchResult branchResult = entry.getValue();
-
-        if (branchResult == GitPushBranchResult.SUCCESS) {
-          sb.append(GitUIUtil.bold(branch.getName()) + ": pushed " + commits(pushedCommitsNum(commitsByBranch, branch))).append("<br/>");
-        } else {
-          sb.append(code(branch.getName())).append(": rejected").append("<br/>");
-        }
-      }
-      return sb.toString();
-    }
-
-    public String getPushedCommitsDescription(GitCommitsByBranch commitsByBranch) {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<GitBranch, GitPushBranchResult> entry : myBranchResults.entrySet()) {
-        GitBranch branch = entry.getKey();
-        GitPushBranchResult branchResult = entry.getValue();
-
-        if (branchResult == GitPushBranchResult.SUCCESS) {
-          sb.append(branch.getName() + ": pushed " + commits(pushedCommitsNum(commitsByBranch, branch))).append("<br/>");
-        }
-      }      
-      return sb.toString();
-    }
-
-    private static int pushedCommitsNum(GitCommitsByBranch commitsByBranch, GitBranch branch) {
-      return commitsByBranch.get(branch).getCommits().size();
-    }
-  }
-
-  private enum GitPushBranchResult {
-    SUCCESS,
-    REJECTED
-  }
-
-  private static String commits(int commitNum) {
-    return commitNum + " " + StringUtil.pluralize("commit", commitNum);
-  }
 }
