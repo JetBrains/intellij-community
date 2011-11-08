@@ -45,7 +45,7 @@ import java.util.Map;
 public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.paths.WebReferencesAnnotatorBase");
 
-  private final Map<String, MyFetchResult> myFetchCache = new HashMap<String, MyFetchResult>();
+  private final Map<String, MyFetchCacheEntry> myFetchCache = new HashMap<String, MyFetchCacheEntry>();
   private final Object myFetchCacheLock = new Object();
   private static final long FETCH_CACHE_TIMEOUT = 10000;
 
@@ -90,11 +90,28 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   @Override
   public MyInfo[] doAnnotate(MyInfo[] infos) {
-    for (MyInfo info : infos) {
-      if (checkUrl(info.myUrl)) {
-        info.myResult = true;
+    final MyFetchResult[] fetchResults = new MyFetchResult[infos.length];
+    for (int i = 0; i < fetchResults.length; i++) {
+      fetchResults[i] = checkUrl(infos[i].myUrl);
+    }
+
+    boolean containsAvailableHosts = false;
+    
+    for (MyFetchResult fetchResult : fetchResults) {
+      if (fetchResult != MyFetchResult.UNKNOWN_HOST) {
+        containsAvailableHosts = true;
       }
     }
+
+    for (int i = 0; i < fetchResults.length; i++) {
+      final MyFetchResult result = fetchResults[i];
+
+      // if all hosts are not available, internet connection may be disabled, so it's better to not report warnings for unknown hosts
+      if (result == MyFetchResult.OK || (!containsAvailableHosts && result == MyFetchResult.UNKNOWN_HOST)) {
+        infos[i].myResult = true;
+      }
+    }
+
     return infos;
   }
 
@@ -149,22 +166,23 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   @NotNull
   protected abstract HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
 
-  private boolean checkUrl(String url) {
+  @NotNull
+  private MyFetchResult checkUrl(String url) {
     synchronized (myFetchCacheLock) {
-      final MyFetchResult cachedResult = myFetchCache.get(url);
+      final MyFetchCacheEntry entry = myFetchCache.get(url);
       final long currentTime = System.currentTimeMillis();
 
-      if (cachedResult != null && currentTime - cachedResult.getTime() < FETCH_CACHE_TIMEOUT) {
-        return cachedResult.isExists();
+      if (entry != null && currentTime - entry.getTime() < FETCH_CACHE_TIMEOUT) {
+        return entry.getFetchResult();
       }
 
-      final boolean answer = doCheckUrl(url);
-      myFetchCache.put(url, new MyFetchResult(currentTime, answer));
-      return answer;
+      final MyFetchResult fetchResult = doCheckUrl(url);
+      myFetchCache.put(url, new MyFetchCacheEntry(currentTime, fetchResult));
+      return fetchResult;
     }
   }
 
-  private static boolean doCheckUrl(String url) {
+  private static MyFetchResult doCheckUrl(String url) {
     final HttpClient client = new HttpClient();
     client.setTimeout(3000);
     client.setConnectionTimeout(3000);
@@ -172,39 +190,45 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
       final GetMethod method = new GetMethod(url);
       final int code = client.executeMethod(method);
 
-      return code == HttpStatus.SC_OK ||
-             code == HttpStatus.SC_REQUEST_TIMEOUT;
+      return code == HttpStatus.SC_OK || code == HttpStatus.SC_REQUEST_TIMEOUT 
+             ? MyFetchResult.OK 
+             : MyFetchResult.NONEXISTENCE;
     }
     catch (UnknownHostException e) {
       LOG.info(e);
-      return false;
+      return MyFetchResult.UNKNOWN_HOST;
     }
     catch (IOException e) {
       LOG.info(e);
-      return true;
+      return MyFetchResult.OK;
     }
     catch (IllegalArgumentException e) {
       LOG.debug(e);
-      return true;
+      return MyFetchResult.OK;
     }
   }
 
-  private static class MyFetchResult {
+  private static class MyFetchCacheEntry {
     private final long myTime;
-    private final boolean myExists;
+    private final MyFetchResult myFetchResult;
 
-    private MyFetchResult(long time, boolean exists) {
+    private MyFetchCacheEntry(long time, @NotNull MyFetchResult fetchResult) {
       myTime = time;
-      myExists = exists;
+      myFetchResult = fetchResult;
     }
 
     public long getTime() {
       return myTime;
     }
 
-    public boolean isExists() {
-      return myExists;
+    @NotNull
+    public MyFetchResult getFetchResult() {
+      return myFetchResult;
     }
+  }
+  
+  private static enum MyFetchResult {
+    OK, UNKNOWN_HOST, NONEXISTENCE
   }
 
   protected static class MyInfo {
