@@ -664,14 +664,18 @@ public class Mappings {
             }
           }
           else if (d.base() != Difference.NONE || throwsChanged) {
-            if (d.packageLocalOn()) {
-              final UsageRepr.Usage usage = m.createUsage(myContext, it.name);
-
-              affectedUsages.add(usage);
-              usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
-            }
-
             final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
+
+            if (d.packageLocalOn()) {
+              final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+              u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
+
+              for (UsageRepr.Usage usage : usages) {
+                usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
+              }
+
+              affectedUsages.addAll(usages);
+            }
 
             if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
               u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
@@ -693,17 +697,12 @@ public class Mappings {
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
 
-                if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
                   u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
 
                   for (UsageRepr.Usage usage : usages) {
-                    if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0) {
-                      usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
-                    }
-                    else {
-                      usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
-                    }
+                    usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
                   }
 
                   affectedUsages.addAll(usages);
@@ -885,11 +884,11 @@ public class Mappings {
           }
         }
 
+        dependentFiles.removeAll(compiledFiles);
+
         filewise:
         for (DependencyContext.S depFile : dependentFiles) {
-          final File theFile = new File(myContext.getValue(depFile));
-
-          if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
+          if (affectedFiles.contains(new File(myContext.getValue(depFile)))) {
             continue filewise;
           }
 
@@ -906,17 +905,18 @@ public class Mappings {
                 final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                 if (constraint == null) {
-                  affectedFiles.add(theFile);
+                  affectedFiles.add(new File(myContext.getValue(depFile)));
                   continue filewise;
                 }
                 else {
                   final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
                   for (DependencyContext.S residentName : residenceClasses) {
                     if (constraint.checkResidence(residentName)) {
-                      affectedFiles.add(theFile);
+                      affectedFiles.add(new File(myContext.getValue(depFile)));
                       continue filewise;
                     }
                   }
+
                 }
               }
             }
@@ -927,7 +927,7 @@ public class Mappings {
               for (UsageRepr.Usage usage : annotationUsages) {
                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
                   if (query.satisfies(usage)) {
-                    affectedFiles.add(theFile);
+                    affectedFiles.add(new File(myContext.getValue(depFile)));
                     continue filewise;
                   }
                 }
