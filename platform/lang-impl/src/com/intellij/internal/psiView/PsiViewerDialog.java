@@ -219,7 +219,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     setModal(modal);
     setOKButtonText("&Build PSI Tree");
     setCancelButtonText("&Close");
-    Disposer.register(myProject, this);
+    Disposer.register(myProject, getDisposable());
     EditorEx editor = null;
     if (myCurrentFile == null) {
       setTitle("PSI Viewer");
