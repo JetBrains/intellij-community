@@ -180,6 +180,18 @@ public class PyEditingTest extends PyTestCase {
                 "                         )");
   }
 
+  public void testEnterInKeyword() {
+    doTestEnter("imp<caret>ort django.http",
+                "imp\n" +
+                "ort django.http");
+  }
+
+  public void testEnterInIdentifier() {
+    doTestEnter("import dja<caret>ngo.http",
+                "import dja\n"+
+                "ngo.http");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

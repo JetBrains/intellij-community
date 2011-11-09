@@ -73,6 +73,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (element == null) {
       return Result.Continue;
     }
+
+    if (offset > 0 && !(PyTokenTypes.STRING_NODES.contains(element.getNode().getElementType()))) {
+      final PsiElement prevElement = file.findElementAt(offset-1);
+      if (prevElement == element) return Result.Continue;
+    }
+
     if (PyTokenTypes.TRIPLE_NODES.contains(element.getNode().getElementType()) ||
       element.getNode().getElementType() == PyTokenTypes.DOCSTRING)
       return Result.Continue;
