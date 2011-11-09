@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +43,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.unscramble.UnscrambleDialog;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -60,10 +58,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -80,6 +77,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @NonNls public static final ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
   @NonNls private static final String OUR_KEY = "ourKey";
+  public static final String MODIFIED = "Modified";
+  public static final NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
@@ -95,6 +95,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
+  
+  static {
+    NotificationsConfigurationImpl.remove("Groovy DSL parsing");
+  }
 
   public GroovyDslFileIndex() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
@@ -102,7 +106,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       @Override
       public void contentsChanged(VirtualFileEvent event) {
         if (event.getFileName().endsWith(".gdsl")) {
-          disableFile(event.getFile());
+          disableFile(event.getFile(), MODIFIED);
         }
       }
 
@@ -131,6 +135,25 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   public int getVersion() {
     return 0;
+  }
+
+  @Nullable 
+  public static String getInactivityReason(VirtualFile file) {
+    try {
+      final byte[] bytes = ENABLED.readAttributeBytes(file);
+      if (bytes == null || bytes.length < 1) {
+        return null;
+      }
+
+      if (bytes[0] != 42) {
+        return null;
+      }
+      
+      return new String(bytes, 1, bytes.length - 1);
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   public static boolean isActivated(VirtualFile file) {
@@ -164,9 +187,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  static void disableFile(final VirtualFile vfile) {
+  private static void disableFile(final VirtualFile vfile, String error) {
     try {
-      ENABLED.writeAttributeBytes(vfile, new byte[0]);
+      ByteArrayOutputStream stream = new ByteArrayOutputStream(error.length() * 2 + 1);
+      stream.write(42);
+      stream.write(error.getBytes());
+      ENABLED.writeAttributeBytes(vfile, stream.toByteArray());
     }
     catch (IOException e1) {
       LOG.error(e1);
@@ -439,30 +465,24 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     if (!isActivated(vfile)) {
       return;
     }
-    disableFile(vfile);
 
-    final StringWriter writer = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    e.printStackTrace(new PrintWriter(writer));
-    final String exceptionText = writer.toString();
+    final String exceptionText = ExceptionUtil.getThrowableText(e);
     LOG.info(exceptionText);
+    disableFile(vfile, exceptionText);
+
 
     if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vfile)) {
       return;
     }
 
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
-      new Notification("Groovy DSL parsing", "DSL script execution error",
-                       "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>", NotificationType.ERROR,
-                       new NotificationListener() {
-                         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                           final UnscrambleDialog dialog = new UnscrambleDialog(project);
-
-                           dialog.setText(exceptionText);
-                           dialog.show();
-                           notification.expire();
-                         }
-                       }));
+    String content = "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>";
+    NOTIFICATION_GROUP.createNotification("DSL script execution error", content, NotificationType.ERROR,
+                                          new NotificationListener() {
+                                            public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                        @NotNull HyperlinkEvent event) {
+                                              GroovyDslAnnotator.analyzeStackTrace(project, exceptionText);
+                                              notification.expire();
+                                            }
+                                          }).notify(project);
   }
-
 }
