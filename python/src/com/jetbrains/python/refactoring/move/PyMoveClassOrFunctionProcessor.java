@@ -86,7 +86,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
             }
             return true;
           }
-        }, FindUsagesHandler.createFindUsagesOptions(myProject));
+        }, FindUsagesHandler.createFindUsagesOptions(myProject, null));
       }
     }
     return allUsages.toArray(new UsageInfo[allUsages.size()]);

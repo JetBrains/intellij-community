@@ -38,7 +38,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
   }
 
-  private static SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
+  protected SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
     final IStubFileElementType file = PythonLanguage.getInstance().getFileElementType();
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
     final TokenSet STATEMENT_OR_DECLARATION = TokenSet.orSet(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(),
