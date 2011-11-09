@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,6 +53,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   private final JCheckBox myUpdateAllRoots;
   private final RebaseAction myRebaseAction;
   private final MergeAction myMergeAction;
+  private final JCheckBox myAutoUpdateInFuture;
 
   protected GitRejectedPushUpdateDialog(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
     super(project);
@@ -59,6 +61,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     myRepositories = repositories;
 
     myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", true);
+    myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method choice and silently update in future <br/>(you may change this in the Settings)</html>");
 
     myMergeAction = new MergeAction(this);
     myRebaseAction = new RebaseAction(this);
@@ -73,7 +76,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
     if (settings == null) {
       return myMergeAction;
-    } else if (settings.getUpdateType() == GitVcsSettings.UpdateType.REBASE) {
+    } else if (settings.getUpdateType() == UpdateMethod.REBASE) {
       return myRebaseAction;
     }
     return myMergeAction;
@@ -83,9 +86,8 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JBLabel desc = new JBLabel(makeDescription());
 
-    JCheckBox dontAskAgain = new JCheckBox("<html>Remember the update method choice and silently update in future <br/>(you may change this in the Settings)</html>");
     JPanel options = new JPanel(new BorderLayout());
-    options.add(dontAskAgain, BorderLayout.SOUTH);
+    options.add(myAutoUpdateInFuture, BorderLayout.SOUTH);
     
     if (!GitUtil.justOneGitRepository(myProject)) {
       options.add(myUpdateAllRoots);
@@ -181,6 +183,9 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     return myUpdateAllRoots.isSelected();
   }
 
+  boolean shouldAutoUpdateInFuture() {
+    return myAutoUpdateInFuture.isSelected();
+  }
 
   private static class MergeAction extends AbstractAction {
     private final DialogWrapper myDialog;

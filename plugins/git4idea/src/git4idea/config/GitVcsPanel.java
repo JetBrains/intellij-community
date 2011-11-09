@@ -48,6 +48,7 @@ public class GitVcsPanel {
   private TextFieldWithBrowseButton myGitField;
   private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
   private JComboBox myConvertTextFilesComboBox; // The conversion policy
+  private JCheckBox myAutoUpdateIfPushRejected;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -114,6 +115,7 @@ public class GitVcsPanel {
     myGitField.setText(settings.getAppSettings().getPathToGit());
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
+    myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
   }
 
   /**
@@ -149,7 +151,8 @@ public class GitVcsPanel {
   public boolean isModified(@NotNull GitVcsSettings settings) {
     return !settings.getAppSettings().getPathToGit().equals(myGitField.getText()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
-           !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem());
+           !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
+           !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected();
   }
 
   /**
@@ -161,6 +164,8 @@ public class GitVcsPanel {
     settings.getAppSettings().setPathToGit(myGitField.getText());
     myVcs.checkVersion();
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
+    settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
+
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
     GitVcsSettings.ConversionPolicy conversionPolicy;
     if (CRLF_DO_NOT_CONVERT.equals(policyItem)) {

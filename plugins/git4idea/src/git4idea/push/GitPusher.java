@@ -18,6 +18,7 @@ package git4idea.push;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,10 +28,13 @@ import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.GitCommandResult;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.UpdateMethod;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.settings.GitPushSettings;
 import git4idea.update.GitUpdateProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,13 +54,15 @@ public final class GitPusher {
   private final Project myProject;
   private final ProgressIndicator myProgressIndicator;
   private final Collection<GitRepository> myRepositories;
+  private final GitVcsSettings mySettings;
+  private final GitPushSettings myPushSettings;
 
   // holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
   private static class UpdateSettings {
     private final boolean myUpdateAllRoots;
-    private final GitUpdateProcess.UpdateMethod myUpdateMethod;
+    private final UpdateMethod myUpdateMethod;
 
-    private UpdateSettings(boolean updateAllRoots, GitUpdateProcess.UpdateMethod updateMethod) {
+    private UpdateSettings(boolean updateAllRoots, UpdateMethod updateMethod) {
       myUpdateAllRoots = updateAllRoots;
       myUpdateMethod = updateMethod;
     }
@@ -65,7 +71,7 @@ public final class GitPusher {
       return myUpdateAllRoots;
     }
 
-    public GitUpdateProcess.UpdateMethod getUpdateMethod() {
+    public UpdateMethod getUpdateMethod() {
       return myUpdateMethod;
     }
 
@@ -78,6 +84,8 @@ public final class GitPusher {
     myProject = project;
     myProgressIndicator = indicator;
     myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
+    mySettings = GitVcsSettings.getInstance(myProject);
+    myPushSettings = GitPushSettings.getInstance(myProject);
   }
 
   /**
@@ -261,11 +269,17 @@ public final class GitPusher {
 
       if (!rejectedPushesForCurrentBranch.isEmpty()) {
 
-        if (updateSettings == null) {  // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
-          final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet());
-          final int exitCode = showDialogAndGetExitCode(dialog);
-          updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode));
-        }
+        if (updateSettings == null) {
+          // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
+          // and don't show the dialog again if user has chosen not to ask again
+          if (!mySettings.autoUpdateIfPushRejected()) {
+            final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet());
+            final int exitCode = showDialogAndGetExitCode(dialog);
+            updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode));
+          } else {
+            updateSettings = readUpdateSettings();
+          }
+        } 
 
         Set<VirtualFile> roots = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
         boolean pushAgain = false; 
@@ -286,7 +300,13 @@ public final class GitPusher {
     }
   }
 
-  private static int showDialogAndGetExitCode(@NotNull final GitRejectedPushUpdateDialog dialog) {
+  private UpdateSettings readUpdateSettings() {
+    boolean updateAllRoots = myPushSettings.shouldUpdateAllRoots();
+    UpdateMethod updateMethod = myPushSettings.getUpdateMethod();
+    return new UpdateSettings(updateAllRoots, updateMethod);
+  }
+
+  private int showDialogAndGetExitCode(@NotNull final GitRejectedPushUpdateDialog dialog) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -295,17 +315,21 @@ public final class GitPusher {
         exitCode.set(dialog.getExitCode());
       }
     });
-    return exitCode.get();
+    int code = exitCode.get();
+    if (code != DialogWrapper.CANCEL_EXIT_CODE) {
+      mySettings.setAutoUpdateIfPushRejected(dialog.shouldAutoUpdateInFuture());
+    }
+    return code;
   }
 
   /**
    * @return update method selected in the dialog or {@code null} if user pressed Cancel, i.e. doesn't want to update.
    */
   @Nullable
-  private static GitUpdateProcess.UpdateMethod getUpdateMethodFromDialogExitCode(int exitCode) {
+  private static UpdateMethod getUpdateMethodFromDialogExitCode(int exitCode) {
     switch (exitCode) {
-      case GitRejectedPushUpdateDialog.MERGE_EXIT_CODE:  return GitUpdateProcess.UpdateMethod.MERGE;
-      case GitRejectedPushUpdateDialog.REBASE_EXIT_CODE: return GitUpdateProcess.UpdateMethod.REBASE;
+      case GitRejectedPushUpdateDialog.MERGE_EXIT_CODE:  return UpdateMethod.MERGE;
+      case GitRejectedPushUpdateDialog.REBASE_EXIT_CODE: return UpdateMethod.REBASE;
     }
     return null;
   }
@@ -326,8 +350,9 @@ public final class GitPusher {
     return roots;
   }
 
-  private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull GitUpdateProcess.UpdateMethod updateMethod) {
-    return new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(updateMethod);
+  private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
+    GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE;
+    return new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(um);
   }
 
 }

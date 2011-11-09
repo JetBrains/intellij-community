@@ -45,9 +45,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   private boolean myCheckoutIncludesTags = false;
   private SshExecutable mySshExecutable = DEFAULT_SSH; // IDEA SSH should be used instead of native SSH.
   private UpdateChangesPolicy myUpdateChangesPolicy = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
-  private UpdateType myUpdateType = UpdateType.BRANCH_DEFAULT; // The type of update operation to perform
+  private UpdateMethod myUpdateType = UpdateMethod.BRANCH_DEFAULT; // The type of update operation to perform
   private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.ASK; // The crlf conversion policy
   private UpdateChangesPolicy myPushActiveBranchesRebaseSavePolicy = UpdateChangesPolicy.STASH; // The policy used in push active branches dialog
+  private boolean myAutoUpdateIfPushRejected = false;
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
     myAppSettings = appSettings;
@@ -93,7 +94,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   /**
    * @return update type
    */
-  public UpdateType getUpdateType() {
+  public UpdateMethod getUpdateType() {
     return myUpdateType;
   }
 
@@ -102,7 +103,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    *
    * @param updateType the update type to set
    */
-  public void setUpdateType(UpdateType updateType) {
+  public void setUpdateType(UpdateMethod updateType) {
     myUpdateType = updateType;
   }
 
@@ -206,6 +207,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     mySshExecutable = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
   }
 
+  public boolean autoUpdateIfPushRejected() {
+    return myAutoUpdateIfPushRejected;
+  }
+
+  public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
+    myAutoUpdateIfPushRejected = autoUpdate;
+  }
+
   /**
    * The state fo the settings
    */
@@ -230,7 +239,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     /**
      * The type of update operation to perform
      */
-    public UpdateType UPDATE_TYPE = UpdateType.BRANCH_DEFAULT;
+    public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
     /**
      * The crlf conversion policy
      */
@@ -265,24 +274,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
      * Naive SSH.
      */
     NATIVE_SSH,
-  }
-
-  /**
-   * The type of update to perform
-   */
-  public enum UpdateType {
-    /**
-     * Use default specified in the config file for the branch
-     */
-    BRANCH_DEFAULT,
-    /**
-     * Merge fetched commits with local branch
-     */
-    MERGE,
-    /**
-     * Rebase local commits upon the fetched branch
-     */
-    REBASE
   }
 
   /**

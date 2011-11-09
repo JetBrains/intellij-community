@@ -115,6 +115,9 @@
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
     <projectService
+        serviceInterface="git4idea.settings.GitPushSettings"
+        serviceImplementation="git4idea.settings.GitPushSettings"/>
+    <projectService
         serviceInterface="git4idea.history.NewGitUsersComponent"
         serviceImplementation="git4idea.history.NewGitUsersComponent"/>
     <projectService
