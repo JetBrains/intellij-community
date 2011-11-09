@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -180,7 +177,11 @@ public class EnterHandler extends BaseEnterHandler {
 
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = comment.getParent().getLanguage();
-    Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(containingFile.getProject());
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    if (parserDefinition == null) {
+      return true;
+    } 
+    Lexer lexer = parserDefinition.createLexer(containingFile.getProject());
     final String commentPrefix = docComment? commenter.getDocumentationCommentPrefix() : commenter.getBlockCommentPrefix();
     lexer.start(commentText, commentPrefix == null? 0 : commentPrefix.length(), commentText.length());
     QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile, editor);
@@ -207,7 +208,8 @@ public class EnterHandler extends BaseEnterHandler {
       }
       if (lexer.getTokenEnd() == commentText.length()) {
         if (lexer.getTokenType() == commenter.getLineCommentTokenType()) {
-          lexer.start(commentText, lexer.getTokenStart() + commenter.getLineCommentPrefix().length(), commentText.length());
+          String prefix = commenter.getLineCommentPrefix();
+          lexer.start(commentText, lexer.getTokenStart() + (prefix == null ? 0 : prefix.length()), commentText.length());
           lexer.advance();
           continue;
         }
@@ -382,11 +384,13 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         String indentInsideJavadoc = null;
-        int line = myDocument.getLineNumber(myOffset);
-        if (line > 0 && (commentContext.docAsterisk || commentContext.docStart)) {
-          indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(myDocument, myDocument.getLineStartOffset(line - 1));
+        if (myOffset < myDocument.getTextLength()) {
+          final int line = myDocument.getLineNumber(myOffset);
+          if (line > 0 && (commentContext.docAsterisk || commentContext.docStart)) {
+            indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(myDocument, myDocument.getLineStartOffset(line - 1));
+          }
         }
-        
+
         if (commentContext.docAsterisk) {
           commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, commentContext.docAsterisk,
                                                          !StringUtil.isEmpty(indentInsideJavadoc), commentContext.commenter);
@@ -522,6 +526,9 @@ public class EnterHandler extends BaseEnterHandler {
       PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
 
       comment = createJavaDocStub(settings, comment, getProject());
+      if (comment == null) {
+        return null;
+      }
 
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
       CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
@@ -548,6 +555,7 @@ public class EnterHandler extends BaseEnterHandler {
       return comment;
     }
 
+    @Nullable
     private PsiComment createJavaDocStub(final CodeInsightSettings settings,
                                             final PsiComment comment,
                                             final Project project) {
