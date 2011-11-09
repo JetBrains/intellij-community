@@ -39,6 +39,11 @@ final class GitCommitsByRepoAndBranch {
   }
 
   @NotNull
+  static GitCommitsByRepoAndBranch empty() {
+    return new GitCommitsByRepoAndBranch(new HashMap<GitRepository, GitCommitsByBranch>());
+  }
+
+  @NotNull
   Collection<GitRepository> getRepositories() {
     return new HashSet<GitRepository>(myCommitsByRepository.keySet());
   }

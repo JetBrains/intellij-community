@@ -16,9 +16,11 @@
 package git4idea.push;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
@@ -27,24 +29,25 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitPushDialog extends DialogWrapper {
 
+  private static final Logger LOG = Logger.getInstance(GitPushDialog.class);
+
   private JComponent myRootPanel;
   private Project myProject;
-  private final Collection<GitRepository> myRepositories;
   private final GitPusher myPusher;
   private final GitPushLog myListPanel;
   private GitCommitsByRepoAndBranch myGitCommitsToPush;
   private GitPushSpec myPushSpec = new GitPushSpec(null, "");
 
-  public GitPushDialog(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
+  public GitPushDialog(@NotNull Project project) {
     super(project);
     myProject = project;
-    myRepositories = repositories;
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
     myListPanel = new GitPushLog(myProject);
@@ -78,11 +81,24 @@ public class GitPushDialog extends DialogWrapper {
   private void loadCommitsInBackground(final GitPushLog myListPanel, final JBLoadingPanel loadingPanel) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpec);
+        final AtomicReference<String> error = new AtomicReference<String>();
+        try {
+          myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpec);
+        }
+        catch (VcsException e) {
+          myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
+          error.set(e.getMessage());
+          LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpec, e);
+        }
+        
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myListPanel.setCommits(myGitCommitsToPush);
+            if (error.get() != null) {
+              myListPanel.displayError(error.get());
+            } else {
+              myListPanel.setCommits(myGitCommitsToPush);
+            }
             loadingPanel.stopLoading();
           }
         });

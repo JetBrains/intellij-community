@@ -56,7 +56,7 @@ public class GitPush extends GitRepositoryAction {
                          final List<VcsException> exceptions) throws VcsException {
 
     Collection<GitRepository> repositories = GitRepositoryManager.getInstance(project).getRepositories();
-    final GitPushDialog dialog = new GitPushDialog(project, repositories);
+    final GitPushDialog dialog = new GitPushDialog(project);
     dialog.show();
     if (dialog.isOK()) {
       Task.Backgroundable task = new Task.Backgroundable(project, GitPusher.INDICATOR_TEXT, false) {

@@ -63,8 +63,14 @@ public class GitPushSpec {
   public String getRefspec() {
     return myRefspec;
   }
-  
-  List<GitBranchPair> parse(GitRepository repository) {
+
+  /**
+   * Parses the refspec to identify local branches that are to be pushed together with remote "destination" branches. 
+   * @throws VcsException When looking for thacking branches.
+   * TODO read tracking information from the config file, i.e. getting rid from the possible exception here.
+   */
+  @NotNull
+  List<GitBranchPair> parse(@NotNull GitRepository repository) throws VcsException {
     // TODO - this is only for isSimple() case, fairly parse ref and make for all cases
     List<GitBranchPair> sourceDests = new ArrayList<GitBranchPair>();
     for (GitBranch branch : repository.getBranches().getLocalBranches()) {
@@ -77,19 +83,14 @@ public class GitPushSpec {
   }
 
   @Nullable
-  private static GitBranchPair findSourceDestForBranch(GitRepository repository, GitBranch branch) {
-    try {
-      GitBranch trackedBranch = branch.tracked(repository.getProject(), repository.getRoot());
-      if (trackedBranch != null) {
-        return new GitBranchPair(branch, trackedBranch);
-      }
-      GitBranch matchingRemoteBranch = findMatchingRemoteBranch(repository, branch);
-      if (matchingRemoteBranch != null) {
-        return new GitBranchPair(branch, matchingRemoteBranch);
-      }
+  private static GitBranchPair findSourceDestForBranch(GitRepository repository, GitBranch branch) throws VcsException {
+    GitBranch trackedBranch = branch.tracked(repository.getProject(), repository.getRoot());
+    if (trackedBranch != null) {
+      return new GitBranchPair(branch, trackedBranch);
     }
-    catch (VcsException e) {
-      e.printStackTrace();  // TODO
+    GitBranch matchingRemoteBranch = findMatchingRemoteBranch(repository, branch);
+    if (matchingRemoteBranch != null) {
+      return new GitBranchPair(branch, matchingRemoteBranch);
     }
     return null;
   }
@@ -129,4 +130,8 @@ public class GitPushSpec {
     return false;
   }
 
+  @Override
+  public String toString() {
+    return myRemote + " " + myRefspec;
+  }
 }

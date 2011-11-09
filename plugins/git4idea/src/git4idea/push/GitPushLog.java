@@ -44,7 +44,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
@@ -174,6 +173,16 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     repaint();
   }
 
+  void displayError(String message) {
+    DefaultMutableTreeNode titleNode = new DefaultMutableTreeNode("Error: couldn't collect commits to be pushed");
+    DefaultMutableTreeNode detailNode = new DefaultMutableTreeNode(message);
+    myRootNode.add(titleNode);
+    myRootNode.add(detailNode);
+    myTreeModel.reload(myRootNode);
+    TreeUtil.expandAll(myTree);
+    repaint();
+  }
+
   /**
    * @return repositories selected (via checkboxes) to be pushed.
    */
@@ -187,7 +196,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return repositories;
   }
 
-  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements TreeCellRenderer {
+  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
 
     @Override
     public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
@@ -222,6 +231,9 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
         SimpleTextAttributes attrs = fromBranch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
         getTextRenderer().append(fromBranch.getName() + " -> " + dest.getName(), attrs);
+      }
+      else {
+        getTextRenderer().append(userObject == null ? "" : userObject.toString());
       }
     }
   }

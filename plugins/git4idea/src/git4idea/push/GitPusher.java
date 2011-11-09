@@ -87,10 +87,11 @@ public final class GitPusher {
    * @param pushSpec which branches in which repositories should be pushed.
    *                               The most common situation is all repositories in the project with a single currently active branch for
    *                               each of them.
+   * @throws VcsException if couldn't query 'git log' about commits to be pushed.
    * @return
    */
   @NotNull
-  public GitCommitsByRepoAndBranch collectCommitsToPush(@NotNull GitPushSpec pushSpec) {
+  GitCommitsByRepoAndBranch collectCommitsToPush(@NotNull GitPushSpec pushSpec) throws VcsException {
     Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpec);
     
     Map<GitRepository, GitCommitsByBranch> commitsByRepoAndBranch = new HashMap<GitRepository, GitCommitsByBranch>();
@@ -104,7 +105,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(@NotNull GitPushSpec pushSpec) {
+  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(@NotNull GitPushSpec pushSpec) throws VcsException {
     Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
     for (GitRepository repository : myRepositories) {
       res.put(repository, pushSpec.parse(repository));
@@ -113,7 +114,8 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitCommitsByBranch collectsCommitsToPush(@NotNull GitRepository repository, @NotNull List<GitBranchPair> sourcesDestinations) {
+  private GitCommitsByBranch collectsCommitsToPush(@NotNull GitRepository repository, @NotNull List<GitBranchPair> sourcesDestinations)
+    throws VcsException {
     Map<GitBranch, GitPushBranchInfo> commitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>();
 
     for (GitBranchPair sourceDest : sourcesDestinations) {
@@ -132,14 +134,9 @@ public final class GitPusher {
   }
 
   @NotNull
-  private List<GitCommit> collectCommitsToPush(@NotNull GitRepository repository, @NotNull String source, @NotNull String destination) {
-    try {
-      return GitHistoryUtils.history(myProject, repository.getRoot(), destination + ".." + source);
-    }
-    catch (VcsException e) {
-      e.printStackTrace();  // TODO
-    }
-    return Collections.emptyList();
+  private List<GitCommit> collectCommitsToPush(@NotNull GitRepository repository, @NotNull String source, @NotNull String destination)
+    throws VcsException {
+    return GitHistoryUtils.history(myProject, repository.getRoot(), destination + ".." + source);
   }
 
   /**
