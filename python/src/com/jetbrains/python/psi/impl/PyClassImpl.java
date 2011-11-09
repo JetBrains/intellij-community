@@ -784,7 +784,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Override
-  public PyTargetExpression findClassAttribute(String name, boolean inherited) {
+  public PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited) {
     final NameFinder<PyTargetExpression> processor = new NameFinder<PyTargetExpression>(name);
     visitClassAttributes(processor, inherited);
     return processor.getResult();

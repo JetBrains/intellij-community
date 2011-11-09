@@ -181,10 +181,14 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   @Nullable
   private static LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
+    final String name = element.getReferencedName();
+    if (name == null) {
+      return null;
+    }
     PyClass containingClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (containingClass == null) return null;
     for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
-      final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(element.getReferencedName(), false);
+      final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(name, false);
       if (ancestorAttr != null) {
         return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
                                               OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL,
