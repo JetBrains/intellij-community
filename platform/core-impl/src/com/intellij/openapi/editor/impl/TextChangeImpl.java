@@ -160,6 +160,27 @@ public class TextChangeImpl implements TextChange {
     setEnd(myEnd + offset);
   }
 
+  /**
+   * Shorthand for calling {@link #isWithinBounds(int, int)} with zero start offset and given length as and end offset
+   * 
+   * @param length  target length
+   * @return        <code>true</code> if current change is within the target bounds; <code>false</code> otherwise
+   */
+  public boolean isWithinBounds(int length) {
+    return isWithinBounds(0, length);
+  }
+
+  /**
+   * Allows to check if current change is within the given bounds.
+   * 
+   * @param start  target bounds start offset (inclusive)
+   * @param end    target bounds end offset (exclusive)
+   * @return       <code>true</code> if current change is within the target bounds; <code>false</code> otherwise 
+   */
+  public boolean isWithinBounds(int start, int end) {
+    return myStart >= start && myEnd <= end && myStart <= myEnd;
+  }
+  
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

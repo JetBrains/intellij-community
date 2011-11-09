@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,21 +52,21 @@ abstract class CharArray implements CharSequenceBackedByArray {
   private static final int MAX_DEFERRED_CHANGES_NUMBER = 10000;
 
   private final AtomicReference<TextChangesStorage> myDeferredChangesStorage = new AtomicReference<TextChangesStorage>();
-  
+
   private int myStart;
   /**
    * This class implements {@link #subSequence(int, int)} by creating object of the same class that partially shares the same
    * data as the object on which the method is called. So, this field may define interested end offset (if it's non-negative).
    */
-  private int myEnd = -1;
-  
+  private int myEnd   = -1;
   private int myCount = 0;
-  private CharSequence myOriginalSequence;
-  private char[] myArray = null;
-  private SoftReference<String> myStringRef = null; // buffers String value - for not to generate it every time
-  private int myBufferSize;
-  private int myDeferredShift;
-  private boolean myDeferredChangeMode;
+
+  private CharSequence          myOriginalSequence;
+  private char[]                myArray;
+  private SoftReference<String> myStringRef; // buffers String value - for not to generate it every time
+  private int                   myBufferSize;
+  private int                   myDeferredShift;
+  private boolean               myDeferredChangeMode;
 
   // We had a problems with bulk document text processing, hence, debug facilities were introduced. The fields group below work with them.
   // The main idea is to hold all history of bulk processing iteration in order to be able to retrieve it from client and reproduce the
@@ -117,7 +117,9 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myDebugDeferredProcessing = debugDeferredProcessing;
     if (myDebugDeferredProcessing) {
       
-      myDebugArray = new CharArray(bufferSize, new TextChangesStorage(), data == null ? null : Arrays.copyOf(data, data.length), start, end, false) {
+      myDebugArray = new CharArray(bufferSize, new TextChangesStorage(), data == null ? null : Arrays.copyOf(data, data.length),
+                                   start, end, false)
+      {
         @NotNull
         @Override
         protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
@@ -278,6 +280,13 @@ abstract class CharArray implements CharSequenceBackedByArray {
    * @param change      new change to store
    */
   private void storeChange(@NotNull TextChangeImpl change) {
+    if (!change.isWithinBounds(length())) {
+      LOG.error(String.format(
+        "Invalid change attempt detected - given change bounds are not within the current char array. Change: %d:%d-%d",
+        change.getText().length(), change.getStart(), change.getEnd()
+      ), dumpState());
+      return;
+    }
     TextChangesStorage storage = myDeferredChangesStorage.get();
     storage.getLock().lock();
     try {
@@ -382,7 +391,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   @Override
-  public CharSequence subSequence(int start, int end) {
+  public CharSequence subSequence(final int start, final int end) {
     if (start == 0 && end == length()) return this;
     if (myOriginalSequence != null) {
       return myOriginalSequence.subSequence(start, end);
@@ -401,6 +410,14 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
         @Override
         protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
+        }
+
+        @Override
+        public char[] getChars() {
+          char[] chars = CharArray.this.getChars();
+          char[] result = new char[end - start];
+          System.arraycopy(chars, start, result, 0, result.length);
+          return result;
         }
       };
     }
@@ -613,6 +630,14 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myDeferredShift = 0;
     storage.clear();
     myDeferredChangeMode = false;
+  }
+
+  @NotNull
+  public String dumpState() {
+    return String.format(
+      "deferred changes mode: %b, length: %d (data array length: %d, deferred shift: %d); view offsets: [%d; %d]; deferred changes: %s",
+      isDeferredChangeMode(), length(), myCount, myDeferredShift, myStart, myEnd, myDeferredChangesStorage
+    );
   }
   
   private void checkStrings(@NotNull String operation, @NotNull String expected, @NotNull String actual) {
