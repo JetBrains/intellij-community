@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.CollectionListModel;
@@ -11,6 +12,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.run.PyModuleRenderer;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -22,7 +24,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public abstract class ModuleAwareProjectConfigurable<T extends Configurable> implements Configurable {
+public abstract class ModuleAwareProjectConfigurable<T extends Configurable> implements SearchableConfigurable {
   private final Project myProject;
   private final String myDisplayName;
   private final String myHelpTopic;
@@ -116,5 +118,16 @@ public abstract class ModuleAwareProjectConfigurable<T extends Configurable> imp
       configurable.disposeUIResources();
     }
     myModuleConfigurables.clear();
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return getClass().getName();
+  }
+
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }
