@@ -24,6 +24,8 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -31,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
@@ -363,23 +367,50 @@ public class AndroidApkBuilder {
                                                           Set<VirtualFile> result,
                                                           @Nullable Project project) {
     visited.add(sourceFolder);
-    final CompilerManager compilerManager = project != null ? CompilerManager.getInstance(project) : null;
-
+    
     for (VirtualFile child : sourceFolder.getChildren()) {
       if (child.exists()) {
         if (child.isDirectory()) {
           if (!visited.contains(child) &&
-              JavaResourceFilter.checkFolderForPackaging(child.getName()) &&
-              (compilerManager == null || !compilerManager.isExcludedFromCompilation(child))) {
+              JavaResourceFilter.checkFolderForPackaging(child.getName()) && !isExcludedFromCompilation(child, project)) {
             collectStandardSourceFolderResources(child, visited, result, project);
           }
         }
-        else if (checkFileForPackaging(child) &&
-                 (compilerManager == null || !compilerManager.isExcludedFromCompilation(child))) {
+        else if (checkFileForPackaging(child) && !isExcludedFromCompilation(child, project)) {
           result.add(child);
         }
       }
     }
+  }
+
+  private static boolean isExcludedFromCompilation(VirtualFile child, @Nullable Project project) {
+    final CompilerManager compilerManager = project != null ? CompilerManager.getInstance(project) : null;
+    
+    if (compilerManager == null) {
+      return false;
+    }
+    
+    if (!compilerManager.isExcludedFromCompilation(child)) {
+      return false;
+    }
+
+    final Module module = ModuleUtil.findModuleForFile(child, project);
+    if (module == null) {
+      return true;
+    }
+
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
+      return true;
+    }
+
+    final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+    if (platform == null) {
+      return true;
+    }
+
+    // we exclude sources of library modules automatically for tools r7 or previous
+    return platform.getSdk().getPlatformToolsRevision() > 7;
   }
 
   private static void writeStandardSourceFolderResources(Collection<VirtualFile> resources,
