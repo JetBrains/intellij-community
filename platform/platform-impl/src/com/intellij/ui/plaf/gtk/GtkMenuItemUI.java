@@ -69,8 +69,7 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
   }
 
   private boolean isCheckBoxItem() {
-    return menuItem instanceof JCheckBoxMenuItem ||
-           menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).isToggleable();
+    return menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).isToggleable();
   }
 
   private static void resetCachedCheckIcon() {
