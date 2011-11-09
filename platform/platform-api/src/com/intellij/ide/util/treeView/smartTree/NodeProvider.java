@@ -19,7 +19,5 @@ package com.intellij.ide.util.treeView.smartTree;
  * @author Konstantin Bulenkov
  */
 public interface NodeProvider<T extends TreeElement> extends TreeAction {
-  NodeProvider[] EMPTY_ARRAY = {};
-
   T[] provideNodes(TreeElement node);
 }

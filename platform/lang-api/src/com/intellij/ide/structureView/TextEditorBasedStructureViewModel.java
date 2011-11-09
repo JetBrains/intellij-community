@@ -30,6 +30,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -168,8 +170,8 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @Override
-  public NodeProvider[] getNodeProviders() {
-    return NodeProvider.EMPTY_ARRAY;
+  public Collection<NodeProvider> getNodeProviders() {
+    return Collections.emptyList();
   }
 
   @Override
