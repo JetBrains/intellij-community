@@ -38,23 +38,26 @@ public class Mappings {
   private Maplet<DependencyContext.S, UsageRepr.Cluster> mySourceFileToUsages;
   private Maplet<DependencyContext.S, DependencyContext.S> myClassToSourceFile;
 
-  private static final TransientMultiMaplet.CollectionConstructor<ClassRepr> ourClassSetConstructor = new TransientMultiMaplet.CollectionConstructor<ClassRepr>() {
-    public Set<ClassRepr> create() {
-      return new HashSet<ClassRepr>();
-    }
-  };
+  private static final TransientMultiMaplet.CollectionConstructor<ClassRepr> ourClassSetConstructor =
+    new TransientMultiMaplet.CollectionConstructor<ClassRepr>() {
+      public Set<ClassRepr> create() {
+        return new HashSet<ClassRepr>();
+      }
+    };
 
-  private static final TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage> ourUsageSetConstructor = new TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage>() {
-    public Set<UsageRepr.Usage> create() {
-      return new HashSet<UsageRepr.Usage>();
-    }
-  };
+  private static final TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage> ourUsageSetConstructor =
+    new TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage>() {
+      public Set<UsageRepr.Usage> create() {
+        return new HashSet<UsageRepr.Usage>();
+      }
+    };
 
-  private static final TransientMultiMaplet.CollectionConstructor<DependencyContext.S> ourStringSetConstructor = new TransientMultiMaplet.CollectionConstructor<DependencyContext.S>() {
-    public Set<DependencyContext.S> create() {
-      return new HashSet<DependencyContext.S>();
-    }
-  };
+  private static final TransientMultiMaplet.CollectionConstructor<DependencyContext.S> ourStringSetConstructor =
+    new TransientMultiMaplet.CollectionConstructor<DependencyContext.S>() {
+      public Set<DependencyContext.S> create() {
+        return new HashSet<DependencyContext.S>();
+      }
+    };
 
   private Mappings(final DependencyContext context) {
     myRootDir = null;
@@ -76,48 +79,37 @@ public class Mappings {
   private void createPersistentImplementation(File rootDir) throws IOException {
     myContext = new DependencyContext(rootDir);
 
-    myClassToSubclasses = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
-      DependencyContext.getTableFile (rootDir, classToSubclassesName),
-      DependencyContext.descriptorS,
-      DependencyContext.descriptorS,
-      ourStringSetConstructor
-    );
+    myClassToSubclasses =
+      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, classToSubclassesName),
+                                                                          DependencyContext.descriptorS, DependencyContext.descriptorS,
+                                                                          ourStringSetConstructor);
 
-    myClassToClassDependency = new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(
-      DependencyContext.getTableFile (rootDir, classToClassName),
-      DependencyContext.descriptorS,
-      DependencyContext.descriptorS,
-      ourStringSetConstructor
-    );
+    myClassToClassDependency =
+      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, classToClassName),
+                                                                          DependencyContext.descriptorS, DependencyContext.descriptorS,
+                                                                          ourStringSetConstructor);
 
-    mySourceFileToClasses = new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(
-      DependencyContext.getTableFile (rootDir, sourceToClassName),
-      DependencyContext.descriptorS,
-      ClassRepr.externalizer(myContext),
-      ourClassSetConstructor
-    );
+    mySourceFileToClasses =
+      new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir, sourceToClassName),
+                                                                DependencyContext.descriptorS, ClassRepr.externalizer(myContext),
+                                                                ourClassSetConstructor);
 
-    mySourceFileToAnnotationUsages = new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(
-      DependencyContext.getTableFile(rootDir, sourceToAnnotationsName),
-      DependencyContext.descriptorS,
-      UsageRepr.externalizer(myContext),
-      ourUsageSetConstructor
-    );
+    mySourceFileToAnnotationUsages =
+      new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(DependencyContext.getTableFile(rootDir, sourceToAnnotationsName),
+                                                                      DependencyContext.descriptorS, UsageRepr.externalizer(myContext),
+                                                                      ourUsageSetConstructor);
 
-    mySourceFileToUsages = new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(
-      DependencyContext.getTableFile(rootDir, sourceToUsagesName),
-      DependencyContext.descriptorS,
-      UsageRepr.Cluster.clusterExternalizer(myContext)
-    );
+    mySourceFileToUsages =
+      new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(rootDir, sourceToUsagesName),
+                                                                   DependencyContext.descriptorS,
+                                                                   UsageRepr.Cluster.clusterExternalizer(myContext));
 
-    myClassToSourceFile = new PersistentMaplet<DependencyContext.S, DependencyContext.S>(
-      DependencyContext.getTableFile(rootDir, classToSourceName),
-      DependencyContext.descriptorS,
-      DependencyContext.descriptorS
-    );
+    myClassToSourceFile =
+      new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, classToSourceName),
+                                                                     DependencyContext.descriptorS, DependencyContext.descriptorS);
   }
 
-  public Mappings createDelta(){
+  public Mappings createDelta() {
     return new Mappings(myContext);
   }
 
@@ -595,8 +587,8 @@ public class Mappings {
             }
 
             if (!removedtargets.isEmpty()) {
-              annotationQuery
-                .add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, removedtargets));
+              annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
+                .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, removedtargets));
             }
 
             for (MethodRepr m : diff.methods().added()) {
@@ -667,8 +659,8 @@ public class Mappings {
             if (d.defaultRemoved()) {
               final List<DependencyContext.S> l = new LinkedList<DependencyContext.S>();
               l.add(m.name);
-              annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(
-                myContext, TypeRepr.createClassType(myContext, it.name), l, null));
+              annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
+                .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), l, null));
             }
           }
           else if (d.base() != Difference.NONE || throwsChanged) {
@@ -701,12 +693,17 @@ public class Mappings {
                   u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
 
-                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
+                if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
                   u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
 
                   for (UsageRepr.Usage usage : usages) {
-                    usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
+                    if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0) {
+                      usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
+                    }
+                    else {
+                      usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
+                    }
                   }
 
                   affectedUsages.addAll(usages);
@@ -739,9 +736,9 @@ public class Mappings {
                   else {
                     final DependencyContext.S outerClass = r.outerClassName;
 
-                      if (u.fieldVisible(outerClass, f)) {
-                        affectedFiles.add(new File(myContext.getValue(sourceFileName)));
-                      }
+                    if (u.fieldVisible(outerClass, f)) {
+                      affectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                    }
                   }
                 }
 
@@ -838,12 +835,17 @@ public class Mappings {
                   u.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), affectedUsages, dependants);
                 }
 
-                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && (d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
                   final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
                   u.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, dependants);
 
                   for (UsageRepr.Usage usage : usages) {
-                    usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
+                    if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0) {
+                      usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
+                    }
+                    else {
+                      usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
+                    }
                   }
 
                   affectedUsages.addAll(usages);
@@ -883,11 +885,11 @@ public class Mappings {
           }
         }
 
-        dependentFiles.removeAll(compiledFiles);
-
         filewise:
         for (DependencyContext.S depFile : dependentFiles) {
-          if (affectedFiles.contains(new File(myContext.getValue(depFile)))) {
+          final File theFile = new File(myContext.getValue(depFile));
+
+          if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
             continue filewise;
           }
 
@@ -904,18 +906,17 @@ public class Mappings {
                 final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                 if (constraint == null) {
-                  affectedFiles.add(new File(myContext.getValue(depFile)));
+                  affectedFiles.add(theFile);
                   continue filewise;
                 }
                 else {
                   final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
                   for (DependencyContext.S residentName : residenceClasses) {
                     if (constraint.checkResidence(residentName)) {
-                      affectedFiles.add(new File(myContext.getValue(depFile)));
+                      affectedFiles.add(theFile);
                       continue filewise;
                     }
                   }
-
                 }
               }
             }
@@ -926,7 +927,7 @@ public class Mappings {
               for (UsageRepr.Usage usage : annotationUsages) {
                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
                   if (query.satisfies(usage)) {
-                    affectedFiles.add(new File(myContext.getValue(depFile)));
+                    affectedFiles.add(theFile);
                     continue filewise;
                   }
                 }
@@ -1079,12 +1080,12 @@ public class Mappings {
     return (Set<ClassRepr>)mySourceFileToClasses.get(myContext.get(sourceFileName));
   }
 
-  public void close (){
+  public void close() {
     if (myRootDir != null) {
       // only close if you own the context
       myContext.close();
     }
-    myClassToSubclasses.close ();
+    myClassToSubclasses.close();
     myClassToClassDependency.close();
     mySourceFileToClasses.close();
     mySourceFileToAnnotationUsages.close();
