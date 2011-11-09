@@ -179,13 +179,16 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
       if (parent instanceof PyWithItem) {
         final PyWithItem item = (PyWithItem)parent;
-        final PyType exprType = item.getExpression().getType(context);
-        if (exprType instanceof PyClassType) {
-          final PyClass cls = ((PyClassType)exprType).getPyClass();
-          if (cls != null) {
-            final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
-            if (enter != null) {
-              return enter.getReturnType(context, null);
+        final PyExpression expression = item.getExpression();
+        if (expression != null) {
+          final PyType exprType = expression.getType(context);
+          if (exprType instanceof PyClassType) {
+            final PyClass cls = ((PyClassType)exprType).getPyClass();
+            if (cls != null) {
+              final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
+              if (enter != null) {
+                return enter.getReturnType(context, null);
+              }
             }
           }
         }
