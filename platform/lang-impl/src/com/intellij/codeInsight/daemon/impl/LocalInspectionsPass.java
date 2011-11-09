@@ -241,13 +241,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Set<String> langIds = new HashSet<String>();
     for (Language language : languages) {
       langIds.add(language.getID());
+    }
+    Set<String> dialects = new HashSet<String>();
+    for (Language language : languages) {
       for (Language dialect : language.getDialects()) {
-        langIds.add(dialect.getID());
+        dialects.add(dialect.getID());
       }
     }
     List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
     for (LocalInspectionToolWrapper wrapper : toolWrappers) {
-      if (wrapper.getLanguage() == null || langIds.contains(wrapper.getLanguage())) {
+      String language = wrapper.getLanguage();
+      if (language == null || langIds.contains(language) || wrapper.applyToDialects() && dialects.contains(language)) {
         LocalInspectionTool tool = wrapper.getTool();
         if (!checkDumbAwareness || tool instanceof DumbAware) {
           tools.add(tool);

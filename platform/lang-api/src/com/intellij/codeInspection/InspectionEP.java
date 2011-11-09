@@ -74,6 +74,9 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Attribute("enabledByDefault")
   public boolean enabledByDefault = false;
 
+  @Attribute("applyToDialects")
+  public boolean applyToDialects = true;
+
   @Attribute("level")
   public String level;
 
