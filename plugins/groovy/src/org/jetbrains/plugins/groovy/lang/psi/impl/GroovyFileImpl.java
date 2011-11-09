@@ -453,7 +453,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (currentPackage != null) {
       final GrCodeReferenceElement packageReference = currentPackage.getPackageReference();
       if (packageReference != null) {
-        packageReference.replace(newPackage.getPackageReference());
+        GrCodeReferenceElement ref = newPackage.getPackageReference();
+        if (ref != null) {
+          packageReference.replace(ref);
+        }
         return;
       }
     }
