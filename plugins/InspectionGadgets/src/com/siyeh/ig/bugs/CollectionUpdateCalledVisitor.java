@@ -16,11 +16,11 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Set;
 
 class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
 
@@ -29,8 +29,7 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
   private boolean updated = false;
   private final PsiVariable variable;
 
-  CollectionUpdateCalledVisitor(PsiVariable variable,
-                                Set<String> updateNames) {
+  CollectionUpdateCalledVisitor(@Nullable PsiVariable variable, Set<String> updateNames) {
     this.variable = variable;
     this.updateNames = updateNames;
   }
@@ -68,28 +67,15 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
         return;
       }
     }
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
-    if (qualifier == null || qualifier instanceof PsiThisExpression) {
-      final PsiMethod method = call.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (CollectionUtils.isCollectionClassOrInterface(aClass)) {
-        updated = true;
-      }
-    }
-    else {
-      checkQualifier(qualifier);
-    }
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    checkQualifier(qualifier);
   }
 
   private void checkQualifier(PsiExpression expression) {
     if (updated) {
       return;
     }
-    if (expression instanceof PsiReferenceExpression) {
+    if (variable != null && expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression =
         (PsiReferenceExpression)expression;
       final PsiElement referent = referenceExpression.resolve();
@@ -114,6 +100,11 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
       final PsiExpression elseExpression =
         conditionalExpression.getElseExpression();
       checkQualifier(elseExpression);
+    }
+    else if (variable == null) {
+      if (expression == null || expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
+        updated = true;
+      }
     }
   }
 
