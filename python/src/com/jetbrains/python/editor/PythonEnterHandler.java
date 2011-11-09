@@ -87,6 +87,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (string != null && string.getTextOffset() < offset) {
       String stringText = element.getText();
       int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      if (string.getTextOffset()+prefixLength >=offset)
+        return Result.Continue;
       String quote = element.getText().substring(prefixLength, prefixLength + 1);
       doc.insertString(offset, quote+" \\"+quote);
       caretOffset.set(offset+3);

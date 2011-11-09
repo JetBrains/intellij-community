@@ -192,6 +192,12 @@ public class PyEditingTest extends PyTestCase {
                 "ngo.http");
   }
 
+  public void testEnterAfterStringPrefix() {
+    doTestEnter("r<caret>\"string\"",
+                "r\n"+
+                "\"string\"");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
