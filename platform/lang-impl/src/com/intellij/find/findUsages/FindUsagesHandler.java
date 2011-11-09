@@ -15,6 +15,7 @@
  */
 package com.intellij.find.findUsages;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -78,7 +79,7 @@ public abstract class FindUsagesHandler {
   }
 
   public static FindUsagesOptions createFindUsagesOptions(final Project project) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, null);
+    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, DataManager.getInstance().getDataContext());
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isSearchForTextOccurrences = true;
     return findUsagesOptions;
