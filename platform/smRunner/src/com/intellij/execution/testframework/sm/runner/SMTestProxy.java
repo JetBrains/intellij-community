@@ -418,6 +418,14 @@ public class SMTestProxy extends AbstractTestProxy {
     });
   }
 
+  /**
+   * This method was left for backward compatibility.
+   *
+   * @param output
+   * @param stackTrace
+   * @deprecated use SMTestProxy.addError(String output, String stackTrace, boolean isCritical)
+   */
+  @Deprecated
   public void addError(final String output,
                        @Nullable final String stackTrace) {
     addError(output, stackTrace, true);
