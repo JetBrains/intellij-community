@@ -358,7 +358,11 @@ public final class GitPusher {
 
   private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
     GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE;
-    return new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(um);
+    boolean updateResult = new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(um);
+    for (VirtualFile virtualFile : rootsToUpdate) {
+      virtualFile.refresh(true, true);
+    }
+    return updateResult;
   }
 
 }
