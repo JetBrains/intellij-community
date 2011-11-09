@@ -2478,7 +2478,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPaintSelection = paintSelection;
   }
 
-  public CharSequence dumpState() {
+  public String dumpState() {
     return "use soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off") +  ", soft wraps data: " + getSoftWrapModel()
            + "\n\nfolding data: " + getFoldingModel() + "\n\ndocument info: " + myDocument.dumpState();
   }
