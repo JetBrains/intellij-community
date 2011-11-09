@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
+import com.jetbrains.python.facet.FacetLibraryConfigurator;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -45,6 +46,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
   @NonNls public static final String SCRIPT_SUFFIX = "-script";
+  private static final String BUILDOUT_LIB_NAME = "Buildout Eggs";
 
   public BuildoutFacet(@NotNull final FacetType facetType,
                        @NotNull final Module module,
@@ -57,7 +59,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       public void contentsChanged(VirtualFileEvent event) {
         if (event.getFile() == getScript()) {
           updatePaths();
-          BuildoutConfigurable.attachLibrary(module);
+          attachLibrary(module);
         }
       }
     }, this);
@@ -117,12 +119,12 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   @Override
   public void updateLibrary() {
     updatePaths();
-    BuildoutConfigurable.attachLibrary(getModule());
+    attachLibrary(getModule());
   }
 
   @Override
   public void removeLibrary() {
-    BuildoutConfigurable.detachLibrary(getModule());
+    detachLibrary(getModule());
   }
 
   public void updatePaths() {
@@ -329,5 +331,18 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     return null;
+  }
+
+  public static void attachLibrary(final Module module) {
+    final BuildoutFacet facet = getInstance(module);
+    if (facet == null) {
+      return;
+    }
+    final List<String> paths = facet.getConfiguration().getPaths();
+    FacetLibraryConfigurator.attachLibrary(module, null, BUILDOUT_LIB_NAME, paths);
+  }
+
+  public static void detachLibrary(final Module module) {
+    FacetLibraryConfigurator.detachLibrary(module, BUILDOUT_LIB_NAME);
   }
 }
