@@ -2127,6 +2127,8 @@ def cut_binary_lib_suffix(path, f):
     @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
     Note: if for .pyc or .pyo file a .py is found, None is returned.
     """
+    if not f.endswith(".pyc") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(".pyd"):
+        return None
     ret = None
     m = BIN_MODULE_FNAME_PAT.match(f)
     if m:
@@ -2165,6 +2167,12 @@ def is_skipped_module(path, f):
     return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')])
 
 
+def is_module(d, root):
+    return (os.path.exists(os.path.join(root, d, "__init__.py")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyc")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyo")))
+
+
 def find_binaries(paths):
     """
     Finds binaries in the given list of paths.
@@ -2183,6 +2191,11 @@ def find_binaries(paths):
     for path in paths:
         for root, dirs, files in os.walk(path):
             if root.endswith('__pycache__'): continue
+            dirs_copy = list(dirs)
+            for d in dirs_copy:
+                if d.endswith("__pycache__") or not is_module(d, root):
+                    dirs.remove(d)
+
             cutpoint = path.rfind(SEP)
             if cutpoint > 0:
                 preprefix = path[(cutpoint + len(SEP)):] + '.'

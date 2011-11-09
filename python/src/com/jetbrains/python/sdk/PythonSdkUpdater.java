@@ -68,11 +68,9 @@ public class PythonSdkUpdater implements StartupActivity {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
                   for (Sdk sdk : sdksToUpdate) {
-                    long start_time = System.currentTimeMillis();
                     PythonSdkType.refreshSkeletonsOfSDK(sdk); // NOTE: whole thing would need a rename
-                    LOG.info("Refreshing skeletons took " + (System.currentTimeMillis() - start_time) + " ms");
 
-                    start_time = System.currentTimeMillis();
+                    long start_time = System.currentTimeMillis();
                     updateSdkPath(sdk, PythonSdkType.getSysPath(sdk.getHomePath()));
                     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - start_time) + " ms");
 
