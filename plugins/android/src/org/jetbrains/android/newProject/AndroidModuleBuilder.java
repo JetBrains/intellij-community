@@ -167,6 +167,23 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private boolean createProjectByAndroidTool(final VirtualFile contentRoot,
                                              final VirtualFile sourceRoot,
                                              final AndroidFacet facet) {
+
+
+    File tempContentRoot = null;
+
+    // todo: support custom non-empty source root
+
+    if (sourceRoot != null &&
+        sourceRoot.getChildren().length == 0 &&
+        (sourceRoot.getParent() != contentRoot || !SdkConstants.FD_SOURCES.equals(sourceRoot.getName()))) {
+      try {
+        tempContentRoot = FileUtil.createTempDirectory("android_temp_content_root", "tmp");
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
     final Module module = facet.getModule();
     AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
@@ -205,7 +222,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     commandLine.addParameter(getAntProjectName(module.getName()));
 
     commandLine.addParameters("--path");
-    commandLine.addParameter(FileUtil.toSystemDependentName(contentRoot.getPath()));
+    final String targetDirectoryPath = tempContentRoot != null ? tempContentRoot.getPath() : contentRoot.getPath();
+    commandLine.addParameter(FileUtil.toSystemDependentName(targetDirectoryPath));
 
     if (myProjectType == ProjectType.APPLICATION || myProjectType == ProjectType.LIBRARY) {
       String apiLevel = target.hashString();
@@ -226,11 +244,36 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       commandLine.addParameter(FileUtil.toSystemDependentName(moduleDirPath));
     }
 
+    final File finalTempContentRoot = tempContentRoot;
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         final Project project = module.getProject();
         AndroidUtils.runExternalTool(project, commandLine, true, null);
+
+        if (finalTempContentRoot != null) {
+          for (File child : finalTempContentRoot.listFiles()) {
+
+            if (SdkConstants.FD_SOURCES.equals(child.getName())) {
+              continue;
+            }
+            final File to = new File(contentRoot.getPath(), child.getName());
+
+            if (!FileUtil.moveDirWithContent(child, to)) {
+              LOG.error("Cannot move content from " + child.getPath() + " to " + to.getPath());
+            }
+          }
+
+          final File tempSourceRoot = new File(finalTempContentRoot, SdkConstants.FD_SOURCES);
+          if (tempSourceRoot.exists()) {
+            final File to = new File(sourceRoot.getPath());
+
+            if (!FileUtil.moveDirWithContent(tempSourceRoot, to)) {
+              LOG.error("Cannot move content from " + tempSourceRoot.getPath() + " to " + to.getPath());
+            }
+          }
+        }
 
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
           public void run() {
@@ -259,10 +302,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                     assignApplicationName(facet);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
-                  }
-                  VirtualFile srcDir = contentRoot.findChild(SdkConstants.FD_SOURCES);
-                  if (srcDir != sourceRoot && sourceRoot != null && srcDir != null) {
-                    moveContentAndRemoveDir(project, srcDir, sourceRoot);
                   }
                 }
                 catch (IOException e) {
