@@ -224,7 +224,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   }
 
   public boolean canZoomOut() {
-    return myZoomFactor > getMinZoomFactor() + EPS;
+    return myImage != null && myZoomFactor > getMinZoomFactor() + EPS;
   }
 
   private double getMinZoomFactor() {
