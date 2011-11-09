@@ -107,22 +107,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   /**
-   * @return true if drop down in checkout dialog includes tags
-   */
-  public boolean isCheckoutIncludesTags() {
-    return myCheckoutIncludesTags;
-  }
-
-  /**
-   * Record whether checkout dialog option included tags last time
-   *
-   * @param value the value to record
-   */
-  public void setCheckoutIncludesTags(boolean value) {
-    myCheckoutIncludesTags = value;
-  }
-
-  /**
    * @return get (a possibly converted value) of update stash policy
    */
   @NotNull

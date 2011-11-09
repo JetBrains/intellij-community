@@ -32,30 +32,26 @@ import java.awt.event.ActionListener;
  * Git VCS configuration panel
  */
 public class GitVcsPanel {
-  private JButton myTestButton; // Test git executable
-  private JComponent myRootPanel;
-  private TextFieldWithBrowseButton myGitField;
-  private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
-  private JComboBox myConvertTextFilesComboBox; // The conversion policy
-  private final Project myProject;
-  private final GitVcsApplicationSettings myAppSettings;
-  private final GitVcsSettings myProjectSettings;
+
   private static final String IDEA_SSH = ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
   private static final String CRLF_CONVERT_TO_PROJECT = GitBundle.getString("git.vcs.config.convert.project");
   private static final String CRLF_DO_NOT_CONVERT = GitBundle.getString("git.vcs.config.convert.do.not.convert");
   private static final String CRLF_ASK = GitBundle.getString("git.vcs.config.convert.ask");
-  private GitVcs myVcs;
 
-  /**
-   * The constructor
-   *
-   * @param project the context project
-   */
+  private final Project myProject;
+  private final GitVcsApplicationSettings myAppSettings;
+  private final GitVcs myVcs;
+
+  private JButton myTestButton; // Test git executable
+  private JComponent myRootPanel;
+  private TextFieldWithBrowseButton myGitField;
+  private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
+  private JComboBox myConvertTextFilesComboBox; // The conversion policy
+
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
     myAppSettings = GitVcsApplicationSettings.getInstance();
-    myProjectSettings = GitVcsSettings.getInstance(project);
     myProject = project;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
