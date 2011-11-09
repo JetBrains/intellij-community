@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,6 +27,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -216,5 +218,12 @@ public class ShowFilePathAction extends AnAction {
   @Nullable
   private static VirtualFile getFile(final AnActionEvent e) {
     return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+  }
+
+  public static void showDialog(Project project, String message, String title, File file) {
+    if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
+                                    IdeBundle.message("action.close"), Messages.getInformationIcon()) == 0) {
+      open(file, file);
+    }
   }
 }
