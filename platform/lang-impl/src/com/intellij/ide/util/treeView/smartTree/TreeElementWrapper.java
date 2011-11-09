@@ -46,8 +46,9 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
       final Collection<NodeProvider> providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
       for (NodeProvider provider : providers) {
         if (((ProvidingTreeModel)myTreeModel).isEnabled(provider)) {
-          for (TreeElement child : provider.provideNodes(getValue())) {
-            addSubElement(createChildNode(child));
+          final Collection<TreeElement> nodes = provider.provideNodes(getValue());
+          for (TreeElement node : nodes) {
+            addSubElement(createChildNode(node));
           }
         }
       }
