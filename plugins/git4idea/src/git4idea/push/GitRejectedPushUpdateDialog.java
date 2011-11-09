@@ -21,7 +21,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -55,28 +54,27 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   private final MergeAction myMergeAction;
   private final JCheckBox myAutoUpdateInFuture;
 
-  protected GitRejectedPushUpdateDialog(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
+  protected GitRejectedPushUpdateDialog(@NotNull Project project,
+                                        @NotNull Collection<GitRepository> repositories,
+                                        GitPusher.UpdateSettings initialSettings) {
     super(project);
     myProject = project;
     myRepositories = repositories;
 
-    myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", true);
+    myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", initialSettings.shouldUpdateAllRoots());
     myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method choice and silently update in future <br/>(you may change this in the Settings)</html>");
 
     myMergeAction = new MergeAction(this);
     myRebaseAction = new RebaseAction(this);
-    getDefaultAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+    getDefaultAction(initialSettings.getUpdateMethod()).putValue(DEFAULT_ACTION, Boolean.TRUE);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     
     init();
     setTitle("Push Rejected");
   }
 
-  private AbstractAction getDefaultAction() {
-    GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
-    if (settings == null) {
-      return myMergeAction;
-    } else if (settings.getUpdateType() == UpdateMethod.REBASE) {
+  private AbstractAction getDefaultAction(@NotNull UpdateMethod updateMethod) {
+    if (updateMethod == UpdateMethod.REBASE) {
       return myRebaseAction;
     }
     return myMergeAction;

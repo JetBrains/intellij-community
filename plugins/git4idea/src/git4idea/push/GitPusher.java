@@ -58,7 +58,7 @@ public final class GitPusher {
   private final GitPushSettings myPushSettings;
 
   // holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
-  private static class UpdateSettings {
+  static class UpdateSettings {
     private final boolean myUpdateAllRoots;
     private final UpdateMethod myUpdateMethod;
 
@@ -272,12 +272,12 @@ public final class GitPusher {
         if (updateSettings == null) {
           // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
           // and don't show the dialog again if user has chosen not to ask again
+          updateSettings = readUpdateSettings();
           if (!mySettings.autoUpdateIfPushRejected()) {
-            final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet());
+            final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet(), updateSettings);
             final int exitCode = showDialogAndGetExitCode(dialog);
             updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode));
-          } else {
-            updateSettings = readUpdateSettings();
+            saveUpdateSettings(updateSettings);
           }
         } 
 
@@ -300,6 +300,12 @@ public final class GitPusher {
     }
   }
 
+  private void saveUpdateSettings(@NotNull UpdateSettings updateSettings) {
+    myPushSettings.setUpdateAllRoots(updateSettings.shouldUpdateAllRoots());
+    myPushSettings.setUpdateMethod(updateSettings.getUpdateMethod());
+  }
+
+  @NotNull
   private UpdateSettings readUpdateSettings() {
     boolean updateAllRoots = myPushSettings.shouldUpdateAllRoots();
     UpdateMethod updateMethod = myPushSettings.getUpdateMethod();

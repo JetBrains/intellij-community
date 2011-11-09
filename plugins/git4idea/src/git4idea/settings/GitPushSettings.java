@@ -53,8 +53,16 @@ public class GitPushSettings implements PersistentStateComponent<GitPushSettings
     return myState.myUpdateAllRoots;
   }
   
+  public void setUpdateAllRoots(boolean updateAllRoots) {
+    myState.myUpdateAllRoots = updateAllRoots;
+  }
+
   public UpdateMethod getUpdateMethod() {
     return myState.myUpdateMethod;
+  }
+
+  public void setUpdateMethod(UpdateMethod updateMethod) {
+    myState.myUpdateMethod = updateMethod;
   }
 
 }
