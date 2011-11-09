@@ -40,13 +40,13 @@ import java.util.Collection;
 
 public class UiUtils {
 
-  private UiUtils() {
-  }
+  private UiUtils() {}
 
-  public static void setScrollPaneSize(JScrollPane scrollPane,
-                                       int rows, int columns) {
+  public static void setScrollPaneSize(JScrollPane scrollPane, int rows, int columns) {
     final Component view = scrollPane.getViewport().getView();
-    setComponentSize(view, rows, columns);
+    final FontMetrics fontMetrics = view.getFontMetrics(view.getFont());
+    final int width = fontMetrics.charWidth('m') * columns;
+    scrollPane.setPreferredSize(new Dimension(width, fontMetrics.getHeight() * rows));
   }
 
   public static void setComponentSize(Component component, int rows, int columns) {
