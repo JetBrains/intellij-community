@@ -341,7 +341,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     if (!myUpdating.get()) return;
     if (element.isContainer()) {
       text.set(prepareText(element.getPath()));
-      for (DiffElement child : element.getChildren()) {
+      final DiffElement[] children = element.getChildren();
+      for (DiffElement child : children) {
+        Disposer.register(element, child);
+      }
+      for (DiffElement child : children) {
         if (!myUpdating.get()) return;
         scan(child, root.addChild(child, source), source);
       }
