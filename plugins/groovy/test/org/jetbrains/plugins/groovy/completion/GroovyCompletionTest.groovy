@@ -747,6 +747,7 @@ format(<caret>)"""
     myFixture.addClass "package foo; public class AbcdClass {}; public class AbcdException extends Throwable {}"
     myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
     myFixture.completeBasic()
+    myFixture.type('\n')
     myFixture.checkResult """import foo.AbcdException
 
 try {} catch (AbcdException"""
@@ -841,7 +842,7 @@ return foo()"""
 
   public void testNamedArgsUsedInFile() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    doVariantableTest 'foo2', 'false', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
+    doVariantableTest 'false', 'foo2', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
   }
 
   public void testSuggestMembersOfExpectedType() {
@@ -851,7 +852,14 @@ return foo()"""
 
   public void testFieldTypeAfterModifier() {
     myFixture.addClass("package bar; public class Fooooooooooo { }")
-    doBasicTest();
+    checkCompletion '''
+class A {
+  private Foooo<caret>
+}''', '\n', '''import bar.Fooooooooooo
+
+class A {
+  private Fooooooooooo<caret>
+}'''
   }
 
   public void testSuperClassProperty() throws Exception {

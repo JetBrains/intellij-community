@@ -458,12 +458,15 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
         if (myEditor instanceof EditorImpl) {
           editorState = ((EditorImpl)myEditor).dumpState();
         }
-        LOG.error(String.format(
-          "Detected invalid soft wraps recalculation. Event: %s, normal: %b.%n%nTail cache entries: %s%n%n"
-          + "Affected by change cache entries: %s%n%nBefore change state: %s%n%nAfter change state: %s%n%nEditor state: %s",
-          event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
-          myBeforeChangeState, myAfterChangeState, editorState
-        ));
+        LOG.error(
+          "Detected invalid soft wraps cache update",
+          String.format(
+            "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
+            + "After change state: %s%n%nEditor state: %s",
+            event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries, 
+            myBeforeChangeState, myAfterChangeState, editorState
+          )
+        );
       }
     }
     

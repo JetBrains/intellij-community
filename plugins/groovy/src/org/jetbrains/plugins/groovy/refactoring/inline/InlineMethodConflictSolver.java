@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 public class InlineMethodConflictSolver {
   private InlineMethodConflictSolver() {}
 
-  public static String suggestNewName(@NotNull String startName, GrMethod method, PsiElement call, String... otherNames) {
+  public static String suggestNewName(@NotNull String startName, @Nullable GrMethod method, PsiElement call, String... otherNames) {
     String newName;
     int i = 1;
     PsiElement parent = call.getParent();

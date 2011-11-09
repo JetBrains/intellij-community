@@ -77,7 +77,9 @@ import org.jetbrains.android.dom.manifest.IntentFilter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
-import org.jetbrains.android.run.*;
+import org.jetbrains.android.run.AndroidRunConfiguration;
+import org.jetbrains.android.run.AndroidRunConfigurationType;
+import org.jetbrains.android.run.TargetSelectionMode;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
@@ -449,7 +451,7 @@ public class AndroidUtils {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
 
-    if (timeout != null && timeout != 0) {
+    if (timeout == null || timeout > 0) {
       handler.addProcessListener(new ProcessAdapter() {
         public void onTextAvailable(final ProcessEvent event, final Key outputType) {
           messageBuilder.append(event.getText());
@@ -476,7 +478,7 @@ public class AndroidUtils {
       return ExecutionStatus.TIMEOUT;
     }
 
-    if (timeout != null && timeout != 0) {
+    if (timeout == null || timeout > 0) {
       String message = messageBuilder.toString();
       LOG.info(message);
     }
@@ -522,7 +524,7 @@ public class AndroidUtils {
                                                    ConsoleViewContentType.ERROR_OUTPUT;
         final String finalResult = result;
         assert project != null;
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             printMessageToConsole(project, finalResult, contentType);
@@ -649,21 +651,28 @@ public class AndroidUtils {
     }
   }
 
-  public static void printMessageToConsole(@NotNull Project project, @NotNull String s, @NotNull ConsoleViewContentType contentType) {
-    activateConsoleToolWindow(project);
-    final ConsoleView consoleView = project.getUserData(CONSOLE_VIEW_KEY);
+  public static void printMessageToConsole(@NotNull final Project project,
+                                           @NotNull final String s,
+                                           @NotNull final ConsoleViewContentType contentType) {
+    activateConsoleToolWindow(project, new Runnable() {
+      @Override
+      public void run() {
+        final ConsoleView consoleView = project.getUserData(CONSOLE_VIEW_KEY);
 
-    if (consoleView != null) {
-      consoleView .print(s + '\n', contentType);
-    }
+        if (consoleView != null) {
+          consoleView.print(s + '\n', contentType);
+        }
+      }
+    });
   }
 
-  private static void activateConsoleToolWindow(@NotNull Project project) {
+  private static void activateConsoleToolWindow(@NotNull Project project, @NotNull final Runnable runAfterActivation) {
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
     final String toolWindowId = AndroidBundle.message("android.console.tool.window.title");
 
     ToolWindow toolWindow = manager.getToolWindow(toolWindowId);
     if (toolWindow != null) {
+      runAfterActivation.run();
       return;
     }
 
@@ -681,8 +690,14 @@ public class AndroidUtils {
       public void stateChanged() {
         ToolWindow window = manager.getToolWindow(toolWindowId);
         if (window != null && !window.isVisible()) {
-          manager.unregisterToolWindow(toolWindowId);
           ((ToolWindowManagerEx)manager).removeToolWindowManagerListener(this);
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              manager.unregisterToolWindow(toolWindowId);
+            }
+          });
         }
       }
     };
@@ -690,6 +705,7 @@ public class AndroidUtils {
     toolWindow.show(new Runnable() {
       @Override
       public void run() {
+        runAfterActivation.run();
         ((ToolWindowManagerEx)manager).addToolWindowManagerListener(listener);
       }
     });

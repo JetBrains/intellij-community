@@ -518,9 +518,10 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (module != null) {
           final Sdk prevSdk = myModule2Sdk.get(module);
           final Sdk newSdk = ModuleRootManager.getInstance(module).getSdk();
-          if (newSdk != null &&
-              (newSdk.getSdkType() instanceof AndroidSdkType || prevSdk.getSdkType() instanceof AndroidSdkType) &&
-              !newSdk.equals(prevSdk)) {
+          if (newSdk != null
+              && (newSdk.getSdkType() instanceof AndroidSdkType ||
+                  (prevSdk != null && prevSdk.getSdkType() instanceof AndroidSdkType))
+              && !newSdk.equals(prevSdk)) {
 
             final AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData)newSdk.getSdkAdditionalData();
             final AndroidPlatform newPlatform = additionalData != null ? additionalData.getAndroidPlatform() : null;

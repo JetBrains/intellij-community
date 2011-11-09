@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -185,14 +186,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters, CompletionResultSet result, final Consumer<LookupElement> consumer, final InheritorsHolder inheritors) {
     final PsiElement position = parameters.getPosition();
     final ElementFilter filter = getClassFilter(position);
-    AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
-      @Override
-      public void consume(PsiClass psiClass) {
-        if (!inheritors.alreadyProcessed(psiClass) && filter.isAcceptable(psiClass, position)) {
-          consumer.consume(GroovyCompletionUtil.createClassLookupItem(psiClass));
-        }
-      }
-    });
+    AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1,
+                                        new Consumer<PsiClass>() {
+                                          @Override
+                                          public void consume(PsiClass psiClass) {
+                                            if (!inheritors.alreadyProcessed(psiClass) && filter.isAcceptable(psiClass, position)) {
+                                              consumer.consume(GroovyCompletionUtil.createClassLookupItem(psiClass));
+                                            }
+                                          }
+                                        });
   }
 
   private static ElementFilter getClassFilter(PsiElement position) {
@@ -308,31 +310,31 @@ public class GroovyCompletionContributor extends CompletionContributor {
         addUnfinishedMethodTypeParameters(position, result);
 
         final PsiElement parent = position.getParent();
+        GrReferenceElement reference;
         if (parent instanceof GrReferenceElement) {
-          GrReferenceElement reference = (GrReferenceElement)parent;
-          if (parent.getParent() instanceof GrImportStatement && reference.getQualifier() != null) {
+          reference = (GrReferenceElement)parent;
+          if (reference.getParent() instanceof GrImportStatement && reference.getQualifier() != null) {
             result.addElement(LookupElementBuilder.create("*"));
           }
+        } else if (couldContainReference(position)) {
+          reference = GroovyPsiElementFactory.getInstance(position.getProject()).createReferenceElementFromText("Foo", position);
+        } else {
+          return;
+        }
 
-          InheritorsHolder inheritors = new InheritorsHolder(position, result);
-          completeReference(parameters, result, reference, inheritors);
+        InheritorsHolder inheritors = new InheritorsHolder(position, result);
+        completeReference(parameters, result, reference, inheritors);
 
-          if (reference.getQualifier() == null) {
-            GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
+        if (reference.getQualifier() == null) {
+          GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-            if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
-              if (JavaCompletionContributor.mayShowAllClasses(parameters)) {
-                addAllClasses(parameters, result, inheritors);
-              } else {
-                JavaCompletionContributor.advertiseSecondCompletion(position.getProject());
-              }
+          if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
+            if (JavaCompletionContributor.mayShowAllClasses(parameters)) {
+              addAllClasses(parameters, result, inheritors);
+            } else {
+              JavaCompletionContributor.advertiseSecondCompletion(position.getProject());
             }
           }
-
-        } else if (IN_CATCH_TYPE.accepts(position) ||
-                   AFTER_AT.accepts(position) ||
-                   GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(position, true)) {
-          addAllClasses(parameters, result, new InheritorsHolder(position, result));
         }
       }
     });
@@ -358,10 +360,22 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   }
 
+  private static boolean couldContainReference(PsiElement position) {
+    return IN_CATCH_TYPE.accepts(position) ||
+               AFTER_AT.accepts(position) ||
+               GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(position, true);
+  }
+
   public static boolean isClassNamePossible(PsiElement position) {
+    if (PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
+      return false;
+    }
+
     PsiElement parent = position.getParent();
-    return parent instanceof GrReferenceElement && ((GrReferenceElement)parent).getQualifier() == null &&
-           !PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position);
+    if (parent instanceof GrReferenceElement) {
+      return ((GrReferenceElement)parent).getQualifier() == null;
+    }
+    return couldContainReference(position);
   }
 
   private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
@@ -426,8 +440,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
           return;
         }
 
+        if (element instanceof LookupElement && ((LookupElement)element).getObject() instanceof PsiClass) {
+          element = ((LookupElement)element).getObject();
+        }
+
         final LookupElement lookupElement = element instanceof PsiClass
-                                            ? GroovyCompletionUtil.createClassLookupItem((PsiClass)element)
+                                            ? GroovyCompletionUtil.createClassLookupItem(CompletionUtil.getOriginalOrSelf((PsiClass)element))
                                             : GroovyCompletionUtil.getLookupElement(element);
         Object object = lookupElement.getObject();
         PsiSubstitutor substitutor = null;
