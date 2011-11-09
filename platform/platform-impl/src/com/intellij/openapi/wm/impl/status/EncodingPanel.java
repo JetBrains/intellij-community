@@ -189,40 +189,40 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   private void update() {
-    final VirtualFile file = getSelectedFile();
-    Pair<String, Boolean> result = ChooseFileEncodingAction.update(file);
-    String text;
-    String toolTip;
-    if (file != null) {
-      Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
-      if (charset == null) charset = file.getCharset();
-
-      text = charset.displayName();
-      actionEnabled = result.second;
-      toolTip = result.first;
-    }
-    else {
-      text = "";
-      actionEnabled = false;
-      toolTip = "";
-    }
-    myComponent.setToolTipText(toolTip);
-    myComponent.setText(text);
-
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        final VirtualFile file = getSelectedFile();
+        Pair<String, Boolean> result = ChooseFileEncodingAction.update(file);
+        String text;
+        String toolTip;
+        if (file != null) {
+          Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
+          if (charset == null) charset = file.getCharset();
+
+          text = charset.displayName();
+          actionEnabled = result.second;
+          toolTip = result.first;
+        }
+        else {
+          text = "";
+          actionEnabled = false;
+          toolTip = "";
+        }
+        myComponent.setToolTipText(toolTip);
+        myComponent.setText(text);
+
         if (actionEnabled) {
           myComponent.setForeground(UIUtil.getActiveTextColor());
         }
         else {
           myComponent.setForeground(UIUtil.getInactiveTextColor());
         }
+
+        myStatusBar.updateWidget(ID());
       }
     });
-
-
-    myStatusBar.updateWidget(ID());
+    
   }
 
   @Override
