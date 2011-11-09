@@ -36,6 +36,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.FileWatcher;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +92,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   public boolean isContainer() {
     return myFile.isDirectory();
   }
+
   @Override
   public VirtualFileDiffElement[] getChildren() {
     final VirtualFile[] files = myFile.getChildren();
@@ -247,6 +250,9 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
           }
         }, ModalityState.defaultModalityState());
       }
+    }
+    if (!FileWatcher.getInstance().isWatched(myFile)) {
+      ((NewVirtualFile)myFile).markDirtyRecursively();
     }
     myFile.refresh(false, true);
   }
