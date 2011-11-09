@@ -64,7 +64,7 @@ public class FList<E> extends AbstractList<E> {
 
     FList<E> current = this;
     while (!current.isEmpty()) {
-      if (current.myHead.equals(elem)) {
+      if (elem == null ? current.myHead == null : current.myHead.equals(elem)) {
         FList<E> result = current.myTail;
         while (!front.isEmpty()) {
           result = result.prepend(front.myHead);
