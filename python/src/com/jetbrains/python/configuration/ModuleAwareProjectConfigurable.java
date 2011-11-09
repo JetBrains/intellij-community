@@ -80,7 +80,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends Configurable> imp
         layout.show(cardPanel, value.getName());
       }
     });
-    layout.show(cardPanel, modules [0].getName());
+    if (modules.length > 0) {
+      layout.show(cardPanel, modules [0].getName());
+    }
     return splitter;
   }
 
