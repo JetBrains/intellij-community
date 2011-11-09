@@ -383,6 +383,7 @@
     <annotator language="Cython" implementationClass="com.jetbrains.cython.CythonBuiltinAnnotator"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.cython.CythonKeywordCompletionContributor"/>
     <lang.psiStructureViewFactory language="Cython" implementationClass="com.jetbrains.cython.structureView.CythonStructureViewFactory"/>
+    <lang.formatter language="Cython" implementationClass="com.jetbrains.cython.CythonFormattingModelBuilder"/>
 
     <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
     <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
