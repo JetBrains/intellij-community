@@ -110,6 +110,38 @@ public class CharArrayTest {
     checkText("1aXABC");
     assertFalse(myArray.hasDeferredChanges());
   }
+
+  @Config(text = "01234567", deferred = true)
+  @Test
+  public void subSequenceWithDeferredChangeBeforeIt() {
+    replace(0, 2, "abc");
+    CharArray subsSequence = (CharArray)myArray.subSequence(5, 6);
+    assertArrayEquals("4".toCharArray(), subsSequence.getChars());
+  }
+
+  @Config(text = "01234567", deferred = true)
+  @Test
+  public void subSequenceWithDeferredChangeIntersectingFromLeft() {
+    replace(0, 2, "abc");
+    CharArray subsSequence = (CharArray)myArray.subSequence(2, 4);
+    assertArrayEquals("c2".toCharArray(), subsSequence.getChars());
+  }
+
+  @Config(text = "01234567", deferred = true)
+  @Test
+  public void subSequenceWithDeferredChangeIntersectingFromRight() {
+    replace(4, 6, "abc");
+    CharArray subsSequence = (CharArray)myArray.subSequence(3, 5);
+    assertArrayEquals("3a".toCharArray(), subsSequence.getChars());
+  }
+  
+  @Config(text = "01234567", deferred = true)
+  @Test
+  public void subSequenceWithDeferredChangeAfterIt() {
+    replace(6, 8, "abc");
+    CharArray subsSequence = (CharArray)myArray.subSequence(1, 2);
+    assertArrayEquals("1".toCharArray(), subsSequence.getChars());
+  }
   
   private void init(int size) {
     myArray = new CharArray(size) {
