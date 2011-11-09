@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,6 +34,16 @@ public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
   private final Set<String> myAlreadyUpdated = new HashSet<String>();
+  
+  public static PythonSdkUpdater getInstance() {
+    final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
+    for (StartupActivity extension : extensions) {
+      if (extension instanceof PythonSdkUpdater) {
+        return (PythonSdkUpdater) extension;
+      }
+    }
+    throw new UnsupportedOperationException("could not find self");
+  }
 
   @Override
   public void runActivity(final Project project) {
@@ -41,6 +52,10 @@ public class PythonSdkUpdater implements StartupActivity {
       return;
     }
 
+    updateActiveSdks(project, 7000);
+  }
+
+  public void updateActiveSdks(final Project project, final int delay) {
     final Set<Sdk> sdksToUpdate = new HashSet<Sdk>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -51,15 +66,18 @@ public class PythonSdkUpdater implements StartupActivity {
         }
       }
     }
-    
+
     // NOTE: everything is run later on the AWT thread
     if (!sdksToUpdate.isEmpty()) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          try {
-            Thread.sleep(7000); // wait until all short-term disk-hitting activity ceases
+          if (delay > 0) {
+            try {
+              Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
+            }
+            catch (InterruptedException ignore) {
+            }
           }
-          catch (InterruptedException ignore) {}
           // update skeletons
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
@@ -67,11 +85,17 @@ public class PythonSdkUpdater implements StartupActivity {
               ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
-                  for (Sdk sdk : sdksToUpdate) {
+                  for (final Sdk sdk : sdksToUpdate) {
                     PythonSdkType.refreshSkeletonsOfSDK(sdk); // NOTE: whole thing would need a rename
 
                     long start_time = System.currentTimeMillis();
-                    updateSdkPath(sdk, PythonSdkType.getSysPath(sdk.getHomePath()));
+                    final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        updateSdkPath(sdk, sysPath);
+                      }
+                    });
                     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - start_time) + " ms");
 
                     myAlreadyUpdated.add(sdk.getHomePath());
