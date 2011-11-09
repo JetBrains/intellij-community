@@ -26,17 +26,17 @@ try:
   BaseSuiteRunner = SUITE_RUNNER or DjangoTestSuiteRunner
 
   class BaseRunner(TeamcityTestRunner, BaseSuiteRunner):
-    def __init__(self, stream=sys.stdout):
+    def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self,stream)
       BaseSuiteRunner.__init__(self)
 
 except ImportError:
   class BaseRunner(TeamcityTestRunner):
-    def __init__(self, stream=sys.stdout):
+    def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self,stream)
 
 class DjangoTeamcityTestRunner(BaseRunner):
-  def __init__(self, stream=sys.stdout):
+  def __init__(self, stream=sys.stdout, **options):
     BaseRunner.__init__(self, stream)
     #self.interactive = False
 
