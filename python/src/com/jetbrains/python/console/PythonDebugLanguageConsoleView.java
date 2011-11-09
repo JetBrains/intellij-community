@@ -51,7 +51,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
     add(myPydevConsoleView.getComponent(), PYDEV_CONSOLE_PANEL);
-    showDebugConsole(false);
+    
+    showDebugConsole(PyConsoleOptionsProvider.getInstance(project).isShowDebugConsoleByDefault());
   }
 
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
@@ -136,7 +137,6 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     myPydevConsoleView.getConsole().getHistoryViewer().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     myTextConsole.scrollTo(offset);
   }
-
 
   @Override
   public void attachToProcess(ProcessHandler processHandler) {

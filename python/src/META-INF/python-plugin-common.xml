@@ -377,6 +377,9 @@
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
 
+    <projectConfigurable instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
+    <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>

@@ -49,7 +49,11 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   @Override
   public void processLine(final String text) {
-    if ("".equals(text)) {
+    processLine(text, false);
+  }
+
+  public void processLine(final String text, boolean execAnyway) {
+    if (text.isEmpty()) {
       processOneLine(text);
     }
     else {
@@ -58,6 +62,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         String line = s.nextLine();
         processOneLine(line);
       }
+    }
+    if (execAnyway && myCurrentIndentSize>0) {
+      finishExecution();
     }
   }
 

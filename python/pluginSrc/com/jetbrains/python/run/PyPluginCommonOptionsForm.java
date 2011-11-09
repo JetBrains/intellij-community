@@ -37,15 +37,15 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JBLabel myWorkingDirectoryJBLabel;
   private JComponent labelAnchor;
 
-  public PyPluginCommonOptionsForm(AbstractPythonRunConfiguration configuration) {
+  public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
-    final List<Module> validModules = configuration.getValidModules();
+    final List<Module> validModules = data.getValidModules();
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
     myModuleComboBox.setRenderer(new PyModuleRenderer(PyPluginCommonOptionsForm.this.myModuleComboBox.getRenderer()));
 
     myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>", myInterpreterComboBox.getRenderer()));
-    myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", configuration.getProject(),
+    myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
@@ -97,7 +97,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
       String homePath = sdk.getHomePath();
-      if (homePath != null && FileUtil.pathsEqual(homePath, sdkHome)) selection = sdk;
+      if (homePath != null && sdkHome != null && FileUtil.pathsEqual(homePath, sdkHome)) selection = sdk;
       sdkList.add(sdk);
     }
 
