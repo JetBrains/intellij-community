@@ -15,20 +15,16 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitVcs;
+import git4idea.checkin.GitOldPushDialog;
+import git4idea.commands.GitHandlerUtil;
 import git4idea.i18n.GitBundle;
-import git4idea.push.GitPushDialog;
-import git4idea.push.GitPusher;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -54,19 +50,12 @@ public class GitPush extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-
-    Collection<GitRepository> repositories = GitRepositoryManager.getInstance(project).getRepositories();
-    final GitPushDialog dialog = new GitPushDialog(project);
-    dialog.show();
-    if (dialog.isOK()) {
-      Task.Backgroundable task = new Task.Backgroundable(project, GitPusher.INDICATOR_TEXT, false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          new GitPusher(project, indicator).push(dialog.getPushInfo());
-        }
-      };
-      GitVcs.runInBackground(task);
+    GitOldPushDialog d = new GitOldPushDialog(project, gitRoots, defaultRoot);
+    d.show();
+    if (!d.isOK()) {
+      return;
     }
+    GitHandlerUtil.doSynchronously(d.handler(), GitBundle.getString("pushing.all.changes"), "git push");
+    GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL);
   }
-
 }
