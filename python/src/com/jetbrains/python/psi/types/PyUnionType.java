@@ -135,6 +135,22 @@ public class PyUnionType implements PyType {
   public List<PyType> getMembers() {
     return myMembers;
   }
+  
+  public List<PyType> getResolvedMembers(TypeEvalContext context) {
+    List<PyType> result = new ArrayList<PyType>();
+    for (PyType member : myMembers) {
+      if (member instanceof PyTypeReference) {
+        final PyType resolved = ((PyTypeReference)member).resolve(null, context);
+        if (resolved != null && !resolved.equals(this)) {
+          result.add(resolved);
+        }
+      }
+      else {
+        result.add(member);
+      }
+    }
+    return result;
+  }
 
   public PyType exclude(PyType t, TypeEvalContext context) {
     final List<PyType> members = new ArrayList<PyType>();
