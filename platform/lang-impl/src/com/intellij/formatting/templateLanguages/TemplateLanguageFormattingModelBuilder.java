@@ -48,7 +48,7 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
     return new DocumentBasedFormattingModel(rootBlock, element.getProject(), settings, file.getFileType(), file);
   }
 
-  private Block getRootBlock(PsiElement element, FileViewProvider viewProvider, CodeStyleSettings settings) {
+  protected Block getRootBlock(PsiElement element, FileViewProvider viewProvider, CodeStyleSettings settings) {
     ASTNode node = element.getNode();
     if (node == null) {
       return createDummyBlock(node);
