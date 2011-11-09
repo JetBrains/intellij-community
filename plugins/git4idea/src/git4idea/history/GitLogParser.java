@@ -90,7 +90,7 @@ class GitLogParser {
   private static final String PATHS =
     SINGLE_PATH +                    // First path - required.
     "(?:\t" + SINGLE_PATH + ")?" +   // Second path - optional. Paths are separated by tab.
-    EOL;                             // Path(s) information ends with a line terminator.
+    "(?:" + EOL + ")?";                             // Path(s) information ends with a line terminator (possibly except the last path in the output).
 
   private static Pattern NAME_ONLY = Pattern.compile(PATHS);
   private static Pattern NAME_STATUS = Pattern.compile("([\\S]+)\t" + PATHS);

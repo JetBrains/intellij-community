@@ -15,6 +15,7 @@
  */
 package git4idea.commands;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public class GitCommandResult {
     return new ArrayList<String>(myErrorOutput);
   }
 
+  @NotNull
   public List<String> getOutput() {
     return new ArrayList<String>(myOutput);
   }
@@ -61,5 +63,10 @@ public class GitCommandResult {
   @Override
   public String toString() {
     return String.format("{%d} %nOutput: %n%s %nError output: %n%s", myExitCode, myOutput, myErrorOutput);
+  }
+
+  @NotNull
+  public String getErrorOutputAsHtmlString() {
+    return StringUtil.join(myErrorOutput, "<br/>");
   }
 }

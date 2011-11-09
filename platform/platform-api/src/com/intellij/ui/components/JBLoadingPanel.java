@@ -92,4 +92,9 @@ public class JBLoadingPanel extends JPanel {
   public void add(Component comp, Object constraints) {
     myPanel.add(comp, constraints);
   }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return getContentPanel().getPreferredSize();
+  }
 }

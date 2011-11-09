@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package git4idea.validators;
 
 import com.intellij.util.Function;
-import git4idea.validators.GitRefNameValidator;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -137,5 +136,5 @@ public class GitRefNameValidatorTest {
     assertFalse(GitRefNameValidator.getInstance().checkInput(branchName), "Should be invalid");
     assertFalse(GitRefNameValidator.getInstance().canClose(branchName), "Should be invalid");
   }
-  
+
 }
