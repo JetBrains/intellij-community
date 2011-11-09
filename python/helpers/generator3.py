@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.96" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.97" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1155,6 +1155,7 @@ class ModuleRedeclarator(object):
         @param seen_values a list of keys we've seen if we're processing a dict
         """
         SELF_VALUE = "<value is a self-reference, replaced by this string>"
+        ERR_VALUE = "<failed to retrieve the value>"
         if isinstance(p_value, SIMPLEST_TYPES):
             out(indent, prefix, reliable_repr(p_value), postfix)
         else:
@@ -1199,7 +1200,14 @@ class ModuleRedeclarator(object):
                             pass # unsortable keys happen, e,g, in py3k _ctypes
                         for k in keys:
                             v = p_value[k]
-                            if v in seen_values:
+
+                            try:
+                                is_seen = v in seen_values
+                            except:
+                                is_seen = False
+                                v = ERR_VALUE
+
+                            if is_seen:
                                 v = SELF_VALUE
                             elif not isinstance(v, SIMPLEST_TYPES):
                                 seen_values.append(v)
