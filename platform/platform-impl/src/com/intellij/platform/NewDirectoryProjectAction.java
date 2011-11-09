@@ -85,6 +85,6 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
           generator.generateProject(project, baseDir, finalSettings, module);
         }
       }
-    });
+    }, true);
   }
 }
