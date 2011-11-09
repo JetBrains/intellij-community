@@ -39,7 +39,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvider<JavaAnonymousClassTreeElement> {
-  private static final String ID = "SHOW_ANONYMOUS";
+  public static final String ID = "SHOW_ANONYMOUS";
 
   @Override
   public Collection<JavaAnonymousClassTreeElement> provideNodes(TreeElement node) {
