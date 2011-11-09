@@ -76,14 +76,9 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testPossibleClosureParameter2() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    try {
-      myFixture.configureByText("a.groovy", "{ a, <caret> }")
-      type 'h'
-      assert !lookup.focused
-    }
-    finally {
-      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    }
+    myFixture.configureByText("a.groovy", "{ a, <caret> }")
+    type 'h'
+    assert !lookup.focused
   }
 
   public void testImpossibleClosureParameter() {
@@ -94,14 +89,9 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testFieldTypeLowercase() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    try {
-      myFixture.configureByText "a.groovy", "class Foo { <caret> }"
-      type 'aioobe'
-      assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
-    }
-    finally {
-      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    }
+    myFixture.configureByText "a.groovy", "class Foo { <caret> }"
+    type 'aioobe'
+    assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
   }
 
   public void testNoWordCompletionAutoPopup() {
@@ -130,6 +120,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   @Override
   protected void tearDown() {
     CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     super.tearDown()
   }
 
@@ -211,6 +202,22 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'Abcde '
     myFixture.checkResult 'Abcdefg <caret>'
+  }
+
+  public void testPrivate() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.addClass("package foo; public class PrimaBalerina {}")
+    myFixture.configureByText 'a.groovy', 'class Foo { <caret> }'
+    type 'pri'
+    assert myFixture.lookupElementStrings[0] == 'private'
+    assert !('PrimaBalerina' in myFixture.lookupElementStrings)
+  }
+
+  public void testFieldTypeNonImported() {
+    myFixture.addClass("package foo; public class PrimaBalerina {}")
+    myFixture.configureByText 'a.groovy', 'class Foo { <caret> }'
+    type 'PrimaB'
+    assert myFixture.lookupElementStrings == ['PrimaBalerina']
   }
 
 }
