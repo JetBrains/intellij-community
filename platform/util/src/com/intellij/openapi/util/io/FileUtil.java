@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.intellij.lang.annotations.RegExp;
@@ -1176,4 +1177,22 @@ public class FileUtil {
     }
     return normalizeFile(file);
   }
+  
+  @Nullable
+  public static String getLocationRelativeToUserHome(final String path) {
+    if (path == null) return null;
+
+    String _path = path;
+
+    if ((SystemInfo.isLinux || SystemInfo.isMac)) {
+      final File projectDir = new File(path);
+      final File userHomeDir = new File(SystemProperties.getUserHome());
+      if (isAncestor(userHomeDir, projectDir, true)) {
+        _path = "~/" + getRelativePath(userHomeDir, projectDir);
+      }
+    }
+
+    return _path;
+  }
+  
 }
