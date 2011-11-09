@@ -24,7 +24,9 @@
           <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-src.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="JUnit4" level="project" />
