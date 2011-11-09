@@ -98,15 +98,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     });
   }
 
-  public boolean isVersionAtLeast(Module module, String version) {
-    if (module == null) return false;
-    final String sdkVersion = getSDKVersion(module);
-    if (sdkVersion == null) return false;
-    return sdkVersion.compareTo(version) >= 0;
-  }
-
   public boolean isVersionAtLeast(PsiElement psiElement, String version) {
-    return isVersionAtLeast(ModuleUtil.findModuleForPsiElement(psiElement), version);
+    return isVersionAtLeast(psiElement, version, true);
+  }
+  public boolean isVersionAtLeast(PsiElement psiElement, String version, boolean unknownResult) {
+    Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    if (module == null) return unknownResult;
+    final String sdkVersion = getSDKVersion(module);
+    if (sdkVersion == null) return unknownResult;
+    return sdkVersion.compareTo(version) >= 0;
   }
 
   @NotNull
