@@ -222,11 +222,12 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onError(@NotNull final String localizedMessage,
-                      @Nullable final String stackTrace) {
+                      @Nullable final String stackTrace,
+                      final boolean isCritical) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy currentProxy = findCurrentTestOrSuite();
-        currentProxy.addError(localizedMessage, stackTrace);
+        currentProxy.addError(localizedMessage, stackTrace, isCritical);
       }
     });
   }
