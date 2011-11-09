@@ -296,20 +296,25 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setPrompt(String prompt) {
     // always add space to the prompt otherwise it may look ugly
-    myPrompt = prompt != null && !prompt.endsWith(" ")? prompt + " " : prompt;
+    myPrompt = prompt != null && !prompt.endsWith(" ") ? prompt + " " : prompt;
     setPromptInner(myPrompt);
   }
 
   private void setPromptInner(final String prompt) {
-    ((EditorImpl)myConsoleEditor).setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
-    if (myPanel.isVisible()) {
-      queueUiUpdate(false);
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myConsoleEditor.setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+        if (myPanel.isVisible()) {
+          queueUiUpdate(false);
+        }
+      }
+    });
   }
 
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
-    setPromptInner(editable? myPrompt : "");
+    setPromptInner(editable ? myPrompt : "");
   }
 
   public boolean isEditable() {
@@ -395,7 +400,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public boolean shouldScrollHistoryToEnd() {
     final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
     final Dimension contentSize = myHistoryViewer.getContentSize();
-    return contentSize.getHeight() - visibleArea.getMaxY() < 2*myHistoryViewer.getLineHeight();
+    return contentSize.getHeight() - visibleArea.getMaxY() < 2 * myHistoryViewer.getLineHeight();
   }
 
   private void scrollHistoryToEnd() {
@@ -627,9 +632,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public static PsiFile setDocumentFileAndInitPsi(final Project project, final Document document, final LightVirtualFile newVFile) {
     newVFile.setContent(document, document.getText(), false);
     FileDocumentManagerImpl.registerDocument(document, newVFile);
-    final PsiFile psiFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(newVFile, newVFile.getLanguage(), true, false);
+    final PsiFile psiFile =
+      ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(newVFile, newVFile.getLanguage(), true, false);
     if (psiFile == null) {
-      throw new AssertionError("PSI=null for light file: name=" + newVFile.getName() + ", language=" + newVFile.getLanguage().getDisplayName());
+      throw new AssertionError(
+        "PSI=null for light file: name=" + newVFile.getName() + ", language=" + newVFile.getLanguage().getDisplayName());
     }
     PsiDocumentManagerImpl.cachePsi(document, psiFile);
     FileContentUtil.reparseFiles(project, Collections.<VirtualFile>singletonList(newVFile), false);
@@ -647,7 +654,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       final int componentCount = parent.getComponentCount();
       if (componentCount == 0) return;
       final EditorEx history = myHistoryViewer;
-      final EditorEx editor = componentCount == 2? myConsoleEditor : null;
+      final EditorEx editor = componentCount == 2 ? myConsoleEditor : null;
 
       if (editor == null) {
         parent.getComponent(0).setBounds(parent.getBounds());
