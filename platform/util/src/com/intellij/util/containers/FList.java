@@ -59,6 +59,26 @@ public class FList<E> extends AbstractList<E> {
     return new FList<E>(elem, this);
   }
 
+  public FList<E> without(E elem) {
+    FList<E> front = emptyList();
+
+    FList<E> current = this;
+    while (!current.isEmpty()) {
+      if (current.myHead.equals(elem)) {
+        FList<E> result = current.myTail;
+        while (!front.isEmpty()) {
+          result = result.prepend(front.myHead);
+          front = front.myTail;
+        }
+        return result;
+      }
+
+      front = front.prepend(current.myHead);
+      current = current.myTail;
+    }
+    return this;
+  }
+
   public FList<E> getTail() {
     return myTail;
   }

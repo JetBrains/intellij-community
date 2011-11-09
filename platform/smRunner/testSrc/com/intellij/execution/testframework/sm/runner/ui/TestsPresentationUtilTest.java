@@ -158,7 +158,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     final MyRenderer pausedRenderer = new MyRenderer(true, myFragContainer = new UITestUtil.FragmentsContainer());
 
     mySimpleTest.setStarted();
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
 
     TestsPresentationUtil.formatTestProxy(mySimpleTest, pausedRenderer);
 
@@ -194,7 +194,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   public void testFormatTestProxyTest_Failed_WithErrors() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", false);
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(SMPoolOfTestIcons.FAILED_E_ICON, myRenderer.getIcon());
@@ -218,7 +218,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   public void testFormatTestProxyTest_Error_WithErrors() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", true);
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.ERROR_ICON, myRenderer.getIcon());
@@ -242,7 +242,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   public void testFormatTestProxyTest_Ignored_WithErrors() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestIgnored("", null);
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(SMPoolOfTestIcons.IGNORED_E_ICON, myRenderer.getIcon());
@@ -263,13 +263,40 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
   }
 
-  public void testFormatTestProxyTest_WithErrors() {
+  public void testFormatTestProxyTest_TerminatedWithErrors() {
     mySimpleTest.setStarted();
     mySimpleTest.setTerminated();
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(SMPoolOfTestIcons.TERMINATED_E_ICON, myRenderer.getIcon());
+  }
+
+  public void testFormatTestProxyTest_WithCriticalErrors() {
+    mySimpleTest.setStarted();
+    mySimpleTest.addError("msg", "stacktrace", true);
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+
+    assertEquals(SMPoolOfTestIcons.PASSED_E_ICON, myRenderer.getIcon());
+  }
+
+  public void testFormatTestProxyTest_WithErrors_LegacyApi() {
+    mySimpleTest.setStarted();
+    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+
+    assertEquals(SMPoolOfTestIcons.PASSED_E_ICON, myRenderer.getIcon());
+  }
+
+  public void testFormatTestProxyTest_WithNoncriticalErrors() {
+    mySimpleTest.setStarted();
+    mySimpleTest.addError("msg", "stacktrace", false);
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+
+    assertEquals(SMPoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
   }
 
   public void testFormatRootNodeWithChildren_Started() {
@@ -318,7 +345,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySMRootTestProxy.setStarted();
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", false);
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     mySMRootTestProxy.setFinished();
 
@@ -340,7 +367,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySMRootTestProxy.setStarted();
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", true);
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     mySMRootTestProxy.setFinished();
 
@@ -393,7 +420,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySMRootTestProxy.setStarted();
     mySimpleTest.setStarted();
     mySimpleTest.setTestIgnored("", null);
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     mySMRootTestProxy.setFinished();
 
@@ -428,7 +455,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySMRootTestProxy.addChild(mySimpleTest);
     mySMRootTestProxy.setStarted();
     mySimpleTest.setStarted();
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     mySMRootTestProxy.setFinished();
 
@@ -458,7 +485,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySMRootTestProxy.addChild(mySimpleTest);
     mySMRootTestProxy.setStarted();
     mySimpleTest.setStarted();
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     mySMRootTestProxy.setTerminated();
     // terminated
@@ -491,10 +518,10 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySMRootTestProxy.setTestsReporterAttached();
     mySMRootTestProxy.addChild(mySimpleTest);
     mySMRootTestProxy.setStarted();
-    mySMRootTestProxy.addError("msg1", "stacktrace1");
+    mySMRootTestProxy.addError("msg1", "stacktrace1", true);
     mySimpleTest.setStarted();
     mySimpleTest.setFinished();
-    mySMRootTestProxy.addError("msg2", "stacktrace2");
+    mySMRootTestProxy.addError("msg2", "stacktrace2", true);
     mySMRootTestProxy.setFinished();
 
     TestsPresentationUtil.formatRootNodeWithChildren(mySMRootTestProxy, renderer1);

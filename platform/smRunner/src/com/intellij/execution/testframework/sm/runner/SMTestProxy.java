@@ -54,7 +54,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private Integer myDuration = null; // duration is unknown
   @Nullable private final String myLocationUrl;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
-  private boolean myHasErrors = false;
+  private boolean myHasCriticalErrors = false;
   private boolean myHasErrorsCached = false;
 
   private final boolean myIsSuite;
@@ -101,21 +101,21 @@ public class SMTestProxy extends AbstractTestProxy {
   public boolean hasErrors() {
     // if already cached
     if (myHasErrorsCached) {
-      return myHasErrors;
+      return myHasCriticalErrors;
     }
 
     final boolean canCacheErrors = !myState.isInProgress();
     // calculate
     final boolean hasErrors = calcHasErrors();
     if (canCacheErrors) {
-      myHasErrors = hasErrors;
+      myHasCriticalErrors = hasErrors;
       myHasErrorsCached = true;
     }
     return hasErrors;
   }
 
   private boolean calcHasErrors() {
-    if (myHasErrors) {
+    if (myHasCriticalErrors) {
       return true;
     }
 
@@ -418,9 +418,23 @@ public class SMTestProxy extends AbstractTestProxy {
     });
   }
 
+  /**
+   * This method was left for backward compatibility.
+   *
+   * @param output
+   * @param stackTrace
+   * @deprecated use SMTestProxy.addError(String output, String stackTrace, boolean isCritical)
+   */
+  @Deprecated
   public void addError(final String output,
                        @Nullable final String stackTrace) {
-    myHasErrors = true;
+    addError(output, stackTrace, true);
+  }
+
+  public void addError(final String output,
+                       @Nullable final String stackTrace,
+                       final boolean isCritical) {
+    myHasCriticalErrors = isCritical;
     addLast(new Printable() {
       public void printOn(final Printer printer) {
         final String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);

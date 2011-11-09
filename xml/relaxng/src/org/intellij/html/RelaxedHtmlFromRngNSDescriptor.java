@@ -16,6 +16,7 @@
 package org.intellij.html;
 
 import com.intellij.html.RelaxedHtmlNSDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -31,8 +32,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene.Kudelevsky
  */
 public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements RelaxedHtmlNSDescriptor {
+  private static final Logger LOG = Logger.getInstance("#org.intellij.html.RelaxedHtmlFromRngNSDescriptor");
+
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
+
+    LOG.debug("Descriptor from rng for tag " +
+              tag.getName() +
+              " is " +
+              (elementDescriptor != null ? elementDescriptor.getClass().getCanonicalName() : "NULL"));
 
     String namespace;
     if (elementDescriptor == null &&

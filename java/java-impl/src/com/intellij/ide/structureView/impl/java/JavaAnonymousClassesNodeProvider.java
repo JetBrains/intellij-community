@@ -30,6 +30,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -37,21 +42,21 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
   private static final String ID = "SHOW_ANONYMOUS";
 
   @Override
-  public JavaAnonymousClassTreeElement[] provideNodes(TreeElement node) {
+  public Collection<JavaAnonymousClassTreeElement> provideNodes(TreeElement node) {
     if (node instanceof JavaClassTreeElement) {
       final PsiClass cls = ((JavaClassTreeElement)node).getElement();
       for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {
         final PsiElement[] elements = provider.getAnonymousElements(cls);
         if (elements != null && elements.length > 0) {
-          JavaAnonymousClassTreeElement[] result = new JavaAnonymousClassTreeElement[elements.length];
-          for (int i = 0; i < elements.length; i++) {
-            result[i] = new JavaAnonymousClassTreeElement((PsiAnonymousClass)elements[i]);
+          List<JavaAnonymousClassTreeElement> result = new ArrayList<JavaAnonymousClassTreeElement>(elements.length);
+          for (PsiElement element : elements) {
+            result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element));
           }
           return result;
         }
       }
     }
-    return JavaAnonymousClassTreeElement.EMPTY_ARRAY;
+    return Collections.emptyList();
   }
 
   @Override

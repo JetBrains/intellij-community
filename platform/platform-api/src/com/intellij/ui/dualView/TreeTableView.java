@@ -144,7 +144,8 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     final int[] rows = getSelectedRows();
     final ArrayList result = new ArrayList();
     for (int row : rows) {
-      result.add(tree.getPathForRow(row).getLastPathComponent());
+      final TreePath pathForRow = tree.getPathForRow(row);
+      if (pathForRow != null) result.add(pathForRow.getLastPathComponent());
     }
     return result;
   }

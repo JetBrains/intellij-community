@@ -40,6 +40,7 @@ public class DirDiffDialog extends DialogWrapper {
     table.getTableHeader().setReorderingAllowed(false);
     table.getTableHeader().setResizingAllowed(false);
     Disposer.register(getDisposable(), myModel);
+    Disposer.register(project, getDisposable());
   }
 
   @Override

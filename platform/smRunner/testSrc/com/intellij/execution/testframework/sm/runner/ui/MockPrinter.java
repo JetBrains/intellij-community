@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 public class MockPrinter implements Printer {
   private boolean myShouldReset = false;
   private boolean myHasPrinted = false;
-  private final StringBuilder myAllOut = new StringBuilder();
-  private final StringBuilder myStdOut = new StringBuilder();
-  private final StringBuilder myStdErr = new StringBuilder();
-  private final StringBuilder myStdSys = new StringBuilder();
+  protected final StringBuilder myAllOut = new StringBuilder();
+  protected final StringBuilder myStdOut = new StringBuilder();
+  protected final StringBuilder myStdErr = new StringBuilder();
+  protected final StringBuilder myStdSys = new StringBuilder();
 
   public MockPrinter() {
     this(true);

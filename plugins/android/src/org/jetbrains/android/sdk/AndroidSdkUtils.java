@@ -17,6 +17,7 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -54,15 +55,7 @@ public class AndroidSdkUtils {
   }
 
   public static boolean isAndroidSdk(@NotNull String path) {
-    path = FileUtil.toSystemDependentName(path);
-
-    final File f = new File(path);
-    if (!f.exists() && !f.isDirectory()) {
-      return false;
-    }
-
-    SdkManager manager = SdkManager.createManager(path, new EmptySdkLog());
-    return manager != null;
+    return createSdkManager(path, new EmptySdkLog()) != null;
   }
 
   @Nullable
@@ -366,5 +359,22 @@ public class AndroidSdkUtils {
 
   public static void openModuleDependenciesConfigurable(final Module module) {
     ProjectSettingsService.getInstance(module.getProject()).openModuleDependenciesSettings(module, null);
+  }
+
+  @Nullable
+  public static SdkManager createSdkManager(@NotNull String path, @NotNull ISdkLog log) {
+    path = FileUtil.toSystemDependentName(path);
+
+    final File f = new File(path);
+    if (!f.exists() || !f.isDirectory()) {
+      return null;
+    }
+
+    final File platformsDir = new File(f, SdkConstants.FD_PLATFORMS);
+    if (!platformsDir.exists() || !platformsDir.isDirectory()) {
+      return null;
+    }
+
+    return SdkManager.createManager(path + File.separatorChar, log);
   }
 }

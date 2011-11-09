@@ -24,6 +24,8 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel {
   private final StructureViewModel myModel;
@@ -48,9 +50,21 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   private ArrayList<TreeAction> filterActive(TreeAction[] actions) {
     ArrayList<TreeAction> filtered = new ArrayList<TreeAction>();
     for (TreeAction action : actions) {
-      if (action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName())) filtered.add(action);
+      if (isFiltered(action)) filtered.add(action);
     }
     return filtered;
+  }
+  
+  private ArrayList<NodeProvider> filterProviders(Collection<NodeProvider> actions) {
+    ArrayList<NodeProvider> filtered = new ArrayList<NodeProvider>();
+    for (NodeProvider action : actions) {
+      if (isFiltered(action)) filtered.add(action);
+    }
+    return filtered;
+  }
+
+  private boolean isFiltered(TreeAction action) {
+    return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
   }
 
   @NotNull
@@ -70,12 +84,11 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   }
 
   @Override
-  public NodeProvider[] getNodeProviders() {
+  public Collection<NodeProvider> getNodeProviders() {
     if (myModel instanceof ProvidingTreeModel) {
-      ArrayList<TreeAction> filtered = filterActive(((ProvidingTreeModel)myModel).getNodeProviders());
-      return filtered.toArray(new NodeProvider[filtered.size()]);
+      return filterProviders(((ProvidingTreeModel)myModel).getNodeProviders());
     }
-    return NodeProvider.EMPTY_ARRAY;
+    return Collections.emptyList();
   }
 
   public static boolean isActive(final TreeAction action, final TreeActionsOwner actionsOwner) {

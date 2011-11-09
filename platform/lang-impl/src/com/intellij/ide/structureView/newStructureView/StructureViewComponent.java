@@ -396,7 +396,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       result.add(new TreeActionWrapper(filter, this));
     }
     if (myTreeModel instanceof ProvidingTreeModel) {
-      final NodeProvider[] providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
+      final Collection<NodeProvider> providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
       for (NodeProvider provider : providers) {
         result.add(new TreeActionWrapper(provider, this));
       }

@@ -25,7 +25,12 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider {
+  private static final Collection<NodeProvider> NODE_PROVIDERS = Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider(),
+                                                                                             new JavaAnonymousClassesNodeProvider());
   private final PsiJavaFile myFile;
 
   public JavaFileTreeModel(@NotNull PsiJavaFile file) {
@@ -40,8 +45,8 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
   }
 
   @Override
-  public NodeProvider[] getNodeProviders() {
-    return new NodeProvider[]{new JavaInheritedMembersNodeProvider(), new JavaAnonymousClassesNodeProvider()};
+  public Collection<NodeProvider> getNodeProviders() {
+    return NODE_PROVIDERS;
   }
 
   @NotNull

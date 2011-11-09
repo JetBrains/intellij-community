@@ -20,25 +20,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Holder for branch and its tracked branch (if any).
+ * Holder for Git branch and the branch it is "connected" with. It is tracked branch or so called "matched" branch.
  *
  * @author Kirill Likhodedov
  */
 public class GitBranchPair {
   private @NotNull GitBranch myBranch;
-  private @Nullable GitBranch myTrackedName;
+  private @Nullable GitBranch myDestBranch;
 
-  public GitBranchPair(@NotNull GitBranch branch, @Nullable GitBranch tracked) {
+  public GitBranchPair(@NotNull GitBranch branch, @Nullable GitBranch destination) {
     myBranch = branch;
-    myTrackedName = tracked;
+    myDestBranch = destination;
   }
 
   public @NotNull GitBranch getBranch() {
     return myBranch;
   }
 
-  public @Nullable GitBranch getTracked() {
-    return myTrackedName;
+  public @Nullable GitBranch getDest() {
+    return myDestBranch;
   }
 
 }

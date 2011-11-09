@@ -35,7 +35,6 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -626,11 +625,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       task.run(true);
     } catch (Throwable e) {
       if (Boolean.getBoolean(DEBUG_PROPERTY_NAME)) {
-        LOG.error(String.format(
-          "Unexpected exception occurred during performing '%s'. Current soft wraps cache: %n"
-          + "%s%nFold regions: %s",
-          task, myDataMapper, Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e
-        );
+        String info = "";
+        if (myEditor instanceof EditorImpl) {
+          info = ((EditorImpl)myEditor).dumpState();
+        } 
+        LOG.error(String.format("Unexpected exception occurred during performing '%s'", task), e, info);
       }
       myEditor.getFoldingModel().rebuild();
       myDataMapper.release();
@@ -640,11 +639,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         task.run(true);
       }
       catch (Throwable e1) {
-        LOG.error(String.format(
-          "Can't perform %s even with complete soft wraps cache re-parsing. Current soft wraps cache: %n"
-          + "%s. Document:%n%s%nFold regions: %s", task, myDataMapper, myEditor.getDocument().getText(),
-          Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e1
-        );
+        String info = "";
+        if (myEditor instanceof EditorImpl) {
+          info = ((EditorImpl)myEditor).dumpState();
+        }
+        LOG.error(String.format("Can't perform %s even with complete soft wraps cache re-parsing", task), e1, info);
         myEditor.getSettings().setUseSoftWraps(false);
         task.run(false);
       }

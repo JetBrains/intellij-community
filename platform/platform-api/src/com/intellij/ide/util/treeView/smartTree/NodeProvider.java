@@ -15,11 +15,11 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import java.util.Collection;
+
 /**
  * @author Konstantin Bulenkov
  */
 public interface NodeProvider<T extends TreeElement> extends TreeAction {
-  NodeProvider[] EMPTY_ARRAY = {};
-
-  T[] provideNodes(TreeElement node);
+  Collection<T> provideNodes(TreeElement node);
 }

@@ -48,9 +48,14 @@ import java.util.Collection;
  *   If some additional data is needed, add the field, getter, constructor parameter and populate it in {@link GitConfig}.
  * </p>
  * 
+ * <p>
+ *   This class implements {@link Comparable}, but remotes are compared only by their names 
+ *   (which is inconsistent with {@code equals}, but is fair enough, since there can't be different remotes with the same name). 
+ * </p>
+ * 
  * @author Kirill Likhodedov
  */
-public final class GitRemote {
+public final class GitRemote implements Comparable<GitRemote> {
 
   private final String myName;
   private final Collection<String> myUrls;
@@ -118,4 +123,8 @@ public final class GitRemote {
                          myName, myUrls, myPushUrls, myFetchRefSpec, myPushRefSpec);
   }
 
+  @Override
+  public int compareTo(@NotNull GitRemote o) {
+    return getName().compareTo(o.getName());
+  }
 }

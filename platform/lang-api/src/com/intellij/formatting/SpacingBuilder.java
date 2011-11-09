@@ -213,6 +213,11 @@ public class SpacingBuilder {
     return new RuleBuilder(before, after);
   }
 
+  public SpacingBuilder append(SpacingBuilder builder) {
+    myRules.addAll(builder.myRules);
+    return this;
+  }
+
   @Nullable
   public Spacing getSpacing(Block parent, Block child1, Block child2) {
     if (!(parent instanceof ASTBlock) || !(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {

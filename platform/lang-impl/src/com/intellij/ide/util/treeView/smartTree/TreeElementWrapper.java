@@ -20,6 +20,8 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.project.Project;
 
+import java.util.Collection;
+
 public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   public TreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
     super(project, value, treeModel);
@@ -41,11 +43,12 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
       addSubElement(createChildNode(child));
     }
     if (myTreeModel instanceof ProvidingTreeModel) {
-      final NodeProvider[] providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
+      final Collection<NodeProvider> providers = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
       for (NodeProvider provider : providers) {
         if (((ProvidingTreeModel)myTreeModel).isEnabled(provider)) {
-          for (TreeElement child : provider.provideNodes(getValue())) {
-            addSubElement(createChildNode(child));
+          final Collection<TreeElement> nodes = provider.provideNodes(getValue());
+          for (TreeElement node : nodes) {
+            addSubElement(createChildNode(node));
           }
         }
       }

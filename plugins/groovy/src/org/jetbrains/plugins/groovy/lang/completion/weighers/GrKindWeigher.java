@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -39,6 +40,10 @@ import java.util.Set;
  */
 public class GrKindWeigher extends CompletionWeigher {
   private static final Set<String> TRASH_CLASSES = new HashSet<String>(10);
+  private static final Set<String> PRIORITY_KEYWORDS = CollectionFactory.newSet(
+    PsiKeyword.RETURN, PsiKeyword.INSTANCEOF, "in",
+    PsiKeyword.PRIVATE, PsiKeyword.PROTECTED, PsiKeyword.PUBLIC, PsiKeyword.STATIC, "def",
+    PsiKeyword.TRUE,  PsiKeyword.FALSE, PsiKeyword.NULL);
 
   static {
     TRASH_CLASSES.add(CommonClassNames.JAVA_LANG_CLASS);
@@ -50,17 +55,14 @@ public class GrKindWeigher extends CompletionWeigher {
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     final PsiElement position = location.getCompletionParameters().getPosition();
     if (!(position.getContainingFile() instanceof GroovyFileBase)) return null;
-    if (!(position.getParent() instanceof GrReferenceElement)) return null;
-
-    final GrReferenceElement parent = (GrReferenceElement)position.getParent();
 
     Object o = element.getObject();
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
     }
 
-
-    final PsiElement qualifier = parent.getQualifier();
+    final PsiElement parent = position.getParent();
+    final PsiElement qualifier = parent instanceof GrReferenceElement ? ((GrReferenceElement)parent).getQualifier() : null;
     if (qualifier == null) {
       if (o instanceof NamedArgumentDescriptor) {
         switch (((NamedArgumentDescriptor)o).getPriority()) {
@@ -106,7 +108,8 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   private static boolean isPriorityKeyword(Object o) {
-    return PsiKeyword.INSTANCEOF.equals(o);
+    //noinspection SuspiciousMethodCalls
+    return PRIORITY_KEYWORDS.contains(o);
   }
 
   private static boolean isLightElement(Object o) {

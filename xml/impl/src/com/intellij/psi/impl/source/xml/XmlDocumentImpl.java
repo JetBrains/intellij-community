@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -198,6 +199,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     if (XmlUtil.HTML_URI.equals(namespace)) {
       XmlNSDescriptor nsDescriptor = doctype != null ? getNsDescriptorFormDocType(doctype, containingFile, true) : null;
+      if (doctype != null) {
+        LOG.debug(
+          "Descriptor from doctype " + doctype + " is " + (nsDescriptor != null ? nsDescriptor.getClass().getCanonicalName() : "NULL"));
+      }
+
       if (nsDescriptor == null) {
         String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
         if (htmlns == null || htmlns.length() == 0) {
@@ -257,15 +263,37 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     return null;
   }
+  
+  @NotNull
+  private static String getFilePathForLogging(@Nullable PsiFile file) {
+    if (file == null) {
+      return "NULL";
+    }
+    final VirtualFile vFile = file.getVirtualFile();
+    return vFile != null ? vFile.getPath() : "NULL_VFILE";
+  }
 
   @Nullable
   private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile, final boolean forHtml) {
     XmlNSDescriptor descriptor = getNSDescriptorFromMetaData(doctype.getMarkupDecl(), true);
 
+    final String filePath = getFilePathForLogging(containingFile);
+
     final String dtdUri = XmlUtil.getDtdUri(doctype);
+    LOG.debug("DTD url for doctype " + doctype.getText() + " in file " + filePath + " is " + dtdUri);
+    
     if (dtdUri != null && dtdUri.length() > 0){
       final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
+      final String schemaFilePath = getFilePathForLogging(xmlFile);
+      
+      LOG.debug("Schema file for " + filePath + " is " + schemaFilePath);
+      
       XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(xmlFile == null ? null : xmlFile.getDocument(), forHtml);
+
+      LOG.debug("Descriptor from meta data for schema file " +
+                schemaFilePath +
+                " is " +
+                (descriptorFromDtd != null ? descriptorFromDtd.getClass().getCanonicalName() : "NULL"));
 
       if (descriptor != null && descriptorFromDtd != null){
         descriptor = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descriptor, descriptorFromDtd});

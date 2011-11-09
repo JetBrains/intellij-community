@@ -143,6 +143,12 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     }
   }
 
+  public void updateAllRepositories(GitRepository.TrackedTopic trackedTopic) {
+    for (VirtualFile root : myRepositories.keySet()) {
+      updateRepository(root, trackedTopic);
+    }
+  }
+
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
   @Override
   public void directoryMappingChanged() {

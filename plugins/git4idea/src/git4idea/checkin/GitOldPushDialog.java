@@ -44,11 +44,11 @@ import java.util.List;
 /**
  * The push dialog
  */
-public class GitPushDialog extends DialogWrapper {
+public class GitOldPushDialog extends DialogWrapper {
   /**
    * the logger
    */
-  private static final Logger LOG = Logger.getInstance(GitPushDialog.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitOldPushDialog.class.getName());
   /**
    * Push policy meaning selected references
    */
@@ -129,7 +129,7 @@ public class GitPushDialog extends DialogWrapper {
    * @param roots       the list of the roots
    * @param defaultRoot the default root to select
    */
-  public GitPushDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
+  public GitOldPushDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("push.title"));
     setOKButtonText(GitBundle.getString("push.button"));

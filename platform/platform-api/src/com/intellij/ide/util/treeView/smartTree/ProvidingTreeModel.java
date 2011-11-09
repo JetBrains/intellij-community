@@ -15,10 +15,12 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import java.util.Collection;
+
 /**
  * @author Konstantin Bulenkov
  */
 public interface ProvidingTreeModel extends TreeModel {
-  NodeProvider[] getNodeProviders();
+  Collection<NodeProvider> getNodeProviders();
   boolean isEnabled(NodeProvider provider);
 }

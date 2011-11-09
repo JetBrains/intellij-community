@@ -16,7 +16,6 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -31,10 +30,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -51,7 +47,7 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
     }
 
   @Override
-  public TreeElement[] provideNodes(TreeElement node) {
+  public Collection<TreeElement> provideNodes(TreeElement node) {
     if (node instanceof JavaClassTreeElement) {
       final PsiClass aClass = ((JavaClassTreeElement)node).getValue();
       Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>();
@@ -63,7 +59,7 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
 
       aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
       inherited.removeAll(ownChildren);
-      List<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>();
+      List<TreeElement> array = new ArrayList<TreeElement>();
       for (PsiElement child : inherited) {
         if (!child.isValid()) continue;
         if (child instanceof PsiClass) {
@@ -79,9 +75,9 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
           array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
         }
       }
-      return array.toArray(new StructureViewTreeElement[array.size()]);
+      return array;
     }
-    return StructureViewTreeElement.EMPTY_ARRAY;
+    return Collections.emptyList();
   }
 
   @NotNull
