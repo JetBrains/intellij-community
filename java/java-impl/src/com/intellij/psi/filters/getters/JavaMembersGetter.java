@@ -33,8 +33,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaMembersGetter extends MembersGetter {
   private final PsiType myExpectedType;
+  private final PsiElement myPlace;
 
-  public JavaMembersGetter(@NotNull PsiType expectedType) {
+  public JavaMembersGetter(@NotNull PsiType expectedType, PsiElement place) {
+    myPlace = place;
     myExpectedType = JavaCompletionUtil.originalize(expectedType);
   }
 
@@ -120,7 +122,7 @@ public class JavaMembersGetter extends MembersGetter {
 
 
     JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
-    item.setInferenceSubstitutor(substitutor);
+    item.setInferenceSubstitutor(substitutor, myPlace);
     return item;
   }
 }
