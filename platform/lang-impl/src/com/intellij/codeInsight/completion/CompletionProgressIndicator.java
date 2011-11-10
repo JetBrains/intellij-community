@@ -135,7 +135,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getNewValue() != null) {
-          LOG.error("An attempt to change the lookup during completion");
+          LOG.error("An attempt to change the lookup during completion, phase = " + CompletionServiceImpl.getCompletionPhase());
         }
       }
     };
