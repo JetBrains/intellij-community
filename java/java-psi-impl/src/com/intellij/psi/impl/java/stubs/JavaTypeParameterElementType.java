@@ -16,12 +16,11 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.cache.RecordUtil;
-import com.intellij.psi.impl.compiled.ClsTypeParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
@@ -51,12 +50,7 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
 
   @Override
   public PsiTypeParameter createPsi(final PsiTypeParameterStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsTypeParameterImpl(stub);
-    }
-    else {
-      return new PsiTypeParameterImpl(stub);
-    }
+    return getPsiFactory(stub).createTypeParameter(stub);
   }
 
   @Override

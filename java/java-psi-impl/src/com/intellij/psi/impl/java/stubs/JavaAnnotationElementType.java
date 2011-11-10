@@ -20,7 +20,6 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -50,12 +49,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
 
   @Override
   public PsiAnnotation createPsi(final PsiAnnotationStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsAnnotationImpl(stub);
-    }
-    else {
-      return new PsiAnnotationImpl(stub);
-    }
+    return getPsiFactory(stub).createAnnotation(stub);
   }
 
   @Override

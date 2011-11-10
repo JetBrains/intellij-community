@@ -22,7 +22,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl;
@@ -53,12 +52,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
   @Override
   public PsiMethod createPsi(final PsiMethodStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsMethodImpl(stub);
-    }
-    else {
-      return stub.isAnnotationMethod() ? new PsiAnnotationMethodImpl(stub) : new PsiMethodImpl(stub);
-    }
+    return getPsiFactory(stub).createMethod(stub);
   }
 
   @Override
