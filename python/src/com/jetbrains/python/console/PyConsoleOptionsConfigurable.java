@@ -93,7 +93,8 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
   private static class PyConsoleOptionsPanel {
     private JPanel myWholePanel;
     private JPanel mySpecificOptionsPanel;
-    private JBCheckBox myShowDebugConsoleByDefaultCheckBox;
+    private JBCheckBox myShowDebugConsoleByDefault;
+    private JBCheckBox myShowSeparatorLine;
     private PyConsoleSpecificOptionsPanel myPythonConsoleOptionsPanel;
     private PyConsoleSpecificOptionsPanel myDjangoConsoleOptionsPanel;
     private PyConsoleOptionsProvider myOptionsProvider;
@@ -120,11 +121,13 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
       if (myDjangoConsoleOptionsPanel != null) {
         myDjangoConsoleOptionsPanel.apply();
       }
-      myOptionsProvider.setShowDebugConsoleByDefault(myShowDebugConsoleByDefaultCheckBox.isSelected());
+      myOptionsProvider.setShowDebugConsoleByDefault(myShowDebugConsoleByDefault.isSelected());
+      myOptionsProvider.setShowSeparatorLine(myShowSeparatorLine.isSelected());
     }
 
     public void reset() {
-      myShowDebugConsoleByDefaultCheckBox.setSelected(myOptionsProvider.isShowDebugConsoleByDefault());
+      myShowDebugConsoleByDefault.setSelected(myOptionsProvider.isShowDebugConsoleByDefault());
+      myShowSeparatorLine.setSelected(myOptionsProvider.isShowSeparatorLine());
       myPythonConsoleOptionsPanel.reset();
       if (myDjangoConsoleOptionsPanel != null) {
         myDjangoConsoleOptionsPanel.reset();
@@ -132,7 +135,8 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
     }
 
     public boolean isModified() {
-      return myShowDebugConsoleByDefaultCheckBox.isSelected() != myOptionsProvider.isShowDebugConsoleByDefault() ||
+      return myShowDebugConsoleByDefault.isSelected() != myOptionsProvider.isShowDebugConsoleByDefault() ||
+             myShowSeparatorLine.isSelected() != myOptionsProvider.isShowSeparatorLine() ||
              myPythonConsoleOptionsPanel.isModified() || (myDjangoConsoleOptionsPanel != null && myDjangoConsoleOptionsPanel.isModified());
     }
   }

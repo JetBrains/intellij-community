@@ -41,16 +41,16 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   public void apply() {
-    myConsoleSettings.myStartScript = myEditorTextField.getText();
+    myConsoleSettings.myCustomStartScript = myEditorTextField.getText();
     myConsoleSettings.apply(myCommonOptionsForm);
   }
 
   public boolean isModified() {
-    return !myEditorTextField.getText().equals(myConsoleSettings.myStartScript) || myConsoleSettings.isModified(myCommonOptionsForm);
+    return !myEditorTextField.getText().equals(myConsoleSettings.myCustomStartScript) || myConsoleSettings.isModified(myCommonOptionsForm);
   }
 
   public void reset() {
-    myEditorTextField.setText(myConsoleSettings.myStartScript);
+    myEditorTextField.setText(myConsoleSettings.myCustomStartScript);
     myConsoleSettings.reset(myCommonOptionsForm);
   }
 
@@ -69,7 +69,7 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   private void configureStartingScriptPanel(final Project project, final PyConsoleOptionsProvider.PyConsoleSettings optionsProvider) {
-    myEditorTextField = new EditorTextField(createDocument(project, optionsProvider.myStartScript), project, PythonFileType.INSTANCE) {
+    myEditorTextField = new EditorTextField(createDocument(project, optionsProvider.myCustomStartScript), project, PythonFileType.INSTANCE) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
