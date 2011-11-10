@@ -38,13 +38,15 @@ import java.util.LinkedHashSet;
  * User: anna
  */
 public class AvailablePluginsManagerMain extends PluginManagerMain {
+  public static final String MANAGE_REPOSITORIES = "Manage repositories...";
+
   private PluginManagerMain installed;
 
   public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings) {
     super(uiSettings);
     this.installed = installed;
     init();
-    final JButton manageRepositoriesBtn = new JButton("Manage repositories...");
+    final JButton manageRepositoriesBtn = new JButton(MANAGE_REPOSITORIES);
     manageRepositoriesBtn.setMnemonic('m');
     manageRepositoriesBtn.addActionListener(new ActionListener() {
       @Override

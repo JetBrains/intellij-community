@@ -17,13 +17,14 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
+import com.intellij.ide.plugins.AvailablePluginsManagerMain;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
@@ -95,6 +97,11 @@ public class TraverseUIStarter implements ApplicationStarter {
         processKeymap(configurableElement);
       } else if (configurable instanceof OptionsContainingConfigurable){
         processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
+      } else if (configurable instanceof PluginManagerConfigurable) {
+        final TreeSet<OptionDescription> descriptions = wordsToOptionDescriptors(Collections.singleton(AvailablePluginsManagerMain.MANAGE_REPOSITORIES));
+        for (OptionDescription description : descriptions) {
+          append(null, AvailablePluginsManagerMain.MANAGE_REPOSITORIES, description.getOption(), configurableElement);
+        }
       }
       root.addContent(configurableElement);
       configurable.disposeUIResources();
