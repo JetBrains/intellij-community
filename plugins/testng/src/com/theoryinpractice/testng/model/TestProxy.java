@@ -17,10 +17,7 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
@@ -162,7 +159,7 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Navigatable getDescriptor(final Location location) {
+  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
     if (location == null) return null;
     return EditSourceUtil.getDescriptor(location.getPsiElement());
   }

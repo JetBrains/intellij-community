@@ -23,6 +23,7 @@ import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -103,7 +104,7 @@ public class TestProxy extends AbstractTestProxy {
     return myParent;
   }
 
-  public Navigatable getDescriptor(final Location location) {
+  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
     return getState().getDescriptor(location);
   }
 

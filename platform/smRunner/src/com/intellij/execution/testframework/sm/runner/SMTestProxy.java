@@ -17,10 +17,8 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.TestsLocationProviderUtil;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
@@ -57,10 +55,12 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myHasCriticalErrors = false;
   private boolean myHasErrorsCached = false;
 
+  @Nullable private String myStacktrace;
+
   private final boolean myIsSuite;
   private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
   private boolean myIsEmpty = true;
-  TestLocationProvider myLocator = null;
+  TestLocationProvider myCustomLocator = null;
 
   public SMTestProxy(final String testName, final boolean isSuite,
                      @Nullable final String locationUrl) {
@@ -70,7 +70,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void setLocator(@NotNull TestLocationProvider locator) {
-    myLocator = locator;
+    myCustomLocator = locator;
   }
 
   public boolean isInProgress() {
@@ -125,6 +125,10 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
     return false;
+  }
+
+  private void setStacktraceIfNotSet(@Nullable String stacktrace) {
+    if (myStacktrace == null) myStacktrace = stacktrace;
   }
 
   public boolean isLeaf() {
@@ -184,8 +188,8 @@ public class SMTestProxy extends AbstractTestProxy {
     final boolean isDumbMode = DumbService.isDumb(project);
 
     if (protocolId != null && path != null) {
-      if (myLocator != null) {
-        List<Location> locations = myLocator.getLocation(protocolId, path, project);
+      if (myCustomLocator != null) {
+        List<Location> locations = myCustomLocator.getLocation(protocolId, path, project);
         if (!locations.isEmpty()) {
           return locations.iterator().next();
         }
@@ -205,14 +209,20 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Navigatable getDescriptor(final Location location) {
+  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
     // by location gets navigatable element.
     // It can be file or place in file (e.g. when OPEN_FAILURE_LINE is enabled)
+    if (location == null) return null;
 
-    if (location != null) {
-      return EditSourceUtil.getDescriptor(location.getPsiElement());
+    final String stacktrace = myStacktrace;
+    if (stacktrace != null && (testConsoleProperties instanceof SMStacktraceParser) && isLeaf()) {
+      final Navigatable result = ((SMStacktraceParser)testConsoleProperties).getErrorNavigatable(location.getProject(), stacktrace);
+      if (result != null) {
+        return result;
+      }
     }
-    return null;
+
+    return EditSourceUtil.getDescriptor(location.getPsiElement());
   }
 
   public boolean isSuite() {
@@ -313,6 +323,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public void setTestFailed(@NotNull final String localizedMessage,
                             @Nullable final String stackTrace,
                             final boolean testError) {
+    setStacktraceIfNotSet(stackTrace);
     myState = testError
               ? new TestErrorState(localizedMessage, stackTrace)
               : new TestFailedState(localizedMessage, stackTrace);
@@ -323,6 +334,7 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
+    setStacktraceIfNotSet(stackTrace);
     myState = new TestComparisionFailedState(localizedMessage, stackTrace,
                                              actualText, expectedText);
     fireOnNewPrintable(myState);
@@ -330,6 +342,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setTestIgnored(@NotNull final String ignoreComment,
                              @Nullable final String stackTrace) {
+    setStacktraceIfNotSet(stackTrace);
     myState = new TestIgnoredState(ignoreComment, stackTrace);
     fireOnNewPrintable(myState);
   }
@@ -427,6 +440,8 @@ public class SMTestProxy extends AbstractTestProxy {
                        @Nullable final String stackTrace,
                        final boolean isCritical) {
     myHasCriticalErrors = isCritical;
+    setStacktraceIfNotSet(stackTrace);
+
     addLast(new Printable() {
       public void printOn(final Printer printer) {
         final String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
