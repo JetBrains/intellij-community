@@ -186,22 +186,36 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static void doOpen(@NotNull final String path) throws IOException, ExecutionException {
-
     if (SystemInfo.isWindows) {
       new GeneralCommandLine("explorer", "/select,", path).createProcess();
+      return;
     }
-    else if (SystemInfo.isMac) {
+
+    if (SystemInfo.isMac) {
       final String script = String.format(
         "tell application \"Finder\"\n" +
         "\treveal {\"%s\"} as POSIX file\n" +
         "\tactivate\n" +
         "end tell", path);
       new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
+      return;
     }
-    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      Desktop.getDesktop().open(new File(path));
+
+    // workaround for Ubuntu 11.10 inability to open file:/path/ URLs
+    try {
+      if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+        Desktop.getDesktop().open(new File(path));
+        return;
+      }
     }
-    else if (SystemInfo.hasXdgOpen) {
+    catch (IOException e) {
+      final String message = e.getMessage();
+      if (!new File(path).isDirectory() || message == null || !message.startsWith("Failed to show URI:file")) {
+        throw e;
+      }
+    }
+
+    if (SystemInfo.hasXdgOpen) {
       new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
     }
     else if (SystemInfo.isGnome) {
