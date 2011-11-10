@@ -33,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -149,6 +151,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
+    Set<PyType> visited = new HashSet<PyType>();
     if (type == null) {
       return UNKNOWN;
     }
@@ -167,7 +170,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     if (type instanceof PyUnionType) {
-      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
+      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getResolvedMembers(context),
                                                           new Function<PyType, String>() {
                                                             @Override
                                                             public String fun(PyType t) {

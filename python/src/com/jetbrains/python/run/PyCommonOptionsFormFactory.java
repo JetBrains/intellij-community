@@ -10,5 +10,5 @@ public abstract class PyCommonOptionsFormFactory {
     return ServiceManager.getService(PyCommonOptionsFormFactory.class);
   }
 
-  public abstract AbstractPyCommonOptionsForm createForm(AbstractPythonRunConfiguration runConfiguration);
+  public abstract AbstractPyCommonOptionsForm createForm(PyCommonOptionsFormData data);
 }

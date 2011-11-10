@@ -69,8 +69,6 @@ public class PythonSdkType extends SdkType {
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
 
-  private List<String> myCachedSysPath;
-
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
   }
@@ -557,14 +555,12 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public List<String> getSysPath(String bin_path) {
+  public static List<String> getSysPath(String bin_path) {
     String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
       final List<String> paths = getSysPathsFromScript(bin_path);
-      myCachedSysPath = paths;
       if (paths == null) throw new InvalidSdkException("Failed to determine Python's sys.path value");
-      myCachedSysPath = Collections.unmodifiableList(paths);
       return paths;
     }
     else { // mock sdk
@@ -572,12 +568,6 @@ public class PythonSdkType extends SdkType {
       ret.add(working_dir);
       return ret;
     }
-  }
-
-  @Nullable
-  public List<String> getCachedSysPath(String bin_path) {
-    if (myCachedSysPath != null) return myCachedSysPath;
-    else return getSysPath(bin_path);
   }
 
 
@@ -661,35 +651,33 @@ public class PythonSdkType extends SdkType {
     return type == OrderRootType.CLASSES;
   }
 
-  static void refreshSkeletonsOfAllSDKs(final Project project) {
+  static void refreshSkeletonsOfSDK(Sdk sdk) {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failed_sdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final List<Sdk> sdkList = getAllSdks();
     List<String> sdk_errors;
     Ref<Boolean> migration_flag = new Ref<Boolean>(false);
-    for (Sdk sdk : sdkList) {
-      final String homePath = sdk.getHomePath();
-      final String skeletonsPath = findSkeletonsPath(sdk);
-      if (skeletonsPath == null) {
-        LOG.info("Could not find skeletons path for SDK path " + homePath);
+    final String homePath = sdk.getHomePath();
+    final String skeletonsPath = findSkeletonsPath(sdk);
+    if (skeletonsPath == null) {
+      LOG.info("Could not find skeletons path for SDK path " + homePath);
+    }
+    else {
+      LOG.info("Refreshing skeletons for " + homePath);
+      try {
+        SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
+        sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migration_flag);
+        if (sdk_errors.size() > 0) {
+          String sdk_name = sdk.getName();
+          List<String> known_errors = errors.get(sdk_name);
+          if (known_errors == null) errors.put(sdk_name, sdk_errors);
+          else known_errors.addAll(sdk_errors);
+        }
       }
-      else {
-        LOG.info("Refreshing skeletons for " + homePath);
-        try {
-          SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-          sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migration_flag);
-          if (sdk_errors.size() > 0) {
-            String sdk_name = sdk.getName();
-            List<String> known_errors = errors.get(sdk_name);
-            if (known_errors == null) errors.put(sdk_name, sdk_errors);
-            else known_errors.addAll(sdk_errors);
-          }
-        }
-        catch (InvalidSdkException ex) {
-          failed_sdks.add(sdk.getName());
-          LOG.warn("Problems with SDK " + sdk.getHomePath(), ex);
-        }
+      catch (InvalidSdkException ex) {
+        failed_sdks.add(sdk.getName());
+        LOG.warn("Problems with SDK " + sdk.getHomePath(), ex);
       }
     }
     if (failed_sdks.size() > 0 || errors.size() > 0) {

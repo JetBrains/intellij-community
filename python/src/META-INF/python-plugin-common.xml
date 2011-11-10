@@ -377,6 +377,9 @@
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
 
+    <projectConfigurable instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
+    <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
@@ -392,6 +395,8 @@
 
     <projectService serviceInterface="com.jetbrains.python.coverage.PyCoverageAnnotator"
                     serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
+
+    <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
@@ -773,9 +778,6 @@
     </component>
     <component>
       <implementation-class>com.jetbrains.django.lang.template.DjangoTemplatePsiManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.jetbrains.python.sdk.PythonSdkUpdater</implementation-class>
     </component>
   </project-components>
 

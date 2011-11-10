@@ -134,12 +134,15 @@ public class PySkeletonRefresher {
 
     indicate(PyBundle.message("sdk.gen.querying.$0", readable_path));
     // get generator version and binary libs list in one go
+
+    long start_time = System.currentTimeMillis();
     final ProcessOutput run_result = SdkUtil.getProcessOutput(
       parent_dir,
-      new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L", "-s", getExtraSyspath()},
+      new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", getExtraSyspath()},
       PythonSdkType.getVirtualEnvAdditionalEnv(home_path),
       MINUTE * 4 // see PY-3898
     );
+    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - start_time) + " ms");
     if (run_result.getExitCode() != 0) {
       StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(home_path);
       if (run_result.isTimeout()) sb.append(": timed out.");
@@ -314,6 +317,7 @@ public class PySkeletonRefresher {
     new File(skeletonsRoot).mkdirs();
 
 
+    long startTime = System.currentTimeMillis();
     final ProcessOutput run_result = SdkUtil.getProcessOutput(
       new File(binary_path).getParent(),
       new String[]{
@@ -325,6 +329,7 @@ public class PySkeletonRefresher {
       PythonSdkType.getVirtualEnvAdditionalEnv(binary_path), MINUTE *5
     );
     run_result.checkSuccess(LOG);
+    LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
   }
 
   /**

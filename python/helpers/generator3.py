@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.96" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.97" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1155,6 +1155,7 @@ class ModuleRedeclarator(object):
         @param seen_values a list of keys we've seen if we're processing a dict
         """
         SELF_VALUE = "<value is a self-reference, replaced by this string>"
+        ERR_VALUE = "<failed to retrieve the value>"
         if isinstance(p_value, SIMPLEST_TYPES):
             out(indent, prefix, reliable_repr(p_value), postfix)
         else:
@@ -1199,7 +1200,14 @@ class ModuleRedeclarator(object):
                             pass # unsortable keys happen, e,g, in py3k _ctypes
                         for k in keys:
                             v = p_value[k]
-                            if v in seen_values:
+
+                            try:
+                                is_seen = v in seen_values
+                            except:
+                                is_seen = False
+                                v = ERR_VALUE
+
+                            if is_seen:
                                 v = SELF_VALUE
                             elif not isinstance(v, SIMPLEST_TYPES):
                                 seen_values.append(v)
@@ -2127,6 +2135,8 @@ def cut_binary_lib_suffix(path, f):
     @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
     Note: if for .pyc or .pyo file a .py is found, None is returned.
     """
+    if not f.endswith(".pyc") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(".pyd"):
+        return None
     ret = None
     m = BIN_MODULE_FNAME_PAT.match(f)
     if m:
@@ -2165,6 +2175,12 @@ def is_skipped_module(path, f):
     return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')])
 
 
+def is_module(d, root):
+    return (os.path.exists(os.path.join(root, d, "__init__.py")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyc")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyo")))
+
+
 def find_binaries(paths):
     """
     Finds binaries in the given list of paths.
@@ -2183,6 +2199,11 @@ def find_binaries(paths):
     for path in paths:
         for root, dirs, files in os.walk(path):
             if root.endswith('__pycache__'): continue
+            dirs_copy = list(dirs)
+            for d in dirs_copy:
+                if d.endswith("__pycache__") or not is_module(d, root):
+                    dirs.remove(d)
+
             cutpoint = path.rfind(SEP)
             if cutpoint > 0:
                 preprefix = path[(cutpoint + len(SEP)):] + '.'

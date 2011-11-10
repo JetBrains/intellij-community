@@ -108,7 +108,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
     printText(statement, attributes);
-    myExecuteActionHandler.processLine(statement);
+    myExecuteActionHandler.processLine(statement, true);
   }
 
   public void printText(String text, final Key attributes) {

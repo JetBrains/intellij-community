@@ -28,7 +28,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JComponent anchor;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
-    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
+    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
 
     Project project = configuration.getProject();

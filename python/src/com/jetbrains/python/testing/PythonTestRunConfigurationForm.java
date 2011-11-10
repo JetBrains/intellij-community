@@ -55,7 +55,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   public PythonTestRunConfigurationForm(final Project project,
                                         final AbstractPythonTestRunConfiguration configuration) {
     myProject = project;
-    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
+    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
     initComponents();
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -46,7 +47,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   }
 
   public List<Module> getValidModules() {
-    final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    return getValidModules(getProject());
+  }
+
+  public static List<Module> getValidModules(Project project) {
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
     List<Module> result = Lists.newArrayList();
     for (Module module : modules) {
       if (PythonSdkType.findPythonSdk(module) != null) {
@@ -54,6 +59,20 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
       }
     }
     return result;
+  }
+
+  public PyCommonOptionsFormData getCommonOptionsFormData() {
+    return new PyCommonOptionsFormData() {
+      @Override
+      public Project getProject() {
+        return AbstractPythonRunConfiguration.this.getProject();
+      }
+
+      @Override
+      public List<Module> getValidModules() {
+        return AbstractPythonRunConfiguration.this.getValidModules();
+      }
+    };
   }
 
   @Override

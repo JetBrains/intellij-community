@@ -2,9 +2,8 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -15,19 +14,15 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * A component that initiates a refresh of all project's Python SDKs.
@@ -35,69 +30,82 @@ import java.util.List;
  * <br/>
  * @author yole
  */
-public class PythonSdkUpdater implements ProjectComponent {
+public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
-  public static final @NotNull Key<Boolean> SKELETONS_ALREADY_UPDATED_FLAG = new Key<Boolean>("SKELETONS_ALREADY_UPDATED_FLAG");
+  private final Set<String> myAlreadyUpdated = new HashSet<String>();
+  
+  public static PythonSdkUpdater getInstance() {
+    final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
+    for (StartupActivity extension : extensions) {
+      if (extension instanceof PythonSdkUpdater) {
+        return (PythonSdkUpdater) extension;
+      }
+    }
+    throw new UnsupportedOperationException("could not find self");
+  }
 
-  public PythonSdkUpdater(final Project project, StartupManager startupManager) {
+  @Override
+  public void runActivity(final Project project) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
     }
-    startupManager.registerStartupActivity(new Runnable() {
-      public void run() {
-        final Boolean flag = application.getUserData(SKELETONS_ALREADY_UPDATED_FLAG);
-        if (flag == null || !flag) {
-          long start_time = System.currentTimeMillis();
-          final Module[] modules = ModuleManager.getInstance(project).getModules();
-          if (modules.length > 0) {
-            updateSysPath(project, modules[0]);
-          }
-          LOG.info("Refreshing skeletons took " + (System.currentTimeMillis() - start_time) + " ms");
-        }
-        application.putUserData(SKELETONS_ALREADY_UPDATED_FLAG, true);
-      }
-    });
+
+    updateActiveSdks(project, 7000);
   }
 
-  private static void updateSysPath(final Project project, Module module) {
+  public void updateActiveSdks(final Project project, final int delay) {
+    final Set<Sdk> sdksToUpdate = new HashSet<Sdk>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+      if (sdk != null) {
+        final SdkType sdkType = sdk.getSdkType();
+        if (sdkType instanceof PythonSdkType && !myAlreadyUpdated.contains(sdk.getHomePath())) {
+          sdksToUpdate.add(sdk);
+        }
+      }
+    }
+
     // NOTE: everything is run later on the AWT thread
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    if (sdk != null) {
-      final SdkType sdkType = sdk.getSdkType();
-      if (sdkType instanceof PythonSdkType) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
+    if (!sdksToUpdate.isEmpty()) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          if (delay > 0) {
             try {
-              Thread.sleep(7000); // wait until all short-term disk-hitting activity ceases
+              Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
             }
-            catch (InterruptedException ignore) {}
-            // update skeletons
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
-                  @Override
-                  public void run(@NotNull ProgressIndicator indicator) {
-                    PythonSdkType.refreshSkeletonsOfAllSDKs(project); // NOTE: whole thing would need a rename
-                  }
-                });
-              }
-            });
-            // update paths
-            final List<String> sysPath = ((PythonSdkType)sdkType).getSysPath(sdk.getHomePath());
-            if (sysPath != null) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
+            catch (InterruptedException ignore) {
+            }
+          }
+          // update skeletons
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
                 @Override
-                public void run() {
-                  updateSdkPath(sdk, sysPath);
+                public void run(@NotNull ProgressIndicator indicator) {
+                  for (final Sdk sdk : sdksToUpdate) {
+                    PythonSdkType.refreshSkeletonsOfSDK(sdk); // NOTE: whole thing would need a rename
+
+                    long start_time = System.currentTimeMillis();
+                    final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        updateSdkPath(sdk, sysPath);
+                      }
+                    });
+                    LOG.info("Updating sys.path took " + (System.currentTimeMillis() - start_time) + " ms");
+
+                    myAlreadyUpdated.add(sdk.getHomePath());
+                  }
                 }
               });
             }
-          }
-        });
-      }
+          });
+        }
+      });
     }
   }
 
@@ -148,22 +156,5 @@ public class PythonSdkUpdater implements ProjectComponent {
     catch (IOException e) {
       return path;
     }
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "Updating skeletons for binary modules";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

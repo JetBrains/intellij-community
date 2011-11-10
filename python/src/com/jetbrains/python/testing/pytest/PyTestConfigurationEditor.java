@@ -37,7 +37,7 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
 
   public PyTestConfigurationEditor(final Project project, PyTestRunConfiguration configuration) {
     myProject = project;
-    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
+    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel());
 
     String title = PyBundle.message("runcfg.unittest.dlg.select.script.path");

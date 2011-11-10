@@ -106,8 +106,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   @Nullable
   public static PyClass findClass(@NotNull String qName, Project project, GlobalSearchScope scope) {
     int pos = qName.lastIndexOf(".");
-    assert pos > 0;
-    String shortName = qName.substring(pos+1);
+    String shortName = pos > 0 ? qName.substring(pos+1) : qName;
     for (PyClass pyClass : find(shortName, project, scope)) {
       if (pyClass.getQualifiedName().equals(qName)) {
         return pyClass;
