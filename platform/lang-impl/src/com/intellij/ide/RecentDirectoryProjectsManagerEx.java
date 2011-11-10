@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -42,6 +43,7 @@ public class RecentDirectoryProjectsManagerEx extends RecentDirectoryProjectsMan
     super(projectManager, messageBus);
   }
 
+  @NotNull
   @Override
   protected String getProjectDisplayName(Project project) {
     if (ProjectAttachProcessor.canAttachToProject()) {

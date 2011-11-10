@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
@@ -136,9 +137,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
-  @Nullable
+  @NotNull
   protected String getProjectDisplayName(Project project) {
-    return null;
+    return "";
   }
   
 
@@ -175,7 +176,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       final String projectName = getProjectName(path);
       boolean needShowPath = false;
       String displayName = myState.names.get(path);
-      if (displayName == null) {
+      if (StringUtil.isEmptyOrSpaces(displayName)) {
         if (map.get(projectName) > 1) {
           displayName = path;
         }
