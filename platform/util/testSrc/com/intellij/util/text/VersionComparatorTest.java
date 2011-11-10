@@ -79,6 +79,7 @@ public class VersionComparatorTest extends TestCase {
     assertVerLess("sp", "release");
     assertVerLess("release", "trash");
     assertVerLess("trash", "1");
+    assertVerLess("preview", "p");
   }
 
   private void assertStrsEquals(String[] expected, Collection<String> actual) {
