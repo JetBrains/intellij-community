@@ -39,9 +39,11 @@ public class OpenOrAttachDialog extends DialogWrapper {
   private static final String MODE_ATTACH = "attach";
   private static final String MODE_REPLACE = "replace";
   private static final String MODE_NEW = "new";
+  private final boolean myHideReplace;
 
-  protected OpenOrAttachDialog(Project project) {
+  protected OpenOrAttachDialog(Project project, boolean hideReplace) {
     super(project);
+    myHideReplace = hideReplace;
     setTitle("Open Project");
     init();
     MouseAdapter listener = new MouseAdapter() {
@@ -59,13 +61,16 @@ public class OpenOrAttachDialog extends DialogWrapper {
     if (MODE_NEW.equals(mode)) {
       myOpenInNewWindowButton.setSelected(true);
     }
-    else if (MODE_REPLACE.equals(mode)) {
+    else if (MODE_REPLACE.equals(mode) || hideReplace) {
       myCurrentWindowButton.setSelected(true);
       myReplaceCheckBox.setSelected(true);
     }
     else {
       myCurrentWindowButton.setSelected(true);
       myReplaceCheckBox.setSelected(false);
+    }
+    if (hideReplace) {
+      myReplaceCheckBox.setVisible(false);
     }
     myReplaceCheckBox.setEnabled(myCurrentWindowButton.isSelected());
     final ActionListener listener1 = new ActionListener() {
@@ -79,11 +84,11 @@ public class OpenOrAttachDialog extends DialogWrapper {
   }
   
   public boolean isReplace() {
-    return myCurrentWindowButton.isSelected() && myReplaceCheckBox.isSelected();
+    return myCurrentWindowButton.isSelected() && (myReplaceCheckBox.isSelected() || myHideReplace);
   }
   
   public boolean isAttach() {
-    return myCurrentWindowButton.isSelected() && !myReplaceCheckBox.isSelected();
+    return myCurrentWindowButton.isSelected() && !myReplaceCheckBox.isSelected() && !myHideReplace;
   }
 
   @Override

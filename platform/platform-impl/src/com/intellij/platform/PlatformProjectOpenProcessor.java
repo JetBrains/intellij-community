@@ -109,8 +109,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && allowAttach) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose);
+      if (ProjectAttachProcessor.canAttachToProject()) {
+        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, !allowAttach);
         dialog.show();
         if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
           return null;
