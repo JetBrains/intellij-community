@@ -124,6 +124,10 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     public String getWorkingDirectory() {
       return myWorkingDirectory;
     }
+
+    public boolean isUseModuleSdk() {
+      return myUseModuleSdk;
+    }
   }
 }
 
