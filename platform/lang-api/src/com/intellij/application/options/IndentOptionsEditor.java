@@ -94,7 +94,7 @@ public class IndentOptionsEditor extends OptionGroup {
   }
 
   protected int getUIIndent() {
-    return getFieldValue(myIndentField, 1, 4);
+    return getFieldValue(myIndentField, 0, 4);
   }
 
   protected int getUITabSize() {
