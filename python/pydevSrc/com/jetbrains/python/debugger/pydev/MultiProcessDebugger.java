@@ -339,20 +339,30 @@ public class MultiProcessDebugger implements ProcessDebugger {
         try {
           Socket socket = myServerSocket.accept();
 
-          final ServerSocket serverSocket = createServerSocket();
-          final RemoteDebugger debugger =
-            new RemoteDebugger(myMultiProcessDebugger.myDebugProcess, serverSocket, myMultiProcessDebugger.myTimeoutInMillis);
-          addCloseListener(debugger);
-          sendDebuggerPort(socket, serverSocket);
-          socket.close();
-          debugger.waitForConnect();
-          debugger.handshake();
-          myMultiProcessDebugger.addDebugger(debugger);
-          myMultiProcessDebugger.myDebugProcess.init();
+          try {
+            final ServerSocket serverSocket = createServerSocket();
+            final RemoteDebugger debugger =
+              new RemoteDebugger(myMultiProcessDebugger.myDebugProcess, serverSocket, myMultiProcessDebugger.myTimeoutInMillis);
+            addCloseListener(debugger);
+            sendDebuggerPort(socket, serverSocket);
+            socket.close();
+            debugger.waitForConnect();
+            debugger.handshake();
+            myMultiProcessDebugger.addDebugger(debugger);
+            myMultiProcessDebugger.myDebugProcess.init();
 
-          debugger.run();
+            debugger.run();
+          }
+          finally {
+            if (!socket.isClosed()) {
+              socket.close();
+            }
+          }
         }
         catch (Exception ignore) {
+          if (myServerSocket == null) {
+            myShouldAccept = false;
+          }
         }
       }
     }
@@ -393,6 +403,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
         catch (IOException ignore) {
         }
         myServerSocket = null;
+        myShouldAccept = false;
       }
     }
   }
