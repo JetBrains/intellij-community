@@ -217,14 +217,18 @@ public class Git {
       h.addParameters(remote.getName());
       h.addParameters(pushSpec.getRefspec());
     }
-    return run(h);
+    return run(h, true);
   }
+
+  private static GitCommandResult run(@NotNull GitLineHandler handler) {
+    return run(handler, false);
+  } 
 
   /**
    * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
    */
-  private static GitCommandResult run(GitLineHandler handler) {
-    handler.setNoSSH(true);
+  private static GitCommandResult run(@NotNull GitLineHandler handler, boolean remote) {
+    handler.setNoSSH(!remote);
 
     final List<String> errorOutput = new ArrayList<String>();
     final List<String> output = new ArrayList<String>();
