@@ -16,9 +16,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonResolveUtil;
-import com.jetbrains.cython.psi.CythonFile;
-import com.jetbrains.cython.psi.CythonIncludeStatement;
-import com.jetbrains.cython.psi.CythonVariable;
+import com.jetbrains.cython.psi.*;
 import com.jetbrains.django.util.PythonDataflowUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -210,6 +208,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final CythonFile implicit = CythonResolveUtil.findImplicitDefinitionFile(realContext);
       if (implicit != null) {
         uexpr = implicit.getElementNamed(referencedName);
+      }
+      final ScopeOwner owner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
+      if (owner instanceof CythonFile) {
+        final PsiElement resolved = ((CythonFile)owner).getElementNamed(referencedName);
+        if ((resolved instanceof CythonFunction && ((CythonFunction)resolved).isCythonLevel()) ||
+            resolved instanceof CythonFile) {
+          ret.poke(resolved, getRate(resolved));
+        }
       }
     }
     if (uexpr != null) {
