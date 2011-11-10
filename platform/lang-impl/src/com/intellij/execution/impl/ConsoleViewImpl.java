@@ -336,10 +336,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       public void run() {
         flushDeferredText(false);
         if (myEditor == null) return;
-        int moveOffset = offset;
-        int textLength = myEditor.getDocument().getTextLength();
-        if (myBuffer.isUseCyclicBuffer() && moveOffset >= textLength) {
-          moveOffset = textLength - 1;
+        int moveOffset = Math.min(offset, myEditor.getDocument().getTextLength());
+        if (myBuffer.isUseCyclicBuffer() && moveOffset >= myEditor.getDocument().getTextLength()) {
+          moveOffset = 0;
         }
         myEditor.getCaretModel().moveToOffset(moveOffset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
