@@ -342,6 +342,14 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return method instanceof GrLightMethodBuilder && kind.equals(((GrLightMethodBuilder)method).myMethodKind);
   }
 
+  public static boolean checkKind(@Nullable PsiElement method, @NotNull Object kind1, @NotNull Object kind2) {
+    if (method instanceof GrLightMethodBuilder) {
+      Object kind = ((GrLightMethodBuilder)method).getMethodKind();
+      return kind1.equals(kind) || kind2.equals(kind);
+    }
+    return false;
+  }
+
   public String toString() {
     return myMethodKind + ":" + getName();
   }
