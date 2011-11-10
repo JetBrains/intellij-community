@@ -17,10 +17,7 @@
 package org.jetbrains.android.run.testing;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.util.config.Storage;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,16 +26,8 @@ import com.intellij.util.config.Storage;
  * Time: 1:20:40 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AndroidTestConsoleProperties extends TestConsoleProperties {
-  private final RuntimeConfiguration myConfig;
-
+public class AndroidTestConsoleProperties extends SMTRunnerConsoleProperties {
   public AndroidTestConsoleProperties(final AndroidTestRunConfiguration configuration, Executor executor) {
-    super(new Storage.PropertiesComponentStorage("Android.", PropertiesComponent.getInstance()), configuration.getProject(), executor);
-    myConfig = configuration;
+    super(configuration, "Android", executor);
   }
-
-  public RuntimeConfiguration getConfiguration() {
-    return myConfig;
-  }
-
 }

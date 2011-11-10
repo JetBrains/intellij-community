@@ -569,12 +569,12 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testNavigatable() {
-    assertNull(mySuite.getDescriptor(null));
+    assertNull(mySuite.getDescriptor(null, null));
 
     mySuite.addChild(mySimpleTest);
 
-    assertNull(mySuite.getDescriptor(null));
-    assertNull(mySimpleTest.getDescriptor(null));
+    assertNull(mySuite.getDescriptor(null, null));
+    assertNull(mySimpleTest.getDescriptor(null, null));
   }
 
   public void testShouldRun_Test() {
