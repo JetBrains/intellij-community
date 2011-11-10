@@ -287,6 +287,10 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   }
 
   private void doRender(@NotNull final AndroidFacet facet, @NotNull String layoutXmlText, @NotNull final String fileName) {
+    if (myToolWindowForm == null) {
+      return;
+    }
+
     BufferedImage image = null;
     RenderingErrorMessage errorMessage = null;
     String warnMessage = null;
