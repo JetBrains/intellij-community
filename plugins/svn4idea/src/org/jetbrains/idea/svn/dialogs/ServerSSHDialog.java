@@ -45,7 +45,7 @@ public class ServerSSHDialog extends DialogWrapper {
     myStore = store;
     myHost = host;
     myAlgorithm = algorithm == null ? "" : algorithm;
-    myFingerprints = SVNSSLUtil.getFingerprint(fingerprints);
+    myFingerprints = SVNSSLUtil.getFingerprint(fingerprints, "SHA1");
     myResult = ISVNAuthenticationProvider.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssh.accept"));
     setCancelButtonText(SvnBundle.message("button.text.ssh.reject"));
