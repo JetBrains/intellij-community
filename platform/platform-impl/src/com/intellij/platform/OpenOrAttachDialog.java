@@ -18,8 +18,11 @@ package com.intellij.platform;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -27,11 +30,11 @@ import java.awt.event.MouseEvent;
  * @author yole
  */
 public class OpenOrAttachDialog extends DialogWrapper {
-  private JRadioButton myAttachButton;
-  private JRadioButton myReplaceButton;
+  private JRadioButton myCurrentWindowButton;
   private JRadioButton myOpenInNewWindowButton;
   private JPanel myMainPanel;
-  
+  private JBCheckBox myReplaceCheckBox;
+
   private static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
   private static final String MODE_ATTACH = "attach";
   private static final String MODE_REPLACE = "replace";
@@ -40,8 +43,6 @@ public class OpenOrAttachDialog extends DialogWrapper {
   protected OpenOrAttachDialog(Project project) {
     super(project);
     setTitle("Open Project");
-    myAttachButton.setText("Attach to '" + project.getName() + "' in current window");
-    myAttachButton.setMnemonic('A');
     init();
     MouseAdapter listener = new MouseAdapter() {
       @Override
@@ -51,8 +52,7 @@ public class OpenOrAttachDialog extends DialogWrapper {
         }
       }
     };
-    myAttachButton.addMouseListener(listener);
-    myReplaceButton.addMouseListener(listener);
+    myCurrentWindowButton.addMouseListener(listener);
     myOpenInNewWindowButton.addMouseListener(listener);
 
     final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
@@ -60,19 +60,30 @@ public class OpenOrAttachDialog extends DialogWrapper {
       myOpenInNewWindowButton.setSelected(true);
     }
     else if (MODE_REPLACE.equals(mode)) {
-      myReplaceButton.setSelected(true);
+      myCurrentWindowButton.setSelected(true);
+      myReplaceCheckBox.setSelected(true);
     }
     else {
-      myAttachButton.setSelected(true);      
+      myCurrentWindowButton.setSelected(true);
+      myReplaceCheckBox.setSelected(false);
     }
+    myReplaceCheckBox.setEnabled(myCurrentWindowButton.isSelected());
+    final ActionListener listener1 = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myReplaceCheckBox.setEnabled(myCurrentWindowButton.isSelected());
+      }
+    };
+    myCurrentWindowButton.addActionListener(listener1);
+    myOpenInNewWindowButton.addActionListener(listener1);
   }
   
   public boolean isReplace() {
-    return myReplaceButton.isSelected();
+    return myCurrentWindowButton.isSelected() && myReplaceCheckBox.isSelected();
   }
   
   public boolean isAttach() {
-    return myAttachButton.isSelected();
+    return myCurrentWindowButton.isSelected() && !myReplaceCheckBox.isSelected();
   }
 
   @Override
