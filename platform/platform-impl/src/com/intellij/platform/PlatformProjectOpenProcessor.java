@@ -132,7 +132,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         }
       }
     }
-    
+
+    boolean runConfigurators = true;
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
     if (projectDir.exists()) {
@@ -142,6 +143,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         }
         
         project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
+        runConfigurators = false;
       }
       catch (Exception e) {
         // ignore
@@ -156,11 +158,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     if (project == null) return null;
-    final Module module = runDirectoryProjectConfigurators(baseDir, project);
+    final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : null;
 
     openFileFromCommandLine(project, virtualFile, line);
     projectManager.openProject(project);
-    if (callback != null) {
+    if (callback != null && runConfigurators) {
       callback.projectOpened(project, module);
     }
 
