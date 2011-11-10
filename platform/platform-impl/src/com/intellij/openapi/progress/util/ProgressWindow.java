@@ -210,9 +210,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
             }
           });
         }
-        if (!myWasShown && object instanceof PaintEvent){
-          return false;
-        }
         return isStarted() && !isRunning();
       }
     });
