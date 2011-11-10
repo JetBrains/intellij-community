@@ -210,6 +210,7 @@ public class CommandMerger {
 
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
       if (!undoRedo.execute(false)) return;
+      if (isUndo ? undoRedo.isMerged4Undo() : undoRedo.isMerged4Redo()) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
       if (!shouldRepeat) break;
     }

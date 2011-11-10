@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -28,6 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -66,7 +69,14 @@ public class VariableInplaceRenameHandler implements RenameHandler {
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
-    if (element == null) return;
+    if (element == null) {
+      if (LookupManager.getActiveLookup(editor) != null) {
+        element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiNamedElement.class);
+        if (element == null) return;
+      } else {
+        return;
+      }
+    }
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (checkAvailable(element, editor, dataContext)) {
       doRename(element, editor, dataContext);

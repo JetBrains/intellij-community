@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -191,9 +192,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       conflicts);
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+  @Override
+  public void prepareRenaming(PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
-    OverridingMethodsSearch.search(method, true).forEach(new Processor<PsiMethod>() {
+    OverridingMethodsSearch.search(method, scope, true).forEach(new Processor<PsiMethod>() {
       public boolean process(PsiMethod overrider) {
         final String overriderName = overrider.getName();
         final String baseName = method.getName();

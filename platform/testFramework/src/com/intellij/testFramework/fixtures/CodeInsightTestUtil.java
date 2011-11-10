@@ -185,8 +185,10 @@ public class CodeInsightTestUtil {
 
       state = TemplateManagerImpl.getTemplateState(editor);
       assert state != null;
-      state.gotoEnd();
-      renamer.performAutomaticRename(newName, elementAtCaret);
+      state.gotoEnd(false);
+    }
+    catch (Exception er) {
+      er.printStackTrace();
     }
     finally {
       templateManager.setTemplateTesting(false);

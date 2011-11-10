@@ -64,6 +64,15 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   @Override
+  public boolean isMemberInplaceRenameAvailable(PsiElement elementToRename, PsiElement context) {
+    if (context != null && context.getContainingFile() != elementToRename.getContainingFile()) return false;
+    if (elementToRename instanceof PsiMethod && ((PsiMethod)elementToRename).findDeepestSuperMethods().length > 0) {
+      return false;
+    }
+    return elementToRename instanceof PsiMember;
+  }
+
+  @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
   }
@@ -118,13 +127,19 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
-    if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter) && !(elementToRename instanceof PsiTypeParameter)) return false;
+    if (!(elementToRename instanceof PsiLocalVariable) &&
+        !(elementToRename instanceof PsiParameter) &&
+        !(elementToRename instanceof PsiTypeParameter)) {
+      return false;
+    }
     SearchScope useScope = PsiSearchHelper.SERVICE.getInstance(elementToRename.getProject()).getUseScope(elementToRename);
     if (!(useScope instanceof LocalSearchScope)) return false;
-    PsiElement[] scopeElements = ((LocalSearchScope) useScope).getScope();
+    PsiElement[] scopeElements = ((LocalSearchScope)useScope).getScope();
     if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in them
         !isElementWithComment(scopeElements) &&              // ... except a case of element and it's doc comment
-        !isResourceVariable(scopeElements)) return false;    // ... and badly scoped resource variables
+        !isResourceVariable(scopeElements)) {
+      return false;    // ... and badly scoped resource variables
+    }
     PsiFile containingFile = elementToRename.getContainingFile();
     return PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false);
   }
@@ -135,7 +150,9 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
     PsiDocComment comment = null;
     PsiDocCommentOwner owner = null;
     for (PsiElement element : scopeElements) {
-      if (element instanceof PsiDocComment) comment = (PsiDocComment)element;
+      if (element instanceof PsiDocComment) {
+        comment = (PsiDocComment)element;
+      }
       else if (element instanceof PsiDocCommentOwner) owner = (PsiDocCommentOwner)element;
     }
 

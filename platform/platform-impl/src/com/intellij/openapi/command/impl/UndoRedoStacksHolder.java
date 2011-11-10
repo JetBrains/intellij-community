@@ -40,7 +40,7 @@ class UndoRedoStacksHolder {
     myUndo = isUndo;
   }
 
-  private LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
+  LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
     return r.getFile() != null ? doGetStackForFile(r) : doGetStackForDocument(r);
   }
 
