@@ -342,6 +342,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
         yield(new Runnable() {
           public void run() {
+            if (isDisposed()) return;
             expandChild(kids, 0, nonStopCondition, file, element, async, indicator, target);
           }
         });
