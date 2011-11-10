@@ -87,7 +87,7 @@ public abstract class PlaybackContext  {
     return myCallClasses;
   }
 
-  public void flushAwtAndRun(final Runnable runnable) {
+  public void flushAwtAndRunInEdt(final Runnable runnable) {
     if (EventQueue.isDispatchThread()) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
@@ -102,6 +102,21 @@ public abstract class PlaybackContext  {
     }
   }
 
+  public void delayAndRunInEdt(final Runnable runnable, final long delay) {
+    runPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          Thread.currentThread().sleep(delay);
+        }
+        catch (InterruptedException e) {
+
+        }
+        SwingUtilities.invokeLater(runnable);
+      }
+    });
+  }
+  
   public void runPooledThread(Runnable runnable) {
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
   }
