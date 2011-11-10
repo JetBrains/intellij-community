@@ -95,7 +95,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
-  private void removePath(final String path) {
+  public void removePath(final String path) {
     if (path == null) return;
     if (SystemInfo.isFileSystemCaseSensitive) {
       myState.recentPaths.remove(path);

@@ -19,7 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.ReopenProjectAction;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.Disposable;
@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -210,7 +211,8 @@ public class WelcomeScreen implements Disposable {
 
     AnAction[] recentProjectsActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     if (recentProjectsActions.length > 0) {
-      myRecentProjectsPanel = setUpRecentProjectsPanel(rootPane, recentProjectsActions);
+      myRecentProjectsPanel = new JPanel(new GridBagLayout());
+      setUpRecentProjectsPanel(rootPane, recentProjectsActions);
       quickStartPanel.add(myRecentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
                                                                       new Insets(14, 30, 5, 0), 0, 0));
     }
@@ -238,25 +240,25 @@ public class WelcomeScreen implements Disposable {
     myWelcomePanel.setTransferHandler(new OpenProjectTransferHandler(myWelcomePanel));
   }
 
-  private JComponent setUpRecentProjectsPanel(IdeRootPane rootPane, AnAction[] recentProjectsActions) {
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBackground(MAIN_PANEL_BACKGROUND);
+  private void setUpRecentProjectsPanel(final IdeRootPane rootPane, final AnAction[] recentProjectsActions) {
+    myRecentProjectsPanel.setBackground(MAIN_PANEL_BACKGROUND);
 
     JLabel caption = new JLabel("Recent Projects");
     caption.setFont(GROUP_CAPTION_FONT);
     caption.setForeground(CAPTION_COLOR);
-    panel.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 20, 0), 0, 0));
+    myRecentProjectsPanel.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 20, 0), 0, 0));
 
     JLabel iconLabel = new JLabel();
     iconLabel.setIcon(IconLoader.getIcon("/general/reopenRecentProject.png"));
-    panel.add(iconLabel, new GridBagConstraints(0, 1, 1, 5, 0, 0, NORTHWEST, NONE, new Insets(5, 0, 15, 20), 0, 0));
+    myRecentProjectsPanel.add(iconLabel, new GridBagConstraints(0, 1, 1, 5, 0, 0, NORTHWEST, NONE, new Insets(5, 0, 15, 20), 0, 0));
 
     int row = 1;
     for (final AnAction action : recentProjectsActions) {
-      SimpleColoredComponent actionLabel = new SimpleColoredComponent();
+      final SimpleColoredComponent actionLabel = new SimpleColoredComponent();
       actionLabel.append(String.valueOf(row), CAPTION_UNDERLINE_ATTRIBUTES);
       actionLabel.append(". ", new SimpleTextAttributes(0, CAPTION_COLOR));
       actionLabel.append(action.getTemplatePresentation().getText(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
+      actionLabel.setIconOnTheRight(true);
 
       if (action instanceof ReopenProjectAction && !((ReopenProjectAction) action).hasPath()) {
         String path = ((ReopenProjectAction)action).getProjectPath();
@@ -276,19 +278,52 @@ public class WelcomeScreen implements Disposable {
         public void mouseClicked(MouseEvent e) {
           if (e.getButton() == MouseEvent.BUTTON1) {
             DataContext dataContext = DataManager.getInstance().getDataContext(myWelcomePanel);
-            AnActionEvent event = new AnActionEvent(e, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-            action.actionPerformed(event);
+            int fragment = actionLabel.findFragmentAt(e.getX());
+            if (fragment == SimpleColoredComponent.FRAGMENT_ICON) {
+              final int rc = Messages.showOkCancelDialog(PlatformDataKeys.PROJECT.getData(dataContext),
+                                                        "Remove '" + action.getTemplatePresentation().getText() +
+                                                        "' from recent projects list?",
+                                                        "Remove Recent Project",
+                                                        Messages.getQuestionIcon());
+              if (rc == 0) {
+                final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
+                manager.removePath(((ReopenProjectAction)action).getProjectPath());
+                final AnAction[] actions = manager.getRecentProjectsActions(false);
+                if (actions.length == 0) {
+                  hideRecentProjectsPanel();
+                }
+                else {
+                  for (int i = myRecentProjectsPanel.getComponentCount() - 1; i >= 0; i--) {
+                    myRecentProjectsPanel.remove(i);
+                  }
+                  setUpRecentProjectsPanel(rootPane, actions);
+                  myRecentProjectsPanel.revalidate();
+                }
+              }
+            }
+            else if (fragment != -1) {
+              AnActionEvent event = new AnActionEvent(e, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+              action.actionPerformed(event);
+            }
           }
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          actionLabel.setIcon(IconLoader.getIcon("/actions/closeNew.png"));
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          actionLabel.setIcon(null);
         }
       });
       
       action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_0 + row, InputEvent.ALT_DOWN_MASK)),
                                        rootPane, this);
-      panel.add(actionLabel, new GridBagConstraints(1, row++, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
+      myRecentProjectsPanel.add(actionLabel, new GridBagConstraints(1, row++, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
       if (row == 9) break;
     }
-
-    return panel;
   }
 
   public void hideRecentProjectsPanel() {

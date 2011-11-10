@@ -51,6 +51,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
   private ArrayList<Object> myFragmentTags = null;
+  
+  public static final int FRAGMENT_ICON = -2;
 
   /**
    * Component's icon. It can be <code>null</code>.
@@ -91,6 +93,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   private AccessibleContext myContext = new MyAccessibleContext();
 
+  private boolean myIconOnTheRight = false;
+
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
@@ -99,6 +103,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     myBorder = new MyBorder();
     myAligns = new HashMap<Integer, Integer>(10);
     setOpaque(true);
+  }
+
+  public boolean isIconOnTheRight() {
+    return myIconOnTheRight;
+  }
+
+  public void setIconOnTheRight(boolean iconOnTheRight) {
+    myIconOnTheRight = iconOnTheRight;
   }
 
   public final void append(@NotNull String fragment) {
@@ -360,10 +372,20 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     return new Dimension(width, height);
   }
 
+  /**
+   * Returns the index of text fragment at the specified X offset.
+   *
+   * @param x the offset
+   * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
+   */
   public int findFragmentAt(int x) {
     int curX = myIpad.left;
-    if (myIcon != null) {
-      curX += myIcon.getIconWidth() + myIconTextGap;
+    if (myIcon != null && !myIconOnTheRight) {
+      final int iconRight = myIcon.getIconWidth() + myIconTextGap;
+      if (x < iconRight) {
+        return FRAGMENT_ICON;
+      }
+      curX += iconRight;
     }
 
     Font font = getFont();
@@ -390,6 +412,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         curX = fixedWidth.intValue();
       }
     }
+
+    if (myIcon != null && myIconOnTheRight) {
+      curX += myIconTextGap;
+      if (x >= curX && x < curX + myIcon.getIconWidth()) {
+        return FRAGMENT_ICON;
+      }
+    }
     return -1;
   }
 
@@ -411,13 +440,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   protected void doPaint(final Graphics2D g) {
     int offset = 0;
     final Icon icon = myIcon; // guard against concurrent modification (IDEADEV-12635)
-    if (icon != null) {
-      doPaintIcon(g, icon);
+    if (icon != null && !myIconOnTheRight) {
+      doPaintIcon(g, icon, 0);
       offset += myIpad.left + icon.getIconWidth() + myIconTextGap;
     }
 
     doPaintTextBackground(g, offset);
-    doPaintText(g, offset, myFocusBorderAroundIcon || icon == null);
+    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null);
+    if (icon != null && myIconOnTheRight) {
+      doPaintIcon(g, icon, offset);
+    }
   }
   
 
@@ -428,7 +460,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
   }
 
-  protected void doPaintIcon(Graphics2D g, Icon icon) {
+  protected void doPaintIcon(Graphics2D g, Icon icon, int offset) {
     final Container parent = getParent();
     Color iconBackgroundColor = null;
     if (isOpaque() || isIconOpaque()) {
@@ -442,10 +474,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     if (iconBackgroundColor != null) {
       g.setColor(iconBackgroundColor);
-      g.fillRect(0, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
+      g.fillRect(offset, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
     }
 
-    paintIcon(g, icon);
+    paintIcon(g, icon, offset + myIpad.left);
   }
 
   protected int doPaintText(Graphics2D g, int offset, boolean focusAroundIcon) {
@@ -584,8 +616,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     return false;
   }
   
-  protected void paintIcon(Graphics g, Icon icon) {
-    icon.paintIcon(this, g, myIpad.left, (getHeight() - icon.getIconHeight()) / 2);
+  protected void paintIcon(Graphics g, Icon icon, int offset) {
+    icon.paintIcon(this, g, offset, (getHeight() - icon.getIconHeight()) / 2);
   }
 
   protected void applyAdditionalHints(final Graphics g) {
