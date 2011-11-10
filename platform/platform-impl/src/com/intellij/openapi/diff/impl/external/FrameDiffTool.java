@@ -49,7 +49,10 @@ class FrameDiffTool implements DiffTool {
     if (shouldOpenDialog) {
       final DialogBuilder builder = new DialogBuilder(request.getProject());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow(), builder);
-      if (diffPanel == null) return;
+      if (diffPanel == null) {
+        Disposer.dispose(builder);
+        return;
+      }
       if (hints.contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
         diffPanel.setPatchAppliedApproximately(); // todo read only and not variants
       }
