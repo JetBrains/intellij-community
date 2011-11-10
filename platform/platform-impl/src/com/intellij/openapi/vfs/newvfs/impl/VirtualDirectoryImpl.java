@@ -165,7 +165,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
     if (PersistentFS.isDirectory(id)) {
-      child = PersistentFS.isSymLink(id) ? new SymlinkDirectory(name, this, fs, id) : new VirtualDirectoryImpl(name, this, fs, id);
+      child = /*PersistentFS.isSymLink(id) ? new SymlinkDirectory(name, this, fs, id) :*/ new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
       child = new VirtualFileImpl(name, this, id);
