@@ -105,7 +105,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
-  final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
+  private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
   private long myStampShown = 0;
   private boolean myShown = false;

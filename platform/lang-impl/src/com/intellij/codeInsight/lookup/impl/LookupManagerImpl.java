@@ -220,13 +220,9 @@ public class LookupManagerImpl extends LookupManager {
   public void hideActiveLookup() {
     LookupImpl lookup = myActiveLookup;
     if (lookup != null) {
+      lookup.checkValid();
       lookup.hide();
       LOG.assertTrue(lookup.isLookupDisposed(), "Should be disposed");
-      LookupImpl lookup2 = myActiveLookup;
-      if (lookup2 != null) {
-        lookup.hide();
-        LOG.error("Non-cleaned-up lookup: " + lookup.isLookupDisposed() + "; " + lookup2.isLookupDisposed() + "; " + (lookup2 == lookup) + "; listeners=" + lookup.myListeners);
-      }
     }
   }
 
