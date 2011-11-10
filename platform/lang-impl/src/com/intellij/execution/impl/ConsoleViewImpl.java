@@ -318,16 +318,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void clear() {
     if (myEditor == null) return;
     synchronized (LOCK) {
-      // let's decrease myContentSize by size of deferred output text
-      // then in EDT we will clear already flushed output (editor content)
-      // end it will induce document changed event which will
-      // also decrease myContentSize by flushed output size.
-      //
-      // P.S: We cannot set myContentSize to '0' here because between this
-      // code and alarm clear request (in EDT) my occur print event in non-EDT thread
-      // and unfortunately it is a real usecase and happens when switching active test in
-      // tests console.
-      myContentSize = Math.max(0, myContentSize - myBuffer.getLength());
+      // rear document content will be cleared on next flush;
+      myContentSize = 0;
       myBuffer.clear();
     }
     myFlushAlarm.cancelAllRequests();
@@ -345,8 +337,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         flushDeferredText(false);
         if (myEditor == null) return;
         int moveOffset = offset;
-        if (myBuffer.isUseCyclicBuffer() && moveOffset >= myEditor.getDocument().getTextLength()) {
-          moveOffset = 0;
+        int textLength = myEditor.getDocument().getTextLength();
+        if (myBuffer.isUseCyclicBuffer() && moveOffset >= textLength) {
+          moveOffset = textLength - 1;
         }
         myEditor.getCaretModel().moveToOffset(moveOffset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -500,8 +493,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
-    myContentSize += length;
-    addToken(length, null, contentType);
+    synchronized (LOCK) {
+      myContentSize += length;
+      addToken(length, null, contentType);
+    }
   }
 
   private void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType) {
@@ -519,7 +514,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public int getContentSize() {
-    return myContentSize;
+    synchronized (LOCK) {
+      return myContentSize;
+    }
   }
 
   public boolean canPause() {
