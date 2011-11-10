@@ -815,7 +815,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public int getLookupStart() {
-    LOG.assertTrue(myLookupStartMarker.isValid());
+    LOG.assertTrue(myLookupStartMarker.isValid(), disposeTrace);
     return myLookupStartMarker.getStartOffset();
   }
 
