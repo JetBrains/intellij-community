@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author peter
  */
-public class GroovyDslAnnotator implements Annotator {
+public class GroovyDslAnnotator implements Annotator, DumbAware {
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof GroovyFile) {
