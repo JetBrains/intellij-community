@@ -17,13 +17,17 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Comparator;
 
@@ -55,10 +59,12 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   };
 
   private final int columnIdx;
+  private final PluginTableModel myModel;
 
-  public PluginManagerColumnInfo(int columnIdx) {
+  public PluginManagerColumnInfo(int columnIdx, PluginTableModel model) {
     super(COLUMNS[columnIdx]);
     this.columnIdx = columnIdx;
+    myModel = model;
   }
 
   public String valueOf(IdeaPluginDescriptor base) {
@@ -102,12 +108,9 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   protected boolean isSortByStatus() {
-    return true;
+    return myModel.isSortByStatus();
   }
 
-  protected boolean isSortByRepository() {
-    return true;
-  }
 
   public static boolean isDownloaded(@NotNull PluginNode node) {
     if (node.getStatus() == PluginNode.STATUS_DOWNLOADED) return true;
@@ -119,6 +122,48 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   public Comparator<IdeaPluginDescriptor> getComparator() {
+    final Comparator<IdeaPluginDescriptor> comparator = getColumnComparator();
+    if (isSortByStatus()) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
+            final int status1 = ((PluginNode)o1).getStatus();
+            final int status2 = ((PluginNode)o2).getStatus();
+            if (isDownloaded((PluginNode)o1)){
+              if (!isDownloaded((PluginNode)o2)) return -1;
+              return comparator.compare(o1, o2);
+            }
+            if (isDownloaded((PluginNode)o2)) return 1;
+
+            if (status1 == PluginNode.STATUS_DELETED) {
+              if (status2 != PluginNode.STATUS_DELETED) return -1;
+              return comparator.compare(o1, o2);
+            }
+            if (status2 == PluginNode.STATUS_DELETED) return 1;
+
+            if (status1 == PluginNode.STATUS_INSTALLED) {
+              if (status2 !=PluginNode.STATUS_INSTALLED) return -1;
+              final boolean hasNewerVersion1 = InstalledPluginsTableModel.hasNewerVersion(o1.getPluginId());
+              final boolean hasNewerVersion2 = InstalledPluginsTableModel.hasNewerVersion(o2.getPluginId());
+              if (hasNewerVersion1 != hasNewerVersion2) {
+                if (hasNewerVersion1) return -1;
+                return 1;
+              }
+              return comparator.compare(o1, o2);
+            }
+            if (status2 == PluginNode.STATUS_INSTALLED) {
+              return 1;
+            }
+          }
+          return comparator.compare(o1, o2);
+        }
+      };
+    }
+
+    return comparator;
+  }
+
+  private Comparator<IdeaPluginDescriptor> getColumnComparator() {
     if (isSortByName()) {
       return new Comparator<IdeaPluginDescriptor>() {
         public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
@@ -156,59 +201,9 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
       };
     }
-    if (isSortByStatus()) {
-      return new Comparator<IdeaPluginDescriptor>() {
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-          if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-            final int status1 = ((PluginNode)o1).getStatus();
-            final int status2 = ((PluginNode)o2).getStatus();
-            if (isDownloaded((PluginNode)o1)){
-              if (!isDownloaded((PluginNode)o2)) return -1;
-              return StringUtil.compare(o1.getName(), o2.getName(), true);
-            }
-            if (isDownloaded((PluginNode)o2)) return 1;
-
-            if (status1 == PluginNode.STATUS_DELETED) {
-              if (status2 != PluginNode.STATUS_DELETED) return -1;
-              return StringUtil.compare(o1.getName(), o2.getName(), true);
-            }
-            if (status2 == PluginNode.STATUS_DELETED) return 1;
-
-            if (status1 == PluginNode.STATUS_INSTALLED) {
-              if (status2 !=PluginNode.STATUS_INSTALLED) return -1;
-              final boolean hasNewerVersion1 = InstalledPluginsTableModel.hasNewerVersion(o1.getPluginId());
-              final boolean hasNewerVersion2 = InstalledPluginsTableModel.hasNewerVersion(o2.getPluginId());
-              if (hasNewerVersion1 != hasNewerVersion2) {
-                if (hasNewerVersion1) return -1;
-                return 1;
-              }
-              return StringUtil.compare(o1.getName(), o2.getName(), true);
-            }
-            if (status2 == PluginNode.STATUS_INSTALLED) {
-              return 1;
-            }
-          }
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
-      };
-    }
-    if (isSortByRepository()) {
-      return new Comparator<IdeaPluginDescriptor>() {
-        @Override
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-          if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-            final String repositoryName1 = ((PluginNode)o1).getRepositoryName();
-            final String repositoryName2 = ((PluginNode)o2).getRepositoryName();
-            if (!Comparing.strEqual(repositoryName1, repositoryName2)) {
-              return StringUtil.compare(repositoryName1, repositoryName2, true);
-            }
-          }
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
-      };
-    }
     return new Comparator<IdeaPluginDescriptor>() {
-      public int compare(IdeaPluginDescriptor o, IdeaPluginDescriptor o1) {
+      @Override
+      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
         return 0;
       }
     };
@@ -236,10 +231,56 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   public Class getColumnClass() {
-    return String.class;
+    if (columnIdx == COLUMN_DOWNLOADS) {
+      return Integer.class;
+    }
+    else {
+      return String.class;
+    }
   }
 
   protected static Font getNameFont() {
     return UIUtil.getLabelFont();
+  }
+
+  public TableCellRenderer getRenderer(IdeaPluginDescriptor o) {
+    return new PluginTableCellRenderer((PluginNode)o);
+  }
+
+
+  private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
+    private final JLabel myLabel = new JLabel();
+    private final PluginNode myPluginDescriptor;
+
+    private PluginTableCellRenderer(PluginNode pluginDescriptor) {
+      myLabel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
+      myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      myPluginDescriptor = pluginDescriptor;
+    }
+
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      final Color bg = orig.getBackground();
+      final Color grayedFg = isSelected ? orig.getForeground() : Color.GRAY;
+      myLabel.setForeground(grayedFg);
+      myLabel.setBackground(bg);
+      myLabel.setOpaque(true);
+
+      if (column == COLUMN_DATE) {
+        long date = myPluginDescriptor.getDate();
+        myLabel.setText(date != 0 && date != Long.MAX_VALUE ? DateFormatUtil.formatDate(date) : "n/a");
+      } else if (column == COLUMN_DOWNLOADS) {
+        myLabel.setText(myPluginDescriptor.getDownloads());
+      }
+      myLabel.setVerticalAlignment(SwingConstants.BOTTOM);
+      if (myPluginDescriptor.getStatus() == PluginNode.STATUS_INSTALLED) {
+        PluginId pluginId = myPluginDescriptor.getPluginId();
+        final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
+        if (hasNewerVersion) {
+          if (!isSelected) myLabel.setBackground(LightColors.BLUE);
+        }
+      }
+      return myLabel;
+    }
   }
 }

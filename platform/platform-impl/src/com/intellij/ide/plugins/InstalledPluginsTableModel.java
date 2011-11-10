@@ -568,7 +568,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private class MyPluginManagerColumnInfo extends PluginManagerColumnInfo {
     public MyPluginManagerColumnInfo() {
-      super(PluginManagerColumnInfo.COLUMN_NAME);
+      super(PluginManagerColumnInfo.COLUMN_NAME, InstalledPluginsTableModel.this);
     }
 
     @Override
@@ -579,16 +579,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     @Override
     protected boolean isSortByName() {
       return true;
-    }
-
-    @Override
-    protected boolean isSortByDownloads() {
-      return false;
-    }
-
-    @Override
-    protected boolean isSortByDate() {
-      return false;
     }
 
     /*@Override
