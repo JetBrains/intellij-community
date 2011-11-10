@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.performance;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
@@ -57,8 +57,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "size.replaceable.by.isempty.negation.ignore.option"), this,
-                                          "ignoreNegations");
+      "size.replaceable.by.isempty.negation.ignore.option"), this, "ignoreNegations");
   }
 
   @Override
@@ -77,10 +76,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)descriptor.getPsiElement();
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
       PsiExpression operand = binaryExpression.getLOperand();
       if (!(operand instanceof PsiMethodCallExpression)) {
         operand = binaryExpression.getROperand();
@@ -88,12 +85,9 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (!(operand instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)operand;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {
         return;
       }
@@ -112,14 +106,10 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     return new SizeReplaceableByIsEmptyVisitor();
   }
 
-  private class SizeReplaceableByIsEmptyVisitor
-    extends BaseInspectionVisitor {
-
-    @NonNls private String isEmptyCall = "";
+  private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      PsiBinaryExpression expression) {
+    public void visitBinaryExpression(PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {
@@ -130,97 +120,89 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       }
       final PsiExpression lhs = expression.getLOperand();
       if (lhs instanceof PsiMethodCallExpression) {
-        if (canBeReplacedByIsEmpty(lhs, rhs, false,
-                                   expression.getOperationTokenType())) {
-          registerError(expression, isEmptyCall);
+        final String replacementIsEmptyCall = getReplacementIsEmptyCall(lhs, rhs, false, expression.getOperationTokenType());
+        if (replacementIsEmptyCall != null) {
+          registerError(expression, replacementIsEmptyCall);
         }
       }
       else if (rhs instanceof PsiMethodCallExpression) {
-        if (canBeReplacedByIsEmpty(rhs, lhs, true,
-                                   expression.getOperationTokenType())) {
-          registerError(expression, isEmptyCall);
+        final String replacementIsEmptyCall = getReplacementIsEmptyCall(rhs, lhs, true, expression.getOperationTokenType());
+        if (replacementIsEmptyCall != null) {
+          registerError(expression, replacementIsEmptyCall);
         }
       }
     }
 
-    private boolean canBeReplacedByIsEmpty(
-      PsiExpression lhs, PsiExpression rhs,
-      boolean flipped, IElementType tokenType) {
-      final PsiMethodCallExpression callExpression =
-        (PsiMethodCallExpression)lhs;
-      if (!isSizeCall(callExpression)) {
-        return false;
+    @Nullable
+    private String getReplacementIsEmptyCall(PsiExpression lhs, PsiExpression rhs, boolean flipped, IElementType tokenType) {
+      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)lhs;
+      final String isEmptyCall = getIsEmptyCall(callExpression);
+      if (isEmptyCall == null) {
+        return null;
       }
-      final Object object =
-        ExpressionUtils.computeConstantExpression(rhs);
+      final Object object = ExpressionUtils.computeConstantExpression(rhs);
       if (!(object instanceof Integer)) {
-        return false;
+        return null;
       }
       final Integer integer = (Integer)object;
       final int constant = integer.intValue();
       if (constant != 0) {
-        return false;
+        return null;
       }
       if (JavaTokenType.EQEQ.equals(tokenType)) {
-        return true;
+        return isEmptyCall;
       }
       if (ignoreNegations) {
-        return false;
+        return null;
       }
-      isEmptyCall = '!' + isEmptyCall;
       if (JavaTokenType.NE.equals(tokenType)) {
-        return true;
+        return '!' + isEmptyCall;
       }
       else if (flipped) {
         if (JavaTokenType.LT.equals(tokenType)) {
-          return true;
+          return '!' + isEmptyCall;
         }
       }
       else if (JavaTokenType.GT.equals(tokenType)) {
-        return true;
+        return '!' + isEmptyCall;
       }
-      return false;
+      return null;
     }
 
-    private boolean isSizeCall(
-      PsiMethodCallExpression callExpression) {
-      final PsiReferenceExpression methodExpression =
-        callExpression.getMethodExpression();
+    @Nullable
+    private String getIsEmptyCall(PsiMethodCallExpression callExpression) {
+      final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.SIZE.equals(referenceName)) {
-        return false;
+      if (!HardcodedMethodConstants.SIZE.equals(referenceName) &&
+        !HardcodedMethodConstants.LENGTH.equals(referenceName)) {
+        return null;
       }
-      final PsiExpressionList argumentList =
-        callExpression.getArgumentList();
+      final PsiExpressionList argumentList = callExpression.getArgumentList();
       final PsiExpression[] expressions = argumentList.getExpressions();
       if (expressions.length != 0) {
-        return false;
+        return null;
       }
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {
-        return false;
+        return null;
       }
-      isEmptyCall = qualifierExpression.getText() + ".isEmpty()";
       final PsiType type = qualifierExpression.getType();
       if (!(type instanceof PsiClassType)) {
-        return false;
+        return null;
       }
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
       if (aClass == null) {
-        return false;
+        return null;
       }
-      final PsiMethod[] methods =
-        aClass.findMethodsByName("isEmpty", true);
+      final PsiMethod[] methods = aClass.findMethodsByName("isEmpty", true);
       for (PsiMethod method : methods) {
-        final PsiParameterList parameterList =
-          method.getParameterList();
+        final PsiParameterList parameterList = method.getParameterList();
         if (parameterList.getParametersCount() == 0) {
-          return true;
+          return qualifierExpression.getText() + ".isEmpty()";
         }
       }
-      return false;
+      return null;
     }
   }
 }
