@@ -145,8 +145,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return;
     }
 
+    int newTime = phase.newCompletionStarted(time, repeated);
     if (invokedExplicitly) {
-      time = phase.newCompletionStarted(time, repeated);
+      time = newTime;
     }
     if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
