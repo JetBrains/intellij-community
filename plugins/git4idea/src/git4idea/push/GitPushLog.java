@@ -139,7 +139,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull GitPushBranchInfo branchInfo) {
-    DefaultMutableTreeNode branchNode = new CheckedTreeNode(new GitBranchPair(branch, branchInfo.getDestBranch()));
+    DefaultMutableTreeNode branchNode = new DefaultMutableTreeNode(new GitBranchPair(branch, branchInfo.getDestBranch()));
     for (GitCommit commit : branchInfo.getCommits()) {
       branchNode.add(new DefaultMutableTreeNode(commit));
     }
