@@ -32,10 +32,12 @@ import java.awt.event.InputEvent;
 public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectPath;
   private final String myProjectName;
+  private final boolean myNeedShowPath;
 
-  public ReopenProjectAction(final String projectPath, final String projectName) {
+  public ReopenProjectAction(final String projectPath, final String projectName, boolean needShowPath) {
     myProjectPath = projectPath;
     myProjectName = projectName;
+    myNeedShowPath = needShowPath;
 
     final Presentation presentation = getTemplatePresentation();
     String text = myProjectPath.equals(myProjectName) ? FileUtil.getLocationRelativeToUserHome(myProjectPath) : myProjectName;
@@ -61,8 +63,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     return myProjectPath;
   }
   
-  public boolean hasPath() {
-    return myProjectPath.equals(myProjectName);
+  public boolean needShowPath() {
+    return myNeedShowPath;
   }
 
   public String getProjectName() {

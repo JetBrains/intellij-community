@@ -106,24 +106,30 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   }
 
   private static void addPrimaryModuleDependency(Project project, @NotNull Module newModule) {
-    for (Module oldModule : ModuleManager.getInstance(project).getModules()) {
-      if (oldModule != newModule) {
-        final VirtualFile[] roots = ModuleRootManager.getInstance(oldModule).getContentRoots();
-        for (VirtualFile root : roots) {
-          if (root == project.getBaseDir()) {
-            final ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(oldModule).getModifiableModel();
-            modifiableRootModel.addModuleOrderEntry(newModule);
-            AccessToken token = WriteAction.start();
-            try {
-              modifiableRootModel.commit();
-            }
-            finally {
-              token.finish();
-            }
-            break;
-          }
+    final Module module = getPrimaryModule(project);
+    if (module != null && module != newModule) {
+      final ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      modifiableRootModel.addModuleOrderEntry(newModule);
+      AccessToken token = WriteAction.start();
+      try {
+        modifiableRootModel.commit();
+      }
+      finally {
+        token.finish();
+      }
+    }
+  }
+
+  @Nullable
+  public static Module getPrimaryModule(Project project) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+      for (VirtualFile root : roots) {
+        if (root == project.getBaseDir()) {
+          return module;
         }
       }
     }
+    return null;
   }
 }

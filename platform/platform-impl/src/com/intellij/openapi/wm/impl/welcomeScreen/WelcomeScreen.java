@@ -260,7 +260,7 @@ public class WelcomeScreen implements Disposable {
       actionLabel.append(action.getTemplatePresentation().getText(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
       actionLabel.setIconOnTheRight(true);
 
-      if (action instanceof ReopenProjectAction && !((ReopenProjectAction) action).hasPath()) {
+      if (action instanceof ReopenProjectAction && ((ReopenProjectAction) action).needShowPath()) {
         String path = ((ReopenProjectAction)action).getProjectPath();
         File pathFile = new File(path);
         if (pathFile.isDirectory() && pathFile.getName().equals(((ReopenProjectAction)action).getProjectName())) {
@@ -930,7 +930,7 @@ public class WelcomeScreen implements Disposable {
       if (projectPath == null) return false;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          ReopenProjectAction action = new ReopenProjectAction(projectPath, projectPath);
+          ReopenProjectAction action = new ReopenProjectAction(projectPath, projectPath, true);
           DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
           AnActionEvent e = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
           action.actionPerformed(e);

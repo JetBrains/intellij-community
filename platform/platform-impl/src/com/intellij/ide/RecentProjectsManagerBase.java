@@ -52,6 +52,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   public static class State {
     public List<String> recentPaths = new ArrayList<String>();
     public List<String> openPaths = new ArrayList<String>();
+    public Map<String, String> names = new HashMap<String, String>();
     public String lastPath;
   }
 
@@ -90,7 +91,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
         }
       }
       while (myState.recentPaths.size() > Registry.intValue("ide.max.recent.projects")) {
-        myState.recentPaths.remove(myState.recentPaths.size() - 1);
+        final int index = myState.recentPaths.size() - 1;
+        myState.names.remove(myState.recentPaths.get(index));
+        myState.recentPaths.remove(index);
       }
     }
   }
@@ -99,12 +102,14 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     if (path == null) return;
     if (SystemInfo.isFileSystemCaseSensitive) {
       myState.recentPaths.remove(path);
+      myState.names.remove(path);
     }
     else {
       Iterator<String> i = myState.recentPaths.iterator();
       while (i.hasNext()) {
         String p = i.next();
         if (path.equalsIgnoreCase(p)) {
+          myState.names.remove(p);
           i.remove();
         }
       }
@@ -124,10 +129,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
       myState.openPaths = new ArrayList<String>();
       for (Project openProject : openProjects) {
-        ContainerUtil.addIfNotNull(myState.openPaths, getProjectPath(openProject));
+        final String path = getProjectPath(openProject);
+        ContainerUtil.addIfNotNull(myState.openPaths, path);
+        myState.names.put(path, getProjectDisplayName(openProject));
       }
     }
   }
+
+  @Nullable
+  protected String getProjectDisplayName(Project project) {
+    return null;
+  }
+  
 
   /**
    * @param addClearListItem - used for detecting whether the "Clear List" action should be added
@@ -160,7 +173,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
     for (final String path : paths) {
       final String projectName = getProjectName(path);
-      actions.add(map.get(projectName) > 1 ? new ReopenProjectAction(path, path) : new ReopenProjectAction(path, projectName));
+      boolean needShowPath = false;
+      String displayName = myState.names.get(path);
+      if (displayName == null) {
+        if (map.get(projectName) > 1) {
+          displayName = path;
+        }
+        else {
+          displayName = projectName;
+          needShowPath = true;
+        }
+      }
+      actions.add(new ReopenProjectAction(path, displayName, needShowPath));
     }
 
     if (actions.isEmpty()) {
@@ -226,6 +250,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (path != null) {
         markPathRecent(path);
       }
+    }
+
+    @Override
+    public void projectClosing(Project project) {
+      myState.names.put(getProjectPath(project), getProjectDisplayName(project));
     }
 
     public void projectClosed(final Project project) {
