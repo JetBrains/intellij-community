@@ -90,12 +90,17 @@ public class GroovyBuilder extends Builder {
       }
       Map<String, String> class2Src = buildClassToSourceMap(context, toCompilePaths, moduleOutputPath);
 
-      fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, moduleOutputPath, class2Src);
+      String encoding = "UTF-8"; //todo encoding
+      List<String> patchers = Collections.emptyList(); //todo patchers
+      GroovycOSProcessHandler.fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths,
+                                                            moduleOutputPath, class2Src,
+                                                            encoding, patchers);
 
       if (myForStubs) {
         JavaBuilder.addTempSourcePathRoot(context, dir);
       }
 
+      // todo CompilerUtil.addLocaleOptions()
       //todo different outputs in a chunk
       //todo module jdk path
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
@@ -193,37 +198,6 @@ public class GroovyBuilder extends Builder {
       }
     }
     return class2Src;
-  }
-
-  private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<String> files, String finalOutput, Map<String, String> class2Src) throws IOException {
-    final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
-    try {
-      for (String file : files) {
-        writer.write("src_file\n");
-        writer.write(file);
-        writer.write("\n");
-      }
-      
-      writer.write("class2src\n");
-      for (Map.Entry<String, String> entry : class2Src.entrySet()) {
-        writer.write(entry.getKey() + "\n");
-        writer.write(entry.getValue() + "\n");
-      }
-      writer.write("end\n");
-
-      //todo patchers
-      writer.write("encoding\n");
-      writer.write("UTF-8\n");  //todo encoding
-      writer.write("outputpath\n");
-      writer.write(outputDir);
-      writer.write("\n");
-      writer.write("final_outputpath\n");
-      writer.write(finalOutput);
-      writer.write("\n");
-    }
-    finally {
-      writer.close();
-    }
   }
 
   public String getDescription() {

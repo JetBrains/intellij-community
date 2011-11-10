@@ -59,18 +59,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Chunk;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
@@ -78,8 +74,9 @@ import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
-import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -168,7 +165,16 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       File fileWithParameters = FileUtil.createTempFile("toCompile", "");
       final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
-      fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);
+      final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
+      String encoding = !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
+      List<String> paths2Compile = ContainerUtil.map2List(toCompile, new Function<VirtualFile, String>() {
+        @Override
+        public String fun(VirtualFile file) {
+          return file.getPath();
+        }
+      });
+      GroovycOSProcessHandler.fillFileWithGroovycParameters(fileWithParameters, outputDir.getPath(), paths2Compile, finalOutputDir.getPath(),
+                                                            Collections.<String, String>emptyMap(), encoding, patchers);
 
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
       parameters.getProgramParametersList().add(fileWithParameters.getPath());
@@ -189,13 +195,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       };
 
       processHandler.startNotify();
-      // tests run in awt
-      while (!processHandler.waitFor(100)) {
-        if (SwingUtilities.isEventDispatchThread()) {
-          UIUtil.dispatchAllInvocationEvents();
-        }
-      }
-
+      processHandler.waitFor();
 
       final List<VirtualFile> toRecompile = new ArrayList<VirtualFile>();
       Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
@@ -205,8 +205,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         toRecompile.add(vFile);
       }
 
-      final List<org.jetbrains.jps.incremental.messages.CompilerMessage> messages = processHandler.getCompilerMessages();
-      for (org.jetbrains.jps.incremental.messages.CompilerMessage compilerMessage : messages) {
+      final List<CompilerMessage> messages = processHandler.getCompilerMessages();
+      for (CompilerMessage compilerMessage : messages) {
         final CompilerMessageCategory category = getMessageCategory(compilerMessage);
 
         final String url = compilerMessage.getSourcePath();
@@ -299,7 +299,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return tests ? compileContext.getModuleOutputDirectoryForTests(module) : compileContext.getModuleOutputDirectory(module);
   }
 
-  private static CompilerMessageCategory getMessageCategory(org.jetbrains.jps.incremental.messages.CompilerMessage compilerMessage) {
+  private static CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
     BuildMessage.Kind category = compilerMessage.getKind();
 
     if (BuildMessage.Kind.ERROR.equals(category)) return CompilerMessageCategory.ERROR;
@@ -307,52 +307,6 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (BuildMessage.Kind.WARNING.equals(category)) return CompilerMessageCategory.WARNING;
 
     return CompilerMessageCategory.ERROR;
-  }
-
-  private void fillFileWithGroovycParameters(List<VirtualFile> virtualFiles, File f, VirtualFile outputDir, final List<String> patchers,
-                                             @NotNull VirtualFile finalOutputDir) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Running groovyc on: " + virtualFiles.toString());
-    }
-
-    FileOutputStream stream;
-    try {
-      stream = new FileOutputStream(f);
-    }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
-      return;
-    }
-
-    final PrintStream printer = new PrintStream(stream);
-
-    for (final VirtualFile item : virtualFiles) {
-      printer.println(GroovycRunner.SRC_FILE);
-      printer.println(FileUtil.toSystemDependentName(item.getPath()));
-    }
-
-    if (!patchers.isEmpty()) {
-      printer.println(GroovycRunner.PATCHERS);
-      for (final String patcher : patchers) {
-        printer.println(patcher);
-      }
-      printer.println(GroovycRunner.END);
-    }
-
-    final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
-    if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
-      printer.println(GroovycRunner.ENCODING);
-      printer.println(ideCharset.name());
-    }
-
-    printer.println(GroovycRunner.OUTPUTPATH);
-    printer.println(PathUtil.getLocalPath(outputDir));
-
-    printer.println(GroovycRunner.FINAL_OUTPUTPATH);
-    printer.println(FileUtil.toSystemDependentName(finalOutputDir.getPath()));
-
-
-    printer.close();
   }
 
   private static void appendOutputPath(Module module, PathsList compileClasspath, final boolean forTestClasses) {
