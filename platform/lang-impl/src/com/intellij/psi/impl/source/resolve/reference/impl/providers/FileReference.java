@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -38,7 +37,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -66,7 +65,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   private static final TObjectHashingStrategy<ResolveResult> RESOLVE_RESULT_HASHING_STRATEGY = new TObjectHashingStrategy<ResolveResult>() {
     @Override
     public int computeHashCode(ResolveResult object) {
-      return object.hashCode();
+      PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)object.getElement();
+      if (fileSystemItem == null) {
+        return 0;
+      }
+      VirtualFile file = fileSystemItem.getVirtualFile();
+      return file == null ? 0 : file.hashCode();
     }
 
     @Override
@@ -271,7 +275,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       }
     }
     final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
-    final PsiElement[] candidates = PsiUtilBase.toPsiElementArray(set);
+    final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
 
     final Object[] variants = new Object[candidates.length];
     for (int i = 0; i < candidates.length; i++) {
@@ -472,7 +476,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
           for (PsiFileSystemItem context : contexts) {
             final VirtualFile contextFile = context.getVirtualFile();
             assert contextFile != null;
-            if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
+            if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
               final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
               if (path != null) {
                 return rename(path);
