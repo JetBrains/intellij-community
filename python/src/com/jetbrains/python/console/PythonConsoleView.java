@@ -182,10 +182,14 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     private PythonConsoleView myPythonConsoleView;
 
     public PythonLanguageConsole(final Project project, final String title, final Sdk sdk) {
-      super(project, title, PythonLanguage.getInstance());
+      super(project, title, PythonLanguage.getInstance(), false);
       initLanguageLevel(sdk);
       // Mark editor as console one, to prevent autopopup completion
       getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+
+      setShowSeparatorLine(PyConsoleOptionsProvider.getInstance(project).isShowSeparatorLine());
+
+      initComponents();
     }
 
     private void initLanguageLevel(@Nullable Sdk sdk) {

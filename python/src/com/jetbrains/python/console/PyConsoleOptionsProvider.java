@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ComparatorUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 
 import java.util.Map;
@@ -46,6 +47,14 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     myState.myShowDebugConsoleByDefault = showDebugConsoleByDefault;
   }
 
+  public boolean isShowSeparatorLine() {
+    return myState.myShowSeparatorLine;
+  }
+
+  public void setShowSeparatorLine(boolean showSeparatorLine) {
+    myState.myShowSeparatorLine = showSeparatorLine;
+  }
+
 
   public static PyConsoleOptionsProvider getInstance(Project project) {
     return ServiceManager.getService(project, PyConsoleOptionsProvider.class);
@@ -59,6 +68,7 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
   @Override
   public void loadState(State state) {
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
+    myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myDjangoConsoleState = state.myDjangoConsoleState;
     myState.myPythonConsoleState.myProject = myProject;
@@ -70,20 +80,22 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     public PyConsoleSettings myDjangoConsoleState = new PyConsoleSettings();
 
     public boolean myShowDebugConsoleByDefault = false;
+    public boolean myShowSeparatorLine = true;
   }
 
   public static class PyConsoleSettings {
-    public String myStartScript = "";
+    public String myCustomStartScript = "";
     public String mySdkHome = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
     public String myModuleName = null;
     public Map<String, String> myEnvs = Maps.newHashMap();
     public String myWorkingDirectory = "";
+    @Transient
     private Project myProject;
 
     public String getCustomStartScript() {
-      return myStartScript;
+      return myCustomStartScript;
     }
 
     public String getSdkHome() {
