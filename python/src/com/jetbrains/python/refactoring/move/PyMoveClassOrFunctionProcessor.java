@@ -163,36 +163,6 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
     }
   }
-  //
-  //@NotNull
-  //private PyFile getOrCreateFile(String path) {
-  //  final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-  //  final PsiFile psi;
-  //  if (vfile == null) {
-  //    final File file = new File(myDestination);
-  //    try {
-  //      final VirtualFile baseDir = myProject.getBaseDir();
-  //      final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
-  //      final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
-  //      final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties()) : null;
-  //      psi = PyExtractSuperclassHelper.placeFile(myProject,
-  //                                                StringUtil.notNullize(file.getParent(),
-  //                                                                      baseDir != null ? baseDir.getPath() : "."),
-  //                                                file.getName(),
-  //                                                content);
-  //    }
-  //    catch (IOException e) {
-  //      throw new IncorrectOperationException(String.format("Cannot create file '%s'", myDestination));
-  //    }
-  //  }
-  //  else {
-  //    psi = PsiManager.getInstance(myProject).findFile(vfile);
-  //  }
-  //  if (!(psi instanceof PyFile)) {
-  //    throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.place.elements.into.nonpython.file"));
-  //  }
-  //  return (PyFile)psi;
-  //}
 
   @Nullable
   private static PyImportStatementBase getUsageImportStatement(UsageInfo usage) {
