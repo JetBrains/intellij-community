@@ -332,6 +332,18 @@ public class PyQuickFixTest extends PyTestCase {
     }
   }
 
+  public void testDocstringParams2() {                      //PY-4964
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doInspectionTest("DocstringParams2.py", PyDocstringInspection.class,
+                     PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true);
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
+  }
+
   public void testUnnecessaryBackslash() {
     String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);

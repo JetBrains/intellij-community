@@ -25,20 +25,24 @@ public class DocstringQuickFix implements LocalQuickFix {
   public DocstringQuickFix(PyParameter missing, String unexpected) {
     myMissing = missing;
     if (myMissing != null) {
-      if (myMissing.getText().startsWith("*"))
+      if (myMissing.getText().startsWith("*")) {
         myMissingText = myMissing.getText();
-      else
+      }
+      else {
         myMissingText = myMissing.getName();
+      }
     }
     myUnexpected = unexpected;
   }
 
   @NotNull
   public String getName() {
-    if (myMissing != null)
+    if (myMissing != null) {
       return PyBundle.message("QFIX.docstring.add.$0", myMissingText);
-    else
+    }
+    else {
       return PyBundle.message("QFIX.docstring.remove.$0", myUnexpected);
+    }
   }
 
   @NotNull
@@ -53,10 +57,12 @@ public class DocstringQuickFix implements LocalQuickFix {
     if (element == null) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(element.getProject());
-    if (documentationSettings.isEpydocFormat(element.getContainingFile()))
+    if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
       myPrefix = "@";
-    else
+    }
+    else {
       myPrefix = ":";
+    }
 
     String replacement = element.getText();
     if (myMissing != null) {
@@ -81,11 +87,11 @@ public class DocstringQuickFix implements LocalQuickFix {
         boolean lookNext = false;
         boolean add = true;
         for (String s : subLines) {
-          if (s.trim().equals(myPrefix+"param")) {
+          if (s.trim().equals(myPrefix + "param")) {
             lookNext = true;
           }
           if (lookNext && s.trim().endsWith(":")) {
-            String tmp = s.trim().substring(0, s.trim().length()-1);
+            String tmp = s.trim().substring(0, s.trim().length() - 1);
             if (myUnexpected.equals(tmp)) {
               lookNext = false;
               skipNext = true;
@@ -98,8 +104,9 @@ public class DocstringQuickFix implements LocalQuickFix {
           skipNext = false;
         }
       }
-      else if (!skipNext || line.contains("\"\"\"") || line.contains("'''"))
+      else if (!skipNext || line.contains("\"\"\"") || line.contains("'''")) {
         newText.append(line);
+      }
     }
     return newText.toString();
   }
@@ -107,34 +114,62 @@ public class DocstringQuickFix implements LocalQuickFix {
   private String createMissingReplacement(PsiElement element) {
     String text = element.getText();
     String[] lines = LineTokenizer.tokenize(text, true);
-    StringBuilder newText = new StringBuilder();
+    StringBuilder replacementText = new StringBuilder();
     int ind = lines.length - 1;
-    for (int i = 0; i != lines.length-1; ++i) {
+    if (lines.length == 1) {
+      return createSingleLineReplacement(element);
+    }
+    for (int i = 0; i != lines.length - 1; ++i) {
       String line = lines[i];
       if (line.contains(myPrefix)) {
         ind = i;
         break;
       }
-      newText.append(line);
+      replacementText.append(line);
     }
+    addParam(replacementText, element, false);
+    for (int i = ind; i != lines.length; ++i) {
+      String line = lines[i];
+      replacementText.append(line);
+    }
+    return replacementText.toString();
+  }
+
+  private void addParam(StringBuilder replacementText, PsiElement element, boolean addWS) {
     PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
     String ws = "\n";
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1)
+      if (spaces.length > 1) {
         ws = ws + whitespace.getText().split("\n")[1];
+      }
     }
-    newText.deleteCharAt(newText.length()-1);
-    newText.append(ws);
+    replacementText.deleteCharAt(replacementText.length() - 1);
+    replacementText.append(ws);
 
     String paramText = myMissingText;
-    newText.append(myPrefix).append("param ").append(paramText).append(": ");
-    newText.append("\n");
-    for (int i = ind; i != lines.length; ++i) {
-      String line = lines[i];
-      newText.append(line);
+    replacementText.append(myPrefix).append("param ").append(paramText).append(": ");
+    if (addWS)
+      replacementText.append(ws);
+    else
+      replacementText.append("\n");
+  }
+
+  private String createSingleLineReplacement(PsiElement element) {
+    String text = element.getText();
+    StringBuilder replacementText = new StringBuilder();
+    String closingQuotes = "";
+    if (text.endsWith("'''") || text.endsWith("\"\"\"")) {
+      replacementText.append(text.substring(0, text.length() - 2));
+      closingQuotes = text.substring(text.length() - 3);
     }
-    return newText.toString();
+    else {
+      replacementText.append(text.substring(0, text.length()));
+      closingQuotes = text.substring(text.length() - 1);
+    }
+    addParam(replacementText, element, true);
+    replacementText.append(closingQuotes);
+    return replacementText.toString();
   }
 }
