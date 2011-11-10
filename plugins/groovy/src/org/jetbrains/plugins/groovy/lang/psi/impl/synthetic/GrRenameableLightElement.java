@@ -3,5 +3,5 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 /**
  * @author Sergey Evdokimov
  */
-public interface GrRenamedLightElement {
+public interface GrRenameableLightElement {
 }

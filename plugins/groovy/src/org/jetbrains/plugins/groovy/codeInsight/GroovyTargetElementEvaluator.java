@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightElement;
 
 /**
  * @author Maxim.Medvedev
@@ -67,7 +68,7 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
     if (sourceElement instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)sourceElement).resolve();
-       if (resolved instanceof GrGdkMethod) {
+       if (resolved instanceof GrGdkMethod || !(resolved instanceof GrRenameableLightElement)) {
         return correctSearchTargets(resolved);
       }
       return resolved;

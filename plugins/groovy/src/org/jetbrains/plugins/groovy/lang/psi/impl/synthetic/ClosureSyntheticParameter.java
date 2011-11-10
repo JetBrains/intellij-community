@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 /**
  * @author ven
  */
-public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenamedLightElement {
+public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
   private final GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(GrClosableBlock closure) {
