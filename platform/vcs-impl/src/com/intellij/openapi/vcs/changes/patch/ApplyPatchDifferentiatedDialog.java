@@ -225,7 +225,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   public void init(final VirtualFile patchFile) {
-    myPatchFile.setText(patchFile.getPath());
+    myPatchFile.setText(patchFile.getPresentableUrl());
     myRecentPathFileChange.set(new FilePresentation(patchFile));
     myLoadQueue.queue(myUpdater);
   }
