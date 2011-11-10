@@ -64,6 +64,14 @@ abstract class UndoRedo {
     return myUndoableGroup.isTransparent();
   }
 
+  boolean isMerged4Redo() {
+    return myUndoableGroup.isMerged4Redo();
+  }
+
+  boolean isMerged4Undo() {
+    return myUndoableGroup.isMerged4Undo();
+  }
+
   boolean hasMoreActions() {
     return getStackHolder().canBeUndoneOrRedone(getDecRefs());
   }
@@ -102,7 +110,7 @@ abstract class UndoRedo {
     }
 
 
-    if (myUndoableGroup.shouldAskConfirmation()) {
+    if (myUndoableGroup.shouldAskConfirmation(isRedo())) {
       if (!askUser()) return false;
     }
     else {
@@ -146,6 +154,8 @@ abstract class UndoRedo {
 
     return true;
   }
+
+  protected abstract boolean isRedo();
 
   private Collection<Document> collectReadOnlyDocuments() {
     Collection<DocumentReference> affectedDocument = myUndoableGroup.getAffectedDocuments();

@@ -53,7 +53,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract Location getLocation(final Project project);
 
-  public abstract Navigatable getDescriptor(final Location location);
+  public abstract Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties);
 
   public abstract AbstractTestProxy getParent();
 

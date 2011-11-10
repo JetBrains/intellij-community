@@ -615,7 +615,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private void releaseAllEditors() {
     for (Editor editor : myEditors.values()) {
-      EditorFactory.getInstance().releaseEditor(editor);
+      if (!editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
     }
     myEditors.clear();
   }

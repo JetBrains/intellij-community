@@ -50,7 +50,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     return getUserData(IndexingDataKeys.PROJECT);
   }
 
-  private final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
+  private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
   /**
    * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot

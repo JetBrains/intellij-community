@@ -51,7 +51,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile = new File(PathManager.getIndexRoot(), "rep.names");
-  private boolean mySerializersLoaded = false;
+  private volatile boolean mySerializersLoaded = false;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
   public SerializationManagerImpl() {
@@ -167,12 +167,12 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   public void serialize(StubElement rootStub, OutputStream stream) {
+    if (!mySerializersLoaded) initSerializers();
     StubOutputStream stubOutputStream = new StubOutputStream(stream, myNameStorage);
     doSerialize(rootStub, stubOutputStream);
   }
 
   private void doSerialize(final StubElement rootStub, final StubOutputStream stream) {
-    if (!mySerializersLoaded) initSerializers();
     try {
       final StubSerializer serializer = getSerializer(rootStub);
 

@@ -3,15 +3,11 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import org.jetbrains.annotations.NonNls;
 
@@ -64,15 +60,7 @@ public class RenameClassTest extends MultiFileTestCase {
         PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
         assertNotNull("Class XX not found", aClass);
 
-        final RenameProcessor processor = new RenameProcessor(myProject, aClass, newName, true, true) {
-          @Override
-          protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
-            for (PsiNamedElement element : automaticVariableRenamer.getElements()) {
-              automaticVariableRenamer.setRename(element, automaticVariableRenamer.getNewName(element));
-            }
-            return true;
-          }
-        };
+        final RenameProcessor processor = new RenameProcessor(myProject, aClass, newName, true, true);
         for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
           processor.addRenamerFactory(factory);
         }

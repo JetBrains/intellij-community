@@ -34,4 +34,12 @@ public interface GradleApiFacade extends Remote {
    * @throws RemoteException    in case of unexpected I/O exception during processing
    */
   void applySettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException;
+
+  /**
+   * Asks remote gradle process to use given progress manager.
+   * 
+   * @param progressManager  progress manager to use
+   * @throws RemoteException    in case of unexpected I/O exception during processing
+   */
+  void applyProgressManager(@NotNull RemoteGradleProgressNotificationManager progressManager) throws RemoteException;
 }

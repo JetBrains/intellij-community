@@ -45,6 +45,10 @@ public class GradleBootstrap extends AbstractProjectComponent {
   }
 
   private void initToolWindow() {
+    // TODO den don't show tool window if no gradle project is associated with the current project.
+    if (!Boolean.getBoolean("gradle.show.tool.window")) {
+      return;
+    }
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
     ToolWindow toolWindow = manager.registerToolWindow(GRADLE_TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
     toolWindow.setIcon(GradleIcons.GRADLE_ICON);
