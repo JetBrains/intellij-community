@@ -46,6 +46,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
     if (problemFunction == null) return;
     PyFunction superInit = mySuper.findMethodByName(PyNames.INIT, false);
+    if (superInit == null) return;
     StringBuilder superCall = new StringBuilder();
     PyClass klass = problemFunction.getContainingClass();
     boolean addComma = true;
