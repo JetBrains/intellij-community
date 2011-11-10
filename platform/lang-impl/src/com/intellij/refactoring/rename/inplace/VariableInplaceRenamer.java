@@ -22,16 +22,18 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.FinishMarkAction;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -40,6 +42,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -93,7 +97,7 @@ public class VariableInplaceRenamer {
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
-  private static final String RENAME_TITLE = RefactoringBundle.message("rename.title");
+  static final String RENAME_TITLE = RefactoringBundle.message("rename.title");
 
   private PsiNamedElement myElementToRename;
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
@@ -136,9 +140,7 @@ public class VariableInplaceRenamer {
     final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
     VirtualFile file = getTopLevelVirtualFile(fileViewProvider);
 
-    SearchScope referencesSearchScope = file == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)
-      ? ProjectScope.getProjectScope(myElementToRename.getProject())
-      : new LocalSearchScope(myElementToRename.getContainingFile());
+    SearchScope referencesSearchScope = getReferencesSearchScope(file);
 
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
 
@@ -172,15 +174,21 @@ public class VariableInplaceRenamer {
     ourRenamersStack.push(this);
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
-    collectAdditionalElementsToRename(processTextOccurrences, stringUsages);
+    collectAdditionalElementsToRename(processTextOccurrences, stringUsages); //todo check default to be consistent
     if (appendAdditionalElement(stringUsages)) {
-      runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
+      return runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
     } else {
       new RenameChooser(myEditor).showChooser(refs, stringUsages, nameSuggestions, scope, containingFile);
     }
 
 
     return true;
+  }
+
+  protected SearchScope getReferencesSearchScope(VirtualFile file) {
+    return file == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)
+      ? ProjectScope.getProjectScope(myElementToRename.getProject())
+      : new LocalSearchScope(myElementToRename.getContainingFile());
   }
 
   @Nullable
@@ -211,11 +219,11 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private void runRenameTemplate(LinkedHashSet<String> nameSuggestions,
-                                 Collection<PsiReference> refs,
-                                 Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                 PsiElement scope,
-                                 final PsiFile containingFile) {
+  private boolean runRenameTemplate(LinkedHashSet<String> nameSuggestions,
+                                    Collection<PsiReference> refs,
+                                    final Collection<Pair<PsiElement, TextRange>> stringUsages,
+                                    PsiElement scope,
+                                    final PsiFile containingFile) {
     final PsiElement context = containingFile.getContext();
     if (context != null) {
       scope = context.getContainingFile();
@@ -243,6 +251,20 @@ public class VariableInplaceRenamer {
       addVariable(usage.first, usage.second, selectedElement, builder, nameSuggestions);
     }
     addAdditionalVariables(builder);
+    final StartMarkAction markAction;
+    try {
+      markAction = startRename();
+    }
+    catch (StartMarkAction.AlreadyStartedException e) {
+      PsiNamedElement oldElement = e.getElement();
+      boolean otherElement = oldElement != getVariable();
+      if (otherElement) {
+        CommonRefactoringUtil.showErrorHint(myProject, myEditor, e.getMessage(), RENAME_TITLE, null);
+      } else {
+        restoreStateBeforeDialogWouldBeShown();
+      }
+      return oldElement != null && otherElement;
+    }
 
     final PsiElement scope1 = scope;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -281,13 +303,13 @@ public class VariableInplaceRenamer {
               }
 
               @Override
-              public void templateFinished(Template template, boolean brokenOff) {
+              public void templateFinished(Template template, final boolean brokenOff) {
                 super.templateFinished(template, brokenOff);
                 moveOffsetAfter(!brokenOff);
-                if (myNewName != null) {
+                if (myNewName != null && !brokenOff) {
                   final Runnable runnable = new Runnable() {
                     public void run() {
-                      performAutomaticRename(myNewName, getVariable());
+                      performRefactoringRename(myNewName, context, markAction);
                     }
                   };
                   if (ApplicationManager.getApplication().isUnitTestMode()){
@@ -295,6 +317,8 @@ public class VariableInplaceRenamer {
                   } else {
                     ApplicationManager.getApplication().invokeLater(runnable);
                   }
+                } else {
+                  FinishMarkAction.finish(myProject, myEditor, markAction);
                 }
               }
 
@@ -302,6 +326,7 @@ public class VariableInplaceRenamer {
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();
                 finish();
                 moveOffsetAfter(false);
+                FinishMarkAction.finish(myProject, myEditor, markAction);
               }
             });
 
@@ -331,7 +356,15 @@ public class VariableInplaceRenamer {
         });
       }
     }, RENAME_TITLE, null);
+    return true;
+  }
 
+  protected void restoreStateBeforeDialogWouldBeShown() {
+  }
+
+  @Nullable
+  protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
+    return null;
   }
 
   @Nullable
@@ -377,8 +410,10 @@ public class VariableInplaceRenamer {
       refs.add(reference);
     }
   }
-
-  public void performAutomaticRename(final String newName, final PsiElement elementToRename) {
+  protected void performRefactoringRename(final String newName,
+                                            PsiElement context,
+                                            final StartMarkAction markAction) {
+    PsiNamedElement elementToRename = getVariable();
     for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (renamerFactory.isApplicable(elementToRename)) {
         final List<UsageInfo> usages = new ArrayList<UsageInfo>();
@@ -424,6 +459,14 @@ public class VariableInplaceRenamer {
 
   public void setElementToRename(PsiNamedElement elementToRename) {
     myElementToRename = elementToRename;
+  }
+
+  protected void showDialogAdvertisement(final String actionId) {
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    final Shortcut[] shortcuts = keymap.getShortcuts(actionId);
+    if (shortcuts.length > 0) {
+      setAdvertisementText("Press " + shortcuts[0] + " to show dialog");
+    }
   }
 
   private static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {

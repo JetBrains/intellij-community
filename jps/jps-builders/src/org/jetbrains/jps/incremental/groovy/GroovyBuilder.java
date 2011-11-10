@@ -50,7 +50,7 @@ public class GroovyBuilder extends Builder {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           final String path = file.getPath();
-          if ((path.endsWith(".groovy") || path.endsWith(".gpp")) && isFileDirty(file, context, tsStorage)) { //todo file type check
+          if (isGroovyFile(path) && isFileDirty(file, context, tsStorage)) { //todo file type check
             toCompile.add(file);
           }
           return true;
@@ -176,13 +176,17 @@ public class GroovyBuilder extends Builder {
     }
   }
 
+  private static boolean isGroovyFile(String path) {
+    return path.endsWith(".groovy") || path.endsWith(".gpp");
+  }
+
   private static Map<String, String> buildClassToSourceMap(CompileContext context, Set<String> toCompilePaths, String moduleOutputPath)
     throws Exception {
     Map<String, String> class2Src = new HashMap<String, String>();
     for (String out : context.getBuildDataManager().getOutputToSourceStorage().getKeys()) {
       if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
         String src = context.getBuildDataManager().getOutputToSourceStorage().getState(out);
-        if (!toCompilePaths.contains(src)) {
+        if (!toCompilePaths.contains(src) && isGroovyFile(src)) {
           String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.').replace('$', '.');
           class2Src.put(className, src);
         }

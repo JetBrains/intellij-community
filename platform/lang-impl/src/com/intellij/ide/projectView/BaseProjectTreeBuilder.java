@@ -390,6 +390,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean validateNode(final Object child) {
+    if (child == null) {
+      return false;
+    }
     if (child instanceof ProjectViewNode) {
       final ProjectViewNode projectViewNode = (ProjectViewNode)child;
       return projectViewNode.validate();

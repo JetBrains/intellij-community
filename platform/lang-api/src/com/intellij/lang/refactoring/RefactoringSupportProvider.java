@@ -137,4 +137,8 @@ public abstract class RefactoringSupportProvider {
   public RefactoringActionHandler getExtractClassHandler() {
     return null;
   }
+
+  public boolean isMemberInplaceRenameAvailable(PsiElement element, PsiElement context) {
+    return false;
+  }
 }

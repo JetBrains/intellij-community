@@ -16,6 +16,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -56,7 +57,8 @@ public abstract class FindUsagesHandler {
 
   @NotNull
   public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
-    return new CommonFindUsagesDialog(myPsiElement, getProject(), getFindUsagesOptions(), toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
+    return new CommonFindUsagesDialog(myPsiElement, getProject(), getFindUsagesOptions(DataManager.getInstance().getDataContext()),
+                                      toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
   }
 
   public final PsiElement getPsiElement() {
@@ -78,8 +80,8 @@ public abstract class FindUsagesHandler {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public static FindUsagesOptions createFindUsagesOptions(final Project project) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, DataManager.getInstance().getDataContext());
+  public static FindUsagesOptions createFindUsagesOptions(final Project project, @Nullable final DataContext dataContext) {
+    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, dataContext);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isSearchForTextOccurrences = true;
     return findUsagesOptions;
@@ -87,7 +89,11 @@ public abstract class FindUsagesHandler {
 
   @NotNull
   public FindUsagesOptions getFindUsagesOptions() {
-    FindUsagesOptions options = createFindUsagesOptions(getProject());
+    return getFindUsagesOptions(null);
+  }
+  @NotNull
+  public FindUsagesOptions getFindUsagesOptions(@Nullable final DataContext dataContext) {
+    FindUsagesOptions options = createFindUsagesOptions(getProject(), dataContext);
     options.isSearchForTextOccurrences &= isSearchForTextOccurencesAvailable(getPsiElement(), false);
     return options;
   }

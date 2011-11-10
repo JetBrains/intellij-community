@@ -45,7 +45,7 @@ public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons
     updateState(state);
     if (isReloadNeeded()) {
       if (isFullReload()) {
-        getModel().reloadModel(isFullReload());
+        getModel().reloadModel(true);
       } else {
         if (state) {
           getModel().applySettings();

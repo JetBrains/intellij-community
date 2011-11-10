@@ -2110,9 +2110,13 @@ public class AbstractTreeUi {
   private MutualMap<Object, Integer> loadElementsFromStructure(final NodeDescriptor descriptor,
                                                                @Nullable LoadedChildren preloadedChildren) {
     MutualMap<Object, Integer> elementToIndexMap = new MutualMap<Object, Integer>(true);
+    final Object element = getBuilder().getTreeStructureElement(descriptor);
+    if (!isValid(element)) return elementToIndexMap;
+
+
     List<Object> children = preloadedChildren != null
                     ? preloadedChildren.getElements()
-                    : Arrays.asList(getChildrenFor(getBuilder().getTreeStructureElement(descriptor)));
+                    : Arrays.asList(getChildrenFor(element));
     int index = 0;
     for (Object child : children) {
       if (!isValid(child)) continue;

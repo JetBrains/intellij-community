@@ -607,7 +607,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       Collections.sort(better, itemComparator);
     }
 
-    return myPresentableModel.classifyByRelevance(better);
+    List<LookupElement> classified = myPresentableModel.classifyByRelevance(better);
+    List<LookupElement> result = new ArrayList<LookupElement>(classified.size());
+    for (LookupElement element : classified) {
+      if (element.getLookupString().equals(itemPattern(element))) {
+        result.add(element);
+      }
+    }
+    for (LookupElement element : classified) {
+      if (!element.getLookupString().equals(itemPattern(element))) {
+        result.add(element);
+      }
+    }
+    return result;
   }
 
   @NotNull

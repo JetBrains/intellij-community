@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -80,6 +81,10 @@ public abstract class RenamePsiElementProcessor {
    * @param allRenames the map (from element to its new name) into which all additional elements to be renamed should be stored.
    */
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+    prepareRenaming(element, newName, allRenames, element.getUseScope());
+  }
+
+  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts) {

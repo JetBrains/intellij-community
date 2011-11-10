@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -91,7 +92,7 @@ public class DiffErrorElement extends DiffElement {
   }
 
   @Override
-  public JComponent getViewComponent(Project project, @Nullable DiffElement target) {
+  public JComponent getViewComponent(Project project, @Nullable DiffElement target, @NotNull Disposable parentDisposable) {
     return myDescription;
   }
 }

@@ -54,6 +54,8 @@ class UndoableGroup {
   private final UndoConfirmationPolicy myConfirmationPolicy;
 
   private boolean myValid;
+  private boolean myMerged4Undo;
+  private boolean myMerged4Redo;
 
   public UndoableGroup(String commandName,
                        boolean isGlobal,
@@ -75,6 +77,14 @@ class UndoableGroup {
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
     myValid = valid;
+    for (UndoableAction action : actions) {
+      if (action instanceof FinishMarkAction) {
+        ((FinishMarkAction)action).setGlobal(isGlobal);
+        ((FinishMarkAction)action).setCommandName(commandName);
+        myMerged4Undo = true;
+        break;
+      }
+    }
   }
 
   public boolean isGlobal() {
@@ -98,6 +108,10 @@ class UndoableGroup {
 
   public void redo() {
     undoOrRedo(false);
+  }
+
+  public boolean containsAction(UndoableAction action) {
+    return myActions.contains(action);
   }
 
   private void undoOrRedo(boolean isUndo) {
@@ -173,6 +187,22 @@ class UndoableGroup {
     commitAllDocuments();
   }
 
+  public void setMerged4Undo() {
+    myMerged4Undo = true;
+  }
+
+  public boolean isMerged4Undo() {
+    return myMerged4Undo;
+  }
+
+  public boolean isMerged4Redo() {
+    return myMerged4Redo;
+  }
+
+  public void setMerged4Redo() {
+    myMerged4Redo = true;
+  }
+
   private static void commitAllDocuments() {
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       PsiDocumentManager.getInstance(p).commitAllDocuments();
@@ -229,6 +259,12 @@ class UndoableGroup {
   }
 
   public String getCommandName() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof StartMarkAction) {
+        String commandName = ((StartMarkAction)action).getCommandName();
+        if (commandName != null) return commandName;
+      }
+    }
     return myCommandName;
   }
 
@@ -236,7 +272,25 @@ class UndoableGroup {
     return myCommandTimestamp;
   }
 
-  public boolean shouldAskConfirmation() {
+  public boolean shouldAskConfirmation(boolean redo) {
+    if (redo) {
+      if (myMerged4Redo) {
+        for (UndoableAction action : myActions) {
+          if (action instanceof StartMarkAction) {
+            if (action.isGlobal()) return true;
+            break;
+          }
+        }
+      }
+
+      if (myMerged4Undo) {
+        for (UndoableAction action : myActions) {
+          if (action instanceof FinishMarkAction) {
+            return false;
+          }
+        }
+      }
+    }
     return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
            myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
   }

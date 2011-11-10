@@ -17,6 +17,8 @@ package com.intellij.internal.psiView;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
@@ -35,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -97,7 +100,7 @@ import java.util.regex.Pattern;
 public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disposable {
   private static final String REFS_CACHE = "References Resolve Cache";
   private static final Color SELECTION_BG_COLOR = Registry.getColor("psi.viewer.selection.color", new Color(255, 204, 204));
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.psiView.PsiViewerDialog");
   private final Project myProject;
 
   private JPanel myPanel;
@@ -216,7 +219,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     setModal(modal);
     setOKButtonText("&Build PSI Tree");
     setCancelButtonText("&Close");
-    Disposer.register(myProject, this);
+    Disposer.register(myProject, getDisposable());
     EditorEx editor = null;
     if (myCurrentFile == null) {
       setTitle("PSI Viewer");
@@ -770,8 +773,17 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myPsiToBlockMap = new HashMap<PsiElement, BlockTreeNode>();
     final PsiElement psiFile = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
     initMap(rootNode, psiFile);
-    final BlockTreeNode blockNode = findBlockNode(rootElement);
-    assert blockNode != null;
+    PsiElement rootPsi = (rootNode.getBlock() instanceof ASTBlock) ?
+                         ((ASTBlock)rootNode.getBlock()).getNode().getPsi() : rootElement;
+    BlockTreeNode blockNode = myPsiToBlockMap.get(rootPsi);
+
+    if (blockNode == null) {
+      LOG.error(LogMessageEx
+                  .createEvent("PsiViewer: rootNode not found", "Current language: " + rootElement.getContainingFile().getLanguage(),
+                               new Attachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile())));
+      blockNode = findBlockNode(rootPsi);
+    }
+
     blockTreeStructure.setRoot(blockNode);
     myBlockTree.addTreeSelectionListener(new MyBlockTreeSelectionListener());
     myBlockTree.setRootVisible(true);
@@ -914,7 +926,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
     return result;
   }
-  
+
   private void selectBlockNode(@Nullable BlockTreeNode currentBlockNode) {
     if (myBlockTreeBuilder == null) return;
     if (currentBlockNode != null) {

@@ -6,19 +6,24 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.remote.*;
+import org.jetbrains.plugins.gradle.notification.GradleTaskId;
+import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
+import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
+import org.jetbrains.plugins.gradle.remote.GradleApiException;
+import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
+import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.io.*;
+import java.io.File;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,18 +38,20 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 8/8/11 11:09 AM
  */
 public class GradleProjectResolverImpl extends RemoteObject implements GradleProjectResolver, RemoteGradleService {
-  
-  private final BlockingQueue<ProjectConnection>             myConnections       = new LinkedBlockingQueue<ProjectConnection>();
-  private final AtomicReference<RemoteGradleProcessSettings> mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
-  private final GradleLibraryNamesMixer                      myLibraryNamesMixer = new GradleLibraryNamesMixer();
+
+  private final BlockingQueue<ProjectConnection>                myConnections       = new LinkedBlockingQueue<ProjectConnection>();
+  private final AtomicReference<RemoteGradleProcessSettings>    mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
+  private final GradleLibraryNamesMixer                         myLibraryNamesMixer = new GradleLibraryNamesMixer();
+  private final AtomicReference<GradleTaskNotificationListener> myNotificationListener =
+    new AtomicReference<GradleTaskNotificationListener>();
 
   @NotNull
   @Override
-  public GradleProject resolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries)
+  public GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
   {
     try {
-      return doResolveProjectInfo(projectPath, downloadLibraries);
+      return doResolveProjectInfo(id, projectPath, downloadLibraries);
     }
     catch (Throwable e) {
       throw new GradleApiException(e);
@@ -52,11 +59,21 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
   
   @NotNull
-  private GradleProject doResolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries)
+  private GradleProject doResolveProjectInfo(@NotNull final GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, IllegalArgumentException, IllegalStateException
   {
+    final GradleTaskNotificationListener progressManager = myNotificationListener.get();
+    progressManager.onStart(id);
     ProjectConnection connection = getConnection(projectPath);
-    IdeaProject project = connection.getModel(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
+    ModelBuilder<? extends IdeaProject> modelBuilder = connection.model(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
+    modelBuilder.addProgressListener(new ProgressListener() {
+      @Override
+      public void statusChanged(ProgressEvent event) {
+        progressManager.onStatusChange(new GradleTaskNotificationEvent(id, event.getDescription()));
+      }
+    });
+    IdeaProject project = modelBuilder.get();
+    progressManager.onEnd(id);
     GradleProject result = populateProject(project, projectPath);
 
     // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is
@@ -341,7 +358,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     RemoteGradleProcessSettings settings = mySettings.get();
     if (settings != null) {
       connector.useInstallation(new File(settings.getGradleHome()));
-    } 
+    }
     connector.forProjectDirectory(projectDir);
     ProjectConnection connection = connector.connect();
     if (connection == null) {
@@ -379,5 +396,10 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   @Override
   public void setSettings(@NotNull RemoteGradleProcessSettings settings) {
     mySettings.set(settings); 
+  }
+
+  @Override
+  public void setNotificationListener(@NotNull GradleTaskNotificationListener notificationListener) {
+    myNotificationListener.set(notificationListener);
   }
 }

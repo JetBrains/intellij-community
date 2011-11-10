@@ -18,6 +18,7 @@ package com.intellij.find.findUsages;
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -206,7 +207,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   @Override
   @NotNull
-  public FindUsagesOptions getFindUsagesOptions() {
+  public FindUsagesOptions getFindUsagesOptions(@Nullable final DataContext dataContext) {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {
       return myFactory.getFindPackageOptions();
@@ -223,7 +224,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     if (ThrowSearchUtil.isSearchable(element)) {
       return myFactory.getFindThrowOptions();
     }
-    return super.getFindUsagesOptions();
+    return super.getFindUsagesOptions(dataContext);
   }
 
   @Override

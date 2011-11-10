@@ -35,6 +35,10 @@ public abstract class AbstractTreeStructure {
   public boolean isToBuildChildrenInBackground(Object element){
     return false;
   }
+  
+  public boolean isValid(Object element) {
+    return true;
+  }
 
   public boolean isAlwaysLeaf(Object element) {
     return false;

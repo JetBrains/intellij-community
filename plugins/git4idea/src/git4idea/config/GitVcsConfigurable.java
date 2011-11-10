@@ -24,75 +24,60 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * Git VCS configurable implementation
- */
 public class GitVcsConfigurable implements Configurable {
-  private final GitVcsSettings settings;
+
+  private final Project myProject;
+  private final GitVcsSettings mySettings;
   private GitVcsPanel panel;
-  private final Project project;
 
   public GitVcsConfigurable(@NotNull GitVcsSettings settings, @NotNull Project project) {
-    this.project = project;
-    this.settings = settings;
+    myProject = project;
+    mySettings = settings;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @NotNull
+  @Override
   public String getDisplayName() {
     return GitVcs.NAME;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
+  @Override
   public Icon getIcon() {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.VCSs.Git";
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @NotNull
+  @Override
   public JComponent createComponent() {
-    panel = new GitVcsPanel(project);
-    panel.load(settings);
+    panel = new GitVcsPanel(myProject);
+    panel.load(mySettings);
     return panel.getPanel();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
   public boolean isModified() {
-    return panel.isModified(settings);
+    return panel.isModified(mySettings);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
   public void apply() throws ConfigurationException {
-    panel.save(settings);
+    panel.save(mySettings);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
   public void reset() {
-    panel.load(settings);
+    panel.load(mySettings);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
   public void disposeUIResources() {
   }
+
 }

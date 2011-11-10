@@ -43,7 +43,7 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
                                        final FormErrorCollector collector) {
     String error = checkDescriptor(descriptor, module);
     if (error != null) {
-      collector.addError(getID(), component, prop, error, null);
+      collector.addError(getID(), component, prop, error);
     }
   }
 

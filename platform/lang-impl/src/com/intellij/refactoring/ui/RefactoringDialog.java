@@ -49,6 +49,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return myCbPreviewResults;
   }
 
+  public void setPreviewResults(boolean previewResults) {
+    myCbPreviewResults = previewResults;
+  }
+
   protected void createDefaultActions() {
     super.createDefaultActions ();
     myRefactorAction = new RefactorAction();

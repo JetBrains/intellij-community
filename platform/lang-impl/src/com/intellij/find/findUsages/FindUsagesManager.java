@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -300,7 +301,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   public UsageViewPresentation processUsages(FindUsagesHandler handler, @NotNull final Processor<Usage> processor) {
     if (handler == null) return null;
 
-    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
 
     PsiElement element = handler.getPsiElement();
     LOG.assertTrue(element.isValid());

@@ -209,11 +209,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         }
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
-            if (Messages.showOkCancelDialog(myProject, message,
-                                    VcsBundle.message("create.patch.commit.action.title"),
-                                    RevealFileAction.getActionName(), IdeBundle.message("action.close"), Messages.getInformationIcon()) == 0) {
-              ShowFilePathAction.open(file, file);
-            }
+            ShowFilePathAction.showDialog(myProject, message, VcsBundle.message("create.patch.commit.action.title"), file);
           }
         }, null, myProject);
       } catch (ProcessCanceledException e) {

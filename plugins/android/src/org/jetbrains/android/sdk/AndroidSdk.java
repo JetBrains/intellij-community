@@ -114,14 +114,8 @@ public abstract class AndroidSdk {
 
   @Nullable
   public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
-    path = FileUtil.toSystemDependentName(path);
+    final SdkManager manager = AndroidSdkUtils.createSdkManager(path, log);
 
-    final File f = new File(path);
-    if (!f.exists() && !f.isDirectory()) {
-      return null;
-    }
-
-    SdkManager manager = SdkManager.createManager(path + File.separatorChar, log);
     if (manager != null) {
       return new AndroidSdkImpl(manager, path);
     }

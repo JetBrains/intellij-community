@@ -42,8 +42,6 @@ public class OpenOrAttachDialog extends DialogWrapper {
     setTitle("Open Project");
     myAttachButton.setText("Attach to '" + project.getName() + "' in current window");
     myAttachButton.setMnemonic('A');
-    myReplaceButton.setText("Replace '" + project.getName() + "' in current window");
-    myReplaceButton.setMnemonic('R');
     init();
     MouseAdapter listener = new MouseAdapter() {
       @Override

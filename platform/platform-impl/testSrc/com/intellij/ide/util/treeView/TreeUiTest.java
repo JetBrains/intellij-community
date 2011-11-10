@@ -20,6 +20,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TreeUiTest extends AbstractTreeBuilderTest {
 
@@ -2168,6 +2170,43 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     assertTree("-/\n" + " +com\n" + " +jetbrains\n" + " +org\n" + " +[xunit]\n");
   }
+
+  public void testGetChildrenOnInvalidNode() throws Exception {
+    buildStructure(myRoot);
+
+    final Set<NodeElement> invalid = new HashSet<NodeElement>();
+    myValidator = new Validator() {
+      @Override
+      public boolean isValid(Object element) {
+        return !invalid.contains(element);
+      }
+    };
+
+    expand(getPath("/"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    invalid.add(new NodeElement("com"));
+
+    updateFrom(new NodeElement("com"));
+    assertTree("-/\n" +
+               " com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    updateFromRoot();
+    assertTree("-/\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+  }
+
 
   public void testSelectWhenUpdatesArePending() throws Exception {
     getBuilder().getUpdater().setDelay(1000);

@@ -78,9 +78,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myProject = project;
     mySettings = settings;
     mySrc = src;
-    Disposer.register(this, src);
     myTrg = trg;
-    Disposer.register(this, trg);
   }
 
   public void stopUpdating() {
@@ -343,11 +341,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       text.set(prepareText(element.getPath()));
       final DiffElement[] children = element.getChildren();
       for (DiffElement child : children) {
-        Disposer.register(element, child);
-      }
-      for (DiffElement child : children) {
         if (!myUpdating.get()) return;
-        scan(child, root.addChild(child, source), source);
+        final DTree el = root.addChild(child, source);
+        scan(child, el, source);
       }
     }
   }
