@@ -30,8 +30,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 public class GotoClassModel2 extends FilteringGotoByModel<Language> {
+  private String[] mySeparators;
+  
   public GotoClassModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getClassModelContributors());
   }
@@ -101,7 +104,17 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
 
   @NotNull
   public String[] getSeparators() {
-    return new String[] {"."};
+    if (mySeparators == null) {
+      final Set<String> separators = new HashSet<String>();
+      separators.add(".");
+      for(ChooseByNameContributor c: getContributors()) {
+        if (c instanceof GotoClassContributor) {
+          separators.add(((GotoClassContributor)c).getQualifiedNameSeparator());
+        }
+      }
+      mySeparators = separators.toArray(new String[separators.size()]);
+    }
+    return mySeparators;
   }
 
   @Override

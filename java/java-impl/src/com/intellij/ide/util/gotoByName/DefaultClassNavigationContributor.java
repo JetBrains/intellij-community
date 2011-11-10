@@ -57,4 +57,9 @@ public class DefaultClassNavigationContributor implements GotoClassContributor {
     }
     return null;
   }
+
+  @Override
+  public String getQualifiedNameSeparator() {
+    return ".";
+  }
 }

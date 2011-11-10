@@ -24,4 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public interface GotoClassContributor extends ChooseByNameContributor {
   @Nullable
   String getQualifiedName(NavigationItem item);
+
+  @Nullable
+  String getQualifiedNameSeparator();
 }
