@@ -64,6 +64,11 @@ public class PyMoveClassOrFunctionTest extends PyTestCase {
     doTest("f", "b.py");
   }
 
+  // PY-4545
+  public void testBaseClass() {
+    doTest("B", "b.py");
+  }
+
   private void doTest(final String symbolName, final String toFileName) {
     String root = "/refactoring/moveClassOrFunction/" + getTestName(true);
     String rootBefore = root + "/before/src";

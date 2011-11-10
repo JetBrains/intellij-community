@@ -2,9 +2,11 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,9 +36,14 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
     @Override
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       PyExpression lhsExpression = node.getLeftHandSideExpression();
-      PyExpression assignedValue = node.getAssignedValue();
+      PsiElement assignedValue = node.getAssignedValue();
       if (assignedValue instanceof PyParenthesizedExpression)     // PY-2659
         assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
+      if (lhsExpression instanceof PyParenthesizedExpression)     // PY-4360
+        lhsExpression = ((PyParenthesizedExpression)lhsExpression).getContainedExpression();
+      if (assignedValue instanceof PyReferenceExpression) {          // PY-4357
+        assignedValue = ((PyReferenceExpression)assignedValue).followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
+      }
       if (lhsExpression instanceof PyTupleExpression && assignedValue instanceof PyTupleExpression) {
         int valuesLength = ((PyTupleExpression)assignedValue).getElements().length;
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();
@@ -57,9 +64,9 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
         int targetsLength = elements.length;
         if (targetsLength > valuesLength) {
-          registerProblem(assignedValue, "Need more values to unpack");
+          registerProblem(node.getAssignedValue(), "Need more values to unpack");
         } else if (!containsStarExpression && targetsLength < valuesLength) {
-          registerProblem(assignedValue, "Too many values to unpack");
+          registerProblem(node.getAssignedValue(), "Too many values to unpack");
         }
       }
     }
