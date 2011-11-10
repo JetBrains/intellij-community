@@ -333,6 +333,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @throws IncorrectOperationException if <code>text</code> is not a valid Java keyword.
    */
   @NotNull PsiKeyword createKeyword(@NotNull @NonNls String keyword) throws IncorrectOperationException;
+  @NotNull PsiKeyword createKeyword(@NotNull @NonNls String keyword, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates an import statement for importing the specified class.

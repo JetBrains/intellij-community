@@ -48,7 +48,7 @@ public class BasicExpressionCompletionContributor {
 
   public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
     try {
-      final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
+      final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s, element);
       return new KeywordLookupItem(keyword, element).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
     }
     catch (IncorrectOperationException e) {

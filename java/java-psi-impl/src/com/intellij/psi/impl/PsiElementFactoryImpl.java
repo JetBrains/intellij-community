@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.*;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.StatementParser;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -501,6 +502,15 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("\"" + text + "\" is not a keyword.");
     }
     return new LightKeyword(myManager, text);
+  }
+
+  @NotNull
+  @Override
+  public PsiKeyword createKeyword(@NotNull @NonNls String keyword, PsiElement context) throws IncorrectOperationException {
+    if (!JavaLexer.isKeyword(keyword, PsiUtil.getLanguageLevel(context))) {
+      throw new IncorrectOperationException("\"" + keyword + "\" is not a keyword.");
+    }
+    return new LightKeyword(myManager, keyword);
   }
 
   @NotNull
