@@ -32,16 +32,19 @@ import java.util.regex.Pattern;
 public class VMOptions {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.VMOptions");
 
-  @NonNls public static final String XMX_OPTION_NAME = "Xmx";
-  @NonNls public static final String PERM_GEN_OPTION_NAME = "XX:MaxPermSize";
+  @NonNls static final String XMX_OPTION_NAME = "Xmx";
+  @NonNls static final String PERM_GEN_OPTION_NAME = "XX:MaxPermSize";
+  @NonNls static final String CODE_CACHE_OPTION_NAME = "XX:ReservedCodeCacheSize";
 
   @NonNls private static final String XMX_OPTION = "-" + XMX_OPTION_NAME;
   @NonNls private static final String PERM_GEN_OPTION = "-" + PERM_GEN_OPTION_NAME + "=";
+  @NonNls static final String CODE_CACHE_OPTION = "-" + CODE_CACHE_OPTION_NAME + "=";
 
   @NonNls private static final String MEM_SIZE_EXPR = "(\\d*)([a-zA-Z]*)";
 
   @NonNls private static final Pattern XMX_PATTERN = Pattern.compile(XMX_OPTION + MEM_SIZE_EXPR);
   @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
+  @NonNls static final Pattern CODE_CACHE_PATTERN = Pattern.compile(CODE_CACHE_OPTION + MEM_SIZE_EXPR);
   @NonNls public static final String MAC_ARCH_VMOPTIONS = SystemInfo.is64Bit ? "VMOptions.x86_64" : "VMOptions.i386";
   @NonNls private static final Pattern MAC_OS_VM_OPTIONS_PATTERN = Pattern.compile("(<key>" + MAC_ARCH_VMOPTIONS + "</key>(?:(?:\\s*)(?:<!--(?:.*)-->(?:\\s*))*)<string>)(.*)(</string>)");
 
@@ -71,8 +74,16 @@ public class VMOptions {
     return readOption(PERM_GEN_PATTERN);
   }
 
+  public static int readCodeCache() {
+    return readOption(CODE_CACHE_PATTERN);
+  }
+
   public static void writeMaxPermGen(int value) {
     writeOption(PERM_GEN_OPTION, value, PERM_GEN_PATTERN);
+  }
+
+  public static void writeCodeCache(int value) {
+    writeOption(CODE_CACHE_OPTION, value, CODE_CACHE_PATTERN);
   }
 
   private static int readOption(Pattern pattern) {

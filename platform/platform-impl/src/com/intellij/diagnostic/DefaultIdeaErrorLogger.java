@@ -46,7 +46,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     return notificationEnabled ||
            !(IdeErrorsDialog.getSubmitter(event.getThrowable()) instanceof ITNReporter) ||
            ApplicationManagerEx.getApplicationEx().isInternal() ||
-           event.getThrowable() instanceof OutOfMemoryError     ||
+           isOOMError(event.getThrowable())     ||
            event.getThrowable() instanceof MappingFailedException;
   }
 
@@ -55,10 +55,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
    */
   public void handle(IdeaLoggingEvent event) {
     try {
-      if (event.getThrowable() instanceof OutOfMemoryError) {
-        processOOMError(event);
+      Throwable throwable = event.getThrowable();
+      if (isOOMError(throwable)) {
+        processOOMError(throwable);
       }
-      else if (event.getThrowable() instanceof MappingFailedException) {
+      else if (throwable instanceof MappingFailedException) {
         processMappingFailed(event);
       }
       else if (!ourOomOccured) {
@@ -70,19 +71,26 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
+  private boolean isOOMError(Throwable throwable) {
+    return throwable instanceof OutOfMemoryError ||
+        throwable instanceof VirtualMachineError && throwable.getMessage().contains("CodeCache");
+  }
+
   /**
    * @noinspection CallToPrintStackTrace
    */
-  private static void processOOMError(final IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
+  private static void processOOMError(final Throwable throwable) throws InterruptedException, InvocationTargetException {
     ourOomOccured = true;
-    event.getThrowable().printStackTrace();
+    throwable.printStackTrace();
 
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
-        String message = event.getThrowable().getMessage();
-        OutOfMemoryDialog.MemoryKind k = message != null && message.indexOf(PARAM_PERMGEN) >= 0
+        String message = throwable.getMessage();
+        OutOfMemoryDialog.MemoryKind k = message != null && message.contains(PARAM_PERMGEN)
                                          ? OutOfMemoryDialog.MemoryKind.PERM_GEN
-                                         : OutOfMemoryDialog.MemoryKind.HEAP;
+                                         : message != null && message.contains("CodeCache")
+                                           ? OutOfMemoryDialog.MemoryKind.CODE_CACHE
+                                           : OutOfMemoryDialog.MemoryKind.HEAP;
         new OutOfMemoryDialog(k).show();
       }
     });
