@@ -120,6 +120,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   protected JScrollPane createTable() {
     pluginsModel = new InstalledPluginsTableModel();
     pluginTable = new PluginTable(pluginsModel);
+    pluginTable.setTableHeader(null);
 
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(pluginTable);
     pluginTable.registerKeyboardAction(new ActionListener() {

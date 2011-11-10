@@ -31,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableModel;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,7 +68,14 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public void reset() {
     myPluginManagerMain.reset();
     if (myAvailable) {
-      myPluginManagerMain.pluginsModel.setSortMode(myUISettings.AVAILABLE_SORT_MODE);
+      final int column = myUISettings.AVAILABLE_SORT_MODE;
+      if (column >= 0) {
+        myPluginManagerMain.pluginsModel.setSortKey(new RowSorter.SortKey(column, SortOrder.ASCENDING));
+      }
+      if (myUISettings.AVAILABLE_SORT_BY_STATUS) {
+        myPluginManagerMain.pluginsModel.setSortByStatus(true);
+      }
+      myPluginManagerMain.pluginsModel.sort();
     }
     getSplitterProportions().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
   }
@@ -80,7 +89,15 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
       getSplitterProportions().saveSplitterProportions(myPluginManagerMain.getMainPanel());
 
       if (myAvailable) {
-        myUISettings.AVAILABLE_SORT_MODE = myPluginManagerMain.pluginsModel.getSortMode();
+        final RowSorter<? extends TableModel> rowSorter = myPluginManagerMain.pluginTable.getRowSorter();
+        if (rowSorter != null) {
+          final List<? extends RowSorter.SortKey> sortKeys = rowSorter.getSortKeys();
+          if (sortKeys.size() > 0) {
+            final RowSorter.SortKey sortKey = sortKeys.get(0);
+            myUISettings.AVAILABLE_SORT_MODE = sortKey.getColumn();
+          }
+        }
+        myUISettings.AVAILABLE_SORT_BY_STATUS = myPluginManagerMain.pluginsModel.isSortByStatus();
       }
 
       Disposer.dispose(myPluginManagerMain);

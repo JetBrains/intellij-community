@@ -22,7 +22,6 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
@@ -43,28 +42,19 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   private String myCategory = ALL;
   private LinkedHashSet<String> myAvailableCategories = new LinkedHashSet<String>();
 
-  protected static final String DOWNLOADS = "Downloads";
-  protected static final String RELEASE_DATE = "Updated";
   protected static final String STATUS = "Status";
-  protected static final String REPOSITORY = "Repository";
-  public static final String [] SORT_MODES = new String[] {NAME, DOWNLOADS, RELEASE_DATE, STATUS};
+
   public static final String JETBRAINS_REPO = "JetBrains";
   private String myRepository = ALL;
 
   public AvailablePluginsTableModel() {
-    super.columns = new ColumnInfo[] {new AvailablePluginColumnInfo(mySortMode)};
+    super.columns = new ColumnInfo[] {
+      new AvailablePluginColumnInfo(this),
+      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, this),
+      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, this)};
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
     view = new ArrayList<IdeaPluginDescriptor>();
-  }
-
-  @Override
-  public void setSortMode(String sortMode) {
-    if (REPOSITORY.equals(sortMode) && UpdateSettings.getInstance().myPluginHosts.isEmpty()) {
-      sortMode = NAME;
-    }
-    ((AvailablePluginColumnInfo)columns[getNameColumn()]).setSortMode(sortMode);
-    super.setSortMode(sortMode);
   }
 
   public String getCategory() {

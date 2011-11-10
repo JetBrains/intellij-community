@@ -16,14 +16,12 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -80,10 +78,11 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   protected JScrollPane createTable() {
     pluginsModel = new AvailablePluginsTableModel();
     pluginTable = new PluginTable(pluginsModel);
-    JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(pluginTable);
-    
+    pluginTable.getTableHeader().setReorderingAllowed(false);
+    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 60);
+    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 60);
 
-    return availableScrollPane;
+    return ScrollPaneFactory.createScrollPane(pluginTable);
   }
 
   @Override
@@ -104,9 +103,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     actionGroup.add(new RefreshAction());
     actionGroup.add(new ActionInstallPlugin(this, installed));
     if (inToolbar) {
+      actionGroup.add(new SortByStatusAction());
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
-      actionGroup.add(new SortByNameAction());
     }
     return actionGroup;
   }
@@ -188,34 +187,20 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
   }
 
-  private class SortByNameAction extends ComboBoxAction implements DumbAware{
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setText("Sort by: " + pluginsModel.getSortMode());
+  private class SortByStatusAction extends ToggleAction {
+    private SortByStatusAction() {
+      super("Sort installed first", "Sort installed first", IconLoader.getIcon("/objectBrowser/sortByType.png"));
     }
 
-    @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      final DefaultActionGroup gr = new DefaultActionGroup();
-      for (final String sortMode : AvailablePluginsTableModel.SORT_MODES) {
-        gr.add(createSortByAction(sortMode));
-      }
-      if (!UpdateSettings.getInstance().myPluginHosts.isEmpty()) {
-        gr.add(createSortByAction(AvailablePluginsTableModel.REPOSITORY));
-      }
-      return gr;
+    public boolean isSelected(AnActionEvent e) {
+      return pluginsModel.isSortByStatus();
     }
 
-    private AnAction createSortByAction(final String sortMode) {
-      return new AnAction(sortMode) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          pluginsModel.setSortMode(sortMode);
-        }
-      };
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      pluginsModel.setSortByStatus(state);
+      pluginsModel.sort();
     }
   }
 }

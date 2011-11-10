@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SideBorder;
@@ -34,45 +35,14 @@ import java.awt.*;
  * Date: 10/13/11
  */
 class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
-  private String mySortMode;
 
-  public AvailablePluginColumnInfo(String sortMode) {
-    super(PluginManagerColumnInfo.COLUMN_NAME);
-    mySortMode = sortMode;
+  public AvailablePluginColumnInfo(AvailablePluginsTableModel model) {
+    super(PluginManagerColumnInfo.COLUMN_NAME, model);
   }
 
   @Override
   public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
     return new AvailableTableRenderer(pluginDescriptor);
-  }
-
-  @Override
-  protected boolean isSortByName() {
-    return mySortMode.equals(PluginTableModel.NAME);
-  }
-
-  @Override
-  protected boolean isSortByDownloads() {
-    return mySortMode.equals(AvailablePluginsTableModel.DOWNLOADS);
-  }
-
-  @Override
-  protected boolean isSortByDate() {
-    return mySortMode.equals(AvailablePluginsTableModel.RELEASE_DATE);
-  }
-
-  @Override
-  protected boolean isSortByStatus() {
-    return mySortMode.equals(AvailablePluginsTableModel.STATUS);
-  }
-
-  @Override
-  protected boolean isSortByRepository() {
-    return mySortMode.equals(AvailablePluginsTableModel.REPOSITORY);
-  }
-
-  public void setSortMode(String sortMode) {
-    mySortMode = sortMode;
   }
 
   private static class AvailableTableRenderer extends DefaultTableCellRenderer {
@@ -102,17 +72,18 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
 
       final GridBagConstraints gc =
-        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, ((PluginNode)myPluginDescriptor).getRepositoryName() != null ? 5 : 4, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                new Insets(0, LEFT_MARGIN, 0, 0), 0, 0);
-      final JPanel namePanel = new JPanel(new BorderLayout(0, LEFT_MARGIN));
-      namePanel.add(myNameLabel, BorderLayout.WEST);
-      namePanel.add(myStatusLabel, BorderLayout.CENTER);
+      final JPanel namePanel = new JPanel(new GridBagLayout());
+      GridBagConstraints gn = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0,0), 0,0);
+      namePanel.add(myNameLabel, gn);
+      gn.insets.left = LEFT_MARGIN;
+      namePanel.add(myStatusLabel, gn);
+      gn.weightx = 1;
+      gn.fill = GridBagConstraints.HORIZONTAL;
+      namePanel.add(Box.createHorizontalBox(), gn);
       namePanel.setOpaque(false);
       myPanel.add(namePanel, gc);
-
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      myPanel.add(Box.createHorizontalBox(), gc);
 
       gc.weightx = 0;
       gc.fill = GridBagConstraints.NONE;
@@ -122,16 +93,20 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         myPanel.add(myRepositoryLabel, gc);
       }
       myPanel.add(myCategoryLabel, gc);
-      myPanel.add(myDateLabel, gc);
-      myPanel.add(myDownloadsLabel, gc);
-
       gc.weightx = 1;
       gc.fill = GridBagConstraints.HORIZONTAL;
       myPanel.add(Box.createHorizontalBox(), gc);
+      gc.weightx = 0;
+      gc.fill = GridBagConstraints.NONE;
+      gc.anchor = GridBagConstraints.NORTHEAST;
+      myPanel.add(myDownloadsLabel, gc);
+      gc.insets.left = 15;
+      myPanel.add(myDateLabel, gc);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      final String updatedMask = "Updated: xx/xx/xx";
       Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (myPluginDescriptor != null) {
         final PluginNode pluginNode = (PluginNode)myPluginDescriptor;
@@ -140,10 +115,14 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         if (repositoryName != null) {
           myRepositoryLabel.setText("Repository: " + repositoryName);
         } else {
-          myCategoryLabel.setText("Category: " + myPluginDescriptor.getCategory());
+          myCategoryLabel.setText(myPluginDescriptor.getCategory());
           long date = ((PluginNode)myPluginDescriptor).getDate();
-          myDateLabel.setText("Updated: " + (date != 0 ? DateFormatUtil.formatDate(date) : "n/a"));
-          myDownloadsLabel.setText("Downloads: " + myPluginDescriptor.getDownloads());
+          String formattedDate = date != 0 ? DateFormatUtil.formatDate(date) : "n/a";
+          if (formattedDate.length() < updatedMask.length()) {
+            formattedDate = StringUtil.repeat(" ", updatedMask.length() - formattedDate.length()) + formattedDate;
+          }
+          //myDateLabel.setText(formattedDate);
+          //myDownloadsLabel.setText("Downloads: " + myPluginDescriptor.getDownloads());
         }
 
         final Color fg = orig.getForeground();
