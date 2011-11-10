@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -51,7 +52,20 @@ public class GitPushDialog extends DialogWrapper {
     myProject = project;
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
-    myListPanel = new GitPushLog(myProject, GitRepositoryManager.getInstance(myProject).getRepositories());
+    myListPanel = new GitPushLog(myProject, GitRepositoryManager.getInstance(myProject).getRepositories(), new Consumer<Boolean>() {
+      @Override public void consume(Boolean checked) {
+        if (checked) {
+          setOKActionEnabled(true);
+        } else {
+          Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
+          if (repositories.isEmpty()) {
+            setOKActionEnabled(false);
+          } else {
+            setOKActionEnabled(true);
+          }
+        }
+      }
+    });
 
     init();
     setOKButtonText("Push");
