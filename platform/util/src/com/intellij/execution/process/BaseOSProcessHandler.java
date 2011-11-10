@@ -17,6 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.OutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,15 +56,25 @@ public class BaseOSProcessHandler extends ProcessHandler {
   }
 
   public void startNotify() {
-    final ReadProcessThread stdoutThread = new ReadProcessThread(createProcessOutReader()) {
-      protected void textAvailable(String s) {
-        notifyTextAvailable(s, ProcessOutputTypes.STDOUT);
+    final OutputReader stdoutReader = new OutputReader(createProcessOutReader()) {
+      protected void onTextAvailable(@NotNull String text) {
+        notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
+      }
+
+      @Override
+      protected Future<?> executeOnPooledThread(Runnable runnable) {
+        return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
       }
     };
 
-    final ReadProcessThread stderrThread = new ReadProcessThread(createProcessErrReader()) {
-      protected void textAvailable(String s) {
-        notifyTextAvailable(s, ProcessOutputTypes.STDERR);
+    final OutputReader stderrReader = new OutputReader(createProcessErrReader()) {
+      protected void onTextAvailable(@NotNull String text) {
+        notifyTextAvailable(text, ProcessOutputTypes.STDERR);
+      }
+
+      @Override
+      protected Future<?> executeOnPooledThread(Runnable runnable) {
+        return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
       }
     };
 
@@ -74,24 +85,20 @@ public class BaseOSProcessHandler extends ProcessHandler {
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
         try {
-          final Future<?> stdOutReadingFuture = executeOnPooledThread(stdoutThread);
-          final Future<?> stdErrReadingFuture = executeOnPooledThread(stderrThread);
-
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
             public void consume(Integer exitCode) {
               try {
-                // tell threads that no more attempts to read process' output should be made
-                stderrThread.setProcessTerminated(true);
-                stdoutThread.setProcessTerminated(true);
+                // tell readers that no more attempts to read process' output should be made
+                stderrReader.stop();
+                stdoutReader.stop();
 
-                stdErrReadingFuture.get();
-                stdOutReadingFuture.get();
-              }
-              catch (InterruptedException ignored) {
-              }
-              catch (ExecutionException e) {
-                LOG.error(e);
+                try {
+                  stderrReader.waitFor();
+                  stdoutReader.waitFor();
+                }
+                catch (InterruptedException ignore) {
+                }
               }
               finally {
                 onOSProcessTerminated(exitCode);
@@ -107,7 +114,6 @@ public class BaseOSProcessHandler extends ProcessHandler {
 
     super.startNotify();
   }
-
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
   }
@@ -194,98 +200,6 @@ public class BaseOSProcessHandler extends ProcessHandler {
         }
       });
     }
-  }
-
-  private abstract static class ReadProcessThread implements Runnable {
-    private final Reader myReader;
-    private boolean skipLF = false;
-
-    private boolean myIsProcessTerminated = false;
-    private final char[] myBuffer = new char[8192];
-
-    public ReadProcessThread(final Reader reader) {
-      myReader = reader;
-    }
-
-    public synchronized void setProcessTerminated(boolean isProcessTerminated) {
-      myIsProcessTerminated = isProcessTerminated;
-    }
-
-    public void run() {
-      try {
-        while (true) {
-          final int rc = readAvailable();
-          if (rc == DONE) {
-            break;
-          }
-          //noinspection BusyWait
-          Thread.sleep(rc == READ_SOME ? 1L : 5L); // give other threads a chance
-        }
-      }
-      catch (InterruptedException ignore) {
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    private static final int DONE = 0;
-    private static final int READ_SOME = 1;
-    private static final int READ_NONE = 2;
-
-    private synchronized int readAvailable() throws IOException {
-      char[] buffer = myBuffer;
-      StringBuilder token = new StringBuilder();
-      int rc = READ_NONE;
-      while (myReader.ready()) {
-        int n = myReader.read(buffer);
-        if (n <= 0) break;
-        rc = READ_SOME;
-
-        for (int i = 0; i < n; i++) {
-          char c = buffer[i];
-          if (skipLF && c != '\n') {
-            token.append('\r');
-          }
-
-          if (c == '\r') {
-            skipLF = true;
-          }
-          else {
-            skipLF = false;
-            token.append(c);
-          }
-
-          if (c == '\n') {
-            textAvailable(token.toString());
-            token.setLength(0);
-          }
-        }
-      }
-
-      if (token.length() != 0) {
-        textAvailable(token.toString());
-        token.setLength(0);
-      }
-
-      if (myIsProcessTerminated) {
-        try {
-          myReader.close();
-        }
-        catch (IOException e1) {
-          // supressed
-        }
-
-        return DONE;
-      }
-
-      return rc;
-    }
-
-    protected abstract void textAvailable(final String s);
   }
 
   protected class ProcessWaitFor {
