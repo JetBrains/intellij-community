@@ -118,9 +118,12 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
   @Override
   protected void updateStep() {
-    super.updateStep();
     final int step = getCurrentStep();
     final ExportSignedPackageWizardStep currentStep = mySteps.get(step);
+    getFinishButton().setEnabled(currentStep.canFinish());
+
+    super.updateStep();
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         getRootPane().setDefaultButton(getNextStep(step) != step ? getNextButton() : getFinishButton());
@@ -136,7 +139,6 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
         }
       }
     });
-    getFinishButton().setEnabled(currentStep.canFinish());
   }
 
   @Override
