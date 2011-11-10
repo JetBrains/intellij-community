@@ -39,11 +39,22 @@ public abstract class GroovyNamedArgumentProvider {
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =
     ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
 
-  public abstract void getNamedArguments(@NotNull GrCall call,
-                                         @Nullable PsiElement resolve,
-                                         @Nullable String argumentName,
-                                         boolean forCompletion,
-                                         Map<String, NamedArgumentDescriptor> result);
+  public void getNamedArguments(@NotNull GrCall call,
+                                @Nullable PsiElement resolve,
+                                @Nullable String argumentName,
+                                boolean forCompletion,
+                                Map<String, NamedArgumentDescriptor> result) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void getNamedArguments(@NotNull GrCall call,
+                                @Nullable PsiElement resolve,
+                                @Nullable GroovyResolveResult resolveResult,
+                                @Nullable String argumentName,
+                                boolean forCompletion,
+                                Map<String, NamedArgumentDescriptor> result) {
+    getNamedArguments(call, resolve, argumentName, forCompletion, result);
+  }
 
   public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
                                                                                   @Nullable String argumentName,
@@ -65,7 +76,7 @@ public abstract class GroovyNamedArgumentProvider {
 
     if (callVariants.length == 0) {
       for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-        namedArgumentProvider.getNamedArguments(call, null, argumentName, forCompletion, namedArguments);
+        namedArgumentProvider.getNamedArguments(call, null, null, argumentName, forCompletion, namedArguments);
       }
     }
     else {
@@ -87,14 +98,14 @@ public abstract class GroovyNamedArgumentProvider {
             }
             else if (methodInfo.isNamedArgumentProviderDefined()) {
               if (methodInfo.isApplicable(method)) {
-                methodInfo.getNamedArgProvider().getNamedArguments(call, element, argumentName, forCompletion, namedArguments);
+                methodInfo.getNamedArgProvider().getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
               }
             }
           }
         }
 
         for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-          namedArgumentProvider.getNamedArguments(call, element, argumentName, forCompletion, namedArguments);
+          namedArgumentProvider.getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
         }
       }
     }
