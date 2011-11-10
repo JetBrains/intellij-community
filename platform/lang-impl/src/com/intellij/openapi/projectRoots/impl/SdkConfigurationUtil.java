@@ -59,7 +59,8 @@ public class SdkConfigurationUtil {
   private SdkConfigurationUtil() {
   }
 
-  public static void createSdk(final Project project, final Sdk[] existingSdks,
+  public static void createSdk(@Nullable final Project project,
+                               final Sdk[] existingSdks,
                                final Consumer<Sdk> onSdkCreatedCallBack,
                                final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
@@ -291,7 +292,7 @@ public class SdkConfigurationUtil {
     return LocalFileSystem.getInstance().findFileByPath(homepath);
   }
 
-  public static void suggestAndAddSdk(final Project project,
+  public static void suggestAndAddSdk(@Nullable final Project project,
                                        final Sdk[] existingSdks,
                                        JComponent popupOwner,
                                        final Consumer<Sdk> callback,
@@ -313,7 +314,7 @@ public class SdkConfigurationUtil {
     }
   }
 
-  private static void showSuggestedHomesPopup(final Project project,
+  private static void showSuggestedHomesPopup(@Nullable final Project project,
                                               final Sdk[] existingSdks,
                                               final Map<String, SdkType> suggestedSdkHomes,
                                               final SdkType[] sdkTypes,
