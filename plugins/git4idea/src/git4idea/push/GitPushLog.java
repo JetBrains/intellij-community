@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -36,7 +35,6 @@ import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,17 +55,15 @@ import java.util.List;
 class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   private final Project myProject;
+  private final Collection<GitRepository> myAllRepositories;
   private final ChangesBrowser myChangesBrowser;
-  private final Tree myTree;
+  private final CheckboxTree myTree;
   private final DefaultTreeModel myTreeModel;
   private final CheckedTreeNode myRootNode;
-  private final Map<GitRepository, Boolean> mySelectedRepositories = new HashMap<GitRepository, Boolean>();
 
-  GitPushLog(@NotNull Project project) {
+  GitPushLog(@NotNull Project project, Collection<GitRepository> repositories) {
     myProject = project;
-    for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
-      mySelectedRepositories.put(repository, true);
-    }
+    myAllRepositories = repositories;
 
     myRootNode = new CheckedTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRootNode);
@@ -187,13 +183,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
    * @return repositories selected (via checkboxes) to be pushed.
    */
   Collection<GitRepository> getSelectedRepositories() {
-    Collection<GitRepository> repositories = new ArrayList<GitRepository>(mySelectedRepositories.size());
-    for (Map.Entry<GitRepository, Boolean> entry : mySelectedRepositories.entrySet()) {
-      if (entry.getValue()) {
-        repositories.add(entry.getKey());
-      }
+    if (myAllRepositories.size() == 1) {
+      return myAllRepositories;
     }
-    return repositories;
+    GitRepository[] checkedRepoNodes = myTree.getCheckedNodes(GitRepository.class, null);
+    return Arrays.asList(checkedRepoNodes);
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {

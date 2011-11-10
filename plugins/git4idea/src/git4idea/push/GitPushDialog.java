@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class GitPushDialog extends DialogWrapper {
     myProject = project;
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
-    myListPanel = new GitPushLog(myProject);
+    myListPanel = new GitPushLog(myProject, GitRepositoryManager.getInstance(myProject).getRepositories());
 
     init();
     setOKButtonText("Push");
