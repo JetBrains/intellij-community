@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -46,6 +47,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -62,6 +64,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
@@ -167,14 +170,25 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
       String encoding = !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
-      List<String> paths2Compile = ContainerUtil.map2List(toCompile, new Function<VirtualFile, String>() {
+      Set<String> paths2Compile = ContainerUtil.map2Set(toCompile, new Function<VirtualFile, String>() {
         @Override
         public String fun(VirtualFile file) {
           return file.getPath();
         }
       });
-      GroovycOSProcessHandler.fillFileWithGroovycParameters(fileWithParameters, outputDir.getPath(), paths2Compile, finalOutputDir.getPath(),
-                                                            Collections.<String, String>emptyMap(), encoding, patchers);
+      Map<String, String> class2Src = new HashMap<String, String>();
+
+      for (VirtualFile file : enumerateGroovyFiles(module)) {
+        if (!paths2Compile.contains(file.getPath())) {
+          for (String name : TranslatingCompilerFilesMonitor.getCompiledClassNames(file, myProject)) {
+            class2Src.put(name.replace('$', '.'), file.getPath());
+          }
+        }
+      }
+
+      GroovycOSProcessHandler
+        .fillFileWithGroovycParameters(fileWithParameters, outputDir.getPath(), paths2Compile, finalOutputDir.getPath(),
+                                       class2Src, encoding, patchers);
 
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
       parameters.getProgramParametersList().add(fileWithParameters.getPath());
@@ -281,6 +295,30 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     catch (ExecutionException e) {
       LOG.error(e);
     }
+  }
+
+  protected Set<VirtualFile> enumerateGroovyFiles(final Module module) {
+    final Set<VirtualFile> moduleClasses = new THashSet<VirtualFile>();
+    ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new ContentIterator() {
+      public boolean processFile(final VirtualFile vfile) {
+        if (!vfile.isDirectory() &&
+            GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType())) {
+
+          AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+          try {
+            if (PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
+              moduleClasses.add(vfile);
+            }
+          }
+          finally {
+            accessToken.finish();
+          }
+        }
+        return true;
+      }
+    });
+    return moduleClasses;
   }
 
   protected static void addStubsToCompileScope(List<String> outputPaths, CompileContext compileContext, Module module) {
