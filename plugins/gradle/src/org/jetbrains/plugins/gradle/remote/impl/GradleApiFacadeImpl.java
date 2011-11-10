@@ -4,17 +4,19 @@ import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacade;
-import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
+import org.jetbrains.plugins.gradle.notification.GradleTaskId;
+import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
+import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
+import org.jetbrains.plugins.gradle.remote.RemoteGradleProgressNotificationManager;
+import org.jetbrains.plugins.gradle.remote.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,19 +30,32 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade {
 
   private static final long DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
-  
-  private final ConcurrentMap<Class<?>, Remote> myRemotes  = new ConcurrentHashMap<Class<?>, Remote>();
-  private final AtomicReference<RemoteGradleProcessSettings> mySettings = new AtomicReference<RemoteGradleProcessSettings>();
-  private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final AtomicLong myTtlMs = new AtomicLong(DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS);
+
+  private final ConcurrentMap<Class<?>, RemoteGradleService>       myRemotes
+    = new ConcurrentHashMap<Class<?>, RemoteGradleService>();
+  private final AtomicReference<RemoteGradleProcessSettings>       mySettings
+    = new AtomicReference<RemoteGradleProcessSettings>();
+  private final AtomicReference<GradleTaskNotificationListener> myNotificationListener
+    = new AtomicReference<GradleTaskNotificationListener>();
+  private final AtomicLong                                         myTtlMs
+    = new AtomicLong(DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS);
+
+  private final Alarm         myShutdownAlarm         = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final AtomicInteger myCallsInProgressNumber = new AtomicInteger();
+  
 
   public GradleApiFacadeImpl() {
     updateAutoShutdownTime();
   }
 
   public static void main(String[] args) throws Exception {
-    start(new GradleApiFacadeImpl());
+    GradleApiFacadeImpl facade = new GradleApiFacadeImpl();
+    start(facade);
+    facade.init();
+  }
+
+  private void init() throws RemoteException {
+    applyProgressManager(RemoteGradleProgressNotificationManager.NULL_OBJECT);
   }
   
   @NotNull
@@ -69,9 +84,8 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
    */
   @SuppressWarnings("unchecked")
-  private <I extends Remote, C extends Remote & RemoteGradleService> I getRemote(@NotNull Class<I> interfaceClass,
-                                                                                 @NotNull Class<C> implClass) 
-    throws ClassNotFoundException, IllegalAccessException, InstantiationException
+  private <I extends RemoteGradleService, C extends I> I getRemote(@NotNull Class<I> interfaceClass, @NotNull Class<C> implClass)
+    throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
   {
     Object cachedResult = myRemotes.get(implClass);
     if (cachedResult != null) {
@@ -82,6 +96,7 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     if (settings != null) {
       result.setSettings(settings);
     }
+    result.setNotificationListener(myNotificationListener.get());
     I proxy = (I)Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { interfaceClass }, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -98,7 +113,7 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     try {
       I stub = (I)UnicastRemoteObject.exportObject(proxy, 0);
       I stored = (I)myRemotes.putIfAbsent(implClass, stub);
-      return stored == null ? (I)result : stored;
+      return stored == null ? result : stored;
     }
     catch (RemoteException e) {
       Object raceResult = myRemotes.get(implClass);
@@ -121,9 +136,23 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     long ttl = settings.getTtlInMs();
     if (ttl > 0) {
       myTtlMs.set(ttl);
-    } 
+    }
+    List<RemoteGradleService> services = new ArrayList<RemoteGradleService>(myRemotes.values());
+    for (RemoteGradleService service : services) {
+      service.setSettings(settings);
+    }
   }
 
+  @Override
+  public void applyProgressManager(@NotNull RemoteGradleProgressNotificationManager progressManager) throws RemoteException {
+    GradleTaskNotificationListener listener = new SwallowingNotificationListener(progressManager);
+    myNotificationListener.set(listener);
+    List<RemoteGradleService> services = new ArrayList<RemoteGradleService>(myRemotes.values());
+    for (RemoteGradleService service : services) {
+      service.setNotificationListener(listener);
+    }
+  }
+  
   /**
    * Schedules automatic process termination in {@code #REMOTE_GRADLE_PROCESS_TTL_IN_MS} milliseconds.
    * <p/>
@@ -142,5 +171,44 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
         System.exit(0);
       }
     }, (int)myTtlMs.get());
+  }
+  
+  private static class SwallowingNotificationListener implements GradleTaskNotificationListener {
+    
+    private final RemoteGradleProgressNotificationManager myManager;
+
+    SwallowingNotificationListener(@NotNull RemoteGradleProgressNotificationManager manager) {
+      myManager = manager;
+    }
+
+    @Override
+    public void onStart(@NotNull GradleTaskId id) {
+      try {
+        myManager.onStart(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
+      try {
+        myManager.onStatusChange(event);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public void onEnd(@NotNull GradleTaskId id) {
+      try {
+        myManager.onEnd(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
   }
 }

@@ -23,13 +23,13 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.importing.GradleModulesImporter;
 import org.jetbrains.plugins.gradle.model.GradleEntity;
 import org.jetbrains.plugins.gradle.model.GradleModule;
 import org.jetbrains.plugins.gradle.model.GradleProject;
+import org.jetbrains.plugins.gradle.notification.*;
+import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -51,9 +51,16 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   
   /** @see #setModuleMappings(Map) */
   private final Map<GradleModule/*origin*/, GradleModule/*adjusted*/> myModuleMappings = new HashMap<GradleModule, GradleModule>();
+  
+  private final GradleProgressNotificationManager myProgressManager;
+  
   private GradleProject myGradleProject;
   private File myProjectFile;
-  
+
+  public GradleProjectImportBuilder(@NotNull GradleProgressNotificationManager progressManager) {
+    myProgressManager = progressManager;
+  }
+
   @Override
   public String getName() {
     return GradleBundle.message("gradle.name");
@@ -89,7 +96,9 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModifiableArtifactModel artifactModel)
   {
     GradleModulesImporter importer = new GradleModulesImporter();
-    Map<GradleModule, Module> mappings = importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath());
+    Map<GradleModule, Module> mappings = importer.importModules(
+      myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath(), myProgressManager
+    );
     return new ArrayList<Module>(mappings.values());
   }
 
@@ -151,12 +160,20 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
         @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         @Override
-        public void run(@NotNull ProgressIndicator indicator) {
+        public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
           GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+          GradleTaskNotificationListener gradleProgressListener = new GradleTaskNotificationListenerAdapter() {
+            @Override
+            public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
+              indicator.setText2(event.getDescription());
+            }
+          };
+          GradleTaskId taskId = GradleTaskId.create(GradleTaskType.RESOLVE_PROJECT);
+          myProgressManager.addNotificationListener(taskId, gradleProgressListener);
           try {
             GradleProjectResolver resolver = manager.getFacade().getResolver();
-            myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath(), false);
+            myGradleProject = resolver.resolveProjectInfo(taskId, myProjectFile.getAbsolutePath(), false);
           }
           catch (ProcessCanceledException e) {
             // Ignore
@@ -178,6 +195,9 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
             else {
               GradleLog.LOG.warn("Can't resolve gradle project", e);
             }
+          }
+          finally {
+            myProgressManager.removeNotificationListener(gradleProgressListener);
           }
         }
       });
