@@ -101,11 +101,11 @@ public class GitUpdateProcess {
    * 5. Restores local changes if update completed or failed with error. If update is incomplete, i.e. some unmerged files remain,
    * local changes are not restored.
    *
-   * @param forceRebase
-   * @return
    */
   public boolean update(final UpdateMethod updateMethod) {
     LOG.info("update started|" + updateMethod);
+    String oldText = myProgressIndicator.getText();
+    myProgressIndicator.setText("Updating...");
 
     if (!fetchAndNotify()) {
       return false;
@@ -117,6 +117,8 @@ public class GitUpdateProcess {
       }
     };
     GitComplexProcess.execute(myProject, "update", updateOperation);
+
+    myProgressIndicator.setText(oldText);
     return myResult;
   }
 
