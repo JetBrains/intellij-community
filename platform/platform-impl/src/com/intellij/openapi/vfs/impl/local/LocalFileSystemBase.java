@@ -487,9 +487,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       @Override
       public void close() throws IOException {
         super.close();
-        if (timeStamp > 0) {
+        if (timeStamp > 0 && ioFile.exists()) {
           if (!ioFile.setLastModified(timeStamp)) {
-            LOG.error("Failed: " + file.getPath() + ", " + timeStamp);
+            LOG.warn("Failed: " + file.getPath() + ", new:" + timeStamp + ", old:" + ioFile.lastModified());
           }
         }
       }
@@ -586,8 +586,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) {
-    if (!convertToIOFile(file).setLastModified(timeStamp)) {
-      LOG.error("Failed: " + file.getPath() + ", " + timeStamp);
+    final File ioFile = convertToIOFile(file);
+    if (ioFile.exists() && !ioFile.setLastModified(timeStamp)) {
+      LOG.warn("Failed: " + file.getPath() + ", new:" + timeStamp + ", old:" + ioFile.lastModified());
     }
   }
 
