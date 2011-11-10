@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
@@ -55,8 +56,6 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   private State myState = new State();
-
-  private static final int MAX_RECENT_PROJECTS = 25;
 
   public RecentProjectsManagerBase(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
@@ -90,7 +89,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
           i.remove();
         }
       }
-      while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
+      while (myState.recentPaths.size() > Registry.intValue("ide.max.recent.projects")) {
         myState.recentPaths.remove(myState.recentPaths.size() - 1);
       }
     }
