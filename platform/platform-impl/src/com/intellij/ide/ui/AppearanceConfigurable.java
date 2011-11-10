@@ -45,8 +45,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return IdeBundle.message("title.appearance");
   }
 
-  public JComponent createComponent() {
+  public AppearanceConfigurable() {
     myComponent = new MyComponent();
+  }
+
+  public JComponent createComponent() {
+    if (myComponent == null)  {
+      myComponent = new MyComponent();
+    }
 
     DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
     myComponent.myFontCombo.setModel(aModel);
