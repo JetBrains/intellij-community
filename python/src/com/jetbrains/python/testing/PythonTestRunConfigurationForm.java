@@ -50,6 +50,8 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
 
+  private boolean myPatternIsVisible = true;
+
   public PythonTestRunConfigurationForm(final Project project,
                                         final AbstractPythonTestRunConfiguration configuration) {
     myProject = project;
@@ -68,7 +70,6 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
 
     myParamTextField.setVisible(false);
     myParamCheckBox.setVisible(false);
-    setPatternVisible(getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -175,6 +176,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   }
 
   public void setPatternVisible(boolean b) {
+    myPatternIsVisible = b;
     myPatternTextField.setVisible(b);
     myPatternCheckBox.setVisible(b);
   }
@@ -205,6 +207,10 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     myParamTextField.setEnabled(myParamCheckBox.isSelected());
     myTestMethodComponent.getLabel().setText(testType == TestType.TEST_METHOD? PyBundle.message("runcfg.unittest.dlg.method_label")
                                                                              : PyBundle.message("runcfg.unittest.dlg.function_label"));
+    if (myPatternIsVisible) {
+      myPatternTextField.setVisible(getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
+      myPatternCheckBox.setVisible(getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
+    }
   }
 
   public JComponent getPanel() {

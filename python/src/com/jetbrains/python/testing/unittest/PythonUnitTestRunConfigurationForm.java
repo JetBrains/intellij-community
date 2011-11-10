@@ -45,12 +45,6 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
     border.setTitle(PyBundle.message("runcfg.unittest.display_name"));
 
-    myTestRunConfigurationForm.addTestTypeListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myTestRunConfigurationForm.setPatternVisible(myTestRunConfigurationForm.getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
-      }
-    });
-
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
 
