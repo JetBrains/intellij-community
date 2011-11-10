@@ -55,6 +55,8 @@ public class DaemonTooltipUtil {
       bestPoint,
       editor.getComponent().getRootPane().getLayeredPane()
     );
-    TooltipController.getInstance().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP, new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true));
+
+    TooltipController.getInstance().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP, new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setCalloutShift(
+      editor.getLineHeight() / 2 - 1));
   }
 }
