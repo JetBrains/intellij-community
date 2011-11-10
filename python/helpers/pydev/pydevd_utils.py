@@ -1,4 +1,5 @@
 import traceback
+import os
 
 try:
     from urllib import quote
@@ -97,10 +98,11 @@ def quote_smart(s, safe='/'):
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path)-1]
+    filename = os.path.basename(path)
     for name in ['python', 'jython', 'pypy']:
-        for ext in ['', '.exe', '.bat']:
-            if path.endswith(name + ext):
-                return True
+        if filename.find(name) != -1:
+            return True
+
     return False
 
 def patch_args(args):
