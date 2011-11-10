@@ -18,6 +18,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
@@ -122,6 +123,9 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                 // TODO: Respect the qualified import style
                 if (oldExpr instanceof PyQualifiedExpression) {
                   final PyQualifiedExpression qexpr = (PyQualifiedExpression)oldExpr;
+                  if (oldElement instanceof PyClass && PyNames.INIT.equals(qexpr.getName())) {
+                    continue;
+                  }
                   if (qexpr.getQualifier() != null) {
                     final PsiElement newExpr = qexpr.getParent().addBefore(new PyReferenceExpressionImpl(qexpr.getNameElement()), qexpr);
                     qexpr.delete();
