@@ -168,7 +168,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
       @Override
       public void startNotified(final ProcessEvent event) {
         TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
-        unboundOutputRoot.setOutputFilePath(config.getOutputFilePath());
+        if (config.isSaveOutputToFile()) {
+          unboundOutputRoot.setOutputFilePath(config.getOutputFilePath());
+        }
         client.prepareListening(listener, port);
         mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
         ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);

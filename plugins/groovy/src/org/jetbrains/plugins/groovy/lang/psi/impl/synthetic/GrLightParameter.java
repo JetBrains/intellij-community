@@ -91,6 +91,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   public void setType(@Nullable PsiType type) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
   }
 
   @NotNull

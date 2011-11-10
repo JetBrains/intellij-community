@@ -42,7 +42,8 @@ import org.jetbrains.annotations.NonNls;
 public class PluginManagerUISettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
   
-  public String AVAILABLE_SORT_MODE = PluginTableModel.NAME;
+  public int AVAILABLE_SORT_MODE = 0;
+  public boolean AVAILABLE_SORT_BY_STATUS = false;
   public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
 

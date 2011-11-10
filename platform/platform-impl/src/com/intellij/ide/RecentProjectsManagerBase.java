@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
@@ -55,8 +56,6 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   private State myState = new State();
-
-  private static final int MAX_RECENT_PROJECTS = 25;
 
   public RecentProjectsManagerBase(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
@@ -88,18 +87,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
         if (s == null) {
           i.remove();
-        } else {
-          final File file = new File(s);
-          if (file.isDirectory()) {
-            if (!new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-              i.remove();
-            }
-          } else if (!file.exists()) {
-            i.remove();
-          }
         }
       }
-      while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
+      while (myState.recentPaths.size() > Registry.intValue("ide.max.recent.projects")) {
         myState.recentPaths.remove(myState.recentPaths.size() - 1);
       }
     }
@@ -225,7 +215,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
 
-  private static boolean isValidProjectPath(String projectPath) {
+  public static boolean isValidProjectPath(String projectPath) {
     final File file = new File(projectPath);
     return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
   }

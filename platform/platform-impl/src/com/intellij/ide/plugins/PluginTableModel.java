@@ -40,7 +40,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
   protected List<IdeaPluginDescriptor> view;
   private RowSorter.SortKey myDefaultSortKey;
   protected final List<IdeaPluginDescriptor> filtered = new ArrayList<IdeaPluginDescriptor>();
-  protected String mySortMode = NAME;
+  private boolean mySortByStatus;
 
   protected PluginTableModel() {
   }
@@ -156,12 +156,11 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     fireTableDataChanged();
   }
 
-  public String getSortMode() {
-    return mySortMode;
+  public boolean isSortByStatus() {
+    return mySortByStatus;
   }
 
-  public void setSortMode(String sortMode) {
-    mySortMode = sortMode;
-    sort();
+  public void setSortByStatus(boolean sortByStatus) {
+    mySortByStatus = sortByStatus;
   }
 }

@@ -38,7 +38,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -105,7 +104,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private Editor myFullEditor;
   private ActionGroup myFullEditorActions;
 
+  private boolean myShowSeparatorLine = true;
+
   public LanguageConsoleImpl(final Project project, String title, final Language language) {
+    this(project, title, language, true);
+  }
+
+  public LanguageConsoleImpl(final Project project, String title, final Language language, boolean initComponents) {
     myProject = project;
     myTitle = title;
     installEditorFactoryListener();
@@ -117,6 +122,15 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
+    myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
+    Disposer.register(this, myUpdateQueue);
+
+    if (initComponents) {
+      initComponents();
+    }
+  }
+
+  public void initComponents() {
     final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
     final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
       @Override
@@ -131,8 +145,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myPanel.add(myConsoleEditor.getComponent());
     setupComponents();
     DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
-    myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
-    Disposer.register(this, myUpdateQueue);
+
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
       public void componentResized(ComponentEvent e) {
         if (myForceScrollToEnd.getAndSet(false)) {
@@ -191,11 +204,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     configureFullEditor();
   }
 
+  public void setShowSeparatorLine(boolean showSeparatorLine) {
+    myShowSeparatorLine = showSeparatorLine;
+  }
+
   private void setupComponents() {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CUT_COPY_PASTE));
-    if (SEPARATOR_THICKNESS > 0) {
+    //noinspection PointlessBooleanExpression,ConstantConditions
+    if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(Color.LIGHT_GRAY, SideBorder.BOTTOM));
     }
     myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
@@ -675,7 +693,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
       // deal with height
       if (historySize.width == 0) historySize.height = 0;
-      final int minHistorySize = historySize.height > 0 ? 2 * history.getLineHeight() + SEPARATOR_THICKNESS : 0;
+      final int minHistorySize = historySize.height > 0 ? 2 * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0) : 0;
       final int minEditorSize = editor.isViewer() ? 0 : editor.getLineHeight();
       final int editorPreferred = editor.isViewer() ? 0 : Math.max(minEditorSize, editorSize.height);
       final int historyPreferred = Math.max(minHistorySize, historySize.height);

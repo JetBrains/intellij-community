@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -410,7 +411,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     }
     dest.setBaseIcon(myBaseIcon);
     dest.setReturnType(myReturnType);
-
+    dest.setContainingClass(myContainingClass);
+    
     dest.getModifierList().copyModifiers(this);
 
     dest.getParameterList().clear();
@@ -426,6 +428,29 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return copy;
   }
 
+  public static GrLightMethodBuilder wrap(PsiMethod method) {
+    GrLightMethodBuilder res = new GrLightMethodBuilder(method.getManager(), method.getName());
+
+    res.setReturnType(method.getReturnType());
+    res.setNavigationElement(method.getNavigationElement());
+
+    res.setContainingClass(method.getContainingClass());
+
+    res.getModifierList().copyModifiers(method);
+
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      GrLightParameter p = new GrLightParameter(StringUtil.notNullize(parameter.getName()), parameter.getType(), res);
+
+      if (parameter instanceof GrParameter) {
+        p.setOptional(((GrParameter)parameter).isOptional());
+      }
+
+      res.addParameter(p);
+    }
+    
+    return res;
+  }
+  
   public <T> T getData() {
     //noinspection unchecked
     return (T)myData;

@@ -704,4 +704,7 @@
 
   <itemPresentationProvider forClass="com.intellij.psi.PsiDirectory"
                             implementationClass="com.intellij.navigation.DirectoryPresentationProvider"/>
+
+  <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
+                  serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
 </extensions>

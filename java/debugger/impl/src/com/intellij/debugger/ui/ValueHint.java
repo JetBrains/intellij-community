@@ -56,9 +56,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * User: lex
- * Date: Nov 24, 2003
- * Time: 7:31:26 PM
+ * @author lex
+ * @since Nov 24, 2003
  */
 public class ValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
@@ -117,7 +116,6 @@ public class ValueHint extends AbstractValueHint {
           try {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
 
-
             final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
               public String compute() {
                 return myCurrentExpression.getText();
@@ -127,18 +125,18 @@ public class ValueHint extends AbstractValueHint {
             final Value value = myValueToShow != null? myValueToShow : evaluator.evaluate(evaluationContext);
 
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text, value);
-            if (!isActiveTootlipApplicable(value) || getType() == ValueHintType.MOUSE_OVER_HINT) {
+            if (!isActiveTooltipApplicable(value) || getType() == ValueHintType.MOUSE_OVER_HINT) {
               if (getType() == ValueHintType.MOUSE_OVER_HINT) {
-                // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
+                // force using default renderer for mouse over hint in order to not to call accidentally methods while rendering
                 // otherwise, if the hint is invoked explicitly, show it with the right "auto" renderer
-                descriptor.setRenderer(debuggerContext.getDebugProcess().getDefaultRenderer(value));
+                descriptor.setRenderer(DebugProcessImpl.getDefaultRenderer(value));
               }
               descriptor.updateRepresentation(evaluationContext, new DescriptorLabelListener() {
                 public void labelChanged() {
                   if(getCurrentRange() != null) {
                     if(getType() != ValueHintType.MOUSE_OVER_HINT || descriptor.isValueValid()) {
                       final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(debuggerContext, descriptor, true);
-                      if (isActiveTootlipApplicable(value)){
+                      if (isActiveTooltipApplicable(value)){
                         simpleColoredText.append(" (" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
                       }
                       showHint(simpleColoredText, descriptor);
@@ -148,7 +146,7 @@ public class ValueHint extends AbstractValueHint {
               });
             } else {
               final InspectDebuggerTree tree = getInspectTree(descriptor);
-              showTreePopup(tree, debuggerContext, myCurrentExpression.getText(), new ValueHintTreeComponent(ValueHint.this, tree, myCurrentExpression.getText()));
+              showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
             }
           }
           catch (EvaluateException e) {
@@ -163,10 +161,9 @@ public class ValueHint extends AbstractValueHint {
     }
   }
 
-  private static boolean isActiveTootlipApplicable(final Value value) {
+  private static boolean isActiveTooltipApplicable(final Value value) {
     return value != null && !(value instanceof PrimitiveValue);
   }
-
 
   public void showTreePopup(final InspectDebuggerTree tree,
                         final DebuggerContextImpl debuggerContext,
@@ -185,7 +182,7 @@ public class ValueHint extends AbstractValueHint {
       public void run() {
         if(!isHintHidden()) {
           JComponent component;
-          if (!isActiveTootlipApplicable(descriptor.getValue())) {
+          if (!isActiveTooltipApplicable(descriptor.getValue())) {
             component = HintUtil.createInformationLabel(text);
           }
           else {
@@ -255,11 +252,10 @@ public class ValueHint extends AbstractValueHint {
               selectedExpression.set(JVMElementFactories.getFactory(ctx.getLanguage(), project).createExpressionFromText(text, ctx));
               currentRange.set(new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd()));
             }
-          } catch (IncorrectOperationException e) {
           }
+          catch (IncorrectOperationException ignored) { }
         }
 
-        
         if(currentRange.get() == null) {
           PsiElement elementAtCursor = psiFile.findElementAt(offset);
           if (elementAtCursor == null) {
@@ -305,5 +301,4 @@ public class ValueHint extends AbstractValueHint {
     });
     return Trinity.create(selectedExpression.get(), currentRange.get(), preCalculatedValue.get());
   }
-
 }

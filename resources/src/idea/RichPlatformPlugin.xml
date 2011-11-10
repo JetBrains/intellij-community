@@ -127,9 +127,6 @@
     <projectService serviceInterface="com.intellij.facet.impl.ui.FacetEditorsStateManager"
                     serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsStateManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
-                    serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
-
     <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
 
