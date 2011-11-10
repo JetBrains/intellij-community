@@ -16,6 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -25,5 +26,5 @@ public abstract class ProjectProfileManager implements ProfileManager, JDOMExter
   public abstract String getProfileName();
 
   public abstract String getProjectProfile();
-  public abstract void setProjectProfile(final String projectProfile);
+  public abstract void setProjectProfile(@Nullable final String projectProfile);
 }
