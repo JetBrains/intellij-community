@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.DocstringQuickFix;
@@ -55,17 +56,20 @@ public class PyDocstringInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
+      if (MakoLanguage._isDisabledFor(node)) return;
       checkDocString(node);
     }
 
     @Override
     public void visitPyFunction(PyFunction node) {
+      if (MakoLanguage._isDisabledFor(node)) return;
       final String name = node.getName();
       if (name != null && !name.startsWith("_")) checkDocString(node);
     }
 
     @Override
     public void visitPyClass(PyClass node) {
+      if (MakoLanguage._isDisabledFor(node)) return;
       final String name = node.getName();
       if (name != null && !name.startsWith("_")) checkDocString(node);
     }
