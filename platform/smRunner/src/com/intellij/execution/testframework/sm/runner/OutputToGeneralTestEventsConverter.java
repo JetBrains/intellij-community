@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor.getTFrameworkPrefix;
@@ -48,76 +46,40 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private GeneralTestEventsProcessor myProcessor;
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
-  private boolean myStdinSupportEnabled;
+
+  private OutputLineSplitter mySplitter;
   private boolean myPendingLineBreakFlag;
-
-  private static class OutputChunk {
-    private final Key myKey;
-    private String myText;
-
-    private OutputChunk(Key key, String text) {
-      myKey = key;
-      myText = text;
-    }
-
-    public Key getKey() {
-      return myKey;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public void append(String text) {
-      myText += text;
-    }
-  }
-
-  private final List<OutputChunk> myOutputChunks;
 
   public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
                                             @NotNull final TestConsoleProperties consoleProperties) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    myOutputChunks = new ArrayList<OutputChunk>();
-    myStdinSupportEnabled = consoleProperties.isEditable();
+
+    mySplitter = new OutputLineSplitter(consoleProperties.isEditable()) {
+      @Override
+      protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
+        processConsistentText(text, outputType, tcLikeFakeOutput);
+      }
+    };
   }
 
   public void setProcessor(final GeneralTestEventsProcessor processor) {
     myProcessor = processor;
   }
 
-  public void process(final String text, final Key outputType) {
-    final int textLength = text.length();
-    // if text is multi line:
-    if (textLength > 1 && text.substring(0, text.length() - 1).contains("\n")) {
-      // some fake process handler may not auto-split text in lines
-      final List<String> lines = StringUtil.split(text, "\n", false);
-      for (String line : lines) {
-        processLine(line, outputType);
-      }
-    }
-    else {
-      // one line
-      processLine(text, outputType);
-    }
+  public void dispose() {
+    setProcessor(null);
   }
 
-  private void processLine(String text, Key outputType) {
-    if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
-      // we check for consistently only std output
-      // because all events must be send to stdout
-      processStdOutConsistently(text, outputType);
-    } else {
-      processConsistentText(text, outputType, false);
-    }
+  public void process(final String text, final Key outputType) {
+    mySplitter.process(text, outputType);
   }
 
   /**
    * Flashes the rest of stdout text buffer after output has been stopped
    */
   public void flushBufferBeforeTerminating() {
-    flushStdOutputBuffer();
+    mySplitter.flush();
     if (myPendingLineBreakFlag) {
       fireOnUncapturedLineBreak();
     }
@@ -125,76 +87,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private void fireOnUncapturedLineBreak() {
     fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
-  }
-
-  public void dispose() {
-    setProcessor(null);
-  }
-
-  private void flushStdOutputBuffer() {
-    // if osColoredProcessHandler was attached it can split string with several colors
-    // in several  parts. Thus '\n' symbol may be send as one part with some color
-    // such situation should differ from single '\n' from process that is used by TC reporters
-    // to separate TC commands from other stuff + optimize flushing
-    // TODO: probably in IDEA mode such runners shouldn't add explicit \n because we can
-    // successfully process broken messages across several flushes
-    // size of parts may tell us either \n was single in original flushed data or it was
-    // separated by process handler
-    List<OutputChunk> chunks = new ArrayList<OutputChunk>();
-    OutputChunk lastChunk = null;
-    synchronized (myOutputChunks) {
-      for (OutputChunk chunk : myOutputChunks) {
-        if (lastChunk != null && chunk.getKey() == lastChunk.getKey()) {
-          lastChunk.append(chunk.getText());
-        }
-        else {
-          lastChunk = chunk;
-          chunks.add(chunk);
-        }
-      }
-
-      myOutputChunks.clear();
-    }
-    final boolean isTCLikeFakeOutput = chunks.size() == 1;
-    for (OutputChunk chunk : chunks) {
-      processConsistentText(chunk.getText(), chunk.getKey(), isTCLikeFakeOutput);
-    }
-  }
-
-  private void processStdOutConsistently(final String text, final Key outputType) {
-    final int textLength = text.length();
-    if (textLength == 0) {
-      return;
-    }
-
-    synchronized (myOutputChunks) {
-      myOutputChunks.add(new OutputChunk(outputType, text));
-    }
-
-    final char lastChar = text.charAt(textLength - 1);
-    if (lastChar == '\n' || lastChar == '\r') {
-      // buffer contains consistent string
-      flushStdOutputBuffer();
-    } else {
-      // test framework may show some promt and ask user for smth. Question may not
-      // finish with \n or \r thus buffer wont be flushed and user will have to input smth
-      // before question. And question will became visible with next portion of text.
-      // Such behaviour is confusing. So
-      // 1. Let's assume that sevice messages starts with \n if console is editable
-      // 2. Then we can suggest that each service message will start from new line and buffer should
-      //    be flushed before every service message. Thus if chunks list is empty and output doesn't end
-      //    with \n or \r but starts with ##teamcity then it is a service message and should be buffered otherwise
-      //    we can safely flush buffer.
-
-      // TODO if editable:
-      if (myStdinSupportEnabled && !isMostLikelyServiceMessagePart(text)) {
-        flushStdOutputBuffer();
-      }
-    }
-  }
-
-  protected boolean isMostLikelyServiceMessagePart(@NotNull final String text) {
-    return text.startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX);
   }
 
   private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
