@@ -88,15 +88,6 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
         if (s == null) {
           i.remove();
-        } else {
-          final File file = new File(s);
-          if (file.isDirectory()) {
-            if (!new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-              i.remove();
-            }
-          } else if (!file.exists()) {
-            i.remove();
-          }
         }
       }
       while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
@@ -225,7 +216,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
 
-  private static boolean isValidProjectPath(String projectPath) {
+  public static boolean isValidProjectPath(String projectPath) {
     final File file = new File(projectPath);
     return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
   }
