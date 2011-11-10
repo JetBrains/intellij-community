@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -132,4 +134,20 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     }
     return null;
   }
+
+  public static List<Module> getSortedModules(Project project) {
+    List<Module> result = new ArrayList<Module>();
+    final Module primaryModule = getPrimaryModule(project);
+    if (primaryModule != null) {
+      result.add(primaryModule);
+    }
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      if (module != primaryModule) {
+        result.add(module);
+      }
+    }
+    return result;
+  }
+
 }
