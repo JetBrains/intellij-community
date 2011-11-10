@@ -15,7 +15,12 @@
  */
 package git4idea.push;
 
+import com.intellij.util.containers.HashMap;
+import git4idea.GitBranch;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * Holds information about a single Git push action which is to be executed or has been executed.
@@ -25,24 +30,29 @@ import org.jetbrains.annotations.NotNull;
 public final class GitPushInfo {
 
   @NotNull private final GitCommitsByRepoAndBranch myCommits;
-  @NotNull private final GitPushSpec myPushSpec;
+  @NotNull private final Map<GitRepository, GitPushSpec> myPushSpecs;
 
   /**
    * We pass the complex {@link GitCommitsByRepoAndBranch} structure here instead of just the list of repositories,
    * because later (after successful push, for example) it may be needed for showing useful notifications, such as number of commits pushed.
    */
-  public GitPushInfo(@NotNull GitCommitsByRepoAndBranch commits, @NotNull GitPushSpec pushSpec) {
+  public GitPushInfo(@NotNull GitCommitsByRepoAndBranch commits, @NotNull Map<GitRepository, GitPushSpec> pushSpecs) {
     myCommits = commits;
-    myPushSpec = pushSpec;
+    myPushSpecs = pushSpecs;
   }
 
   @NotNull
-  public GitPushSpec getPushSpec() {
-    return myPushSpec;
+  public Map<GitRepository, GitPushSpec> getPushSpecs() {
+    return myPushSpecs;
   }
 
   @NotNull
   public GitCommitsByRepoAndBranch getCommits() {
     return myCommits;
+  }
+
+  @NotNull
+  public GitPushInfo retain(Map<GitRepository, GitBranch> repoBranchMap) {
+    return new GitPushInfo(myCommits.retainAll(repoBranchMap), new HashMap<GitRepository, GitPushSpec>(myPushSpecs));
   }
 }

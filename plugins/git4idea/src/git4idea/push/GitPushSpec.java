@@ -36,22 +36,13 @@ public class GitPushSpec {
   private static final Logger LOG = Logger.getInstance(GitPushSpec.class);
   
   private final GitRemote myRemote;
-  private final String myRefspec;
+  @NotNull private final GitBranch mySource;
+  @NotNull private final GitBranch myDest;
 
-  GitPushSpec(@Nullable GitRemote remote, @NotNull String refspec) {
+  GitPushSpec(@NotNull GitRemote remote, @NotNull GitBranch source, @NotNull GitBranch dest) {
     myRemote = remote;
-    myRefspec = refspec;
-    verifyParams();
-  }
-
-  private void verifyParams() {
-    if (myRemote == null) {
-      LOG.assertTrue(myRefspec.isEmpty(), "If remote is not set, refspec should be empty. Refspec: " + myRefspec);
-    }
-  }
-
-  public boolean isSimple() {
-    return myRemote == null;
+    mySource = source;
+    myDest = dest;
   }
 
   @Nullable
@@ -60,8 +51,13 @@ public class GitPushSpec {
   }
 
   @NotNull
-  public String getRefspec() {
-    return myRefspec;
+  public GitBranch getSource() {
+    return mySource;
+  }
+
+  @NotNull
+  public GitBranch getDest() {
+    return myDest;
   }
 
   /**
@@ -80,6 +76,10 @@ public class GitPushSpec {
       }
     }
     return sourceDests;
+  }
+
+  public boolean pushAll() {
+    return false;
   }
 
   @Nullable
@@ -132,6 +132,6 @@ public class GitPushSpec {
 
   @Override
   public String toString() {
-    return myRemote + " " + myRefspec;
+    return myRemote + " " + mySource + "->" + myDest;
   }
 }

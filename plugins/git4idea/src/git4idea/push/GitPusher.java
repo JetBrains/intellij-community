@@ -119,12 +119,16 @@ public final class GitPusher {
    * @return
    */
   @NotNull
-  GitCommitsByRepoAndBranch collectCommitsToPush(@NotNull GitPushSpec pushSpec) throws VcsException {
-    Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpec);
+  GitCommitsByRepoAndBranch collectCommitsToPush(@NotNull Map<GitRepository, GitPushSpec> pushSpecs) throws VcsException {
+    Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpecs);
     
     Map<GitRepository, GitCommitsByBranch> commitsByRepoAndBranch = new HashMap<GitRepository, GitCommitsByBranch>();
     for (GitRepository repository : myRepositories) {
-      GitCommitsByBranch commitsByBranch = collectsCommitsToPush(repository, reposAndBranchesToPush.get(repository));
+      List<GitBranchPair> branchPairs = reposAndBranchesToPush.get(repository);
+      if (branchPairs == null) {
+        continue;
+      }
+      GitCommitsByBranch commitsByBranch = collectsCommitsToPush(repository, branchPairs);
       if (!commitsByBranch.isEmpty()) {
         commitsByRepoAndBranch.put(repository, commitsByBranch);
       }
@@ -133,10 +137,13 @@ public final class GitPusher {
   }
 
   @NotNull
-  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(@NotNull GitPushSpec pushSpec) throws VcsException {
+  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(@NotNull Map<GitRepository, GitPushSpec> pushSpecs) throws VcsException {
     Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
     for (GitRepository repository : myRepositories) {
-      res.put(repository, pushSpec.parse(repository));
+      GitPushSpec pushSpec = pushSpecs.get(repository);
+      if (pushSpec != null) {
+        res.put(repository, Collections.singletonList(new GitBranchPair(pushSpec.getSource(), pushSpec.getDest())));
+      }
     }
     return res;
   }
@@ -193,7 +200,7 @@ public final class GitPusher {
     GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
     for (GitRepository repository : commits.getRepositories()) {
       GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
-      GitCommandResult res = Git.push(repository, pushInfo.getPushSpec(), rejectedDetector);
+      GitCommandResult res = Git.push(repository, pushInfo.getPushSpecs().get(repository), rejectedDetector);
 
       GitPushRepoResult repoResult;
       if (rejectedDetector.rejected()) {
@@ -309,7 +316,7 @@ public final class GitPusher {
 
         if (pushAgain) {
           myProgressIndicator.setText(INDICATOR_TEXT);
-          GitPushInfo newPushInfo = new GitPushInfo(pushInfo.getCommits().retainAll(rejectedPushesForCurrentBranch), pushInfo.getPushSpec());
+          GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
           GitPushResult adjustedPushResult = result.remove(rejectedPushesForCurrentBranch);
           push(newPushInfo, adjustedPushResult, updateSettings);
           return; // don't notify - next push will notify all results in compound

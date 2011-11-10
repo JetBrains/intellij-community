@@ -24,13 +24,18 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitBranch;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,14 +50,16 @@ public class GitPushDialog extends DialogWrapper {
   private final GitPusher myPusher;
   private final GitPushLog myListPanel;
   private GitCommitsByRepoAndBranch myGitCommitsToPush;
-  private GitPushSpec myPushSpec = new GitPushSpec(null, "");
+  private Map<GitRepository, GitPushSpec> myPushSpecs;
+  private final Collection<GitRepository> myRepositories;
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
     myProject = project;
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
-    myListPanel = new GitPushLog(myProject, GitRepositoryManager.getInstance(myProject).getRepositories(), new Consumer<Boolean>() {
+    myRepositories = GitRepositoryManager.getInstance(myProject).getRepositories();
+    myListPanel = new GitPushLog(myProject, myRepositories, new Consumer<Boolean>() {
       @Override public void consume(Boolean checked) {
         if (checked) {
           setOKActionEnabled(true);
@@ -70,6 +77,57 @@ public class GitPushDialog extends DialogWrapper {
     init();
     setOKButtonText("Push");
     setTitle("Git Push");
+  }
+
+  private Map<GitRepository, GitPushSpec> pushSpecsForCurrentBranches() throws VcsException {
+    Map<GitRepository, GitPushSpec> defaultSpecs = new HashMap<GitRepository, GitPushSpec>();
+    for (GitRepository repository : myRepositories) {
+      GitBranch currentBranch = repository.getCurrentBranch();
+      if (currentBranch == null) {
+        continue;
+      }
+      String remoteName = currentBranch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
+      String trackedBranchName = currentBranch.getTrackedBranchName(repository.getProject(), repository.getRoot());
+      GitRemote remote = findRemoteByName(repository, remoteName);
+      GitBranch tracked = findRemoteBranchByName(repository, remote, trackedBranchName);
+      if (remote == null || tracked == null) {
+        continue;
+      }
+      GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, tracked);
+      defaultSpecs.put(repository, pushSpec);
+    }
+    return defaultSpecs;
+  }
+
+  @Nullable
+  private static GitBranch findRemoteBranchByName(@NotNull GitRepository repository, @Nullable GitRemote remote, @Nullable String name) {
+    if (name == null || remote == null) {
+      return null;
+    }
+    final String BRANCH_PREFIX = "refs/heads/";
+    if (name.startsWith(BRANCH_PREFIX)) {
+      name = name.substring(BRANCH_PREFIX.length());
+    }
+
+    for (GitBranch branch : repository.getBranches().getRemoteBranches()) {
+      if (branch.getName().equals(remote.getName() + "/" + name)) {
+        return branch;
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  private static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable String name) {
+    if (name == null) {
+      return null;
+    }
+    for (GitRemote remote : repository.getRemotes()) {
+      if (remote.getName().equals(name)) {
+        return remote;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -98,12 +156,13 @@ public class GitPushDialog extends DialogWrapper {
       public void run() {
         final AtomicReference<String> error = new AtomicReference<String>();
         try {
-          myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpec);
+          myPushSpecs = pushSpecsForCurrentBranches();
+          myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
         }
         catch (VcsException e) {
           myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
           error.set(e.getMessage());
-          LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpec, e);
+          LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
         }
         
         UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -151,6 +210,6 @@ public class GitPushDialog extends DialogWrapper {
   public GitPushInfo getPushInfo() {
     Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
     GitCommitsByRepoAndBranch selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
-    return new GitPushInfo(selectedCommits, myPushSpec);
+    return new GitPushInfo(selectedCommits, myPushSpecs);
   }
 }
