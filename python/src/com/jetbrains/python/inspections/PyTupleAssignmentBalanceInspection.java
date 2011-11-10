@@ -39,6 +39,8 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       PsiElement assignedValue = node.getAssignedValue();
       if (assignedValue instanceof PyParenthesizedExpression)     // PY-2659
         assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
+      if (lhsExpression instanceof PyParenthesizedExpression)     // PY-4360
+        lhsExpression = ((PyParenthesizedExpression)lhsExpression).getContainedExpression();
       if (assignedValue instanceof PyReferenceExpression) {          // PY-4357
         assignedValue = ((PyReferenceExpression)assignedValue).followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
       }
