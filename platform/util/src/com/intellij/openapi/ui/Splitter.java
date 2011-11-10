@@ -537,13 +537,13 @@ public class Splitter extends JPanel {
         float proportion;
         if (getOrientation()) {
           if (getHeight() > 0) {
-            proportion = Math.min(1.0f, Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()));
+            proportion = Math.min(1.0f, Math.max(.0f, Math.min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()), 1 - getMinProportion(mySecondComponent))));
             setProportion(proportion);
           }
         }
         else {
           if (getWidth() > 0) {
-            proportion = Math.min(1.0f, Math.max(getMinProportion(myFirstComponent), (float)myPoint.x / (float)Splitter.this.getWidth()));
+            proportion = Math.min(1.0f, Math.max(.0f, Math.min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.x / (float)Splitter.this.getWidth()), 1 - getMinProportion(mySecondComponent))));
             setProportion(proportion);
           }
         }

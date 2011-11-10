@@ -324,7 +324,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   public Dimension getPreferredSize() {
     final Graphics2D g2 = (Graphics2D)getGraphics();
-    return new Dimension(Integer.MAX_VALUE, DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1);
+    return new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
   }
 
   public Dimension getMaximumSize() {
