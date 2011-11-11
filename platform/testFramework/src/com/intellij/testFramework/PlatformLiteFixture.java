@@ -22,8 +22,12 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -47,7 +51,21 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
 
   public void initApplication() {
     //if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
-    ApplicationManager.setApplication(new MockApplicationEx(getTestRootDisposable()), getTestRootDisposable());
+    final MockApplicationEx instance = new MockApplicationEx(getTestRootDisposable());
+    ApplicationManager.setApplication(instance,
+                                      new Getter<FileTypeRegistry>() {
+                                        @Override
+                                        public FileTypeRegistry get() {
+                                          return FileTypeManager.getInstance();
+                                        }
+                                      },
+                                      new Getter<EncodingRegistry>() {
+                                        @Override
+                                        public EncodingRegistry get() {
+                                          return EncodingManager.getInstance();
+                                        }
+                                      },
+                                      getTestRootDisposable());
     getApplication().registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 

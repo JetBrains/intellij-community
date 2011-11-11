@@ -174,7 +174,7 @@ public class VariableInplaceRenamer {
     ourRenamersStack.push(this);
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
-    collectAdditionalElementsToRename(processTextOccurrences, stringUsages); //todo check default to be consistent
+    collectAdditionalElementsToRename(processTextOccurrences, stringUsages);
     if (appendAdditionalElement(stringUsages)) {
       return runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
     } else {
