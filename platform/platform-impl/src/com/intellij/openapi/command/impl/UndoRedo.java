@@ -64,14 +64,6 @@ abstract class UndoRedo {
     return myUndoableGroup.isTransparent();
   }
 
-  boolean isMerged4Redo() {
-    return myUndoableGroup.isMerged4Redo();
-  }
-
-  boolean isMerged4Undo() {
-    return myUndoableGroup.isMerged4Undo();
-  }
-
   boolean hasMoreActions() {
     return getStackHolder().canBeUndoneOrRedone(getDecRefs());
   }

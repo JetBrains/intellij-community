@@ -142,11 +142,10 @@ public class CommandMerger {
 
       myManager.getUndoStacksHolder().addToStacks(new UndoableGroup(myCommandName,
                                                                     isGlobal(),
-                                                                    myManager.getProject(),
+                                                                    myManager,
                                                                     myStateBefore,
                                                                     myStateAfter,
                                                                     myCurrentActions,
-                                                                    myManager.nextCommandTimestamp(),
                                                                     myUndoConfirmationPolicy,
                                                                     isTransparent(),
                                                                     myValid));
@@ -208,9 +207,11 @@ public class CommandMerger {
       if (!undoRedo.hasMoreActions()) break;
     }
 
+    boolean isInsideStopFinishGroup = false;
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
       if (!undoRedo.execute(false)) return;
-      if (isUndo ? undoRedo.isMerged4Undo() : undoRedo.isMerged4Redo()) continue;
+      isInsideStopFinishGroup = undoRedo.myUndoableGroup.isInsideStopFinishGroup(isUndo, isInsideStopFinishGroup);
+      if (isInsideStopFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
       if (!shouldRepeat) break;
     }

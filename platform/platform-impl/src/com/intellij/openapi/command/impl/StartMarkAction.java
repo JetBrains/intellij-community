@@ -76,7 +76,7 @@ public class StartMarkAction extends BasicUndoableAction {
     return markAction;
   }
 
-  public static void markFinished() {
+  static void markFinished() {
     ourCurrentMark = null;
   }
 
