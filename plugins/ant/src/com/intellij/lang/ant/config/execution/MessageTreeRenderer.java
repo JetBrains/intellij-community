@@ -18,7 +18,9 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.lang.ant.AntIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.rt.ant.execution.AntMain2;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultilineTreeCellRenderer;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
@@ -34,7 +36,9 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
   }
 
   public static JScrollPane install(JTree tree) {
-    return MultilineTreeCellRenderer.installRenderer(tree, new MessageTreeRenderer());
+    JScrollPane scrollPane = MultilineTreeCellRenderer.installRenderer(tree, new MessageTreeRenderer());
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+    return scrollPane;
   }
 
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
