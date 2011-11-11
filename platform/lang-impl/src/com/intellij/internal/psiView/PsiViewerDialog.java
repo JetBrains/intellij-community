@@ -24,6 +24,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.internal.psiView.formattingblocks.BlockTreeBuilder;
 import com.intellij.internal.psiView.formattingblocks.BlockTreeNode;
 import com.intellij.internal.psiView.formattingblocks.BlockTreeStructure;
@@ -261,6 +262,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
           final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
           if (userObject instanceof ViewerNodeDescriptor) {
             final Object element = ((ViewerNodeDescriptor)userObject).getElement();
+            if (c instanceof NodeRenderer) {
+              ((NodeRenderer)c).setToolTipText(element == null ? null : element.getClass().getName());
+            }
             if ((element instanceof PsiElement && FileContextUtil.getFileContext(((PsiElement)element).getContainingFile()) != null) ||
                 element instanceof ViewerTreeStructure.Inject) {
               final TextAttributes attr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
