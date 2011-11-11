@@ -56,7 +56,15 @@ class GitPushResult {
   private Label myBeforeUpdateLabel;
 
   GitPushResult(@NotNull Project project) {
+    this(project, null, new HashMap<GitRepository, GitRevisionNumber>());
+  }
+  
+  private GitPushResult(@NotNull Project project, @Nullable Label beforeUpdateLabel, @NotNull Map<GitRepository, GitRevisionNumber> updateStarts) {
     myProject = project;
+    myBeforeUpdateLabel = beforeUpdateLabel;
+    for (Map.Entry<GitRepository, GitRevisionNumber> entry : updateStarts.entrySet()) {
+      myUpdateStarts.put(entry.getKey(), entry.getValue());
+    }
   }
 
   void append(@NotNull GitRepository repository, @NotNull GitPushRepoResult result) {
@@ -115,7 +123,7 @@ class GitPushResult {
 
   @NotNull
   GitPushResult remove(@NotNull Map<GitRepository, GitBranch> repoBranchPairs) {
-    GitPushResult result = new GitPushResult(myProject);
+    GitPushResult result = new GitPushResult(myProject, myBeforeUpdateLabel, myUpdateStarts);
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : myResults.entrySet()) {
       GitRepository repository = entry.getKey();
       GitPushRepoResult repoResult = entry.getValue();
