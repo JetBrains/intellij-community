@@ -1,7 +1,7 @@
 package com.jetbrains.python.console;
 
-import com.intellij.coverage.CoverageOptions;
-import com.intellij.openapi.extensions.Extensions;
+import com.google.common.collect.Lists;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -13,12 +13,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author traff
  */
-public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
+public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract {
+  public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
   private PyConsoleOptionsPanel myPanel;
+  private PyConsoleSpecificOptionsPanel myPythonConsoleOptionsPanel;
+  private PyConsoleSpecificOptionsPanel myDjangoConsoleOptionsPanel;
+
   private final PyConsoleOptionsProvider myOptionsProvider;
   private Project myProject;
 
@@ -38,6 +43,82 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
     return null;
   }
 
+  @Override
+  protected Configurable[] buildConfigurables() {
+    List<Configurable> result = Lists.newArrayList();
+
+    myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
+    result.add(createConsoleChildConfigurable("Python console", myPythonConsoleOptionsPanel,
+                                              myOptionsProvider.getPythonConsoleSettings()));
+
+    if (DjangoFacet.isPresentInAnyModule(myProject)) {
+      myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
+      result.add(createConsoleChildConfigurable("Django console",
+                                                myDjangoConsoleOptionsPanel, myOptionsProvider.getDjangoConsoleSettings()));
+    }
+
+
+    return result.toArray(new Configurable[result.size()]);
+  }
+
+  private Configurable createConsoleChildConfigurable(final String name,
+                                                      final PyConsoleSpecificOptionsPanel panel,
+                                                      final PyConsoleOptionsProvider.PyConsoleSettings settings) {
+    return new SearchableConfigurable() {
+
+      @NotNull
+      @Override
+      public String getId() {
+        return "PyConsoleConfigurable." + name;
+      }
+
+      @Override
+      public Runnable enableSearch(String option) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Nls
+      @Override
+      public String getDisplayName() {
+        return name;
+      }
+
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public String getHelpTopic() {
+        return CONSOLE_SETTINGS_HELP_REFERENCE;
+      }
+
+      @Override
+      public JComponent createComponent() {
+        return panel.createPanel(myProject, settings);
+      }
+
+      @Override
+      public boolean isModified() {
+        return panel.isModified();
+      }
+
+      @Override
+      public void apply() throws ConfigurationException {
+        panel.apply();
+      }
+
+      @Override
+      public void reset() {
+        panel.reset();
+      }
+
+      @Override
+      public void disposeUIResources() {
+      }
+    };
+  }
+
   @Nls
   @Override
   public String getDisplayName() {
@@ -51,7 +132,7 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
 
   @Override
   public String getHelpTopic() {
-    return "reference.project.settings.coverage";
+    return CONSOLE_SETTINGS_HELP_REFERENCE;
   }
 
   @Override
@@ -59,10 +140,6 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
     myPanel = new PyConsoleOptionsPanel();
 
     return myPanel.createPanel(myProject, myOptionsProvider);
-  }
-
-  private CoverageOptions[] getExtensions() {
-    return Extensions.getExtensions(CoverageOptions.EP_NAME, myProject);
   }
 
   @Override
@@ -84,43 +161,21 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
   @Override
   public void disposeUIResources() {
     myPanel = null;
-
-    for (CoverageOptions coverageOptions : getExtensions()) {
-      coverageOptions.disposeUIResources();
-    }
   }
 
   private static class PyConsoleOptionsPanel {
     private JPanel myWholePanel;
-    private JPanel mySpecificOptionsPanel;
     private JBCheckBox myShowDebugConsoleByDefault;
     private JBCheckBox myShowSeparatorLine;
-    private PyConsoleSpecificOptionsPanel myPythonConsoleOptionsPanel;
-    private PyConsoleSpecificOptionsPanel myDjangoConsoleOptionsPanel;
     private PyConsoleOptionsProvider myOptionsProvider;
 
     public JPanel createPanel(Project project, PyConsoleOptionsProvider optionsProvider) {
-      JBTabbedPane tabbedPane = new JBTabbedPane();
-
       myOptionsProvider = optionsProvider;
-      mySpecificOptionsPanel.setLayout(new BorderLayout());
-      mySpecificOptionsPanel.add(tabbedPane, BorderLayout.CENTER);
-
-      myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
-      tabbedPane.addTab("Python console", myPythonConsoleOptionsPanel.createPanel(project, optionsProvider.getPythonConsoleSettings()));
-      if (DjangoFacet.isPresentInAnyModule(project)) {
-        myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
-        tabbedPane.addTab("Django console", myDjangoConsoleOptionsPanel.createPanel(project, optionsProvider.getDjangoConsoleSettings()));
-      }
 
       return myWholePanel;
     }
 
     public void apply() {
-      myPythonConsoleOptionsPanel.apply();
-      if (myDjangoConsoleOptionsPanel != null) {
-        myDjangoConsoleOptionsPanel.apply();
-      }
       myOptionsProvider.setShowDebugConsoleByDefault(myShowDebugConsoleByDefault.isSelected());
       myOptionsProvider.setShowSeparatorLine(myShowSeparatorLine.isSelected());
     }
@@ -128,16 +183,12 @@ public class PyConsoleOptionsConfigurable implements SearchableConfigurable {
     public void reset() {
       myShowDebugConsoleByDefault.setSelected(myOptionsProvider.isShowDebugConsoleByDefault());
       myShowSeparatorLine.setSelected(myOptionsProvider.isShowSeparatorLine());
-      myPythonConsoleOptionsPanel.reset();
-      if (myDjangoConsoleOptionsPanel != null) {
-        myDjangoConsoleOptionsPanel.reset();
-      }
     }
 
     public boolean isModified() {
       return myShowDebugConsoleByDefault.isSelected() != myOptionsProvider.isShowDebugConsoleByDefault() ||
-             myShowSeparatorLine.isSelected() != myOptionsProvider.isShowSeparatorLine() ||
-             myPythonConsoleOptionsPanel.isModified() || (myDjangoConsoleOptionsPanel != null && myDjangoConsoleOptionsPanel.isModified());
+             myShowSeparatorLine.isSelected() != myOptionsProvider.isShowSeparatorLine();
+
     }
   }
 }
