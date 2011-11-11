@@ -19,6 +19,7 @@ package com.intellij.find.actions;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.FindBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.*;
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 
@@ -83,8 +85,15 @@ public class FindUsagesInFileAction extends AnAction {
     }
     else {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) {
+        return false;
+      }
 
-      return file != null && !(LanguageFindUsages.INSTANCE.forLanguage(file.getLanguage()) instanceof EmptyFindUsagesProvider);
+      Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+      if (language == null) {
+        language = file.getLanguage();
+      }
+      return !(LanguageFindUsages.INSTANCE.forLanguage(language) instanceof EmptyFindUsagesProvider);
     }
   }
 
