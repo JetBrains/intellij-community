@@ -30,6 +30,7 @@ public enum LanguageLevel {
   private final boolean myHasPrintStatement;
   private final boolean mySupportsSetLiterals;
   private final boolean myIsPy3K;
+
   LanguageLevel(int version, boolean hasWithStatement, boolean hasPrintStatement, boolean supportsSetLiterals, boolean isPy3K) {
     myVersion = version;
     myHasWithStatement = hasWithStatement;
@@ -61,15 +62,15 @@ public enum LanguageLevel {
     return myIsPy3K;
   }
 
-  public boolean isOlderThan(LanguageLevel other) {
+  public boolean isOlderThan(@NotNull LanguageLevel other) {
     return myVersion < other.myVersion;
   }
 
-  public boolean isAtLeast(LanguageLevel other) {
+  public boolean isAtLeast(@NotNull LanguageLevel other) {
     return myVersion >= other.myVersion;
   }
 
-  public static LanguageLevel fromPythonVersion(String pythonVersion) {
+  public static LanguageLevel fromPythonVersion(@NotNull String pythonVersion) {
     if (pythonVersion.startsWith("2.7")) {
       return PYTHON27;
     }

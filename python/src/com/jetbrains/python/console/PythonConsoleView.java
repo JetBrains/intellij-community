@@ -49,7 +49,8 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);
     myProject = project;
-    myPyHighlighter = new PyHighlighter(sdk != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
+    //noinspection ConstantConditions
+    myPyHighlighter = new PyHighlighter(sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
     myScheme = getPythonLanguageConsole().getConsoleEditor().getColorsScheme();
   }
 
