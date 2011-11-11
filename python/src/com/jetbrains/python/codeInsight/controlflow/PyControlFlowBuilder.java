@@ -11,6 +11,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
@@ -117,7 +118,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   public static boolean isSelf(PsiElement qualifier) {
     PyFunction func = PsiTreeUtil.getParentOfType(qualifier, PyFunction.class);
-    if (func == null || PsiTreeUtil.getParentOfType(func, PyClass.class) == null) {
+    if (func == null || !(ScopeUtil.getScopeOwner(func) instanceof PyClass)) {
       return false;
     }
     final PyParameter[] params = func.getParameterList().getParameters();
