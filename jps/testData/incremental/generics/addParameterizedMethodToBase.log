@@ -1,0 +1,24 @@
+Request to make modules:
+module AddParameterizedMethodToBase
+End of request
+digraph X {
+  AddParameterizedMethodToBase[label="AddParameterizedMethodToBase"];
+}
+digraph X {
+  AddParameterizedMethodToBase[label="AddParameterizedMethodToBase"];
+}
+Propagated modules:
+module AddParameterizedMethodToBase
+End of propagated
+Cleaning output files:
+out/production/AddParameterizedMethodToBase/C.class
+End of files
+Compiling files:
+src/C.java
+End of files
+Cleaning output files:
+out/production/AddParameterizedMethodToBase/D.class
+End of files
+Compiling files:
+src/D.java
+End of files

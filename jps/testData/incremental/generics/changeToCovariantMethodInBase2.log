@@ -1,0 +1,24 @@
+Request to make modules:
+module ChangeToCovariantMethodInBase2
+End of request
+digraph X {
+  ChangeToCovariantMethodInBase2[label="ChangeToCovariantMethodInBase2"];
+}
+digraph X {
+  ChangeToCovariantMethodInBase2[label="ChangeToCovariantMethodInBase2"];
+}
+Propagated modules:
+module ChangeToCovariantMethodInBase2
+End of propagated
+Cleaning output files:
+out/production/ChangeToCovariantMethodInBase2/maketest/BaseImplementation.class
+End of files
+Compiling files:
+src/maketest/BaseImplementation.java
+End of files
+Cleaning output files:
+out/production/ChangeToCovariantMethodInBase2/maketest/IImpl.class
+End of files
+Compiling files:
+src/maketest/IImpl.java
+End of files

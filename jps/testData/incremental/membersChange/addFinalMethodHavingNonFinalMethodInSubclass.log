@@ -1,0 +1,24 @@
+Request to make modules:
+module AddFinalMethodHavingNonFinalMethodInSubclass
+End of request
+digraph X {
+  AddFinalMethodHavingNonFinalMethodInSubclass[label="AddFinalMethodHavingNonFinalMethodInSubclass"];
+}
+digraph X {
+  AddFinalMethodHavingNonFinalMethodInSubclass[label="AddFinalMethodHavingNonFinalMethodInSubclass"];
+}
+Propagated modules:
+module AddFinalMethodHavingNonFinalMethodInSubclass
+End of propagated
+Cleaning output files:
+out/production/AddFinalMethodHavingNonFinalMethodInSubclass/BaseServer.class
+End of files
+Compiling files:
+src/BaseServer.java
+End of files
+Cleaning output files:
+out/production/AddFinalMethodHavingNonFinalMethodInSubclass/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files

@@ -226,6 +226,39 @@ public class Mappings {
       return propagateMemberAccess(false, name, className);
     }
 
+    Collection<Pair<MethodRepr, ClassRepr>> findOverridingMethods(final MethodRepr m, final ClassRepr c) {
+      final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
+
+      new Object() {
+        public void run(final ClassRepr c) {
+          final Collection<DependencyContext.S> subClasses = myClassToSubclasses.get(c.name);
+
+          if (subClasses != null) {
+            for (DependencyContext.S subClassName : subClasses) {
+              final ClassRepr r = reprByName(subClassName);
+
+              if (r != null) {
+                boolean cont = true;
+
+                final Collection<MethodRepr> methods = r.findMethodsByJavaRules(m);
+
+                for (MethodRepr mm : methods) {
+                  result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
+                  cont = false;
+                }
+
+                if (cont) {
+                  run(r);
+                }
+              }
+            }
+          }
+        }
+      }.run(c);
+
+      return result;
+    }
+
     Collection<Pair<MethodRepr, ClassRepr>> findOverridenMethods(final MethodRepr m, final ClassRepr c) {
       final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
 
@@ -239,14 +272,12 @@ public class Mappings {
             if (r != null) {
               boolean cont = true;
 
-              if (r.methods.contains(m)) {
-                final MethodRepr mm = r.findMethod(m);
+              final Collection<MethodRepr> methods = r.findMethodsByJavaRules(m);
 
-                if (mm != null) {
-                  if ((mm.access & Opcodes.ACC_PRIVATE) == 0) {
-                    result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
-                    cont = false;
-                  }
+              for (MethodRepr mm : methods) {
+                if ((mm.access & Opcodes.ACC_PRIVATE) == 0) {
+                  result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
+                  cont = false;
                 }
               }
 
@@ -321,6 +352,36 @@ public class Mappings {
             return true;
           }
         }
+      }
+
+      return false;
+    }
+
+    boolean isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
+      if (who.equals(whom)) {
+        return true;
+      }
+
+      if (who instanceof TypeRepr.PrimitiveType || whom instanceof TypeRepr.PrimitiveType) {
+        return false;
+      }
+
+      if (who instanceof TypeRepr.ArrayType) {
+        if (whom instanceof TypeRepr.ArrayType) {
+          return isSubtypeOf(((TypeRepr.ArrayType)who).elementType, ((TypeRepr.ArrayType)whom).elementType);
+        }
+
+        final String descr = whom.getDescr(myContext);
+
+        if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
+          return true;
+        }
+
+        return false;
+      }
+
+      if (whom instanceof TypeRepr.ClassType) {
+        return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className);
       }
 
       return false;
@@ -485,6 +546,16 @@ public class Mappings {
     }
   }
 
+  private static boolean weakerAccess(final int me, final int then) {
+    return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
+           ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
+           ((me & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0 && (then & Opcodes.ACC_PROTECTED) > 0);
+  }
+
+  private boolean empty (final DependencyContext.S s){
+    return s.equals(myContext.get(""));
+  }
+  
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
@@ -603,6 +674,30 @@ public class Mappings {
           if ((it.access & Opcodes.ACC_INTERFACE) > 0 || (m.access & Opcodes.ACC_ABSTRACT) > 0) {
             u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
           }
+
+          if ((m.access & Opcodes.ACC_PRIVATE) == 0) {
+            final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = u.findOverridingMethods(m, it);
+
+            for (Pair<MethodRepr, ClassRepr> p : overridingMethods) {
+              final MethodRepr mm = p.first;
+              final ClassRepr cc = p.second;
+
+              if (weakerAccess(mm.access, m.access) ||
+                  ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
+                  ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
+                  ((m.access & Opcodes.ACC_FINAL) > 0) ||
+                  !m.exceptions.equals(mm.exceptions) ||
+                  !u.isSubtypeOf(mm.type, m.type) ||
+                  !empty(mm.signature) || !empty(m.signature)
+                ) {
+                final DependencyContext.S file = myClassToSourceFile.get(cc.name);
+
+                if (file != null) {
+                  affectedFiles.add(new File(myContext.getValue(file)));
+                }
+              }
+            }
+          }
         }
 
         for (MethodRepr m : diff.methods().removed()) {
@@ -611,6 +706,22 @@ public class Mappings {
 
           if (overridenMethods.size() == 0) {
             u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
+          }
+          else {
+            boolean clear = true;
+
+            loop: for (Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
+              final MethodRepr mm = overriden.first;
+              
+              if (! mm.type.equals(m.type) || !empty(mm.signature) || !empty(m.signature)){
+                clear = false;
+                break loop;
+              }
+            }
+
+            if (!clear) {
+              u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), affectedUsages, dependants);
+            }
           }
 
           if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {

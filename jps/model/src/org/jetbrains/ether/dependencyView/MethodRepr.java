@@ -4,8 +4,9 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -138,7 +139,11 @@ class MethodRepr extends ProtoMember {
     };
   }
 
-  ;
+  boolean equalsByJavaRules(final MethodRepr that) {
+    if (this == that) return true;
+
+    return name.equals(that.name) && Arrays.equals(argumentTypes, that.argumentTypes);
+  }
 
   @Override
   public boolean equals(Object o) {

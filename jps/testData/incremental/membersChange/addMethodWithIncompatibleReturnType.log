@@ -1,0 +1,24 @@
+Request to make modules:
+module AddMethodWithIncompatibleReturnType
+End of request
+digraph X {
+  AddMethodWithIncompatibleReturnType[label="AddMethodWithIncompatibleReturnType"];
+}
+digraph X {
+  AddMethodWithIncompatibleReturnType[label="AddMethodWithIncompatibleReturnType"];
+}
+Propagated modules:
+module AddMethodWithIncompatibleReturnType
+End of propagated
+Cleaning output files:
+out/production/AddMethodWithIncompatibleReturnType/BaseServer.class
+End of files
+Compiling files:
+src/BaseServer.java
+End of files
+Cleaning output files:
+out/production/AddMethodWithIncompatibleReturnType/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files
