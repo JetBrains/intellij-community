@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention;
 
+import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,7 +50,7 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
       if (baseName == null) {
         LOG.error("No resource bundle specified for "+myPluginDescriptor);
       }
-      final ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), myPluginDescriptor.getPluginClassLoader());
+      final ResourceBundle bundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
 
       final String[] keys = categoryKey.split("/");
       if (keys.length > 1) {
