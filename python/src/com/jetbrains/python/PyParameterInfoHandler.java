@@ -69,6 +69,11 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // align offset to nearest expression; context may point to a space, etc.
     List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
     int alleged_cursor_offset = context.getOffset(); // this is already shifted backwards to skip spaces
+
+    if (!arglist.getTextRange().contains(alleged_cursor_offset)) {
+      context.removeHint();
+      return;
+    }
     PsiFile file = context.getFile();
     CharSequence chars = file.getViewProvider().getContents();
     int offset = -1;
