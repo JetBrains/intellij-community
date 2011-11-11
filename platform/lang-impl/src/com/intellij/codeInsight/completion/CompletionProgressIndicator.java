@@ -510,13 +510,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return false;
         }
 
-        //if (showHintAutopopup()) {
+        if (item.isValid()) {
           final LookupElementPresentation presentation = new LookupElementPresentation();
           item.renderElement(presentation);
           if (StringUtil.isNotEmpty(presentation.getTailText())) {
             return false;
           }
-        //}
+        }
       }
 
       myLookup.hideLookup(false);
