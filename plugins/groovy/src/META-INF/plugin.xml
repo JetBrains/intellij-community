@@ -371,6 +371,8 @@
 
     <treeCopyHandler implementation="org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport"/>
 
+    <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyLiteralCopyPasteProcessor"/>
+
     <localInspection language="Groovy" shortName="SecondUnsafeCall" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="second.unsafe.call" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
