@@ -271,12 +271,13 @@ public class AndroidCompileUtil {
     }
   }
   
+  @Nullable
   private static Module setUpGenModule(@NotNull Module libModule) {
     final ModuleRootManager libRootManager = ModuleRootManager.getInstance(libModule);
     final Sdk sdk = libRootManager.getSdk();
 
     if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
-      LOG.error("Android SDK is not specified for module " + libModule.getName());
+      LOG.info("Android SDK is not specified for module " + libModule.getName());
       return null;
     }
 
