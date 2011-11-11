@@ -125,7 +125,15 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
       form.setUseModuleSdk(myUseModuleSdk);
+      boolean moduleWasAutoselected = false;
+      if (form.isUseModuleSdk() != myUseModuleSdk) {
+        myUseModuleSdk = form.isUseModuleSdk();
+        moduleWasAutoselected = true;
+      }
       form.setModule(myModuleName == null ? null : ModuleManager.getInstance(myProject).findModuleByName(myModuleName));
+      if (moduleWasAutoselected) {
+        myModuleName = form.getModule().getName();
+      }
       form.setWorkingDirectory(form.getWorkingDirectory());
     }
 
