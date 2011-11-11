@@ -231,19 +231,20 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         return;
       }
 
-      if (userObject instanceof GitCommit) {
-        ColoredTreeCellRenderer renderer = getTextRenderer();
-        GitCommit commit = (GitCommit)userObject;
+      ColoredTreeCellRenderer renderer = getTextRenderer();
+      Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN); // using probable monospace font to emulate table
+      renderer.setFont(font);
 
-        Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-        renderer.setFont(font);
+      if (userObject instanceof GitCommit) {
+        GitCommit commit = (GitCommit)userObject;
         SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
         renderer.append(commit.getShortHash().toString(), small);
         renderer.append(String.format("%15s  ", DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime())), small);
         renderer.append(commit.getSubject(), small);
+        
       }
       else if (userObject instanceof GitRepository) {
-        getTextRenderer().append(((GitRepository)userObject).getPresentableUrl());
+        renderer.append(((GitRepository)userObject).getPresentableUrl());
       }
       else if (userObject instanceof GitBranchPair) {
         GitBranchPair branchPair = (GitBranchPair) userObject;
@@ -252,10 +253,10 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         assert dest != null : "Destination branch can't be null for branch " + fromBranch;
 
         SimpleTextAttributes attrs = fromBranch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        getTextRenderer().append(fromBranch.getName() + " -> " + dest.getName(), attrs);
+        renderer.append(fromBranch.getName() + " -> " + dest.getName(), attrs);
       }
       else {
-        getTextRenderer().append(userObject == null ? "" : userObject.toString());
+        renderer.append(userObject == null ? "" : userObject.toString());
       }
     }
   }
