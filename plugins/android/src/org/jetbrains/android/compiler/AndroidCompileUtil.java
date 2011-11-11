@@ -49,7 +49,6 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
@@ -281,18 +280,15 @@ public class AndroidCompileUtil {
       return null;
     }
 
-    final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
-    final Sdk jdk = data != null ? data.getJavaSdk() : null;
-
-    if (jdk == null) {
-      LOG.error("Internal Java SDK is not specified for module " + libModule.getName());
-      return null;
-    }
-
     final Module genModule = findOrCreateGenModule(libModule);
     
     final ModifiableRootModel genModel = ModuleRootManager.getInstance(genModule).getModifiableModel();
-    genModel.setSdk(jdk);
+    genModel.setSdk(sdk);
+    
+    if (ArrayUtil.find(genModel.getModuleDependencies(), libModule) < 0) {
+      genModel.addModuleOrderEntry(libModule);
+    }
+    
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
