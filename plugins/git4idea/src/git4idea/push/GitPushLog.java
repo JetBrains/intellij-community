@@ -77,6 +77,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           checkboxListener.consume(node.isChecked());
         }
       }
+
+      @Override
+      public boolean getScrollableTracksViewportWidth() {
+        return false;
+      }
     };
     myTree.setRootVisible(false);
     TreeUtil.expandAll(myTree);
@@ -97,6 +102,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
     });
     
+
     myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
@@ -173,10 +179,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   void setCommits(@NotNull GitCommitsByRepoAndBranch commits) {
+    myRootNode.removeAllChildren();
     createNodes(commits);
-    myTreeModel.reload(myRootNode);
+    myTreeModel.nodeStructureChanged(myRootNode);
+    myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
     TreeUtil.expandAll(myTree);
-    repaint();
   }
 
   void displayError(String message) {

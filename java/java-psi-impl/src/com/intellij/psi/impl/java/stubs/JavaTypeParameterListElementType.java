@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiTypeParameterList;
-import com.intellij.psi.impl.compiled.ClsTypeParametersListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.impl.source.tree.java.TypeParameterListElement;
@@ -47,12 +46,7 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
 
   @Override
   public PsiTypeParameterList createPsi(final PsiTypeParameterListStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsTypeParametersListImpl(stub);
-    }
-    else {
-      return new PsiTypeParameterListImpl(stub);
-    }
+    return getPsiFactory(stub).createTypeParameterList(stub);
   }
 
   @Override

@@ -158,6 +158,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     if (project == null) return null;
+    ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : null;
 
     openFileFromCommandLine(project, virtualFile, line);
@@ -170,7 +171,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
-    ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     final Ref<Module> moduleRef = new Ref<Module>();
     for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
       try {

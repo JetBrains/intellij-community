@@ -25,4 +25,6 @@ import com.intellij.psi.stubs.PsiClassHolderFileStub;
 public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
   String getPackageName();
   boolean isCompiled();
+  StubPsiFactory getPsiFactory();
+  void setPsiFactory(StubPsiFactory factory);
 }

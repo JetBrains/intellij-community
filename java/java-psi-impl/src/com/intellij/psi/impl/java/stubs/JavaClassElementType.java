@@ -22,7 +22,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.cache.RecordUtil;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
@@ -54,16 +53,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @Override
   public PsiClass createPsi(final PsiClassStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsClassImpl(stub);
-    }
-    if (stub.isEnumConstantInitializer()) {
-      return new PsiEnumConstantInitializerImpl(stub);
-    }
-    if (stub.isAnonymous()) {
-      return new PsiAnonymousClassImpl(stub);
-    }
-    return new PsiClassImpl(stub);
+    return getPsiFactory(stub).createClass(stub);
   }
 
   @Override

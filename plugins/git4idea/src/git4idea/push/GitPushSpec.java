@@ -16,8 +16,10 @@
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,22 +37,26 @@ public class GitPushSpec {
   private static final Logger LOG = Logger.getInstance(GitPushSpec.class);
   
   private final GitRemote myRemote;
-  private final String myRefspec;
+  @NotNull private final GitBranch mySource;
+  @NotNull private final GitBranch myDest;
+  private final boolean myPushAll;
 
-  GitPushSpec(@Nullable GitRemote remote, @NotNull String refspec) {
+  GitPushSpec(@NotNull GitRemote remote, @NotNull GitBranch source, @NotNull GitBranch dest) {
     myRemote = remote;
-    myRefspec = refspec;
-    verifyParams();
+    mySource = source;
+    myDest = dest;
+    myPushAll = false;
   }
 
-  private void verifyParams() {
-    if (myRemote == null) {
-      LOG.assertTrue(myRefspec.isEmpty(), "If remote is not set, refspec should be empty. Refspec: " + myRefspec);
-    }
+  private GitPushSpec() {
+    myRemote = null;
+    mySource = null;
+    myDest = null;
+    myPushAll = true;
   }
 
-  public boolean isSimple() {
-    return myRemote == null;
+  static GitPushSpec pushAllSpec() {
+    return new GitPushSpec();
   }
 
   @Nullable
@@ -60,8 +65,13 @@ public class GitPushSpec {
   }
 
   @NotNull
-  public String getRefspec() {
-    return myRefspec;
+  public GitBranch getSource() {
+    return mySource;
+  }
+
+  @NotNull
+  public GitBranch getDest() {
+    return myDest;
   }
 
   /**
@@ -70,8 +80,7 @@ public class GitPushSpec {
    * TODO read tracking information from the config file, i.e. getting rid from the possible exception here.
    */
   @NotNull
-  List<GitBranchPair> parse(@NotNull GitRepository repository) throws VcsException {
-    // TODO - this is only for isSimple() case, fairly parse ref and make for all cases
+  static List<GitBranchPair> getBranchesForPushAll(@NotNull GitRepository repository) throws VcsException {
     List<GitBranchPair> sourceDests = new ArrayList<GitBranchPair>();
     for (GitBranch branch : repository.getBranches().getLocalBranches()) {
       GitBranchPair forBranch = findSourceDestForBranch(repository, branch);
@@ -82,56 +91,29 @@ public class GitPushSpec {
     return sourceDests;
   }
 
+  public boolean isPushAll() {
+    return myPushAll;
+  }
+
   @Nullable
   private static GitBranchPair findSourceDestForBranch(GitRepository repository, GitBranch branch) throws VcsException {
     GitBranch trackedBranch = branch.tracked(repository.getProject(), repository.getRoot());
     if (trackedBranch != null) {
       return new GitBranchPair(branch, trackedBranch);
     }
-    GitBranch matchingRemoteBranch = findMatchingRemoteBranch(repository, branch);
+    Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, branch);
+    if (remoteAndBranch == null) {
+      return null;
+    }
+    GitBranch matchingRemoteBranch = remoteAndBranch.getSecond();
     if (matchingRemoteBranch != null) {
       return new GitBranchPair(branch, matchingRemoteBranch);
     }
     return null;
   }
 
-  @Nullable
-  private static GitBranch findMatchingRemoteBranch(GitRepository repository, GitBranch branch) throws VcsException {
-    /*
-    from man git-push:
-    git push
-               Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no
-               remote is configured for the current branch).
-
-     */
-    String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
-    if (remoteName == null) {
-      if (originExists(repository.getRemotes())) {
-        remoteName = "origin";
-      } else {
-        return null;
-      }
-    }
-
-    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
-      if (remoteBranch.getName().equals(remoteName + "/" + branch.getName())) {
-        return remoteBranch;
-      }
-    }
-    return null;
-  }
-
-  private static boolean originExists(Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals("origin")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public String toString() {
-    return myRemote + " " + myRefspec;
+    return myRemote + " " + mySource + "->" + myDest;
   }
 }

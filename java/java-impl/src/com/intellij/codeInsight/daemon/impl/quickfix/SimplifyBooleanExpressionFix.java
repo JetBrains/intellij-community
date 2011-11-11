@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -254,7 +255,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         }
         else {
           final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
-          if (javaToken != null) {
+          if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand)) {
             resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
           } else {
             resultExpression = null;

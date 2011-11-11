@@ -46,8 +46,7 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
 
   @Override
   public PsiImportList createPsi(final PsiImportListStub stub) {
-    assert !isCompiled(stub);
-    return new PsiImportListImpl(stub);
+    return getPsiFactory(stub).createImportList(stub);
   }
 
   @Override

@@ -22,8 +22,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.compiled.ClsEnumConstantImpl;
-import com.intellij.psi.impl.compiled.ClsFieldImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiFieldStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
@@ -56,13 +54,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
 
   @Override
   public PsiField createPsi(final PsiFieldStub stub) {
-    final boolean compiled = isCompiled(stub);
-    if (compiled) {
-      return stub.isEnumConstant() ? new ClsEnumConstantImpl(stub) : new ClsFieldImpl(stub);
-    }
-    else {
-      return stub.isEnumConstant() ? new PsiEnumConstantImpl(stub) : new PsiFieldImpl(stub);
-    }
+    return getPsiFactory(stub).createField(stub);
   }
 
   @Override

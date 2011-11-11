@@ -208,11 +208,14 @@ public class VariableInplaceRenamer {
 
   protected void collectAdditionalElementsToRename(boolean processTextOccurrences, final List<Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
+    final PsiFile currentFile = myElementToRename.getContainingFile();
     if (processTextOccurrences && stringToSearch != null) {
       TextOccurrencesUtil
         .processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
           public boolean process(PsiElement psiElement, TextRange textRange) {
-            stringUsages.add(Pair.create(psiElement, textRange));
+            if (psiElement.getContainingFile() == currentFile) {
+              stringUsages.add(Pair.create(psiElement, textRange));
+            }
             return true;
           }
         });

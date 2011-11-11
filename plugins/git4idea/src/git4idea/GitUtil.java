@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,6 +35,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -565,5 +567,56 @@ public class GitUtil {
       }
     });
     return repos;
+  }
+
+  @Nullable
+  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable String name) {
+    if (name == null) {
+      return null;
+    }
+    for (GitRemote remote : repository.getRemotes()) {
+      if (remote.getName().equals(name)) {
+        return remote;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<GitRemote, GitBranch> findMatchingRemoteBranch(GitRepository repository, GitBranch branch) throws VcsException {
+    /*
+    from man git-push:
+    git push
+               Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no
+               remote is configured for the current branch).
+
+     */
+    String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
+    GitRemote remote;
+    if (remoteName == null) {
+      remote = findOrigin(repository.getRemotes());
+    } else {
+      remote = findRemoteByName(repository, remoteName);
+    }
+    if (remote == null) {
+      return null;
+    }
+
+    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
+      if (remoteBranch.getName().equals(remote.getName() + "/" + branch.getName())) {
+        return Pair.create(remote, remoteBranch);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static GitRemote findOrigin(Collection<GitRemote> remotes) {
+    for (GitRemote remote : remotes) {
+      if (remote.getName().equals("origin")) {
+        return remote;
+      }
+    }
+    return null;
   }
 }

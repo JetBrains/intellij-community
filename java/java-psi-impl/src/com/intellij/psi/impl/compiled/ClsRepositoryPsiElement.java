@@ -63,6 +63,11 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   }
 
   @Override
+  public boolean isPhysical() {
+    return getContainingFile().isPhysical();
+  }
+
+  @Override
   @NotNull
   public PsiElement[] getChildren() {
     final List stubs = getStub().getChildrenStubs();

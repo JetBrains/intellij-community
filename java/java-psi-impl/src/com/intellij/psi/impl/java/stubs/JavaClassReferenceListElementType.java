@@ -20,7 +20,6 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiReferenceListImpl;
@@ -50,16 +49,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
 
   @Override
   public PsiReferenceList createPsi(final PsiClassReferenceListStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsReferenceListImpl(stub);
-    }
-    else {
-      if (stub.getRole() == PsiReferenceList.Role.EXTENDS_BOUNDS_LIST) {
-        return new PsiTypeParameterExtendsBoundsListImpl(stub, JavaStubElementTypes.EXTENDS_BOUND_LIST);
-      }
-
-      return new PsiReferenceListImpl(stub, stub.getStubType());
-    }
+    return getPsiFactory(stub).createClassReferenceList(stub);
   }
 
   @Override

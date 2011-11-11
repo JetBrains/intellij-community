@@ -46,13 +46,21 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
     return "java." + toString();
   }
 
+  protected StubPsiFactory getPsiFactory(StubT stub) {
+    return getFileStub(stub).getPsiFactory();
+  }
+
   public boolean isCompiled(StubT stub) {
+    return getFileStub(stub).isCompiled();
+  }
+
+  private PsiJavaFileStub getFileStub(StubT stub) {
     StubElement parent = stub;
     while (!(parent instanceof PsiFileStub)) {
       parent = parent.getParentStub();
     }
 
-    return ((PsiJavaFileStub)parent).isCompiled();
+    return (PsiJavaFileStub)parent;
   }
 
   public abstract PsiT createPsi(ASTNode node);

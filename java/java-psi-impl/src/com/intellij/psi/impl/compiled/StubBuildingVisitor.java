@@ -70,7 +70,7 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
   @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
   private JavaLexer myLexer;
 
-  StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
+  public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
     mySource = classSource;
     myInnersStrategy = innersStrategy;
     myParent = parent;

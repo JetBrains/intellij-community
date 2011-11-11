@@ -23,8 +23,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.psi.codeStyle.PredefinedCodeStyle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,16 +37,12 @@ public class NewCodeStyleSettingsPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel");
 
   private final Configurable myTab;
-  private Language mySelectedLanguage;
 
   public NewCodeStyleSettingsPanel(Configurable tab) {
     super(new BorderLayout());
     myTab = tab;
     JComponent component = myTab.createComponent();
     add(component, BorderLayout.CENTER);
-    if (tab instanceof CodeStyleAbstractConfigurable) {
-      mySelectedLanguage = ((CodeStyleAbstractConfigurable)tab).getPanel().getDefaultLanguage();
-    }
   }
 
   public boolean isModified() {
@@ -109,39 +103,11 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
-  public void resetFromClone() {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      ((CodeStyleAbstractConfigurable)myTab).resetFromClone();
-    }
-
-
-  }
-
   public void setLanguage(Language language) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      if (configurable.getPanel().setPanelLanguage(language)) {
-        mySelectedLanguage = language;
-      }
-      else {
-        mySelectedLanguage = configurable.getPanel().getDefaultLanguage();
-      }
-      return;
+      configurable.getPanel().setPanelLanguage(language);
     }
-    mySelectedLanguage = null;
-  }
-  
-  @Nullable
-  public Language getSelectedLanguage() {
-    return mySelectedLanguage;
-  } 
-  
-  public boolean isMultiLanguage() {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      return (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel);
-    }
-    return false;
   }
 
   public Set<String> processListOptions() {
@@ -151,10 +117,12 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     return Collections.emptySet();
   }
   
-  public void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
+
+  @Nullable
+  public CodeStyleAbstractPanel getSelectedPanel() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
-      ((CodeStyleAbstractConfigurable)myTab).getPanel().applyPredefinedSettings(codeStyle);
-      ((CodeStyleAbstractConfigurable)myTab).getPanel().getPanel().repaint();
+      return ((CodeStyleAbstractConfigurable)myTab).getPanel();
     }
+    return null;
   }
 }
