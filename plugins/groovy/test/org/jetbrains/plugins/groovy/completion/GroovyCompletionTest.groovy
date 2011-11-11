@@ -1102,4 +1102,9 @@ public class KeyVO {
     assert !('static' in myFixture.lookupElementStrings)
     assert 'final' in myFixture.lookupElementStrings
   }
+
+  public void testSpaceTail() {
+    checkCompletion 'class A <caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
+    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends <caret>ArrayList {}'
+  }
 }
