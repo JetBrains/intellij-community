@@ -32,7 +32,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
@@ -74,25 +74,13 @@ public class CoreEnvironment {
     Extensions.cleanRootArea(parentDisposable);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    FileTypeRegistry.ourInstanceGetter = new Getter<FileTypeRegistry>() {
-      @Override
-      public FileTypeRegistry get() {
-        return myFileTypeRegistry;
-      }
-    };
-
     myEncodingRegistry = new CoreEncodingRegistry();
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    EncodingRegistry.ourInstanceGetter = new Getter<EncodingRegistry>() {
-      @Override
-      public EncodingRegistry get() {
-        return myEncodingRegistry;
-      }
-    };
 
     myApplication = new MockApplication(parentDisposable);
-    ApplicationManager.setApplication(myApplication, parentDisposable);
+    ApplicationManager.setApplication(myApplication,
+                                      new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
+                                      new StaticGetter<EncodingRegistry>(myEncodingRegistry),
+                                      parentDisposable);
     myLocalFileSystem = new CoreLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 
