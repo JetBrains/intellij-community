@@ -23,7 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -44,12 +44,12 @@ public class CodeStyleImportsPanel extends JPanel {
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
   private final PackageEntryTable myPackageList = new PackageEntryTable();
 
-  private Table myImportLayoutTable;
+  private JBTable myImportLayoutTable;
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
   private JButton myRemovePackageFromImportLayoutButton;
   private JButton myRemovePackageFromPackagesButton;
-  private Table myPackageTable;
+  private JBTable myPackageTable;
   private final CodeStyleSettings mySettings;
   private JRadioButton myJspImportCommaSeparated;
   private JRadioButton myJspOneImportPerDirective;
@@ -68,8 +68,8 @@ public class CodeStyleImportsPanel extends JPanel {
 
     myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);
     myJSPPanel.add(createJspImportLayoutPanel(), BorderLayout.CENTER);
-    myImportsLayoutPanel.add(createImportLayoutPanel(), BorderLayout.NORTH);
-    myPackagesPanel.add(createPackagesPanel(), BorderLayout.NORTH);
+    myImportsLayoutPanel.add(createImportLayoutPanel(), BorderLayout.CENTER);
+    myPackagesPanel.add(createPackagesPanel(), BorderLayout.CENTER);
   }
 
   private JPanel createJspImportLayoutPanel() {
@@ -191,7 +191,7 @@ public class CodeStyleImportsPanel extends JPanel {
     return panel;
   }
 
-  private void refreshTable(final Table table, final PackageEntryTable packageTable) {
+  private void refreshTable(final JBTable table, final PackageEntryTable packageTable) {
     AbstractTableModel model = (AbstractTableModel)table.getModel();
     table.createDefaultColumnsFromModel();
     model.fireTableDataChanged();
@@ -310,7 +310,7 @@ public class CodeStyleImportsPanel extends JPanel {
     refreshTableModel(selected, myImportLayoutTable);
   }
 
-  private static void refreshTableModel(int selectedRow, Table table) {
+  private static void refreshTableModel(int selectedRow, JBTable table) {
     AbstractTableModel model = (AbstractTableModel)table.getModel();
     model.fireTableRowsInserted(selectedRow, selectedRow);
     table.setRowSelectionInterval(selectedRow, selectedRow);
@@ -414,7 +414,7 @@ public class CodeStyleImportsPanel extends JPanel {
     return ScrollPaneFactory.createScrollPane(myPackageTable);
   }
 
-  private Table createTableForPackageEntries(final PackageEntryTable packageTable) {
+  private JBTable createTableForPackageEntries(final PackageEntryTable packageTable) {
     final String[] names = {
       ApplicationBundle.message("listbox.import.package"),
       ApplicationBundle.message("listbox.import.with.subpackages"),
@@ -492,7 +492,7 @@ public class CodeStyleImportsPanel extends JPanel {
     };
 
     // Create the table
-    final Table result = new Table(dataModel);
+    final JBTable result = new JBTable(dataModel);
     result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     resizeColumns(packageTable, result);
 
@@ -524,7 +524,7 @@ public class CodeStyleImportsPanel extends JPanel {
     return result;
   }
 
-  private void resizeColumns(final PackageEntryTable packageTable, Table result) {
+  private void resizeColumns(final PackageEntryTable packageTable, JBTable result) {
     ColoredTableCellRenderer packageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -565,9 +565,9 @@ public class CodeStyleImportsPanel extends JPanel {
     }
   }
 
-  private static void fixColumnWidthToHeader(Table result, int columnIdx) {
+  private static void fixColumnWidthToHeader(JBTable result, int columnIdx) {
     final TableColumn column = result.getColumnModel().getColumn(columnIdx);
-    final int width = result.getTableHeader().getFontMetrics(result.getTableHeader().getFont()).stringWidth(result.getColumnName(columnIdx)) + 6;
+    final int width = 15 + result.getTableHeader().getFontMetrics(result.getTableHeader().getFont()).stringWidth(result.getColumnName(columnIdx));
     column.setMinWidth(width);
     column.setMaxWidth(width);
   }
@@ -599,7 +599,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
     myImportLayoutList.copyFrom(settings.IMPORT_LAYOUT_TABLE);
     myPackageList.copyFrom(settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    
+
     myCbLayoutStaticImportsSeparately.setSelected(settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
 
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
@@ -657,7 +657,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
     settings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
   }
-  
+
   public void apply() {
     apply(mySettings);
   }
@@ -684,7 +684,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
     return isModified;
   }
-  
+
   public boolean isModified() {
     return isModified(mySettings);
   }
