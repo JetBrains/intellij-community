@@ -355,7 +355,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private StringBuffer getOriginalDocument() {
+  public StringBuffer getOriginalDocument() {
     if (myOriginalDocument == null) {
       final Editor editor = getEditor();
       if (editor != null) {
