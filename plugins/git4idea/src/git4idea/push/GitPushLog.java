@@ -48,6 +48,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * The list of commits from multiple repositories and branches, with diff panel at the right.
@@ -62,6 +63,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private final CheckboxTree myTree;
   private final DefaultTreeModel myTreeModel;
   private final CheckedTreeNode myRootNode;
+  private final ReentrantReadWriteLock TREE_CONSTRUCTION_LOCK = new ReentrantReadWriteLock();
 
   GitPushLog(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull final Consumer<Boolean> checkboxListener) {
     myProject = project;
@@ -114,6 +116,40 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     add(splitter);
   }
 
+  // Make changes available for diff action
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+    if (VcsDataKeys.CHANGES.equals(key)) {
+      DefaultMutableTreeNode[] selectedNodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
+      if (selectedNodes.length == 0) {
+        return;
+      }
+      Object object = selectedNodes[0].getUserObject();
+      if (object instanceof GitCommit) {
+        sink.put(key, ArrayUtil.toObjectArray(((GitCommit)object).getChanges(), Change.class));
+      }
+    }
+  }
+
+  @NotNull
+  public JComponent getPreferredFocusComponent() {
+    return myTree;
+  }
+
+  void setCommits(@NotNull GitCommitsByRepoAndBranch commits) {
+    try {
+      TREE_CONSTRUCTION_LOCK.writeLock().lock();
+      myRootNode.removeAllChildren();
+      createNodes(commits);
+      myTreeModel.nodeStructureChanged(myRootNode);
+      myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
+      TreeUtil.expandAll(myTree);
+    }
+    finally {
+      TREE_CONSTRUCTION_LOCK.writeLock().unlock();
+    }
+  }
+
   private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
     for (GitRepository repository : GitUtil.sortRepositories(commits.getRepositories())) {
       GitCommitsByBranch commitsByBranch = commits.get(repository);
@@ -158,34 +194,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return branchNode;
   }
 
-  // Make changes available for diff action
-  @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (VcsDataKeys.CHANGES.equals(key)) {
-      DefaultMutableTreeNode[] selectedNodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
-      if (selectedNodes.length == 0) {
-        return;
-      }
-      Object object = selectedNodes[0].getUserObject();
-      if (object instanceof GitCommit) {
-        sink.put(key, ArrayUtil.toObjectArray(((GitCommit)object).getChanges(), Change.class));
-      }
-    }
-  }
-
-  @NotNull
-  public JComponent getPreferredFocusComponent() {
-    return myTree;
-  }
-
-  void setCommits(@NotNull GitCommitsByRepoAndBranch commits) {
-    myRootNode.removeAllChildren();
-    createNodes(commits);
-    myTreeModel.nodeStructureChanged(myRootNode);
-    myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
-    TreeUtil.expandAll(myTree);
-  }
-
   void displayError(String message) {
     DefaultMutableTreeNode titleNode = new DefaultMutableTreeNode("Error: couldn't collect commits to be pushed");
     DefaultMutableTreeNode detailNode = new DefaultMutableTreeNode(message);
@@ -203,19 +211,30 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     if (myAllRepositories.size() == 1) {
       return myAllRepositories;
     }
-    Collection<GitRepository> selectedRepositories = new ArrayList<GitRepository>(myAllRepositories.size());
-    for (int i = 0; i < myRootNode.getChildCount(); i++) {
-      TreeNode child = myRootNode.getChildAt(i);
-      if (child instanceof CheckedTreeNode) {
-        CheckedTreeNode node = (CheckedTreeNode)child;
-        if (node.isChecked()) {
-          if (node.getUserObject() instanceof GitRepository) {
-            selectedRepositories.add((GitRepository) node.getUserObject());
+
+    try {
+      TREE_CONSTRUCTION_LOCK.readLock().lock();  // wait for tree to be constructed
+      Collection<GitRepository> selectedRepositories = new ArrayList<GitRepository>(myAllRepositories.size());
+      if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began => returning all repos.
+        return myAllRepositories;
+      }
+
+      for (int i = 0; i < myRootNode.getChildCount(); i++) {
+        TreeNode child = myRootNode.getChildAt(i);
+        if (child instanceof CheckedTreeNode) {
+          CheckedTreeNode node = (CheckedTreeNode)child;
+          if (node.isChecked()) {
+            if (node.getUserObject() instanceof GitRepository) {
+              selectedRepositories.add((GitRepository)node.getUserObject());
+            }
           }
         }
       }
+      return selectedRepositories;
     }
-    return selectedRepositories;
+    finally {
+      TREE_CONSTRUCTION_LOCK.readLock().unlock();
+    }
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {

@@ -222,11 +222,14 @@ public class GitPushDialog extends DialogWrapper {
     // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
     // notify about pushed commits
     synchronized (COMMITS_LOADING_LOCK) {
+      GitCommitsByRepoAndBranch selectedCommits;
       if (myGitCommitsToPush == null) {
         collectInfoToPush(myPushAllCheckbox.isSelected());
+        selectedCommits = myGitCommitsToPush;
+      } else {
+        Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
+        selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
       }
-      Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-      GitCommitsByRepoAndBranch selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
       return new GitPushInfo(selectedCommits, myPushSpecs);
     }
   }
