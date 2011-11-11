@@ -68,7 +68,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
     if (items != null && items.length > 0) {
       context.getProgressIndicator().setText("Generating " + AndroidUtils.CLASSES_FILE_NAME + "...");
-      new ProcessAction(context, items).compute();
+      return new ProcessAction(context, items).compute();
     }
     return ProcessingItem.EMPTY_ARRAY;
   }
