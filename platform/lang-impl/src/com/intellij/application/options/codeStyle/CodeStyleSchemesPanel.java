@@ -16,10 +16,10 @@
 
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemesManager;
@@ -29,10 +29,9 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
@@ -52,6 +51,8 @@ public class CodeStyleSchemesPanel{
   private JPanel myGlobalPanel;
   private JPanel myProjectPanel;
   private JComboBox mySettingsType;
+  private JButton myCopyFromButton;
+  private PopupMenu myCopyFromMenu;
   private boolean myIsReset = false;
   private NewCodeStyleSettingsPanel mySettingsPanel;
   
@@ -152,8 +153,19 @@ public class CodeStyleSchemesPanel{
         onExportProjectScheme();
       }
     });
+
+    myCopyFromMenu = new PopupMenu();
+    myCopyFromButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        showCopyFromMenu();
+      }
+    });
+    myCopyFromButton.add(myCopyFromMenu);
+    myCopyFromButton.setEnabled(false);
     
     myJBScrollPane.setBorder(null);
+
   }
 
   private void onExportProjectScheme() {
@@ -306,6 +318,11 @@ public class CodeStyleSchemesPanel{
 
   public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
     mySettingsPanel = settingsPanel;
+    CodeStyleAbstractPanel selectedPanel = mySettingsPanel.getSelectedPanel();
+    if (selectedPanel != null) {
+      selectedPanel.setupCopyFromMenu(myCopyFromMenu);
+    }
+    myCopyFromButton.setEnabled(myCopyFromMenu.getItemCount() > 0);
   }
 
   private void onSettingsTypeChange() {
@@ -314,6 +331,12 @@ public class CodeStyleSchemesPanel{
     myGlobalPanel.setVisible(!useProjectSettings);
     myProjectPanel.setVisible(useProjectSettings);
     myModel.setUsePerProjectSettings(useProjectSettings);
+  }
+  
+  private void showCopyFromMenu() {
+    if (myCopyFromMenu.getItemCount() > 0) {
+      myCopyFromMenu.show(myCopyFromButton, 0, 0);
+    }
   }
 
 }

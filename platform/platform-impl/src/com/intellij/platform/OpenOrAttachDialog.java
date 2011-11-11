@@ -33,7 +33,7 @@ public class OpenOrAttachDialog extends DialogWrapper {
   private JRadioButton myCurrentWindowButton;
   private JRadioButton myOpenInNewWindowButton;
   private JPanel myMainPanel;
-  private JBCheckBox myReplaceCheckBox;
+  private JBCheckBox myAddCheckbox;
 
   private static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
   private static final String MODE_ATTACH = "attach";
@@ -61,22 +61,22 @@ public class OpenOrAttachDialog extends DialogWrapper {
     if (MODE_NEW.equals(mode)) {
       myOpenInNewWindowButton.setSelected(true);
     }
-    else if (MODE_REPLACE.equals(mode) || hideReplace) {
+    else if (mode == null || MODE_REPLACE.equals(mode) || hideReplace) {
       myCurrentWindowButton.setSelected(true);
-      myReplaceCheckBox.setSelected(true);
+      myAddCheckbox.setSelected(false);
     }
     else {
       myCurrentWindowButton.setSelected(true);
-      myReplaceCheckBox.setSelected(false);
+      myAddCheckbox.setSelected(true);
     }
     if (hideReplace) {
-      myReplaceCheckBox.setVisible(false);
+      myAddCheckbox.setVisible(false);
     }
-    myReplaceCheckBox.setEnabled(myCurrentWindowButton.isSelected());
+    myAddCheckbox.setEnabled(myCurrentWindowButton.isSelected());
     final ActionListener listener1 = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myReplaceCheckBox.setEnabled(myCurrentWindowButton.isSelected());
+        myAddCheckbox.setEnabled(myCurrentWindowButton.isSelected());
       }
     };
     myCurrentWindowButton.addActionListener(listener1);
@@ -84,11 +84,11 @@ public class OpenOrAttachDialog extends DialogWrapper {
   }
   
   public boolean isReplace() {
-    return myCurrentWindowButton.isSelected() && (myReplaceCheckBox.isSelected() || myHideReplace);
+    return myCurrentWindowButton.isSelected() && (!myAddCheckbox.isSelected() || myHideReplace);
   }
   
   public boolean isAttach() {
-    return myCurrentWindowButton.isSelected() && !myReplaceCheckBox.isSelected() && !myHideReplace;
+    return myCurrentWindowButton.isSelected() && myAddCheckbox.isSelected() && !myHideReplace;
   }
 
   @Override

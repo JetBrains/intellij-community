@@ -19,9 +19,10 @@ public class Utils {
   }
 
   public static void showCompletionPopup(JComponent toolbarComponent,
-                                          final JList list,
-                                          String title,
-                                          final JTextComponent textField) {
+                                         final JList list,
+                                         String title,
+                                         final JTextComponent textField,
+                                         String ad) {
 
     final Runnable callback = new Runnable() {
       @Override
@@ -37,9 +38,12 @@ public class Utils {
     if (title != null) {
       builder.setTitle(title);
     }
-
     final JBPopup popup = builder.setMovable(false).setResizable(false)
       .setRequestFocus(true).setItemChoosenCallback(callback).createPopup();
+
+    if (ad != null) {
+      popup.setAdText(ad, SwingUtilities.LEFT);
+    }
 
     if (toolbarComponent != null) {
       popup.showUnderneathOf(toolbarComponent);

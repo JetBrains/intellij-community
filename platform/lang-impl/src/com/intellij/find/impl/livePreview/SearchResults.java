@@ -238,6 +238,7 @@ public class SearchResults implements DocumentListener {
 
     final ArrayList<FindResult> results = new ArrayList<FindResult>();
     if (findModel != null) {
+      updatePreviousFindModel(findModel);
       final FutureResult<int[]> startsRef = new FutureResult<int[]>();
       final FutureResult<int[]> endsRef = new FutureResult<int[]>();
       getSelection(editor, startsRef, endsRef);
@@ -258,7 +259,8 @@ public class SearchResults implements DocumentListener {
 
           if (starts.length == 0 || findModel.isGlobal()) {
             findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
-          } else {
+          }
+          else {
             for (int i = 0; i < starts.length; ++i) {
               findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
             }
@@ -277,11 +279,23 @@ public class SearchResults implements DocumentListener {
 
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             SwingUtilities.invokeLater(searchCompletedRunnable);
-          } else {
+          }
+          else {
             searchCompletedRunnable.run();
           }
         }
       });
+    }
+  }
+
+  private void updatePreviousFindModel(FindModel model) {
+    FindModel prev = FindManager.getInstance(getProject()).getPreviousFindModel();
+    if (prev == null) {
+      prev = new FindModel();
+    }
+    if (!model.getStringToFind().isEmpty()) {
+      prev.copyFrom(model);
+      FindManager.getInstance(getProject()).setPreviousFindModel(prev);
     }
   }
 

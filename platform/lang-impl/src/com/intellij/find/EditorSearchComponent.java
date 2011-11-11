@@ -139,6 +139,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
   }
 
+  public void restoreFindModel() {
+    final FindModel model = FindManager.getInstance(myProject).getPreviousFindModel();
+    if (model != null) {
+      myFindModel.copyFrom(model);
+      updateUIWithFindModel();
+    }
+  }
+
   private static FindModel createDefaultFindModel(Project p, Editor e) {
     FindModel findModel = new FindModel();
     findModel.copyFrom(FindManager.getInstance(p).getFindInFileModel());
@@ -322,6 +330,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         setInitialText(initialText);
       }
     });
+
+    new RestorePreviousSettingsAction(this, mySearchField);
 
     new VariantsCompletionAction(this, mySearchFieldGetter); // It registers a shortcut set automatically on construction
     Utils.setSmallerFontForChildren(myToolbarComponent);
@@ -589,8 +599,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
     FindSettings settings = FindSettings.getInstance();
     String[] recent = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
-    Utils.showCompletionPopup(byClickingToolbarButton ? myToolbarComponent : null, new JBList((Object[])ArrayUtil.reverseArray(recent)),
-                              "Recent " + (textField == mySearchField ? "Searches" : "Replaces"), textField);
+    final boolean toShowAd = textField == mySearchField && textField.getText().isEmpty() && FindManager.getInstance(myProject).getPreviousFindModel() != null;
+    Utils.showCompletionPopup(byClickingToolbarButton ? myToolbarComponent : null,
+                              new JBList((Object[])ArrayUtil.reverseArray(recent)),
+                              "Recent " + (textField == mySearchField ? "Searches" : "Replaces"),
+                              textField,
+                              toShowAd ? RestorePreviousSettingsAction.getAd() : null);
+  }
+
+  private String gerRestoreFindModelAd() {
+    return "Use " + KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0) + " to restore your last search/replace settings";
   }
 
   private void paintBorderOfTextField(Graphics g) {

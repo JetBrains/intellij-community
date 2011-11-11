@@ -258,9 +258,6 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     if (psiFile == null) {
       return;
     }
-
-    final String layoutXmlText = psiFile.getText();
-    final String fileName = psiFile.getName();
     
     final AndroidFacet facet = AndroidFacet.getInstance(psiFile);
     if (facet == null) {
@@ -274,7 +271,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
           @Override
           public void run() {
             DumbService.getInstance(myProject).waitForSmartMode();
-            doRender(facet, layoutXmlText, fileName);
+            doRender(facet, psiFile);
           }
         }, new MyProgressIndicator());
       }
@@ -286,7 +283,11 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     });
   }
 
-  private void doRender(@NotNull final AndroidFacet facet, @NotNull String layoutXmlText, @NotNull final String fileName) {
+  private void doRender(@NotNull final AndroidFacet facet, @NotNull PsiFile psiFile) {
+    if (myToolWindowForm == null) {
+      return;
+    }
+
     BufferedImage image = null;
     RenderingErrorMessage errorMessage = null;
     String warnMessage = null;
@@ -321,10 +322,15 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       final float xdpi = deviceConfiguration.getDevice().getXDpi();
       final float ydpi = deviceConfiguration.getDevice().getYDpi();
 
+      final String layoutXmlText = psiFile.getText();
+      final VirtualFile layoutXmlFile = psiFile.getVirtualFile();
+
       synchronized (RENDERING_LOCK) {
         final StringBuilder warnBuilder = new StringBuilder();
+
         if (target != null && theme != null &&
-            RenderUtil.renderLayout(myProject, layoutXmlText, imgPath, target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
+            RenderUtil.renderLayout(myProject, layoutXmlText, layoutXmlFile, imgPath,
+                                    target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
           warnMessage = warnBuilder.toString();
           final File input = new File(imgPath);
           image = ImageIO.read(input);
@@ -366,6 +372,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       return;
     }
 
+    final String fileName = psiFile.getName();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

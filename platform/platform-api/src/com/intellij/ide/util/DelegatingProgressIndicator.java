@@ -126,4 +126,14 @@ public class DelegatingProgressIndicator implements ProgressIndicator {
   protected final ProgressIndicator getDelegate() {
     return myIndicator;
   }
+
+  @Override
+  public boolean isPopupWasShown() {
+    return myIndicator.isPopupWasShown();
+  }
+
+  @Override
+  public boolean isShowing() {
+    return myIndicator.isShowing();
+  }
 }

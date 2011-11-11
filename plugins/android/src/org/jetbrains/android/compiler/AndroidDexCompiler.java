@@ -20,7 +20,6 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -69,8 +68,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
     if (items != null && items.length > 0) {
       context.getProgressIndicator().setText("Generating " + AndroidUtils.CLASSES_FILE_NAME + "...");
-      Application application = ApplicationManager.getApplication();
-      return application.runReadAction(new ProcessAction(context, items));
+      new ProcessAction(context, items).compute();
     }
     return ProcessingItem.EMPTY_ARRAY;
   }

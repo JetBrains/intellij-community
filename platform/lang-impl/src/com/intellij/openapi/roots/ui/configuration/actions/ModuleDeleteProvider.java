@@ -110,7 +110,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
 
   @Override
   public String getActionTitle() {
-    return ProjectAttachProcessor.canAttachToProject() ? "Close Project" : "Remove Module";
+    return ProjectAttachProcessor.canAttachToProject() ? "Remove from Project View" : "Remove Module";
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,

@@ -431,4 +431,14 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   public String toString() {
     return "ProgressIndicator " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
   }
+
+  @Override
+  public boolean isPopupWasShown() {
+    return true;
+  }
+
+  @Override
+  public boolean isShowing() {
+    return isModal();
+  }
 }
