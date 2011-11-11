@@ -116,14 +116,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         register(fileType, parse(fileType.getDefaultExtension()));
       }
 
+      @Override
       public void consume(@NotNull final FileType fileType, final String extensions) {
         register(fileType, parse(extensions));
       }
 
+      @Override
       public void consume(@NotNull final FileType fileType, final FileNameMatcher... matchers) {
         register(fileType, new ArrayList<FileNameMatcher>(Arrays.asList(matchers)));
       }
 
+      @Override
       public FileType getStandardFileTypeByName(@NotNull final String name) {
         final StandardFileType type = ourStandardFileTypes.get(name);
         return type != null ? type.fileType : null;
@@ -162,6 +165,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
     myMessageBus = bus;
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
+      @Override
       public AbstractFileType readScheme(final Document document) throws InvalidDataException {
         if (document == null) {
           throw new InvalidDataException();
@@ -189,11 +193,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       }
 
+      @Override
       public boolean shouldBeSaved(final AbstractFileType fileType) {
         return shouldBeSavedToFile(fileType);
 
       }
 
+      @Override
       public Document writeScheme(final AbstractFileType fileType) throws WriteExternalException {
         Element root = new Element(ELEMENT_FILETYPE);
 
@@ -215,6 +221,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       }
 
+      @Override
       public void onSchemeAdded(final AbstractFileType scheme) {
         fireBeforeFileTypesChanged();
         if (scheme instanceof ReadFileType) {
@@ -223,6 +230,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         fireFileTypesChanged();
       }
 
+      @Override
       public void onSchemeDeleted(final AbstractFileType scheme) {
         fireBeforeFileTypesChanged();
         myPatternsTable.removeAllAssociations(scheme);
@@ -252,17 +260,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return true;
   }
 
+  @Override
   @NotNull
   public FileType getStdFileType(@NotNull @NonNls String name) {
     StandardFileType stdFileType = ourStandardFileTypes.get(name);
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{getOrCreateFileTypesDir(), PathManager.getOptionsFile(this)};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return FileTypesBundle.message("filetype.settings.component");
@@ -271,9 +282,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // ApplicationComponent interface implementation
   // -------------------------------------------------------------------------
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void initComponent() {
   }
 
@@ -281,6 +294,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Implementation of abstract methods
   // -------------------------------------------------------------------------
 
+  @Override
   @NotNull
   public FileType getFileTypeByFileName(@NotNull String fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
@@ -291,6 +305,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     file.putUserData(FILE_TYPE_KEY, fileType);
   }
 
+  @Override
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     FileType fileType = file.getUserData(FILE_TYPE_KEY);
@@ -404,6 +419,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return guess != null && guess != CharsetToolkit.GuessedEncoding.INVALID_UTF8;
   }
 
+  @Override
   public boolean isFileOfType(VirtualFile file, FileType type) {
     if (type instanceof FileTypeIdentifiableByVirtualFile) {
       return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
@@ -412,17 +428,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return getFileTypeByFileName(file.getName()) == type;
   }
 
+  @Override
   @NotNull
   public FileType getFileTypeByExtension(@NotNull String extension) {
     return getFileTypeByFileName("IntelliJ_IDEA_RULES." + extension);
   }
 
+  @Override
   public void registerFileType(FileType fileType) {
     registerFileType(fileType, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
+  @Override
   public void registerFileType(@NotNull final FileType type, @NotNull final List<FileNameMatcher> defaultAssociations) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         fireBeforeFileTypesChanged();
         registerFileTypeWithoutNotification(type, defaultAssociations);
@@ -432,10 +452,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     });
   }
 
-  public void unregisterFileType(FileType fileType) {
-    fireBeforeFileTypesChanged();
-    unregisterFileTypeWithoutNotification(fileType);
-    fireFileTypesChanged();
+  @Override
+  public void unregisterFileType(final FileType fileType) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        fireBeforeFileTypesChanged();
+        unregisterFileTypeWithoutNotification(fileType);
+        fireFileTypesChanged();
+      }
+    });
   }
 
   private void unregisterFileTypeWithoutNotification(FileType fileType) {
@@ -447,12 +473,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @Override
   @NotNull
   public FileType[] getRegisteredFileTypes() {
     Collection<FileType> fileTypes = mySchemesManager.getAllSchemes();
     return fileTypes.toArray(new FileType[fileTypes.size()]);
   }
 
+  @Override
   @NotNull
   public String getExtension(String fileName) {
     int index = fileName.lastIndexOf('.');
@@ -460,6 +488,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return fileName.substring(index + 1);
   }
 
+  @Override
   @NotNull
   public String getIgnoredFilesList() {
     final Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
@@ -470,12 +499,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return StringUtil.join(masks, ";") + ";";
   }
 
+  @Override
   public void setIgnoredFilesList(@NotNull String list) {
     fireBeforeFileTypesChanged();
     myIgnoredPatterns.setIgnoreMasks(list);
     fireFileTypesChanged();
   }
 
+  @Override
   public boolean isIgnoredFilesListEqualToCurrent(String list) {
     Set<String> tempSet = new THashSet<String>();
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
@@ -485,6 +516,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return tempSet.equals(myIgnoredPatterns.getIgnoreMasks());
   }
 
+  @Override
   public boolean isFileIgnored(@NotNull String name) {
     return myIgnoredPatterns.isIgnored(name);
   }
@@ -494,21 +526,25 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return isFileIgnored(file.getName());
   }
 
+  @Override
   @SuppressWarnings({"deprecation"})
   @NotNull
   public String[] getAssociatedExtensions(@NotNull FileType type) {
     return myPatternsTable.getAssociatedExtensions(type);
   }
 
+  @Override
   @NotNull
   public List<FileNameMatcher> getAssociations(@NotNull FileType type) {
     return myPatternsTable.getAssociations(type);
   }
 
+  @Override
   public void associate(@NotNull FileType type, @NotNull FileNameMatcher matcher) {
     associate(type, matcher, true);
   }
 
+  @Override
   public void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher) {
     removeAssociation(type, matcher, true);
   }
@@ -517,27 +553,34 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myPatternsTable.removeAllAssociations(type);
   }
 
+  @Override
   public void fireBeforeFileTypesChanged() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     FileTypeEvent event = new FileTypeEvent(this);
     myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
+  @Override
   public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
     return mySchemesManager;
   }
 
+  @Override
   public void fireFileTypesChanged() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
 
+  @Override
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(TOPIC, listener);
     myAdapters.put(listener, connection);
   }
 
+  @Override
   public void removeFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myAdapters.remove(listener);
     if (connection != null) {
@@ -558,10 +601,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Implementation of NamedExternalizable interface
   // -------------------------------------------------------------------------
 
+  @Override
   public String getExternalFileName() {
     return "filetypes";
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     int savedVersion = getVersion(parentNode);
     for (final Object o : parentNode.getChildren()) {
@@ -699,6 +744,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     parentNode.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
 
@@ -710,6 +756,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     final List<FileType> fileTypes = Arrays.asList(getRegisteredFileTypes());
     Collections.sort(fileTypes, new Comparator<FileType>() {
+      @Override
       public int compare(FileType o1, FileType o2) {
         return o1.getName().compareTo(o2.getName());
       }
@@ -973,6 +1020,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Setup
   // -------------------------------------------------------------------------
 
+  @Override
   @NotNull
   public String getComponentName() {
     return PlatformUtils.isCommunity() ? "CommunityFileTypes" : "FileTypeManager";
@@ -983,6 +1031,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {
@@ -1023,6 +1072,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @Override
   @Nullable
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
     return FileTypeChooser.getKnownFileTypeOrAssociate(file);
