@@ -35,6 +35,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
@@ -235,7 +236,11 @@ public class CompletionUtil {
 
   @Nullable
   public static PsiElement getTargetElement(LookupElement lookupElement) {
-    final Object object = lookupElement.getObject();
+    Object object = lookupElement.getObject();
+    if (object instanceof ResolveResult) {
+      object = ((ResolveResult)object).getElement();
+    }
+    
     if (object instanceof PsiElement) {
       return getOriginalElement((PsiElement)object);
     }
