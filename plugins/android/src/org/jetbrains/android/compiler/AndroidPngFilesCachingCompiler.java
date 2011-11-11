@@ -94,11 +94,8 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
       final String resDirOsPath = FileUtil.toSystemDependentName(item.getResourceDir().getPath());
 
       try {
-        final String resCacheDirOsPath = AndroidCompileUtil.findResourcesCacheDirectory(module, true);
+        final String resCacheDirOsPath = AndroidCompileUtil.findResourcesCacheDirectory(module, true, context);
         if (resCacheDirOsPath == null) {
-          context.addMessage(CompilerMessageCategory.ERROR,
-                             AndroidBundle.message("android.compilation.error.cannot.create.png.cache.directory", module.getName()), null,
-                             -1, -1);
           continue;
         }
         

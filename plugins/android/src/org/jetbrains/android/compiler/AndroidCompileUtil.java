@@ -568,7 +568,7 @@ public class AndroidCompileUtil {
 
       if (platformToolsRevision < 0 || platformToolsRevision > 7) {
         // png cache is supported since platform-tools-r8
-        final String resCacheDirOsPath = findResourcesCacheDirectory(module, false);
+        final String resCacheDirOsPath = findResourcesCacheDirectory(module, false, null);
         if (resCacheDirOsPath != null) {
           result.add(resCacheDirOsPath);
         }
@@ -585,16 +585,22 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static String findResourcesCacheDirectory(@NotNull Module module, boolean createIfNotFound) {
+  public static String findResourcesCacheDirectory(@NotNull Module module, boolean createIfNotFound, @Nullable CompileContext context) {
     final Project project = module.getProject();
     
     final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension == null) {
+      if (context != null) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot get compiler settings for project " + project.getName(), null, -1, -1);
+      }
       return null;
     }
 
     final VirtualFile projectOutputDirectory = extension.getCompilerOutput();
     if (projectOutputDirectory == null) {
+      if (context != null) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot find output directory for project " + project.getName(), null, -1, -1);
+      }
       return null;
     }
 
@@ -603,7 +609,16 @@ public class AndroidCompileUtil {
     
     final File pngCacheDir = new File(pngCacheDirOsPath);
     if (pngCacheDir.exists()) {
-      return pngCacheDir.isDirectory() ? pngCacheDirOsPath : null;
+      if (pngCacheDir.isDirectory()) {
+        return pngCacheDirOsPath;
+      }
+      else {
+        if (context != null) {
+          context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + pngCacheDirOsPath + " because file already exists",
+                             null, -1, -1);
+        }
+        return null;
+      }
     }
     
     if (!createIfNotFound) {
@@ -611,6 +626,9 @@ public class AndroidCompileUtil {
     }
     
     if (!pngCacheDir.mkdirs()) {
+      if (context != null) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + pngCacheDirOsPath, null, -1, -1);
+      }
       return null;
     }
     
