@@ -15,18 +15,16 @@
  */
 package git4idea.actions;
 
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitStandardProgressAnalyzer;
-import git4idea.commands.GitTask;
-import git4idea.commands.GitTaskResultHandlerAdapter;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.GitFetchDialog;
 import git4idea.ui.GitUIUtil;
+import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,25 +45,21 @@ public class GitFetch extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-    final GitFetchDialog d = new GitFetchDialog(project, gitRoots, defaultRoot);
-    d.show();
-    if (!d.isOK()) {
-      return;
-    }
-    final GitLineHandler h = d.fetchHandler();
-    GitTask fetchTask = new GitTask(project, h, GitBundle.message("fetching.title", d.getRemote()));
-    fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    fetchTask.executeAsync(new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void onSuccess() {
-        GitUIUtil.notifySuccess(project, "Fetched successfully", "Fetched " + d.getRemote());
-        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL);
-      }
+    GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", false) {
+      @Override public void run(@NotNull ProgressIndicator indicator) {
+        GitFetcher fetcher = new GitFetcher(project, indicator);
+        for (VirtualFile root : gitRoots) {
+          fetcher.fetch(root);
+        }
 
-      @Override
-      protected void onFailure() {
-        GitUIUtil.notifyGitErrors(project, "Error fetching " + d.getRemote(), "", h.errors());
-        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL);
+        if (!fetcher.isSuccess()) {
+          GitVcs instance = GitVcs.getInstance(project);
+          if (instance != null && instance.getExecutableValidator().isExecutableValid()) {
+            GitUIUtil.notifyMessage(myProject, "", "Fetch failed", NotificationType.ERROR, true, fetcher.getErrors());
+          }
+        } else {
+          GitUIUtil.notifySuccess(project, "", "Fetched successfully");
+        }
       }
     });
   }

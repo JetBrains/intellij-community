@@ -46,7 +46,7 @@
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="/actions/reset.png"/>
       <separator/>
-      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch Changes..."/>
+      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull Changes..." icon="/actions/checkOut.png"/>
       <action id="Git.Push" class="git4idea.actions.GitPush" text="Push Changes..." icon="/actions/commit.png"/>
       <action id="Git.Push.Active.Branches" class="git4idea.actions.GitPushActiveBranches" text="Push Active Branches..."/>

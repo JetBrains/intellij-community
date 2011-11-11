@@ -53,7 +53,7 @@ public class GitFetcher {
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicBoolean success = new AtomicBoolean();
-    fetchTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+    fetchTask.execute(true, false, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {
         success.set(true);
       }
