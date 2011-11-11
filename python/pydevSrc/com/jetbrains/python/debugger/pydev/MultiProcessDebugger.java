@@ -109,7 +109,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
     for (ProcessDebugger d : myOtherDebuggers) {
       d.disconnect();
     }
-    myDebugProcessAcceptor.disconnect();
+    if (myDebugProcessAcceptor != null) {
+      myDebugProcessAcceptor.disconnect();
+    }
   }
 
   @Override
