@@ -723,7 +723,7 @@ public class JavaCompletionUtil {
       if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified() && !(parent.getParent() instanceof PsiPackageStatement)) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
 
-        if (!psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
+        if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
           final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
           PsiElement newElement = staticImport
                                   ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
