@@ -15,13 +15,15 @@
  */
 package org.jetbrains.plugins.groovy
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author peter
  */
 class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
+  int myAddImportsOld
 
   public void testEscapeSlashesInRegex() {
     myFixture.configureByText 'a.groovy', '<selection>a/b</selection>'
@@ -46,6 +48,34 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     myFixture.performEditorAction IdeActions.ACTION_PASTE
     myFixture.checkResult 'def x = "smth$a<caret>h"'
 
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    myAddImportsOld = settings.ADD_IMPORTS_ON_PASTE;
+    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld;
+    super.tearDown();
+  }
+
+  public void testRestoreImports() {
+    myFixture.addClass("package foo; public class Foo {}")
+
+    myFixture.configureByText 'a.groovy', '''import foo.*; <selection>Foo f</selection>'''
+    myFixture.performEditorAction IdeActions.ACTION_COPY
+    myFixture.configureByText 'b.groovy', '<caret>'
+    myFixture.performEditorAction IdeActions.ACTION_PASTE
+    myFixture.checkResult '''import foo.Foo
+
+Foo f'''
   }
 
 }
