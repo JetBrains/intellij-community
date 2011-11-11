@@ -20,8 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
@@ -73,11 +71,10 @@ public class WaitForProgressToShow {
   }
 
   public static void execute(ProgressIndicator pi) {
-    if ((pi.isModal() || (pi instanceof BackgroundableProcessIndicator && ! ((BackgroundableProcessIndicator)pi).isBackgrounded()))
-        && pi instanceof ProgressWindow) {
+    if (pi.isShowing()) {
       final long maxWait = 3000;
       final long start = System.currentTimeMillis();
-      while ((!((ProgressWindow)pi).isPopupWasShown()) && (pi.isRunning()) && (System.currentTimeMillis() - maxWait < start)) {
+      while ((! pi.isPopupWasShown()) && (pi.isRunning()) && (System.currentTimeMillis() - maxWait < start)) {
         final Object lock = new Object();
         synchronized (lock) {
           try {

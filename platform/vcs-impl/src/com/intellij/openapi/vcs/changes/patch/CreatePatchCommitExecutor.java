@@ -17,8 +17,6 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.PathManager;

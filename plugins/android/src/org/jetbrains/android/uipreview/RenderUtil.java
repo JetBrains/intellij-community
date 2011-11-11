@@ -5,10 +5,7 @@ import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.resources.*;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.resources.configuration.VersionQualifier;
-import com.android.io.FolderWrapper;
-import com.android.io.IAbstractFile;
-import com.android.io.IAbstractFolder;
-import com.android.io.IAbstractResource;
+import com.android.io.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.manifest.Application;
@@ -29,11 +27,11 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParserException;
 
 import javax.imageio.ImageIO;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +50,7 @@ class RenderUtil {
 
   public static boolean renderLayout(@NotNull Project project,
                                      @NotNull String layoutXmlText,
+                                     @Nullable VirtualFile layoutXmlFile,
                                      @NotNull String imgPath,
                                      @NotNull IAndroidTarget target,
                                      @NotNull AndroidFacet facet,
@@ -88,11 +87,11 @@ class RenderUtil {
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
     final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
 
-    loadResources(projectResources, resFolders);
+    loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
     String missingRClassMessage = null;
     boolean missingRClass = false;
-    
+
     final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
     try {
       callback.loadAndParseRClass();
@@ -223,6 +222,8 @@ class RenderUtil {
   }
 
   public static void loadResources(@NotNull ResourceRepository repository,
+                                   @Nullable final String layoutXmlFileText,
+                                   @Nullable VirtualFile layoutXmlFile,
                                    @NotNull IAbstractFolder... rootFolders) throws IOException, RenderingException {
     final ScanningContext scanningContext = new ScanningContext(repository);
 
@@ -236,9 +237,19 @@ class RenderUtil {
         final ResourceFolder resFolder = repository.processFolder(folder);
 
         if (resFolder != null) {
-          for (IAbstractResource childRes : folder.listMembers()) {
+          for (final IAbstractResource childRes : folder.listMembers()) {
             if (childRes instanceof IAbstractFile) {
-              resFolder.processFile((IAbstractFile)childRes, ResourceDeltaKind.ADDED, scanningContext);
+              assert childRes instanceof FileWrapper;
+              @SuppressWarnings("CastConflictsWithInstanceof") 
+              final FileWrapper fileWrapper = (FileWrapper)childRes;
+              
+              final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileWrapper.getPath());
+              if (vFile != null && vFile == layoutXmlFile && layoutXmlFileText != null) {
+                resFolder.processFile(new MyFileWrapper(layoutXmlFileText, childRes), ResourceDeltaKind.ADDED, scanningContext);
+              }
+              else {
+                resFolder.processFile((IAbstractFile)childRes, ResourceDeltaKind.ADDED, scanningContext);
+              }
             }
           }
         }
@@ -261,5 +272,65 @@ class RenderUtil {
       }
     }
     return result.toString();
+  }
+
+  private static class MyFileWrapper implements IAbstractFile {
+    private final String myLayoutXmlFileText;
+    private final IAbstractResource myChildRes;
+
+    public MyFileWrapper(String layoutXmlFileText, IAbstractResource childRes) {
+      myLayoutXmlFileText = layoutXmlFileText;
+      myChildRes = childRes;
+    }
+
+    @Override
+    public InputStream getContents() throws StreamException {
+      return new ByteArrayInputStream(myLayoutXmlFileText.getBytes());
+    }
+
+    @Override
+    public void setContents(InputStream source) throws StreamException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws StreamException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PreferredWriteMode getPreferredWriteMode() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getModificationStamp() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getName() {
+      return myChildRes.getName();
+    }
+
+    @Override
+    public String getOsLocation() {
+      return myChildRes.getOsLocation();
+    }
+
+    @Override
+    public boolean exists() {
+      return true;
+    }
+
+    @Override
+    public IAbstractFolder getParentFolder() {
+      return myChildRes.getParentFolder();
+    }
+
+    @Override
+    public boolean delete() {
+      throw new UnsupportedOperationException();
+    }
   }
 }

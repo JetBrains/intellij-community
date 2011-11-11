@@ -57,6 +57,8 @@ public class GitPushDialog extends DialogWrapper {
   private Map<GitRepository, GitPushSpec> myPushSpecs;
   private final Collection<GitRepository> myRepositories;
   private final JBLoadingPanel myLoadingPanel;
+  private final JCheckBox myPushAllCheckbox;
+  private final Object COMMITS_LOADING_LOCK = new Object();
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
@@ -66,6 +68,15 @@ public class GitPushDialog extends DialogWrapper {
     myRepositories = GitRepositoryManager.getInstance(myProject).getRepositories();
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
+    myPushAllCheckbox = new JCheckBox("Push all branches", false);
+    myPushAllCheckbox.setMnemonic('p');
+    myPushAllCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        loadCommitsInBackground(myPushAllCheckbox.isSelected());
+      }
+    });
+
     myListPanel = new GitPushLog(myProject, myRepositories, new Consumer<Boolean>() {
       @Override public void consume(Boolean checked) {
         if (checked) {
@@ -88,18 +99,20 @@ public class GitPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
+    JPanel optionsPanel = new JPanel(new BorderLayout());
+    optionsPanel.add(myPushAllCheckbox);
+
     myRootPanel = new JPanel(new BorderLayout());
     myRootPanel.add(createCommitListPanel(), BorderLayout.CENTER);
-    myRootPanel.add(createOptionsPanel(), BorderLayout.SOUTH);
+    myRootPanel.add(optionsPanel, BorderLayout.SOUTH);
     return myRootPanel;
   }
   
   private JComponent createCommitListPanel() {
-    JPanel commitListPanel = new JPanel(new BorderLayout());
-
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
     loadCommitsInBackground(false);
 
+    JPanel commitListPanel = new JPanel(new BorderLayout());
     commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
     return commitListPanel;
   }
@@ -110,14 +123,8 @@ public class GitPushDialog extends DialogWrapper {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         final AtomicReference<String> error = new AtomicReference<String>();
-        try {
-          myPushSpecs = pushAll ? pushSpecsForPushAll() : pushSpecsForCurrentBranches();
-          myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
-        }
-        catch (VcsException e) {
-          myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
-          error.set(e.getMessage());
-          LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
+        synchronized (COMMITS_LOADING_LOCK) {
+          error.set(collectInfoToPush(pushAll));
         }
         
         UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -133,6 +140,20 @@ public class GitPushDialog extends DialogWrapper {
         });
       }
     });
+  }
+  
+  @Nullable
+  private String collectInfoToPush(boolean pushAll) {
+    try {
+      myPushSpecs = pushAll ? pushSpecsForPushAll() : pushSpecsForCurrentBranches();
+      myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
+      return null;
+    }
+    catch (VcsException e) {
+      myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
+      LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
+      return e.getMessage();
+    }
   }
   
   private Map<GitRepository, GitPushSpec> pushSpecsForCurrentBranches() throws VcsException {
@@ -186,20 +207,6 @@ public class GitPushDialog extends DialogWrapper {
     return specs;
   }
 
-  private JComponent createOptionsPanel() {
-    final JCheckBox pushAll = new JCheckBox("Push all branches");
-    pushAll.setMnemonic('p');
-    pushAll.addActionListener(new ActionListener() {
-      @Override public void actionPerformed(ActionEvent e) {
-        loadCommitsInBackground(pushAll.isSelected());
-      }
-    });
-    
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(pushAll);
-    return panel;
-  }
-
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myListPanel.getPreferredFocusComponent();
@@ -212,8 +219,18 @@ public class GitPushDialog extends DialogWrapper {
 
   @NotNull
   public GitPushInfo getPushInfo() {
-    Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-    GitCommitsByRepoAndBranch selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
-    return new GitPushInfo(selectedCommits, myPushSpecs);
+    // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
+    // notify about pushed commits
+    synchronized (COMMITS_LOADING_LOCK) {
+      GitCommitsByRepoAndBranch selectedCommits;
+      if (myGitCommitsToPush == null) {
+        collectInfoToPush(myPushAllCheckbox.isSelected());
+        selectedCommits = myGitCommitsToPush;
+      } else {
+        Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
+        selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
+      }
+      return new GitPushInfo(selectedCommits, myPushSpecs);
+    }
   }
 }

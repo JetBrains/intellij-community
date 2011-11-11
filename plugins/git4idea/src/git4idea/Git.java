@@ -52,6 +52,7 @@ public class Git {
    */
   public static void init(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.INIT);
+    h.setSilent(false);
     h.setNoSSH(true);
     h.run();
     if (!h.errors().isEmpty()) {
@@ -130,6 +131,7 @@ public class Git {
                                           @Nullable String newBranch,
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    h.setSilent(false);
     if (newBranch == null) { // simply checkout
       h.addParameters(reference);
     } else { // checkout reference as new branch
@@ -147,6 +149,7 @@ public class Git {
   public static GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                                    @Nullable GitLineHandlerListener listener) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    h.setSilent(false);
     h.addParameters("-b");
     h.addParameters(branchName);
     if (listener != null) {
@@ -158,6 +161,7 @@ public class Git {
   public static GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
                                                      @Nullable GitLineHandlerListener listener, String reference) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
+    h.setSilent(false);
     h.addParameters(tagName);
     if (reference != null && ! reference.isEmpty()) {
       h.addParameters(reference);
@@ -176,6 +180,7 @@ public class Git {
                                               boolean force,
                                               @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
     h.addParameters(force ? "-D" : "-d");
     h.addParameters(branchName);
     for (GitLineHandlerListener listener : listeners) {
@@ -208,6 +213,8 @@ public class Git {
 
   public static GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
+    h.setSilent(false);
+
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }

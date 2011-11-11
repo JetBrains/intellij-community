@@ -160,7 +160,7 @@ public class RenderServiceFactory {
     final FrameworkResources resources = new FrameworkResources();
     final FolderWrapper resFolderWrapper = new FolderWrapper(resFolder);
 
-    RenderUtil.loadResources(resources, resFolderWrapper);
+    RenderUtil.loadResources(resources, null, null, resFolderWrapper);
 
     resources.loadPublicResources(resFolderWrapper, log);
     return resources;
