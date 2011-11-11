@@ -108,37 +108,44 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected void performRefactoringRename(final String newName,
                                           PsiElement context,
                                           final StartMarkAction markAction) {
-    final PsiNamedElement variable = getVariable();
-    if (variable != null) {
-      RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(variable);
-      PsiElement substitutedElement = processor.substituteElementToRename(variable, myEditor);
-      if (substitutedElement == null) {
+    try {
+      final PsiNamedElement variable = getVariable();
+      if (variable != null && !newName.equals(myOldName)) {
+        RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(variable);
+        PsiElement substitutedElement = processor.substituteElementToRename(variable, myEditor);
+        if (substitutedElement == null) {
+          return;
+        }
+
+        final RenameDialog dialog = new RenameDialog(myProject, substitutedElement, context, myEditor) {
+          @Override
+          public String[] getSuggestedNames() {
+            return new String[]{newName};
+          }
+        };
+        dialog.setPreviewResults(false);
+        final String commandName = RefactoringBundle
+          .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
+        restore(variable, commandName);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
-            FinishMarkAction.finish(myProject, myEditor, markAction);
+            dialog.performRename(newName);
           }
-        }, RENAME_TITLE, null);
-
-        return;
+        }, commandName, null);
       }
-      final RenameDialog dialog = new RenameDialog(myProject, substitutedElement, context, myEditor) {
-        @Override
-        public String[] getSuggestedNames() {
-          return new String[]{newName};
-        }
-      };
-      dialog.setPreviewResults(false);
-      final String commandName = RefactoringBundle
-        .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
-      restore(variable, commandName);
+    }
+    finally {
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
-          dialog.performRename(newName);
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           FinishMarkAction.finish(myProject, myEditor, markAction);
         }
-      }, commandName, null);
+      }, RENAME_TITLE, null);
     }
+  }
+
+  @Override
+  protected void collectAdditionalElementsToRename(boolean processTextOccurrences, List<Pair<PsiElement, TextRange>> stringUsages) {
+    //do not highlight non-code usages in file
   }
 
   private void restore(final PsiNamedElement variable, String commandName) {
@@ -170,7 +177,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
               for (PsiReference reference : references) {
                 reference.handleElementRename(myOldName);
               }
-              
+
 
               variable.setName(myOldName);
             }
