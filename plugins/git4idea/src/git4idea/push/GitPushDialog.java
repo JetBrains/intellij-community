@@ -20,11 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -142,10 +144,15 @@ public class GitPushDialog extends DialogWrapper {
       }
       String remoteName = currentBranch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
       String trackedBranchName = currentBranch.getTrackedBranchName(repository.getProject(), repository.getRoot());
-      GitRemote remote = findRemoteByName(repository, remoteName);
+      GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
       GitBranch tracked = findRemoteBranchByName(repository, remote, trackedBranchName);
       if (remote == null || tracked == null) {
-        continue;
+        Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
+        if (remoteAndBranch == null) {
+          continue;
+        }
+        remote = remoteAndBranch.getFirst();
+        tracked = remoteAndBranch.getSecond();
       }
       GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, tracked);
       defaultSpecs.put(repository, pushSpec);
@@ -166,19 +173,6 @@ public class GitPushDialog extends DialogWrapper {
     for (GitBranch branch : repository.getBranches().getRemoteBranches()) {
       if (branch.getName().equals(remote.getName() + "/" + name)) {
         return branch;
-      }
-    }
-    return null;
-  }
-  
-  @Nullable
-  private static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable String name) {
-    if (name == null) {
-      return null;
-    }
-    for (GitRemote remote : repository.getRemotes()) {
-      if (remote.getName().equals(name)) {
-        return remote;
       }
     }
     return null;

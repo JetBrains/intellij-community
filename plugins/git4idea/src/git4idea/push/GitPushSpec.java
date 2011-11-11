@@ -16,8 +16,10 @@
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -100,46 +101,15 @@ public class GitPushSpec {
     if (trackedBranch != null) {
       return new GitBranchPair(branch, trackedBranch);
     }
-    GitBranch matchingRemoteBranch = findMatchingRemoteBranch(repository, branch);
+    Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, branch);
+    if (remoteAndBranch == null) {
+      return null;
+    }
+    GitBranch matchingRemoteBranch = remoteAndBranch.getSecond();
     if (matchingRemoteBranch != null) {
       return new GitBranchPair(branch, matchingRemoteBranch);
     }
     return null;
-  }
-
-  @Nullable
-  private static GitBranch findMatchingRemoteBranch(GitRepository repository, GitBranch branch) throws VcsException {
-    /*
-    from man git-push:
-    git push
-               Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no
-               remote is configured for the current branch).
-
-     */
-    String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
-    if (remoteName == null) {
-      if (originExists(repository.getRemotes())) {
-        remoteName = "origin";
-      } else {
-        return null;
-      }
-    }
-
-    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
-      if (remoteBranch.getName().equals(remoteName + "/" + branch.getName())) {
-        return remoteBranch;
-      }
-    }
-    return null;
-  }
-
-  private static boolean originExists(Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals("origin")) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
