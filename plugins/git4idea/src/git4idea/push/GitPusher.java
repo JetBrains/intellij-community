@@ -141,8 +141,13 @@ public final class GitPusher {
     Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
     for (GitRepository repository : myRepositories) {
       GitPushSpec pushSpec = pushSpecs.get(repository);
-      if (pushSpec != null) {
+      if (pushSpec == null) {
+        continue;
+      }
+      if (!pushSpec.isPushAll()) {
         res.put(repository, Collections.singletonList(new GitBranchPair(pushSpec.getSource(), pushSpec.getDest())));
+      } else {
+        res.put(repository, GitPushSpec.getBranchesForPushAll(repository));
       }
     }
     return res;

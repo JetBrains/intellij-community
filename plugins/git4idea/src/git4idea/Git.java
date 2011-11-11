@@ -211,7 +211,7 @@ public class Git {
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
-    if (!pushSpec.pushAll()) {
+    if (!pushSpec.isPushAll()) {
       GitRemote remote = pushSpec.getRemote();
       LOG.assertTrue(remote != null, "Remote can't be null: " + pushSpec);
       h.addParameters(remote.getName());

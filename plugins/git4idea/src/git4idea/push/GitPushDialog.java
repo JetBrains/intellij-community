@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,6 +54,7 @@ public class GitPushDialog extends DialogWrapper {
   private GitCommitsByRepoAndBranch myGitCommitsToPush;
   private Map<GitRepository, GitPushSpec> myPushSpecs;
   private final Collection<GitRepository> myRepositories;
+  private final JBLoadingPanel myLoadingPanel;
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
@@ -59,6 +62,8 @@ public class GitPushDialog extends DialogWrapper {
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
     myRepositories = GitRepositoryManager.getInstance(myProject).getRepositories();
+
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
     myListPanel = new GitPushLog(myProject, myRepositories, new Consumer<Boolean>() {
       @Override public void consume(Boolean checked) {
         if (checked) {
@@ -79,6 +84,55 @@ public class GitPushDialog extends DialogWrapper {
     setTitle("Git Push");
   }
 
+  @Override
+  protected JComponent createCenterPanel() {
+    myRootPanel = new JPanel(new BorderLayout());
+    myRootPanel.add(createCommitListPanel(), BorderLayout.CENTER);
+    myRootPanel.add(createOptionsPanel(), BorderLayout.SOUTH);
+    return myRootPanel;
+  }
+  
+  private JComponent createCommitListPanel() {
+    JPanel commitListPanel = new JPanel(new BorderLayout());
+
+    myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
+    loadCommitsInBackground(false);
+
+    commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
+    return commitListPanel;
+  }
+
+  private void loadCommitsInBackground(final boolean pushAll) {
+    myLoadingPanel.startLoading();
+    
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        final AtomicReference<String> error = new AtomicReference<String>();
+        try {
+          myPushSpecs = pushAll ? pushSpecsForPushAll() : pushSpecsForCurrentBranches();
+          myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
+        }
+        catch (VcsException e) {
+          myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
+          error.set(e.getMessage());
+          LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
+        }
+        
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (error.get() != null) {
+              myListPanel.displayError(error.get());
+            } else {
+              myListPanel.setCommits(myGitCommitsToPush);
+            }
+            myLoadingPanel.stopLoading();
+          }
+        });
+      }
+    });
+  }
+  
   private Map<GitRepository, GitPushSpec> pushSpecsForCurrentBranches() throws VcsException {
     Map<GitRepository, GitPushSpec> defaultSpecs = new HashMap<GitRepository, GitPushSpec>();
     for (GitRepository repository : myRepositories) {
@@ -130,70 +184,26 @@ public class GitPushDialog extends DialogWrapper {
     return null;
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    myRootPanel = new JPanel(new BorderLayout());
-    myRootPanel.add(createCommitListPanel(), BorderLayout.CENTER);
-    myRootPanel.add(createManualRefspecPanel(), BorderLayout.SOUTH);
-    return myRootPanel;
-  }
-  
-  private JComponent createCommitListPanel() {
-    JPanel commitListPanel = new JPanel(new BorderLayout());
-
-    final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
-    loadingPanel.add(myListPanel, BorderLayout.CENTER);
-    loadingPanel.startLoading();
-
-    loadCommitsInBackground(myListPanel, loadingPanel);
-
-    commitListPanel.add(loadingPanel, BorderLayout.CENTER);
-    return commitListPanel;
+  private Map<GitRepository, GitPushSpec> pushSpecsForPushAll() {
+    Map<GitRepository, GitPushSpec> specs = new HashMap<GitRepository, GitPushSpec>();
+    for (GitRepository repository : myRepositories) {
+      specs.put(repository, GitPushSpec.pushAllSpec());
+    }
+    return specs;
   }
 
-  private void loadCommitsInBackground(final GitPushLog myListPanel, final JBLoadingPanel loadingPanel) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        final AtomicReference<String> error = new AtomicReference<String>();
-        try {
-          myPushSpecs = pushSpecsForCurrentBranches();
-          myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
-        }
-        catch (VcsException e) {
-          myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
-          error.set(e.getMessage());
-          LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
-        }
-        
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (error.get() != null) {
-              myListPanel.displayError(error.get());
-            } else {
-              myListPanel.setCommits(myGitCommitsToPush);
-            }
-            loadingPanel.stopLoading();
-          }
-        });
+  private JComponent createOptionsPanel() {
+    final JCheckBox pushAll = new JCheckBox("Push all branches");
+    pushAll.setMnemonic('p');
+    pushAll.addActionListener(new ActionListener() {
+      @Override public void actionPerformed(ActionEvent e) {
+        loadCommitsInBackground(pushAll.isSelected());
       }
     });
-  }
-
-  private JComponent createManualRefspecPanel() {
-    // TODO
-    //GitPushRefspecPanel refspecPanel = new GitPushRefspecPanel(myRepositories);
-    //refspecPanel.addChangeListener(new MyRefspecChanged(refspecPanel));
-    //
-    //JBLabel commentLabel = new JBLabel("This command will be applied as is for all selected repositories", UIUtil.ComponentStyle.SMALL);
-    //
-    //JComponent detailsPanel = new JPanel(new BorderLayout());
-    //detailsPanel.add(refspecPanel, BorderLayout.WEST);
-    //detailsPanel.add(commentLabel, BorderLayout.SOUTH);
-    //
-    //JPanel hiddenPanel = new ShowHidePanel("Manually specify refspec", detailsPanel);
-    //return hiddenPanel;
-    return new JPanel();
+    
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(pushAll);
+    return panel;
   }
 
   @Override

@@ -38,11 +38,24 @@ public class GitPushSpec {
   private final GitRemote myRemote;
   @NotNull private final GitBranch mySource;
   @NotNull private final GitBranch myDest;
+  private final boolean myPushAll;
 
   GitPushSpec(@NotNull GitRemote remote, @NotNull GitBranch source, @NotNull GitBranch dest) {
     myRemote = remote;
     mySource = source;
     myDest = dest;
+    myPushAll = false;
+  }
+
+  private GitPushSpec() {
+    myRemote = null;
+    mySource = null;
+    myDest = null;
+    myPushAll = true;
+  }
+
+  static GitPushSpec pushAllSpec() {
+    return new GitPushSpec();
   }
 
   @Nullable
@@ -66,8 +79,7 @@ public class GitPushSpec {
    * TODO read tracking information from the config file, i.e. getting rid from the possible exception here.
    */
   @NotNull
-  List<GitBranchPair> parse(@NotNull GitRepository repository) throws VcsException {
-    // TODO - this is only for isSimple() case, fairly parse ref and make for all cases
+  static List<GitBranchPair> getBranchesForPushAll(@NotNull GitRepository repository) throws VcsException {
     List<GitBranchPair> sourceDests = new ArrayList<GitBranchPair>();
     for (GitBranch branch : repository.getBranches().getLocalBranches()) {
       GitBranchPair forBranch = findSourceDestForBranch(repository, branch);
@@ -78,8 +90,8 @@ public class GitPushSpec {
     return sourceDests;
   }
 
-  public boolean pushAll() {
-    return false;
+  public boolean isPushAll() {
+    return myPushAll;
   }
 
   @Nullable
