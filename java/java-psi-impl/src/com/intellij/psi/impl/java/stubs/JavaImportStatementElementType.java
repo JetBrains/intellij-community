@@ -47,13 +47,7 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
 
   @Override
   public PsiImportStatementBase createPsi(final PsiImportStatementStub stub) {
-    assert !isCompiled(stub);
-    if (stub.isStatic()) {
-      return new PsiImportStaticStatementImpl(stub);
-    }
-    else {
-      return new PsiImportStatementImpl(stub);
-    }
+    return getPsiFactory(stub).createImportStatement(stub);
   }
 
   @Override

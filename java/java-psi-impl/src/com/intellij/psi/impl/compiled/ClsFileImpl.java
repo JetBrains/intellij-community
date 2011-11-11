@@ -71,6 +71,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private volatile SoftReference<StubTree> myStub;
   private TreeElement myMirrorFileElement;  // guarded by MIRROR_LOCK
   private volatile ClsPackageStatementImpl myPackageStatement = null;
+  private boolean myIsPhysical = true;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
@@ -489,5 +490,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   public FileASTNode getNode() {
     return null;
+  }
+
+  @Override
+  public boolean isPhysical() {
+    return myIsPhysical;
+  }
+
+  public void setPhysical(boolean isPhysical) {
+    myIsPhysical = isPhysical;
   }
 }

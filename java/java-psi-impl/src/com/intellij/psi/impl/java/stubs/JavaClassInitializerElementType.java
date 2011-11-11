@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
 import com.intellij.psi.impl.source.PsiClassInitializerImpl;
@@ -46,8 +46,7 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
 
   @Override
   public PsiClassInitializer createPsi(final PsiClassInitializerStub stub) {
-    assert !isCompiled(stub);
-    return new PsiClassInitializerImpl(stub);
+    return getPsiFactory(stub).createClassInitializer(stub);
   }
 
   @Override
