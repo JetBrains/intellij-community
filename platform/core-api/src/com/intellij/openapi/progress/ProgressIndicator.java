@@ -71,4 +71,7 @@ public interface ProgressIndicator {
   void setIndeterminate(boolean indeterminate);
 
   void checkCanceled() throws ProcessCanceledException;
+
+  boolean isPopupWasShown();
+  boolean isShowing();
 }

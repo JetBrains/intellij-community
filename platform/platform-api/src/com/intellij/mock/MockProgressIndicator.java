@@ -98,4 +98,14 @@ public class MockProgressIndicator implements ProgressIndicator {
 
   public void checkCanceled() {
   }
+
+  @Override
+  public boolean isPopupWasShown() {
+    return false;
+  }
+
+  @Override
+  public boolean isShowing() {
+    return false;
+  }
 }

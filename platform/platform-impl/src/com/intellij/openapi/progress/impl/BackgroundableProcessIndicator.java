@@ -159,4 +159,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myStatusBar = null;
     myOption = null;
   }
+
+  @Override
+  public boolean isShowing() {
+    return isModal() || ! isBackgrounded();
+  }
 }

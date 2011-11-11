@@ -112,4 +112,14 @@ public class EmptyProgressIndicator implements ProgressIndicator {
       throw new ProcessCanceledException();
     }
   }
+
+  @Override
+  public boolean isPopupWasShown() {
+    return false;
+  }
+
+  @Override
+  public boolean isShowing() {
+    return false;
+  }
 }
