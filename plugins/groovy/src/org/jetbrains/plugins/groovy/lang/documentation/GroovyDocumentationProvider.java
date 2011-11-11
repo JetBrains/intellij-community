@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -76,6 +75,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @NonNls private static final String PARAM_TAG = "@param";
   @NonNls private static final String RETURN_TAG = "@return";
   @NonNls private static final String THROWS_TAG = "@throws";
+  private static final String BODY_HTML = "</body></html>";
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -188,7 +188,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       return generateClassInfo((GrTypeDefinition)element);
     }
 
-    //todo
     return null;
   }
 
@@ -231,9 +230,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     final String classString =
       aClass.isInterface() ? "interface" : aClass instanceof PsiTypeParameter ? "type parameter" : aClass.isEnum() ? "enum" : "class";
-    buffer.append(classString).append(" ");
-
-    buffer.append(aClass.getName());
+    buffer.append(classString).append(" ").append(aClass.getName());
 
     if (aClass.hasTypeParameters()) {
       PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
@@ -263,7 +260,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
 
     PsiClassType[] refs = aClass.getExtendsListTypes();
-    if (refs.length > 0 || !aClass.isInterface() && !"java.lang.Object".equals(aClass.getQualifiedName())) {
+    if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
       buffer.append(" extends ");
       if (refs.length == 0) {
         buffer.append("Object");
@@ -316,7 +313,16 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element instanceof CustomMembersGenerator.GdslNamedParameter) {
-      return ((CustomMembersGenerator.GdslNamedParameter)element).docString;
+      CustomMembersGenerator.GdslNamedParameter parameter = (CustomMembersGenerator.GdslNamedParameter)element;
+      String result = "<pre><b>" + parameter.getName() + "</b>";
+      if (parameter.myParameterTypeText != null) {
+        result += ": " + parameter.myParameterTypeText;
+      }
+      result += "</pre>";
+      if (parameter.docString != null) {
+        result += "<p>" + parameter.docString;
+      }
+      return result;
     }
 
     if (element instanceof GrReferenceExpression) {
@@ -327,12 +333,22 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     
     if (element == null) return null;
 
+    String standard = JavaDocumentationProvider.generateExternalJavadoc(element);
+
     String gdslDoc = element.getUserData(NonCodeMembersHolder.DOCUMENTATION);
     if (gdslDoc != null) {
+      if (standard != null) {
+        String truncated = StringUtil.trimEnd(standard, BODY_HTML);
+        String appended = truncated + "<p>" + gdslDoc;
+        if (truncated.equals(standard)) {
+          return appended;
+        }
+        return appended + BODY_HTML;
+      }
       return gdslDoc;
     }
 
-    return JavaDocumentationProvider.generateExternalJavadoc(element);
+    return standard;
   }
 
   private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {
