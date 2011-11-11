@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
-import com.intellij.ui.SideBorder;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -204,7 +203,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return new Comparator<IdeaPluginDescriptor>() {
       @Override
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-        return 0;
+        return StringUtil.compare(o1.getCategory(), o2.getCategory(), true);
       }
     };
   }
@@ -253,7 +252,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     private final PluginNode myPluginDescriptor;
 
     private PluginTableCellRenderer(PluginNode pluginDescriptor) {
-      myLabel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
       myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       myPluginDescriptor = pluginDescriptor;
     }
@@ -270,7 +268,14 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         long date = myPluginDescriptor.getDate();
         myLabel.setText(date != 0 && date != Long.MAX_VALUE ? DateFormatUtil.formatDate(date) : "n/a");
       } else if (column == COLUMN_DOWNLOADS) {
-        myLabel.setText(myPluginDescriptor.getDownloads());
+        String downloads = myPluginDescriptor.getDownloads();
+        myLabel.setText(!StringUtil.isEmpty(downloads) ? downloads : "n/a");
+      } else if (column == COLUMN_CATEGORY) {
+        String category = myPluginDescriptor.getCategory();
+        if (StringUtil.isEmpty(category)) {
+          category = myPluginDescriptor.getRepositoryName();
+        }
+        myLabel.setText(!StringUtil.isEmpty(category) ? category : "n/a");
       }
       myLabel.setVerticalAlignment(SwingConstants.BOTTOM);
       if (myPluginDescriptor.getStatus() == PluginNode.STATUS_INSTALLED) {
