@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -89,6 +90,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       if (string.getTextOffset()+prefixLength >=offset)
         return Result.Continue;
+      if ("\\".equals(doc.getText(TextRange.create(offset-1, offset)))) return Result.Continue;
       String quote = element.getText().substring(prefixLength, prefixLength + 1);
       doc.insertString(offset, quote+" \\"+quote);
       caretOffset.set(offset+3);
