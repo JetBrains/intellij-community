@@ -162,6 +162,7 @@ public class CodeStyleSchemesPanel{
       }
     });
     myCopyFromButton.add(myCopyFromMenu);
+    myCopyFromButton.setEnabled(false);
     
     myJBScrollPane.setBorder(null);
 
@@ -321,6 +322,7 @@ public class CodeStyleSchemesPanel{
     if (selectedPanel != null) {
       selectedPanel.setupCopyFromMenu(myCopyFromMenu);
     }
+    myCopyFromButton.setEnabled(myCopyFromMenu.getItemCount() > 0);
   }
 
   private void onSettingsTypeChange() {
