@@ -69,7 +69,7 @@ public class VariantsCompletionAction extends AnAction {
 
       Utils.showCompletionPopup(
         e.getInputEvent() instanceof MouseEvent ? getEditorSearchComponent().getToolbarComponent() : null,
-        list, null, getTextField());
+        list, null, getTextField(), null);
     }
   }
 

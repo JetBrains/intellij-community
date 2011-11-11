@@ -92,6 +92,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private final FindModel myFindInProjectModel = new FindModel();
   private final FindModel myFindInFileModel = new FindModel();
   private FindModel myFindNextModel = null;
+  private FindModel myPreviousFindModel = null;
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private final Project myProject;
   private final MessageBus myBus;
@@ -300,6 +301,16 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       offset = model.isForward() ? result.getStartOffset() + 1 : result.getEndOffset() - 1;
     }
+  }
+
+  @Override
+  public FindModel getPreviousFindModel() {
+    return myPreviousFindModel;
+  }
+
+  @Override
+  public void setPreviousFindModel(FindModel previousFindModel) {
+    myPreviousFindModel = previousFindModel;
   }
 
   private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
