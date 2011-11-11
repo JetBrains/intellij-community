@@ -79,59 +79,63 @@ public class ActivityMonitorTest extends UsefulTestCase {
     assertTrue(myMonitor.hasObjectFor(project2));
 
 
-    myMonitor.addActivity("global", ModalityState.any());
+    myMonitor.addActivity(new UiActivity("global"), ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertBusy(project2);
 
-    myMonitor.addActivity("global", ModalityState.any());
+    myMonitor.addActivity(new UiActivity("global"), ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertBusy(project2);
 
-    myMonitor.removeActivity("global");
+    myMonitor.removeActivity(new UiActivity("global"));
     assertReady(null);
     assertReady(project1);
     assertReady(project2);
 
 
-    myMonitor.addActivity(project1, "p1", ModalityState.any());
+    myMonitor.addActivity(project1, new UiActivity("p1"), ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertReady(project2);
 
-    myMonitor.addActivity("global", ModalityState.any());
+    myMonitor.addActivity(new UiActivity("global"), ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertBusy(project2);
 
-    myMonitor.removeActivity("global");
+    myMonitor.removeActivity(new UiActivity("global"));
     assertBusy(null);
     assertBusy(project1);
     assertReady(project2);
 
-    myMonitor.removeActivity(project1, "p1");
+    myMonitor.removeActivity(project1, new UiActivity("p1"));
     assertReady(null);
     assertReady(project1);
     assertReady(project2);
   }
 
+  public void testReadyWithWatchActivities() throws Exception {
+
+  }
+
   public void testModalityState() {
     assertReady(null);
 
-    myMonitor.addActivity("non_modal_1", ModalityState.NON_MODAL);
+    myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
     assertBusy(null);
 
     myCurrentState = new ModalityStateEx(new Object[] {"dialog"});
     assertReady(null);
 
-    myMonitor.addActivity("non_modal2", ModalityState.NON_MODAL);
+    myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.NON_MODAL);
     assertReady(null);
 
-    myMonitor.addActivity("modal_1", new ModalityStateEx(new Object[] {"dialog"}));
+    myMonitor.addActivity(new UiActivity("modal_1"), new ModalityStateEx(new Object[] {"dialog"}));
     assertBusy(null);
 
-    myMonitor.addActivity("modal_2", new ModalityStateEx(new Object[] {"dialog", "popup"}));
+    myMonitor.addActivity(new UiActivity("modal_2"), new ModalityStateEx(new Object[] {"dialog", "popup"}));
     assertBusy(null);
 
     myCurrentState = ModalityState.NON_MODAL;
@@ -141,13 +145,20 @@ public class ActivityMonitorTest extends UsefulTestCase {
   public void testModalityStateAny() {
     assertReady(null);
 
-    myMonitor.addActivity("non_modal_1", ModalityState.any());
+    myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.any());
     assertBusy(null);
 
     myCurrentState = new ModalityStateEx(new Object[] {"dialog"});
     assertBusy(null);
   }
 
+  public void testUiActivity() throws Exception {
+    assertTrue(new UiActivity("root", "folder1").isSameOrGeneralFor(new UiActivity("root", "folder1")));
+    assertTrue(new UiActivity("root", "folder1").isSameOrGeneralFor(new UiActivity("root", "folder1", "folder2")));
+    assertFalse(new UiActivity("root", "folder2").isSameOrGeneralFor(new UiActivity("root", "folder1", "folder2")));
+    assertFalse(new UiActivity("root", "folder2").isSameOrGeneralFor(new UiActivity("anotherRoot")));
+  }
+  
   private void assertReady(@Nullable Project key) {
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key) : myMonitor.getBusy());
     assertTrue(busy.isReady());

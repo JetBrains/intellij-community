@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.internal.focus.FocusTracesAction;
 import com.intellij.openapi.Disposable;
@@ -50,8 +51,8 @@ import java.util.List;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
-  private static final String FOCUS = "focus";
-  private static final String TYPEAHEAD = "typeahead";
+  private static final UiActivity FOCUS = new UiActivity.Focus("awtFocusRequest");
+  private static final UiActivity TYPEAHEAD = new UiActivity.Focus("typeahead");
 
   private final Application myApp;
 

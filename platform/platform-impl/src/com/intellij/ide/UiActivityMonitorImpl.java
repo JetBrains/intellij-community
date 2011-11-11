@@ -91,22 +91,22 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @Override
-  public BusyObject getBusy(@NotNull Project project) {
+  public BusyObject getBusy(@NotNull Project project, UiActivity ... toWatch) {
     return _getBusy(project);
   }
 
   @Override
-  public BusyObject getBusy() {
+  public BusyObject getBusy(UiActivity ... toWatch) {
     return _getBusy(null);
   }
 
   @Override
-  public void addActivity(@NotNull final Project project, @NotNull final Object activity) {
+  public void addActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
     addActivity(project, activity, getDefaultModalityState());
   }
 
   @Override
-  public void addActivity(@NotNull final Project project, @NotNull final Object activity, @NotNull final ModalityState effectiveModalityState) {
+  public void addActivity(@NotNull final Project project, @NotNull final UiActivity activity, @NotNull final ModalityState effectiveModalityState) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -126,7 +126,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @Override
-  public void removeActivity(@NotNull final Project project, @NotNull final Object activity) {
+  public void removeActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -136,7 +136,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @Override
-  public void addActivity(@NotNull final Object activity) {
+  public void addActivity(@NotNull final UiActivity activity) {
     addActivity(activity, getDefaultModalityState());
   }
 
@@ -145,7 +145,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @Override
-  public void addActivity(@NotNull final Object activity, @NotNull final ModalityState effectiveModalityState) {
+  public void addActivity(@NotNull final UiActivity activity, @NotNull final ModalityState effectiveModalityState) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -155,7 +155,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @Override
-  public void removeActivity(@NotNull final Object activity) {
+  public void removeActivity(@NotNull final UiActivity activity) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
