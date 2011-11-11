@@ -22,13 +22,6 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     LightGroovyTestCase.GROOVY_DESCRIPTOR
   }
 
-  ThrowableRunnable highlight;
-  @Override
-  protected void setUp() {
-    super.setUp();
-    highlight = { myFixture.doHighlighting() } as ThrowableRunnable
-  }
-
   ThrowableRunnable configureAndHighlight(String text) {
     return {
       myFixture.configureByText 'a.groovy', text
