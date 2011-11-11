@@ -834,7 +834,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static Map<String, PyExpression> dictValue(PyDictLiteralExpression dict) {
+  public static Map<String, PyExpression> dictValue(@NotNull PyDictLiteralExpression dict) {
     Map<String, PyExpression> result = Maps.newLinkedHashMap();
     for (PyKeyValueExpression keyValue : dict.getElements()) {
       PyExpression key = keyValue.getKey();
