@@ -22,6 +22,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,8 +32,9 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameDialog;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,24 +114,30 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       final PsiNamedElement variable = getVariable();
       if (variable != null && !newName.equals(myOldName)) {
         RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(variable);
-        PsiElement substitutedElement = processor.substituteElementToRename(variable, myEditor);
+        final PsiElement substitutedElement = processor.substituteElementToRename(variable, myEditor);
         if (substitutedElement == null) {
           return;
         }
 
-        final RenameDialog dialog = new RenameDialog(myProject, substitutedElement, context, myEditor) {
-          @Override
-          public String[] getSuggestedNames() {
-            return new String[]{newName};
-          }
-        };
-        dialog.setPreviewResults(false);
         final String commandName = RefactoringBundle
           .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
         restore(variable, commandName);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
-            dialog.performRename(newName);
+            final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(substitutedElement);
+            final RenameProcessor
+              renameProcessor = new RenameProcessor(myProject, substitutedElement, newName,
+                                                    elementProcessor.isToSearchInComments(substitutedElement),
+                                                    elementProcessor.isToSearchForTextOccurrences(substitutedElement));
+            for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+              if (factory.isApplicable(substitutedElement) && factory.getOptionName() != null) {
+                if (factory.isEnabled()) {
+                  renameProcessor.addRenamerFactory(factory);
+                }
+              }
+            }
+            renameProcessor.run();
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           }
         }, commandName, null);
       }
