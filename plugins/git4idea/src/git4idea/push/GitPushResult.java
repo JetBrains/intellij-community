@@ -15,17 +15,31 @@
  */
 package git4idea.push;
 
+import com.intellij.history.Label;
+import com.intellij.history.LocalHistory;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.UpdateInfoTree;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import git4idea.GitBranch;
+import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,8 +47,13 @@ import java.util.Map;
 * @author Kirill Likhodedov
 */
 class GitPushResult {
+
+  private static final Logger LOG = Logger.getInstance(GitPushResult.class);
+
   private final Project myProject;
   private final Map<GitRepository, GitPushRepoResult> myResults = new HashMap<GitRepository, GitPushRepoResult>();
+  private final Map<GitRepository, GitRevisionNumber> myUpdateStarts = new HashMap<GitRepository, GitRevisionNumber>();
+  private Label myBeforeUpdateLabel;
 
   GitPushResult(@NotNull Project project) {
     myProject = project;
@@ -42,6 +61,23 @@ class GitPushResult {
 
   void append(@NotNull GitRepository repository, @NotNull GitPushRepoResult result) {
     myResults.put(repository, result);
+  }
+
+  /**
+   * For the specified repositories remembers the revision when update process (actually, auto-update inside the push process) has started.
+   */
+  void markUpdateStartIfNotMarked(@NotNull Collection<GitRepository> repositories) {
+    if (myUpdateStarts.isEmpty()) {
+      myBeforeUpdateLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
+    }
+    for (GitRepository repository : repositories) {
+      if (!myUpdateStarts.containsKey(repository)) {
+        String currentRevision = repository.getCurrentRevision();
+        if (currentRevision != null) {
+          myUpdateStarts.put(repository, new GitRevisionNumber(currentRevision));
+        }
+      }
+    }
   }
 
   boolean wasError() {
@@ -54,7 +90,7 @@ class GitPushResult {
   }
 
   @NotNull
-  GroupedResult group() {
+  private GroupedResult group() {
     final Map<GitRepository, GitPushRepoResult> successfulResults = new HashMap<GitRepository, GitPushRepoResult>();
     final Map<GitRepository, GitPushRepoResult> errorResults = new HashMap<GitRepository, GitPushRepoResult>();
     final Map<GitRepository, GitPushRepoResult> rejectedResults = new HashMap<GitRepository, GitPushRepoResult>();
@@ -113,6 +149,11 @@ class GitPushResult {
         append(repository, repoResult);
       }
     }
+
+    for (Map.Entry<GitRepository, GitRevisionNumber> entry : previousResult.myUpdateStarts.entrySet()) {
+      myUpdateStarts.put(entry.getKey(), entry.getValue());
+    }
+    myBeforeUpdateLabel = previousResult.myBeforeUpdateLabel;
   }
 
   @NotNull
@@ -138,9 +179,13 @@ class GitPushResult {
    * If there is only 1 repository in the project, just returns the error without writing the repository url (to avoid confusion for people
    * with only 1 root ever).
    * Otherwise adds repository URL to the error that repository produced.
+   * 
+   * The procedure also includes collecting for updated files (if an auto-update was performed during the push), which may be lengthy.
    */
   @NotNull
   Notification createNotification() {
+    final UpdatedFiles updatedFiles = collectUpdatedFiles();
+
     GroupedResult groupedResult = group();
     
     boolean error = !groupedResult.myErrorResults.isEmpty();
@@ -185,7 +230,36 @@ class GitPushResult {
     sb.append(rejectedReport);
     sb.append(successReport);
     
-    return GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, sb.toString(), notificationType, null);
+    if (!updatedFiles.isEmpty()) {
+      sb.append("<a href='UpdatedFiles'>View files updated during the push<a/>");
+    }
+
+    return GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, sb.toString(), notificationType, new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED) && event.getDescription().equals("UpdatedFiles")) {
+          ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
+          UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(updatedFiles, "Update", ActionInfo.UPDATE, false);
+          tree.setBefore(myBeforeUpdateLabel);
+          tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
+        }
+      }
+    });
+  }
+
+  @NotNull
+  private UpdatedFiles collectUpdatedFiles() {
+    UpdatedFiles updatedFiles = UpdatedFiles.create();
+    for (Map.Entry<GitRepository, GitRevisionNumber> updatedRepository : myUpdateStarts.entrySet()) {
+      GitRepository repository = updatedRepository.getKey();
+      final MergeChangeCollector collector = new MergeChangeCollector(myProject, repository.getRoot(), updatedRepository.getValue());
+      final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+      collector.collect(updatedFiles, exceptions);
+      for (VcsException exception : exceptions) {
+        LOG.info(exception);
+      }
+    }
+    return updatedFiles;
   }
 
   private static int calcPushedCommitTotalNumber(@NotNull Map<GitRepository, GitPushRepoResult> successfulResults) {

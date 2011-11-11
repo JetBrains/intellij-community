@@ -288,7 +288,7 @@ public final class GitPusher {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Everything up-to-date", NotificationType.INFORMATION).notify(myProject);
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Nothing to push", NotificationType.INFORMATION).notify(myProject);
     }
     else if (result.wasError()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
@@ -313,19 +313,19 @@ public final class GitPusher {
           }
         } 
 
-        Set<VirtualFile> roots = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
-        boolean pushAgain = false; 
         if (updateSettings.shouldUpdate()) {
-          pushAgain = update(roots, updateSettings.getUpdateMethod());
+          Collection<GitRepository> repositoriesToUpdate = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
+          GitPushResult adjustedPushResult = result.remove(rejectedPushesForCurrentBranch);
+          adjustedPushResult.markUpdateStartIfNotMarked(repositoriesToUpdate);
+          boolean updateResult = update(getRootsFromRepositories(repositoriesToUpdate), updateSettings.getUpdateMethod());
+          if (updateResult) {
+            myProgressIndicator.setText(INDICATOR_TEXT);
+            GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
+            push(newPushInfo, adjustedPushResult, updateSettings);
+            return; // don't notify - next push will notify all results in compound
+          }
         }
 
-        if (pushAgain) {
-          myProgressIndicator.setText(INDICATOR_TEXT);
-          GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
-          GitPushResult adjustedPushResult = result.remove(rejectedPushesForCurrentBranch);
-          push(newPushInfo, adjustedPushResult, updateSettings);
-          return; // don't notify - next push will notify all results in compound
-        }
       }
 
       result.createNotification().notify(myProject);
@@ -373,24 +373,22 @@ public final class GitPusher {
   }
 
   @NotNull
-  private Set<VirtualFile> getRootsToUpdate(@NotNull Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch, boolean updateAllRoots) {
-    Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    if (updateAllRoots) {
-      for (GitRepository repository : myRepositories) {
-        roots.add(repository.getRoot());
-      }
-    }
-    else {
-      for (GitRepository repository : rejectedPushesForCurrentBranch.keySet()) {
-        roots.add(repository.getRoot());
-      }
+  private Collection<GitRepository> getRootsToUpdate(@NotNull Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch, boolean updateAllRoots) {
+    return updateAllRoots ? myRepositories : rejectedPushesForCurrentBranch.keySet();
+  }
+  
+  @NotNull
+  private static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
+    Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
+    for (GitRepository repository : repositories) {
+      roots.add(repository.getRoot());
     }
     return roots;
   }
 
-  private boolean update(@NotNull Set<VirtualFile> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
+  private boolean update(@NotNull Collection<VirtualFile> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
     GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE;
-    boolean updateResult = new GitUpdateProcess(myProject, myProgressIndicator, rootsToUpdate, UpdatedFiles.create()).update(um);
+    boolean updateResult = new GitUpdateProcess(myProject, myProgressIndicator, new HashSet<VirtualFile>(rootsToUpdate), UpdatedFiles.create()).update(um);
     for (VirtualFile virtualFile : rootsToUpdate) {
       virtualFile.refresh(true, true);
     }
