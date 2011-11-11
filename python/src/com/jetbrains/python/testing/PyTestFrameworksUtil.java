@@ -11,25 +11,37 @@ public class PyTestFrameworksUtil {
 
   public static boolean isPyTestInstalled(Project project, String sdkHome) {
     if (ourListener == null) {
-      ourListener = new VFSTestFrameworkListener(project, sdkHome);
+      ourListener = new VFSTestFrameworkListener(project);
       LocalFileSystem.getInstance().addVirtualFileListener(ourListener);
     }
-    return Boolean.parseBoolean(TestRunnerService.getInstance(project).isPyTestInstalled());
+    TestRunnerService service = TestRunnerService.getInstance(project);
+    if (!service.getSdks().contains(sdkHome))
+      VFSTestFrameworkListener.updateTestFrameworks(service, sdkHome);
+
+    return service.isPyTestInstalled(sdkHome);
   }
 
   public static boolean isNoseTestInstalled(Project project, String sdkHome) {
     if (ourListener == null) {
-      ourListener = new VFSTestFrameworkListener(project, sdkHome);
+      ourListener = new VFSTestFrameworkListener(project);
       LocalFileSystem.getInstance().addVirtualFileListener(ourListener);
     }
-    return Boolean.parseBoolean(TestRunnerService.getInstance(project).isNoseTestInstalled());
+    TestRunnerService service = TestRunnerService.getInstance(project);
+    if (!service.getSdks().contains(sdkHome))
+      VFSTestFrameworkListener.updateTestFrameworks(service, sdkHome);
+
+    return service.isNoseTestInstalled(sdkHome);
   }
 
   public static boolean isAtTestInstalled(Project project, String sdkHome) {
     if (ourListener == null) {
-      ourListener = new VFSTestFrameworkListener(project, sdkHome);
+      ourListener = new VFSTestFrameworkListener(project);
       LocalFileSystem.getInstance().addVirtualFileListener(ourListener);
     }
-    return Boolean.parseBoolean(TestRunnerService.getInstance(project).isAtTestInstalled());
+    TestRunnerService service = TestRunnerService.getInstance(project);
+    if (!service.getSdks().contains(sdkHome))
+      VFSTestFrameworkListener.updateTestFrameworks(service, sdkHome);
+
+    return service.isAtTestInstalled(sdkHome);
   }
 }
