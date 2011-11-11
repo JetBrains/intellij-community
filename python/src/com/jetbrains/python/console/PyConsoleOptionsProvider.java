@@ -131,7 +131,7 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
         moduleWasAutoselected = true;
       }
       form.setModule(myModuleName == null ? null : ModuleManager.getInstance(myProject).findModuleByName(myModuleName));
-      if (moduleWasAutoselected) {
+      if (moduleWasAutoselected && form.getModule() != null) {
         myModuleName = form.getModule().getName();
       }
       form.setWorkingDirectory(form.getWorkingDirectory());
