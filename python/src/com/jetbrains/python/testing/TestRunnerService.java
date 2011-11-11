@@ -2,10 +2,12 @@ package com.jetbrains.python.testing;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: catherine
@@ -20,11 +22,17 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   private List<String> myConfigurations = new ArrayList<String>();
   public String PROJECT_CONFIGURATION = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
 
-  public String PY_TEST_INSTALLED = "False";
-  public String NOSE_TEST_INSTALLED = "False";
-  public String AT_TEST_INSTALLED = "False";
+  public Map <String, Boolean> SDK_TO_PYTEST;
+  public Map <String, Boolean> SDK_TO_NOSETEST;
+  public Map <String, Boolean> SDK_TO_ATTEST;
+
+  public List <String> PROCESSED_SDK;
 
   public TestRunnerService() {
+    SDK_TO_PYTEST = new HashMap<String, Boolean>();
+    SDK_TO_NOSETEST = new HashMap<String, Boolean>();
+    SDK_TO_ATTEST = new HashMap<String, Boolean>();
+    PROCESSED_SDK = new ArrayList<String>();
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME);
     myConfigurations.add(PythonTestConfigurationsModel.PY_TEST_NAME);
@@ -58,27 +66,38 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
     return PROJECT_CONFIGURATION;
   }
 
-  public void pyTestInstalled(String installed) {
-    PY_TEST_INSTALLED = installed;
+  public void pyTestInstalled(boolean installed, String sdkHome) {
+    SDK_TO_PYTEST.put(sdkHome, installed);
   }
 
-  public String isPyTestInstalled() {
-    return PY_TEST_INSTALLED;
+  public boolean isPyTestInstalled(String sdkHome) {
+    Boolean isInstalled = SDK_TO_PYTEST.get(sdkHome);
+    return isInstalled == null? true: isInstalled;
   }
 
-  public void noseTestInstalled(String installed) {
-    NOSE_TEST_INSTALLED = installed;
+  public void noseTestInstalled(boolean installed, String sdkHome) {
+    SDK_TO_NOSETEST.put(sdkHome, installed);
   }
 
-  public String isNoseTestInstalled() {
-    return NOSE_TEST_INSTALLED;
+  public boolean isNoseTestInstalled(String sdkHome) {
+    Boolean isInstalled = SDK_TO_NOSETEST.get(sdkHome);
+    return isInstalled == null? true: isInstalled;
   }
 
-  public void atTestInstalled(String installed) {
-    AT_TEST_INSTALLED = installed;
+  public void atTestInstalled(boolean installed, String sdkHome) {
+    SDK_TO_ATTEST.put(sdkHome, installed);
   }
 
-  public String isAtTestInstalled() {
-    return AT_TEST_INSTALLED;
+  public boolean isAtTestInstalled(String sdkHome) {
+    Boolean isInstalled = SDK_TO_ATTEST.get(sdkHome);
+    return isInstalled == null? true: isInstalled;
+  }
+
+  public void addSdk(String sdkHome) {
+    PROCESSED_SDK.add(sdkHome);
+  }
+
+  public List getSdks() {
+    return PROCESSED_SDK;
   }
 }
