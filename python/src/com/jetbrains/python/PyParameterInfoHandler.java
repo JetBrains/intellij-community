@@ -77,6 +77,10 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       // widen the range to include all whitespace around the arg
       int left = CharArrayUtil.shiftBackward(chars, range.getStartOffset()-1, " \t\r\n");
       int right = CharArrayUtil.shiftForwardCarefully(chars, range.getEndOffset(), " \t\r\n");
+      if (arg.getParent() instanceof PyListLiteralExpression || arg.getParent() instanceof PyTupleExpression) {
+        right = CharArrayUtil.shiftForward(chars, range.getEndOffset(), " \t\r\n])");
+      }
+
       if (left <= alleged_cursor_offset && right >= alleged_cursor_offset) {
         offset = range.getStartOffset();
         break;
