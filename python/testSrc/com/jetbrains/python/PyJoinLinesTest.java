@@ -62,4 +62,5 @@ public class PyJoinLinesTest extends PyTestCase {
   public void testTupleRPar() { doTest(); }
   public void testTwoComments() { doTest(); }
   public void testTwoStatements() { doTest(); }
+  public void testStringWithSlash() { doTest(); }
 }
