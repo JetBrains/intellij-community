@@ -199,7 +199,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected void moveOffsetAfter(boolean success) {
     super.moveOffsetAfter(success);
     if (!success) {
-      restore(getVariable(), RENAME_TITLE);
+      if (myElementToRename != null && myElementToRename.isValid()) {
+        restore(myElementToRename, RENAME_TITLE);
+      }
     }
   }
 
