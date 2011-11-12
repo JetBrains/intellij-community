@@ -58,6 +58,7 @@ public class GitLogAssembler implements GitLog {
     myMediator.setLoader(myLoadController);
     myMediator.setTableModel(myTableModel);
     myMediator.setUIRefresh(myGitLogUI.getRefreshObject());
+    myMediator.setDetailsLoader(myDetailsLoader);
 
     myTableModel.setCache(myDetailsCache);
     Disposer.register(this, myGitLogUI);
