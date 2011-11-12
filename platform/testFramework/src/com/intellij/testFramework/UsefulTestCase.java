@@ -125,6 +125,7 @@ public abstract class UsefulTestCase extends TestCase {
       FileUtil.delete(new File(myTempDir));
     }
 
+    UIUtil.removeLeakingAppleListeners();
     super.tearDown();
   }
 
