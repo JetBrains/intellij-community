@@ -134,6 +134,10 @@ public class PyIntentionTest extends PyTestCase {
     doNegativeTest(PyBundle.message("INTN.join.if.text"));
   }
 
+  public void testJoinIfBinary() {              //PY-4697
+    doTest(PyBundle.message("INTN.join.if.text"));
+  }
+
   public void testJoinIfMultiStatements() {           //PY-2970
     doNegativeTest(PyBundle.message("INTN.join.if.text"));
   }

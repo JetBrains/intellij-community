@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,17 +66,24 @@ public class PyJoinIfIntention extends BaseIntentionAction {
     PyIfStatement ifStatement = getIfStatement(expression);
 
     PyStatement firstStatement = getFirstStatement(ifStatement);
-
+    if (ifStatement == null) return;
     if (firstStatement != null && firstStatement instanceof PyIfStatement) {
       PyExpression condition = ((PyIfStatement)firstStatement).getIfPart().getCondition();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpression newCondition = elementGenerator.createExpressionFromText(
-                    ifStatement.getIfPart().getCondition().getText() + " and " + condition.getText());
-      ifStatement.getIfPart().getCondition().replace(newCondition);
+      PyExpression ifCondition = ifStatement.getIfPart().getCondition();
+      if (ifCondition == null || condition == null) return;
+      StringBuilder replacementText = new StringBuilder(ifCondition.getText() + " and ");
+      if (condition instanceof PyBinaryExpression && ((PyBinaryExpression)condition).getOperator() == PyTokenTypes.OR_KEYWORD) {
+        replacementText.append("(").append(condition.getText()).append(")");
+      } else
+        replacementText.append(condition.getText());
+
+      PyExpression newCondition = elementGenerator.createExpressionFromText(replacementText.toString());
+      ifCondition.replace(newCondition);
 
       PyStatementList stList = ((PyIfStatement)firstStatement).getIfPart().getStatementList();
       PyStatementList ifStatementList = ifStatement.getIfPart().getStatementList();
-
+      if (ifStatementList == null || stList == null) return;
       List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(ifStatement.getIfPart(), PsiComment.class);
       comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(((PyIfStatement)firstStatement).getIfPart(), PsiComment.class));
       comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(ifStatementList, PsiComment.class));
