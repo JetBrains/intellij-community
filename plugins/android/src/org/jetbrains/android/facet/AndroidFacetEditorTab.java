@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -210,8 +211,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     });
 
     myApkPathLabel.setLabelFor(myApkPathCombo);
-    myApkPathCombo.getComboBox().setEditable(true);
-    myApkPathCombo.getComboBox().setModel(new DefaultComboBoxModel(getDefaultApks(module)));
+
+    final JComboBox apkPathComboBoxComponent = myApkPathCombo.getComboBox();
+    apkPathComboBoxComponent.setEditable(true);
+    apkPathComboBoxComponent.setModel(new DefaultComboBoxModel(getDefaultApks(module)));
+    apkPathComboBoxComponent.setMinimumSize(new Dimension(10, apkPathComboBoxComponent.getMinimumSize().height));
+    apkPathComboBoxComponent.setPreferredSize(new Dimension(10, apkPathComboBoxComponent.getPreferredSize().height));
+
     myApkPathCombo.addBrowseFolderListener(project, new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
