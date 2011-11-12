@@ -199,7 +199,9 @@ public class CodeInsightUtil {
 
   public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-    addReferenceExpressions(array, scope, referee);
+    if (scope != null) {
+      addReferenceExpressions(array, scope, referee);
+    }
     return array.toArray(new PsiExpression[array.size()]);
   }
 
