@@ -18,6 +18,7 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -77,6 +78,34 @@ public abstract class LogFilterModel {
 
   public abstract void selectFilter(LogFilter filter);
 
-  @Nullable
-  public abstract Key processLine(String line);
+  @NotNull
+  public abstract MyProcessingResult processLine(String line);
+  
+  public static class MyProcessingResult {
+    private final Key myKey;
+    private final boolean myApplicable;
+    private final String myMessagePrefix;
+
+    public MyProcessingResult(@Nullable Key key,
+                               boolean applicable,
+                               @Nullable String messagePrefix) {
+      myKey = key;
+      myApplicable = applicable;
+      myMessagePrefix = messagePrefix;
+    }
+
+    @Nullable
+    public Key getKey() {
+      return myKey;
+    }
+
+    public boolean isApplicable() {
+      return myApplicable;
+    }
+
+    @Nullable
+    public String getMessagePrefix() {
+      return myMessagePrefix;
+    }
+  }
 }

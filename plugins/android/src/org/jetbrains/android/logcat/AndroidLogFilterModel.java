@@ -36,13 +36,16 @@ import java.util.regex.Pattern;
  */
 public abstract class AndroidLogFilterModel extends LogFilterModel {
   static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
-    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/(\\w+)\\((\\d+)\\):(.*)");
+    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/(\\S+)\\((\\d+)\\):(.*)");
 
   private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
 
   private Log.LogLevel myPrevMessageLogLevel;
   private String myPrevTag;
   private String myPrevPid;
+  private boolean myFullMessageApplicable = false;
+  private boolean myFullMessageApplicableByCustomFilter = false;
+  private StringBuilder myMessageBuilder = new StringBuilder();
   
   private LogFilter mySelectedLogFilter;
   private List<AndroidLogFilter> myLogFilters = new ArrayList<AndroidLogFilter>();
@@ -118,13 +121,17 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     return ProcessOutputTypes.STDOUT;
   }
 
+  @Override
   public boolean isApplicable(String text) {
     if (!super.isApplicable(text)) return false;
-    
+
     if (!(mySelectedLogFilter == null || mySelectedLogFilter.isAcceptable(text))) {
       return false;
     }
+    return true;
+  }
 
+  public boolean isApplicableByCustomFilter(String text) {
     final ConfiguredFilter configuredFilterName = getConfiguredFilter();
     if (configuredFilterName == null) {
       return true;
@@ -133,7 +140,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
 
     String tag = null;
     String pid = null;
-    String message = null;
+    String message = text;
     
     final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(text);
     if (matcher.matches()) {
@@ -204,48 +211,55 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     }
   }
 
-  public Key processLine(String line) {
-    String tag = null;
-    String pid = null;
-    
+  @NotNull
+  public MyProcessingResult processLine(String line) {
     final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);
-    if (matcher.matches()) {
+    final boolean messageHeader = matcher.matches();
+
+    if (messageHeader) {
       String s = matcher.group(1).trim();
       if (s.length() > 0) {
-        tag = s;
+        myPrevTag = s;
       }
       
       s = matcher.group(2).trim();
       if (s.length() > 0) {
-        pid = s;
+        myPrevPid = s;
       }
-    }
-    
-    if (tag != null) {
-      myPrevTag = tag;
-    }
-    
-    if (pid != null) {
-      myPrevPid = pid;
     }
     
     Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
     if (logLevel != null) {
       myPrevMessageLogLevel = logLevel;
     }
-    return myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
-  }
+    final Key key = myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
+    
+    
+    final boolean applicable = isApplicable(line); 
+    final boolean applicableByCustomFilter = isApplicableByCustomFilter(line);
 
-  @Nullable
-  private static String getLogTag(String line) {
-    String prevTag = null;
-    final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);
-    if (matcher.matches()) {
-      final String tag = matcher.group(1).trim();
-      if (tag.length() > 0) {
-        prevTag = tag;
-      }
+    String messagePrefix;
+    
+    if (messageHeader) {
+      messagePrefix = null;
+      myMessageBuilder = new StringBuilder(line);
+      myMessageBuilder.append('\n');
+      myFullMessageApplicable = applicable;
+      myFullMessageApplicableByCustomFilter = applicableByCustomFilter;
     }
-    return prevTag;
+    else {
+      messagePrefix = (myFullMessageApplicable || applicable) &&
+                      (myFullMessageApplicableByCustomFilter || applicableByCustomFilter) &&
+                      !(myFullMessageApplicable && myFullMessageApplicableByCustomFilter)
+                      ? myMessageBuilder.toString()
+                      : null;
+      myMessageBuilder.append(line).append('\n');
+      myFullMessageApplicable = myFullMessageApplicable || applicable;
+      myFullMessageApplicableByCustomFilter = myFullMessageApplicableByCustomFilter || applicableByCustomFilter;
+    }
+    
+    return new MyProcessingResult(key,
+                                  myFullMessageApplicable && myFullMessageApplicableByCustomFilter,
+                                  messagePrefix);
   }
 }

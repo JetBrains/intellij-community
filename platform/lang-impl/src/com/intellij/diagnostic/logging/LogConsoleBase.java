@@ -32,10 +32,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
@@ -58,7 +55,7 @@ import java.util.List;
  */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleImpl");
-  @NonNls protected static final String APPLYING_FILTER_TITLE = "Applying filter...";
+  @NonNls public static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
@@ -226,19 +223,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   public void onFilterStateChange(final LogFilter filter) {
-    filterConsoleOutput(new Condition<String>() {
-      public boolean value(final String line) {
-        return myModel.isApplicable(line);
-      }
-    });
+    filterConsoleOutput();
   }
 
   public void onTextFilterChange() {
-    filterConsoleOutput(new Condition<String>() {
-      public boolean value(final String line) {
-        return myModel.isApplicable(line);
-      }
-    });
+    filterConsoleOutput();
   }
 
   @NotNull
@@ -330,9 +319,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       }
     }
     else {
-      Key key = myModel.processLine(text);
-      if (myModel.isApplicable(text)) {
+      final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(text);
+      if (processingResult.isApplicable()) {
+        final Key key = processingResult.getKey();
         if (key != null) {
+          final String messagePrefix = processingResult.getMessagePrefix();
+          if (messagePrefix != null) {
+            myProcessHandler.notifyTextAvailable(messagePrefix, key);
+          }
           myProcessHandler.notifyTextAvailable(text + "\n", key);
         }
       }
@@ -370,7 +364,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myConsole != null ? PlatformDataKeys.EDITOR.getData((DataProvider) myConsole) : null;
   }
 
-  private synchronized void filterConsoleOutput(Condition<String> isApplicable) {
+  private synchronized void filterConsoleOutput() {
     myOriginalDocument = getOriginalDocument();
     if (myOriginalDocument != null) {
       final Editor editor = getEditor();
@@ -390,7 +384,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       int offset = 0;
       boolean caretPositioned = false;
       for (String line : lines) {
-        if (printMessageToConsole(line, isApplicable)) {
+        if (printMessageToConsole(line)) {
           if (!caretPositioned) {
             if (Comparing.strEqual(myLineUnderSelection, line)) {
               caretPositioned = true;
@@ -406,7 +400,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private boolean printMessageToConsole(String line, Condition<String> isApplicable) {
+  private boolean printMessageToConsole(String line) {
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
@@ -417,11 +411,18 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       }
     }
     else {
-      Key key = myModel.processLine(line);
-      if (isApplicable.value(line) && key != null) {
-        ConsoleViewContentType type = ConsoleViewContentType.getConsoleViewType(key);
-        if (type != null) {
-          myConsole.print(line + "\n", type);
+      final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(line);
+      if (processingResult.isApplicable()) {
+        final Key key = processingResult.getKey();
+        if (key != null) {
+          ConsoleViewContentType type = ConsoleViewContentType.getConsoleViewType(key);
+          if (type != null) {
+            final String messagePrefix = processingResult.getMessagePrefix();
+            if (messagePrefix != null) {
+              myConsole.print(messagePrefix, type);
+            }
+            myConsole.print(line + "\n", type);
+          }
         }
       }
     }

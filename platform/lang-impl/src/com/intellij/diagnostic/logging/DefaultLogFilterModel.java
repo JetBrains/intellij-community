@@ -20,6 +20,7 @@ import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -147,7 +148,8 @@ public class DefaultLogFilterModel extends LogFilterModel {
     getPreferences().selectOnlyFilter(filter);
   }
 
-  public Key processLine(String line) {
+  @NotNull
+  public MyProcessingResult processLine(String line) {
     final String type = LogConsolePreferences.getType(line);
     Key contentType = type != null
                       ? LogConsolePreferences.getProcessOutputTypes(type)
@@ -155,7 +157,8 @@ public class DefaultLogFilterModel extends LogFilterModel {
     if (type != null) {
       myPrevType = type;
     }
-    return contentType;
+    final boolean applicable = isApplicable(line);
+    return new MyProcessingResult(contentType, applicable, null);
   }
 
   private abstract class MyFilter extends IndependentLogFilter {
