@@ -24,6 +24,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.internal.psiView.formattingblocks.BlockTreeBuilder;
 import com.intellij.internal.psiView.formattingblocks.BlockTreeNode;
@@ -1244,9 +1245,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     @Override
     public void selectionChanged(SelectionEvent e) {
       if (!available() || !myEditor.getSelectionModel().hasSelection()) return;
-      final PsiElement rootElement =((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
+      ViewerTreeStructure treeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
+      if (treeStructure == null) return;
+      final PsiElement rootElement = treeStructure.getRootPsiElement();
       final SelectionModel selection = myEditor.getSelectionModel();
-      final ViewerTreeStructure treeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
       PsiElement rootPsiElement = treeStructure.getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int start = selection.getSelectionStart()+baseOffset;
@@ -1283,7 +1285,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
     @Nullable
     private PsiFile getPsiFile() {
-      final PsiElement root = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
+      ViewerTreeStructure treeStructure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
+      final PsiElement root = treeStructure != null ? treeStructure.getRootPsiElement() : null;
       return root instanceof PsiFile ? (PsiFile)root : null;
     }
 
@@ -1325,11 +1328,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @Nullable
   private BlockTreeNode findBlockNode(TextRange range, boolean selectParentIfNotFound) {
-    if (myBlockTreeBuilder == null || !myBlockStructurePanel.isVisible()) {
+    final BlockTreeBuilder builder = myBlockTreeBuilder;
+    if (builder == null || !myBlockStructurePanel.isVisible()) {
       return null;
     }
 
-    BlockTreeNode node = (BlockTreeNode)myBlockTreeBuilder.getTreeStructure().getRootElement();
+    AbstractTreeStructure treeStructure = builder.getTreeStructure();
+    if (treeStructure == null) return null;
+    BlockTreeNode node = (BlockTreeNode)treeStructure.getRootElement();
     main_loop:
     while (true) {
       if (node.getBlock().getTextRange().equals(range)) {
