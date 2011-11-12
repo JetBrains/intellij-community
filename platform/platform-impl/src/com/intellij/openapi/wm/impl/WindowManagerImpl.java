@@ -54,9 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
@@ -208,6 +206,19 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
       }
     });
+
+    if (UIUtil.hasLeakingAppleListeners()) {
+      UIUtil.addAwtListener(new AWTEventListener() {
+        @Override
+        public void eventDispatched(AWTEvent event) {
+          if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
+            if (((ContainerEvent)event).getChild() instanceof JViewport) {
+              UIUtil.removeLeakingAppleListeners();
+            }
+          }
+        }
+      }, AWTEvent.CONTAINER_EVENT_MASK, application);
+    }
   }
 
   public void showFrame(final String[] args) {

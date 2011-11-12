@@ -130,6 +130,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }
 
+    UIUtil.removeLeakingAppleListeners();
     super.tearDown();
   }
 

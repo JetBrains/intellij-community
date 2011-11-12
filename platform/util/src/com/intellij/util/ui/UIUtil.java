@@ -54,6 +54,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -139,6 +140,34 @@ public class UIUtil {
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
   private UIUtil() { }
+
+  public static boolean hasLeakingAppleListeners() {
+    // in version 1.6.0_29 Apple introduced a memory leak in JViewport class - they add a PropertyChangeListeners to the CToolkit
+    // but never remove them:
+    // JViewport.java:
+    // public JViewport() {
+    //   ...
+    //   final Toolkit toolkit = Toolkit.getDefaultToolkit();
+    //   if(toolkit instanceof CToolkit)
+    //   {
+    //     final boolean isRunningInHiDPI = ((CToolkit)toolkit).runningInHiDPI();
+    //     if(isRunningInHiDPI) setScrollMode(0);
+    //     toolkit.addPropertyChangeListener("apple.awt.contentScaleFactor", new PropertyChangeListener() { ... });
+    //   }
+    // }
+
+    return SystemInfo.isMac && System.getProperty("java.runtime.version").startsWith("1.6.0_29");
+  }
+
+  public static void removeLeakingAppleListeners() {
+    if (!hasLeakingAppleListeners()) return;
+
+    Toolkit toolkit = Toolkit.getDefaultToolkit();
+    String name = "apple.awt.contentScaleFactor";
+    for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
+      toolkit.removePropertyChangeListener(name, each);
+    }
+  }
 
   public static String getHtmlBody(String text) {
     return getHtmlBody(new Html(text));
