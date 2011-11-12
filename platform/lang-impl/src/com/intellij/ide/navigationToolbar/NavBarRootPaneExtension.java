@@ -49,7 +49,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
-  private final Project myProject;
+  private Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
   private boolean myNavToolbarGroupExist;
@@ -68,6 +68,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
     final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
     myNavToolbarGroupExist = navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0;
+
+    Disposer.register(myProject, this);
   }
 
   @Override
@@ -339,11 +341,11 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return NAV_BAR;
   }
 
-
   public void dispose() {
     myWrapperPanel.setVisible(false);
     myWrapperPanel = null;
     myRunPanel = null;
     myNavigationBar = null;
+    myProject = null;
   }
 }
