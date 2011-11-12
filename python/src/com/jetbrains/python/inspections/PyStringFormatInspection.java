@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -82,6 +83,18 @@ public class PyStringFormatInspection extends PyInspection {
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
 
+        //in case tuple multiplies integer PY-4647
+        if (rightExpression instanceof PyBinaryExpression) {
+          PyBinaryExpression binaryExpression = (PyBinaryExpression)rightExpression;
+          if (binaryExpression.getOperator() == PyTokenTypes.MULT && binaryExpression.getLeftExpression() instanceof PyParenthesizedExpression
+                                                                && binaryExpression.getRightExpression() instanceof PyNumericLiteralExpression) {
+            PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)binaryExpression.getLeftExpression();
+            if (parenthesizedExpression.getContainedExpression() instanceof PyTupleExpression) {
+              PyExpression[] tupleElements = ((PyTupleExpression)parenthesizedExpression.getContainedExpression()).getElements();
+              return ((PyNumericLiteralExpression)((PyBinaryExpression)rightExpression).getRightExpression()).getBigIntegerValue().intValue() * tupleElements.length;
+            }
+          }
+        }
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
             assert rightExpression != null;
